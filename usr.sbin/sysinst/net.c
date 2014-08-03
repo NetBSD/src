@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: net.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,8 +64,12 @@
 
 int network_up = 0;
 /* Access to network information */
-static char *net_devices;
-static char *net_up;
+#define MAX_NETS 15
+struct net_desc {
+	char if_dev[STRSIZE];
+	char name[STRSIZE]; // TODO
+};
+
 static char net_dev[STRSIZE];
 static char net_domain[STRSIZE];
 static char net_host[STRSIZE];
@@ -200,7 +204,6 @@ url_encode(char *dst, const char *src, const char *ep,
 	return dst;
 }
 
-
 static const char *ignored_if_names[] = {
 	"eon",			/* netiso */
 	"gre",			/* net */
@@ -208,6 +211,7 @@ static const char *ignored_if_names[] = {
 	"gif",			/* netinet6 */
 	"faith",		/* netinet6 */
 	"lo",			/* net */
+	"lo0",			/* net */
 #if 0
 	"mdecap",		/* netinet -- never in IF list (?) XXX */
 #endif
@@ -222,24 +226,19 @@ static const char *ignored_if_names[] = {
 	NULL,
 };
 
-static void
-get_ifconfig_info(void)
+static int
+get_ifconfig_info(struct net_desc *devs)
 {
-	char *textbuf;
-	char *t, *nt;
+	char *buf_in;
+	char *buf_tmp;
 	const char **ignore;
+	char *buf;
+	char *tmp;
 	int textsize;
-	ulong fl;
-	char *cp;
-
-	free(net_devices);
-	net_devices = NULL;
-	free(net_up);
-	net_up = NULL;
+	int i;
 
 	/* Get ifconfig information */
-
-	textsize = collect(T_OUTPUT, &textbuf, "/sbin/ifconfig -a 2>/dev/null");
+	textsize = collect(T_OUTPUT, &buf_in, "/sbin/ifconfig -l 2>/dev/null");
 	if (textsize < 0) {
 		if (logfp)
 			(void)fprintf(logfp,
@@ -248,52 +247,31 @@ get_ifconfig_info(void)
 		exit(1);
 	}
 
-	for (t = textbuf; t != NULL && *t != 0; t = nt) {
-		/* find entry for next interface */
-		for (nt = t; (nt = strchr(nt, '\n')); ) {
-			if (*++nt != '\t')
-				break;
-		}
-		if (memcmp(t, "lo0:", 4) == 0)
-			/* completely ignore loopback interface */
-			continue;
-		cp = strchr(t, '=');
-		if (cp == NULL)
-			break;
-		/* get interface flags */
-		fl = strtoul(cp + 1, &cp, 16);
-		if (*cp != '<')
-			break;
+	buf = malloc (STRSIZE * sizeof(char));
+	for (i = 0, buf_tmp = buf_in; strlen(buf_tmp) > 0 && buf_tmp < buf_in +
+	     strlen(buf_in);) {
+		tmp = stpncpy(buf, buf_tmp, strcspn(buf_tmp," \n"));
+		*tmp='\0';
+		buf_tmp += (strcspn(buf_tmp, " \n") + 1) * sizeof(char);
 
+		/* Skip ignored interfaces */
 		for (ignore = ignored_if_names; *ignore != NULL; ignore++) {
 			size_t len = strlen(*ignore);
-			if (strncmp(t, *ignore, len) == 0 &&
-			    isdigit((unsigned char)t[len]))
+			if (strncmp(buf, *ignore, len) == 0 &&
+			    isdigit((unsigned char)buf[len]))
 				break;
 		}
 		if (*ignore != NULL)
 			continue;
 
-		if (fl & IFF_UP) {
-			/* This interface might be connected to the server */
-			cp = strchr(t, ':');
-			if (cp == NULL)
-				break;
-			asprintf(&cp, "%s%.*s ",
-			    net_up ? net_up : "", (int)(cp - t), t);
-			free(net_up);
-			net_up = cp;
-		}
-
-		cp = strchr(t, ':');
-		if (cp == NULL)
-			break;
-		asprintf(&cp, "%s%.*s ",
-		    net_devices ? net_devices : "", (int)(cp - t), t);
-		free(net_devices);
-		net_devices = cp;
+		strncpy (devs[i].if_dev, buf, STRSIZE);
+		i++;
 	}
-	free(textbuf);
+	strcpy(devs[i].if_dev, "\0");
+
+	free(buf);
+	free(buf_in);
+	return i;
 }
 
 static int
@@ -539,9 +517,6 @@ handle_license(const char *dev)
 int
 config_network(void)
 {
-	char *tp;
-	char *defname;
-	const char *prompt;
 	char *textbuf;
 	int  octet0;
 	int  dhcp_config;
@@ -551,8 +526,13 @@ config_network(void)
  	char **ap, *slcmd[10], *in_buf;
  	char buffer[STRSIZE];
  	struct statvfs sb;
+	struct net_desc net_devs[MAX_NETS];
+	menu_ent net_menu[5];
+	int menu_no;
+	int num_devs;
+	int selected_net;
 
-	int l;
+	int i;
 	char dhcp_host[STRSIZE];
 #ifdef INET6
 	int v6config = 1;
@@ -564,43 +544,38 @@ config_network(void)
 	if (network_up)
 		return (1);
 
-	get_ifconfig_info();
+	num_devs = get_ifconfig_info(net_devs);
 
-	if (net_up != NULL) {
-		/* XXX: some retry loops come here... */
-		/* active interfaces found */
-		msg_display(MSG_netup, net_up);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
-			return 0;
-	}
-
-	if (net_devices == NULL) {
+	if (num_devs < 1) {
 		/* No network interfaces found! */
 		msg_display(MSG_nonet);
 		process_menu(MENU_ok, NULL);
 		return (-1);
 	}
+
+	for (i = 0; i < num_devs; i++) {
+		net_menu[i].opt_name = net_devs[i].if_dev;
+		net_menu[i].opt_menu = OPT_NOMENU;
+		net_menu[i].opt_flags = OPT_EXIT;
+		net_menu[i].opt_action = set_menu_select;
+	}
+again:
+	selected_net = -1;
+	menu_no = new_menu(MSG_netdevs,
+		net_menu, num_devs, -1, 4, 0, 0,
+		MC_SCROLL,
+		NULL, NULL, NULL, NULL, NULL);
+	msg_display(MSG_asknetdev, "");
+	process_menu(menu_no, &selected_net);
+	free_menu(menu_no);
+	
+	if (selected_net == -1)
+	    return 0;
+
 	network_up = 1;
 
-again:
-	tp = strchr(net_devices, ' ');
-	asprintf(&defname, "%.*s", (int)(tp - net_devices), net_devices);
-	for (prompt = MSG_asknetdev;; prompt = MSG_badnet) {
-		msg_prompt(prompt, defname, net_dev, sizeof net_dev - 1,
-		    net_devices);
-		l = strlen(net_dev);
-		net_dev[l] = ' ';
-		net_dev[l + 1] = 0;
-		tp = strstr(net_devices, net_dev);
-		if (tp == NULL)
-			continue;
-		if (tp != net_devices && tp[-1] != ' ')
-			continue;
-		net_dev[l] = 0;
-		break;
-	}
-	free(defname);
+	strncpy(net_dev, net_devs[selected_net].if_dev, STRSIZE);
+
 	if (!handle_license(net_dev))
 		goto done;
 
@@ -802,8 +777,7 @@ again:
 #endif
 done:
 	process_menu(MENU_yesno, deconst(MSG_netok_ok));
-	if (!yesno)
-		msg_display(MSG_netagain);
+
 	if (!yesno)
 		goto again;
 
@@ -1028,40 +1002,18 @@ do_ftp_fetch(const char *set_name, struct ftpinfo *f)
 	return rval ? SET_RETRY : SET_OK;
 }
 
-static int
-do_config_network(void)
-{
-	int ret;
 
-	while ((ret = config_network()) <= 0) {
-		if (ret < 0)
-			return (-1);
-		msg_display(MSG_netnotup);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno) {
-			msg_display(MSG_netnotup_continueanyway);
-			process_menu(MENU_yesno, NULL);
-			if (!yesno)
-				return -1;
-			network_up = 1;
-			break;
-		}
-	}
-	return 0;
-}
+// XXX: check MSG_netnotup_continueanyway and MSG_netnotup
 
 int
 get_pkgsrc(void)
 {
-	if (!network_up)
-		if (do_config_network() != 0)
-			return SET_RETRY;
-
-	yesno = 1;
+	yesno = -1;
 	process_menu(MENU_pkgsrc, NULL);
 	
-	if (yesno == 0)
+	if (yesno == SET_SKIP)
 		return SET_SKIP;
+
 	fetch_fn = pkgsrc_fetch;
 	snprintf(ext_dir_pkgsrc, sizeof ext_dir_pkgsrc, "%s/%s",
 	    target_prefix(), xfer_dir + (*xfer_dir == '/'));
@@ -1072,11 +1024,11 @@ get_pkgsrc(void)
 int
 get_via_ftp(const char *xfer_type)
 {
-
-	if (do_config_network() != 0)
-		return SET_RETRY;
-
+	yesno = -1;
 	process_menu(MENU_ftpsource, deconst(xfer_type));
+	
+	if (yesno == SET_RETRY)
+		return SET_RETRY;
 
 	/* We'll fetch each file just before installing it */
 	fetch_fn = ftp_fetch;
@@ -1094,9 +1046,6 @@ get_via_nfs(void)
 {
 	struct statvfs sb;
 
-	if (do_config_network() != 0)
-		return SET_RETRY;
-
 	/* If root is on NFS and we have sets, skip this step. */
 	if (statvfs(set_dir_bin, &sb) == 0 &&
 	    strcmp(sb.f_fstypename, "nfs") == 0) {
@@ -1106,7 +1055,11 @@ get_via_nfs(void)
 	}
 
 	/* Get server and filepath */
+	yesno = -1;
 	process_menu(MENU_nfssource, NULL);
+	
+	if (yesno == SET_RETRY)
+		return SET_RETRY;
 
 	/* Mount it */
 	if (run_program(0, "/sbin/mount -r -o -2,-i,-r=1024 -t nfs %s:%s /mnt2",

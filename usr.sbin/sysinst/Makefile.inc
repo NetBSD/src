@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2014/07/26 19:32:22 dholland Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2014/08/03 16:09:38 martin Exp $
 #
 # Makefile for sysinst
 
@@ -17,7 +17,7 @@ WARNS=		4
 
 SRCS+=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c geom.c \
-	label.c target.c md.c sizemultname.c configmenu.c checkrc.c
+	label.c target.c md.c sizemultname.c configmenu.c checkrc.c partman.c
 
 SRCS+=	${MD_OPTIONS:MAOUT2ELF:S/AOUT2ELF/aout2elf.c/}
 SRCS+=	${MENUS_MD:Mmenus.mbr:S/menus.mbr/mbr.c/}
@@ -49,7 +49,12 @@ MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\" \
-		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH}
+		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH} \
+		${NODISKLABEL:D-DNO_DISKLABEL}
+
+.if (defined(DEBUG))
+CPPFLAGS+=-DDEBUG -g -O0
+.endif
 
 .if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
@@ -67,6 +72,7 @@ COPTS.mbr.c += -Wno-format-nonliteral
 COPTS.msg_defs.c += -Wno-format-nonliteral
 COPTS.bsddisklabel.c += -Wno-format-nonliteral
 COPTS.md.c += -Wno-format-nonliteral
+COPTS.partman.c += -Wno-format-nonliteral
 
 # Host to ftp from.  Default:
 #	"ftp.NetBSD.org"
