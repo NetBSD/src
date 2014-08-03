@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.126 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.127 2014/08/03 22:55:24 rmind Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.126 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.127 2014/08/03 22:55:24 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -599,24 +599,28 @@ in6_pcbdetach(struct in6pcb *in6p)
 #if defined(IPSEC)
 	if (ipsec_enabled)
 		ipsec6_delete_pcbpolicy(in6p);
-#endif /* IPSEC */
-	so->so_pcb = 0;
-	if (in6p->in6p_options)
-		m_freem(in6p->in6p_options);
-	if (in6p->in6p_outputopts != NULL) {
-		ip6_clearpktopts(in6p->in6p_outputopts, -1);
-		free(in6p->in6p_outputopts, M_IP6OPT);
-	}
-	rtcache_free(&in6p->in6p_route);
-	ip6_freemoptions(in6p->in6p_moptions);
+#endif
+	so->so_pcb = NULL;
+
 	s = splnet();
 	in6_pcbstate(in6p, IN6P_ATTACHED);
 	LIST_REMOVE(&in6p->in6p_head, inph_lhash);
 	TAILQ_REMOVE(&in6p->in6p_table->inpt_queue, &in6p->in6p_head,
 	    inph_queue);
-	pool_put(&in6pcb_pool, in6p);
 	splx(s);
+
+	if (in6p->in6p_options) {
+		m_freem(in6p->in6p_options);
+	}
+	if (in6p->in6p_outputopts != NULL) {
+		ip6_clearpktopts(in6p->in6p_outputopts, -1);
+		free(in6p->in6p_outputopts, M_IP6OPT);
+	}
+	rtcache_free(&in6p->in6p_route);
 	sofree(so);				/* drops the socket's lock */
+
+	ip6_freemoptions(in6p->in6p_moptions);
+	pool_put(&in6pcb_pool, in6p);
 	mutex_enter(softnet_lock);		/* reacquire it */
 }
 
