@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:30:44 dholland Exp $ */
+/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:38 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,9 +107,9 @@ int
 md_post_newfs(void)
 {
 	/* boot blocks ... */
-	msg_display(MSG_dobootblks, diskdev);
+	msg_display(MSG_dobootblks, pm->diskdev);
 	return run_program(RUN_DISPLAY,
-	    "/usr/mdec/installboot -v /usr/mdec/xxboot /dev/r%sa", diskdev);
+	    "/usr/mdec/installboot -v /usr/mdec/xxboot /dev/r%sa", pm->diskdev);
 }
 
 int

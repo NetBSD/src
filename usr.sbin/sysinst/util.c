@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: util.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -363,8 +363,10 @@ floppy_fetch(const char *set_name)
 int
 get_via_floppy(void)
 {
-
+	yesno = -1;
 	process_menu(MENU_floppysource, NULL);
+	if (yesno == SET_RETRY)
+		return SET_RETRY;
 
 	fetch_fn = floppy_fetch;
 
@@ -492,14 +494,6 @@ cd_has_sets(void)
 	return dir_exists_p(ext_dir_bin);
 }
 
-
-static int
-set_cd_select(menudesc *m, void *arg)
-{
-	*(int *)arg = m->cursel;
-	return 1;
-}
-
 /*
  * Check whether we can remove the boot media.
  * If it is not a local filesystem, return -1.
@@ -564,7 +558,7 @@ get_via_cdrom(void)
 			cd_menu[i].opt_name = cds[i].menu;
 			cd_menu[i].opt_menu = OPT_NOMENU;
 			cd_menu[i].opt_flags = OPT_EXIT;
-			cd_menu[i].opt_action = set_cd_select;
+			cd_menu[i].opt_action = set_menu_select;
 		}
 		/* create a menu offering available choices */
 		menu_cd = new_menu(MSG_Available_cds,
@@ -590,7 +584,10 @@ get_via_cdrom(void)
 	}
 
 	/* ask for paths on the CD */
+	yesno = -1;
 	process_menu(MENU_cdromsource, NULL);
+	if (yesno == SET_RETRY)
+		return SET_RETRY;
 
 	if (cd_has_sets())
 		return SET_OK;
@@ -606,9 +603,11 @@ get_via_cdrom(void)
 int
 get_via_localfs(void)
 {
-
 	/* Get device, filesystem, and filepath */
+	yesno = -1;
 	process_menu (MENU_localfssource, NULL);
+	if (yesno == SET_RETRY)
+		return SET_RETRY;
 
 	/* Mount it */
 	if (run_program(0, "/sbin/mount -rt %s /dev/%s /mnt2",
@@ -632,9 +631,11 @@ get_via_localfs(void)
 int
 get_via_localdir(void)
 {
-
 	/* Get filepath */
+	yesno = -1;
 	process_menu(MENU_localdirsource, NULL);
+	if (yesno == SET_RETRY)
+		return SET_RETRY;
 
 	/*
 	 * We have to have an absolute path ('cos pax runs in a
@@ -1588,9 +1589,8 @@ check_lfs_progs(void)
 {
 
 #ifndef NO_LFS
-	return (access("/sbin/fsck_lfs", X_OK) == 0 &&
-		access("/sbin/mount_lfs", X_OK) == 0 &&
-		access("/sbin/newfs_lfs", X_OK) == 0);
+	return binary_available("fsck_lfs") && binary_available("mount_lfs")
+	    && binary_available("newfs_lfs");
 #else
 	return 0;
 #endif
@@ -1614,5 +1614,64 @@ ext_dir_for_set(const char *set_name) {
 	if (strcmp(set_name, "pkgsrc") == 0)
 		return ext_dir_pkgsrc;
 	return set_is_source(set_name) ? ext_dir_src : ext_dir_bin;
+}
+
+void
+do_coloring(unsigned int fg, unsigned int bg) {
+	if (bg > COLOR_WHITE)
+		bg = COLOR_BLUE;
+	if (fg > COLOR_WHITE)
+		fg = COLOR_WHITE;
+	if (fg != bg && has_colors()) {
+		init_pair(1, fg, bg);
+		wbkgd(stdscr, COLOR_PAIR(1));
+		wbkgd(mainwin, COLOR_PAIR(1));
+		wattrset(stdscr, COLOR_PAIR(1));
+		wattrset(mainwin, COLOR_PAIR(1));
+	}
+	/* redraw screen */
+	touchwin(stdscr);
+	touchwin(mainwin);
+	wrefresh(stdscr);
+	wrefresh(mainwin);
+	return;
+}
+
+int
+set_menu_select(menudesc *m, void *arg)
+{
+	*(int *)arg = m->cursel;
+	return 1;
+}
+
+/*
+ * check wether a binary is available somewhere in PATH,
+ * return 1 if found, 0 if not.
+ */
+int
+binary_available(const char *prog)
+{
+        char *p, tmp[MAXPATHLEN], *path = getenv("PATH");
+ 
+        if (path == NULL)
+                return access(prog, X_OK) == 0;
+        path = strdup(path);
+        if (path == NULL)
+                return 0;
+ 
+        while ((p = strsep(&path, ":")) != NULL) {
+                if (strlcpy(tmp, p, MAXPATHLEN) >= MAXPATHLEN)
+                        continue;
+                if (strlcat(tmp, "/", MAXPATHLEN) >= MAXPATHLEN)
+                        continue;
+                if (strlcat(tmp, prog, MAXPATHLEN) >= MAXPATHLEN)
+                        continue;
+                if (access(tmp, X_OK) == 0) {
+                        free(path);
+                        return 1;
+                }
+        }
+        free(path);
+        return 0;
 }
 

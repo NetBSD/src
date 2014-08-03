@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -35,7 +35,7 @@
 /* MI Message catalog -- english, machine independent */
 
 message usage
-{usage: sysinst [-D] [-f definition_file] [-r release]
+{usage: sysinst [-D] [-f definition_file] [-r release] [-C bg:fg]
 }
 
 message sysinst_message_language
@@ -504,13 +504,10 @@ message netup
 Does one of them connect to the required server?}
 
 message asknetdev
-{I have found the following network interfaces: %s
-\nWhich device shall I use?}
+{Which network device would you like to use?}
 
-message badnet
-{You did not choose one of the listed network devices.  Please try again.
-The following network devices are available: %s
-\nWhich device shall I use?}
+message netdevs
+{Available interfaces}
 
 message netinfo
 {To be able to use the network, we need answers to the following:
@@ -578,12 +575,6 @@ IPv6 Nameserver:	%s
 
 message netok_ok
 {Are they OK?}
-
-message netagain
-{Please reenter the information about your network.  Your last answers
-will be your default.
-
-}
 
 message wait_network
 {
@@ -903,6 +894,7 @@ message Reboot_the_computer {Reboot the computer}
 message Utility_menu {Utility menu}
 message Config_menu {Config menu}
 message exit_utility_menu {Back to main menu}
+message exit_menu_generic {Exit}
 message NetBSD_VERSION_Utilities {NetBSD-@@VERSION@@ Utilities}
 message Run_bin_sh {Run /bin/sh}
 message Set_timezone {Set timezone}
@@ -961,6 +953,11 @@ message Perform_IPv6_autoconfiguration {Perform IPv6 autoconfiguration?}
 message Perform_DHCP_autoconfiguration {Perform DHCP autoconfiguration?}
 message Root_shell {Root shell}
 message User_shell {User shell}
+message Color_scheme {Color scheme}
+message White_on_black {White on black}
+message Black_on_white {Black on white}
+message White_on_blue {White on blue}
+message Green_on_black {Green on black}
 
 .if AOUT2ELF
 message aoutfail
@@ -1020,6 +1017,10 @@ message enable_sshd {Enable sshd}
 message enable_ntpd {Enable ntpd}
 message run_ntpdate {Run ntpdate at boot}
 message enable_mdnsd {Enable mdnsd}
+message enable_xdm {Enable xdm}
+message enable_cgd {Enable cgd}
+message enable_lvm {Enable lvm}
+message enable_raid {Enable raidframe}
 message add_a_user {Add a user}
 message configmenu {Configure the additional items as needed.}
 message doneconfig {Finished configuring}
@@ -1042,9 +1043,160 @@ message Pkgsrc_dir {pkgsrc directory}
 message get_pkgsrc {Fetch and unpack pkgsrc for building from source}
 message retry_pkgsrc_network {Network configuration failed.  Retry?}
 message quit_pkgsrc {Quit without installing pkgsrc}
+message quit_pkgs_install {Quit installing binary pkgs}
 message pkgin_failed
 {Installation of pkgin failed, possibly because no binary packages
 exist.  Please check the package path and try again.}
 message failed {Failed}
+
+message notsupported {Operation not supported!}
+message askfsmountadv {Mountpoint or 'raid' or 'cgd' or 'lvm'?}
+message partman {Extended partitioning}
+message editbsdpart {Edit BSD partitions}
+message editmbr {Edit and save MBR}
+message switchgpt {Switch to GPT}
+message switchmbr {Switch to MBR}
+message renamedisk {Set disk name}
+message fmtasraid {Format as RAID}
+message fmtaslvm {Format as LVM PV}
+message encrypt {Encrypt}
+message setbootable {Bootable flag}
+message erase {Safe erase}
+message undo {Undo changes}
+message unconfig {Unconfigure}
+message edit {Edit}
+message doumount {Force umount}
+message fillzeros {Fill by zeros}
+message fillrandom {Fill by random data}
+message fillcrypto {Fill by crypto data}
+message raid0 {0 - No parity, only simple striping.}
+message raid1 {1 - Mirroring.  The parity is the mirror.}
+message raid4 {4 - Striping with parity stored on the last component.}
+message raid5 {5 - Striping with parity at the all components.}
+
+message fremove {REMOVE}
+message remove {Remove}
+message add {Add}
+message auto {auto}
+
+message removepartswarn {This remove all partitions on disk. Do you want to continue?}
+message saveprompt {Save changes before finishing?}
+message cantsave {Changes cannot be saved.}
+message noroot {No root partition defined, cannot continue\n}
+message wannaunblock {
+Device is blocked. It's editing may cause problems.
+Do you want to force unblock it and continue?}
+message wannatry {Do you want to try?}
+message create_cgd {Create cryptographic volume (CGD)}
+message create_cnd {Create virtual disk image (VND)}
+message create_vg {Create volume group (LVM VG)}
+message create_lv {      Create logical volume}
+message create_raid {Create software RAID}
+message updpmlist {Update devices list}
+message savepm {Save changes}
+message pmblocked {BLOCKED}
+message pmunchanged {UNCHANGED}
+message pmsetboot {BOOT}
+message pmused {USED}
+message pmmounted {(mounted)}
+message pmunused {(unused)}
+message pmgptdisk {GPT-labeled disk}
+
+message finishpm {Finish partitioning}
+message limitcount {Limit for the devices count was reached!}
+message invaliddev {Invalid device!}
+message avdisks {Available disks:}
+message nofreedev {Cannot allocate device node!}
+message partman_header
+{Partition manager. All disks, partitions and etc. displayed there.
+At first make MBR partitions, then make BSD label. If you want to use RAID,
+LVM or CGD, follow these steps: 1) Create BSD partitions with needed type;
+2) Create RAID/LVM VG/CGD using these partitions; 3) Save it;
+4) Create partitions for RAID/CGD or Logical Volumes for LVM.}
+
+message raid_menufmt {   raid%d (level %1d) on %-34s %11uM}
+message raid_err_menufmt {   EMPTY RAID!}
+message raid_disks_fmt {Disks: %33s}
+message raid_spares_fmt {Spares: %32s}
+message raid_level_fmt {RAID level:       %22d}
+message raid_numrow_fmt {numRow:           %22d}
+message raid_numcol_fmt {numCol:           %22d}
+message raid_numspare_fmt {numSpare:         %22d}
+message raid_sectpersu_fmt {sectPerSU:        %22d}
+message raid_superpar_fmt {SUsPerParityUnit: %22d}
+message raid_superrec_fmt {SUsPerReconUnit:  %22d}
+message raid_nomultidim {Multi-dimensional arrays are NOT supported!}
+message raid_numrow_ask {numRow?}
+message raid_numcol_ask {numCol?}
+message raid_numspare_ask {numSpare?}
+message raid_sectpersu_ask {sectPerSU?}
+message raid_superpar_ask {SUsPerParityUnit?}
+message raid_superrec_ask {SUsPerReconUnit?}
+message raid_disks {Disks in RAID:}
+message vnd_err_menufmt {   PATH NOT DEFINED!}
+message vnd_assgn_menufmt {   vnd%1d on %-51s ASSIGN}
+message vnd_menufmt {   vnd%1d on %-45s %11uM}
+message vnd_path_fmt {File path: %29s}
+message vnd_assgn_fmt {Assign exist image: %20s}
+message vnd_size_fmt {Size:            %22sM}
+message vnd_ro_fmt {Read-only:        %22s}
+message vnd_geom_fmt {Set geometry by hand: %18s}
+message vnd_bps_fmt {Bytes per Sector:     %18s}
+message vnd_spt_fmt {Sectors per Track:    %18s}
+message vnd_tpc_fmt {Tracks per Cylinder:  %18s}
+message vnd_cyl_fmt {Cylinders:        %22s}
+message vnd_path_ask {File path?}
+message vnd_size_ask {Size (MB)?}
+message vnd_bps_ask {Bytes per Sector?}
+message vnd_spt_ask {Sectors per Track?}
+message vnd_tpc_ask {Tracks per Cylinder?}
+message vnd_cyl_ask {Cylinders?}
+message cgd_err_menufmt {   DISK NOT DEFINED!}
+message cgd_menufmt {   cgd%1d %-48s %11uM}
+message cgd_dev_fmt {Base device:    %24s}
+message cgd_enc_fmt {Encyption:      %24s}
+message cgd_key_fmt {Key size:       %24d}
+message cgd_iv_fmt {IV algorithm:   %24s}
+message cgd_keygen_fmt {Key generation: %24s}
+message cgd_verif_fmt {Verification method:   %17s}
+message lvm_disks {Disks in VG:}
+message lvm_menufmt {   %-44s %20sM}
+message lvm_err_menufmt {   EMPTY VG!}
+message lvm_disks_fmt {PV's: %34s}
+message lvm_name_fmt {Name: %34s}
+message lvm_maxlv_fmt {MaxLogicalVolumes:  %20s}
+message lvm_maxpv_fmt {MaxPhysicalVolumes: %20s}
+message lvm_extsiz_fmt {PhysicalExtentSize: %20s}
+message lvm_name_ask {Name?}
+message lvm_maxlv_ask {MaxLogicalVolumes?}
+message lvm_maxpv_ask {MaxPhysicalVolumes?}
+message lvm_extsiz_ask {PhysicalExtentSize (MB)?}
+message lvmlv_menufmt {      Logical volume %-35s %11uM}
+message lvmlv_name_fmt {Name: %34s}
+message lvmlv_size_fmt {Size: %33dM}
+message lvmlv_ro_fmt {Read-only:   %27s}
+message lvmlv_cont_fmt {Contiguous:  %27s}
+message lvmlv_extnum_fmt {LogicalExtentsNumber: %18s}
+message lvmlv_minor_fmt {Minor number: %26s}
+message lvmlv_mirrors_fmt {Mirrors:     %27d}
+message lvmlv_regsiz_fmt {MirrorLogRegionSize:  %18s}
+message lvmlv_pers_fmt {Persistent minor number:  %14s}
+message lvmlv_readahsect_fmt {ReadAheadSectors:     %18s}
+message lvmlv_stripes_fmt {Stripes:     %27s}
+message lvmlv_stripesiz_fmt {StripeSize:  %27s}
+message lvmlv_zero_fmt {Zeroing of the first KB:   %13s}
+message lvmlv_name_ask {Name?}
+message lvmlv_size_ask {Size (MB)?}
+message lvmlv_extnum_ask {LogicalExtentsNumber?}
+message lvmlv_minor_ask {Minor number?}
+message lvmlv_mirrors_ask {Mirrors?}
+message lvmlv_regsiz_ask {MirrorLogRegionSize?}
+message lvmlv_readahsect_ask {ReadAheadSectors?}
+message lvmlv_stripes_ask {Stripes?}
+
 message addusername {8 character username to add:}
 message addusertowheel {Do you wish to add this user to group wheel?}
+
+message Delete_partition
+{Delete partition}
+

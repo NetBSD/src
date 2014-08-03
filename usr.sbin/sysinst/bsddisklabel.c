@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,8 +52,6 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-static int check_partitions(void);
-
 /* For the current state of this file blame abs@NetBSD.org */
 /* Even though he wasn't the last to hack it, but he did admit doing so :-) */
 
@@ -91,11 +89,12 @@ save_ptn(int ptn, daddr_t start, daddr_t size, int fstype, const char *mountpt)
 	static int maxptn;
 	partinfo *p;
 	int pp;
+	char *buf;
 
 	if (maxptn == 0)
 		maxptn = getmaxpartitions();
 
-	if (ptn < 0 || bsdlabel[ptn].pi_fstype != FS_UNUSED) {
+	if (ptn < 0 || pm->bsdlabel[ptn].pi_fstype != FS_UNUSED) {
 		ptn = getrawpartition() + 1;
 #ifdef PART_FIRST_FREE
 		if (ptn < PART_FIRST_FREE)
@@ -106,7 +105,7 @@ save_ptn(int ptn, daddr_t start, daddr_t size, int fstype, const char *mountpt)
 				return -1;
 			if (ptn == PART_USR)
 				continue;
-			if (bsdlabel[ptn].pi_fstype == FS_UNUSED)
+			if (pm->bsdlabel[ptn].pi_fstype == FS_UNUSED)
 				break;
 		}
 	}
@@ -114,17 +113,25 @@ save_ptn(int ptn, daddr_t start, daddr_t size, int fstype, const char *mountpt)
 	if (fstype == FS_UNUSED)
 		return ptn;
 
-	p = bsdlabel + ptn;
+	p = pm->bsdlabel + ptn;
 	p->pi_offset = start;
 	p->pi_size = size;
 	set_ptype(p, fstype, mountpt ? PIF_NEWFS : 0);
 
-	if (mountpt != NULL) {
+	/* Hack because we does not have something like FS_LVMPV */
+	p->lvmpv = 0;
+	if (mountpt != NULL && strcmp(mountpt, "lvm") == 0)
+		p->lvmpv = 1;
+	else if (mountpt != NULL) {
 		for (pp = 0; pp < maxptn; pp++) {
-			if (strcmp(bsdlabel[pp].pi_mount, mountpt) == 0)
-				bsdlabel[pp].pi_flags &= ~PIF_MOUNT;
+			if (strcmp(pm->bsdlabel[pp].pi_mount, mountpt) == 0)
+				pm->bsdlabel[pp].pi_flags &= ~PIF_MOUNT;
 		}
-		strlcpy(p->pi_mount, mountpt, sizeof p->pi_mount);
+		if (mountpt[0] != '/')
+			asprintf(&buf, "/%s", mountpt);
+		else
+			asprintf(&buf, "%s", mountpt);
+		strlcpy(p->pi_mount, buf, sizeof p->pi_mount);
 		p->pi_flags |= PIF_MOUNT;
 		/* Default to UFS2. */
 		if (p->pi_fstype == FS_BSDFFS) {
@@ -135,6 +142,7 @@ save_ptn(int ptn, daddr_t start, daddr_t size, int fstype, const char *mountpt)
 				p->pi_flags |= PIF_FFSv2;
 #endif
 		}
+		free(buf);
 	}
 
 	return ptn;
@@ -145,7 +153,7 @@ set_ptn_titles(menudesc *m, int opt, void *arg)
 {
 	struct ptn_info *pi = arg;
 	struct ptn_size *p;
-	int sm = MEG / sectorsize;
+	int sm = MEG / pm->sectorsize;
 	daddr_t size;
 	char inc_free[12];
 
@@ -161,7 +169,7 @@ set_ptn_titles(menudesc *m, int opt, void *arg)
 	else
 		inc_free[0] = 0;
 	wprintw(m->mw, "%6" PRIi64 "%8s%10" PRIi64 "%10" PRIi64 " %c %s",
-		size / sm, inc_free, size / dlcylsize, size,
+		size / sm, inc_free, size / pm->dlcylsize, size,
 		p == pi->pool_part ? '+' : ' ', p->mount);
 }
 
@@ -217,8 +225,8 @@ set_ptn_size(menudesc *m, void *arg)
 		return 0;
 
 	if (p->mount[0] == 0) {
-		msg_prompt_win(MSG_askfsmount, -1, 18, 0, 0,
-			NULL, p->mount, sizeof p->mount);
+		msg_prompt_win(partman_go?MSG_askfsmountadv:MSG_askfsmount,
+			-1, 18, 0, 0, NULL, p->mount, sizeof p->mount);
 		if (p->mount[0] == 0)
 			return 0;
 	}
@@ -259,15 +267,15 @@ set_ptn_size(menudesc *m, void *arg)
 			mult = 1;
 			break;
 		case 'c':
-			mult = dlcylsize;
+			mult = pm->dlcylsize;
 			break;
 		case 'm':
 		case 'M':
-			mult = MEG / sectorsize;
+			mult = MEG / pm->sectorsize;
 			break;
 		case 'g':
 		case 'G':
-			mult = 1024 * MEG / sectorsize;
+			mult = 1024 * MEG / pm->sectorsize;
 			break;
 		case '+':
 			cp--;
@@ -284,7 +292,7 @@ set_ptn_size(menudesc *m, void *arg)
 			break;
 	}
 
-	size = NUMSEC(size, mult, dlcylsize);
+	size = NUMSEC(size, mult, pm->dlcylsize);
 	if (p->ptn_id == PART_TMP_RAMDISK) {
 		p->size = size;
 		return 0;
@@ -294,7 +302,7 @@ set_ptn_size(menudesc *m, void *arg)
 	if (*cp == '+' && p->limit == 0) {
 		pi->pool_part = p;
 		if (size == 0)
-			size = dlcylsize;
+			size = pm->dlcylsize;
 	}
 	if (p->limit != 0 && size > p->limit)
 		size = p->limit;
@@ -320,9 +328,9 @@ set_ptn_size(menudesc *m, void *arg)
 			 * but keep cylinder alignment
 			 */
 			if (f < 0)
-				f = -roundup(-f, dlcylsize);
+				f = -roundup(-f, pm->dlcylsize);
 			else
-				f = rounddown(f, dlcylsize);
+				f = rounddown(f, pm->dlcylsize);
 			size += f;
 			if (size != 0) {
 				pi->free_space -= f;
@@ -336,6 +344,7 @@ set_ptn_size(menudesc *m, void *arg)
 	return 0;
 }
 
+/* Menu to change sizes of /, /usr, /home and etc. partitions */
 void
 get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 {
@@ -344,8 +353,10 @@ get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 	int sm;				/* sectors in 1MB */
 	struct ptn_size *p;
 	daddr_t size;
+	static int swap_created = 0, root_created = 0;
 
-	static struct ptn_info pi = { -1, {
+	if (pm->pi.menu_no < 0)
+	pm->pi = (struct ptn_info) { -1, {
 #define PI_ROOT 0
 		{ PART_ROOT,	{ '/', '\0' },
 		  DEFROOTSIZE,	DEFROOTSIZE , 0, 0},
@@ -377,134 +388,139 @@ get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 	msg_display(MSG_ptnsizes);
 	msg_table_add(MSG_ptnheaders);
 
-	if (pi.menu_no < 0) {
+	if (pm->pi.menu_no < 0) {
 		/* If there is a swap partition elsewhere, don't add one here.*/
-		if (no_swap) {
-			pi.ptn_sizes[PI_SWAP].size = 0;
+		if (no_swap || (swap_created && partman_go)) {
+			pm->pi.ptn_sizes[PI_SWAP].size = 0;
 		} else {
 #if DEFSWAPSIZE == -1
 			/* Dynamic swap size. */
-			pi.ptn_sizes[PI_SWAP].dflt_size = get_ramsize();
-			pi.ptn_sizes[PI_SWAP].size =
-			    pi.ptn_sizes[PI_SWAP].dflt_size;
+			pm->pi.ptn_sizes[PI_SWAP].dflt_size = get_ramsize();
+			pm->pi.ptn_sizes[PI_SWAP].size =
+			    pm->pi.ptn_sizes[PI_SWAP].dflt_size;
 #endif
 		}
 
 		/* If installing X increase default size of /usr */
 		if (set_X11_selected())
-			pi.ptn_sizes[PI_USR].dflt_size += XNEEDMB;
+			pm->pi.ptn_sizes[PI_USR].dflt_size += XNEEDMB;
 
 		/* Start of planning to give free space to / */
-		pi.pool_part = &pi.ptn_sizes[PI_ROOT];
+		pm->pi.pool_part = &pm->pi.ptn_sizes[PI_ROOT];
 		/* Make size of root include default size of /usr */
-		pi.ptn_sizes[PI_ROOT].size += pi.ptn_sizes[PI_USR].dflt_size;
+		pm->pi.ptn_sizes[PI_ROOT].size += pm->pi.ptn_sizes[PI_USR].dflt_size;
 
-		sm = MEG / sectorsize;
+		sm = MEG / pm->sectorsize;
 
 		if (root_limit != 0) {
 			/* Bah - bios can not read all the disk, limit root */
-			pi.ptn_sizes[PI_ROOT].limit = root_limit - part_start;
+			pm->pi.ptn_sizes[PI_ROOT].limit = root_limit - part_start;
 			/* Allocate a /usr partition if bios can't read
 			 * everything except swap.
 			 */
-			if (pi.ptn_sizes[PI_ROOT].limit
-			    < sectors - pi.ptn_sizes[PI_SWAP].size * sm) {
+			if (pm->pi.ptn_sizes[PI_ROOT].limit
+			    < sectors - pm->pi.ptn_sizes[PI_SWAP].size * sm) {
 				/* Root won't be able to access all the space */
 				/* Claw back space for /usr */
-				pi.ptn_sizes[PI_USR].size =
-						pi.ptn_sizes[PI_USR].dflt_size;
-				pi.ptn_sizes[PI_ROOT].size -=
-						pi.ptn_sizes[PI_USR].dflt_size;
-				pi.ptn_sizes[PI_ROOT].changed = 1;
+				pm->pi.ptn_sizes[PI_USR].size =
+						pm->pi.ptn_sizes[PI_USR].dflt_size;
+				pm->pi.ptn_sizes[PI_ROOT].size -=
+						pm->pi.ptn_sizes[PI_USR].dflt_size;
+				pm->pi.ptn_sizes[PI_ROOT].changed = 1;
 				/* Give free space to /usr */
-				pi.pool_part = &pi.ptn_sizes[PI_USR];
+				pm->pi.pool_part = &pm->pi.ptn_sizes[PI_USR];
 			}
 		}
 
 		/* Change preset sizes from MB to sectors */
-		pi.free_space = sectors;
-		for (p = pi.ptn_sizes; p->mount[0]; p++) {
-			p->size = NUMSEC(p->size, sm, dlcylsize);
-			p->dflt_size = NUMSEC(p->dflt_size, sm, dlcylsize);
-			pi.free_space -= p->size;
+		pm->pi.free_space = sectors;
+		for (p = pm->pi.ptn_sizes; p->mount[0]; p++) {
+			p->size = NUMSEC(p->size, sm, pm->dlcylsize);
+			p->dflt_size = NUMSEC(p->dflt_size, sm, pm->dlcylsize);
+			pm->pi.free_space -= p->size;
 		}
 
 		/* Steal space from swap to make things fit.. */
-		if (pi.free_space < 0) {
-			i = roundup(-pi.free_space, dlcylsize);
-			if (i > pi.ptn_sizes[PI_SWAP].size)
-				i = pi.ptn_sizes[PI_SWAP].size;
-			pi.ptn_sizes[PI_SWAP].size -= i;
-			pi.free_space += i;
+		if (pm->pi.free_space < 0) {
+			i = roundup(-pm->pi.free_space, pm->dlcylsize);
+			if (i > pm->pi.ptn_sizes[PI_SWAP].size)
+				i = pm->pi.ptn_sizes[PI_SWAP].size;
+			pm->pi.ptn_sizes[PI_SWAP].size -= i;
+			pm->pi.free_space += i;
 		}
 
 		/* Add space for 2 system dumps to / (traditional) */
 		i = get_ramsize() * sm;
-		i = roundup(i, dlcylsize);
-		if (pi.free_space > i * 2)
+		i = roundup(i, pm->dlcylsize);
+		if (pm->pi.free_space > i * 2)
 			i *= 2;
-		if (pi.free_space > i) {
-			pi.ptn_sizes[PI_ROOT].size += i;
-			pi.free_space -= i;
+		if (pm->pi.free_space > i) {
+			pm->pi.ptn_sizes[PI_ROOT].size += i;
+			pm->pi.free_space -= i;
+		}
+
+		if (root_created && partman_go) {
+			pm->pi.ptn_sizes[PI_ROOT].size = 0;
+			pm->pi.pool_part = 0;
 		}
 
 		/* Ensure all of / is readable by the system boot code */
-		i = pi.ptn_sizes[PI_ROOT].limit;
-		if (i != 0 && (i -= pi.ptn_sizes[PI_ROOT].size) < 0) {
-			pi.ptn_sizes[PI_ROOT].size += i;
-			pi.free_space -= i;
+		i = pm->pi.ptn_sizes[PI_ROOT].limit;
+		if (i != 0 && (i -= pm->pi.ptn_sizes[PI_ROOT].size) < 0) {
+			pm->pi.ptn_sizes[PI_ROOT].size += i;
+			pm->pi.free_space -= i;
 		}
 
 		/* Count free partition slots */
-		pi.free_parts = 0;
+		pm->pi.free_parts = 0;
 		for (i = 0; i < maxpart; i++) {
-			if (bsdlabel[i].pi_size == 0)
-				pi.free_parts++;
+			if (pm->bsdlabel[i].pi_size == 0)
+				pm->pi.free_parts++;
 		}
 		for (i = 0; i < MAXPARTITIONS; i++) {
-			p = &pi.ptn_sizes[i];
+			p = &pm->pi.ptn_sizes[i];
 			if (i != 0 && p->ptn_id == 0)
 				p->ptn_id = PART_EXTRA;
 			if (p->size != 0)
-				pi.free_parts--;
+				pm->pi.free_parts--;
 		}
 
-		pi.menu_no = new_menu(0, pi.ptn_menus, nelem(pi.ptn_menus),
+		pm->pi.menu_no = new_menu(0, pm->pi.ptn_menus, nelem(pm->pi.ptn_menus),
 			3, -1, 12, 70,
-			MC_NOSHORTCUT |
 			MC_ALWAYS_SCROLL | MC_NOBOX | MC_NOCLEAR,
 			NULL, set_ptn_titles, NULL,
-			"help", pi.exit_msg);
+			"help", pm->pi.exit_msg);
 
-		if (pi.menu_no < 0)
+		if (pm->pi.menu_no < 0)
 			return;
 	}
 
 	do {
-		set_ptn_menu(&pi);
-		current_cylsize = dlcylsize;
-		process_menu(pi.menu_no, &pi);
-	} while (pi.free_space < 0 || pi.free_parts < 0);
+		set_ptn_menu(&pm->pi);
+		pm->current_cylsize = pm->dlcylsize;
+		process_menu(pm->pi.menu_no, &pm->pi);
+	} while (pm->pi.free_space < 0 || pm->pi.free_parts < 0);
 
 	/* Give any cylinder fragment to last partition */
-	if (pi.pool_part != NULL || pi.free_space < dlcylsize) {
-		for (p = pi.ptn_sizes + nelem(pi.ptn_sizes) - 1; ;p--) {
+	if (pm->pi.pool_part != NULL || pm->pi.free_space < pm->dlcylsize) {
+		for (p = pm->pi.ptn_sizes + nelem(pm->pi.ptn_sizes) - 1; ;p--) {
 			if (p->size == 0) {
-				if (p == pi.ptn_sizes)
+				if (p == pm->pi.ptn_sizes)
 					break;
 				continue;
 			}
 			if (p->ptn_id == PART_TMP_RAMDISK)
 				continue;
-			p->size += pi.free_space % dlcylsize;
+			p->size += pm->pi.free_space % pm->dlcylsize;
+			pm->pi.free_space -= pm->pi.free_space % pm->dlcylsize;
 			break;
 		}
 	}
 
-	for (p = pi.ptn_sizes; p->mount[0]; p++, part_start += size) {
+	for (p = pm->pi.ptn_sizes; p->mount[0]; p++, part_start += size) {
 		size = p->size;
-		if (p == pi.pool_part) {
-			size += rounddown(pi.free_space, dlcylsize);
+		if (p == pm->pi.pool_part) {
+			size += rounddown(pm->pi.free_space, pm->dlcylsize);
 			if (p->limit != 0 && size > p->limit)
 				size = p->limit;
 		}
@@ -516,8 +532,19 @@ get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 		}
 		if (size == 0)
 			continue;
+		if (i == PART_ROOT && size > 0)
+			root_created = 1;
 		if (i == PART_SWAP) {
+			if (size > 0)
+				swap_created = 1;
 			save_ptn(i, part_start, size, FS_SWAP, NULL);
+			continue;
+		}
+		if (!strcmp(p->mount, "raid")) {
+			save_ptn(i, part_start, size, FS_RAID, NULL);
+			continue;			
+		} else if (!strcmp(p->mount, "cgd")) {
+			save_ptn(i, part_start, size, FS_CGD, NULL);
 			continue;
 		}
 		save_ptn(i, part_start, size, FS_BSDFFS, p->mount);
@@ -537,52 +564,57 @@ make_bsd_partitions(void)
 	int part_raw, part_bsd;
 	daddr_t ptend;
 	int no_swap = 0, valid_part = -1;
-	partinfo *p;
+	partinfo *p, savedlabel[MAXPARTITIONS];
+
+	memcpy(&savedlabel, &pm->bsdlabel, sizeof savedlabel);
 
 	/*
 	 * Initialize global variables that track space used on this disk.
 	 * Standard 4.4BSD 8-partition labels always cover whole disk.
 	 */
-	if (logfp) fprintf(logfp, "dlsize=%" PRId64 " ptsize=%" PRId64 " ptstart=%" PRId64 "\n", dlsize,ptsize,ptstart);
-	if (ptsize == 0)
-		ptsize = dlsize - ptstart;
-	if (dlsize == 0)
-		dlsize = ptstart + ptsize;
+	if (pm->ptsize == 0)
+		pm->ptsize = pm->dlsize - pm->ptstart;
+	if (pm->dlsize == 0)
+		pm->dlsize = pm->ptstart + pm->ptsize;
+	if (logfp) fprintf(logfp, "dlsize=%" PRId64 " ptsize=%" PRId64
+	    " ptstart=%" PRId64 "\n",
+	    pm->dlsize, pm->ptsize, pm->ptstart);
 
-	partstart = ptstart;
-	ptend = ptstart + ptsize;
+	partstart = pm->ptstart;
+	ptend = pm->ptstart + pm->ptsize;
 
 	/* Ask for layout type -- standard or special */
-	msg_display(MSG_layout,
-		    (int) (ptsize / (MEG / sectorsize)),
+	if (partman_go == 0) {
+		msg_display(MSG_layout,
+		    (int) (pm->ptsize / (MEG / pm->sectorsize)),
 		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE,
 		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE + XNEEDMB);
-
-	process_menu(MENU_layout, NULL);
+		process_menu(MENU_layout, NULL);
+	}
 
 	/* Set so we use the 'real' geometry for rounding, input in MB */
-	current_cylsize = dlcylsize;
+	pm->current_cylsize = pm->dlcylsize;
 	set_sizemultname_meg();
 
 	/* Build standard partitions */
-	memset(&bsdlabel, 0, sizeof bsdlabel);
+	memset(&pm->bsdlabel, 0, sizeof pm->bsdlabel);
 
 	/* Set initial partition types to unused */
 	for (part = 0 ; part < maxpart ; ++part)
-		bsdlabel[part].pi_fstype = FS_UNUSED;
+		pm->bsdlabel[part].pi_fstype = FS_UNUSED;
 
 	/* Whole disk partition */
 	part_raw = getrawpartition();
 	if (part_raw == -1)
 		part_raw = PART_C;	/* for sanity... */
-	bsdlabel[part_raw].pi_offset = 0;
-	bsdlabel[part_raw].pi_size = dlsize;
+	pm->bsdlabel[part_raw].pi_offset = 0;
+	pm->bsdlabel[part_raw].pi_size = pm->dlsize;
 
 	if (part_raw == PART_D) {
 		/* Probably a system that expects an i386 style mbr */
 		part_bsd = PART_C;
-		bsdlabel[PART_C].pi_offset = ptstart;
-		bsdlabel[PART_C].pi_size = ptsize;
+		pm->bsdlabel[PART_C].pi_offset = pm->ptstart;
+		pm->bsdlabel[PART_C].pi_size = pm->ptsize;
 	} else {
 		part_bsd = part_raw;
 	}
@@ -591,60 +623,60 @@ make_bsd_partitions(void)
 	i = BOOT_SIZE;
 	if (i >= 1024) {
 		/* Treat big numbers as a byte count */
-		i = (i + dlcylsize * sectorsize - 1) / (dlcylsize * sectorsize);
-		i *= dlcylsize;
+		i = (i + pm->dlcylsize * pm->sectorsize - 1) / (pm->dlcylsize * pm->sectorsize);
+		i *= pm->dlcylsize;
 	}
 #if defined(PART_BOOT_FFS)
-	bsdlabel[PART_BOOT].pi_fstype = FS_BSDFFS;
-	bsdlabel[PART_BOOT].pi_flags = PIF_NEWFS;
+	pm->bsdlabel[PART_BOOT].pi_fstype = FS_BSDFFS;
+	pm->bsdlabel[PART_BOOT].pi_flags = PIF_NEWFS;
 #else
-	bsdlabel[PART_BOOT].pi_fstype = FS_BOOT;
+	pm->bsdlabel[PART_BOOT].pi_fstype = FS_BOOT;
 #endif
-	bsdlabel[PART_BOOT].pi_size = i;
+	pm->bsdlabel[PART_BOOT].pi_size = i;
 #ifdef BOOT_HIGH
-	bsdlabel[PART_BOOT].pi_offset = ptend - i;
+	pm->bsdlabel[PART_BOOT].pi_offset = ptend - i;
 	ptend -= i;
 #else
-	bsdlabel[PART_BOOT].pi_offset = ptstart;
+	pm->bsdlabel[PART_BOOT].pi_offset = pm->ptstart;
 	partstart += i;
 #endif
 #elif defined(PART_BOOT)
-	if (bootsize != 0) {
+	if (pm->bootsize != 0) {
 #if defined(PART_BOOT_MSDOS)
-		bsdlabel[PART_BOOT].pi_fstype = FS_MSDOS;
+		pm->bsdlabel[PART_BOOT].pi_fstype = FS_MSDOS;
 #else
-		bsdlabel[PART_BOOT].pi_fstype = FS_BOOT;
+		pm->bsdlabel[PART_BOOT].pi_fstype = FS_BOOT;
 #endif
-		bsdlabel[PART_BOOT].pi_size = bootsize;
-		bsdlabel[PART_BOOT].pi_offset = bootstart;
+		pm->bsdlabel[PART_BOOT].pi_size = pm->bootsize;
+		pm->bsdlabel[PART_BOOT].pi_offset = pm->bootstart;
 #if defined(PART_BOOT_PI_FLAGS)
-		bsdlabel[PART_BOOT].pi_flags |= PART_BOOT_PI_FLAGS;
+		pm->bsdlabel[PART_BOOT].pi_flags |= PART_BOOT_PI_FLAGS;
 #endif
 #if defined(PART_BOOT_PI_MOUNT)
-		strlcpy(bsdlabel[PART_BOOT].pi_mount, PART_BOOT_PI_MOUNT,
-		    sizeof bsdlabel[PART_BOOT].pi_mount);
+		strlcpy(pm->bsdlabel[PART_BOOT].pi_mount, PART_BOOT_PI_MOUNT,
+		    sizeof pm->bsdlabel[PART_BOOT].pi_mount);
 #endif
 	}
 #endif /* PART_BOOT w/o BOOT_SIZE */
 
 #if defined(PART_SYSVBFS) && defined(SYSVBFS_SIZE)
-	bsdlabel[PART_SYSVBFS].pi_offset = partstart;
-	bsdlabel[PART_SYSVBFS].pi_fstype = FS_SYSVBFS;
-	bsdlabel[PART_SYSVBFS].pi_size = SYSVBFS_SIZE;
-	bsdlabel[PART_SYSVBFS].pi_flags |= PIF_NEWFS | PIF_MOUNT;
-	strlcpy(bsdlabel[PART_SYSVBFS].pi_mount, "/stand",
-	    sizeof bsdlabel[PART_SYSVBFS].pi_mount);
+	pm->bsdlabel[PART_SYSVBFS].pi_offset = partstart;
+	pm->bsdlabel[PART_SYSVBFS].pi_fstype = FS_SYSVBFS;
+	pm->bsdlabel[PART_SYSVBFS].pi_size = SYSVBFS_SIZE;
+	pm->bsdlabel[PART_SYSVBFS].pi_flags |= PIF_NEWFS | PIF_MOUNT;
+	strlcpy(pm->bsdlabel[PART_SYSVBFS].pi_mount, "/stand",
+	    sizeof pm->bsdlabel[PART_SYSVBFS].pi_mount);
 	partstart += SYSVBFS_SIZE;
 #endif
 
 #ifdef PART_REST
-	bsdlabel[PART_REST].pi_offset = 0;
-	bsdlabel[PART_REST].pi_size = ptstart;
+	pm->bsdlabel[PART_REST].pi_offset = 0;
+	pm->bsdlabel[PART_REST].pi_size = pm->ptstart;
 #endif
 
-	if (layoutkind == 4) {
+	if (layoutkind == LY_USEEXIST) {
 		/*
-		 * If 'oldlabel' is a default label created by the kernel it
+		 * If 'pm->oldlabel' is a default label created by the kernel it
 		 * will have exactly one valid partition besides raw_part
 		 * which covers the whole disk - but might lie outside the
 		 * mbr partition we (by now) have offset by a few sectors.
@@ -654,7 +686,7 @@ make_bsd_partitions(void)
 		for (i = 0; i < maxpart; i++) {
 			if (i == part_raw)
 				continue;
-			if (oldlabel[i].pi_size > 0 && PI_ISBSDFS(&oldlabel[i])) {
+			if (pm->oldlabel[i].pi_size > 0 && PI_ISBSDFS(&pm->oldlabel[i])) {
 				if (valid_part >= 0) {
 					/* nope, not the default case */
 					valid_part = -1;
@@ -663,9 +695,9 @@ make_bsd_partitions(void)
 				valid_part = i;
 			}
 		}
-		if (valid_part >= 0 && oldlabel[valid_part].pi_offset < ptstart) {
-			oldlabel[valid_part].pi_offset = ptstart;
-			oldlabel[valid_part].pi_size -= ptstart;
+		if (valid_part >= 0 && pm->oldlabel[valid_part].pi_offset < pm->ptstart) {
+			pm->oldlabel[valid_part].pi_offset = pm->ptstart;
+			pm->oldlabel[valid_part].pi_size -= pm->ptstart;
 		}
 	}
 
@@ -676,16 +708,16 @@ make_bsd_partitions(void)
 	 * partitions on a multiboot i386 system.
 	 */
 	 for (i = maxpart; i--;) {
-		if (bsdlabel[i].pi_size != 0)
+		if (pm->bsdlabel[i].pi_size != 0)
 			/* Don't overwrite special partitions */
 			continue;
-		p = &oldlabel[i];
+		p = &pm->oldlabel[i];
 		if (p->pi_fstype == FS_UNUSED || p->pi_size == 0)
 			continue;
-		if (layoutkind == 4) {
+		if (layoutkind == LY_USEEXIST) {
 			if (PI_ISBSDFS(p)) {
 				p->pi_flags |= PIF_MOUNT;
-				if (layoutkind == 4 && i == valid_part) {
+				if (layoutkind == LY_USEEXIST && i == valid_part) {
 					int fstype = p->pi_fstype;
 					p->pi_fstype = 0;
 					strcpy(p->pi_mount, "/");
@@ -693,36 +725,53 @@ make_bsd_partitions(void)
 				}
 			}
 		} else {
-			if (p->pi_offset < ptstart + ptsize &&
-			    p->pi_offset + p->pi_size > ptstart)
+			if (p->pi_offset < pm->ptstart + pm->ptsize &&
+			    p->pi_offset + p->pi_size > pm->ptstart)
 				/* Not outside area we are allocating */
 				continue;
 			if (p->pi_fstype == FS_SWAP)
 				no_swap = 1;
 		}
-		bsdlabel[i] = oldlabel[i];
+		pm->bsdlabel[i] = pm->oldlabel[i];
 	 }
 
-	if (layoutkind != 4)
+	if (layoutkind == LY_SETNEW)
 		get_ptn_sizes(partstart, ptend - partstart, no_swap);
+	
+	else if (layoutkind == LY_NEWRAID) {
+		set_ptype(&(pm->bsdlabel[PART_E]), FS_RAID, 0);
+		pm->bsdlabel[PART_E].pi_size = pm->ptsize;
+	}
+	else if (layoutkind == LY_NEWCGD) {
+		set_ptype(&(pm->bsdlabel[PART_E]), FS_CGD, 0);
+		pm->bsdlabel[PART_E].pi_size = pm->ptsize;
+	}
+	else if (layoutkind == LY_NEWLVM) {
+		set_ptype(&(pm->bsdlabel[PART_E]), FS_BSDFFS, 0);
+		pm->bsdlabel[PART_E].pi_size = pm->ptsize;
+		pm->bsdlabel[PART_E].lvmpv = 1;
+	}
 
 	/*
 	 * OK, we have a partition table. Give the user the chance to
 	 * edit it and verify it's OK, or abort altogether.
 	 */
- edit_check:
-	if (edit_and_check_label(bsdlabel, maxpart, part_raw, part_bsd) == 0) {
-		msg_display(MSG_abort);
-		return 0;
-	}
-	if (check_partitions() == 0)
-		goto edit_check;
+ 	do {
+		if (edit_and_check_label(pm->bsdlabel, maxpart, part_raw, part_bsd) == 0) {
+			msg_display(MSG_abort);
+			memcpy(&pm->bsdlabel, &savedlabel, sizeof pm->bsdlabel);
+			return 0;
+		}
+	} while (partman_go == 0 && check_partitions() == 0);
 
 	/* Disk name */
-	msg_prompt(MSG_packname, bsddiskname, bsddiskname, sizeof bsddiskname);
+	if (!partman_go)
+		msg_prompt(MSG_packname, pm->bsddiskname, pm->bsddiskname,
+			sizeof pm->bsddiskname);
 
 	/* save label to disk for MI code to update. */
-	(void) savenewlabel(bsdlabel, maxpart);
+	if (! partman_go)
+		(void) savenewlabel(pm->bsdlabel, maxpart);
 
 	/* Everything looks OK. */
 	return (1);
@@ -731,11 +780,11 @@ make_bsd_partitions(void)
 /*
  * check that there is at least a / somewhere.
  */
-static int
+int
 check_partitions(void)
 {
 #ifdef HAVE_BOOTXX_xFS
-	int rv;
+	int rv = 1;
 	char *bootxx;
 #endif
 #ifndef HAVE_UFS2_BOOT
@@ -756,9 +805,9 @@ check_partitions(void)
 	}
 #endif
 #ifndef HAVE_UFS2_BOOT
-	fstype = bsdlabel[rootpart].pi_fstype;
+	fstype = pm->bsdlabel[pm->rootpart].pi_fstype;
 	if (fstype == FS_BSDFFS &&
-	    (bsdlabel[rootpart].pi_flags & PIF_FFSv2) != 0) {
+	    (pm->bsdlabel[pm->rootpart].pi_flags & PIF_FFSv2) != 0) {
 		process_menu(MENU_ok, deconst(MSG_cannot_ufs2_root));
 		return 0;
 	}
