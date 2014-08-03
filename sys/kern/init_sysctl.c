@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.203 2014/05/08 08:21:53 hannken Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.204 2014/08/03 09:15:21 apb Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.203 2014/05/08 08:21:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.204 2014/08/03 09:15:21 apb Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -610,6 +610,19 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       "it doesn't"),
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_STRING, "configname",
+			SYSCTL_DESCR("Name of config file"),
+			NULL, 0, __UNCONST(kernel_ident), 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_STRING, "buildinfo",
+			SYSCTL_DESCR("Information from build environment"),
+			NULL, 0, __UNCONST(buildinfo), 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+
 	/* kern.posix. */
 	sysctl_createv(clog, 0, NULL, &rnode,
 			CTLFLAG_PERMANENT,
@@ -623,12 +636,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 			SYSCTL_DESCR("Maximal number of semaphores"),
 			NULL, 0, &ksem_max, 0,
 			CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_STRING, "configname",
-			SYSCTL_DESCR("Name of config file"),
-			NULL, 0, __UNCONST(kernel_ident), 0,
-			CTL_KERN, CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
