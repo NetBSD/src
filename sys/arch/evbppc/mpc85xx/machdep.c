@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2014/07/24 23:30:38 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2014/08/04 23:31:36 joerg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1293,6 +1293,7 @@ static const char * const mpc8548cds_extirq_names[] = {
 };
 #endif
 
+#ifndef MPC8548
 static const char * const mpc85xx_extirq_names[] = {
 	[0] = "extirq 0",
 	[1] = "extirq 1",
@@ -1307,6 +1308,7 @@ static const char * const mpc85xx_extirq_names[] = {
 	[10] = "extirq 10",
 	[11] = "extirq 11",
 };
+#endif
 
 static void
 mpc85xx_extirq_setup(void)
