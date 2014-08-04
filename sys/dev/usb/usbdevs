@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.679 2014/08/02 17:55:00 nonaka Exp $
+$NetBSD: usbdevs,v 1.680 2014/08/04 19:59:37 jdc Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -945,7 +945,7 @@ product ATI2 205		0xa001	USB Cable 205
 
 /* Atmel Comp. products */
 product ATMEL UHB124		0x3301	UHB124 hub
-product ATMEL WN210		0x3301	W-Buddie WN210
+product ATMEL WN210		0x4102	W-Buddie WN210
 product ATMEL DWL900AP		0x5601	DWL-900AP Wireless access point
 product ATMEL SAM_BA		0x6124	ARM SAM-BA programming port
 product ATMEL DWL120		0x7602	DWL-120 Wireless adapter
