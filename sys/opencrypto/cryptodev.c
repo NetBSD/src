@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.79 2014/07/25 08:10:40 dholland Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.80 2014/08/04 14:17:18 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.79 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.80 2014/08/04 14:17:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2085,6 +2085,8 @@ void	cryptoattach(int);
 void
 cryptoattach(int num)
 {
+	crypto_init();
+
 	pool_init(&fcrpl, sizeof(struct fcrypt), 0, 0, 0, "fcrpl",
 	    NULL, IPL_NET);	/* XXX IPL_NET ("splcrypto") */
 	pool_init(&csepl, sizeof(struct csession), 0, 0, 0, "csepl",
