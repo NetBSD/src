@@ -1,4 +1,4 @@
-/*	$NetBSD: x86emu.c,v 1.9 2014/08/04 21:40:11 joerg Exp $	*/
+/*	$NetBSD: x86emu.c,v 1.10 2014/08/04 21:41:44 joerg Exp $	*/
 
 /****************************************************************************
 *
@@ -3604,12 +3604,19 @@ Handles opcode 0xe8
 static void
 x86emuOp_call_near_IMM(struct X86EMU *emu)
 {
-	int16_t ip;
-
-	ip = (int16_t) fetch_word_imm(emu);
-	ip += (int16_t) emu->x86.R_IP;	/* CHECK SIGN */
-	push_word(emu, emu->x86.R_IP);
-	emu->x86.R_IP = ip;
+	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
+		int32_t ip;
+		ip = (int32_t) fetch_long_imm(emu);
+		ip += (int32_t) emu->x86.R_EIP;
+		push_long(emu, emu->x86.R_EIP);
+		emu->x86.R_EIP = ip;
+	} else {
+		int16_t ip;
+		ip = (int16_t) fetch_word_imm(emu);
+		ip += (int16_t) emu->x86.R_IP;	/* CHECK SIGN */
+		push_word(emu, emu->x86.R_IP);
+		emu->x86.R_IP = ip;
+	}
 }
 /****************************************************************************
 REMARKS:
