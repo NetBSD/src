@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.3 2014/08/04 08:59:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -129,8 +129,8 @@ md_check_partitions(void)
 	 * Make sure that a boot partition (old 4.3BSD UFS) is prepared
 	 * properly for our native bootloader.
 	 */
-	if (bsdlabel[PART_BOOT].pi_fstype != FS_BSDFFS ||
-	    (bsdlabel[PART_BOOT].pi_flags & PIF_NEWFS) == 0) {
+	if (pm->bsdlabel[PART_BOOT].pi_fstype != FS_BSDFFS ||
+	    (pm->bsdlabel[PART_BOOT].pi_flags & PIF_NEWFS) == 0) {
 		msg_display(MSG_nobootpartdisklabel);
 		process_menu(MENU_ok, NULL);
 		return 0;
@@ -156,7 +156,7 @@ md_post_disklabel(void)
 {
 
 	if (get_ramsize() <= 32)
-		set_swap(diskdev, bsdlabel);
+		set_swap(pm->diskdev, pm->bsdlabel);
 
 	return 0;
 }
@@ -166,9 +166,9 @@ copy_bootloader(void)
 {
 	const char *mntdir = "/mnt2";
 
-	msg_display(MSG_copybootloader, diskdev);
+	msg_display(MSG_copybootloader, pm->diskdev);
 	if (!run_program(RUN_SILENT | RUN_ERROR_OK,
-	    "mount /dev/%s%c %s", diskdev, 'a' + PART_BOOT, mntdir)) {
+	    "mount /dev/%s%c %s", pm->diskdev, 'a' + PART_BOOT, mntdir)) {
 		mnt2_mounted = 1;
 		run_program(0, "/bin/cp /usr/mdec/boot %s", mntdir);
 		run_program(RUN_SILENT | RUN_ERROR_OK, "umount %s", mntdir);
@@ -219,7 +219,7 @@ md_pre_update(void)
 {
 
 	if (get_ramsize() <= 32)
-		set_swap(diskdev, bsdlabel);
+		set_swap(pm->diskdev, pm->bsdlabel);
 
 	return 1;
 }
@@ -238,7 +238,7 @@ md_update(void)
 	 * We'll update bootloader only if the old one was installed.
 	 */
 	if (!run_program(RUN_SILENT | RUN_ERROR_OK,
-	    "mount -r /dev/%s%c %s", diskdev, 'a' + PART_BOOT, mntdir)) {
+	    "mount -r /dev/%s%c %s", pm->diskdev, 'a' + PART_BOOT, mntdir)) {
 		mnt2_mounted = 1;
 		snprintf(bootpath, sizeof(bootpath), "%s/%s", mntdir, "boot");
 		if (stat(bootpath, &sb) == 0 && S_ISREG(sb.st_mode))
