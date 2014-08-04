@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.2 2014/04/14 19:45:40 reinoud Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.3 2014/08/04 18:14:43 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.2 2014/04/14 19:45:40 reinoud Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.3 2014/08/04 18:14:43 reinoud Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -93,6 +93,63 @@ _C_LABEL(odroid_start):
 	movt	r4, #:upper16:uboot_args
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
 	stmia	r4, {r0-r3}			// Save the arguments
+
+	/*
+	 * Rescue passed "bootargs" env variable. This is not trivial
+	 * since we can be booted using either `go' or trough `bootm'.
+	 *
+	 * 'go' passes R0 = argc, R1 = argv
+	 * 'bootm' passes R0 = uboot_bootinfo, R3 = bootargs
+	 */
+
+	movw	r4, #:lower16:bootargs
+	movt	r4, #:upper16:bootargs
+	sub	r4, r4, #KERNEL_BASE_VOFFSET
+
+	cmp	r0, #0
+	beq	1f
+	cmp	r0, #MAX_BOOT_STRING
+	bge	1f
+
+	/* `go' method */
+	cmp	r0, #1					// extra argument?
+	beq	3f
+	ldr	r5, [r1, #4]				// load argv[1]
+2:
+	ldrb	r0, [r5], #1
+	strb	r0, [r4], #1
+	teq	r0, #0
+	bne	2b
+
+	b	3f
+1:
+	/* `bootm' method */
+	mov	r6, r0					// save binfo pointer
+
+	cmp	r3, #0
+	beq	1f
+2:
+	ldrb	r0, [r3], #1
+	strb	r0, [r4], #1
+	teq	r0, #0
+	bne	2b
+
+1:
+	cmp	r6, #0					// binfo passed?
+	beq	3f
+
+	add	r6, r6, #0x250				// to eth addr
+
+	movw	r4, #:lower16:uboot_enaddr
+	movt	r4, #:upper16:uboot_enaddr
+	mov	r2, #6
+2:
+	ldrb	r0, [r6], #1
+	strb	r0, [r4], #1
+	subs	r2, r2, #1
+	bne	2b
+	
+3:
 
 	/*
 	 * For easy and early SoC / PoP dependency, retrieve the IDs
