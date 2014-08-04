@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.22 2014/08/04 11:30:10 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.23 2014/08/04 11:32:27 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.22 2014/08/04 11:30:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.23 2014/08/04 11:32:27 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -357,10 +357,6 @@ curcpu()->ci_data.cpu_cc_freq = 1*1000*1000*1000;	/* XXX hack XXX */
 	parse_mi_bootargs(mi_bootargs);
 #endif
 
-	/* Fake bootconfig structure for the benefit of pmap.c. */
-	bootconfig.dramblocks = 1;
-	bootconfig.dram[0].address = rambase;
-
 	/*
 	 * Determine physical memory by looking at the PoP package. This PoP
 	 * package ID seems to be only available on Exynos4
@@ -382,6 +378,10 @@ curcpu()->ci_data.cpu_cc_freq = 1*1000*1000*1000;	/* XXX hack XXX */
 		}
 	}
 #endif
+
+	/* Fake bootconfig structure for the benefit of pmap.c. */
+	bootconfig.dramblocks = 1;
+	bootconfig.dram[0].address = rambase;
 	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
