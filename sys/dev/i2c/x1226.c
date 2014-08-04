@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.17 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: x1226.c,v 1.18 2014/08/04 23:28:19 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.17 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.18 2014/08/04 23:28:19 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,8 +182,8 @@ xrtc_read(dev_t dev, struct uio *uio, int flags)
 
 	while (uio->uio_resid && uio->uio_offset < X1226_NVRAM_SIZE) {
 		addr = (int)uio->uio_offset + X1226_NVRAM_START;
-		cmdbuf[0] = (addr >> 8) && 0xff;
-		cmdbuf[1] = addr && 0xff;
+		cmdbuf[0] = (addr >> 8) & 0xff;
+		cmdbuf[1] = addr & 0xff;
 		if ((error = iic_exec(sc->sc_tag,
 			I2C_OP_READ_WITH_STOP,
 			sc->sc_address, cmdbuf, 2, &ch, 1, 0)) != 0) {
@@ -223,8 +223,8 @@ xrtc_write(dev_t dev, struct uio *uio, int flags)
 
 	while (uio->uio_resid && uio->uio_offset < X1226_NVRAM_SIZE) {
 		addr = (int)uio->uio_offset + X1226_NVRAM_START;
-		cmdbuf[0] = (addr >> 8) && 0xff;
-		cmdbuf[1] = addr && 0xff;
+		cmdbuf[0] = (addr >> 8) & 0xff;
+		cmdbuf[1] = addr & 0xff;
 		if ((error = uiomove(&cmdbuf[2], 1, uio)) != 0) {
 			break;
 		}
