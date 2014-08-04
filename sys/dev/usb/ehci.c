@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.225 2014/02/17 07:34:21 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.226 2014/08/04 06:17:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.225 2014/02/17 07:34:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.226 2014/08/04 06:17:04 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4195,7 +4195,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	exfer->itdstart = start;
 	exfer->itdend = stop;
 	exfer->sqtdstart = NULL;
-	exfer->sqtdstart = NULL;
+	exfer->sqtdend = NULL;
 
 	ehci_add_intr_list(sc, exfer);
 	xfer->status = USBD_IN_PROGRESS;
