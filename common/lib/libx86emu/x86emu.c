@@ -1,4 +1,4 @@
-/*	$NetBSD: x86emu.c,v 1.8 2014/08/04 19:19:02 joerg Exp $	*/
+/*	$NetBSD: x86emu.c,v 1.9 2014/08/04 21:40:11 joerg Exp $	*/
 
 /****************************************************************************
 *
@@ -2091,21 +2091,24 @@ Handles opcode 0x8d
 static void
 x86emuOp_lea_word_R_M(struct X86EMU *emu)
 {
-	uint16_t *srcreg;
 	uint32_t destoffset;
 
-/*
- * TODO: Need to handle address size prefix!
- *
- * lea  eax,[eax+ebx*2] ??
- */
 	fetch_decode_modrm(emu);
 	if (emu->cur_mod == 3)
 		X86EMU_halt_sys(emu);
 
-	srcreg = decode_rh_word_register(emu);
 	destoffset = decode_rl_address(emu);
-	*srcreg = (uint16_t) destoffset;
+	if (emu->x86.mode & SYSMODE_PREFIX_ADDR) {
+		uint32_t *srcreg;
+
+		srcreg = decode_rh_long_register(emu);
+		*srcreg = (uint32_t) destoffset;
+	} else {
+		uint16_t *srcreg;
+
+		srcreg = decode_rh_word_register(emu);
+		*srcreg = (uint16_t) destoffset;
+	}
 }
 /****************************************************************************
 REMARKS:
