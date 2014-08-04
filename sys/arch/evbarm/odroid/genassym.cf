@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.1 2014/04/13 02:26:26 matt Exp $
+# $NetBSD: genassym.cf,v 1.2 2014/08/04 18:14:43 reinoud Exp $
 
 #-
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,8 +30,10 @@
 #
 
 include <arch/arm/samsung/sscom_reg.h>
+include <arch/evbarm/include/bootconfig.h>
 
 define	UTRSTAT_TXEMPTY		UTRSTAT_TXEMPTY
 define	UTRSTAT_TXSHIFTER_EMPTY	UTRSTAT_TXSHIFTER_EMPTY
 define	SSCOM_UTXH		SSCOM_UTXH
 define	SSCOM_UTRSTAT		SSCOM_UTRSTAT
+define	MAX_BOOT_STRING		MAX_BOOT_STRING
