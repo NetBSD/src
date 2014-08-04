@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.23 2014/08/04 11:32:27 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.24 2014/08/04 18:14:43 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.23 2014/08/04 11:32:27 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.24 2014/08/04 18:14:43 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.23 2014/08/04 11:32:27 reinoud 
 #include <dev/i2c/ddcreg.h>
 
 #include <dev/usb/ukbdvar.h>
+#include <net/if_ether.h>
 
 /* serial console stuff */
 #include "sscom.h"
@@ -178,9 +179,10 @@ uintptr_t uboot_args[4] = { 0 };
  * argument and boot configure storage
  */
 BootConfig bootconfig;				/* for pmap's sake */
-//static char bootargs[MAX_BOOT_STRING];	/* copied string from uboot */
+char bootargs[MAX_BOOT_STRING] = "";		/* copied string from uboot */
 char *boot_args = NULL;				/* MI bootargs */
 char *boot_file = NULL;				/* MI bootfile */
+uint8_t uboot_enaddr[ETHER_ADDR_LEN] = {};
 
 
 /*
@@ -203,6 +205,7 @@ void consinit(void);
 static void kgdb_port_init(void);
 #endif
 static void exynos_usb_powercycle_lan9730(device_t self);
+static void exynos_extract_mac_adress(void);
 void odroid_device_register(device_t self, void *aux);
 void odroid_device_register_post_config(device_t self, void *aux);
 
@@ -356,6 +359,9 @@ curcpu()->ci_data.cpu_cc_freq = 1*1000*1000*1000;	/* XXX hack XXX */
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
+	boot_args = bootargs;
+	parse_mi_bootargs(boot_args);
+	exynos_extract_mac_adress();
 
 	/*
 	 * Determine physical memory by looking at the PoP package. This PoP
@@ -474,6 +480,48 @@ consinit(void)
 }
 
 
+/* extract ethernet mac address from bootargs */
+static void
+exynos_extract_mac_adress(void)
+{
+	char *str, *ptr;
+	int i, v1, v2, val;
+
+#define EXPECT_COLON() {\
+		v1 = *ptr++; \
+		if (v1 != ':') break; \
+	}
+#define EXPECT_HEX(v) {\
+		(v) = (v) >= '0' && (v) <= '9'? (v) - '0' : \
+		      (v) >= 'a' && (v) <= 'f'? (v) - 'a' + 10 : \
+		      (v) >= 'A' && (v) <= 'F'? (v) - 'A' + 10 : -1; \
+		if ((v) < 0) break; \
+	}
+#define EXPECT_2HEX(val) {\
+		v1 = *ptr++; EXPECT_HEX(v1); \
+		v2 = *ptr++; EXPECT_HEX(v2); \
+		val = (v1 << 4) | v2; \
+	}
+	if (get_bootconf_option(boot_args, "ethaddr",
+			BOOTOPT_TYPE_STRING, &str)) {
+		for (i = 0, ptr = str; i < sizeof(uboot_enaddr); i++) {
+			if (i)
+				EXPECT_COLON();
+			EXPECT_2HEX(val);
+			uboot_enaddr[i] = val;
+		}
+		if (i != sizeof(uboot_enaddr)) {
+			printf( "Ignoring invalid MAC address '%s' passed "
+				"as boot paramter `ethaddr'\n", str);
+			memset((char *) uboot_enaddr, 0, sizeof(uboot_enaddr));
+		}
+	}
+#undef EXPECT_2HEX
+#undef EXPECT_HEX
+#undef EXPECT_COLON
+}
+
+
 #ifdef EXYNOS4
 static void
 odroid_exynos4_gpio_ncs(device_t self, prop_dictionary_t dict) {
@@ -572,6 +620,16 @@ odroid_device_register(device_t self, void *aux)
 		prop_dictionary_set_cstring(dict, "hubconnect", "hub_connect");
 		prop_dictionary_set_cstring(dict, "nint", "hub_nint");
 		prop_dictionary_set_cstring(dict, "lan_power", "p3v3_en");
+	}
+
+	if (device_is_a(self, "usmsc")) {
+		prop_data_t blob =
+		    prop_data_create_data(uboot_enaddr, ETHER_ADDR_LEN);
+		if (prop_dictionary_set(dict, "mac-address", blob) == false) {
+			aprint_error_dev(self,
+			    "WARNING: unable to set mac-address property\n");
+		}
+		prop_object_release(blob);
 	}
 
 #ifdef EXYNOS4
