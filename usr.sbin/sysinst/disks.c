@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.2 2014/08/03 16:09:38 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.3 2014/08/04 04:20:01 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -823,7 +823,7 @@ make_fstab(void)
 	char *dev = NULL;
 	pm_devs_t *pm_i;
 #ifndef HAVE_TMPFS
-	pm_devs_t *pm_with_swap;
+	pm_devs_t *pm_with_swap = NULL;
 #endif
 
 	/* Create the fstab. */
