@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2014/08/03 16:09:38 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2014/08/05 18:46:04 martin Exp $
 #
 # Makefile for sysinst
 
@@ -47,10 +47,12 @@ LDADD=		-lcurses -ltermlib -lutil
 UNIF_AWK=	${.CURDIR}/../../unif.awk
 MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
 
+CATALOGDIR=	/usr/share/sysinst/catalog
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\" \
 		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH} \
-		${NODISKLABEL:D-DNO_DISKLABEL}
+		${NODISKLABEL:D-DNO_DISKLABEL} \
+		-DCATALOG_DIR=\"${CATALOGDIR}\"
 
 .if (defined(DEBUG))
 CPPFLAGS+=-DDEBUG -g -O0
@@ -161,6 +163,8 @@ sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgto
 	${HOST_SH} ${MSG_XLAT_SH} -f sysinstmsgs.fmtcnt > ${.TARGET}
 
 DPSRCS+=	sysinstmsgs.${LANG}
+FILES+=		sysinstmsgs.${LANG}
+FILESDIR_sysinstmsgs.${LANG}=	${CATALOGDIR}
 .endfor
 
 .include <bsd.prog.mk>
