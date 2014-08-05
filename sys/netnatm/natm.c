@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.42 2014/08/05 05:24:27 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.43 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.42 2014/08/05 05:24:27 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.43 2014/08/05 07:55:32 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -327,6 +327,42 @@ natm_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
+natm_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct natmpcb *npcb = (struct natmpcb *) so->so_pcb;
+	struct atm_pseudohdr *aph;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(m != NULL);
+
+	if (control && control->m_len) {
+		m_freem(control);
+		m_freem(m);
+		return EINVAL;
+	}
+
+	/*
+	 * send the data.   we must put an atm_pseudohdr on first
+	 */
+	s = SPLSOFTNET();
+	M_PREPEND(m, sizeof(*aph), M_WAITOK);
+	if (m == NULL) {
+		error = ENOBUFS;
+		break;
+	}
+	aph = mtod(m, struct atm_pseudohdr *);
+	ATM_PH_VPI(aph) = npcb->npcb_vpi;
+	ATM_PH_SETVCI(aph, npcb->npcb_vci);
+	ATM_PH_FLAGS(aph) = (proto == PROTO_NATMAAL5) ? ATM_PH_AAL5 : 0;
+	error = atm_output(npcb->npcb_ifp, m, NULL, NULL);
+	splx(s);
+
+	return error;
+}
+
+static int
 natm_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
   KASSERT(solocked(so));
@@ -364,6 +400,7 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
   KASSERT(req != PRU_PEERADDR);
   KASSERT(req != PRU_SOCKADDR);
   KASSERT(req != PRU_RCVOOB);
+  KASSERT(req != PRU_SEND);
   KASSERT(req != PRU_SENDOOB);
 
   s = SPLSOFTNET();
@@ -376,32 +413,6 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
   }
 
   switch (req) {
-    case PRU_SEND:			/* send this data */
-      if (control && control->m_len) {
-	m_freem(control);
-	m_freem(m);
-	error = EINVAL;
-	break;
-      }
-
-      /*
-       * send the data.   we must put an atm_pseudohdr on first
-       */
-
-      M_PREPEND(m, sizeof(*aph), M_WAITOK);
-      if (m == NULL) {
-        error = ENOBUFS;
-	break;
-      }
-      aph = mtod(m, struct atm_pseudohdr *);
-      ATM_PH_VPI(aph) = npcb->npcb_vpi;
-      ATM_PH_SETVCI(aph, npcb->npcb_vci);
-      ATM_PH_FLAGS(aph) = (proto == PROTO_NATMAAL5) ? ATM_PH_AAL5 : 0;
-
-      error = atm_output(npcb->npcb_ifp, m, NULL, NULL);
-
-      break;
-
     case PRU_CONNECT2:			/* connect two sockets */
     case PRU_RCVD:			/* have taken data; more room now */
     case PRU_FASTTIMO:			/* 200ms timeout */
@@ -515,6 +526,7 @@ PR_WRAP_USRREQS(natm)
 #define	natm_peeraddr	natm_peeraddr_wrapper
 #define	natm_sockaddr	natm_sockaddr_wrapper
 #define	natm_recvoob	natm_recvoob_wrapper
+#define	natm_send	natm_send_wrapper
 #define	natm_sendoob	natm_sendoob_wrapper
 #define	natm_usrreq	natm_usrreq_wrapper
 
@@ -533,6 +545,7 @@ const struct pr_usrreqs natm_usrreqs = {
 	.pr_peeraddr	= natm_peeraddr,
 	.pr_sockaddr	= natm_sockaddr,
 	.pr_recvoob	= natm_recvoob,
+	.pr_send	= natm_send,
 	.pr_sendoob	= natm_sendoob,
 	.pr_generic	= natm_usrreq,
 };

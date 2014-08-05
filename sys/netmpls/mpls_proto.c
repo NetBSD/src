@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.21 2014/08/05 05:24:27 rtr Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.22 2014/08/05 07:55:32 rtr Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.21 2014/08/05 05:24:27 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.22 2014/08/05 07:55:32 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -189,6 +189,15 @@ mpls_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
+mpls_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 mpls_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
@@ -215,6 +224,7 @@ mpls_usrreq(struct socket *so, int req, struct mbuf *m,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	return EOPNOTSUPP;
@@ -316,6 +326,7 @@ PR_WRAP_USRREQS(mpls)
 #define	mpls_peeraddr	mpls_peeraddr_wrapper
 #define	mpls_sockaddr	mpls_sockaddr_wrapper
 #define	mpls_recvoob	mpls_recvoob_wrapper
+#define	mpls_send	mpls_send_wrapper
 #define	mpls_sendoob	mpls_sendoob_wrapper
 #define	mpls_usrreq	mpls_usrreq_wrapper
 
@@ -334,6 +345,7 @@ static const struct pr_usrreqs mpls_usrreqs = {
 	.pr_peeraddr	= mpls_peeraddr,
 	.pr_sockaddr	= mpls_sockaddr,
 	.pr_recvoob	= mpls_recvoob,
+	.pr_send	= mpls_send,
 	.pr_sendoob	= mpls_sendoob,
 	.pr_generic	= mpls_usrreq,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.22 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.23 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.22 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.23 2014/08/05 07:55:32 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1510,7 +1510,7 @@ rfcomm_session_send_frame(struct rfcomm_session *rs, int type, int dlci)
 	DPRINTFN(5, "dlci %d type %2.2x (%d bytes, fcs=%#2.2x)\n",
 		dlci, type, m->m_pkthdr.len, fcs);
 
-	return l2cap_send(rs->rs_l2cap, m);
+	return l2cap_send_pcb(rs->rs_l2cap, m);
 }
 
 /*
@@ -1610,7 +1610,7 @@ rfcomm_session_send_uih(struct rfcomm_session *rs, struct rfcomm_dlc *dlc,
 	/*
 	 * UIH frame ready to go..
 	 */
-	err = l2cap_send(rs->rs_l2cap, m0);
+	err = l2cap_send_pcb(rs->rs_l2cap, m0);
 	if (err)
 		goto fail;
 
