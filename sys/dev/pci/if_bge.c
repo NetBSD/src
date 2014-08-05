@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.275 2014/07/24 13:22:49 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.276 2014/08/05 04:29:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.275 2014/07/24 13:22:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.276 2014/08/05 04:29:01 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2369,6 +2369,15 @@ bge_chipinit(struct bge_softc *sc)
 				dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE_GLOBAL;
 			else
 				dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE_LOCAL;
+		} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703) {
+			/*
+			 * In the BCM5703, the DMA read watermark should
+			 * be set to less than or equal to the maximum
+			 * memory read byte count of the PCI-X command
+			 * register.
+			 */
+			dma_rw_ctl |= BGE_PCIDMARWCTL_RD_WAT_SHIFT(4) |
+			    BGE_PCIDMARWCTL_WR_WAT_SHIFT(3);
 		} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
 			/* 1536 bytes for read, 384 bytes for write. */
 			dma_rw_ctl |= BGE_PCIDMARWCTL_RD_WAT_SHIFT(7) |
