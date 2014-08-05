@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/07/06 06:28:49 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2014/08/05 13:49:04 isaki Exp $
 
 NOMAN=		# defined
 
@@ -29,7 +29,7 @@ OBJCOPY?=	/usr/bin/objcopy
 BOOTDIR=	${.CURDIR}/../boot
 .PATH:		${BOOTDIR}
 
-SRCS=		srt0.S boot.c conf.c exec_image.S if_ne.c ne.c dp8390.c
+SRCS=		srt0.S boot.c conf.c switch.c exec_image.S if_ne.c ne.c dp8390.c
 S=		${.CURDIR}/../../../..
 M=		${.CURDIR}/../..
 COMMONDIR=	$M/stand/common
