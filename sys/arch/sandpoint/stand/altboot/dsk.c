@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.16 2012/04/26 19:59:37 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.17 2014/08/05 17:55:20 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -502,7 +502,7 @@ dsk_open(struct open_file *f, ...)
 	d->part = part;
 	f->f_devdata = d;
 
-	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), name);
+	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), "%s", name);
 	if (dlp->d_partitions[part].p_fstype == FS_BSDFFS) {
 		if ((error = ffsv2_open(name, f)) == 0) {
 			fs = &fs_ffsv2;

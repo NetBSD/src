@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.25 2014/03/26 17:35:08 christos Exp $ */
+/* $NetBSD: main.c,v 1.26 2014/08/05 17:55:20 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -525,7 +525,7 @@ module_load(const char *kernel_path)
 		if (size < bm->bm_len)
 			printf("WARNING: couldn't load");
 		else {
-			snprintf(bi->kmod, sizeof(bi->kmod), bm->bm_kmod);
+			snprintf(bi->kmod, sizeof(bi->kmod), "%s", bm->bm_kmod);
 			bi->type = BI_MODULE_ELF;
 			bi->len = size;
 			bi->base = kmodloadp;
