@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.5 2014/07/25 16:35:43 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.6 2014/08/05 20:28:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.5 2014/07/25 16:35:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.6 2014/08/05 20:28:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -192,11 +192,12 @@ intelfb_setconfig_task(struct i915drmkms_task *task)
 		    0, sc->sc_ifa.ifa_fb_size);
 
 	/* XXX Ugh...  Pass these parameters some other way!  */
-	prop_dictionary_set_uint32(dict, "width", sizes->fb_width);
-	prop_dictionary_set_uint32(dict, "height", sizes->fb_height);
+	prop_dictionary_set_uint32(dict, "width", sizes->surface_width);
+	prop_dictionary_set_uint32(dict, "height", sizes->surface_height);
 	prop_dictionary_set_uint8(dict, "depth", sizes->surface_bpp);
 	prop_dictionary_set_uint16(dict, "linebytes",
-	    roundup2((sizes->fb_width * howmany(sizes->surface_bpp, 8)), 64));
+	    roundup2((sizes->surface_width * howmany(sizes->surface_bpp, 8)),
+		64));
 	prop_dictionary_set_uint32(dict, "address", 0); /* XXX >32-bit */
 	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
 	prop_dictionary_set_uint64(dict, "virtual_address",
