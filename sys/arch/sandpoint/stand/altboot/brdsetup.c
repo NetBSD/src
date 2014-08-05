@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.33 2013/11/07 14:51:36 nisimura Exp $ */
+/* $NetBSD: brdsetup.c,v 1.34 2014/08/05 17:55:20 joerg Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -319,11 +319,11 @@ brdsetup(void)
 	brdfixup();
 
 	bi_mem.memsize = mpc107memsize();
-	snprintf(bi_cons.devname, sizeof(bi_cons.devname), consname);
+	snprintf(bi_cons.devname, sizeof(bi_cons.devname), "%s", consname);
 	bi_cons.addr = consport;
 	bi_cons.speed = brdprop->consspeed;
 	bi_clk.ticks_per_sec = ticks_per_sec;
-	snprintf(bi_fam.name, sizeof(bi_fam.name), brdprop->family);
+	snprintf(bi_fam.name, sizeof(bi_fam.name), "%s", brdprop->family);
 }
 
 struct brdprop *
