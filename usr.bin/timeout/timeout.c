@@ -1,4 +1,4 @@
-/* $NetBSD: timeout.c,v 1.3 2014/08/02 09:16:22 martin Exp $ */
+/* $NetBSD: timeout.c,v 1.4 2014/08/05 08:20:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/usr.bin/timeout/timeout.c 268763 2014-07-16 13:52:05Z bapt $");
 #else
-__RCSID("$NetBSD: timeout.c,v 1.3 2014/08/02 09:16:22 martin Exp $");
+__RCSID("$NetBSD: timeout.c,v 1.4 2014/08/05 08:20:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ parse_signal(const char *str)
 
 	if (str[0] == '\0' || *ep != '\0')
 		goto err;
-	if (errno == ERANGE && (sig == INT_MAX || sig == INT_MIN))
+	if (errno == ERANGE && (sig == LONG_MAX || sig == LONG_MIN))
 		goto err;
 	if (sig >= sys_nsig || sig < 0)
 		goto err;
