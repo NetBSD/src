@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.5 2014/08/05 06:35:24 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.6 2014/08/05 06:35:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.5 2014/08/05 06:35:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.6 2014/08/05 06:35:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2420,7 +2420,7 @@ motg_device_xfer_abort(usbd_xfer_handle xfer)
 		DPRINTF(("motg_device_xfer_abort: already aborting\n"));
 		xfer->hcflags |= UXFER_ABORTWAIT;
 		while (xfer->hcflags & UXFER_ABORTING)
-		cv_wait(&xfer->hccv, &sc->sc_lock);
+			cv_wait(&xfer->hccv, &sc->sc_lock);
 		return;
 	}
 	xfer->hcflags |= UXFER_ABORTING;
