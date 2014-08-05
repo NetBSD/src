@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.285 2014/07/31 03:50:09 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.286 2014/08/05 18:13:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -72,11 +72,16 @@
  *
  * TODO (in order of importance):
  *
+ *	- Internal SERDES mode newer than or equal to 82575.
+ *	- EEE (Energy Efficiency Ethernet)
+ *	- MSI/MSI-X
+ *	- Virtual Function
+ *	- Set LED correctly (based on contents in EEPROM)
  *	- Rework how parameters are loaded from the EEPROM.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.285 2014/07/31 03:50:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.286 2014/08/05 18:13:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
