@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.41 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.42 2014/08/05 05:24:27 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.41 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.42 2014/08/05 05:24:27 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -106,7 +106,7 @@ natm_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-natm_bind(struct socket *so, struct mbuf *nam)
+natm_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -114,7 +114,7 @@ natm_bind(struct socket *so, struct mbuf *nam)
 }
 
 static int
-natm_listen(struct socket *so)
+natm_listen(struct socket *so, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -122,7 +122,7 @@ natm_listen(struct socket *so)
 }
 
 static int
-natm_connect(struct socket *so, struct mbuf *nam)
+natm_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	int error = 0, s2;
 	struct natmpcb *npcb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.57 2014/07/31 03:39:35 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.58 2014/08/05 05:24:26 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.57 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.58 2014/08/05 05:24:26 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -452,7 +452,7 @@ ddp_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-ddp_bind(struct socket *so, struct mbuf *nam)
+ddp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotoddpcb(so) != NULL);
@@ -461,7 +461,7 @@ ddp_bind(struct socket *so, struct mbuf *nam)
 }
 
 static int
-ddp_listen(struct socket *so)
+ddp_listen(struct socket *so, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -469,7 +469,7 @@ ddp_listen(struct socket *so)
 }
 
 static int
-ddp_connect(struct socket *so, struct mbuf *nam)
+ddp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct ddpcb *ddp = sotoddpcb(so);
 	int error = 0;
