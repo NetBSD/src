@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.53 2014/08/05 05:24:27 rtr Exp $	*/
+/*	$NetBSD: un.h,v 1.54 2014/08/05 14:02:42 rtr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -79,15 +79,15 @@ struct sockopt;
 extern const struct pr_usrreqs unp_usrreqs;
 
 int	uipc_ctloutput(int, struct socket *, struct sockopt *);
-void	uipc_init (void);
-kmutex_t *uipc_dgramlock (void);
-kmutex_t *uipc_streamlock (void);
-kmutex_t *uipc_rawlock (void);
+void	uipc_init(void);
+kmutex_t *uipc_dgramlock(void);
+kmutex_t *uipc_streamlock(void);
+kmutex_t *uipc_rawlock(void);
 
-int	unp_connect (struct socket *, struct mbuf *, struct lwp *);
-int	unp_connect2 (struct socket *, struct socket *, int);
-void 	unp_dispose (struct mbuf *);
-int 	unp_externalize (struct mbuf *, struct lwp *, int);
+int	unp_connect(struct socket *, struct mbuf *, struct lwp *);
+int	unp_connect2(struct socket *, struct socket *, int);
+void 	unp_dispose(struct mbuf *);
+int 	unp_externalize(struct mbuf *, struct lwp *, int);
 
 #else /* !_KERNEL */
 
