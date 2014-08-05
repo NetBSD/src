@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.417 2014/08/05 15:40:59 apb Exp $
+#	$NetBSD: Makefile,v 1.418 2014/08/05 15:43:50 apb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -593,7 +593,7 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
 	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.tgz; \
-	pax_cmd="COMPRESS_PROGRAM=${TOOL_GZIP:Q} GZIP=-9n ${TOOL_PAX} -O -zw -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
+	pax_cmd="COMPRESS_PROGRAM=${TOOL_GZIP:Q} GZIP="-9 ${GZIP_N_FLAG}" ${TOOL_PAX} -O -zw -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
 	cd $${kerndir} && { \
 		kernels=; newest=; \
 		for kernel in $${kernlist}; do \
