@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.197 2014/08/05 07:10:41 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.198 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.197 2014/08/05 07:10:41 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.198 2014/08/05 07:55:32 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -245,6 +245,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	s = splsoftnet();
@@ -283,7 +284,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	ostate = tcp_debug_capture(tp, req);
 
-	KASSERT(!control || req == PRU_SEND);
+	KASSERT(!control);
 #ifdef INET6
 	/* XXX: KASSERT((inp != NULL) ^ (in6p != NULL)); */
 #endif
@@ -310,21 +311,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 */
 		if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) != 0)
 			(void) tcp_output(tp);
-		break;
-
-	/*
-	 * Do a send by putting data in output queue and updating urgent
-	 * marker if URG set.  Possibly send more data.
-	 */
-	case PRU_SEND:
-		if (control && control->m_len) {
-			m_freem(control);
-			m_freem(m);
-			error = EINVAL;
-			break;
-		}
-		sbappendstream(&so->so_snd, m);
-		error = tcp_output(tp);
 		break;
 
 	default:
@@ -1118,6 +1104,43 @@ tcp_recvoob(struct socket *so, struct mbuf *m, int flags)
 	splx(s);
 
 	return 0;
+}
+
+static int
+tcp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct inpcb *inp = NULL;
+	struct in6pcb *in6p = NULL;
+	struct tcpcb *tp = NULL;
+	int ostate = 0;
+	int error = 0;
+	int s;
+
+	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
+		return error;
+
+	ostate = tcp_debug_capture(tp, PRU_SEND);
+
+	/*
+	 * Do a send by putting data in output queue and updating urgent
+	 * marker if URG set.  Possibly send more data.
+	 */
+	s = splsoftnet();
+	if (control && control->m_len) {
+		m_freem(control);
+		m_freem(m);
+		tcp_debug_trace(so, tp, ostate, PRU_SEND);
+		splx(s);
+		return EINVAL;
+	}
+
+	sbappendstream(&so->so_snd, m);
+	error = tcp_output(tp);
+	tcp_debug_trace(so, tp, ostate, PRU_SEND);
+	splx(s);
+
+	return error;
 }
 
 static int
@@ -2408,6 +2431,7 @@ PR_WRAP_USRREQS(tcp)
 #define	tcp_peeraddr	tcp_peeraddr_wrapper
 #define	tcp_sockaddr	tcp_sockaddr_wrapper
 #define	tcp_recvoob	tcp_recvoob_wrapper
+#define	tcp_send	tcp_send_wrapper
 #define	tcp_sendoob	tcp_sendoob_wrapper
 #define	tcp_usrreq	tcp_usrreq_wrapper
 
@@ -2426,6 +2450,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pr_peeraddr	= tcp_peeraddr,
 	.pr_sockaddr	= tcp_sockaddr,
 	.pr_recvoob	= tcp_recvoob,
+	.pr_send	= tcp_send,
 	.pr_sendoob	= tcp_sendoob,
 	.pr_generic	= tcp_usrreq,
 };

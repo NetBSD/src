@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.165 2014/08/05 05:24:26 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.166 2014/08/05 07:55:31 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.165 2014/08/05 05:24:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.166 2014/08/05 07:55:31 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,6 +377,134 @@ unp_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
+unp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct unpcb *unp = sotounpcb(so);
+	int error = 0;
+	u_int newhiwat;
+	struct socket *so2;
+
+	KASSERT(solocked(so));
+	KASSERT(unp != NULL);
+	KASSERT(m != NULL);
+
+	/*
+	 * Note: unp_internalize() rejects any control message
+	 * other than SCM_RIGHTS, and only allows one.  This
+	 * has the side-effect of preventing a caller from
+	 * forging SCM_CREDS.
+	 */
+	if (control) {
+		sounlock(so);
+		error = unp_internalize(&control);
+		solock(so);
+		if (error != 0) {
+			m_freem(control);
+			m_freem(m);
+			return error;
+		}
+	}
+
+	switch (so->so_type) {
+
+	case SOCK_DGRAM: {
+		KASSERT(so->so_lock == uipc_lock);
+		if (nam) {
+			if ((so->so_state & SS_ISCONNECTED) != 0)
+				error = EISCONN;
+			else {
+				/*
+				 * Note: once connected, the
+				 * socket's lock must not be
+				 * dropped until we have sent
+				 * the message and disconnected.
+				 * This is necessary to prevent
+				 * intervening control ops, like
+				 * another connection.
+				 */
+				error = unp_connect(so, nam, l);
+			}
+		} else {
+			if ((so->so_state & SS_ISCONNECTED) == 0)
+				error = ENOTCONN;
+		}
+		if (error) {
+			unp_dispose(control);
+			m_freem(control);
+			m_freem(m);
+			return error;
+		}
+		error = unp_output(m, control, unp);
+		if (nam)
+			unp_disconnect1(unp);
+		break;
+	}
+
+	case SOCK_SEQPACKET: /* FALLTHROUGH */
+	case SOCK_STREAM:
+#define	rcv (&so2->so_rcv)
+#define	snd (&so->so_snd)
+		if (unp->unp_conn == NULL) {
+			error = ENOTCONN;
+			break;
+		}
+		so2 = unp->unp_conn->unp_socket;
+		KASSERT(solocked2(so, so2));
+		if (unp->unp_conn->unp_flags & UNP_WANTCRED) {
+			/*
+			 * Credentials are passed only once on
+			 * SOCK_STREAM and SOCK_SEQPACKET.
+			 */
+			unp->unp_conn->unp_flags &= ~UNP_WANTCRED;
+			control = unp_addsockcred(l, control);
+		}
+		/*
+		 * Send to paired receive port, and then reduce
+		 * send buffer hiwater marks to maintain backpressure.
+		 * Wake up readers.
+		 */
+		if (control) {
+			if (sbappendcontrol(rcv, m, control) != 0)
+				control = NULL;
+		} else {
+			switch(so->so_type) {
+			case SOCK_SEQPACKET:
+				sbappendrecord(rcv, m);
+				break;
+			case SOCK_STREAM:
+				sbappend(rcv, m);
+				break;
+			default:
+				panic("uipc_usrreq");
+				break;
+			}
+		}
+		snd->sb_mbmax -=
+		    rcv->sb_mbcnt - unp->unp_conn->unp_mbcnt;
+		unp->unp_conn->unp_mbcnt = rcv->sb_mbcnt;
+		newhiwat = snd->sb_hiwat -
+		    (rcv->sb_cc - unp->unp_conn->unp_cc);
+		(void)chgsbsize(so->so_uidinfo,
+		    &snd->sb_hiwat, newhiwat, RLIM_INFINITY);
+		unp->unp_conn->unp_cc = rcv->sb_cc;
+		sorwakeup(so2);
+#undef snd
+#undef rcv
+		if (control != NULL) {
+			unp_dispose(control);
+			m_freem(control);
+		}
+		break;
+
+	default:
+		panic("uipc 4");
+	}
+
+	return error;
+}
+
+static int
 unp_sendoob(struct socket *so, struct mbuf *m, struct mbuf * control)
 {
 	KASSERT(solocked(so));
@@ -410,12 +538,13 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	KASSERT(solocked(so));
 	unp = sotounpcb(so);
 
-	KASSERT(!control || req == PRU_SEND);
+	KASSERT(!control);
 	if (unp == NULL) {
 		error = EINVAL;
 		goto release;
@@ -458,120 +587,6 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 		default:
 			panic("uipc 2");
-		}
-		break;
-
-	case PRU_SEND:
-		/*
-		 * Note: unp_internalize() rejects any control message
-		 * other than SCM_RIGHTS, and only allows one.  This
-		 * has the side-effect of preventing a caller from
-		 * forging SCM_CREDS.
-		 */
-		if (control) {
-			sounlock(so);
-			error = unp_internalize(&control);
-			solock(so);
-			if (error != 0) {
-				m_freem(control);
-				m_freem(m);
-				break;
-			}
-		}
-		switch (so->so_type) {
-
-		case SOCK_DGRAM: {
-			KASSERT(so->so_lock == uipc_lock);
-			if (nam) {
-				if ((so->so_state & SS_ISCONNECTED) != 0)
-					error = EISCONN;
-				else {
-					/*
-					 * Note: once connected, the
-					 * socket's lock must not be
-					 * dropped until we have sent
-					 * the message and disconnected.
-					 * This is necessary to prevent
-					 * intervening control ops, like
-					 * another connection.
-					 */
-					error = unp_connect(so, nam, l);
-				}
-			} else {
-				if ((so->so_state & SS_ISCONNECTED) == 0)
-					error = ENOTCONN;
-			}
-			if (error) {
-				unp_dispose(control);
-				m_freem(control);
-				m_freem(m);
-				break;
-			}
-			KASSERT(l != NULL);
-			error = unp_output(m, control, unp);
-			if (nam)
-				unp_disconnect1(unp);
-			break;
-		}
-
-		case SOCK_SEQPACKET: /* FALLTHROUGH */
-		case SOCK_STREAM:
-#define	rcv (&so2->so_rcv)
-#define	snd (&so->so_snd)
-			if (unp->unp_conn == NULL) {
-				error = ENOTCONN;
-				break;
-			}
-			so2 = unp->unp_conn->unp_socket;
-			KASSERT(solocked2(so, so2));
-			if (unp->unp_conn->unp_flags & UNP_WANTCRED) {
-				/*
-				 * Credentials are passed only once on
-				 * SOCK_STREAM and SOCK_SEQPACKET.
-				 */
-				unp->unp_conn->unp_flags &= ~UNP_WANTCRED;
-				control = unp_addsockcred(l, control);
-			}
-			/*
-			 * Send to paired receive port, and then reduce
-			 * send buffer hiwater marks to maintain backpressure.
-			 * Wake up readers.
-			 */
-			if (control) {
-				if (sbappendcontrol(rcv, m, control) != 0)
-					control = NULL;
-			} else {
-				switch(so->so_type) {
-				case SOCK_SEQPACKET:
-					sbappendrecord(rcv, m);
-					break;
-				case SOCK_STREAM:
-					sbappend(rcv, m);
-					break;
-				default:
-					panic("uipc_usrreq");
-					break;
-				}
-			}
-			snd->sb_mbmax -=
-			    rcv->sb_mbcnt - unp->unp_conn->unp_mbcnt;
-			unp->unp_conn->unp_mbcnt = rcv->sb_mbcnt;
-			newhiwat = snd->sb_hiwat -
-			    (rcv->sb_cc - unp->unp_conn->unp_cc);
-			(void)chgsbsize(so->so_uidinfo,
-			    &snd->sb_hiwat, newhiwat, RLIM_INFINITY);
-			unp->unp_conn->unp_cc = rcv->sb_cc;
-			sorwakeup(so2);
-#undef snd
-#undef rcv
-			if (control != NULL) {
-				unp_dispose(control);
-				m_freem(control);
-			}
-			break;
-
-		default:
-			panic("uipc 4");
 		}
 		break;
 
@@ -1911,6 +1926,7 @@ const struct pr_usrreqs unp_usrreqs = {
 	.pr_peeraddr	= unp_peeraddr,
 	.pr_sockaddr	= unp_sockaddr,
 	.pr_recvoob	= unp_recvoob,
+	.pr_send	= unp_send,
 	.pr_sendoob	= unp_sendoob,
 	.pr_generic	= unp_usrreq,
 };
