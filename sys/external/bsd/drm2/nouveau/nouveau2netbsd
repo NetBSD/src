@@ -1,0 +1,112 @@
+#!/bin/sh
+
+#	$NetBSD: nouveau2netbsd,v 1.1 2014/08/05 17:39:07 riastradh Exp $
+#
+# $ /path/to/nouveau2netbsd > /path/to/files.nouveau.new
+#
+# Run from the top-level Nouveau source directory.  This stupid kludge
+# reinterprets the GNU makefile as a BSD makefile to extract the source
+# file names, renames the ones that have obscure and/or colliding
+# basenames to be less obscure and unlikely (though not guaranteed) to
+# collide, and spits out config(5) directives for all of them.
+
+set -Ceu
+
+# Location of the Nouveau sources relative to $NETBSDSRCDIR.
+nouveau_top=external/bsd/drm2/dist/drm/nouveau
+
+# config(5) flag for the Nouveau driver.
+nouveau_flag=nouveau
+
+filemap=
+
+clean ()
+{
+	[ -z "$filemap" ] || rm -f -- "$filemap" || :
+}
+trap clean EXIT HUP INT TERM
+
+filemap="$(mktemp -t ${0##*/})"
+
+cat Makefile								\
+| sed -e 's,^include \(.*\)$,.include "\1",'				\
+| sed -e 's,^ifdef \(.*\)$,.if !empty(\1:M[yY][eE][sS]),'		\
+| sed -e 's,^endif$,.endif,'						\
+| make -f /dev/stdin -V nouveau-y src=.					\
+| tr ' ' '\n'								\
+| sed -e 's,^$,,'							\
+| sort -u								\
+| sed -e 's,\.o$,.c,'							\
+| awk '
+	BEGIN {
+		duplicates = 0
+	}
+	$1 ~ "nouveau_[^/]*$" {
+		if (seen[$1])
+			printf("Duplicate basename: %s\n", $1)
+		seen[$1] = $1
+		printf("%s %s\n", $1, $1)
+		next
+	}
+	{
+		if (index($1, "/")) {
+			dir = $1
+			sub("/[^/]*$", "/", dir)
+		} else {
+			dir = ""
+		}
+		base = $1
+		sub("^core/", "", base)
+		gsub("/", "_", base)
+		if (seen[base]) {
+			printf("Duplicate basename: %s %s\n", seen[base], $1) \
+			    > "/dev/stderr"
+			duplicates = 1
+		}
+		if (duplicates)
+			next
+		seen[base] = $1
+		printf("%s %s\n", $1, dir "nouveau_" base)
+	}
+	END {
+		if (duplicates) {
+			printf("Time to rewite me!\n") > "/dev/stderr"
+			exit 1
+		}
+	}
+' >> "$filemap"
+
+while read from to; do
+	if [ "x$from" != "x$to" ]; then
+		mv -f -- "$from" "$to"
+	fi
+        # Probably not necessary -- Linux tends not to have RCS ids --
+        # but a precaution out of paranoia.
+        cleantags "$to"
+	case $to in
+	*.c)
+		awk '
+			BEGIN {
+				done = 0
+				printf("/*\t%c%s%c\t*/\n\n", "$","NetBSD","$")
+			}
+			/^#include/ && !done {
+				printf("#include <sys/cdefs.h>\n")
+				printf("__KERNEL_RCSID(0, \"%c%s%c\");\n",
+				    "$","NetBSD","$")
+				printf("\n")
+				done = 1
+			}
+			{
+				print
+			}
+		' < "$to" > "$to".tmp
+		;;
+	esac
+	mv -f -- "$to".tmp "$to"
+	printf 'file\t%s\t%s\n' "$nouveau_top/$to" "$nouveau_flag"
+done < "$filemap" | sort
+
+# We sort the output again at the end because we renamed some files but
+# left $TOP/nouveau_* unchanged, so their sort order relative to the
+# ones that got renamed may have changed.
