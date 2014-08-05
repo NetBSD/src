@@ -187,5 +187,5 @@ pseudo-device	nsmb			# SMB requester
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
-options 	MEMORY_DISK_ROOT_SIZE=4224	# 2112 KiB
+options 	MEMORY_DISK_ROOT_SIZE=4472	# 2236 KiB
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
