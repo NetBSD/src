@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.15 2010/01/19 22:07:02 pooka Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.16 2014/08/05 21:54:39 jmcneill Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -92,7 +92,8 @@ struct wpi_rbuf {
 };
 
 struct wpi_rx_data {
-	struct mbuf	*m;
+	bus_dmamap_t		map;
+	struct mbuf		*m;
 };
 
 struct wpi_rx_ring {
