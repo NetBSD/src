@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.22 2014/08/05 08:33:50 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.23 2014/08/05 10:33:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.22 2014/08/05 08:33:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.23 2014/08/05 10:33:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2452,9 +2452,7 @@ xhci_root_intr_start(usbd_xfer_handle xfer)
 static void
 xhci_root_intr_abort(usbd_xfer_handle xfer)
 {
-#ifdef DIAGNOSTIC
 	struct xhci_softc * const sc = xfer->pipe->device->bus->hci_private;
-#endif
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->pipe->intrxfer == xfer);
