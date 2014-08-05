@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.150 2014/08/03 22:11:50 rmind Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.151 2014/08/05 05:24:26 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.150 2014/08/03 22:11:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.151 2014/08/05 05:24:26 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -402,7 +402,7 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 }
 
 int
-in_pcbbind(void *v, struct mbuf *nam)
+in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct inpcb *inp = v;
 	struct sockaddr_in *sin = NULL; /* XXXGCC */
@@ -428,12 +428,12 @@ in_pcbbind(void *v, struct mbuf *nam)
 	}
 
 	/* Bind address. */
-	error = in_pcbbind_addr(inp, sin, curlwp->l_cred);
+	error = in_pcbbind_addr(inp, sin, l->l_cred);
 	if (error)
 		return (error);
 
 	/* Bind port. */
-	error = in_pcbbind_port(inp, sin, curlwp->l_cred);
+	error = in_pcbbind_port(inp, sin, l->l_cred);
 	if (error) {
 		inp->inp_laddr.s_addr = INADDR_ANY;
 
@@ -527,7 +527,7 @@ in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 		return (EADDRINUSE);
 	if (in_nullhost(inp->inp_laddr)) {
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind(inp, NULL);
+			error = in_pcbbind(inp, NULL, l);
 			/*
 			 * This used to ignore the return value
 			 * completely, but we need to check for
