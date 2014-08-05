@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.252 2014/08/05 08:33:50 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.253 2014/08/05 10:33:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.252 2014/08/05 08:33:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.253 2014/08/05 10:33:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2865,9 +2865,7 @@ ohci_root_intr_start(usbd_xfer_handle xfer)
 Static void
 ohci_root_intr_abort(usbd_xfer_handle xfer)
 {
-#ifdef DIAGNOSTIC
 	ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
-#endif
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->pipe->intrxfer == xfer);
