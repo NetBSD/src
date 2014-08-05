@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_lower.c,v 1.9 2008/08/05 13:08:31 plunky Exp $	*/
+/*	$NetBSD: l2cap_lower.c,v 1.10 2014/08/05 07:55:31 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.9 2008/08/05 13:08:31 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.10 2014/08/05 07:55:31 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -150,7 +150,7 @@ failed:
 }
 
 /*
- * Start another L2CAP packet on its way. This is called from l2cap_send
+ * Start another L2CAP packet on its way. This is called from l2cap_send_pcb
  * (when no PDU is pending) and hci_acl_start (when PDU has been placed on
  * device queue). Thus we can have more than one PDU waiting at the device
  * if space is available but no single channel will hog the link.

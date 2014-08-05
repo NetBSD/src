@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.157 2014/07/09 04:54:03 rtr Exp $ */
+/*	$NetBSD: if_gre.c,v 1.158 2014/08/05 07:55:31 rtr Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.157 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.158 2014/08/05 07:55:31 rtr Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -528,8 +528,8 @@ gre_sosend(struct socket *so, struct mbuf *top)
 	 */
 	if (so->so_state & SS_CANTSENDMORE)
 		snderr(EPIPE);
-	error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-	    PRU_SEND, top, NULL, NULL, l);
+	error = (*so->so_proto->pr_usrreqs->pr_send)(so,
+	    top, NULL, NULL, l);
 	top = NULL;
  release:
 	sbunlock(&so->so_snd);

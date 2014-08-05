@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.142 2014/08/05 05:24:26 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.143 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.142 2014/08/05 05:24:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.143 2014/08/05 07:55:32 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -723,6 +723,55 @@ rip_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
+rip_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct inpcb *inp = sotoinpcb(so);
+	int error = 0;
+	int s;
+
+	KASSERT(solocked(so));
+	KASSERT(inp != NULL);
+	KASSERT(m != NULL);
+
+	/*
+	 * Ship a packet out.  The appropriate raw output
+	 * routine handles any massaging necessary.
+	 */
+	if (control && control->m_len) {
+		m_freem(control);
+		m_freem(m);
+		return EINVAL;
+	}
+
+	s = splsoftnet();
+	if (nam) {
+		if ((so->so_state & SS_ISCONNECTED) != 0) {
+			error = EISCONN;
+			goto die;
+		}
+		error = rip_connect_pcb(inp, nam);
+		if (error) {
+		die:
+			m_freem(m);
+			splx(s);
+			return error;
+		}
+	} else {
+		if ((so->so_state & SS_ISCONNECTED) == 0) {
+			error = ENOTCONN;
+			goto die;
+		}
+	}
+	error = rip_output(m, inp);
+	if (nam)
+		rip_disconnect1(inp);
+
+	splx(s);
+	return error;
+}
+
+static int
 rip_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
@@ -754,6 +803,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	s = splsoftnet();
@@ -770,7 +820,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(solocked(so));
 	inp = sotoinpcb(so);
 
-	KASSERT(!control || (req == PRU_SEND));
+	KASSERT(!control);
 	if (inp == NULL) {
 		splx(s);
 		return EINVAL;
@@ -784,41 +834,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_RCVD:
 		error = EOPNOTSUPP;
-		break;
-
-	/*
-	 * Ship a packet out.  The appropriate raw output
-	 * routine handles any massaging necessary.
-	 */
-	case PRU_SEND:
-		if (control && control->m_len) {
-			m_freem(control);
-			m_freem(m);
-			error = EINVAL;
-			break;
-		}
-	{
-		if (nam) {
-			if ((so->so_state & SS_ISCONNECTED) != 0) {
-				error = EISCONN;
-				goto die;
-			}
-			error = rip_connect_pcb(inp, nam);
-			if (error) {
-			die:
-				m_freem(m);
-				break;
-			}
-		} else {
-			if ((so->so_state & SS_ISCONNECTED) == 0) {
-				error = ENOTCONN;
-				goto die;
-			}
-		}
-		error = rip_output(m, inp);
-		if (nam)
-			rip_disconnect1(inp);
-	}
 		break;
 
 	default:
@@ -844,6 +859,7 @@ PR_WRAP_USRREQS(rip)
 #define	rip_peeraddr	rip_peeraddr_wrapper
 #define	rip_sockaddr	rip_sockaddr_wrapper
 #define	rip_recvoob	rip_recvoob_wrapper
+#define	rip_send	rip_send_wrapper
 #define	rip_sendoob	rip_sendoob_wrapper
 #define	rip_usrreq	rip_usrreq_wrapper
 
@@ -862,6 +878,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pr_peeraddr	= rip_peeraddr,
 	.pr_sockaddr	= rip_sockaddr,
 	.pr_recvoob	= rip_recvoob,
+	.pr_send	= rip_send,
 	.pr_sendoob	= rip_sendoob,
 	.pr_generic	= rip_usrreq,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.30 2014/08/05 05:24:26 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.31 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.30 2014/08/05 05:24:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.31 2014/08/05 07:55:32 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -291,6 +291,39 @@ rfcomm_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
+rfcomm_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+	int err = 0;
+	struct mbuf *m0;
+
+	KASSERT(solocked(so));
+	KASSERT(m != NULL);
+
+	if (control)	/* no use for that */
+		m_freem(control);
+
+	if (pcb == NULL) {
+		err = EINVAL;
+		goto release;
+	}
+
+	m0 = m_copypacket(m, M_DONTWAIT);
+	if (m0 == NULL) {
+		err = ENOMEM;
+		goto release;
+	}
+
+	sbappendstream(&so->so_snd, m);
+	return rfcomm_send_pcb(pcb, m0);
+
+release:
+	m_freem(m);
+	return err;
+}
+
+static int
 rfcomm_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
@@ -323,7 +356,6 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
 	struct rfcomm_dlc *pcb = up->so_pcb;
-	struct mbuf *m0;
 	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
@@ -341,6 +373,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	switch (req) {
@@ -353,22 +386,6 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_SEND:
-		KASSERT(m != NULL);
-
-		if (ctl)	/* no use for that */
-			m_freem(ctl);
-
-		m0 = m_copypacket(m, M_DONTWAIT);
-		if (m0 == NULL) {
-			err = ENOMEM;
-			goto release;
-		}
-
-		sbappendstream(&up->so_snd, m);
-
-		return rfcomm_send(pcb, m0);
-
 	case PRU_RCVD:
 		return rfcomm_rcvd(pcb, sbspace(&up->so_rcv));
 
@@ -560,6 +577,7 @@ PR_WRAP_USRREQS(rfcomm)
 #define	rfcomm_peeraddr		rfcomm_peeraddr_wrapper
 #define	rfcomm_sockaddr		rfcomm_sockaddr_wrapper
 #define	rfcomm_recvoob		rfcomm_recvoob_wrapper
+#define	rfcomm_send		rfcomm_send_wrapper
 #define	rfcomm_sendoob		rfcomm_sendoob_wrapper
 #define	rfcomm_usrreq		rfcomm_usrreq_wrapper
 
@@ -578,6 +596,7 @@ const struct pr_usrreqs rfcomm_usrreqs = {
 	.pr_peeraddr	= rfcomm_peeraddr,
 	.pr_sockaddr	= rfcomm_sockaddr,
 	.pr_recvoob	= rfcomm_recvoob,
+	.pr_send	= rfcomm_send,
 	.pr_sendoob	= rfcomm_sendoob,
 	.pr_generic	= rfcomm_usrreq,
 };

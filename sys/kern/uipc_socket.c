@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.231 2014/08/05 05:24:26 rtr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.232 2014/08/05 07:55:31 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.231 2014/08/05 05:24:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.232 2014/08/05 07:55:31 rtr Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -1052,8 +1052,8 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(so,
 				    top, control);
 			else
-				error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-				    PRU_SEND, top, addr, control, curlwp);
+				error = (*so->so_proto->pr_usrreqs->pr_send)(so,
+				    top, addr, control, l);
 			if (dontroute)
 				so->so_options &= ~SO_DONTROUTE;
 			if (resid > 0)

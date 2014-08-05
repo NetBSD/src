@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.35 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.36 2014/08/05 07:55:31 rtr Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.35 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.36 2014/08/05 07:55:31 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -324,8 +324,8 @@ nopages:
 				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(so,
 				    top, NULL);
 			else
-				error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-				    PRU_SEND, top, NULL, NULL, l);
+				error = (*so->so_proto->pr_usrreqs->pr_send)(so,
+				    top, NULL, NULL, l);
 			if (dontroute)
 				so->so_options &= ~SO_DONTROUTE;
 			if (resid > 0)
