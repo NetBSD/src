@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.62 2014/07/05 17:39:21 jakllsch Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.63 2014/08/05 17:25:16 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.62 2014/07/05 17:39:21 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.63 2014/08/05 17:25:16 jmcneill Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -450,6 +450,7 @@ wpi_dma_contig_alloc(bus_dma_tag_t tag, struct wpi_dma_info *dma, void **kvap,
 		goto fail;
 
 	memset(dma->vaddr, 0, size);
+	bus_dmamap_sync(dma->tag, dma->map, 0, size, BUS_DMASYNC_PREWRITE);
 
 	dma->paddr = dma->map->dm_segs[0].ds_addr;
 	if (kvap != NULL)
@@ -605,12 +606,14 @@ wpi_free_rpool(struct wpi_softc *sc)
 static int
 wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 {
+	bus_size_t size;
 	int i, error;
 
 	ring->cur = 0;
 
+	size = WPI_RX_RING_COUNT * sizeof (uint32_t);
 	error = wpi_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma,
-	    (void **)&ring->desc, WPI_RX_RING_COUNT * sizeof (uint32_t),
+	    (void **)&ring->desc, size,
 	    WPI_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -647,6 +650,9 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 
 		ring->desc[i] = htole32(rbuf->paddr);
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map, 0, size,
+	    BUS_DMASYNC_PREWRITE);
 
 	return 0;
 
@@ -711,6 +717,8 @@ wpi_alloc_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring, int count,
 
 	/* update shared page with ring's base address */
 	sc->shared->txbase[qid] = htole32(ring->desc_dma.paddr);
+	bus_dmamap_sync(sc->sc_dmat, sc->shared_dma.map, 0,
+	    sizeof(struct wpi_shared), BUS_DMASYNC_PREWRITE);
 
 	error = wpi_dma_contig_alloc(sc->sc_dmat, &ring->cmd_dma,
 	    (void **)&ring->cmd, count * sizeof (struct wpi_tx_cmd), 4,
@@ -1303,6 +1311,8 @@ wpi_load_firmware(struct wpi_softc *sc)
 	memcpy((char *)dma->vaddr + WPI_FW_INIT_DATA_MAXSZ, init_text,
 	    init_textsz);
 
+	bus_dmamap_sync(dma->tag, dma->map, 0, dma->size, BUS_DMASYNC_PREWRITE);
+
 	/* tell adapter where to find initialization images */
 	wpi_mem_lock(sc);
 	wpi_mem_write(sc, WPI_MEM_DATA_BASE, dma->paddr);
@@ -1332,6 +1342,8 @@ wpi_load_firmware(struct wpi_softc *sc)
 	memcpy(dma->vaddr, main_data, main_datasz);
 	memcpy((char *)dma->vaddr + WPI_FW_MAIN_DATA_MAXSZ, main_text,
 	    main_textsz);
+
+	bus_dmamap_sync(dma->tag, dma->map, 0, dma->size, BUS_DMASYNC_PREWRITE);
 
 	/* tell adapter where to find runtime images */
 	wpi_mem_lock(sc);
@@ -1995,6 +2007,16 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	ring->queued++;
 
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+	    data->map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, ring->cmd_dma.map, 0,
+	    ring->cmd_dma.size,
+	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map, 0,
+	    ring->desc_dma.size,
+	    BUS_DMASYNC_PREWRITE);
+
 	/* kick ring */
 	ring->cur = (ring->cur + 1) % WPI_TX_RING_COUNT;
 	WPI_WRITE(sc, WPI_TX_WIDX, ring->qid << 8 | ring->cur);
@@ -2290,6 +2312,7 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 	struct wpi_tx_ring *ring = &sc->cmdq;
 	struct wpi_tx_desc *desc;
 	struct wpi_tx_cmd *cmd;
+	struct wpi_dma_info *dma;
 
 	KASSERT(size <= sizeof cmd->data);
 
@@ -2302,10 +2325,16 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 	cmd->idx = ring->cur;
 	memcpy(cmd->data, buf, size);
 
+	dma = &ring->cmd_dma;
+	bus_dmamap_sync(dma->tag, dma->map, 0, dma->size, BUS_DMASYNC_PREWRITE);
+
 	desc->flags = htole32(WPI_PAD32(size) << 28 | 1 << 24);
 	desc->segs[0].addr = htole32(ring->cmd_dma.paddr +
 	    ring->cur * sizeof (struct wpi_tx_cmd));
 	desc->segs[0].len  = htole32(4 + size);
+
+	dma = &ring->desc_dma;
+	bus_dmamap_sync(dma->tag, dma->map, 0, dma->size, BUS_DMASYNC_PREWRITE);
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % WPI_CMD_RING_COUNT;
@@ -2627,6 +2656,9 @@ wpi_setup_beacon(struct wpi_softc *sc, struct ieee80211_node *ni)
 	desc->segs[1].addr = htole32(data->map->dm_segs[0].ds_addr);
 	desc->segs[1].len  = htole32(data->map->dm_segs[0].ds_len);
 
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % WPI_CMD_RING_COUNT;
 	WPI_WRITE(sc, WPI_TX_WIDX, ring->qid << 8 | ring->cur);
@@ -2856,6 +2888,9 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	desc->flags = htole32(WPI_PAD32(pktlen) << 28 | 1 << 24);
 	desc->segs[0].addr = htole32(data->map->dm_segs[0].ds_addr);
 	desc->segs[0].len  = htole32(data->map->dm_segs[0].ds_len);
+
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % WPI_CMD_RING_COUNT;
