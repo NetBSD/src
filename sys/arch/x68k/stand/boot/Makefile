@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2014/07/06 06:28:49 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.24 2014/08/05 13:49:04 isaki Exp $
 
 NOMAN=		# defined
 
@@ -22,7 +22,7 @@ BFDNAME=	a.out-m68k-netbsd
 STRIP?=		/usr/bin/strip
 OBJCOPY?=	/usr/bin/objcopy
 
-SRCS=		srt0.S boot.c conf.c exec_image.S
+SRCS=		srt0.S boot.c conf.c switch.c exec_image.S
 S=		${.CURDIR}/../../../..
 M=		${.CURDIR}/../..
 COMMONDIR=	$M/stand/common
