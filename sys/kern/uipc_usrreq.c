@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.166 2014/08/05 07:55:31 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.167 2014/08/05 08:52:10 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.166 2014/08/05 07:55:31 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.167 2014/08/05 08:52:10 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1120,7 +1120,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		goto bad;
 	}
 	pathbuf_destroy(pb);
-	if ((error = VOP_ACCESS(vp, VWRITE, curlwp->l_cred)) != 0)
+	if ((error = VOP_ACCESS(vp, VWRITE, l->l_cred)) != 0)
 		goto bad;
 	/* Acquire v_interlock to protect against unp_detach(). */
 	mutex_enter(vp->v_interlock);
@@ -1162,9 +1162,9 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			unp3->unp_addrlen = unp2->unp_addrlen;
 		}
 		unp3->unp_flags = unp2->unp_flags;
-		unp3->unp_connid.unp_pid = curlwp->l_proc->p_pid;
-		unp3->unp_connid.unp_euid = kauth_cred_geteuid(curlwp->l_cred);
-		unp3->unp_connid.unp_egid = kauth_cred_getegid(curlwp->l_cred);
+		unp3->unp_connid.unp_pid = l->l_proc->p_pid;
+		unp3->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
+		unp3->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
 		unp3->unp_flags |= UNP_EIDSVALID;
 		if (unp2->unp_flags & UNP_EIDSBIND) {
 			unp->unp_connid = unp2->unp_connid;
