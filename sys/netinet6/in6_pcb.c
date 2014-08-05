@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.127 2014/08/03 22:55:24 rmind Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.128 2014/08/05 05:24:27 rtr Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.127 2014/08/03 22:55:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.128 2014/08/05 05:24:27 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -362,7 +362,7 @@ in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 }
 
 int
-in6_pcbbind(void *v, struct mbuf *nam)
+in6_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct in6pcb *in6p = v;
 	struct sockaddr_in6 lsin6;
@@ -394,12 +394,12 @@ in6_pcbbind(void *v, struct mbuf *nam)
 	}
 
 	/* Bind address. */
-	error = in6_pcbbind_addr(in6p, sin6, curlwp);
+	error = in6_pcbbind_addr(in6p, sin6, l);
 	if (error)
 		return (error);
 
 	/* Bind port. */
-	error = in6_pcbbind_port(in6p, sin6, curlwp);
+	error = in6_pcbbind_port(in6p, sin6, l);
 	if (error) {
 		/*
 		 * Reset the address here to "any" so we don't "leak" the
@@ -540,7 +540,7 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	     in6p->in6p_laddr.s6_addr32[3] == 0))
 	{
 		if (in6p->in6p_lport == 0) {
-			error = in6_pcbbind(in6p, NULL);
+			error = in6_pcbbind(in6p, NULL, l);
 			if (error != 0)
 				return error;
 		}

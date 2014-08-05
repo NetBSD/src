@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.159 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.160 2014/08/05 05:24:26 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.159 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.160 2014/08/05 05:24:26 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -234,7 +234,7 @@ COMPATNAME(route_accept)(struct socket *so, struct mbuf *nam)
 }
 
 static int
-COMPATNAME(route_bind)(struct socket *so, struct mbuf *nam)
+COMPATNAME(route_bind)(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -242,7 +242,7 @@ COMPATNAME(route_bind)(struct socket *so, struct mbuf *nam)
 }
 
 static int
-COMPATNAME(route_listen)(struct socket *so)
+COMPATNAME(route_listen)(struct socket *so, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -250,7 +250,7 @@ COMPATNAME(route_listen)(struct socket *so)
 }
 
 static int
-COMPATNAME(route_connect)(struct socket *so, struct mbuf *nam)
+COMPATNAME(route_connect)(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 

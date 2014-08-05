@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.29 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.30 2014/08/05 05:24:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.29 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.30 2014/08/05 05:24:26 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -125,7 +125,7 @@ sco_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-sco_bind(struct socket *so, struct mbuf *nam)
+sco_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct sco_pcb *pcb = so->so_pcb;
 	struct sockaddr_bt *sa;
@@ -147,7 +147,7 @@ sco_bind(struct socket *so, struct mbuf *nam)
 }
 
 static int
-sco_listen(struct socket *so)
+sco_listen(struct socket *so, struct lwp *l)
 {
 	struct sco_pcb *pcb = so->so_pcb;
 
@@ -160,7 +160,7 @@ sco_listen(struct socket *so)
 }
 
 static int
-sco_connect(struct socket *so, struct mbuf *nam)
+sco_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct sco_pcb *pcb = so->so_pcb;
 	struct sockaddr_bt *sa;

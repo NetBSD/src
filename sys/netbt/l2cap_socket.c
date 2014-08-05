@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.27 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.28 2014/08/05 05:24:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.27 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.28 2014/08/05 05:24:26 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -134,7 +134,7 @@ l2cap_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-l2cap_bind(struct socket *so, struct mbuf *nam)
+l2cap_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
 	struct sockaddr_bt *sa;
@@ -156,7 +156,7 @@ l2cap_bind(struct socket *so, struct mbuf *nam)
 }
 
 static int
-l2cap_listen(struct socket *so)
+l2cap_listen(struct socket *so, struct lwp *l)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
 
@@ -169,7 +169,7 @@ l2cap_listen(struct socket *so)
 }
 
 static int
-l2cap_connect(struct socket *so, struct mbuf *nam)
+l2cap_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
 	struct sockaddr_bt *sa;

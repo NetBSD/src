@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.195 2014/08/02 03:55:26 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.196 2014/08/05 05:24:26 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.195 2014/08/02 03:55:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.196 2014/08/05 05:24:26 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -737,7 +737,7 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-tcp_bind(struct socket *so, struct mbuf *nam)
+tcp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
@@ -760,12 +760,12 @@ tcp_bind(struct socket *so, struct mbuf *nam)
 	switch (so->so_proto->pr_domain->dom_family) {
 #ifdef INET
 	case PF_INET:
-		error = in_pcbbind(inp, nam);
+		error = in_pcbbind(inp, nam, l);
 		break;
 #endif
 #ifdef INET6
 	case PF_INET6:
-		error = in6_pcbbind(in6p, nam);
+		error = in6_pcbbind(in6p, nam, l);
 		if (!error) {
 			/* mapped addr case */
 			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))
@@ -783,7 +783,7 @@ tcp_bind(struct socket *so, struct mbuf *nam)
 }
 
 static int
-tcp_listen(struct socket *so)
+tcp_listen(struct socket *so, struct lwp *l)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
@@ -805,14 +805,14 @@ tcp_listen(struct socket *so)
 	s = splsoftnet();
 #ifdef INET
 	if (inp && inp->inp_lport == 0) {
-		error = in_pcbbind(inp, NULL);
+		error = in_pcbbind(inp, NULL, l);
 		if (error)
 			goto release;
 	}
 #endif
 #ifdef INET6
 	if (in6p && in6p->in6p_lport == 0) {
-		error = in6_pcbbind(in6p, NULL);
+		error = in6_pcbbind(in6p, NULL, l);
 		if (error)
 			goto release;
 	}
@@ -827,7 +827,7 @@ release:
 }
 
 static int
-tcp_connect(struct socket *so, struct mbuf *nam)
+tcp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
@@ -854,21 +854,21 @@ tcp_connect(struct socket *so, struct mbuf *nam)
 #ifdef INET
 	if (inp) {
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind(inp, NULL);
+			error = in_pcbbind(inp, NULL, l);
 			if (error)
 				goto release;
 		}
-		error = in_pcbconnect(inp, nam, curlwp);
+		error = in_pcbconnect(inp, nam, l);
 	}
 #endif
 #ifdef INET6
 	if (in6p) {
 		if (in6p->in6p_lport == 0) {
-			error = in6_pcbbind(in6p, NULL);
+			error = in6_pcbbind(in6p, NULL, l);
 			if (error)
 				goto release;
 		}
-		error = in6_pcbconnect(in6p, nam, curlwp);
+		error = in6_pcbconnect(in6p, nam, l);
 		if (!error) {
 			/* mapped addr case */
 			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))

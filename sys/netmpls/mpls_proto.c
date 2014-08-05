@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.20 2014/07/31 05:37:00 rtr Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.21 2014/08/05 05:24:27 rtr Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.20 2014/07/31 05:37:00 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.21 2014/08/05 05:24:27 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -103,7 +103,7 @@ mpls_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-mpls_bind(struct socket *so, struct mbuf *nam)
+mpls_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -111,7 +111,7 @@ mpls_bind(struct socket *so, struct mbuf *nam)
 }
 
 static int
-mpls_listen(struct socket *so)
+mpls_listen(struct socket *so, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -119,7 +119,7 @@ mpls_listen(struct socket *so)
 }
 
 static int
-mpls_connect(struct socket *so, struct mbuf *nam)
+mpls_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.39 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.40 2014/08/05 05:24:27 rtr Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.39 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.40 2014/08/05 05:24:27 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -495,7 +495,7 @@ key_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-key_bind(struct socket *so, struct mbuf *nam)
+key_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -503,7 +503,7 @@ key_bind(struct socket *so, struct mbuf *nam)
 }
 
 static int
-key_listen(struct socket *so)
+key_listen(struct socket *so, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -511,7 +511,7 @@ key_listen(struct socket *so)
 }
 
 static int
-key_connect(struct socket *so, struct mbuf *nam)
+key_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 

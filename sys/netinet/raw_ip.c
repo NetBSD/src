@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.141 2014/08/03 11:44:52 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.142 2014/08/05 05:24:26 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.141 2014/08/03 11:44:52 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.142 2014/08/05 05:24:26 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -558,7 +558,7 @@ rip_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-rip_bind(struct socket *so, struct mbuf *nam)
+rip_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	struct sockaddr_in *addr;
@@ -596,7 +596,7 @@ release:
 }
 
 static int
-rip_listen(struct socket *so)
+rip_listen(struct socket *so, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -604,7 +604,7 @@ rip_listen(struct socket *so)
 }
 
 static int
-rip_connect(struct socket *so, struct mbuf *nam)
+rip_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;

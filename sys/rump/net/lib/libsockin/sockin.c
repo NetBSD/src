@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.54 2014/07/31 03:39:36 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.55 2014/08/05 05:24:27 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.54 2014/07/31 03:39:36 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.55 2014/08/05 05:24:27 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -69,9 +69,9 @@ static void	sockin_init(void);
 static int	sockin_attach(struct socket *, int);
 static void	sockin_detach(struct socket *);
 static int	sockin_accept(struct socket *, struct mbuf *);
-static int	sockin_bind(struct socket *, struct mbuf *);
-static int	sockin_listen(struct socket *);
-static int	sockin_connect(struct socket *, struct mbuf *);
+static int	sockin_bind(struct socket *, struct mbuf *, struct lwp *);
+static int	sockin_listen(struct socket *, struct lwp *);
+static int	sockin_connect(struct socket *, struct mbuf *, struct lwp *);
 static int	sockin_disconnect(struct socket *);
 static int	sockin_shutdown(struct socket *);
 static int	sockin_abort(struct socket *);
@@ -485,7 +485,7 @@ sockin_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-sockin_bind(struct socket *so, struct mbuf *nam)
+sockin_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 	KASSERT(nam != NULL);
@@ -496,7 +496,7 @@ sockin_bind(struct socket *so, struct mbuf *nam)
 }
 
 static int
-sockin_listen(struct socket *so)
+sockin_listen(struct socket *so, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -504,7 +504,7 @@ sockin_listen(struct socket *so)
 }
 
 static int
-sockin_connect(struct socket *so, struct mbuf *nam)
+sockin_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	int error = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.132 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.133 2014/08/05 05:24:27 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.132 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.133 2014/08/05 05:24:27 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -653,7 +653,7 @@ rip6_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-rip6_bind(struct socket *so, struct mbuf *nam)
+rip6_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
 	struct sockaddr_in6 *addr;
@@ -691,7 +691,7 @@ rip6_bind(struct socket *so, struct mbuf *nam)
 }
 
 static int
-rip6_listen(struct socket *so)
+rip6_listen(struct socket *so, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -699,7 +699,7 @@ rip6_listen(struct socket *so)
 }
 
 static int
-rip6_connect(struct socket *so, struct mbuf *nam)
+rip6_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
 	struct sockaddr_in6 *addr;

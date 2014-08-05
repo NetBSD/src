@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.164 2014/07/31 14:12:57 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.165 2014/08/05 05:24:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.164 2014/07/31 14:12:57 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.165 2014/08/05 05:24:26 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,7 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					 * intervening control ops, like
 					 * another connection.
 					 */
-					error = unp_connect(so, nam);
+					error = unp_connect(so, nam, l);
 				}
 			} else {
 				if ((so->so_state & SS_ISCONNECTED) == 0)
@@ -920,7 +920,7 @@ makeun(struct mbuf *nam, size_t *addrlen) {
 }
 
 static int
-unp_bind(struct socket *so, struct mbuf *nam)
+unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct sockaddr_un *sun;
 	struct unpcb *unp;
@@ -950,7 +950,7 @@ unp_bind(struct socket *so, struct mbuf *nam)
 	unp->unp_flags |= UNP_BUSY;
 	sounlock(so);
 
-	p = curlwp->l_proc;
+	p = l->l_proc;
 	sun = makeun(nam, &addrlen);
 
 	pb = pathbuf_create(sun->sun_path);
@@ -994,8 +994,8 @@ unp_bind(struct socket *so, struct mbuf *nam)
 	unp->unp_addrlen = addrlen;
 	unp->unp_addr = sun;
 	unp->unp_connid.unp_pid = p->p_pid;
-	unp->unp_connid.unp_euid = kauth_cred_geteuid(curlwp->l_cred);
-	unp->unp_connid.unp_egid = kauth_cred_getegid(curlwp->l_cred);
+	unp->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
+	unp->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
 	unp->unp_flags |= UNP_EIDSBIND;
 	VOP_UNLOCK(vp);
 	vput(nd.ni_dvp);
@@ -1011,7 +1011,7 @@ unp_bind(struct socket *so, struct mbuf *nam)
 }
 
 static int
-unp_listen(struct socket *so)
+unp_listen(struct socket *so, struct lwp *l)
 {
 	struct unpcb *unp = sotounpcb(so);
 
@@ -1064,7 +1064,7 @@ unp_abort(struct socket *so)
 }
 
 int
-unp_connect(struct socket *so, struct mbuf *nam)
+unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct sockaddr_un *sun;
 	vnode_t *vp;
