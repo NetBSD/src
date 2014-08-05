@@ -287,7 +287,7 @@ TARFLAGS=	`if tar $(GNUTARFLAGS) --version >/dev/null 2>&1; \
 		 fi`
 
 # Flags to give 'gzip' when making a distribution.
-GZIPFLAGS=	-9n
+GZIPFLAGS=	-9 ${GZIP_N_FLAG}
 
 ###############################################################################
 
