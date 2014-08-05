@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.20 2014/07/26 00:17:57 pgoyette Exp $	*/
+/*	$NetBSD: xhci.c,v 1.21 2014/08/05 06:35:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.20 2014/07/26 00:17:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.21 2014/08/05 06:35:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2457,10 +2457,10 @@ xhci_root_intr_abort(usbd_xfer_handle xfer)
 #endif
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-	if (xfer->pipe->intrxfer == xfer) {
-		DPRINTF(("%s: remove\n", __func__));
-		xfer->pipe->intrxfer = NULL;
-	}
+	KASSERT(xfer->pipe->intrxfer == xfer);
+
+	DPRINTF(("%s: remove\n", __func__));
+
 	xfer->status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
@@ -2865,10 +2865,7 @@ xhci_device_intr_abort(usbd_xfer_handle xfer)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	device_printf(sc->sc_dev, "%s %p\n", __func__, xfer);
-	/* XXX */
-	if (xfer->pipe->intrxfer == xfer) {
-		xfer->pipe->intrxfer = NULL;
-	}
+	KASSERT(xfer->pipe->intrxfer == xfer);
 	xfer->status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
