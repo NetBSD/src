@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.63 2014/08/05 17:25:16 jmcneill Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.64 2014/08/05 21:54:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.63 2014/08/05 17:25:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.64 2014/08/05 21:54:39 jmcneill Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -628,6 +628,14 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 		struct wpi_rx_data *data = &ring->data[i];
 		struct wpi_rbuf *rbuf;
 
+		error = bus_dmamap_create(sc->sc_dmat, WPI_RBUF_SIZE, 1,
+		    WPI_RBUF_SIZE, 0, BUS_DMA_NOWAIT, &data->map);
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "could not allocate rx dma map\n");
+			goto fail;
+		}
+
 		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
 			aprint_error_dev(sc->sc_dev,
@@ -647,6 +655,15 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 		MEXTADD(data->m, rbuf->vaddr, WPI_RBUF_SIZE, 0, wpi_free_rbuf,
 		    rbuf);
 		data->m->m_flags |= M_EXT_RW;
+
+		error = bus_dmamap_load(sc->sc_dmat, data->map,
+		    mtod(data->m, void *), WPI_RBUF_SIZE, NULL,
+		    BUS_DMA_NOWAIT | BUS_DMA_READ);
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "could not load mbuf: %d\n", error);
+			goto fail;
+		}
 
 		ring->desc[i] = htole32(rbuf->paddr);
 	}
@@ -690,8 +707,13 @@ wpi_free_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 	wpi_dma_contig_free(&ring->desc_dma);
 
 	for (i = 0; i < WPI_RX_RING_COUNT; i++) {
-		if (ring->data[i].m != NULL)
+		if (ring->data[i].m != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, ring->data[i].map);
 			m_freem(ring->data[i].m);
+		}
+		if (ring->data[i].map != NULL) {
+			bus_dmamap_destroy(sc->sc_dmat, ring->data[i].map);
+		}
 	}
 }
 
@@ -1451,6 +1473,8 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct mbuf *m, *mnew;
 	int data_off;
 
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD);
 	stat = (struct wpi_rx_stat *)(desc + 1);
 
 	if (stat->len > WPI_STAT_MAXLEN) {
@@ -1506,6 +1530,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 			return;
 		}
 	} else {
+		int error;
 
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 		if (mnew == NULL) {
@@ -1521,11 +1546,23 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 			rbuf);
 		mnew->m_flags |= M_EXT_RW;
 
+		bus_dmamap_unload(sc->sc_dmat, data->map);
 		m = data->m;
 		data->m = mnew;
 
+		error = bus_dmamap_load(sc->sc_dmat, data->map,
+		    mtod(data->m, void *), WPI_RBUF_SIZE, NULL,
+		    BUS_DMA_NOWAIT | BUS_DMA_READ);
+		if (error) {
+			panic("%s: bus_dmamap_load failed: %d\n",
+			    device_xname(sc->sc_dev), error);
+		}
+
 		/* update Rx descriptor */
 		ring->desc[ring->cur] = htole32(rbuf->paddr);
+		bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map, 0,
+		    ring->desc_dma.size,
+		    BUS_DMASYNC_PREWRITE);
 
 		m->m_data = (char*)m->m_data + data_off;
 		m->m_pkthdr.len = m->m_len = le16toh(head->len);
@@ -1655,10 +1692,16 @@ wpi_notif_intr(struct wpi_softc *sc)
 	struct ifnet *ifp =  ic->ic_ifp;
 	uint32_t hw;
 
+	bus_dmamap_sync(sc->sc_dmat, sc->shared_dma.map, 0,
+	    sizeof(struct wpi_shared), BUS_DMASYNC_POSTREAD);
+
 	hw = le32toh(sc->shared->next);
 	while (sc->rxq.cur != hw) {
 		struct wpi_rx_data *data = &sc->rxq.data[sc->rxq.cur];
 		struct wpi_rx_desc *desc = mtod(data->m, struct wpi_rx_desc *);
+
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD);
 
 		DPRINTFN(4, ("rx notification qid=%x idx=%d flags=%x type=%d "
 		    "len=%d\n", desc->qid, desc->idx, desc->flags,
