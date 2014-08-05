@@ -6,7 +6,7 @@ include		"arch/macppc/conf/std.macppc.g5"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.18 $"
+#ident 		"GENERIC-$Revision: 1.19 $"
 
 maxusers	32
 
@@ -197,7 +197,7 @@ pseudo-device	nsmb			# SMB requester
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
-options 	MEMORY_DISK_ROOT_SIZE=4224	# 2112 KiB
+options 	MEMORY_DISK_ROOT_SIZE=4472	# 2236 KiB
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	MAMBO
