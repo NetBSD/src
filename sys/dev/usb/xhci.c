@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.21 2014/08/05 06:35:24 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.22 2014/08/05 08:33:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.21 2014/08/05 06:35:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.22 2014/08/05 08:33:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2460,6 +2460,8 @@ xhci_root_intr_abort(usbd_xfer_handle xfer)
 	KASSERT(xfer->pipe->intrxfer == xfer);
 
 	DPRINTF(("%s: remove\n", __func__));
+
+	sc->sc_intrxfer = NULL;
 
 	xfer->status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
