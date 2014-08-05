@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2014/05/27 19:04:29 palle Exp $
+#	$NetBSD: Makefile,v 1.32 2014/08/05 15:40:58 apb Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -32,7 +32,7 @@ ${CRUNCHBIN}: ${CRUNCHBINDIR}/${CRUNCHBIN}
 
 netbsd.gz: ${KERNOBJDIR}/GENERIC/netbsd
 	-rm -f ${.TARGET}
-	${TOOL_GZIP} -9nc ${.ALLSRC} > ${.TARGET}
+	${TOOL_GZIP_N} -9c ${.ALLSRC} > ${.TARGET}
 
 clean:	localclean
 

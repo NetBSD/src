@@ -38,8 +38,8 @@ MKUBOOTIMAGEARGS+=      -n "$(MACHINE) ${_OSRELEASE} ($(KERNEL_BUILD:T))"
 MKUBOOTIMAGEARGS+=	-C gz
 
 SYSTEM_LD_TAIL_EXTRA+=; \
-	echo ${TOOL_GZIP} -9cn $@.bin '>' $@.bin.gz; \
-	${TOOL_GZIP} -9cn $@.bin > $@.bin.gz; \
+	echo ${TOOL_GZIP_N} -9c $@.bin '>' $@.bin.gz; \
+	${TOOL_GZIP_N} -9c $@.bin > $@.bin.gz; \
 	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub; \
 	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.54 2014/03/06 09:24:07 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.55 2014/08/05 15:40:59 apb Exp $
 #
 # Makefile for NetBSD
 #
@@ -120,8 +120,8 @@ MKUBOOTIMAGEARGS+=      -a ${TEXTADDR:C/....$/0000/} -e $(TEXTADDR)
 MKUBOOTIMAGEARGS+=      -n "NetBSD/$(MACHINE) ${_OSRELEASE} ($(KERNEL_BUILD:T))"
 
 SYSTEM_LD_TAIL_EXTRA+=; \
-	echo ${TOOL_GZIP} -9cn $@.bin '>' $@.bin.gz; \
-	${TOOL_GZIP} -9cn $@.bin > $@.bin.gz; \
+	echo ${TOOL_GZIP_N} -9c $@.bin '>' $@.bin.gz; \
+	${TOOL_GZIP_N} -9c $@.bin > $@.bin.gz; \
 	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub; \
 	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub
 
