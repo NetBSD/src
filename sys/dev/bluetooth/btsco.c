@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.32 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: btsco.c,v 1.33 2014/08/05 07:55:31 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.32 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.33 2014/08/05 07:55:31 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1123,7 +1123,7 @@ btsco_dev_ioctl(void *hdl, u_long cmd, void *addr, int flag,
 /*
  * Our transmit interrupt. This is triggered when a new block is to be
  * sent.  We send mtu sized chunks of the block as mbufs with external
- * storage to sco_send()
+ * storage to sco_send_pcb()
  */
 static void
 btsco_intr(void *arg)
@@ -1163,7 +1163,7 @@ btsco_intr(void *arg)
 		m->m_pkthdr.len = m->m_len = mlen;
 		sc->sc_tx_pending++;
 
-		if (sco_send(sc->sc_sco, m) > 0) {
+		if (sco_send_pcb(sc->sc_sco, m) > 0) {
 			sc->sc_tx_pending--;
 			break;
 		}

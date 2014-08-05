@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.49 2014/08/05 05:24:26 rtr Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.50 2014/08/05 07:55:31 rtr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.49 2014/08/05 05:24:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.50 2014/08/05 07:55:31 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -154,6 +154,48 @@ raw_setpeeraddr(struct rawcb *rp, struct mbuf *nam)
 }
 
 int
+raw_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct rawcb *rp = sotorawcb(so);
+	int error = 0;
+
+	KASSERT(rp != NULL);
+
+	/*
+	 * Ship a packet out.  The appropriate raw output
+	 * routine handles any massaging necessary.
+	 */
+	if (control && control->m_len) {
+		m_freem(control);
+		m_freem(m);
+		return EINVAL;
+	}
+	if (nam) {
+		if ((so->so_state & SS_ISCONNECTED) != 0) {
+			error = EISCONN;
+			goto die;
+		}
+		error = (*so->so_proto->pr_usrreqs->pr_connect)(so, nam, l);
+		if (error) {
+		die:
+			m_freem(m);
+			return error;
+		}
+	} else {
+		if ((so->so_state & SS_ISCONNECTED) == 0) {
+			error = ENOTCONN;
+			goto die;
+		}
+	}
+	error = (*so->so_proto->pr_output)(m, so);
+	if (nam)
+		raw_disconnect(rp);
+
+	return error;
+}
+
+int
 raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
@@ -174,12 +216,13 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	s = splsoftnet();
 	KERNEL_LOCK(1, NULL);
 
-	KASSERT(!control || req == PRU_SEND);
+	KASSERT(!control);
 	if (rp == NULL) {
 		error = EINVAL;
 		goto release;
@@ -198,39 +241,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_RCVD:
 		error = EOPNOTSUPP;
-		break;
-
-	/*
-	 * Ship a packet out.  The appropriate raw output
-	 * routine handles any massaging necessary.
-	 */
-	case PRU_SEND:
-		if (control && control->m_len) {
-			m_freem(control);
-			m_freem(m);
-			error = EINVAL;
-			break;
-		}
-		if (nam) {
-			if ((so->so_state & SS_ISCONNECTED) != 0) {
-				error = EISCONN;
-				goto die;
-			}
-			error = (*so->so_proto->pr_usrreqs->pr_connect)(so, nam, l);
-			if (error) {
-			die:
-				m_freem(m);
-				break;
-			}
-		} else {
-			if ((so->so_state & SS_ISCONNECTED) == 0) {
-				error = ENOTCONN;
-				goto die;
-			}
-		}
-		error = (*so->so_proto->pr_output)(m, so);
-		if (nam)
-			raw_disconnect(rp);
 		break;
 
 	default:

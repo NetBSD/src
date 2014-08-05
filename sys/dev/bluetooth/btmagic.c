@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.10 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.11 2014/08/05 07:55:31 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.10 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.11 2014/08/05 07:55:31 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -723,7 +723,7 @@ btmagic_ctl_send(struct btmagic_softc *sc, const uint8_t *data, size_t len)
 
 	memcpy(mtod(m, uint8_t *), data, len);
 	m->m_pkthdr.len = m->m_len = len;
-	return l2cap_send(sc->sc_ctl, m);
+	return l2cap_send_pcb(sc->sc_ctl, m);
 }
 
 /*

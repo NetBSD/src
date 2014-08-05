@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.214 2014/08/05 05:24:26 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.215 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.214 2014/08/05 05:24:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.215 2014/08/05 07:55:32 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1049,6 +1049,58 @@ udp_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
+udp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct inpcb *inp = sotoinpcb(so);
+	int error = 0;
+	struct in_addr laddr;			/* XXX */
+	int s;
+
+	KASSERT(solocked(so));
+	KASSERT(inp != NULL);
+	KASSERT(m != NULL);
+
+	if (control && control->m_len) {
+		m_freem(control);
+		m_freem(m);
+		return EINVAL;
+	}
+
+	memset(&laddr, 0, sizeof laddr);
+
+	s = splsoftnet();
+	if (nam) {
+		laddr = inp->inp_laddr;		/* XXX */
+		if ((so->so_state & SS_ISCONNECTED) != 0) {
+			error = EISCONN;
+			goto die;
+		}
+		error = in_pcbconnect(inp, nam, l);
+		if (error)
+			goto die;
+	} else {
+		if ((so->so_state & SS_ISCONNECTED) == 0) {
+			error = ENOTCONN;
+			goto die;
+		}
+	}
+	error = udp_output(m, inp);
+	m = NULL;
+	if (nam) {
+		in_pcbdisconnect(inp);
+		inp->inp_laddr = laddr;		/* XXX */
+		in_pcbstate(inp, INP_BOUND);	/* XXX */
+	}
+  die:
+	if (m)
+		m_freem(m);
+
+	splx(s);
+	return error;
+}
+
+static int
 udp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
@@ -1080,6 +1132,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	s = splsoftnet();
@@ -1096,7 +1149,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(solocked(so));
 	inp = sotoinpcb(so);
 
-	KASSERT(!control || req == PRU_SEND);
+	KASSERT(!control);
 	if (inp == NULL) {
 		splx(s);
 		return EINVAL;
@@ -1113,45 +1166,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_RCVD:
 		error = EOPNOTSUPP;
-		break;
-
-	case PRU_SEND:
-		if (control && control->m_len) {
-			m_freem(control);
-			m_freem(m);
-			error = EINVAL;
-			break;
-		}
-	{
-		struct in_addr laddr;			/* XXX */
-
-		memset(&laddr, 0, sizeof laddr);
-		if (nam) {
-			laddr = inp->inp_laddr;		/* XXX */
-			if ((so->so_state & SS_ISCONNECTED) != 0) {
-				error = EISCONN;
-				goto die;
-			}
-			error = in_pcbconnect(inp, nam, l);
-			if (error)
-				goto die;
-		} else {
-			if ((so->so_state & SS_ISCONNECTED) == 0) {
-				error = ENOTCONN;
-				goto die;
-			}
-		}
-		error = udp_output(m, inp);
-		m = NULL;
-		if (nam) {
-			in_pcbdisconnect(inp);
-			inp->inp_laddr = laddr;		/* XXX */
-			in_pcbstate(inp, INP_BOUND);	/* XXX */
-		}
-	  die:
-		if (m)
-			m_freem(m);
-	}
 		break;
 
 	default:
@@ -1394,6 +1408,7 @@ PR_WRAP_USRREQS(udp)
 #define	udp_peeraddr	udp_peeraddr_wrapper
 #define	udp_sockaddr	udp_sockaddr_wrapper
 #define	udp_recvoob	udp_recvoob_wrapper
+#define	udp_send	udp_send_wrapper
 #define	udp_sendoob	udp_sendoob_wrapper
 #define	udp_usrreq	udp_usrreq_wrapper
 
@@ -1412,6 +1427,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pr_peeraddr	= udp_peeraddr,
 	.pr_sockaddr	= udp_sockaddr,
 	.pr_recvoob	= udp_recvoob,
+	.pr_send	= udp_send,
 	.pr_sendoob	= udp_sendoob,
 	.pr_generic	= udp_usrreq,
 };

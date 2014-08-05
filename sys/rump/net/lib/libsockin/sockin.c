@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.55 2014/08/05 05:24:27 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.56 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.55 2014/08/05 05:24:27 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.56 2014/08/05 07:55:32 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -80,6 +80,8 @@ static int	sockin_stat(struct socket *, struct stat *);
 static int	sockin_peeraddr(struct socket *, struct mbuf *);
 static int	sockin_sockaddr(struct socket *, struct mbuf *);
 static int	sockin_recvoob(struct socket *, struct mbuf *, int);
+static int	sockin_send(struct socket *, struct mbuf *, struct mbuf *,
+			    struct mbuf *, struct lwp *);
 static int	sockin_sendoob(struct socket *, struct mbuf *, struct mbuf *);
 static int	sockin_usrreq(struct socket *, int, struct mbuf *,
 			      struct mbuf *, struct mbuf *, struct lwp *);
@@ -100,6 +102,7 @@ static const struct pr_usrreqs sockin_usrreqs = {
 	.pr_peeraddr = sockin_peeraddr,
 	.pr_sockaddr = sockin_sockaddr,
 	.pr_recvoob = sockin_recvoob,
+	.pr_send = sockin_send,
 	.pr_sendoob = sockin_sendoob,
 	.pr_generic = sockin_usrreq,
 };
@@ -597,6 +600,66 @@ sockin_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
+sockin_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct sockaddr *saddr;
+	struct msghdr mhdr;
+	size_t iov_max, i;
+	struct iovec iov_buf[32], *iov;
+	struct mbuf *m2;
+	size_t tot, n;
+	int error = 0;
+	int s;
+
+	bpf_mtap_af(&sockin_if, AF_UNSPEC, m);
+
+	memset(&mhdr, 0, sizeof(mhdr));
+
+	iov_max = 0;
+	for (m2 = m; m2 != NULL; m2 = m2->m_next) {
+		iov_max++;
+	}
+
+	if (iov_max <= __arraycount(iov_buf)) {
+		iov = iov_buf;
+	} else {
+		iov = kmem_alloc(sizeof(struct iovec) * iov_max,
+		    KM_SLEEP);
+	}
+
+	tot = 0;
+	for (i = 0, m2 = m; m2 != NULL; m2 = m2->m_next, i++) {
+		iov[i].iov_base = m2->m_data;
+		iov[i].iov_len = m2->m_len;
+		tot += m2->m_len;
+	}
+	mhdr.msg_iov = iov;
+	mhdr.msg_iovlen = i;
+	s = SO2S(so);
+
+	if (nam != NULL) {
+		saddr = mtod(nam, struct sockaddr *);
+		mhdr.msg_name = saddr;
+		mhdr.msg_namelen = saddr->sa_len;
+	}
+
+	rumpcomp_sockin_sendmsg(s, &mhdr, 0, &n);
+
+	if (iov != iov_buf)
+		kmem_free(iov, sizeof(struct iovec) * iov_max);
+
+	m_freem(m);
+	m_freem(control);
+
+	/* this assumes too many things to list.. buthey, testing */
+	if (!rump_threads)
+		sockin_process(so);
+
+	return error;
+}
+
+static int
 sockin_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
@@ -622,65 +685,10 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	switch (req) {
-	case PRU_SEND:
-	{
-		struct sockaddr *saddr;
-		struct msghdr mhdr;
-		size_t iov_max, i;
-		struct iovec iov_buf[32], *iov;
-		struct mbuf *m2;
-		size_t tot, n;
-		int s;
-
-		bpf_mtap_af(&sockin_if, AF_UNSPEC, m);
-
-		memset(&mhdr, 0, sizeof(mhdr));
-
-		iov_max = 0;
-		for (m2 = m; m2 != NULL; m2 = m2->m_next) {
-			iov_max++;
-		}
-
-		if (iov_max <= __arraycount(iov_buf)) {
-			iov = iov_buf;
-		} else {
-			iov = kmem_alloc(sizeof(struct iovec) * iov_max,
-			    KM_SLEEP);
-		}
-
-		tot = 0;
-		for (i = 0, m2 = m; m2 != NULL; m2 = m2->m_next, i++) {
-			iov[i].iov_base = m2->m_data;
-			iov[i].iov_len = m2->m_len;
-			tot += m2->m_len;
-		}
-		mhdr.msg_iov = iov;
-		mhdr.msg_iovlen = i;
-		s = SO2S(so);
-
-		if (nam != NULL) {
-			saddr = mtod(nam, struct sockaddr *);
-			mhdr.msg_name = saddr;
-			mhdr.msg_namelen = saddr->sa_len;
-		}
-
-		rumpcomp_sockin_sendmsg(s, &mhdr, 0, &n);
-
-		if (iov != iov_buf)
-			kmem_free(iov, sizeof(struct iovec) * iov_max);
-
-		m_freem(m);
-		m_freem(control);
-
-		/* this assumes too many things to list.. buthey, testing */
-		if (!rump_threads)
-			sockin_process(so);
-	}
-		break;
-
 	default:
 		panic("sockin_usrreq: IMPLEMENT ME, req %d not supported", req);
 	}

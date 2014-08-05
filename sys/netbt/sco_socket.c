@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.30 2014/08/05 05:24:26 rtr Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.31 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.30 2014/08/05 05:24:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.31 2014/08/05 07:55:32 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -274,6 +274,47 @@ sco_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
+sco_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+	int err = 0;
+	struct mbuf *m0;
+
+	KASSERT(solocked(so));
+	KASSERT(m != NULL);
+
+	if (control) /* no use for that */
+		m_freem(control);
+
+	if (pcb == NULL) {
+		err = EINVAL;
+		goto release;
+	}
+
+	if (m->m_pkthdr.len == 0)
+		goto release;
+
+	if (m->m_pkthdr.len > pcb->sp_mtu) {
+		err = EMSGSIZE;
+		goto release;
+	}
+
+	m0 = m_copypacket(m, M_DONTWAIT);
+	if (m0 == NULL) {
+		err = ENOMEM;
+		goto release;
+	}
+
+	sbappendrecord(&so->so_snd, m);
+	return sco_send_pcb(pcb, m0);
+
+release:
+	m_freem(m);
+	return err;
+}
+
+static int
 sco_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
@@ -302,7 +343,6 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
 	struct sco_pcb *pcb = (struct sco_pcb *)up->so_pcb;
-	struct mbuf *m0;
 	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
@@ -320,6 +360,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	switch(req) {
@@ -334,28 +375,6 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_SEND:
-		KASSERT(m != NULL);
-		if (m->m_pkthdr.len == 0)
-			break;
-
-		if (m->m_pkthdr.len > pcb->sp_mtu) {
-			err = EMSGSIZE;
-			break;
-		}
-
-		m0 = m_copypacket(m, M_DONTWAIT);
-		if (m0 == NULL) {
-			err = ENOMEM;
-			break;
-		}
-
-		if (ctl) /* no use for that */
-			m_freem(ctl);
-
-		sbappendrecord(&up->so_snd, m);
-		return sco_send(pcb, m0);
-
 	case PRU_RCVD:
 		return EOPNOTSUPP;	/* (no release) */
 
@@ -514,6 +533,7 @@ PR_WRAP_USRREQS(sco)
 #define	sco_peeraddr		sco_peeraddr_wrapper
 #define	sco_sockaddr		sco_sockaddr_wrapper
 #define	sco_recvoob		sco_recvoob_wrapper
+#define	sco_send		sco_send_wrapper
 #define	sco_sendoob		sco_sendoob_wrapper
 #define	sco_usrreq		sco_usrreq_wrapper
 
@@ -532,6 +552,7 @@ const struct pr_usrreqs sco_usrreqs = {
 	.pr_peeraddr	= sco_peeraddr,
 	.pr_sockaddr	= sco_sockaddr,
 	.pr_recvoob	= sco_recvoob,
+	.pr_send	= sco_send,
 	.pr_sendoob	= sco_sendoob,
 	.pr_generic	= sco_usrreq,
 };

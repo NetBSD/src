@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.28 2014/08/05 05:24:26 rtr Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.29 2014/08/05 07:55:31 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.28 2014/08/05 05:24:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.29 2014/08/05 07:55:31 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -283,6 +283,49 @@ l2cap_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
+l2cap_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct l2cap_channel *pcb = so->so_pcb;
+	struct mbuf *m0;
+	int error = 0;
+
+	KASSERT(solocked(so));
+	KASSERT(m != NULL);
+
+	if (control)
+		m_freem(control);
+
+	if (pcb == NULL) {
+		error = EINVAL;
+		goto release;
+	}
+
+	if (m->m_pkthdr.len == 0)
+		goto release;
+
+	if (m->m_pkthdr.len > pcb->lc_omtu) {
+		error = EMSGSIZE;
+		goto release;
+	}
+
+	m0 = m_copypacket(m, M_DONTWAIT);
+	if (m0 == NULL) {
+		error = ENOMEM;
+		goto release;
+	}
+
+	sbappendrecord(&so->so_snd, m);
+	return l2cap_send_pcb(pcb, m0);
+
+release:
+	if (m)
+		m_freem(m);
+
+	return error;
+}
+
+static int
 l2cap_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
@@ -315,7 +358,6 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
 	struct l2cap_channel *pcb = up->so_pcb;
-	struct mbuf *m0;
 	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
@@ -333,6 +375,7 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	switch (req) {
@@ -346,28 +389,6 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_SEND:
-		KASSERT(m != NULL);
-		if (m->m_pkthdr.len == 0)
-			break;
-
-		if (m->m_pkthdr.len > pcb->lc_omtu) {
-			err = EMSGSIZE;
-			break;
-		}
-
-		m0 = m_copypacket(m, M_DONTWAIT);
-		if (m0 == NULL) {
-			err = ENOMEM;
-			break;
-		}
-
-		if (ctl)	/* no use for that */
-			m_freem(ctl);
-
-		sbappendrecord(&up->so_snd, m);
-		return l2cap_send(pcb, m0);
-
 	case PRU_RCVD:
 		return EOPNOTSUPP;	/* (no release) */
 
@@ -547,6 +568,7 @@ PR_WRAP_USRREQS(l2cap)
 #define	l2cap_peeraddr		l2cap_peeraddr_wrapper
 #define	l2cap_sockaddr		l2cap_sockaddr_wrapper
 #define	l2cap_recvoob		l2cap_recvoob_wrapper
+#define	l2cap_send		l2cap_send_wrapper
 #define	l2cap_sendoob		l2cap_sendoob_wrapper
 #define	l2cap_usrreq		l2cap_usrreq_wrapper
 
@@ -565,6 +587,7 @@ const struct pr_usrreqs l2cap_usrreqs = {
 	.pr_peeraddr	= l2cap_peeraddr,
 	.pr_sockaddr	= l2cap_sockaddr,
 	.pr_recvoob	= l2cap_recvoob,
+	.pr_send	= l2cap_send,
 	.pr_sendoob	= l2cap_sendoob,
 	.pr_generic	= l2cap_usrreq,
 };

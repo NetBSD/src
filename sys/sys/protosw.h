@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.57 2014/08/05 05:24:27 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.58 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -250,6 +250,8 @@ struct pr_usrreqs {
 	int	(*pr_peeraddr)(struct socket *, struct mbuf *);
 	int	(*pr_sockaddr)(struct socket *, struct mbuf *);
 	int	(*pr_recvoob)(struct socket *, struct mbuf *, int);
+	int	(*pr_send)(struct socket *, struct mbuf *, struct mbuf *,
+	    struct mbuf *, struct lwp *);
 	int	(*pr_sendoob)(struct socket *, struct mbuf *, struct mbuf *);
 	int	(*pr_generic)(struct socket *, int, struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct lwp *);
@@ -411,6 +413,16 @@ name##_recvoob_wrapper(struct socket *a,		\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
 	rv = name##_recvoob(a, b, c);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_send_wrapper(struct socket *a, struct mbuf *b,	\
+    struct mbuf *c, struct mbuf *d, struct lwp *e)	\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_send(a, b, c, d, e);		\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }							\

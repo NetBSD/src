@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.133 2014/08/05 05:24:27 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.134 2014/08/05 07:55:32 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.133 2014/08/05 05:24:27 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.134 2014/08/05 07:55:32 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -838,6 +838,61 @@ rip6_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
+rip6_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct in6pcb *in6p = sotoin6pcb(so);
+	struct sockaddr_in6 tmp;
+	struct sockaddr_in6 *dst;
+	int error = 0;
+
+	KASSERT(solocked(so));
+	KASSERT(in6p != NULL);
+	KASSERT(m != NULL);
+
+	/*
+	 * Ship a packet out. The appropriate raw output
+	 * routine handles any messaging necessary.
+	 */
+
+	/* always copy sockaddr to avoid overwrites */
+	if (so->so_state & SS_ISCONNECTED) {
+		if (nam) {
+			error = EISCONN;
+			goto release;
+		}
+		/* XXX */
+		sockaddr_in6_init(&tmp, &in6p->in6p_faddr, 0, 0, 0);
+		dst = &tmp;
+	} else {
+		if (nam == NULL) {
+			error = ENOTCONN;
+			goto release;
+		}
+		if (nam->m_len != sizeof(tmp)) {
+			error = EINVAL;
+			goto release;
+		}
+
+		tmp = *mtod(nam, struct sockaddr_in6 *);
+		dst = &tmp;
+
+		if (dst->sin6_family != AF_INET6) {
+			error = EAFNOSUPPORT;
+			goto release;
+		}
+	}
+	error = rip6_output(m, so, dst, control);
+	m = NULL;
+
+release:
+	if (m)
+		m_freem(m);
+
+	return error;
+}
+
+static int
 rip6_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
@@ -852,7 +907,6 @@ int
 rip6_usrreq(struct socket *so, int req, struct mbuf *m, 
 	struct mbuf *nam, struct mbuf *control, struct lwp *l)
 {
-	struct in6pcb *in6p = sotoin6pcb(so);
 	int error = 0;
 
 	KASSERT(req != PRU_ACCEPT);
@@ -867,6 +921,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	if (req == PRU_PURGEIF) {
@@ -882,47 +937,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;
-
-	/*
-	 * Ship a packet out. The appropriate raw output
-	 * routine handles any messaging necessary.
-	 */
-	case PRU_SEND:
-	{
-		struct sockaddr_in6 tmp;
-		struct sockaddr_in6 *dst;
-
-		/* always copy sockaddr to avoid overwrites */
-		if (so->so_state & SS_ISCONNECTED) {
-			if (nam) {
-				error = EISCONN;
-				break;
-			}
-			/* XXX */
-			sockaddr_in6_init(&tmp, &in6p->in6p_faddr, 0, 0, 0);
-			dst = &tmp;
-		} else {
-			if (nam == NULL) {
-				error = ENOTCONN;
-				break;
-			}
-			if (nam->m_len != sizeof(tmp)) {
-				error = EINVAL;
-				break;
-			}
-
-			tmp = *mtod(nam, struct sockaddr_in6 *);
-			dst = &tmp;
-
-			if (dst->sin6_family != AF_INET6) {
-				error = EAFNOSUPPORT;
-				break;
-			}
-		}
-		error = rip6_output(m, so, dst, control);
-		m = NULL;
-		break;
-	}
 
 	/*
 	 * Not supported.
@@ -993,6 +1007,7 @@ PR_WRAP_USRREQS(rip6)
 #define	rip6_peeraddr		rip6_peeraddr_wrapper
 #define	rip6_sockaddr		rip6_sockaddr_wrapper
 #define	rip6_recvoob		rip6_recvoob_wrapper
+#define	rip6_send		rip6_send_wrapper
 #define	rip6_sendoob		rip6_sendoob_wrapper
 #define	rip6_usrreq		rip6_usrreq_wrapper
 
@@ -1011,6 +1026,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pr_peeraddr	= rip6_peeraddr,
 	.pr_sockaddr	= rip6_sockaddr,
 	.pr_recvoob	= rip6_recvoob,
+	.pr_send	= rip6_send,
 	.pr_sendoob	= rip6_sendoob,
 	.pr_generic	= rip6_usrreq,
 };

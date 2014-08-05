@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.19 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.20 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.19 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.20 2014/08/05 07:55:32 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -382,14 +382,14 @@ rfcomm_listen_pcb(struct rfcomm_dlc *dlc)
 }
 
 /*
- * rfcomm_send(dlc, mbuf)
+ * rfcomm_send_pcb(dlc, mbuf)
  *
  * Output data on DLC. This is streamed data, so we add it
  * to our buffer and start the DLC, which will assemble
  * packets and send them if it can.
  */
 int
-rfcomm_send(struct rfcomm_dlc *dlc, struct mbuf *m)
+rfcomm_send_pcb(struct rfcomm_dlc *dlc, struct mbuf *m)
 {
 
 	if (dlc->rd_txbuf != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.17 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.18 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.17 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.18 2014/08/05 07:55:32 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -372,7 +372,7 @@ l2cap_listen_pcb(struct l2cap_channel *chan)
 }
 
 /*
- * l2cap_send(l2cap_channel, mbuf)
+ * l2cap_send_pcb(l2cap_channel, mbuf)
  *
  *	Output SDU on channel described by channel. This corresponds
  *	to "Send Data Request" in the L2CAP specification. The upper
@@ -394,7 +394,7 @@ l2cap_listen_pcb(struct l2cap_channel *chan)
  *	B-Frame header and start sending if we are not already
  */
 int
-l2cap_send(struct l2cap_channel *chan, struct mbuf *m)
+l2cap_send_pcb(struct l2cap_channel *chan, struct mbuf *m)
 {
 	l2cap_hdr_t *hdr;
 	int plen;

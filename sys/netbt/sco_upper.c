@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.15 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.16 2014/08/05 07:55:32 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.15 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.16 2014/08/05 07:55:32 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -261,7 +261,7 @@ sco_listen_pcb(struct sco_pcb *pcb)
 }
 
 /*
- * sco_send(pcb, mbuf)
+ * sco_send_pcb(pcb, mbuf)
  *
  *	Send data on SCO pcb.
  *
@@ -271,7 +271,7 @@ sco_listen_pcb(struct sco_pcb *pcb)
  * we can drop a record from the socket buffer.
  */
 int
-sco_send(struct sco_pcb *pcb, struct mbuf *m)
+sco_send_pcb(struct sco_pcb *pcb, struct mbuf *m)
 {
 	hci_scodata_hdr_t *hdr;
 	int plen;

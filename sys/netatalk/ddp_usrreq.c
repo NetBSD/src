@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.58 2014/08/05 05:24:26 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.59 2014/08/05 07:55:31 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.58 2014/08/05 05:24:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.59 2014/08/05 07:55:31 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -96,6 +96,7 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
 
 	ddp = sotoddpcb(so);
@@ -115,36 +116,6 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		goto release;
 	}
 	switch (req) {
-	case PRU_SEND:{
-			int s = 0;
-
-			if (addr) {
-				if (ddp->ddp_fsat.sat_port != ATADDR_ANYPORT) {
-					error = EISCONN;
-					break;
-				}
-				s = splnet();
-				error = at_pcbconnect(ddp, addr);
-				if (error) {
-					splx(s);
-					break;
-				}
-			} else {
-				if (ddp->ddp_fsat.sat_port == ATADDR_ANYPORT) {
-					error = ENOTCONN;
-					break;
-				}
-			}
-
-			error = ddp_output(m, ddp);
-			m = NULL;
-			if (addr) {
-				at_pcbdisconnect(ddp);
-				splx(s);
-			}
-		}
-		break;
-
 	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
@@ -565,6 +536,42 @@ ddp_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
+ddp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct ddpcb *ddp = sotoddpcb(so);
+	int error = 0;
+	int s;
+
+	KASSERT(solocked(so));
+	KASSERT(ddp != NULL);
+	KASSERT(nam != NULL);
+
+	if (nam) {
+		if (ddp->ddp_fsat.sat_port != ATADDR_ANYPORT)
+			return EISCONN;
+		s = splnet();
+		error = at_pcbconnect(ddp, nam);
+		if (error) {
+			splx(s);
+			return error;
+		}
+	} else {
+		if (ddp->ddp_fsat.sat_port == ATADDR_ANYPORT)
+			return ENOTCONN;
+	}
+
+	error = ddp_output(m, ddp);
+	m = NULL;
+	if (nam) {
+		at_pcbdisconnect(ddp);
+		splx(s);
+	}
+
+	return error;
+}
+
+static int
 ddp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
@@ -660,6 +667,7 @@ PR_WRAP_USRREQS(ddp)
 #define	ddp_peeraddr	ddp_peeraddr_wrapper
 #define	ddp_sockaddr	ddp_sockaddr_wrapper
 #define	ddp_recvoob	ddp_recvoob_wrapper
+#define	ddp_send	ddp_send_wrapper
 #define	ddp_sendoob	ddp_sendoob_wrapper
 #define	ddp_usrreq	ddp_usrreq_wrapper
 
@@ -678,6 +686,7 @@ const struct pr_usrreqs ddp_usrreqs = {
 	.pr_peeraddr	= ddp_peeraddr,
 	.pr_sockaddr	= ddp_sockaddr,
 	.pr_recvoob	= ddp_recvoob,
+	.pr_send	= ddp_send,
 	.pr_sendoob	= ddp_sendoob,
 	.pr_generic	= ddp_usrreq,
 };
