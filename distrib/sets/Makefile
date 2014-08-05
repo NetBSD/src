@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96 2014/06/09 01:17:44 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.97 2014/08/05 15:45:49 apb Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -16,7 +16,7 @@ all:
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 COMPRESS_PROGRAM=${TOOL_GZIP}
-GZIP_FLAGS= -n
+GZIP_FLAGS= ${GZIP_N_FLAG}
 
 SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} \
