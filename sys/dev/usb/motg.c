@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.4 2014/07/25 21:16:31 joerg Exp $	*/
+/*	$NetBSD: motg.c,v 1.5 2014/08/05 06:35:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.4 2014/07/25 21:16:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.5 2014/08/05 06:35:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1185,17 +1185,14 @@ motg_root_intr_abort(usbd_xfer_handle xfer)
 	struct motg_softc *sc = xfer->pipe->device->bus->hci_private;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(xfer->pipe->intrxfer == xfer);
 
 	sc->sc_intr_xfer = NULL;
 
-	if (xfer->pipe->intrxfer == xfer) {
-		DPRINTFN(MD_ROOT, ("motg_root_intr_abort: remove\n"));
-		xfer->pipe->intrxfer = 0;
-	}
-	xfer->status = USBD_CANCELLED;
 #ifdef DIAGNOSTIC
 	// XXX UXFER(xfer)->iinfo.isdone = 1;
 #endif
+	xfer->status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
 

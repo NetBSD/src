@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.226 2014/08/04 06:17:04 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.227 2014/08/05 06:35:24 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.226 2014/08/04 06:17:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.227 2014/08/05 06:35:24 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2609,10 +2609,10 @@ ehci_root_intr_abort(usbd_xfer_handle xfer)
 #endif
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-	if (xfer->pipe->intrxfer == xfer) {
-		DPRINTF(("ehci_root_intr_abort: remove\n"));
-		xfer->pipe->intrxfer = NULL;
-	}
+	KASSERT(xfer->pipe->intrxfer == xfer);
+
+	sc->sc_intrxfer = NULL;
+
 	xfer->status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
@@ -3832,10 +3832,8 @@ Static void
 ehci_device_intr_abort(usbd_xfer_handle xfer)
 {
 	DPRINTFN(1, ("ehci_device_intr_abort: xfer=%p\n", xfer));
-	if (xfer->pipe->intrxfer == xfer) {
-		DPRINTFN(1, ("echi_device_intr_abort: remove\n"));
-		xfer->pipe->intrxfer = NULL;
-	}
+	KASSERT(xfer->pipe->intrxfer == xfer);
+
 	/*
 	 * XXX - abort_xfer uses ehci_sync_hc, which syncs via the advance
 	 *       async doorbell. That's dependent on the async list, wheras
