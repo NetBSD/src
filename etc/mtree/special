@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.147 2014/05/19 05:43:35 uebayasi Exp $
+#	$NetBSD: special,v 1.148 2014/08/05 07:34:52 dholland Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -407,7 +407,7 @@
 ./var/cron/tabs/root		type=file mode=0600 tags=nodiff
 ./var/db			type=dir  mode=0755
 ./var/log			type=dir  mode=0755
-./var/log/authlog		type=file mode=0600 optional tags=exclude tags=nodiff
+./var/log/authlog		type=file mode=0600 optional tags=exclude
 ./var/log/lastlog		type=file mode=0664 gname=utmp tags=exclude
 ./var/log/lastlogx		type=file mode=0664 gname=utmp tags=exclude
 ./var/log/wtmp			type=file mode=0664 gname=utmp tags=exclude
