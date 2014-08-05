@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.1 2014/08/03 16:09:38 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.2 2014/08/05 08:39:39 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2115,8 +2115,7 @@ pm_mountall(void)
 					pm_i->bsdlabel[i].mnt_opts != NULL))
 				continue;
 			mnts[num_devs].mnt_opts = pm_i->bsdlabel[i].mnt_opts;
-			if (pm_i->bsdlabel[i].mounted != NULL &&
-					strlen(pm_i->bsdlabel[i].mounted) > 0) {
+			if (strlen(pm_i->bsdlabel[i].mounted) > 0) {
 				/* Device is already mounted. So, doing mount_null */
 				strlcpy(mnts[num_devs].dev, pm_i->bsdlabel[i].mounted, MOUNTLEN);
 				mnts[num_devs].mnt_opts = "-t null";
