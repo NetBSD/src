@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.137 2014/07/19 18:38:33 lneto Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.138 2014/08/05 18:45:35 martin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1200,6 +1200,8 @@
 ./usr/share/nls/zh_CN.UTF-8
 ./usr/share/nvi
 ./usr/share/nvi/catalog
+./usr/share/sysinst
+./usr/share/sysinst/catalog
 ./usr/share/tabset
 ./usr/share/tmac
 ./usr/share/tmac/mdoc
