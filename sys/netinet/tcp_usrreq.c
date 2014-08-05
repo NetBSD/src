@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.196 2014/08/05 05:24:26 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.197 2014/08/05 07:10:41 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.196 2014/08/05 05:24:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.197 2014/08/05 07:10:41 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -181,6 +181,9 @@ static int
 tcp_getpcb(struct socket *so, struct inpcb **inp,
     struct in6pcb **in6p, struct tcpcb **tp)
 {
+
+	KASSERT(solocked(so));
+
 	/*
 	 * When a TCP is attached to a socket, then there will be
 	 * a (struct inpcb) pointed at by the socket, and this
@@ -272,8 +275,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		splx(s);
 		return (0);
 	}
-
-	KASSERT(solocked(so));
 
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0) {
 		splx(s);
@@ -687,8 +688,6 @@ tcp_detach(struct socket *so)
 	struct tcpcb *tp = NULL;
 	int s;
 
-	KASSERT(solocked(so));
-
 	if (tcp_getpcb(so, &inp, &in6p, &tp) != 0)
 		return;
 
@@ -706,8 +705,6 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 	int ostate = 0;
 	int error = 0;
 	int s;
-
-	KASSERT(solocked(so));
 
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
 		return error;
@@ -745,8 +742,6 @@ tcp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	int s;
 	int error = 0;
 	int ostate = 0;
-
-	KASSERT(solocked(so));
 
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
 		return error;
@@ -792,8 +787,6 @@ tcp_listen(struct socket *so, struct lwp *l)
 	int ostate = 0;
 	int s;
 
-	KASSERT(solocked(so));
-
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
 		return error;
 
@@ -835,8 +828,6 @@ tcp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	int s;
 	int error = 0;
 	int ostate = 0;
-
-	KASSERT(solocked(so));
 
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
 		return error;
@@ -925,8 +916,6 @@ tcp_disconnect(struct socket *so)
 	int ostate = 0;
 	int s;
 
-	KASSERT(solocked(so));
-
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
 		return error;
 
@@ -961,8 +950,6 @@ tcp_shutdown(struct socket *so)
 	int ostate = 0;
 	int s;
 
-	KASSERT(solocked(so));
-
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
 		return error;
 
@@ -990,8 +977,6 @@ tcp_abort(struct socket *so)
 	int error = 0;
 	int ostate = 0;
 	int s;
-
-	KASSERT(solocked(so));
 
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
 		return error;
