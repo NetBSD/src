@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.825 2014/08/05 15:25:20 apb Exp $
+#	$NetBSD: bsd.own.mk,v 1.826 2014/08/05 15:51:23 apb Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1175,7 +1175,7 @@ ${var}?= no
 .endfor
 
 #
-# TOOL_GZIP and friends.  These might refer to TOOL_PIGS or to the host gzip.
+# TOOL_GZIP and friends.  These might refer to TOOL_PIGZ or to the host gzip.
 #
 .if ${USE_PIGZGZIP} != "no"
 TOOL_GZIP=		${TOOL_PIGZ}
