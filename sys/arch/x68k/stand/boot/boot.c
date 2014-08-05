@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.21 2014/07/06 08:10:21 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.22 2014/08/05 13:49:04 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -39,6 +39,7 @@
 
 #include "libx68k.h"
 #include "iocs.h"
+#include "switch.h"
 
 #include "exec_image.h"
 
@@ -122,6 +123,7 @@ help(void)
 #ifndef NETBOOT
 	printf("ls [dev:][directory]\n");
 #endif
+	printf("switch [show | key=val]\n");
 	printf("halt\nreboot\n");
 }
 
@@ -318,6 +320,8 @@ bootmenu(void)
 		else if (strcmp("halt", p) == 0 ||
 			 strcmp("reboot", p) == 0)
 			exit(0);
+		else if (strcmp("switch", p) == 0)
+			cmd_switch(options);
 #ifndef NETBOOT
 		else if (strcmp("ls", p) == 0)
 			cmd_ls(options);
