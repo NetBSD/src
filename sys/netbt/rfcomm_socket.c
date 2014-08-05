@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.29 2014/07/31 15:16:06 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.30 2014/08/05 05:24:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.29 2014/07/31 15:16:06 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.30 2014/08/05 05:24:26 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -142,7 +142,7 @@ rfcomm_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-rfcomm_bind(struct socket *so, struct mbuf *nam)
+rfcomm_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct rfcomm_dlc *pcb = so->so_pcb;
 	struct sockaddr_bt *sa;
@@ -164,7 +164,7 @@ rfcomm_bind(struct socket *so, struct mbuf *nam)
 }
 
 static int
-rfcomm_listen(struct socket *so)
+rfcomm_listen(struct socket *so, struct lwp *l)
 {
 	struct rfcomm_dlc *pcb = so->so_pcb;
 
@@ -177,7 +177,7 @@ rfcomm_listen(struct socket *so)
 }
 
 static int
-rfcomm_connect(struct socket *so, struct mbuf *nam)
+rfcomm_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct rfcomm_dlc *pcb = so->so_pcb;
 	struct sockaddr_bt *sa;
