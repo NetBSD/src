@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2013/12/26 20:19:17 apb Exp $
+#	$NetBSD: Makefile,v 1.47 2014/08/06 19:18:05 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -51,8 +51,9 @@ PRIMARY_YDATA=	africa antarctica asia australasia \
 YDATA=		$(PRIMARY_YDATA) pacificnew etcetera backward
 NDATA=		systemv factory
 TDATA=		$(YDATA) $(NDATA)
-TABDATA=	iso3166.tab zone.tab
-DATA=		$(YDATA) $(NDATA) leapseconds # yearistype.sh
+ZONETABLES=	zone1970.tab zone.tab
+TABDATA=	iso3166.tab leapseconds $(ZONETABLES)
+DATA=		$(YDATA) $(NDATA) $(TABDATA) # yearistype.sh
 
 TZBUILDDIR=	${.OBJDIR}/builddir
 
