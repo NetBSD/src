@@ -1,3 +1,7 @@
-# $NetBSD: md.mvmeppc,v 1.8 2008/11/29 17:57:34 tsutsui Exp $
+# $NetBSD: md.mvmeppc,v 1.9 2014/08/06 08:23:43 martin Exp $
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/boot.elf				base-sysutil-bin
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		share
