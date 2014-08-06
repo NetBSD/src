@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.229 2014/07/26 06:12:30 dholland Exp $
+# $NetBSD: md.sparc64,v 1.230 2014/08/06 08:23:43 martin Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -383,3 +383,7 @@
 ./usr/mdec/ofwboot.net				base-sysutil-bin
 ./usr/sbin/eeprom				base-sysutil-bin
 ./usr/sbin/ofctl				base-sysutil-bin
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		share
