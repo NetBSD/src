@@ -134,11 +134,13 @@ int radeon_fence_emit(struct radeon_device *rdev,
  * Checks the current fence value and wakes the fence queue
  * if the sequence number has increased (all asics).
  */
-void radeon_fence_process(struct radeon_device *rdev, int ring)
+static void radeon_fence_process_locked(struct radeon_device *rdev, int ring)
 {
 	uint64_t seq, last_seq, last_emitted;
 	unsigned count_loop = 0;
 	bool wake = false;
+
+	BUG_ON(!spin_is_locked(&rdev->fence_lock));
 
 	/* Note there is a scenario here for an infinite loop but it's
 	 * very unlikely to happen. For it to happen, the current polling
@@ -192,14 +194,18 @@ void radeon_fence_process(struct radeon_device *rdev, int ring)
 
 	if (wake)
 #ifdef __NetBSD__
-	{
-		spin_lock(&rdev->fence_lock);
 		DRM_SPIN_WAKEUP_ALL(&rdev->fence_queue, &rdev->fence_lock);
-		spin_unlock(&rdev->fence_lock);
-	}
 #else
 		wake_up_all(&rdev->fence_queue);
 #endif
+}
+
+void radeon_fence_process(struct radeon_device *rdev, int ring)
+{
+
+	spin_lock(&rdev->fence_lock);
+	radeon_fence_process_locked(rdev, ring);
+	spin_unlock(&rdev->fence_lock);
 }
 
 /**
@@ -234,11 +240,12 @@ static void radeon_fence_destroy(struct kref *kref)
 static bool radeon_fence_seq_signaled(struct radeon_device *rdev,
 				      u64 seq, unsigned ring)
 {
+	BUG_ON(!spin_is_locked(&rdev->fence_lock));
 	if (atomic64_read(&rdev->fence_drv[ring].last_seq) >= seq) {
 		return true;
 	}
 	/* poll new last sequence at least once */
-	radeon_fence_process(rdev, ring);
+	radeon_fence_process_locked(rdev, ring);
 	if (atomic64_read(&rdev->fence_drv[ring].last_seq) >= seq) {
 		return true;
 	}
@@ -283,6 +290,8 @@ static bool radeon_fence_any_seq_signaled(struct radeon_device *rdev, u64 *seq)
 {
 	unsigned i;
 
+	BUG_ON(!spin_is_locked(&rdev->fence_lock));
+
 	for (i = 0; i < RADEON_NUM_RINGS; ++i) {
 		if (seq[i] && radeon_fence_seq_signaled(rdev, seq[i], i))
 			return true;
@@ -312,6 +321,7 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 	bool signaled;
 	int i, r;
 
+	spin_lock(&rdev->fence_lock);
 	while (!radeon_fence_any_seq_signaled(rdev, target_seq)) {
 
 		/* Save current sequence values, used to check for GPU lockups */
@@ -325,7 +335,6 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 		}
 
 #ifdef __NetBSD__
-		spin_lock(&rdev->fence_lock);
 		if (intr)
 			DRM_SPIN_TIMED_WAIT_UNTIL(r, &rdev->fence_queue,
 			    &rdev->fence_lock, RADEON_FENCE_JIFFIES_TIMEOUT,
@@ -338,7 +347,6 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 			    ((signaled = radeon_fence_any_seq_signaled(rdev,
 				    target_seq))
 				|| rdev->needs_reset));
-		spin_unlock(&rdev->fence_lock);
 #else
 		if (intr) {
 			r = wait_event_interruptible_timeout(rdev->fence_queue, (
@@ -360,11 +368,13 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 		}
 
 		if (unlikely(r < 0))
-			return r;
+			goto out;
 
 		if (unlikely(!signaled)) {
-			if (rdev->needs_reset)
-				return -EDEADLK;
+			if (rdev->needs_reset) {
+				r = -EDEADLK;
+				goto out;
+			}
 
 			/* we were interrupted for some reason and fence
 			 * isn't signaled yet, resume waiting */
@@ -398,20 +408,19 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 					 target_seq[i], last_seq[i], i);
 
 				/* remember that we need an reset */
-#ifdef __NetBSD__
-				spin_lock(&rdev->fence_lock);
 				rdev->needs_reset = true;
+#ifdef __NetBSD__
 				DRM_SPIN_WAKEUP_ALL(&rdev->fence_queue,
 				    &rdev->fence_lock);
-				spin_unlock(&rdev->fence_lock);
 #else
-				rdev->needs_reset = true;
 				wake_up_all(&rdev->fence_queue);
 #endif
-				return -EDEADLK;
+				r = -EDEADLK;
+				goto out;
 			}
 		}
 	}
+out:	spin_unlock(&rdev->fence_lock);
 	return 0;
 }
 
