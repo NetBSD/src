@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $");
 
 #include <core/engine.h>
 #include <linux/swiotlb.h>
@@ -420,6 +420,58 @@ nouveau_bo_validate(struct nouveau_bo *nvbo, bool interruptible,
 	return 0;
 }
 
+#ifdef __NetBSD__
+/*
+ * XXX Can't use bus_space here because this is all mapped through the
+ * radeon_bo abstraction.  Can't assume we're x86 because this is
+ * Nouveau, not Intel.
+ */
+
+#  define	__iomem			volatile
+#  define	ioread16_native		fake_ioread16_native
+#  define	ioread32_native		fake_ioread32_native
+#  define	iowrite16_native	fake_iowrite16_native
+#  define	iowrite32_native	fake_iowrite32_native
+
+static inline uint16_t
+ioread16_native(const void __iomem *ptr)
+{
+	uint16_t v;
+
+	v = *(const uint16_t __iomem *)ptr;
+	membar_consumer();
+
+	return htole16(v);
+}
+
+static inline uint32_t
+ioread32_native(const void __iomem *ptr)
+{
+	uint32_t v;
+
+	v = *(const uint32_t __iomem *)ptr;
+	membar_consumer();
+
+	return htole32(v);
+}
+
+static inline uint16_t
+iowrite16_native(uint16_t v, const void __iomem *ptr)
+{
+
+	membar_producer();
+	*(const uint16_t __iomem *)ptr = le16toh(v);
+}
+
+static inline uint32_t
+iowrite32_native(uint32_t v, const void __iomem *ptr)
+{
+
+	membar_producer();
+	*(const uint32_t __iomem *)ptr = le32toh(v);
+}
+#endif
+
 u16
 nouveau_bo_rd16(struct nouveau_bo *nvbo, unsigned index)
 {
@@ -467,6 +519,14 @@ nouveau_bo_wr32(struct nouveau_bo *nvbo, unsigned index, u32 val)
 	else
 		*mem = val;
 }
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#  undef	ioread16_native
+#  undef	ioread32_native
+#  undef	iowrite16_native
+#  undef	iowrite32_native
+#endif
 
 static struct ttm_tt *
 nouveau_ttm_tt_create(struct ttm_bo_device *bdev, unsigned long size,
@@ -1345,6 +1405,7 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm)
 	if (ttm->state != tt_unpopulated)
 		return 0;
 
+#ifdef __NetBSD__		/* XXX drm prime */
 	if (slave && ttm->sg) {
 		/* make userspace faulting work */
 		drm_prime_sg_to_page_addr_arrays(ttm->sg, ttm->pages,
@@ -1352,6 +1413,7 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm)
 		ttm->state = tt_unbound;
 		return 0;
 	}
+#endif
 
 	drm = nouveau_bdev(ttm->bdev);
 	device = nv_device(drm->device);
@@ -1363,6 +1425,9 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm)
 	}
 #endif
 
+#ifdef __NetBSD__
+	return ttm_bus_dma_populate(ttm_dma);
+#else
 #ifdef CONFIG_SWIOTLB
 	if (swiotlb_nr_tbl()) {
 		return ttm_dma_populate((void *)ttm, dev->dev);
@@ -1388,6 +1453,7 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm)
 		}
 	}
 	return 0;
+#endif
 }
 
 static void
@@ -1397,7 +1463,9 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	struct nouveau_drm *drm;
 	struct nouveau_device *device;
 	struct drm_device *dev;
+#ifndef __NetBSD__
 	unsigned i;
+#endif
 	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
 
 	if (slave)
@@ -1414,6 +1482,9 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	}
 #endif
 
+#ifdef __NetBSD__
+	ttm_bus_dma_unpopulate(ttm_dma);
+#else
 #ifdef CONFIG_SWIOTLB
 	if (swiotlb_nr_tbl()) {
 		ttm_dma_unpopulate((void *)ttm, dev->dev);
@@ -1428,6 +1499,7 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	}
 
 	ttm_pool_unpopulate(ttm);
+#endif
 }
 
 void

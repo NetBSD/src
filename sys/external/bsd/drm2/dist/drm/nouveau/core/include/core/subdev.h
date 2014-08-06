@@ -10,7 +10,13 @@ struct nouveau_subdev {
 	struct nouveau_object base;
 	struct mutex mutex;
 	const char *name;
+#ifdef __NetBSD__
+	bus_space_tag_t mmiot;
+	bus_space_handle_t mmioh;
+	bus_size_t mmiosz;
+#else
 	void __iomem *mmio;
+#endif
 	u32 debug;
 	u32 unit;
 
@@ -60,7 +66,11 @@ static inline u8
 nv_rd08(void *obj, u32 addr)
 {
 	struct nouveau_subdev *subdev = nv_subdev(obj);
+#ifdef __NetBSD__
+	u8 data = bus_space_read_stream_1(subdev->mmiot, subdev->mmioh, addr);
+#else
 	u8 data = ioread8(subdev->mmio + addr);
+#endif
 	nv_spam(subdev, "nv_rd08 0x%06x 0x%02x\n", addr, data);
 	return data;
 }
@@ -69,7 +79,11 @@ static inline u16
 nv_rd16(void *obj, u32 addr)
 {
 	struct nouveau_subdev *subdev = nv_subdev(obj);
+#ifdef __NetBSD__
+	u16 data = bus_space_read_stream_2(subdev->mmiot, subdev->mmioh, addr);
+#else
 	u16 data = ioread16_native(subdev->mmio + addr);
+#endif
 	nv_spam(subdev, "nv_rd16 0x%06x 0x%04x\n", addr, data);
 	return data;
 }
@@ -78,7 +92,11 @@ static inline u32
 nv_rd32(void *obj, u32 addr)
 {
 	struct nouveau_subdev *subdev = nv_subdev(obj);
+#ifdef __NetBSD__
+	u32 data = bus_space_read_stream_4(subdev->mmiot, subdev->mmioh, addr);
+#else
 	u32 data = ioread32_native(subdev->mmio + addr);
+#endif
 	nv_spam(subdev, "nv_rd32 0x%06x 0x%08x\n", addr, data);
 	return data;
 }
@@ -88,7 +106,11 @@ nv_wr08(void *obj, u32 addr, u8 data)
 {
 	struct nouveau_subdev *subdev = nv_subdev(obj);
 	nv_spam(subdev, "nv_wr08 0x%06x 0x%02x\n", addr, data);
+#ifdef __NetBSD__
+	bus_space_write_stream_1(subdev->mmiot, subdev->mmioh, addr, data);
+#else
 	iowrite8(data, subdev->mmio + addr);
+#endif
 }
 
 static inline void
@@ -96,7 +118,11 @@ nv_wr16(void *obj, u32 addr, u16 data)
 {
 	struct nouveau_subdev *subdev = nv_subdev(obj);
 	nv_spam(subdev, "nv_wr16 0x%06x 0x%04x\n", addr, data);
+#ifdef __NetBSD__
+	bus_space_write_stream_2(subdev->mmiot, subdev->mmioh, addr, data);
+#else
 	iowrite16_native(data, subdev->mmio + addr);
+#endif
 }
 
 static inline void
@@ -104,7 +130,11 @@ nv_wr32(void *obj, u32 addr, u32 data)
 {
 	struct nouveau_subdev *subdev = nv_subdev(obj);
 	nv_spam(subdev, "nv_wr32 0x%06x 0x%08x\n", addr, data);
+#ifdef __NetBSD__
+	bus_space_write_stream_4(subdev->mmiot, subdev->mmioh, addr, data);
+#else
 	iowrite32_native(data, subdev->mmio + addr);
+#endif
 }
 
 static inline u32

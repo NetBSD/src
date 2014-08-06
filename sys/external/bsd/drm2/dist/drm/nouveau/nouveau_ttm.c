@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_ttm.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+/*	$NetBSD: nouveau_ttm.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Tungsten Graphics, Inc., Cedar Park, TX., USA,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_ttm.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_ttm.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $");
 
 #include <subdev/fb.h>
 #include <subdev/vm.h>
@@ -369,6 +369,11 @@ nouveau_ttm_init(struct nouveau_drm *drm)
 		     !pci_dma_supported(dev->pdev, DMA_BIT_MASK(bits)))
 			bits = 32;
 
+#ifdef __NetBSD__
+		ret = drm_limit_dma_space(dev, 0, DMA_BIT_MASK(bits));
+		if (ret)
+			return ret;
+#else
 		ret = pci_set_dma_mask(dev->pdev, DMA_BIT_MASK(bits));
 		if (ret)
 			return ret;
@@ -378,6 +383,7 @@ nouveau_ttm_init(struct nouveau_drm *drm)
 		if (ret)
 			pci_set_consistent_dma_mask(dev->pdev,
 						    DMA_BIT_MASK(32));
+#endif
 	}
 
 	ret = nouveau_ttm_global_init(drm);
@@ -387,7 +393,12 @@ nouveau_ttm_init(struct nouveau_drm *drm)
 	ret = ttm_bo_device_init(&drm->ttm.bdev,
 				  drm->ttm.bo_global_ref.ref.object,
 				  &nouveau_bo_driver,
+#ifdef __NetBSD__
+				  dev->bst,
+				  dev->dmat,
+#else
 				  dev->anon_inode->i_mapping,
+#endif
 				  DRM_FILE_PAGE_OFFSET,
 				  bits <= 32 ? true : false);
 	if (ret) {
