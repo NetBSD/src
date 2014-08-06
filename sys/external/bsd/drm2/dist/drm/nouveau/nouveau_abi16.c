@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_abi16.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+/*	$NetBSD: nouveau_abi16.c,v 1.2 2014/08/06 13:54:20 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_abi16.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_abi16.c,v 1.2 2014/08/06 13:54:20 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
@@ -230,7 +230,8 @@ nouveau_abi16_ioctl_getparam(ABI16_IOCTL_ARGS)
 		getparam->value = graph->units ? graph->units(graph) : 0;
 		break;
 	default:
-		nv_debug(device, "unknown parameter %lld\n", getparam->param);
+		nv_debug(device, "unknown parameter %"PRId64"\n",
+		    getparam->param);
 		return -EINVAL;
 	}
 
@@ -253,8 +254,6 @@ nouveau_abi16_ioctl_channel_alloc(ABI16_IOCTL_ARGS)
 	struct nouveau_abi16_chan *chan;
 	struct nouveau_client *client;
 	struct nouveau_device *device;
-	struct nouveau_instmem *imem;
-	struct nouveau_fb *pfb;
 	int ret;
 
 	if (unlikely(!abi16))
@@ -265,8 +264,6 @@ nouveau_abi16_ioctl_channel_alloc(ABI16_IOCTL_ARGS)
 
 	client = nv_client(abi16->client);
 	device = nv_device(abi16->device);
-	imem   = nouveau_instmem(device);
-	pfb    = nouveau_fb(device);
 
 	/* hack to allow channel engine type specification on kepler */
 	if (device->card_type >= NV_E0) {
@@ -407,7 +404,8 @@ nouveau_abi16_ioctl_notifierobj_alloc(ABI16_IOCTL_ARGS)
 	struct nouveau_abi16_chan *chan = NULL, *temp;
 	struct nouveau_abi16_ntfy *ntfy;
 	struct nouveau_object *object;
-	struct nv_dma_class args = {};
+	static const struct nv_dma_class zero_args;
+	struct nv_dma_class args = zero_args;
 	int ret;
 
 	if (unlikely(!abi16))
