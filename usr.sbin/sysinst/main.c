@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2014/08/06 09:11:46 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,6 +36,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 #include <sys/uio.h>
 #include <stdio.h>
 #include <signal.h>
@@ -275,13 +276,24 @@ select_language(void)
 	DIR *dir;
 	struct dirent *dirent;
 	char **lang_msg, **fnames;
+	char prefix[PATH_MAX], fname[PATH_MAX];
 	int max_lang = 16, num_lang = 0;
 	const char *cp;
 	menu_ent *opt = 0;
 	int lang_menu = -1;
 	int lang;
 
+#ifdef CATALOG_DIR
+	strcpy(prefix, CATALOG_DIR "/");
+	dir = opendir(CATALOG_DIR);
+	if (!dir) {
+		strcpy(prefix, "./");
+		dir = opendir(".");
+	}
+#else
 	dir = opendir(".");
+	strcpy(prefix, "./");
+#endif
 	if (!dir)
 		return;
 
@@ -297,7 +309,9 @@ select_language(void)
 	while ((dirent = readdir(dir)) != 0) {
 		if (memcmp(dirent->d_name, "sysinstmsgs.", 12))
 			continue;
-		if (msg_file(dirent->d_name))
+		strcpy(fname, prefix);
+		strcat(fname, dirent->d_name);
+		if (msg_file(fname))
 			continue;
 		cp = msg_string(MSG_sysinst_message_language);
 		if (!strcmp(cp, lang_msg[0]))
@@ -314,7 +328,7 @@ select_language(void)
 				break;
 			fnames = new;
 		}
-		fnames[num_lang] = strdup(dirent->d_name);
+		fnames[num_lang] = strdup(fname);
 		lang_msg[num_lang++] = strdup(cp);
 	}
 	msg_file(0);
