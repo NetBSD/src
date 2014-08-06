@@ -85,9 +85,9 @@ struct nv17_tv_encoder {
 #define to_tv_enc(x) container_of(nouveau_encoder(x),		\
 				  struct nv17_tv_encoder, base)
 
-extern char *nv17_tv_norm_names[NUM_TV_NORMS];
+extern const char *nv17_tv_norm_names[NUM_TV_NORMS];
 
-extern struct nv17_tv_norm_params {
+extern const struct nv17_tv_norm_params {
 	enum {
 		TV_ENC_MODE,
 		CTV_ENC_MODE,

@@ -9,7 +9,12 @@ struct nouveau_fifo_chan {
 	struct nouveau_namedb base;
 	struct nouveau_dmaobj *pushdma;
 	struct nouveau_gpuobj *pushgpu;
+#ifdef __NetBSD__
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+#else
 	void __iomem *user;
+#endif
 	u32 size;
 	u16 chid;
 	atomic_t refcnt; /* NV04_NVSW_SET_REF */
