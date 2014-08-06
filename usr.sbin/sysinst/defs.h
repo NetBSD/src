@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.3 2014/08/06 10:03:49 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -412,6 +412,10 @@ char dist_postfix[SSTRSIZE];
 /* needed prototypes */
 void set_menu_numopts(int, int);
 void remove_color_options(void);
+void remove_raid_options(void);
+void remove_lvm_options(void);
+void remove_cgd_options(void);
+void remove_gpt_options(void);
 
 /* Machine dependent functions .... */
 void	md_init(void);
