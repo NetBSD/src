@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.3 2014/08/06 13:54:10 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.3 2014/08/06 13:54:10 riastradh Exp $");
 
 #include <core/engine.h>
 #include <linux/swiotlb.h>
@@ -1405,7 +1405,7 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm)
 	if (ttm->state != tt_unpopulated)
 		return 0;
 
-#ifdef __NetBSD__		/* XXX drm prime */
+#ifndef __NetBSD__		/* XXX drm prime */
 	if (slave && ttm->sg) {
 		/* make userspace faulting work */
 		drm_prime_sg_to_page_addr_arrays(ttm->sg, ttm->pages,
