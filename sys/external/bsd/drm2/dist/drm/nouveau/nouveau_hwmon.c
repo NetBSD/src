@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_hwmon.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+
 /*
  * Copyright 2010 Red Hat Inc.
  *
@@ -21,6 +23,9 @@
  *
  * Authors: Ben Skeggs
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_hwmon.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
 
 #ifdef CONFIG_ACPI
 #include <linux/acpi.h>

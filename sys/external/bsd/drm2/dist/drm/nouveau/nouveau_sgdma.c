@@ -1,3 +1,8 @@
+/*	$NetBSD: nouveau_sgdma.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_sgdma.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
+
 #include <linux/pagemap.h>
 #include <linux/slab.h>
 

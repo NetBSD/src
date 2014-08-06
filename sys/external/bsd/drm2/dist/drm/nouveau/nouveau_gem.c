@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_gem.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+
 /*
  * Copyright (C) 2008 Ben Skeggs.
  * All Rights Reserved.
@@ -23,6 +25,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
 
 #include <subdev/fb.h>
 

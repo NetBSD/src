@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_ttm.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+
 /*
  * Copyright (c) 2007-2008 Tungsten Graphics, Inc., Cedar Park, TX., USA,
  * All Rights Reserved.
@@ -23,6 +25,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_ttm.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
 
 #include <subdev/fb.h>
 #include <subdev/vm.h>
