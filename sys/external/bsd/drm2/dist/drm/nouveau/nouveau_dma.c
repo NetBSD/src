@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dma.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dma.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,12 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dma.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dma.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $");
 
 #include <core/client.h>
 
 #include "nouveau_drm.h"
 #include "nouveau_dma.h"
+
+#ifdef __NetBSD__
+#  define	__iomem
+#  define	__force
+#endif
 
 void
 OUT_RINGp(struct nouveau_channel *chan, const void *data, unsigned nr_dwords)
@@ -46,6 +51,11 @@ OUT_RINGp(struct nouveau_channel *chan, const void *data, unsigned nr_dwords)
 		memcpy(mem, data, nr_dwords * 4);
 	chan->dma.cur += nr_dwords;
 }
+
+#ifdef __NetBSD__
+#  undef	__force
+#  undef	__iomem
+#endif
 
 /* Fetch and adjust GPU GET pointer
  *
