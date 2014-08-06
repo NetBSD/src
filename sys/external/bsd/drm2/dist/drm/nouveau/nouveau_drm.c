@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_drm.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+
 /*
  * Copyright 2012 Red Hat Inc.
  *
@@ -21,6 +23,9 @@
  *
  * Authors: Ben Skeggs
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/module.h>

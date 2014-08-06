@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_bios.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+
 /*
  * Copyright 2005-2006 Erik Waling
  * Copyright 2006 Stephane Marchesin
@@ -21,6 +23,9 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bios.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
 
 #include <subdev/bios.h>
 
