@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.5 2014/08/06 13:51:49 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.6 2014/08/06 15:01:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -105,5 +105,13 @@ mutex_lock_nest_lock(struct mutex *mutex, struct mutex *already)
 }
 
 #define	lockdep_assert_held(m)	do {} while (0)
+
+#define	SINGLE_DEPTH_NESTING	0
+
+static inline void
+mutex_lock_nested(struct mutex *mutex, unsigned subclass __unused)
+{
+	mutex_lock(mutex);
+}
 
 #endif  /* _LINUX_MUTEX_H_ */
