@@ -1,7 +1,11 @@
-#	$NetBSD: md.emips,v 1.1 2011/01/26 01:18:45 pooka Exp $
+#	$NetBSD: md.emips,v 1.2 2014/08/06 08:23:43 martin Exp $
 #
 ./boot.emips					base-sysutil-bin
 ./usr/mdec/boot.emips				base-sysutil-bin
 ./usr/mdec/bootxx_cd9660			base-sysutil-bin
 ./usr/mdec/bootxx_ffs				base-sysutil-bin
 ./usr/mdec/bootxx_lfs				base-sysutil-bin
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		share
