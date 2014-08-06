@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.3 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.4 2014/08/06 13:51:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -52,10 +52,28 @@ struct i2c_board_info {
 };
 
 static inline void
-i2c_new_device(struct i2c_adapter *adapter __unused,
-    struct i2c_board_info *board __unused)
+i2c_new_device(const struct i2c_adapter *adapter __unused,
+    const struct i2c_board_info *board __unused)
 {
 }
+
+struct i2c_driver {
+};
+
+struct module;
+static inline int
+i2c_register_driver(const struct module *owner __unused,
+    const struct i2c_driver *driver __unused)
+{
+	return 0;
+}
+
+static inline void
+i2c_del_driver(const struct i2c_driver *driver __unused)
+{
+}
+
+struct i2c_client;
 
 struct i2c_adapter {
 	char		 		name[I2C_NAME_SIZE];
