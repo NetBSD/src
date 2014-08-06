@@ -1,10 +1,6 @@
-# $NetBSD: md.mipsco,v 1.6 2014/08/06 08:23:43 martin Exp $
+# $NetBSD: md.mipsco,v 1.7 2014/08/06 12:15:01 martin Exp $
 ./boot						base-sysutil-bin
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/bootxx_cd9660			base-sysutil-bin
 ./usr/mdec/bootxx_ffs				base-sysutil-bin
 ./usr/mdec/installboot				base-sysutil-bin
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		share
