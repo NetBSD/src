@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.1 2014/08/06 13:36:07 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.2 2014/08/06 15:01:34 riastradh Exp $
 
 device	nouveau: drmkms, drmkms_pci, drmkms_ttm, genfb, wsemuldisplaydev
 attach	nouveau at pci
@@ -11,8 +11,24 @@ makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/core/incl
 makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG=1000"
 makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG_DEFAULT=6"
 
+makeoptions	nouveau	"CWARNFLAGS.nouveau_agp.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_bios.c"+="-Wno-shadow"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_bo.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_connector.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_core_client.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_core_gpuobj.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_core_ramht.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_display.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_dispnv04_dfp.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_dispnv04_tvnv04.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_bsp_nv84.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_bsp_nv98.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_dispnv04_tvmodesnv17.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_bsp_nvc0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_bsp_nve0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_copy_nva3.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_copy_nvc0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_copy_nve0.c"+="-Wno-missing-field-initializers"
 
 file	external/bsd/drm2/nouveau/nouveau_module.c	nouveau
 

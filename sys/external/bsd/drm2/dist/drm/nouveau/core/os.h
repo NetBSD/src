@@ -30,6 +30,7 @@
 
 #include <asm/unaligned.h>
 
+#ifndef __NetBSD__		/* XXX ioread */
 #ifndef ioread32_native
 #ifdef __BIG_ENDIAN
 #define ioread16_native ioread16be
@@ -43,5 +44,6 @@
 #define iowrite32_native iowrite32
 #endif /* def __BIG_ENDIAN else */
 #endif /* !ioread32_native */
+#endif
 
 #endif
