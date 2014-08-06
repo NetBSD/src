@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1957 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1958 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -461,3 +461,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	build: New BUILDINFO variable may be passed to build.sh, and exposed
 		in /etc/release, as well as in sysctl kern.buildinfo.
 		[apb 20140803]
+	zoneinfo: Import tzdata2014f. [apb 20140806]
