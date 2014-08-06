@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.24 2011/06/20 19:56:10 matt Exp $   */
+/*      $NetBSD: locore.S,v 1.25 2014/08/06 15:11:17 joerg Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -222,7 +222,7 @@ __start:
  */
 	mfpvr	3
 	rlwinm	3,3,16,16,31		/* CPU revision */
-	cmpi	0,3,9			/* 604e? */
+	cmpwi	%r3,9			/* 604e? */
 	bne	1f
 	mfspr	7,SPR_HID0
 	ori	7,7,HID0_SGE|HID0_BHT
