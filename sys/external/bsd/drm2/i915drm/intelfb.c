@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.6 2014/08/05 20:28:56 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.7 2014/08/06 22:16:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.6 2014/08/05 20:28:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.7 2014/08/06 22:16:38 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -90,6 +90,11 @@ static int	intelfb_genfb_ioctl(void *, void *, unsigned long, void *,
 static paddr_t	intelfb_genfb_mmap(void *, void *, off_t, int);
 static int	intelfb_genfb_enable_polling(void *);
 static int	intelfb_genfb_disable_polling(void *);
+static bool	intelfb_genfb_setmode(struct genfb_softc *, int);
+
+static const struct genfb_mode_callback intelfb_genfb_mode_callback = {
+	.gmc_setmode = intelfb_genfb_setmode,
+};
 
 CFATTACH_DECL_NEW(intelfb, sizeof(struct intelfb_softc),
     intelfb_match, intelfb_attach, intelfb_detach, NULL);
@@ -203,6 +208,9 @@ intelfb_setconfig_task(struct i915drmkms_task *task)
 	prop_dictionary_set_uint64(dict, "virtual_address",
 	    (uint64_t)(uintptr_t)bus_space_vaddr(sc->sc_ifa.ifa_fb_bst,
 		sc->sc_fb_bsh));
+
+	prop_dictionary_set_uint64(dict, "mode_callback",
+	    (uint64_t)(uintptr_t)&intelfb_genfb_mode_callback);
 
 	/* XXX Whattakludge!  */
 #if NVGA > 0
@@ -410,4 +418,16 @@ intelfb_genfb_disable_polling(void *cookie)
 	    struct intelfb_softc, sc_genfb);
 
 	return drm_fb_helper_debug_leave_fb(sc->sc_ifa.ifa_fb_helper);
+}
+
+static bool
+intelfb_genfb_setmode(struct genfb_softc *genfb, int mode)
+{
+	struct intelfb_softc *sc = (struct intelfb_softc *)genfb;
+
+	if (mode == WSDISPLAYIO_MODE_EMUL) {
+		drm_fb_helper_set_config(sc->sc_ifa.ifa_fb_helper);
+	}
+
+	return true;
 }
