@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.286 2014/08/05 18:13:46 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.287 2014/08/06 02:55:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.286 2014/08/05 18:13:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.287 2014/08/06 02:55:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -8325,21 +8325,24 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 	int32_t timeout;
 	uint32_t swsm;
 
-	/* Get the SW semaphore. */
-	timeout = 1000 + 1; /* XXX */
-	while (timeout) {
-		swsm = CSR_READ(sc, WMREG_SWSM);
+	if (sc->sc_flags & WM_F_LOCK_SWSM) {
+		/* Get the SW semaphore. */
+		timeout = 1000 + 1; /* XXX */
+		while (timeout) {
+			swsm = CSR_READ(sc, WMREG_SWSM);
 
-		if ((swsm & SWSM_SMBI) == 0)
-			break;
+			if ((swsm & SWSM_SMBI) == 0)
+				break;
 
-		delay(50);
-		timeout--;
-	}
+			delay(50);
+			timeout--;
+		}
 
-	if (timeout == 0) {
-		aprint_error_dev(sc->sc_dev, "could not acquire SWSM SMBI\n");
-		return 1;
+		if (timeout == 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "could not acquire SWSM SMBI\n");
+			return 1;
+		}
 	}
 
 	/* Get the FW semaphore. */
