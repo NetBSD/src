@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_machdep.h,v 1.3 2008/04/28 20:23:21 martin Exp $ */
+/* $NetBSD: loadfile_machdep.h,v 1.4 2014/08/06 21:57:49 joerg Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,9 +38,14 @@
 #define READ(f, b, c)		pread((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		vpbcopy((s), (void *)LOADADDR(d), (c))
 #define BZERO(d, c)		pbzero((void *)LOADADDR(d), (c))
-#define	WARN(a)			(void)(printf a, \
-				    printf((errno ? ": %s\n" : "\n"), \
-				    strerror(errno)))
+#define	WARN(a)			do { \
+					(void)printf a; \
+					if (errno) \
+						(void)printf(": %s\n", \
+						             strerror(errno)); \
+					else \
+						(void)printf("\n"); \
+				} while(/* CONSTCOND */0)
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
 #define DEALLOC(a, b)		dealloc(a, b)
