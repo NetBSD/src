@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.51 2014/07/25 08:32:21 dholland Exp $
+# $NetBSD: ad.arm,v 1.52 2014/08/06 08:23:43 martin Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -402,3 +402,8 @@
 ./usr/sbin/sbtool				base-sysutil-bin	endian=1234
 ./usr/sbin/tpctl				base-sysutil-bin
 ./usr/sbin/zzz					base-sysutil-bin
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		share
+

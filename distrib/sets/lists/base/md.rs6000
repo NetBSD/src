@@ -1,3 +1,7 @@
-# $NetBSD: md.rs6000,v 1.1 2009/04/30 12:47:40 tsutsui Exp $
+# $NetBSD: md.rs6000,v 1.2 2014/08/06 08:23:43 martin Exp $
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/mkbootimage				base-sysutil-bin
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		share

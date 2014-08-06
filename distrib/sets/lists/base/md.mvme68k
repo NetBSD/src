@@ -1,4 +1,4 @@
-# $NetBSD: md.mvme68k,v 1.22 2009/02/14 11:33:56 abs Exp $
+# $NetBSD: md.mvme68k,v 1.23 2014/08/06 08:23:43 martin Exp $
 ./usr/mdec/bootsd				base-sysutil-bin
 ./usr/mdec/bootst				base-sysutil-bin
 ./usr/mdec/bootxx				base-sysutil-bin
@@ -6,3 +6,7 @@
 ./usr/mdec/netboot				base-sysutil-bin
 ./usr/mdec/sboot				base-sysutil-bin
 ./usr/mdec/stboot				base-sysutil-bin
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		share

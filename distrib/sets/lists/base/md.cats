@@ -1,2 +1,3 @@
-# $NetBSD: md.cats,v 1.6 2010/03/14 09:52:00 mrg Exp $
+# $NetBSD: md.cats,v 1.7 2014/08/06 08:23:43 martin Exp $
 ./dev/pms0					base-obsolete		obsolete
+
