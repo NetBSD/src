@@ -1,4 +1,4 @@
-# $NetBSD: md.atari,v 1.53 2014/08/06 08:23:43 martin Exp $
+# $NetBSD: md.atari,v 1.54 2014/08/06 12:15:01 martin Exp $
 ./sbin/ahdilabel				base-sysutil-root
 ./sbin/binpatch					base-sysutil-root
 ./sbin/edahdi					base-sysutil-root
@@ -27,5 +27,3 @@
 ./usr/share/keymaps/atari/fr.map		base-sys-share
 ./usr/share/keymaps/atari/uk.map		base-sys-share
 ./usr/share/keymaps/atari/us.map		base-sys-share
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
-

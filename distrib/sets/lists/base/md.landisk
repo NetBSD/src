@@ -1,10 +1,6 @@
-# $NetBSD: md.landisk,v 1.6 2014/08/06 08:23:43 martin Exp $
+# $NetBSD: md.landisk,v 1.7 2014/08/06 12:15:01 martin Exp $
 ./usr/mdec/boot			base-sysutil-bin
 ./usr/mdec/bootxx_ffsv1		base-sysutil-bin
 ./usr/mdec/bootxx_ffsv2		base-sysutil-bin
 ./usr/mdec/bootxx_ustarfs	base-sysutil-bin
 ./usr/mdec/mbr			base-sysutil-bin
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		share

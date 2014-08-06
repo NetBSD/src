@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.41 2014/08/06 08:23:43 martin Exp $
+# $NetBSD: md.alpha,v 1.42 2014/08/06 12:15:01 martin Exp $
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/libalpha.so				base-sys-shlib
 ./usr/lib/libalpha.so.0				base-sys-shlib
@@ -19,7 +19,3 @@
 ./usr/mdec/setnetbootinfo			base-sysutil-bin
 ./usr/mdec/ustarboot				base-sysutil-bin
 ./usr/sbin/bad144				base-sysutil-bin
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		share
