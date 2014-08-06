@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2014/08/05 13:49:04 isaki Exp $
+#	$NetBSD: Makefile,v 1.25 2014/08/06 14:10:42 isaki Exp $
 
 NOMAN=		# defined
 
@@ -20,7 +20,6 @@ STRIPFLAG=
 
 BFDNAME=	a.out-m68k-netbsd
 STRIP?=		/usr/bin/strip
-OBJCOPY?=	/usr/bin/objcopy
 
 SRCS=		srt0.S boot.c conf.c switch.c exec_image.S
 S=		${.CURDIR}/../../../..
