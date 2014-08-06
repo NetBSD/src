@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.2 2014/08/05 08:39:39 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.3 2014/08/06 10:03:49 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2706,6 +2706,15 @@ partman(void)
 		have_lvm = binary_available("lvm");
 		have_gpt = binary_available("gpt");
 		have_dk = binary_available("dkctl");
+
+		if (!have_raid)
+			remove_raid_options();
+		if (!have_lvm)
+			remove_lvm_options();
+		if (!have_gpt)
+			remove_gpt_options();
+		if (!have_cgd)
+			remove_cgd_options();
 
 		raids_t_info = (structinfo_t) {
 			.max = MAX_RAID,
