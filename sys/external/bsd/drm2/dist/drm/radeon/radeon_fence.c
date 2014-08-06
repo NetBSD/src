@@ -265,13 +265,17 @@ bool radeon_fence_signaled(struct radeon_fence *fence)
 	if (!fence) {
 		return true;
 	}
+	spin_lock(&fence->rdev->fence_lock);
 	if (fence->seq == RADEON_FENCE_SIGNALED_SEQ) {
+		spin_unlock(&fence->rdev->fence_lock);
 		return true;
 	}
 	if (radeon_fence_seq_signaled(fence->rdev, fence->seq, fence->ring)) {
 		fence->seq = RADEON_FENCE_SIGNALED_SEQ;
+		spin_unlock(&fence->rdev->fence_lock);
 		return true;
 	}
+	spin_unlock(&fence->rdev->fence_lock);
 	return false;
 }
 
