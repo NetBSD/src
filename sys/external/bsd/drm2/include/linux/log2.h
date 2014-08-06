@@ -1,4 +1,4 @@
-/*	$NetBSD: log2.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: log2.h,v 1.5 2014/08/06 14:05:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -56,6 +56,14 @@ roundup_pow_of_two(unsigned long n)
 		n |= (n >> i);
 
 	return (n + 1);
+}
+
+static inline unsigned long
+rounddown_pow_of_two(unsigned long n)
+{
+
+	/* XXX fls64 is not fls_ulong, but it'll do for now.  */
+	return (1UL << (fls64(n) - 1));
 }
 
 static inline unsigned
