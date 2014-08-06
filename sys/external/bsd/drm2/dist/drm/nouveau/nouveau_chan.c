@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_chan.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+/*	$NetBSD: nouveau_chan.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_chan.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_chan.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
@@ -100,7 +100,8 @@ nouveau_channel_prep(struct nouveau_drm *drm, struct nouveau_cli *cli,
 	struct nouveau_vmmgr *vmm = nouveau_vmmgr(device);
 	struct nouveau_fb *pfb = nouveau_fb(device);
 	struct nouveau_client *client = &cli->base;
-	struct nv_dma_class args = {};
+	static const struct nv_dma_class zero_args;
+	struct nv_dma_class args = zero_args;
 	struct nouveau_channel *chan;
 	struct nouveau_object *push;
 	u32 target;
@@ -275,7 +276,8 @@ nouveau_channel_init(struct nouveau_channel *chan, u32 vram, u32 gart)
 	struct nouveau_fb *pfb = nouveau_fb(device);
 	struct nouveau_software_chan *swch;
 	struct nouveau_object *object;
-	struct nv_dma_class args = {};
+	static const struct nv_dma_class zero_args;
+	struct nv_dma_class args = zero_args;
 	int ret, i;
 
 	/* allocate dma objects to cover all allowed vram, and gart */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_core_object.c,v 1.1.1.1 2014/08/06 12:36:23 riastradh Exp $	*/
+/*	$NetBSD: nouveau_core_object.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_core_object.c,v 1.1.1.1 2014/08/06 12:36:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_core_object.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/parent.h>
@@ -35,7 +35,27 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_core_object.c,v 1.1.1.1 2014/08/06 12:36:23 
 
 #ifdef NOUVEAU_OBJECT_MAGIC
 static struct list_head _objlist = LIST_HEAD_INIT(_objlist);
+#ifdef __NetBSD__
+static spinlock_t _objlist_lock;
+#else
 static DEFINE_SPINLOCK(_objlist_lock);
+#endif
+#endif
+
+#ifdef __NetBSD__
+void
+nouveau_objects_init(void)
+{
+
+	spin_lock_init(&_objlist_lock);
+}
+
+void
+nouveau_objects_fini(void)
+{
+
+	spin_lock_destroy(&_objlist_lock);
+}
 #endif
 
 int
