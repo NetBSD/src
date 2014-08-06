@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:56:30 dholland Exp $	*/
+/*	$NetBSD: md.c,v 1.2 2014/08/06 12:34:42 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,7 +40,7 @@
 void
 md_init(void)
 {
-	errx(1, "sysinst has not been properly ported to this platform");
+	warnx("sysinst has not been properly ported to this platform");
 }
 
 void
