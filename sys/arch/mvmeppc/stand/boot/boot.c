@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 2014/08/06 13:55:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,6 +76,8 @@ struct bug_bootinfo	bug_bootinfo;
 struct mvmeppc_bootinfo	bootinfo;
 
 static u_int32_t ioctrl2cflag(u_int32_t);
+
+void main(void);
 
 void
 main(void)
