@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.6 2014/07/16 23:24:23 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.7 2014/08/06 13:52:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/agpvar.h>
 
+#include <linux/dma-mapping.h>
 #include <linux/ioport.h>
 
 struct pci_bus;
@@ -75,6 +76,7 @@ CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 #define	PCI_VENDOR_ID_IBM	PCI_VENDOR_IBM
 #define	PCI_VENDOR_ID_HP	PCI_VENDOR_HP
 #define	PCI_VENDOR_ID_INTEL	PCI_VENDOR_INTEL
+#define	PCI_VENDOR_ID_NVIDIA	PCI_VENDOR_NVIDIA
 #define	PCI_VENDOR_ID_SONY	PCI_VENDOR_SONY
 #define	PCI_VENDOR_ID_VIA	PCI_VENDOR_VIATECH
 
@@ -559,6 +561,17 @@ pci_is_pcie(struct pci_dev *pdev)
 {
 
 	return (pci_find_capability(pdev, PCI_CAP_PCIEXPRESS) != 0);
+}
+
+static inline bool
+pci_dma_supported(struct pci_dev *pdev, uintmax_t mask)
+{
+
+	/* XXX Cop-out.  */
+	if (mask > DMA_BIT_MASK(32))
+		return pci_dma64_available(&pdev->pd_pa);
+	else
+		return true;
 }
 
 #endif  /* _LINUX_PCI_H_ */
