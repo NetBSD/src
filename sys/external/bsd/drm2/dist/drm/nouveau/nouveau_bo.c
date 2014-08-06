@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.3 2014/08/06 13:54:10 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.4 2014/08/06 15:01:33 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.3 2014/08/06 13:54:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.4 2014/08/06 15:01:33 riastradh Exp $");
 
 #include <core/engine.h>
 #include <linux/swiotlb.h>
@@ -146,7 +146,11 @@ nouveau_bo_del_ttm(struct ttm_buffer_object *bo)
 	struct drm_device *dev = drm->dev;
 	struct nouveau_bo *nvbo = nouveau_bo(bo);
 
+#ifdef __NetBSD__
+	if (unlikely(nvbo->gem.gemo_shm_uao))
+#else
 	if (unlikely(nvbo->gem.filp))
+#endif
 		DRM_ERROR("bo %p still attached to GEM object\n", bo);
 	WARN_ON(nvbo->pin_refcnt > 0);
 	nv10_bo_put_tile_region(dev, nvbo->tile, NULL);
@@ -428,6 +432,7 @@ nouveau_bo_validate(struct nouveau_bo *nvbo, bool interruptible,
  */
 
 #  define	__iomem			volatile
+#  define	__force
 #  define	ioread16_native		fake_ioread16_native
 #  define	ioread32_native		fake_ioread32_native
 #  define	iowrite16_native	fake_iowrite16_native
@@ -455,20 +460,20 @@ ioread32_native(const void __iomem *ptr)
 	return htole32(v);
 }
 
-static inline uint16_t
-iowrite16_native(uint16_t v, const void __iomem *ptr)
+static inline void
+iowrite16_native(uint16_t v, void __iomem *ptr)
 {
 
 	membar_producer();
-	*(const uint16_t __iomem *)ptr = le16toh(v);
+	*(uint16_t __iomem *)ptr = le16toh(v);
 }
 
-static inline uint32_t
-iowrite32_native(uint32_t v, const void __iomem *ptr)
+static inline void
+iowrite32_native(uint32_t v, void __iomem *ptr)
 {
 
 	membar_producer();
-	*(const uint32_t __iomem *)ptr = le32toh(v);
+	*(uint32_t __iomem *)ptr = le32toh(v);
 }
 #endif
 
@@ -522,6 +527,7 @@ nouveau_bo_wr32(struct nouveau_bo *nvbo, unsigned index, u32 val)
 
 #ifdef __NetBSD__
 #  undef	__iomem
+#  undef	__force
 #  undef	ioread16_native
 #  undef	ioread32_native
 #  undef	iowrite16_native
@@ -1395,12 +1401,16 @@ static int
 nouveau_ttm_tt_populate(struct ttm_tt *ttm)
 {
 	struct ttm_dma_tt *ttm_dma = (void *)ttm;
+#ifndef __NetBSD__
 	struct nouveau_drm *drm;
 	struct nouveau_device *device;
 	struct drm_device *dev;
 	unsigned i;
 	int r;
+#endif
+#ifndef __NetBSD__		/* XXX drm prime */
 	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
+#endif
 
 	if (ttm->state != tt_unpopulated)
 		return 0;
@@ -1415,9 +1425,11 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm)
 	}
 #endif
 
+#ifndef __NetBSD__
 	drm = nouveau_bdev(ttm->bdev);
 	device = nv_device(drm->device);
 	dev = drm->dev;
+#endif
 
 #if __OS_HAS_AGP
 	if (drm->agp.stat == ENABLED) {
@@ -1460,10 +1472,10 @@ static void
 nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 {
 	struct ttm_dma_tt *ttm_dma = (void *)ttm;
+#ifndef __NetBSD__
 	struct nouveau_drm *drm;
 	struct nouveau_device *device;
 	struct drm_device *dev;
-#ifndef __NetBSD__
 	unsigned i;
 #endif
 	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
@@ -1471,9 +1483,11 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	if (slave)
 		return;
 
+#ifndef __NetBSD__
 	drm = nouveau_bdev(ttm->bdev);
 	device = nv_device(drm->device);
 	dev = drm->dev;
+#endif
 
 #if __OS_HAS_AGP
 	if (drm->agp.stat == ENABLED) {

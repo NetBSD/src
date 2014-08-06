@@ -156,6 +156,11 @@ nv_device_base(struct nouveau_device *device)
 					  &device->platformdev->dev;
 }
 
+#ifdef __NetBSD__
+bus_space_tag_t
+nv_device_resource_tag(struct nouveau_device *device, unsigned int bar);
+#endif
+
 resource_size_t
 nv_device_resource_start(struct nouveau_device *device, unsigned int bar);
 

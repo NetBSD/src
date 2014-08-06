@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_device.h,v 1.3 2014/08/06 13:52:22 riastradh Exp $	*/
+/*	$NetBSD: platform_device.h,v 1.4 2014/08/06 15:01:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 
 struct platform_device {
 	struct device	dev;	/* XXX DON'T BELIEVE ME */
+	uint64_t	id;
 };
 
 #endif  /* _LINUX_PLATFORM_DEVICE_H_ */

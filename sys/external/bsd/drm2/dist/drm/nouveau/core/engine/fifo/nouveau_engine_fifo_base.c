@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_fifo_base.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_fifo_base.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_base.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_base.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $");
 
 #include <core/client.h>
 #include <core/object.h>
@@ -91,10 +91,19 @@ nouveau_fifo_channel_create_(struct nouveau_object *parent,
 	}
 
 	/* map fifo control registers */
+#ifdef __NetBSD__
+	/* XXX errno NetBSD->Linux */
+	chan->bst = nv_device_resource_tag(device, bar)
+	ret = -bus_space_map(chan->bst, nv_device_resource_start(device, bar),
+	    (addr + (chan->chid * size)), 0, size, &chan->bsh);
+	if (ret)
+		return ret;
+#else
 	chan->user = ioremap(nv_device_resource_start(device, bar) + addr +
 			     (chan->chid * size), size);
 	if (!chan->user)
 		return -EFAULT;
+#endif
 
 	nouveau_event_trigger(priv->cevent, 0);
 
@@ -108,7 +117,11 @@ nouveau_fifo_channel_destroy(struct nouveau_fifo_chan *chan)
 	struct nouveau_fifo *priv = (void *)nv_object(chan)->engine;
 	unsigned long flags;
 
+#ifdef __NetBSD__
+	bus_space_unmap(chan->bst, chan->bsh, chan->size);
+#else
 	iounmap(chan->user);
+#endif
 
 	spin_lock_irqsave(&priv->lock, flags);
 	priv->channel[chan->chid] = NULL;

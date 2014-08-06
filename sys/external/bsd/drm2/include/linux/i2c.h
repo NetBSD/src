@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.4 2014/08/06 13:51:37 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.5 2014/08/06 15:01:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ struct i2c_msg;
 struct i2c_board_info {
 	char			type[I2C_NAME_SIZE];
 	uint16_t		addr;
+	void			*platform_data;
 };
 
 static inline void

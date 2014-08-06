@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv04_disp.c,v 1.1.1.1 2014/08/06 12:36:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv04_disp.c,v 1.2 2014/08/06 15:01:34 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Red Hat Inc.
@@ -25,7 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_disp.c,v 1.1.1.1 2014/08/06 12:36:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_disp.c,v 1.2 2014/08/06 15:01:34 riastradh Exp $");
+
+#include <linux/err.h>
 
 #include <core/object.h>
 #include <core/class.h>
