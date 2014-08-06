@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.6 2014/07/17 14:30:33 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.7 2014/08/06 13:50:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,14 +32,21 @@
 #ifndef _LINUX_BITOPS_H_
 #define _LINUX_BITOPS_H_
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/atomic.h>
-#include <sys/cdefs.h>
+#include <sys/bitops.h>
 
 #include <machine/limits.h>
 
 #include <lib/libkern/libkern.h>
+
+static inline unsigned long
+__ffs64(uint64_t x)
+{
+	return ffs64(x);
+}
 
 static inline unsigned int
 hweight16(uint16_t n)
