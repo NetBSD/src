@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_bo.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+
 /*
  * Copyright 2007 Dave Airlied
  * All Rights Reserved.
@@ -26,6 +28,9 @@
  *	    Ben Skeggs   <darktama@iinet.net.au>
  *	    Jeremy Kolb  <jkolb@brandeis.edu>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
 
 #include <core/engine.h>
 #include <linux/swiotlb.h>
