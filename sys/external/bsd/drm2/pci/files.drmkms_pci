@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms_pci,v 1.3 2014/07/16 20:59:58 riastradh Exp $
+#	$NetBSD: files.drmkms_pci,v 1.4 2014/08/06 13:54:40 riastradh Exp $
 
 define	drmkms_pci: drmkms
 
@@ -12,5 +12,5 @@ file	external/bsd/drm2/pci/drm_pci_module.c		drmkms_pci
 
 include "external/bsd/drm2/i915drm/files.i915drmkms"
 include "external/bsd/drm2/radeon/files.radeon"
-#include "external/bsd/drm2/nouveau/files.nouveaudrmkms"
+include "external/bsd/drm2/nouveau/files.nouveau"
 #...
