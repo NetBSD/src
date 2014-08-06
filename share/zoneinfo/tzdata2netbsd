@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.4 2014/08/04 21:56:30 apb Exp $
+# $NetBSD: tzdata2netbsd,v 1.5 2014/08/06 19:41:41 apb Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -12,8 +12,8 @@
 #    redo non-trivial work done by earlier runs.
 #
 
-OLDVER=2014c
-NEWVER=2014e
+OLDVER=2014e
+NEWVER=2014f
 
 # Uppercase variants of OLDVER and NEWVER
 OLDVER_UC="$( echo "${OLDVER}" | tr '[a-z]' '[A-Z]' )"
@@ -219,6 +219,7 @@ EOF
 		/^$/ { blankline = 1; havesentence = 0; }
 		/^  Changes affecting/ { goodsection = 0; }
 		/^  Changes affecting.*time/ { goodsection = 1; }
+		/^  Changes affecting.*data format/ { goodsection = 1; }
 		/^  Changes affecting.*documentation/ || \
 		/^  Changes affecting.*commentary/ {
 			t = gensub("^ *", "", 1, $0);
