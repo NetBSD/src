@@ -49,7 +49,12 @@ struct nouveau_fence_priv {
 	int  (*context_new)(struct nouveau_channel *);
 	void (*context_del)(struct nouveau_channel *);
 
+#ifdef __NetBSD__
+	spinlock_t waitlock;
+	drm_waitqueue_t waitqueue;
+#else
 	wait_queue_head_t waiting;
+#endif
 	bool uevent;
 };
 
