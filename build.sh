@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.289 2014/08/04 21:56:30 apb Exp $
+#	$NetBSD: build.sh,v 1.290 2014/08/06 12:29:13 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -766,7 +766,7 @@ getarch()
 			# remember that there was more than one match.
 			case "$found" in
 			'')	found="$line" ;;
-			*)	found="MULTIPLE_MATCHES" ; break ;;
+			*)	found="MULTIPLE_MATCHES" ;;
 			esac
 			;;
 		esac
@@ -1796,7 +1796,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.289 2014/08/04 21:56:30 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.290 2014/08/06 12:29:13 apb Exp $
 # with these arguments: ${_args}
 #
 
