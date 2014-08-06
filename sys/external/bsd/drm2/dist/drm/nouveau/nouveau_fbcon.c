@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_fbcon.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+
 /*
  * Copyright © 2007 David Airlie
  *
@@ -23,6 +25,9 @@
  * Authors:
  *     David Airlie
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
