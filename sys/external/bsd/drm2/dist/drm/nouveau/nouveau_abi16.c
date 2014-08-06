@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_abi16.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+
 /*
  * Copyright 2012 Red Hat Inc.
  *
@@ -20,6 +22,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_abi16.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
