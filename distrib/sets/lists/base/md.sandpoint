@@ -1,9 +1,5 @@
-# $NetBSD: md.sandpoint,v 1.9 2014/08/06 08:23:43 martin Exp $
+# $NetBSD: md.sandpoint,v 1.10 2014/08/06 12:15:01 martin Exp $
 ./dev/pms0					base-obsolete		obsolete
 ./usr/mdec/altboot				base-sysutil-bin
 ./usr/mdec/altboot.bin				base-sysutil-bin
 ./usr/mdec/altboot.img				base-sysutil-bin
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		share

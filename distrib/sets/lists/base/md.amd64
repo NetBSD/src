@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.242 2014/08/06 08:23:43 martin Exp $
+# $NetBSD: md.amd64,v 1.243 2014/08/06 12:15:01 martin Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -427,7 +427,3 @@
 ./usr/mdec/pxeboot_ia32_com0.bin		base-obsolete		obsolete
 ./usr/sbin/acpidump				base-sysutil-bin
 ./usr/sbin/amldb				base-sysutil-bin
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		share
