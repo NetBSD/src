@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2014/08/05 18:46:04 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2014/08/06 12:16:12 martin Exp $
 #
 # Makefile for sysinst
 
@@ -163,8 +163,8 @@ sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgto
 	${HOST_SH} ${MSG_XLAT_SH} -f sysinstmsgs.fmtcnt > ${.TARGET}
 
 DPSRCS+=	sysinstmsgs.${LANG}
-FILES+=		sysinstmsgs.${LANG}
-FILESDIR_sysinstmsgs.${LANG}=	${CATALOGDIR}
+# FILES+=		sysinstmsgs.${LANG}
+# FILESDIR_sysinstmsgs.${LANG}=	${CATALOGDIR}
 .endfor
 
 .include <bsd.prog.mk>
