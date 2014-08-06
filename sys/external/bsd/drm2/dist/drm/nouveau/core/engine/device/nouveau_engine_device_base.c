@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_device_base.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_device_base.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/device.h>
@@ -452,6 +452,24 @@ nouveau_device_dtor(struct nouveau_object *object)
 
 	nouveau_engine_destroy(&device->base);
 }
+
+#ifdef __NetBSD__
+bus_space_tag_t
+nv_device_resource_tag(struct nouveau_device *device, unsigned int bar)
+{
+	if (nv_device_is_pci(device)) {
+		const struct pci_attach_args *const pa = &device->pdev->pd_pa;
+		if (PCI_MAPREG_TYPE(pci_mapreg_type(pa->pa_pc, pa->pa_tag,
+			    PCI_BAR(bar))) == PCI_MAPREG_TYPE_MEM)
+			return pa->pa_memt;
+		else
+			return pa->pa_iot;
+	} else {
+		/* XXX nouveau platform device */
+		panic("can't handle non-PCI nouveau devices");
+	}
+}
+#endif
 
 resource_size_t
 nv_device_resource_start(struct nouveau_device *device, unsigned int bar)

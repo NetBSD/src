@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_display.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+/*	$NetBSD: nouveau_display.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_display.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_display.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $");
+
+#include <linux/err.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
@@ -87,7 +89,7 @@ calc(int blanks, int blanke, int total, int line)
 	return line;
 }
 
-int
+static int
 nouveau_display_scanoutpos_head(struct drm_crtc *crtc, int *vpos, int *hpos,
 				ktime_t *stime, ktime_t *etime)
 {
@@ -332,7 +334,7 @@ static const struct drm_mode_config_funcs nouveau_mode_config_funcs = {
 struct nouveau_drm_prop_enum_list {
 	u8 gen_mask;
 	int type;
-	char *name;
+	const char *name;
 };
 
 static struct nouveau_drm_prop_enum_list underscan[] = {

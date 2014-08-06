@@ -41,7 +41,7 @@ nv_object(void *obj)
 }
 
 #ifdef __NetBSD__
-void	nouveau_objcets_init(void);
+void	nouveau_objects_init(void);
 void	nouveau_objects_fini(void);
 #endif
 
