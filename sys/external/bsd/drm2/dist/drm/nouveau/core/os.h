@@ -21,6 +21,12 @@
 #include <linux/interrupt.h>
 #include <linux/log2.h>
 #include <linux/pm_runtime.h>
+#include <linux/atomic.h>
+#include <linux/bug.h>
+#include <linux/kernel.h>
+#include <linux/kref.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
 
 #include <asm/unaligned.h>
 
