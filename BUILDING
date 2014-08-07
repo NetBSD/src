@@ -846,10 +846,21 @@ BUILDING
 
      live-image    Perform ``make live-image''.
 
+     list-arch     Prints a list of valid MACHINE and MACHINE_ARCH settings,
+                   the default MACHINE_ARCH for each MACHINE, and aliases for
+                   MACHINE/MACHINE_ARCH pairs, and then exits.  The -m or -a
+                   options (or both) may be used to specify glob patterns that
+                   will be used to narrow the list of results; for example,
+                   ``build.sh -m 'evm*' -a '*arm*' list-arch'' will list all
+                   known MACHINE/MACHINE_ARCH values in which either MACHINE
+                   or ALIAS matches the pattern `evb*', and MACHINE_ARCH
+                   matches the pattern `*arm*'.
+
      The following command line options alter the behaviour of the build.sh
      operations described above:
 
-     -a arch   Set the value of MACHINE_ARCH to arch.
+     -a arch   Set the value of MACHINE_ARCH to arch.  See the -m option for
+               more information.
 
      -B buildid
                Set the value of BUILDID to buildid.  This will also append the
@@ -908,30 +919,19 @@ BUILDING
                relative path.  If the directory does not already exist,
                build.sh will create it.
 
-     -m mach   Set the value of MACHINE to mach, except in some special cases
-               listed below.  This will also override any value of
-               MACHINE_ARCH in the process environment with a value deduced
-               from mach, unless -a is specified.  All cross builds require
-               -m, but if unset on a NetBSD host, the host's value of MACHINE
-               will be detected and used automatically.
+     -m mach   Set the value of MACHINE to mach, unless the mach argument is
+               an alias that refers to a MACHINE/MACHINE_ARCH pair, in which
+               case both MACHINE and MACHINE_ARCH are set from the alias.
+               Such aliases are interpreted entirely by build.sh; they are not
+               used by any other part of the build system.  The MACHINE_ARCH
+               setting implied by mach will override any value of MACHINE_ARCH
+               in the process environment, but will not override a value set
+               by the -a option.  All cross builds require -m, but if unset on
+               a NetBSD host, the host's value of MACHINE will be detected and
+               used automatically.
 
-               Some machines support multiple values for MACHINE_ARCH.  The
-               following special cases for the mach argument are defined to
-               set the listed values of MACHINE and MACHINE_ARCH:
-
-                     mach          MACHINE    MACHINE_ARCH
-                     evbarm        evbarm     (not set)
-                     evbarm-eb     evbarm     armeb
-                     evbarm-el     evbarm     arm
-                     evbmips       evbmips    (not set)
-                     evbmips-eb    evbmips    mipseb
-                     evbmips-el    evbmips    mipsel
-                     evbsh3        evbsh3     (not set)
-                     evbsh3-eb     evbsh3     sh3eb
-                     evbsh3-el     evbsh3     sh3el
-                     sbmips        sbmips     (not set)
-                     sbmips-eb     sbmips     mipseb
-                     sbmips-el     sbmips     mipsel
+               See the list-arch operation for a way to get a list of valid
+               MACHINE and MACHINE_ARCH settings.
 
      -N noiselevel
                Set the ``noisyness'' level of the build, by setting
@@ -962,6 +962,16 @@ BUILDING
                because it is determined by complex rules that are influenced
                by the values of several variables and by the location of the
                source directory.
+
+               Note that placing the obj directory location outside of the
+               default source tree hierarchy makes it easier to manually clear
+               out old files in the event the ``make cleandir'' operation is
+               unable to do so.  (See CAVEATS below.)
+
+               Note also that use of one of -M or -O is the only means of
+               building multiple machine architecture userlands from the same
+               source tree without cleaning between builds (in which case, one
+               would specify distinct obj locations for each).
 
      -o        Set the value of MKOBJDIRS to ``no''.  Otherwise, it will be
                automatically set to ``yes''.  This default is opposite to the
@@ -1064,4 +1074,10 @@ HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as
      USE_NEW_TOOLCHAIN, and re-worked to TOOLCHAIN_MISSING after that.
 
-NetBSD                          August 3, 2014                          NetBSD
+CAVEATS
+     After significant updates to third-party components in the source tree,
+     the ``make cleandir'' operation may be insufficient to clean out old
+     files in object directories.  Instead, one may have to manually remove
+     the files.  Consult the UPDATING file for notices concerning this.
+
+NetBSD                          August 7, 2014                          NetBSD
