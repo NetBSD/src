@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.291 2014/08/07 15:15:48 apb Exp $
+#	$NetBSD: build.sh,v 1.292 2014/08/07 17:54:28 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -848,6 +848,57 @@ validatearch()
 	esac
 }
 
+# listarch -- list valid MACHINE/MACHINE_ARCH/ALIAS values,
+# optionally restricted to those where the MACHINE and/or MACHINE_ARCH
+# match specifed glob patterns.
+#
+listarch()
+{
+	local machglob="$1" archglob="$2"
+	local IFS
+	local wildcard="*"
+	local line xline frag
+	local line_matches_machine line_matches_arch
+	local found=false
+
+	# Empty machglob or archglob should match anything
+	: "${machglob:=${wildcard}}"
+	: "${archglob:=${wildcard}}"
+
+	IFS="${nl}"
+	for line in ${valid_MACHINE_ARCH}; do
+		line="${line%%#*}" # ignore comments
+		xline="$( IFS=" ${tab}" ; echo $line )" # normalise white space
+		[ -z "${xline}" ] && continue # skip blank or comment lines
+
+		line_matches_machine=false
+		line_matches_arch=false
+
+		IFS=" "
+		for frag in ${xline}; do
+			case "${frag}" in
+			MACHINE=${machglob})
+				line_matches_machine=true ;;
+			ALIAS=${machglob})
+				line_matches_machine=true ;;
+			MACHINE_ARCH=${archglob})
+				line_matches_arch=true ;;
+			esac
+		done
+
+		if $line_matches_machine && $line_matches_arch; then
+			found=true
+			echo "$line"
+		fi
+	done
+	if ! $found; then
+		echo >&2 "No match for" \
+		    "MACHINE=${machglob} MACHINE_ARCH=${archglob}"
+		return 1
+	fi
+	return 0
+}
+
 # nobomb_getmakevar --
 # Given the name of a make variable in $1, print make's idea of the
 # value of that variable, or return 1 if there's an error.
@@ -990,6 +1041,9 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     disk-image=target	Creae bootable disk image in
 			RELEASEDIR/RELEASEMACHINEDIR/binary/gzimg/target.img.gz.
     params              Display various make(1) parameters.
+    list-arch           Display a list of valid MACHINE/MACHINE_ARCH values,
+                        and exit.  The list may be narrowed by passing glob
+                        patterns or exact values in MACHINE or MACHINE_ARCH.
 
  Options:
     -a arch        Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
@@ -1121,7 +1175,6 @@ parseoptions()
 		-m)
 			eval ${optargcmd}
 			MACHINE="${OPTARG}"
-			[ "${opt_a}" != "yes" ] && getarch
 			;;
 
 		-N)
@@ -1250,6 +1303,11 @@ parseoptions()
 
 		help)
 			usage
+			;;
+
+		list-arch)
+			listarch "${MACHINE}" "${MACHINE_ARCH}"
+			exit $?
 			;;
 
 		makewrapper|cleandir|obj|tools|build|distribution|release|sets|sourcesets|syspkgs|params)
@@ -1800,7 +1858,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.291 2014/08/07 15:15:48 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.292 2014/08/07 17:54:28 apb Exp $
 # with these arguments: ${_args}
 #
 
