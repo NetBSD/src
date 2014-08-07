@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.40.2.1 2013/09/20 03:49:00 riz Exp $ */
+/* $NetBSD: piixpm.c,v 1.40.2.2 2014/08/07 08:13:44 msaitoh Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.40.2.1 2013/09/20 03:49:00 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.40.2.2 2014/08/07 08:13:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,7 +500,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		}
 		if (st & PIIX_SMB_HS_BUSY)
 			goto timeout;
-		piixpm_intr(smbus);
+		piixpm_intr(sc);
 	} else {
 		/* Wait for interrupt */
 		if (tsleep(sc, PRIBIO, "iicexec", PIIXPM_TIMEOUT * hz))
@@ -535,8 +535,7 @@ timeout:
 static int
 piixpm_intr(void *arg)
 {
-	struct piixpm_smbus *smbus = arg;
-	struct piixpm_softc *sc = smbus->softc;
+	struct piixpm_softc *sc = arg;
 	u_int8_t st;
 	u_int8_t *b;
 	size_t len;
