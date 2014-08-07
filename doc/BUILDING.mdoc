@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.103 2014/08/07 21:32:11 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.104 2014/08/07 21:45:27 apb Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1817,6 +1817,26 @@ Relying on this default is not recommended because
 it is determined by complex rules that are influenced
 by the values of several variables and
 by the location of the source directory.
+.Pp
+Note that placing the
+.Ar obj
+directory location outside of the default source tree hierarchy makes
+it easier to manually clear out old files in the event the
+.Dq make cleandir
+operation is unable to do so.
+(See
+.Sx CAVEATS
+below.)
+.Pp
+Note also that use of one of
+.Fl M
+or
+.Fl O
+is the only means of building multiple machine architecture userlands
+from the same source tree without cleaning between builds (in which
+case, one would specify distinct
+.Ar obj
+locations for each).
 .It Fl o
 Set the value of
 .Sy MKOBJDIRS
@@ -2048,3 +2068,15 @@ as
 and re-worked to
 .Sy TOOLCHAIN_MISSING
 after that.
+.
+.Sh CAVEATS
+.
+After significant updates to third-party components in the source
+tree, the
+.Dq make cleandir
+operation may be insufficient to clean out old files in object
+directories.
+Instead, one may have to manually remove the files.
+Consult the
+.Pa UPDATING
+file for notices concerning this.
