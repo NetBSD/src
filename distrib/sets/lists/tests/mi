@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.582 2014/07/18 12:36:18 christos Exp $
+# $NetBSD: mi,v 1.583 2014/08/07 14:22:13 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -843,6 +843,7 @@
 ./usr/tests/bin/sh/t_wait			tests-bin-tests		atf
 ./usr/tests/bin/sh/dotcmd			tests-bin-tests
 ./usr/tests/bin/sh/dotcmd/Atffile	tests-bin-tests	atf
+./usr/tests/bin/sh/dotcmd/Kyuafile	tests-bin-tests	atf,kyua
 ./usr/tests/bin/sh/dotcmd/break_case	tests-bin-tests	atf
 ./usr/tests/bin/sh/dotcmd/break_compound	tests-bin-tests	atf
 ./usr/tests/bin/sh/dotcmd/break_file	tests-bin-tests	atf
