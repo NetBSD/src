@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.125 2014/07/18 17:52:30 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.126 2014/08/07 09:57:33 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2980,3 +2980,66 @@ distrib/utils/sysinst/arch/alpha/md.c		1.53
 	Make sysinst deal correctly with Tru64 disklabels. PR#48697
 	[tsutsui, ticket #1080]
 
+external/bsd/cron/dist/entry.c			1.5
+
+	PR/48944: cron ignores '?' (question mark) time field.
+	[skrll, ticket #1087]
+
+distrib/sets/lists/comp/md.amd64		patch
+
+	Fix build failure for MKDEBUG+MKCRYPTO_RC5 on amd64.
+	[mlelstv, ticket #1089]
+
+sys/arch/sun3/conf/DISKLESS			1.69
+
+	Enable ie0 in DISKLESS for sun3/110
+	[abs, ticket #1091]
+
+doc/3RDPARTY					1.1126 via patch
+etc/namedb/root.cache				1.18
+
+	Update root.cache to 2014060201.
+	[taca, ticket #1093]
+
+sys/dev/usb/if_urndis.c				1.7
+
+	PR/48963: Fix the size passed in kmem_free in the
+	urndis_ctrl_{query,set} functions to prevent panic in urndis(4).
+	[skrll, ticket #1094]
+
+sys/dev/pci/piixpm.c				1.45
+
+	Consistently pass a "struct piixpm_softc" to piixpm_intr.
+	Prevents a crash on hardware interrupts.
+	[hannken, ticket #1096]
+
+sys/dev/pckbport/wskbdmap_mfii.c		1.25
+sys/dev/usb/ukbdmap.c				1.29
+
+	Add a belgian keyboard layout, based on the french keyboard layout.
+	Fixes PR install/46871.
+	[mbalmer, ticket #1099]
+
+lib/libc/arch/sparc/gen/_setjmp.S		1.10
+
+	Fix longjmp bug which causes a segmentation fault on sparc64
+	kernels with 32-bit userland.
+	[nakayama, ticket #1100]
+
+xsrc/external/mit/xf86-video-wsfb/dist/src/wsfb_driver.c 1.17
+
+	Fixes Xorg server segmentation fault on Xserver exit (and then screen
+	palette settings are not restored properly).
+	[tsutsui, ticket #1101]
+
+sys/dev/pci/if_vioif.c				1.5
+
+	Don't set SOFTINT_MPSAFE to vioif_rx_softint to prevent kernel panic.
+	PR kern/49007.
+	[ozaki-r, ticket #1102]
+
+sys/net/link_proto.c				1.17
+
+	Don't assume if_init is always set. if_init may be NULL, e.g., if_vlan.
+	PR kern/48997.
+	[ozaki-r, ticket #1103]
