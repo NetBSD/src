@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.287 2014/08/06 02:55:50 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.288 2014/08/07 06:49:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -72,6 +72,7 @@
  *
  * TODO (in order of importance):
  *
+ *	- Check XXX'ed comments
  *	- Internal SERDES mode newer than or equal to 82575.
  *	- EEE (Energy Efficiency Ethernet)
  *	- MSI/MSI-X
@@ -81,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.287 2014/08/06 02:55:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.288 2014/08/07 06:49:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
