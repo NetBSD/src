@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.66 2014/08/07 19:54:23 jmcneill Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.67 2014/08/07 22:10:05 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.66 2014/08/07 19:54:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.67 2014/08/07 22:10:05 jmcneill Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -143,7 +143,7 @@ static int	wpi_get_power_index(struct wpi_softc *,
 		    struct wpi_power_group *, struct ieee80211_channel *, int);
 static int	wpi_setup_beacon(struct wpi_softc *, struct ieee80211_node *);
 static int	wpi_auth(struct wpi_softc *);
-static int	wpi_scan(struct wpi_softc *, uint16_t);
+static int	wpi_scan(struct wpi_softc *);
 static int	wpi_config(struct wpi_softc *);
 static void	wpi_stop_master(struct wpi_softc *);
 static int	wpi_power_up(struct wpi_softc *);
@@ -877,6 +877,7 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct ifnet *ifp = ic->ic_ifp;
 	struct wpi_softc *sc = ifp->if_softc;
 	struct ieee80211_node *ni;
+	enum ieee80211_state ostate = ic->ic_state;
 	int error;
 
 	callout_stop(&sc->calib_to);
@@ -888,20 +889,18 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			break;
 
 		sc->is_scanning = true;
-		ieee80211_node_table_reset(&ic->ic_scan);
-		ic->ic_flags |= IEEE80211_F_SCAN | IEEE80211_F_ASCAN;
 
-		/* make the link LED blink while we're scanning */
-		wpi_set_led(sc, WPI_LED_LINK, 20, 2);
+		if (ostate != IEEE80211_S_SCAN) {
+			/* make the link LED blink while we're scanning */
+			wpi_set_led(sc, WPI_LED_LINK, 20, 2);
+		}
 
-		if ((error = wpi_scan(sc, IEEE80211_CHAN_G)) != 0) {
+		if ((error = wpi_scan(sc)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not initiate scan\n");
-			ic->ic_flags &= ~(IEEE80211_F_SCAN | IEEE80211_F_ASCAN);
 			return error;
 		}
-		ic->ic_state = nstate;
-		return 0;
+		break;
 
 	case IEEE80211_S_ASSOC:
 		if (ic->ic_state != IEEE80211_S_RUN)
@@ -1750,28 +1749,24 @@ wpi_notif_intr(struct wpi_softc *sc)
 			    scan->chan, le32toh(scan->status)));
 
 			/* fix current channel */
-			ic->ic_bss->ni_chan = &ic->ic_channels[scan->chan];
+			ic->ic_curchan = &ic->ic_channels[scan->chan];
 #endif
 			break;
 		}
 		case WPI_STOP_SCAN:
 		{
+#ifdef WPI_DEBUG
 			struct wpi_stop_scan *scan =
 			    (struct wpi_stop_scan *)(desc + 1);
+#endif
 
 			DPRINTF(("scan finished nchan=%d status=%d chan=%d\n",
 			    scan->nchan, scan->status, scan->chan));
 
-			if (scan->status == 1 && scan->chan <= 14) {
-				/*
-				 * We just finished scanning 802.11g channels,
-				 * start scanning 802.11a ones.
-				 */
-				if (wpi_scan(sc, IEEE80211_CHAN_A) == 0)
-					break;
-			}
 			sc->is_scanning = false;
-			ieee80211_end_scan(ic);
+			if (ic->ic_state == IEEE80211_S_SCAN)
+				ieee80211_next_scan(ic);
+
 			break;
 		}
 		}
@@ -2764,7 +2759,7 @@ wpi_auth(struct wpi_softc *sc)
  * into a mbuf instead of using the pre-allocated set of commands.
  */
 static int
-wpi_scan(struct wpi_softc *sc, uint16_t flags)
+wpi_scan(struct wpi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct wpi_tx_ring *ring = &sc->cmdq;
@@ -2778,6 +2773,9 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	struct ieee80211_channel *c;
 	uint8_t *frm;
 	int pktlen, error, nrates;
+
+	if (ic->ic_curchan == NULL)
+		return EIO;
 
 	desc = &ring->desc[ring->cur];
 	data = &ring->data[ring->cur];
@@ -2809,14 +2807,14 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	hdr->cmd.id = WPI_ID_BROADCAST;
 	hdr->cmd.lifetime = htole32(WPI_LIFETIME_INFINITE);
 	/*
-	 * Move to the next channel if no packets are received within 10 msecs
+	 * Move to the next channel if no packets are received within 5 msecs
 	 * after sending the probe request (this helps to reduce the duration
 	 * of active scans).
 	 */
-	hdr->quiet = htole16(10);	/* timeout in milliseconds */
+	hdr->quiet = htole16(5);	/* timeout in milliseconds */
 	hdr->plcp_threshold = htole16(1);	/* min # of packets */
 
-	if (flags & IEEE80211_CHAN_A) {
+	if (ic->ic_curchan->ic_flags & IEEE80211_CHAN_5GHZ) {
 		hdr->crc_threshold = htole16(1);
 		/* send probe requests at 6Mbps */
 		hdr->cmd.rate = wpi_plcp_signal(12);
@@ -2877,32 +2875,29 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	hdr->cmd.len = htole16(frm - (uint8_t *)wh);
 
 	chan = (struct wpi_scan_chan *)frm;
-	for (c  = &ic->ic_channels[1];
-	     c <= &ic->ic_channels[IEEE80211_CHAN_MAX]; c++) {
-		if ((c->ic_flags & flags) != flags)
-			continue;
+	c = ic->ic_curchan;
 
-		chan->chan = ieee80211_chan2ieee(ic, c);
-		chan->flags = 0;
-		if (!(c->ic_flags & IEEE80211_CHAN_PASSIVE))
-			chan->flags |= WPI_CHAN_ACTIVE;
+	chan->chan = ieee80211_chan2ieee(ic, c);
+	chan->flags = 0;
+	if (!(c->ic_flags & IEEE80211_CHAN_PASSIVE)) {
+		chan->flags |= WPI_CHAN_ACTIVE;
 		if (ic->ic_des_esslen != 0)
 			chan->flags |= WPI_CHAN_DIRECT;
-		chan->dsp_gain = 0x6e;
-		if (IEEE80211_IS_CHAN_5GHZ(c)) {
-			chan->rf_gain = 0x3b;
-			chan->active  = htole16(24);
-			chan->passive = htole16(110);
-		} else {
-			chan->rf_gain = 0x28;
-			chan->active  = htole16(36);
-			chan->passive = htole16(120);
-		}
-		hdr->nchan++;
-		chan++;
-
-		frm += sizeof (struct wpi_scan_chan);
 	}
+	chan->dsp_gain = 0x6e;
+	if (IEEE80211_IS_CHAN_5GHZ(c)) {
+		chan->rf_gain = 0x3b;
+		chan->active  = htole16(10);
+		chan->passive = htole16(110);
+	} else {
+		chan->rf_gain = 0x28;
+		chan->active  = htole16(20);
+		chan->passive = htole16(120);
+	}
+	hdr->nchan++;
+	chan++;
+
+	frm += sizeof (struct wpi_scan_chan);
 
 	hdr->len = htole16(frm - (uint8_t *)hdr);
 	pktlen = frm - (uint8_t *)cmd;
