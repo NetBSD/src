@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.155.2.12 2014/04/11 10:59:02 msaitoh Exp $
+# $NetBSD: md.amd64,v 1.155.2.13 2014/08/07 06:35:33 msaitoh Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1063,6 +1063,7 @@
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libcrypt.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libcrypto_rc5.so.7.0.debug	comp-compat-shlib	crypto,crypto_rc5,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libcrypto.so.8.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libcurses.so.7.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdes.so.8.2.debug	comp-compat-shlib	compat,pic,debug
