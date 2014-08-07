@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.65 2014/08/07 02:28:52 jmcneill Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.66 2014/08/07 19:54:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.65 2014/08/07 02:28:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.66 2014/08/07 19:54:23 jmcneill Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -960,7 +960,7 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		}
 
 		/* configuration has changed, set Tx power accordingly */
-		if ((error = wpi_set_txpower(sc, ni->ni_chan, 1)) != 0) {
+		if ((error = wpi_set_txpower(sc, ic->ic_curchan, 1)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not set Tx power\n");
 			return error;
@@ -1447,7 +1447,7 @@ wpi_power_calibration(struct wpi_softc *sc, int temp)
 
 	sc->temp = temp;
 
-	if (wpi_set_txpower(sc, sc->sc_ic.ic_bss->ni_chan, 1) != 0) {
+	if (wpi_set_txpower(sc, sc->sc_ic.ic_curchan, 1) != 0) {
 		/* just warn, too bad for the automatic calibration... */
 		aprint_error_dev(sc->sc_dev, "could not adjust Tx power\n");
 	}
@@ -1742,6 +1742,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 		}
 		case WPI_START_SCAN:
 		{
+#if 0
 			struct wpi_start_scan *scan =
 			    (struct wpi_start_scan *)(desc + 1);
 
@@ -1750,6 +1751,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 
 			/* fix current channel */
 			ic->ic_bss->ni_chan = &ic->ic_channels[scan->chan];
+#endif
 			break;
 		}
 		case WPI_STOP_SCAN:
@@ -2774,7 +2776,6 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	struct ieee80211_frame *wh;
 	struct ieee80211_rateset *rs;
 	struct ieee80211_channel *c;
-	enum ieee80211_phymode mode;
 	uint8_t *frm;
 	int pktlen, error, nrates;
 
@@ -2808,27 +2809,31 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	hdr->cmd.id = WPI_ID_BROADCAST;
 	hdr->cmd.lifetime = htole32(WPI_LIFETIME_INFINITE);
 	/*
-	 * Move to the next channel if no packets are received within 5 msecs
+	 * Move to the next channel if no packets are received within 10 msecs
 	 * after sending the probe request (this helps to reduce the duration
 	 * of active scans).
 	 */
-	hdr->quiet = htole16(5);	/* timeout in milliseconds */
+	hdr->quiet = htole16(10);	/* timeout in milliseconds */
 	hdr->plcp_threshold = htole16(1);	/* min # of packets */
 
 	if (flags & IEEE80211_CHAN_A) {
 		hdr->crc_threshold = htole16(1);
 		/* send probe requests at 6Mbps */
 		hdr->cmd.rate = wpi_plcp_signal(12);
+		rs = &ic->ic_sup_rates[IEEE80211_MODE_11A];
 	} else {
 		hdr->flags = htole32(WPI_CONFIG_24GHZ | WPI_CONFIG_AUTO);
 		/* send probe requests at 1Mbps */
 		hdr->cmd.rate = wpi_plcp_signal(2);
+		rs = &ic->ic_sup_rates[IEEE80211_MODE_11G];
 	}
 
 	/* for directed scans, firmware inserts the essid IE itself */
-	hdr->essid[0].id  = IEEE80211_ELEMID_SSID;
-	hdr->essid[0].len = ic->ic_des_esslen;
-	memcpy(hdr->essid[0].data, ic->ic_des_essid, ic->ic_des_esslen);
+	if (ic->ic_des_esslen != 0) {
+		hdr->essid[0].id  = IEEE80211_ELEMID_SSID;
+		hdr->essid[0].len = ic->ic_des_esslen;
+		memcpy(hdr->essid[0].data, ic->ic_des_essid, ic->ic_des_esslen);
+	}
 
 	/*
 	 * Build a probe request frame.  Most of the following code is a
@@ -2849,9 +2854,6 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	/* add empty essid IE (firmware generates it for directed scans) */
 	*frm++ = IEEE80211_ELEMID_SSID;
 	*frm++ = 0;
-
-	mode = ieee80211_chan2mode(ic, ic->ic_ibss_chan);
-	rs = &ic->ic_sup_rates[mode];
 
 	/* add supported rates IE */
 	*frm++ = IEEE80211_ELEMID_RATES;
@@ -2882,19 +2884,18 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 
 		chan->chan = ieee80211_chan2ieee(ic, c);
 		chan->flags = 0;
-		if (!(c->ic_flags & IEEE80211_CHAN_PASSIVE)) {
+		if (!(c->ic_flags & IEEE80211_CHAN_PASSIVE))
 			chan->flags |= WPI_CHAN_ACTIVE;
-			if (ic->ic_des_esslen != 0)
-				chan->flags |= WPI_CHAN_DIRECT;
-		}
+		if (ic->ic_des_esslen != 0)
+			chan->flags |= WPI_CHAN_DIRECT;
 		chan->dsp_gain = 0x6e;
 		if (IEEE80211_IS_CHAN_5GHZ(c)) {
 			chan->rf_gain = 0x3b;
-			chan->active  = htole16(10);
+			chan->active  = htole16(24);
 			chan->passive = htole16(110);
 		} else {
 			chan->rf_gain = 0x28;
-			chan->active  = htole16(20);
+			chan->active  = htole16(36);
 			chan->passive = htole16(120);
 		}
 		hdr->nchan++;
@@ -2967,9 +2968,9 @@ wpi_config(struct wpi_softc *sc)
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	IEEE80211_ADDR_COPY(sc->config.myaddr, ic->ic_myaddr);
 	/* set default channel */
-	sc->config.chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
+	sc->config.chan = ieee80211_chan2ieee(ic, ic->ic_curchan);
 	sc->config.flags = htole32(WPI_CONFIG_TSF);
-	if (IEEE80211_IS_CHAN_2GHZ(ic->ic_ibss_chan)) {
+	if (IEEE80211_IS_CHAN_2GHZ(ic->ic_curchan)) {
 		sc->config.flags |= htole32(WPI_CONFIG_AUTO |
 		    WPI_CONFIG_24GHZ);
 	}
@@ -3002,7 +3003,7 @@ wpi_config(struct wpi_softc *sc)
 	}
 
 	/* configuration has changed, set Tx power accordingly */
-	if ((error = wpi_set_txpower(sc, ic->ic_ibss_chan, 0)) != 0) {
+	if ((error = wpi_set_txpower(sc, ic->ic_curchan, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not set Tx power\n");
 		return error;
 	}
