@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.292 2014/08/07 17:54:28 apb Exp $
+#	$NetBSD: build.sh,v 1.293 2014/08/07 18:10:20 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1097,7 +1097,7 @@ _usage_
 parseoptions()
 {
 	opts='a:B:C:D:Ehj:M:m:N:nO:oR:rS:T:UuV:w:X:xY:yZ:'
-	opt_a=no
+	opt_a=false
 
 	if type getopts >/dev/null 2>&1; then
 		# Use POSIX getopts.
@@ -1128,7 +1128,7 @@ parseoptions()
 		-a)
 			eval ${optargcmd}
 			MACHINE_ARCH=${OPTARG}
-			opt_a=yes
+			opt_a=true
 			;;
 
 		-B)
@@ -1370,12 +1370,16 @@ parseoptions()
 
 	# Set up MACHINE*.  On a NetBSD host, these are allowed to be unset.
 	#
+	# MACHINE_ARCH from the environment may be overridden by getarch
+	# (based on the MACHINE), but MACHINE_ARCH from the -a option should
+	# not be overridden.
+	#
 	if [ -z "${MACHINE}" ]; then
 		[ "${uname_s}" = "NetBSD" ] ||
 		    bomb "MACHINE must be set, or -m must be used, for cross builds."
 		MACHINE=${uname_m}
 	fi
-	[ -n "${MACHINE_ARCH}" ] || getarch
+	$opt_a || getarch
 	validatearch
 
 	# Set up default make(1) environment.
@@ -1858,7 +1862,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.292 2014/08/07 17:54:28 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.293 2014/08/07 18:10:20 apb Exp $
 # with these arguments: ${_args}
 #
 
