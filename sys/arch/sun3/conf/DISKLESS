@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.63 2011/06/30 20:09:37 wiz Exp $
+# $NetBSD: DISKLESS,v 1.63.8.1 2014/08/07 06:36:36 msaitoh Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -115,7 +115,7 @@ ms0	at zsc0 channel 1	# mouse
 #
 
 # Intel Ethernet (onboard, or VME)
-#ie0 at obio0 addr 0x0C0000 ipl 3
+ie0 at obio0 addr 0x0C0000 ipl 3
 #ie1 at vme2 addr 0xe88000 ipl 3 vect 0x75
 
 # Lance Ethernet (only onboard)
