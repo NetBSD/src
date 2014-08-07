@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.290 2014/08/06 12:29:13 apb Exp $
+#	$NetBSD: build.sh,v 1.291 2014/08/07 15:15:48 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -717,7 +717,8 @@ MACHINE=zaurus		MACHINE_ARCH=earm	ALIAS=ezaurus DEFAULT
 # getarch -- find the default MACHINE_ARCH for a MACHINE,
 # or convert an alias to a MACHINE/MACHINE_ARCH pair.
 #
-# Saves MACHINE in makewrappermachine before possibly modifying MACHINE.
+# Saves the original value of MACHINE in makewrappermachine before
+# alias processing.
 #
 # Sets MACHINE and MACHINE_ARCH if the input MACHINE value is
 # recognised as an alias, or recognised as a machine that has a default
@@ -1001,7 +1002,10 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     -j njob        Run up to njob jobs in parallel; see make(1) -j.
     -M obj         Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
                    Unsets MAKEOBJDIR.
-    -m mach        Set MACHINE to mach; not required if NetBSD native.
+    -m mach        Set MACHINE to mach.  Some mach values are actually
+                   aliases that set MACHINE/MACHINE_ARCH pairs.
+                   [Default: deduced from the host system if the host
+                   OS is NetBSD]
     -N noisy       Set the noisyness (MAKEVERBOSE) level of the build:
                        0   Minimal output ("quiet")
                        1   Describe what is occurring
@@ -1796,7 +1800,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.290 2014/08/06 12:29:13 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.291 2014/08/07 15:15:48 apb Exp $
 # with these arguments: ${_args}
 #
 
