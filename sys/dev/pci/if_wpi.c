@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.64 2014/08/05 21:54:39 jmcneill Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.65 2014/08/07 02:28:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.64 2014/08/05 21:54:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.65 2014/08/07 02:28:52 jmcneill Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -536,7 +536,6 @@ wpi_alloc_rbuf(struct wpi_softc *sc)
 	rbuf = SLIST_FIRST(&sc->rxq.freelist);
 	if (rbuf != NULL) {
 		SLIST_REMOVE_HEAD(&sc->rxq.freelist, next);
-		sc->rxq.nb_free_entries --;
 	}
 	mutex_exit(&sc->rxq.freelist_mtx);
 
@@ -558,8 +557,6 @@ wpi_free_rbuf(struct mbuf* m, void *buf, size_t size, void *arg)
 	mutex_enter(&sc->rxq.freelist_mtx);
 	SLIST_INSERT_HEAD(&sc->rxq.freelist, rbuf, next);
 	mutex_exit(&sc->rxq.freelist_mtx);
-	/* No need to protect this with a mutex, see wpi_rx_intr */
-	sc->rxq.nb_free_entries ++;
 
 	if (__predict_true(m != NULL))
 		pool_cache_put(mb_cache, m);
@@ -593,7 +590,6 @@ wpi_alloc_rpool(struct wpi_softc *sc)
 		SLIST_INSERT_HEAD(&ring->freelist, rbuf, next);
 	}
 
-	ring->nb_free_entries = WPI_RBUF_COUNT;
 	return 0;
 }
 
@@ -1471,7 +1467,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *mnew;
-	int data_off;
+	int data_off, error;
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
@@ -1505,68 +1501,56 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	/* Compute where are the useful datas */
 	data_off = (char*)(head + 1) - mtod(data->m, char*);
 			
-	/*
-	 * If the number of free entry is too low
-	 * just dup the data->m socket and reuse the same rbuf entry
-	 * Note that thi test is not protected by a mutex because the
-	 * only path that causes nb_free_entries to decrease is through
-	 * this interrupt routine, which is not re-entrent.
-	 * What may not be obvious is that the safe path is if that test
-	 * evaluates as true, so nb_free_entries can grow any time.
-	 */
-	if (sc->rxq.nb_free_entries <= WPI_RBUF_LOW_LIMIT) {
-	
-		/* Prepare the mbuf for the m_dup */
-		data->m->m_pkthdr.len = data->m->m_len = le16toh(head->len);
-		data->m->m_data = (char*) data->m->m_data + data_off;
+	MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+	if (mnew == NULL) {
+		ifp->if_ierrors++;
+		return;
+	}
 
-		m = m_dup(data->m,0,M_COPYALL,M_DONTWAIT);
+	rbuf = wpi_alloc_rbuf(sc);
+	if (rbuf == NULL) {
+		m_freem(mnew);
+		ifp->if_ierrors++;
+		return;
+	}
 
-		/* Restore the m_data pointer for future use */
-		data->m->m_data = (char*) data->m->m_data - data_off;
+	/* attach Rx buffer to mbuf */
+	MEXTADD(mnew, rbuf->vaddr, WPI_RBUF_SIZE, 0, wpi_free_rbuf,
+		rbuf);
+	mnew->m_flags |= M_EXT_RW;
 
-		if (m == NULL) {
-			ifp->if_ierrors++;
-			return;
-		}
-	} else {
-		int error;
+	bus_dmamap_unload(sc->sc_dmat, data->map);
 
-		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-		if (mnew == NULL) {
-			ifp->if_ierrors++;
-			return;
-		}
-
-		rbuf = wpi_alloc_rbuf(sc);
-		KASSERT(rbuf != NULL);
-
-		/* attach Rx buffer to mbuf */
-		MEXTADD(mnew, rbuf->vaddr, WPI_RBUF_SIZE, 0, wpi_free_rbuf,
-			rbuf);
-		mnew->m_flags |= M_EXT_RW;
-
-		bus_dmamap_unload(sc->sc_dmat, data->map);
-		m = data->m;
-		data->m = mnew;
+	error = bus_dmamap_load(sc->sc_dmat, data->map,
+	    mtod(mnew, void *), WPI_RBUF_SIZE, NULL,
+	    BUS_DMA_NOWAIT | BUS_DMA_READ);
+	if (error) {
+		device_printf(sc->sc_dev,
+		    "couldn't load rx mbuf: %d\n", error);
+		m_freem(mnew);
+		ifp->if_ierrors++;
 
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
 		    mtod(data->m, void *), WPI_RBUF_SIZE, NULL,
 		    BUS_DMA_NOWAIT | BUS_DMA_READ);
-		if (error) {
+		if (error)
 			panic("%s: bus_dmamap_load failed: %d\n",
 			    device_xname(sc->sc_dev), error);
-		}
-
-		/* update Rx descriptor */
-		ring->desc[ring->cur] = htole32(rbuf->paddr);
-		bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map, 0,
-		    ring->desc_dma.size,
-		    BUS_DMASYNC_PREWRITE);
-
-		m->m_data = (char*)m->m_data + data_off;
-		m->m_pkthdr.len = m->m_len = le16toh(head->len);
+		return;
 	}
+
+	/* new mbuf loaded successfully */
+	m = data->m;
+	data->m = mnew;
+
+	/* update Rx descriptor */
+	ring->desc[ring->cur] = htole32(rbuf->paddr);
+	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map, 0,
+	    ring->desc_dma.size,
+	    BUS_DMASYNC_PREWRITE);
+
+	m->m_data = (char*)m->m_data + data_off;
+	m->m_pkthdr.len = m->m_len = le16toh(head->len);
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
@@ -1698,10 +1682,11 @@ wpi_notif_intr(struct wpi_softc *sc)
 	hw = le32toh(sc->shared->next);
 	while (sc->rxq.cur != hw) {
 		struct wpi_rx_data *data = &sc->rxq.data[sc->rxq.cur];
-		struct wpi_rx_desc *desc = mtod(data->m, struct wpi_rx_desc *);
+		struct wpi_rx_desc *desc;
 
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
+		desc = mtod(data->m, struct wpi_rx_desc *);
 
 		DPRINTFN(4, ("rx notification qid=%x idx=%d flags=%x type=%d "
 		    "len=%d\n", desc->qid, desc->idx, desc->flags,
@@ -2699,6 +2684,8 @@ wpi_setup_beacon(struct wpi_softc *sc, struct ieee80211_node *ni)
 	desc->segs[1].addr = htole32(data->map->dm_segs[0].ds_addr);
 	desc->segs[1].len  = htole32(data->map->dm_segs[0].ds_len);
 
+	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map, 0,
+	    ring->desc_dma.map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
@@ -2932,6 +2919,8 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	desc->segs[0].addr = htole32(data->map->dm_segs[0].ds_addr);
 	desc->segs[0].len  = htole32(data->map->dm_segs[0].ds_len);
 
+	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map, 0,
+	    ring->desc_dma.map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
