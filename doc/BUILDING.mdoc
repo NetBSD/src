@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.102 2014/08/03 09:25:02 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.103 2014/08/07 21:32:11 apb Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd August 3, 2014
+.Dd August 7, 2014
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -1554,6 +1554,39 @@ Perform
 Perform
 .Dq make live-image .
 .
+.It Sy list-arch
+Prints a list of valid
+.Sy MACHINE
+and
+.Sy MACHINE_ARCH
+settings, the default
+.Sy MACHINE_ARCH
+for each
+.Sy MACHINE ,
+and aliases for
+.Sy MACHINE Ns No / Ns Sy MACHINE_ARCH
+pairs, and then exits.
+The
+.Fl m
+or
+.Fl a
+options (or both) may be used to specify glob patterns
+that will be used to narrow the list of results;
+for example,
+.Dq Li build.sh -m 'evm*' -a '*arm*' list-arch
+will list all known
+.Sy MACHINE Ns No / Ns Sy MACHINE_ARCH
+values in which either
+.Sy MACHINE
+or
+.Sy ALIAS
+matches the pattern
+.Ql evb* ,
+and
+.Sy MACHINE_ARCH
+matches the pattern
+.Ql *arm* .
+.
 .El
 .
 .Pp
@@ -1568,6 +1601,9 @@ Set the value of
 .Sy MACHINE_ARCH
 to
 .Ar arch .
+See the
+.Fl m
+option for more information.
 .
 .It Fl B Ar buildid
 Set the value of
@@ -1687,42 +1723,39 @@ Set the value of
 .Sy MACHINE
 to
 .Ar mach ,
-except in some special cases listed below.
-This will also override any value of
+unless the
+.Ar mach
+argument is an alias that refers to a
+.Sy MACHINE Ns No / Ns Sy MACHINE_ARCH
+pair, in which case both
+.Sy MACHINE
+and
 .Sy MACHINE_ARCH
-in the process environment with a value deduced from
-.Ar mach ,
-unless
+are set from the alias.
+Such aliases are interpreted entirely by
+.Sy build.sh ;
+they are not used by any other part of the build system.
+The
+.Sy MACHINE_ARCH
+setting implied by
+.Ar mach
+will override any value of
+.Sy MACHINE_ARCH
+in the process environment, but will not override a value set by the
 .Fl a
-is specified.
+option.
 All cross builds require
 .Fl m ,
 but if unset on a NetBSD host, the host's value of MACHINE will be
 detected and used automatically.
 .Pp
-Some machines support multiple values for
-.Sy MACHINE_ARCH .
-The following special cases for the
-.Ar mach
-argument are defined to set the listed values of
-.Sy MACHINE
+See the
+.Cm list-arch
+operation for a way to get a list of valid
+.Sy MACHINE 
 and
-.Sy MACHINE_ARCH :
-.Bl -column "evbmips-el" "MACHINE" "MACHINE_ARCH" -offset indent
-.It Sy mach Ta Sy "MACHINE" Ta Sy "MACHINE_ARCH"
-.It evbarm Ta evbarm Ta (not set)
-.It evbarm-eb Ta evbarm Ta armeb
-.It evbarm-el Ta evbarm Ta arm
-.It evbmips Ta evbmips Ta (not set)
-.It evbmips-eb Ta evbmips Ta mipseb
-.It evbmips-el Ta evbmips Ta mipsel
-.It evbsh3 Ta evbsh3 Ta (not set)
-.It evbsh3-eb Ta evbsh3 Ta sh3eb
-.It evbsh3-el Ta evbsh3 Ta sh3el
-.It sbmips Ta sbmips Ta (not set)
-.It sbmips-eb Ta sbmips Ta mipseb
-.It sbmips-el Ta sbmips Ta mipsel
-.El
+.Sy MACHINE_ARCH
+settings.
 .
 .It Fl N Ar noiselevel
 Set the
