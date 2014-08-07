@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.2.14.1 2013/05/12 16:38:33 riz Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.2.14.2 2014/08/07 09:35:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.2.14.1 2013/05/12 16:38:33 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.2.14.2 2014/08/07 09:35:22 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,7 +557,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	sc->sc_rx_softint = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
+	sc->sc_rx_softint = softint_establish(SOFTINT_NET,
 					      vioif_rx_softint, sc);
 	if (sc->sc_rx_softint == NULL) {
 		aprint_error_dev(self, "cannot establish softint\n");
