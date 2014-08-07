@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.90 2014/05/23 16:48:52 joerg Exp $	*/
+/*	$NetBSD: stdio.h,v 1.91 2014/08/07 17:24:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -458,9 +458,9 @@ __END_DECLS
 #if defined(__GNUC__) && defined(__STDC__)
 static __inline int __sputc(int _c, FILE *_p) {
 	if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
-		return (*_p->_p++ = _c);
+		return *_p->_p++ = (unsigned char)_c;
 	else
-		return (__swbuf(_c, _p));
+		return __swbuf(_c, _p);
 }
 #else
 /*
