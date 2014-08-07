@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.7 2011/10/07 16:34:31 dyoung Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.7.22.1 2014/08/07 09:50:05 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.7 2011/10/07 16:34:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.7.22.1 2014/08/07 09:50:05 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -197,7 +197,8 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 		splx(s);
 		if (error != ENETRESET)
 			return error;
-		else if ((ifp->if_flags & IFF_RUNNING) != 0)
+		else if ((ifp->if_flags & IFF_RUNNING) != 0 &&
+		         ifp->if_init != NULL)
 			return (*ifp->if_init)(ifp);
 		else
 			return 0;
