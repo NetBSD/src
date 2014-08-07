@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.186 2014/07/28 07:32:46 alnsn Exp $	*/
+/*	$NetBSD: bpf.c,v 1.187 2014/08/07 03:40:21 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.186 2014/07/28 07:32:46 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.187 2014/08/07 03:40:21 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -300,7 +300,7 @@ bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 		return (EIO);
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	m->m_pkthdr.rcvif = 0;
+	m->m_pkthdr.rcvif = NULL;
 	m->m_pkthdr.len = (int)(len - hlen);
 	if (len + align > MHLEN) {
 		m_clget(m, M_WAIT);
@@ -387,16 +387,16 @@ bpf_detachd(struct bpf_d *d)
 	p = &bp->bif_dlist;
 	while (*p != d) {
 		p = &(*p)->bd_next;
-		if (*p == 0)
+		if (*p == NULL)
 			panic("%s: descriptor not in list", __func__);
 	}
 	*p = (*p)->bd_next;
-	if (bp->bif_dlist == 0)
+	if (bp->bif_dlist == NULL)
 		/*
 		 * Let the driver know that there are no more listeners.
 		 */
-		*d->bd_bif->bif_driverp = 0;
-	d->bd_bif = 0;
+		*d->bd_bif->bif_driverp = NULL;
+	d->bd_bif = NULL;
 }
 
 static int
@@ -514,7 +514,7 @@ bpf_close(struct file *fp)
 	(d)->bd_hlen = (d)->bd_slen; \
 	(d)->bd_sbuf = (d)->bd_fbuf; \
 	(d)->bd_slen = 0; \
-	(d)->bd_fbuf = 0;
+	(d)->bd_fbuf = NULL;
 /*
  *  bpfread - read next chunk of packets from buffers
  */
@@ -546,7 +546,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 	 * ends when the timeout expires or when enough packets
 	 * have arrived to fill the store buffer.
 	 */
-	while (d->bd_hbuf == 0) {
+	while (d->bd_hbuf == NULL) {
 		if (fp->f_flag & FNONBLOCK) {
 			if (d->bd_slen == 0) {
 				splx(s);
@@ -612,7 +612,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 
 	s = splnet();
 	d->bd_fbuf = d->bd_hbuf;
-	d->bd_hbuf = 0;
+	d->bd_hbuf = NULL;
 	d->bd_hlen = 0;
 done:
 	splx(s);
@@ -673,7 +673,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 
 	KERNEL_LOCK(1, NULL);
 
-	if (d->bd_bif == 0) {
+	if (d->bd_bif == NULL) {
 		KERNEL_UNLOCK_ONE(NULL);
 		return (ENXIO);
 	}
@@ -738,7 +738,7 @@ reset_d(struct bpf_d *d)
 	if (d->bd_hbuf) {
 		/* Free the hold buffer. */
 		d->bd_fbuf = d->bd_hbuf;
-		d->bd_hbuf = 0;
+		d->bd_hbuf = NULL;
 	}
 	d->bd_slen = 0;
 	d->bd_hlen = 0;
@@ -827,7 +827,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Set buffer length.
 	 */
 	case BIOCSBLEN:
-		if (d->bd_bif != 0)
+		if (d->bd_bif != NULL)
 			error = EINVAL;
 		else {
 			u_int size = *(u_int *)addr;
@@ -860,7 +860,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Put interface into promiscuous mode.
 	 */
 	case BIOCPROMISC:
-		if (d->bd_bif == 0) {
+		if (d->bd_bif == NULL) {
 			/*
 			 * No interface attached yet.
 			 */
@@ -880,7 +880,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Get device parameters.
 	 */
 	case BIOCGDLT:
-		if (d->bd_bif == 0)
+		if (d->bd_bif == NULL)
 			error = EINVAL;
 		else
 			*(u_int *)addr = d->bd_bif->bif_dlt;
@@ -890,7 +890,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Get a list of supported device parameters.
 	 */
 	case BIOCGDLTLIST:
-		if (d->bd_bif == 0)
+		if (d->bd_bif == NULL)
 			error = EINVAL;
 		else
 			error = bpf_getdltlist(d, addr);
@@ -900,7 +900,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Set device parameters.
 	 */
 	case BIOCSDLT:
-		if (d->bd_bif == 0)
+		if (d->bd_bif == NULL)
 			error = EINVAL;
 		else
 			error = bpf_setdlt(d, *(u_int *)addr);
@@ -913,7 +913,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	case OBIOCGETIF:
 #endif
 	case BIOCGETIF:
-		if (d->bd_bif == 0)
+		if (d->bd_bif == NULL)
 			error = EINVAL;
 		else
 			bpf_ifname(d->bd_bif->bif_ifp, addr);
@@ -1178,10 +1178,10 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 	/*
 	 * Look through attached interfaces for the named one.
 	 */
-	for (bp = bpf_iflist; bp != 0; bp = bp->bif_next) {
+	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
 		struct ifnet *ifp = bp->bif_ifp;
 
-		if (ifp == 0 ||
+		if (ifp == NULL ||
 		    strcmp(ifp->if_xname, ifr->ifr_name) != 0)
 			continue;
 		/* skip additional entry */
@@ -1193,7 +1193,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 		 * If we're already attached to requested interface,
 		 * just flush the buffer.
 		 */
-		if (d->bd_sbuf == 0) {
+		if (d->bd_sbuf == NULL) {
 			error = bpf_allocbufs(d);
 			if (error != 0)
 				return (error);
@@ -1650,7 +1650,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 		 * Rotate the buffers if we can, then wakeup any
 		 * pending reads.
 		 */
-		if (d->bd_fbuf == 0) {
+		if (d->bd_fbuf == NULL) {
 			/*
 			 * We haven't completed the previous read yet,
 			 * so drop the packet.
@@ -1769,10 +1769,10 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 {
 	struct bpf_if *bp;
 	bp = malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
-	if (bp == 0)
+	if (bp == NULL)
 		panic("bpfattach");
 
-	bp->bif_dlist = 0;
+	bp->bif_dlist = NULL;
 	bp->bif_driverp = driverp;
 	bp->bif_ifp = ifp;
 	bp->bif_dlt = dlt;
@@ -1780,7 +1780,7 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 	bp->bif_next = bpf_iflist;
 	bpf_iflist = bp;
 
-	*bp->bif_driverp = 0;
+	*bp->bif_driverp = NULL;
 
 	bp->bif_hdrlen = hdrlen;
 #if 0
