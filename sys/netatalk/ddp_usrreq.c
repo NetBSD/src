@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.60 2014/08/07 01:02:30 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.61 2014/08/07 07:51:28 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.60 2014/08/07 01:02:30 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.61 2014/08/07 07:51:28 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -541,7 +541,7 @@ ddp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 {
 	struct ddpcb *ddp = sotoddpcb(so);
 	int error = 0;
-	int s;
+	int s = 0; /* XXX gcc 4.8 warns on sgimips */
 
 	KASSERT(solocked(so));
 	KASSERT(ddp != NULL);
