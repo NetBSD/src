@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.4 2011/01/19 09:03:15 he Exp $	*/
+/*	$NetBSD: srt0.S,v 1.5 2014/08/07 13:56:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ ENTRY(_start)
 	sub	%r15,%r14,%r13		/* Our size, in bytes */
 	mflr	%r16			/* Get address we were loaded to */
 	subi	%r16,%r16,0x4		/* Correct for branch */
-	cmp	%cr0,%r13,%r16		/* Do we need to relocate? */
+	cmpw	%r13,%r16		/* Do we need to relocate? */
 	beq	_ASM_LABEL(clrbss)	/* No relocation necessary */
 	li	%r17,0x4
 	bgt	1f			/* Relocate using forward copy? */
