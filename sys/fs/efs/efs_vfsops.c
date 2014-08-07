@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.25 2014/04/16 18:55:18 maxv Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.26 2014/08/07 08:24:23 hannken Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.25 2014/04/16 18:55:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.26 2014/08/07 08:24:23 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.25 2014/04/16 18:55:18 maxv Exp $")
 #include <fs/efs/efs_dinode.h>
 #include <fs/efs/efs_inode.h>
 #include <fs/efs/efs_subr.h>
-#include <fs/efs/efs_ihash.h>
 
 MODULE(MODULE_CLASS_VFS, efs, NULL);
 
@@ -341,74 +340,53 @@ efs_statvfs(struct mount *mp, struct statvfs *sbp)
 /*
  * Obtain a locked vnode for the given on-disk inode number.
  *
- * We currently allocate a new vnode from getnewnode(), tack it with
- * our in-core inode structure (efs_inode), and read in the inode from
- * disk. The returned inode must be locked.
- *
  * Returns 0 on success.
  */
 static int
 efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
-	int err;
-	struct vnode *vp;
+	int error;
+
+	error = vcache_get(mp, &ino, sizeof(ino), vpp);
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+	return 0;
+}
+
+/*
+ * Initialize this vnode / inode pair.
+ * Caller assures no other thread will try to load this inode.
+ */
+static int
+efs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	int error;
+	ino_t ino;
 	struct efs_inode *eip;
 	struct efs_mount *emp;
 
+	KASSERT(key_len == sizeof(ino));
+	memcpy(&ino, key, key_len);
 	emp = VFSTOEFS(mp);
 
-	while (true) {
-		*vpp = efs_ihashget(emp->em_dev, ino, LK_EXCLUSIVE);
-		if (*vpp != NULL)
-			return (0);
-
-		err = getnewvnode(VT_EFS, mp, efs_vnodeop_p, NULL, &vp);
-		if (err)
-			return (err);
-		
-		eip = pool_get(&efs_inode_pool, PR_WAITOK);
-
-		/*
-		 * See if anybody has raced us here.  If not, continue
-		 * setting up the new inode, otherwise start over.
-		 */
-		efs_ihashlock();
-
-		if (efs_ihashget(emp->em_dev, ino, 0) == NULL)
-			break;
-
-		efs_ihashunlock();
-		ungetnewvnode(vp);
-		pool_put(&efs_inode_pool, eip);
-	}
-
-	vp->v_vflag |= VV_LOCKSWORK;
+	eip = pool_get(&efs_inode_pool, PR_WAITOK);
 	eip->ei_mode = 0;
 	eip->ei_lockf = NULL;
 	eip->ei_number = ino;
 	eip->ei_dev = emp->em_dev;
 	eip->ei_vp = vp;
-	vp->v_data = eip;
 
-	/*
-	 * Place the vnode on the hash chain. Doing so will lock the
-	 * vnode, so it's okay to drop the global lock and read in
-	 * the inode from disk.
-	 */
-	efs_ihashins(eip);
-	efs_ihashunlock();
-
-	/*
-	 * Init genfs early, otherwise we'll trip up on genfs_node_destroy
-	 * in efs_reclaim when vput()ing in an error branch here.
-	 */
-	genfs_node_init(vp, &efs_genfsops);
-
-	err = efs_read_inode(emp, ino, NULL, &eip->ei_di);
-	if (err) {
-		vput(vp);
-		*vpp = NULL;
-		return (err);
+	error = efs_read_inode(emp, ino, NULL, &eip->ei_di);
+	if (error) {
+		pool_put(&efs_inode_pool, eip);
+		return error;
 	}
 
 	efs_sync_dinode_to_inode(eip);
@@ -416,9 +394,8 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	if (ino == EFS_ROOTINO && !S_ISDIR(eip->ei_mode)) {
 		printf("efs: root inode (%lu) is not a directory!\n",
 		    (ulong)EFS_ROOTINO);
-		vput(vp);
-		*vpp = NULL;
-		return (EIO);
+		pool_put(&efs_inode_pool, eip);
+		return EIO;
 	}
 
 	switch (eip->ei_mode & S_IFMT) {
@@ -433,6 +410,7 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		break;
 	case S_IFDIR:
 		vp->v_type = VDIR;
+		vp->v_op = efs_vnodeop_p;
 		if (ino == EFS_ROOTINO)
 			vp->v_vflag |= VV_ROOT;
 		break;
@@ -443,27 +421,30 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		break;
 	case S_IFREG:
 		vp->v_type = VREG;
+		vp->v_op = efs_vnodeop_p;
 		break;
 	case S_IFLNK:
 		vp->v_type = VLNK;
+		vp->v_op = efs_vnodeop_p;
 		break;
 	case S_IFSOCK:
 		vp->v_type = VSOCK;
+		vp->v_op = efs_vnodeop_p;
 		break;
 	default:
 		printf("efs: invalid mode 0x%x in inode %lu on mount %s\n",
 		    eip->ei_mode, (ulong)ino, mp->mnt_stat.f_mntonname);
-		vput(vp);
-		*vpp = NULL;
-		return (EIO);
+		pool_put(&efs_inode_pool, eip);
+		return EIO;
 	}
 
+	vp->v_tag = VT_EFS;
+	vp->v_vflag |= VV_LOCKSWORK;
+	vp->v_data = eip;
+	genfs_node_init(vp, &efs_genfsops);
 	uvm_vnp_setsize(vp, eip->ei_size);
-	*vpp = vp;
-
-	KASSERT(VOP_ISLOCKED(vp));
-
-	return (0);
+	*new_key = &eip->ei_number;
+	return 0;
 }
 
 /*
@@ -537,7 +518,6 @@ efs_init(void)
 	malloc_type_attach(M_EFSMNT);
 	malloc_type_attach(M_EFSINO);
 	malloc_type_attach(M_EFSTMP);
-	efs_ihashinit();
 	pool_init(&efs_inode_pool, sizeof(struct efs_inode), 0, 0, 0,
 	    "efsinopl", &pool_allocator_nointr, IPL_NONE);
 }
@@ -549,7 +529,6 @@ static void
 efs_reinit(void)
 {
 	
-	efs_ihashreinit();
 }
 
 /*
@@ -560,7 +539,6 @@ efs_done(void)
 {
 	
 	pool_destroy(&efs_inode_pool);
-	efs_ihashdone();
 	malloc_type_detach(M_EFSMNT);
 	malloc_type_detach(M_EFSINO);
 	malloc_type_detach(M_EFSTMP);
@@ -588,6 +566,7 @@ struct vfsops efs_vfsops = {
 	.vfs_statvfs	= efs_statvfs,
 	.vfs_sync	= (void *)nullop,
 	.vfs_vget	= efs_vget,
+	.vfs_loadvnode	= efs_loadvnode,
 	.vfs_fhtovp	= efs_fhtovp,
 	.vfs_vptofh	= efs_vptofh,
 	.vfs_init	= efs_init,

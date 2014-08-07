@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.32 2014/07/25 08:20:51 dholland Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.33 2014/08/07 08:24:23 hannken Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.32 2014/07/25 08:20:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.33 2014/08/07 08:24:23 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.32 2014/07/25 08:20:51 dholland Exp 
 #include <fs/efs/efs_dinode.h>
 #include <fs/efs/efs_inode.h>
 #include <fs/efs/efs_subr.h>
-#include <fs/efs/efs_ihash.h>
 
 MALLOC_DECLARE(M_EFSTMP);
 
@@ -79,30 +78,17 @@ efs_lookup(void *v)
 	}
 
 	/*
-	 * Handle the three lookup types: '.', '..', and everything else.
+	 * Handle the lookup types: '.' or everything else.
 	 */
 	if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		vref(ap->a_dvp);
 		*ap->a_vpp = ap->a_dvp;
-	} else if (cnp->cn_flags & ISDOTDOT) {
-		err = efs_inode_lookup(VFSTOEFS(ap->a_dvp->v_mount),
-		    EFS_VTOI(ap->a_dvp), ap->a_cnp, &ino);
-		if (err)
-			return (err);
-
-		VOP_UNLOCK(ap->a_dvp);	/* preserve lock order */
-
-		err = VFS_VGET(ap->a_dvp->v_mount, ino, &vp);
-		if (err) {
-			vn_lock(ap->a_dvp, LK_EXCLUSIVE | LK_RETRY);
-			return (err);
-		}
-		vn_lock(ap->a_dvp, LK_EXCLUSIVE | LK_RETRY);
-		*ap->a_vpp = vp;
 	} else {
 		err = efs_inode_lookup(VFSTOEFS(ap->a_dvp->v_mount),
 		    EFS_VTOI(ap->a_dvp), ap->a_cnp, &ino);
 		if (err) {
+			if (cnp->cn_flags & ISDOTDOT)
+				return (err);
 			if (err == ENOENT && nameiop != CREATE)
 				cache_enter(ap->a_dvp, NULL, cnp->cn_nameptr,
 					    cnp->cn_namelen, cnp->cn_flags);
@@ -116,7 +102,7 @@ efs_lookup(void *v)
 			}
 			return (err);
 		}
-		err = VFS_VGET(ap->a_dvp->v_mount, ino, &vp);
+		err = vcache_get(ap->a_dvp->v_mount, &ino, sizeof(ino), &vp);
 		if (err)
 			return (err);
 		*ap->a_vpp = vp;
@@ -124,9 +110,6 @@ efs_lookup(void *v)
 
 	cache_enter(ap->a_dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
-
-	if (*ap->a_vpp != ap->a_dvp)
-		VOP_UNLOCK(*ap->a_vpp);
 
 	return 0;
 }
@@ -598,10 +581,11 @@ efs_reclaim(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct efs_inode *eip = EFS_VTOI(vp);
 
-	efs_ihashrem(EFS_VTOI(vp));
+	vcache_remove(vp->v_mount, &eip->ei_number, sizeof(eip->ei_number));
 	genfs_node_destroy(vp);
-	pool_put(&efs_inode_pool, vp->v_data);
+	pool_put(&efs_inode_pool, eip);
 	vp->v_data = NULL;
 
 	return (0);
