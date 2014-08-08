@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.7 2014/08/06 22:16:38 jmcneill Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.8 2014/08/08 02:27:40 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.7 2014/08/06 22:16:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.8 2014/08/08 02:27:40 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -90,6 +90,7 @@ static int	intelfb_genfb_ioctl(void *, void *, unsigned long, void *,
 static paddr_t	intelfb_genfb_mmap(void *, void *, off_t, int);
 static int	intelfb_genfb_enable_polling(void *);
 static int	intelfb_genfb_disable_polling(void *);
+static bool	intelfb_genfb_shutdown(device_t, int);
 static bool	intelfb_genfb_setmode(struct genfb_softc *, int);
 
 static const struct genfb_mode_callback intelfb_genfb_mode_callback = {
@@ -243,6 +244,9 @@ intelfb_setconfig_task(struct i915drmkms_task *task)
 		goto fail0;
 	}
 	sc->sc_attached = true;
+
+	pmf_device_register1(sc->sc_dev, NULL, NULL,
+	    intelfb_genfb_shutdown);
 
 	drm_fb_helper_set_config(sc->sc_ifa.ifa_fb_helper);
 
@@ -418,6 +422,13 @@ intelfb_genfb_disable_polling(void *cookie)
 	    struct intelfb_softc, sc_genfb);
 
 	return drm_fb_helper_debug_leave_fb(sc->sc_ifa.ifa_fb_helper);
+}
+
+static bool
+intelfb_genfb_shutdown(device_t self, int flags)
+{
+	genfb_enable_polling(self);
+	return true;
 }
 
 static bool
