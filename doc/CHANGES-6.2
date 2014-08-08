@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.126 2014/08/07 09:57:33 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.127 2014/08/08 05:50:41 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -3043,3 +3043,82 @@ sys/net/link_proto.c				1.17
 	Don't assume if_init is always set. if_init may be NULL, e.g., if_vlan.
 	PR kern/48997.
 	[ozaki-r, ticket #1103]
+
+sys/compat/linux/common/linux_socketcall.c	1.44
+sys/compat/linux32/common/linux32_socketcall.c	1.9
+
+	If SCARG(uap, what) = 0, copyin() will copy (size_t)-1 bytes, and it's
+	not a good idea; but not proven harmful. With the help of njoly@.
+	[maxv, ticket #1104]
+
+sys/dev/pci/agp_i810.c				1.108-1.110 via patch.
+
+	Bind i810 dcache pages at the requested offset, not at VA start.
+	From John D Baker in PR xsrc/48344.
+	[riastradh, ticket #1105]
+
+src/external/mit/xorg/server/drivers/xf86-video-mga/Makefile 1.10-1.12
+xsrc/external/mit/xf86-video-mga/dist/ChangeLog		1.1.1.6-1.1.1.7
+xsrc/external/mit/xf86-video-mga/dist/INSTALL		1.1.1.2
+xsrc/external/mit/xf86-video-mga/dist/Makefile.in	1.1.1.6-1.1.1.7
+xsrc/external/mit/xf86-video-mga/dist/aclocal.m4	1.1.1.6-1.1.1.7
+xsrc/external/mit/xf86-video-mga/dist/config.guess	1.1.1.5-1.1.1.6
+xsrc/external/mit/xf86-video-mga/dist/config.h.in	1.1.1.5-1.1.1.6
+xsrc/external/mit/xf86-video-mga/dist/config.sub	1.1.1.5-1.1.1.6
+xsrc/external/mit/xf86-video-mga/dist/configure		1.1.1.6-1.1.1.7
+xsrc/external/mit/xf86-video-mga/dist/configure.ac	1.1.1.6-1.1.1.7
+xsrc/external/mit/xf86-video-mga/dist/depcomp		1.1.1.5-1.1.1.6
+xsrc/external/mit/xf86-video-mga/dist/install-sh	1.1.1.5-1.1.1.6
+xsrc/external/mit/xf86-video-mga/dist/ltmain.sh		1.1.1.6
+xsrc/external/mit/xf86-video-mga/dist/missing		1.1.1.4-1.1.1.5
+xsrc/external/mit/xf86-video-mga/dist/man/Makefile.am	1.1.1.5
+xsrc/external/mit/xf86-video-mga/dist/man/Makefile.in	1.1.1.6-1.1.1.7
+xsrc/external/mit/xf86-video-mga/dist/man/mga.man	1.1.1.3
+xsrc/external/mit/xf86-video-mga/dist/src/Makefile.am	1.1.1.2-1.1.1.3
+xsrc/external/mit/xf86-video-mga/dist/src/Makefile.in	1.1.1.6-1.1.1.7
+xsrc/external/mit/xf86-video-mga/dist/src/binding.h	1.1.1.2
+xsrc/external/mit/xf86-video-mga/dist/src/client.h	1.1.1.2
+xsrc/external/mit/xf86-video-mga/dist/src/clientlx.c	delete
+xsrc/external/mit/xf86-video-mga/dist/src/compat-api.h	1.1.1.1
+xsrc/external/mit/xf86-video-mga/dist/src/mga.h		1.1.1.5-1.1.1.6
+xsrc/external/mit/xf86-video-mga/dist/src/mga_arc.c	1.1.1.3
+xsrc/external/mit/xf86-video-mga/dist/src/mga_bios.c	1.1.1.4
+xsrc/external/mit/xf86-video-mga/dist/src/mga_common.h	1.1.1.2
+xsrc/external/mit/xf86-video-mga/dist/src/mga_dac3026.c	1.3
+xsrc/external/mit/xf86-video-mga/dist/src/mga_dacG.c	1.1.1.4
+xsrc/external/mit/xf86-video-mga/dist/src/mga_dga.c	1.1.1.3
+xsrc/external/mit/xf86-video-mga/dist/src/mga_dh.c	1.1.1.3
+xsrc/external/mit/xf86-video-mga/dist/src/mga_dri.c	1.1.1.3-1.1.1.4
+xsrc/external/mit/xf86-video-mga/dist/src/mga_dri.h	1.1.1.2
+xsrc/external/mit/xf86-video-mga/dist/src/mga_dripriv.h	1.1.1.2
+xsrc/external/mit/xf86-video-mga/dist/src/mga_driver.c	1.1.1.6-1.1.1.7
+xsrc/external/mit/xf86-video-mga/dist/src/mga_esc.c	delete
+xsrc/external/mit/xf86-video-mga/dist/src/mga_exa.c	1.2
+xsrc/external/mit/xf86-video-mga/dist/src/mga_g450pll.c	1.1.1.3
+xsrc/external/mit/xf86-video-mga/dist/src/mga_hwcurs.c	1.1.1.3
+xsrc/external/mit/xf86-video-mga/dist/src/mga_macros.h	1.1.1.2
+xsrc/external/mit/xf86-video-mga/dist/src/mga_merge.c	1.1.1.5
+xsrc/external/mit/xf86-video-mga/dist/src/mga_merge.h	1.1.1.2
+xsrc/external/mit/xf86-video-mga/dist/src/mga_reg.h	1.1.1.4
+xsrc/external/mit/xf86-video-mga/dist/src/mga_sarea.h	1.1.1.2
+xsrc/external/mit/xf86-video-mga/dist/src/mga_shadow.c	1.1.1.4
+xsrc/external/mit/xf86-video-mga/dist/src/mga_storm.c	1.1.1.4-1.1.1.5
+xsrc/external/mit/xf86-video-mga/dist/src/mga_vga.c	1.3
+xsrc/external/mit/xf86-video-mga/dist/src/mga_video.c	1.1.1.4
+xsrc/external/mit/xf86-video-mga/dist/src/mgareg_flags.h 1.1.1.2
+xsrc/external/mit/xf86-video-mga/dist/util/Makefile.in	1.1.1.6-1.1.1.7
+xsrc/external/mit/xf86-video-mga/dist/util/stormdwg.c	1.1.1.2
+
+	Sync with -current (completely the same as of 2014/08/08):
+	- Added support for G200ER.
+	- Added support for G200SE Pilot3.
+	- Optimize use of bandwidth and increase maximum resolution to
+	  1920x1200.
+	- Delete support for MGA's proprietary HAL: unifdef USEMGAHAL.
+	- Add support for Video Memory greater then 8M.
+	- Expand memory mapping of framebuffer from 8 to 16MB.
+	- When we can't load the xaa or exa modules, use shadowfb instead.
+	- Unbreak dual head (xinerama).
+	- This patch has been used in Debian, Ubuntu and Gentoo for years.
+	- Disable HW cursor by default on G200 server chips.
+	[mrg, ticket #1106]
