@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.78 2014/08/08 19:38:47 apb Exp $
+# $NetBSD: mi,v 1.79 2014/08/08 19:54:14 apb Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -487,6 +487,7 @@
 ./usr/libdata/debug/usr/bin/dns-sd.debug	comp-mdns-debug		mdns,debug
 ./usr/libdata/debug/usr/bin/du.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/eject.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/ekermit.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/elfedit.debug	comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/env.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/eqn.debug		comp-groff-debug	groff,debug
