@@ -1,14 +1,17 @@
-.\" $NetBSD: ekermit.1,v 1.1 2014/08/08 21:38:45 apb Exp $
+.\" $NetBSD: ekermit.1,v 1.2 2014/08/08 21:46:36 wiz Exp $
 .Dd August 8, 2014
-.Os
 .Dt MAKE 1
-.\" .Os [OPERATING_SYSTEM] [version/release]
+.Os
 .Sh NAME
 .Nm ekermit
 .Nd Send or receive files using Kermit file transfer protocol
 .Sh SYNOPSIS
 .Nm
-.Op options
+.Op Fl BdhkLRrT
+.Op Fl b Ar 1235
+.Op Fl E Ar number
+.Op Fl p Ar neoms
+.Op Fl s Ar file
 .Sh DESCRIPTION
 .Nm
 is a simple command line interface to
@@ -19,47 +22,51 @@ firmware, use in realtime applications, or for construction of DLLs and
 libraries.
 .Pp
 .\" "What E-Kermit Does"
-EK performs just two functions: sending files and receiving files.
+.Nm
+performs just two functions: sending files and receiving files.
 .\" "What E-Kermit Does NOT Do"
-EK does not include client/server functions; a command or script
+.Pp
+.Nm
+does not include client/server functions; a command or script
 programming language; character-set conversion; transport encryption;
 or any form of communications or file input/output.
 It does not dial modems, it does not make connections,
 it does not have a built-in TCP/IP stack or interface to an external one.
 If you need these features, then you should use a full Kermit program,
-such as C-Kermit or Kermit 95. 
+such as C-Kermit or Kermit 95.
 .Pp
 The followiong options are available:
-.Bl -tag -width "XsXfileX..."
+.Bl -tag -width "XsXfileX..." -offset indent
+.It Fl B
+Force binary mode.
+.It Fl b Ar 1235
+Block check type: 1, 2, 3, or 5.
+.It Fl d
+Create
+.Pa debug.log .
+.It Fl E Ar number
+Simulated error rate (0-100).
+.It Fl h
+Display a help message.
+.It Fl k
+Keep incompletely received files.
+.It Fl L
+Local mode (vs remote).
+.It Fl p Ar neoms
+Parity: none, even, odd, mark, space.
+.It Fl R
+Remote mode (vs local).
 .It Fl r
 Receive files.
 .It Fl s Ar file ...
 Send files.
-.It Fl p Ar neoms
-Parity: none, even, odd, mark, space.
-.It Fl b Ar 1235
-Block check type: 1, 2, 3, or 5
-.It Fl k
-Keep incompletely received files.
-.It Fl B
-Force binary mode.
 .It Fl T
 Force text mode.
-.It Fl R
-Remote mode (vs local).
-.It Fl L
-Local mode (vs remote).
-.It Fl E Ar number
-Simulated error rate (0-100).
-.It Fl d
-Create
-.Pa debug.log .
-.It Fl h
-Display a help message.
 .El
 .
 .Sh IMPLEMENTATION NOTES
-EK includes the following Kermit Protocol features:
+.Nm
+includes the following Kermit Protocol features:
 .Bl -bullet -offset indent -compact
 .It
 Long packets.
@@ -82,7 +89,7 @@ All three block check types (6- and 12-bit checksum, 16-bit CRC).
 .It
 Status reports (protocol state, file name, size, timestamp, bytes so far).
 .It
-Transfer cancellation by either party. 
+Transfer cancellation by either party.
 .El
 .Pp
 The following Kermit Protocol features are not implemented:
@@ -97,21 +104,30 @@ Locking shifts.
 Client/server.
 .El
 .Pp
-Because EK is designed primarily for embedding, it does not use
+Because
+.Nm
+is designed primarily for embedding, it does not use
 streaming or (except in EKSW) true sliding windows (although much of the
 sliding windows code is there).
 .Pp
-The lack of true sliding windows in EK is compensated by having EK
+The lack of true sliding windows in
+.Nm
+is compensated by having
+.Nm
 pretend to support them without really doing so.
 This allows its sending partner to "stream" packets rather than waiting
 for ACKs after each one, as long as there isn't an error.
 If there is an error, the recovery strategy is "go back to n" (or
 perhaps in some cases "error out") rather than "selective repeat".
-EKSW, a separate program that has not been integrated with EK (but
+EKSW, a separate program that has not been integrated with
+.Nm
+(but
 should be), supports true sliding windows with selective repeat; that
 is, only those packets are retransmitted that actually need to be.
 .Pp
-In any event, since EK is intended primarily for embedding, it is
+In any event, since
+.Nm
+is intended primarily for embedding, it is
 anticipated that round-trip delays won't be a big factor; connections
 will generally be local, short, relatively fast, and if the connection
 is effectively flow controlled, error-free.
@@ -121,5 +137,7 @@ throughput and minimizes data loss.
 .Sh SEE ALSO
 .Lk http://www.kermitproject.org/ek.html
 .Sh HISTORY
-Version 1.1 of EK was released in 2002.
+Version 1.1 of
+.Nm
+was released in 2002.
 A BSD-licenced version 1.6 was released in 2011.
