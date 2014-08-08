@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.16 2014/06/12 08:50:52 ozaki-r Exp $	*/
+/*	$NetBSD: mutex.h,v 1.17 2014/08/08 07:34:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -35,15 +35,15 @@
 /*
  * The ARM mutex implementation is troublesome, because pre-v6 ARM lacks a
  * compare-and-swap operation.  However, there aren't any MP pre-v6 ARM
- * systems to speak of.  We are mostly concerned with atomicity with respect
- * to interrupts.
+ * systems to speak of.
  *
- * ARMv6, however, does have ldrex/strex, and can thus implement an MP-safe
- * compare-and-swap.
+ * ARMv6 and later, however, does have ldrex/strex, and can thus implement an
+ * MP-safe compare-and-swap.
  *
- * So, what we have done is impement simple mutexes using a compare-and-swap.
+ * So, what we have done is implement simple mutexes using a compare-and-swap.
  * We support pre-ARMv6 by implementing CAS as a restartable atomic sequence
- * that is checked by the IRQ vector.  MP-safe ARMv6 support will be added later.
+ * that is checked by the IRQ vector.
+ * 
  */
 
 #ifndef __MUTEX_PRIVATE
