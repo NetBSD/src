@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.61 2014/08/07 07:51:28 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.62 2014/08/08 03:05:45 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.61 2014/08/07 07:51:28 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.62 2014/08/08 03:05:45 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -95,6 +95,7 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -123,12 +124,6 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	case PRU_PROTOSEND:
 		error = EOPNOTSUPP;
 		break;
-
-	case PRU_RCVD:
-		/*
-		 * Don't mfree. Good architecture...
-		 */
-		return (EOPNOTSUPP);
 
 	default:
 		error = EOPNOTSUPP;
@@ -528,6 +523,14 @@ ddp_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+ddp_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 ddp_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -665,6 +668,7 @@ PR_WRAP_USRREQS(ddp)
 #define	ddp_stat	ddp_stat_wrapper
 #define	ddp_peeraddr	ddp_peeraddr_wrapper
 #define	ddp_sockaddr	ddp_sockaddr_wrapper
+#define	ddp_rcvd	ddp_rcvd_wrapper
 #define	ddp_recvoob	ddp_recvoob_wrapper
 #define	ddp_send	ddp_send_wrapper
 #define	ddp_sendoob	ddp_sendoob_wrapper
@@ -684,6 +688,7 @@ const struct pr_usrreqs ddp_usrreqs = {
 	.pr_stat	= ddp_stat,
 	.pr_peeraddr	= ddp_peeraddr,
 	.pr_sockaddr	= ddp_sockaddr,
+	.pr_rcvd	= ddp_rcvd,
 	.pr_recvoob	= ddp_recvoob,
 	.pr_send	= ddp_send,
 	.pr_sendoob	= ddp_sendoob,

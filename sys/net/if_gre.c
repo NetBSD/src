@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.158 2014/08/05 07:55:31 rtr Exp $ */
+/*	$NetBSD: if_gre.c,v 1.159 2014/08/08 03:05:45 rtr Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.158 2014/08/05 07:55:31 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.159 2014/08/08 03:05:45 rtr Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -724,8 +724,7 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 	SBLASTRECORDCHK(&so->so_rcv, "soreceive 4");
 	SBLASTMBUFCHK(&so->so_rcv, "soreceive 4");
 	if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
-		(*pr->pr_usrreqs->pr_generic)(so, PRU_RCVD, NULL,
-		    (struct mbuf *)(long)flags, NULL, curlwp);
+		(*pr->pr_usrreqs->pr_rcvd)(so, flags, curlwp);
 	if (*mp0 == NULL && (flags & MSG_EOR) == 0 &&
 	    (so->so_state & SS_CANTRCVMORE) == 0) {
 		sbunlock(&so->so_rcv);

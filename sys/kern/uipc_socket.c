@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.232 2014/08/05 07:55:31 rtr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.233 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.232 2014/08/05 07:55:31 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.233 2014/08/08 03:05:45 rtr Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -1532,8 +1532,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			 * get it filled again.
 			 */
 			if ((pr->pr_flags & PR_WANTRCVD) && so->so_pcb)
-				(*pr->pr_usrreqs->pr_generic)(so, PRU_RCVD,
-				    NULL, (struct mbuf *)(long)flags, NULL, l);
+				(*pr->pr_usrreqs->pr_rcvd)(so, flags, l);
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
 			if (wakeup_state & SS_RESTARTSYS)
@@ -1574,8 +1573,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive 4");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive 4");
 		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
-			(*pr->pr_usrreqs->pr_generic)(so, PRU_RCVD, NULL,
-			    (struct mbuf *)(long)flags, NULL, l);
+			(*pr->pr_usrreqs->pr_rcvd)(so, flags, l);
 	}
 	if (orig_resid == uio->uio_resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.38 2014/08/05 07:55:31 rtr Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.39 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.38 2014/08/05 07:55:31 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.39 2014/08/08 03:05:45 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -647,6 +647,14 @@ hci_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+hci_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 hci_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -735,6 +743,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -751,9 +760,6 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_RCVD:
-		return EOPNOTSUPP;	/* (no release) */
-
 	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
@@ -995,6 +1001,7 @@ PR_WRAP_USRREQS(hci)
 #define	hci_stat		hci_stat_wrapper
 #define	hci_peeraddr		hci_peeraddr_wrapper
 #define	hci_sockaddr		hci_sockaddr_wrapper
+#define	hci_rcvd		hci_rcvd_wrapper
 #define	hci_recvoob		hci_recvoob_wrapper
 #define	hci_send		hci_send_wrapper
 #define	hci_sendoob		hci_sendoob_wrapper
@@ -1014,6 +1021,7 @@ const struct pr_usrreqs hci_usrreqs = {
 	.pr_stat	= hci_stat,
 	.pr_peeraddr	= hci_peeraddr,
 	.pr_sockaddr	= hci_sockaddr,
+	.pr_rcvd	= hci_rcvd,
 	.pr_recvoob	= hci_recvoob,
 	.pr_send	= hci_send,
 	.pr_sendoob	= hci_sendoob,

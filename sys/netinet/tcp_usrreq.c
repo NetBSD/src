@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.198 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.199 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.198 2014/08/05 07:55:32 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.199 2014/08/08 03:05:45 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -244,6 +244,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -296,21 +297,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		break;
-
-	/*
-	 * After a receive, possibly send window update to peer.
-	 */
-	case PRU_RCVD:
-		/*
-		 * soreceive() calls this function when a user receives
-		 * ancillary data on a listening socket. We don't call
-		 * tcp_output in such a case, since there is no header
-		 * template for a listening socket and hence the kernel
-		 * will panic.
-		 */
-		if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) != 0)
-			(void) tcp_output(tp);
 		break;
 
 	default:
@@ -1062,6 +1048,40 @@ tcp_sockaddr(struct socket *so, struct mbuf *nam)
 #endif
 	tcp_debug_trace(so, tp, ostate, PRU_SOCKADDR);
 	splx(s);
+
+	return 0;
+}
+
+static int
+tcp_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	struct inpcb *inp = NULL;
+	struct in6pcb *in6p = NULL;
+	struct tcpcb *tp = NULL;
+	int ostate = 0;
+	int error = 0;
+	int s;
+
+	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
+		return error;
+
+	ostate = tcp_debug_capture(tp, PRU_RCVD);
+
+	/*
+	 * After a receive, possibly send window update to peer.
+	 *
+	 * soreceive() calls this function when a user receives
+	 * ancillary data on a listening socket. We don't call
+	 * tcp_output in such a case, since there is no header
+	 * template for a listening socket and hence the kernel
+	 * will panic.
+	 */
+	s = splsoftnet();
+	if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) != 0)
+		(void) tcp_output(tp);
+	splx(s);
+
+	tcp_debug_trace(so, tp, ostate, PRU_RCVD);
 
 	return 0;
 }
@@ -2430,6 +2450,7 @@ PR_WRAP_USRREQS(tcp)
 #define	tcp_stat	tcp_stat_wrapper
 #define	tcp_peeraddr	tcp_peeraddr_wrapper
 #define	tcp_sockaddr	tcp_sockaddr_wrapper
+#define	tcp_rcvd	tcp_rcvd_wrapper
 #define	tcp_recvoob	tcp_recvoob_wrapper
 #define	tcp_send	tcp_send_wrapper
 #define	tcp_sendoob	tcp_sendoob_wrapper
@@ -2449,6 +2470,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pr_stat	= tcp_stat,
 	.pr_peeraddr	= tcp_peeraddr,
 	.pr_sockaddr	= tcp_sockaddr,
+	.pr_rcvd	= tcp_rcvd,
 	.pr_recvoob	= tcp_recvoob,
 	.pr_send	= tcp_send,
 	.pr_sendoob	= tcp_sendoob,
