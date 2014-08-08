@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.2 2013/08/12 16:34:05 joerg Exp $
+#	$NetBSD: Makefile.xxboot,v 1.3 2014/08/08 15:20:10 isaki Exp $
 
 NOMAN=		# defined
 
@@ -47,7 +47,6 @@ LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/../xxboot.ldscript -M
 LINKFLAGS+=  -noinhibit-exec	# XXX
 .else
 LINKFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
-OBJCOPY?=  objcopy
 .endif
 LIBIOCS!= cd $M/stand/libiocs && ${PRINTOBJDIR}
 LIBSA!=	  cd $M/stand/libsa && ${PRINTOBJDIR}
