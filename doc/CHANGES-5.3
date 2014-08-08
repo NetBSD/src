@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.64 2014/07/14 09:15:07 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.65 2014/08/08 06:58:49 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -924,3 +924,17 @@ sys/kern/sys_module.c				1.15 via patch
 
 	Fix a user-controlled memory allocation.
 	[maxv, ticket #1914]
+
+sys/dev/pckbport/wskbdmap_mfii.c		1.25
+sys/dev/usb/ukbdmap.c				1.29
+
+	Add a belgian keyboard layout, based on the french keyboard layout.
+	Fixes PR install/46871.
+	[mbalmer, ticket #1915]
+
+sys/compat/linux/common/linux_socketcall.c	1.44
+sys/compat/linux32/common/linux32_socketcall.c	1.9
+
+	If SCARG(uap, what) = 0, copyin() will copy (size_t)-1 bytes, and it's
+	not a good idea; but not proven harmful. With the help of njoly@.
+	[maxv, ticket #1916]
