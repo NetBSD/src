@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.2 2014/05/09 22:21:46 reinoud Exp $	*/
+/*	$NetBSD: mct.c,v 1.3 2014/08/08 14:43:14 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.2 2014/05/09 22:21:46 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.3 2014/08/08 14:43:14 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -230,21 +230,24 @@ clockhandler(void *arg)
 	struct clockframe * const cf = arg;
 	struct mct_softc * const sc = &mct_sc;
 	const uint64_t now = mct_gettime(sc);
-	uint64_t delta = now - sc->sc_lastintr;
-	uint64_t missed = delta / sc->sc_autoinc;
+	int64_t delta = now - sc->sc_lastintr;
+	int64_t periods = delta / sc->sc_autoinc;
+
+	KASSERT(delta >= 0);
+	KASSERT(periods >= 0);
 
 	/* ack the interrupt */
 	mct_write_global(sc, MCT_G_INT_CSTAT, G_INT_CSTAT_CLEAR);
 
-	/* check if we missed clock interrupts */
-	if (delta > sc->sc_autoinc)
-		sc->sc_ev_missing_ticks.ev_count += missed;
+	/* check if we periods clock interrupts */
+	if (periods > 1)
+		sc->sc_ev_missing_ticks.ev_count += periods - 1;
 
 	sc->sc_lastintr = now;
 	hardclock(cf);
 
 	if (sc->sc_has_blink_led) {
-		sc->sc_led_timer = sc->sc_led_timer - 1 - missed;
+		sc->sc_led_timer = sc->sc_led_timer - periods - 1;
 		if (sc->sc_led_timer <= 0) {
 			sc->sc_led_state = !sc->sc_led_state;
 			exynos_gpio_pindata_write(&sc->sc_gpio_led,
