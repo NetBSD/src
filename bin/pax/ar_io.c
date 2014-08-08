@@ -1,4 +1,4 @@
-/*	$netbsd: ar_io.c,v 1.48 2007/04/23 18:40:22 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.55 2014/08/08 14:48:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.54 2012/03/20 18:42:28 matt Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.55 2014/08/08 14:48:55 joerg Exp $");
 #endif
 #endif /* not lint */
 
