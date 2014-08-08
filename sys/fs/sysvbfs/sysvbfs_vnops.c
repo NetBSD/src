@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.53 2014/02/07 15:29:21 hannken Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.54 2014/08/08 19:14:45 gson Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.53 2014/02/07 15:29:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.54 2014/08/08 19:14:45 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -450,7 +450,7 @@ sysvbfs_read(void *arg)
 		DPRINTF("%s: read %ldbyte\n", __func__, sz);
 	}
 
-	return  sysvbfs_update(v, NULL, NULL, UPDATE_WAIT);
+	return sysvbfs_update(v, NULL, NULL, UPDATE_WAIT);
 }
 
 int

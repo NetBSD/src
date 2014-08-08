@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.16 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.17 2014/08/08 19:15:33 gson Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.16 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.17 2014/08/08 19:15:33 gson Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -587,7 +587,7 @@ v7fs_read(void *v)
 	}
 	v7node->update_atime = true;
 
-	return  error;
+	return error;
 }
 
 int
