@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.120 2014/07/14 18:50:22 plunky Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.121 2014/08/08 19:43:49 joerg Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -294,6 +294,12 @@
 #define	__noprofile	__attribute__((__no_instrument_function__))
 #else
 #define	__noprofile	/* nothing */
+#endif
+
+#if __GNUC_PREREQ__(4, 6) || defined(__clang__)
+#define	__unreachable()	__builtin_unreachable()
+#else
+#define	__unreachable()	do {} while (0)
 #endif
 
 #if defined(__cplusplus)
