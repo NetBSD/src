@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.3 2014/08/06 10:03:49 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.4 2014/08/08 20:59:35 riz Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -44,11 +44,11 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-/* flags wether to offer the respective options (depending on helper
+/* flags whether to offer the respective options (depending on helper
    programs available on install media */
 static int have_raid, have_vnd, have_cgd, have_lvm, have_gpt, have_dk;
 
-/* XXX: replace all MAX_ defince with depeding on kernel settings vars */
+/* XXX: replace all MAX_* defines with vars that depend on kernel settings */
 #define MAX_ENTRIES 96
 
 #define MAX_RAID 8
@@ -79,7 +79,7 @@ typedef struct vnds_t {
 	int manual_geom;
 	int secsize, nsectors, ntracks, ncylinders;
 	int pm_part;    /* Used only for */
-	pm_devs_t *pm;  /* reffering device */
+	pm_devs_t *pm;  /* referring device */
 } vnds_t;
 vnds_t vnds[MAX_VND];
 
@@ -165,7 +165,7 @@ struct {
     const char *mnt_opts, *on;
 } mnts[MAX_MNTS];
 
-int cursel; /* Number of selected main menu entrie */
+int cursel; /* Number of selected entry in main menu */
 int changed; /* flag indicating that we have unsaved changes */
 int raid_curspare; /* XXX: replace by true way */
 
@@ -362,8 +362,8 @@ pm_manage_getfreenode(void *node, const char *d, structinfo_t *s)
 }
 
 /***
-RAIDs
-***/
+ RAIDs
+ ***/
 
 static void
 pm_raid_menufmt(menudesc *m, int opt, void *arg)
@@ -537,7 +537,7 @@ pm_raid_check(void *arg)
 			if (!dev_ptr->pm_is_spare[i])
 				dev_num++;
 		}
-	/* Calculate summ of available space */
+	/* Calculate sum of available space */
 	if (dev_num > 0) {
 		switch (dev_ptr->raid_level) {
 			case 0:
@@ -700,8 +700,8 @@ pm_raid_commit(void)
 }
 
 /***
-VND
-***/
+ VND
+ ***/
 
 static void
 pm_vnd_menufmt(menudesc *m, int opt, void *arg)
@@ -942,7 +942,7 @@ pm_vnd_commit(void)
 						"vnconfig %s vnd%d %s %d %d %d %d", r_o, vnds[i].node,
 						resultpath, vnds[i].secsize, vnds[i].nsectors,
 						vnds[i].ntracks, vnds[i].ncylinders);
-		/* If this is a existent image or image without manual geometry */
+		/* If this is a existing image or image without manual geometry */
 		else
 			error += run_program(RUN_DISPLAY | RUN_PROGRESS, "vnconfig %s vnd%d %s",
 						r_o, vnds[i].node, resultpath);
@@ -958,8 +958,8 @@ pm_vnd_commit(void)
 }
 
 /***
-CGD
-***/
+ CGD
+ ***/
 
 static void
 pm_cgd_menufmt(menudesc *m, int opt, void *arg)
@@ -1158,8 +1158,8 @@ pm_cgd_commit(void)
 }
 
 /***
-LVM
-***/
+ LVM
+ ***/
 
 /* Add lvm logical volumes to pm list */
 /* XXX: rewrite */
@@ -1686,8 +1686,8 @@ pm_lvm_commit(void)
 }
 
 /***
-GPT
-***/
+ GPT
+ ***/
 
 int
 pm_gpt_convert(pm_devs_t *pm_cur)
@@ -1758,7 +1758,7 @@ pm_wedge_create(int num, pm_devs_t **pm_dk)
 	if (num > MAX_WEDGES)
 		return -1;
 
-	/* There is no ability to use requied dkX device, so that's hack */
+	/* There is no ability to use required dkX device, so that's a hack */
 	for (i = 0; i < num; i++)
 		if (! wedges[i].allocated) {
 			hackerr = 1;
@@ -1852,7 +1852,7 @@ pm_gpt_commit(void)
 
 		error += pm_wedge_create(i, &pm_dk);
 		if (pm_dk != NULL) {
-			/* Create filesystem on wedge and add it to list */
+			/* Create file system on wedge and add it to list */
 			pm_select(pm_dk);
 			make_filesystems();
 			SLIST_INSERT_AFTER(wedges[i].pm, pm_dk, l);
@@ -1870,8 +1870,8 @@ pm_gpt_commit(void)
 }
 
 /***
-Partman generic functions 
-***/
+ Partman generic functions 
+ ***/
 
 int
 pm_getrefdev(pm_devs_t *pm_cur)
@@ -1969,7 +1969,7 @@ pm_partusage(pm_devs_t *pm_cur, int part_num, int do_del)
 	return 0;
 }
 
-/* Cleanup removed devices */
+/* Clean up removed devices */
 static int
 pm_clean(void)
 {
@@ -2256,7 +2256,7 @@ pm_lastcheck(void)
 	return 0;
 }
 
-/* Is there some unsaved changes? */
+/* Are there unsaved changes? */
 static int
 pm_needsave(void)
 {
@@ -2302,7 +2302,7 @@ pm_commit(menudesc *m, void *arg)
 			if (
 				write_disklabel() != 0   || /* Write slices table (disklabel) */
 				md_post_disklabel() != 0 || /* Enable swap and check badblock */
-				make_filesystems() != 0     /* Create filesystems by newfs */
+				make_filesystems() != 0     /* Create filesystems with newfs */
 			) {
 				/* Oops, something failed... */
 				if (logfp)
@@ -2545,7 +2545,7 @@ pm_upddevlist_adv(menudesc *m, void *arg, int *i,
 {
 	int ii;
 	if (d->create_msg != NULL) {
-		/* We want to have menu entrie that create new device */
+		/* We want to have menu entry that creates a new device */
 		((part_entry_t *)arg)[*i].type = d->pe_type;
 		((part_entry_t *)arg)[*i].dev_ptr = NULL;
 		((part_entry_t *)arg)[*i].dev_ptr_delta = d->s->parent_size * d->sub_num;
@@ -2572,7 +2572,7 @@ pm_upddevlist_adv(menudesc *m, void *arg, int *i,
 		((part_entry_t *)arg)[*i].dev_ptr = (char*)d->s->entry_first +
 			d->s->entry_size * ii + d->s->parent_size * d->sub_num;
 		(*i)++;
-		/* We should to show submenu for current entry */
+		/* We should show submenu for current entry */
 		if (d->sub != NULL) {
 			d->sub->sub_num = ii;
 			pm_upddevlist_adv(m, arg, i, d->sub);
