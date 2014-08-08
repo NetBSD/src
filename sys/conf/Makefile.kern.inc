@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.168 2014/05/05 19:06:29 martin Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.169 2014/08/08 14:42:58 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -114,13 +114,6 @@ COPTS.kern_ssp.c+=	-fno-stack-protector -D__SSP__
 # __stack_chk_guard, so ensure stack protection is disabled
 .if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
 COPTS.cpu.c+=		-fno-stack-protector
-.endif
-
-# If we want the bpendtsleep: label in kern_synch.c, we need to use
-# -fno-reorder-blocks.  Don't make this a config(1) defflag without
-# making sure this fragment remains valid.
-.if defined(HAVE_GCC) && !empty(${CFLAGS:M-DKERN_SYNCH_BPENDTSLEEP_LABEL})
-COPTS.kern_synch.c+=	-fno-reorder-blocks
 .endif
 
 # Use the per-source COPTS variables to add -g to just those
