@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.77 2014/08/01 14:08:47 christos Exp $
+# $NetBSD: mi,v 1.78 2014/08/08 19:38:47 apb Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -521,7 +521,6 @@
 ./usr/libdata/debug/usr/bin/getextattr.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getopt.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/gettext.debug	comp-c-debug		debug
-./usr/libdata/debug/usr/bin/gkermit.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/gprof.debug		comp-debug-debug	binutils,debug
 ./usr/libdata/debug/usr/bin/grep.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/grn.debug		comp-groff-debug	groff,debug
