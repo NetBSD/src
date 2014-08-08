@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socketcall.c,v 1.6 2007/12/20 23:02:58 dsl Exp $ */
+/*	$NetBSD: linux32_socketcall.c,v 1.6.20.1 2014/08/08 06:52:24 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.6 2007/12/20 23:02:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.6.20.1 2014/08/08 06:52:24 msaitoh Exp $");
 
 #include "opt_ktrace.h"
 #include <sys/types.h>
@@ -95,7 +95,7 @@ linux32_sys_socketcall(struct lwp *l, const struct linux32_sys_socketcall_args *
 	union linux32_socketcall_args ua;
 	int error;
 
-	if (SCARG(uap, what) < 0 || SCARG(uap, what) > LINUX32_MAX_SOCKETCALL)
+	if (SCARG(uap, what) <= 0 || SCARG(uap, what) > LINUX32_MAX_SOCKETCALL)
 		return ENOSYS;
 
 	if ((error = copyin(SCARG_P32(uap, args), &ua,
