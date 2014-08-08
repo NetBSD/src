@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.91 2014/07/25 08:10:31 dholland Exp $ */
+/*	$NetBSD: fd.c,v 1.92 2014/08/08 21:13:52 joerg Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.91 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.92 2014/08/08 21:13:52 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1851,7 +1851,7 @@ again:
 		 * if we are at gap then we can no longer be sure
 		 * of correct sync marks
 		 */
-		if ((info && 0xff) == 1)
+		if ((info & 0xff) == 1)
 			doagain = 1;
 		else
 			doagain = 0;
