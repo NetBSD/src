@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1482 2014/08/02 23:57:40 rmind Exp $
+# $NetBSD: mi,v 1.1483 2014/08/08 19:38:47 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -186,7 +186,6 @@
 ./usr/share/man/cat1/getextattr.0		man-util-catman		.cat
 ./usr/share/man/cat1/getopt.0			man-util-catman		.cat
 ./usr/share/man/cat1/gettext.0			man-locale-catman	.cat
-./usr/share/man/cat1/gkermit.0			man-util-catman		.cat
 ./usr/share/man/cat1/grep.0			man-util-catman		.cat
 ./usr/share/man/cat1/grfinfo.0			man-obsolete		obsolete
 ./usr/share/man/cat1/groups.0			man-util-catman		.cat
@@ -3310,7 +3309,6 @@
 ./usr/share/man/html1/getextattr.html		man-util-htmlman	html
 ./usr/share/man/html1/getopt.html		man-util-htmlman	html
 ./usr/share/man/html1/gettext.html		man-locale-htmlman	html
-./usr/share/man/html1/gkermit.html		man-util-htmlman	html
 ./usr/share/man/html1/grep.html			man-util-htmlman	html
 ./usr/share/man/html1/groups.html		man-util-htmlman	html
 ./usr/share/man/html1/gunzip.html		man-util-htmlman	html
@@ -6049,7 +6047,6 @@
 ./usr/share/man/man1/getextattr.1		man-util-man		.man
 ./usr/share/man/man1/getopt.1			man-util-man		.man
 ./usr/share/man/man1/gettext.1			man-locale-man		.man
-./usr/share/man/man1/gkermit.1			man-util-man		.man
 ./usr/share/man/man1/grep.1			man-util-man		.man
 ./usr/share/man/man1/grfinfo.1			man-obsolete		obsolete
 ./usr/share/man/man1/groups.1			man-util-man		.man
