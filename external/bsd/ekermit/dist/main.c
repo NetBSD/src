@@ -289,7 +289,7 @@ doarg(char c) {				/* Command-line option parser */
     return(action);
 }
 
-void
+int
 main(int argc, char ** argv) {
     int status, rx_len, i, x;
     char c;
