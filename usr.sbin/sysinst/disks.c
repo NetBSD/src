@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.3 2014/08/04 04:20:01 mrg Exp $ */
+/*	$NetBSD: disks.c,v 1.4 2014/08/08 20:24:27 riz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1395,7 +1395,8 @@ static int
 incoregpt(pm_devs_t *pm_cur, partinfo *lp)
 {
 	int i, num;
-	uint32_t p_start, p_size, p_num;
+	unsigned int p_num;
+	uint64_t p_start, p_size;
 	char *textbuf, *t, *tt, p_type[STRSIZE];
 	struct dkwedge_info *dkw;
 
@@ -1412,16 +1413,16 @@ incoregpt(pm_devs_t *pm_cur, partinfo *lp)
 
 	(void)strtok(textbuf, "\n"); /* ignore first line */
 	while ((t = strtok(NULL, "\n")) != NULL) {
-		i = 0; p_start = -1; p_size = -1; p_num = -1; strcpy(p_type, ""); /* init */
+		i = 0; p_start = 0; p_size = 0; p_num = 0; strcpy(p_type, ""); /* init */
 		while ((tt = strsep(&t, " \t")) != NULL) {
-			if (strlen(tt) < 1)
+			if (strlen(tt) == 0)
 				continue;
 			if (i == 0)
-				p_start = atoi(tt);
+				p_start = strtouq(tt, NULL, 10);
 			if (i == 1)
-				p_size = atoi(tt);
+				p_size = strtouq(tt, NULL, 10);
 			if (i == 2)
-				p_num = atoi(tt);
+				p_num = strtouq(tt, NULL, 10);
 			if (i > 2 || (i == 2 && p_num == 0))
 				if (
 					strcmp(tt, "GPT") &&
@@ -1431,16 +1432,16 @@ incoregpt(pm_devs_t *pm_cur, partinfo *lp)
 						strncat(p_type, tt, STRSIZE);
 			i++;
 		}
-		if (p_start < 1 || p_size < 1)
+		if (p_start == 0 || p_size == 0)
 			continue;
 		else if (! strcmp(p_type, "Pritable"))
 			pm_cur->ptstart = p_start + p_size;
 		else if (! strcmp(p_type, "Sectable"))
 			pm_cur->ptsize = p_start - pm_cur->ptstart - 1;
-		else if (p_num < 1 && strlen(p_type) > 0)
+		else if (p_num == 0 && strlen(p_type) > 0)
 			/* Utilitary entry (PMBR, etc) */
 			continue;
-		else if (p_num < 1) {
+		else if (p_num == 0) {
 			/* Free space */
 			continue;
 		} else {
