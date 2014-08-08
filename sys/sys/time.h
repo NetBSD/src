@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.66 2014/08/07 20:05:10 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.67 2014/08/08 07:40:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -174,7 +174,7 @@ timespec2bintime(const struct timespec *ts, struct bintime *bt)
 
 	bt->sec = ts->tv_sec;
 	/* 18446744073 = int(2^64 / 1000000000) */
-	bt->frac = (uint64_t)ts->tv_nsec * (uint64_t)18446744073LL; 
+	bt->frac = (uint64_t)ts->tv_nsec * (uint64_t)18446744073ULL; 
 }
 
 static __inline void
@@ -192,7 +192,7 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 
 	bt->sec = tv->tv_sec;
 	/* 18446744073709 = int(2^64 / 1000000) */
-	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)18446744073709LL;
+	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)18446744073709ULL;
 }
 #endif /* !defined(_STANDALONE) */
 
