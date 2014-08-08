@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.6,v 1.1.2.18 2014/08/07 10:00:09 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.6,v 1.1.2.19 2014/08/08 05:51:35 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.5 release to the NetBSD 6.0.6
 release:
@@ -704,3 +704,16 @@ sys/net/link_proto.c				1.17
 	Don't assume if_init is always set. if_init may be NULL, e.g., if_vlan.
 	PR kern/48997.
 	[ozaki-r, ticket #1103]
+
+sys/compat/linux/common/linux_socketcall.c	1.44
+sys/compat/linux32/common/linux32_socketcall.c	1.9
+
+	If SCARG(uap, what) = 0, copyin() will copy (size_t)-1 bytes, and it's
+	not a good idea; but not proven harmful. With the help of njoly@.
+	[maxv, ticket #1104]
+
+sys/dev/pci/agp_i810.c				1.108-1.110 via patch.
+
+	Bind i810 dcache pages at the requested offset, not at VA start.
+	From John D Baker in PR xsrc/48344.
+	[riastradh, ticket #1105]
