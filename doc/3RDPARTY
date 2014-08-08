@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1141 2014/08/06 19:27:58 apb Exp $
+#	$NetBSD: 3RDPARTY,v 1.1142 2014/08/08 11:00:56 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1310,12 +1310,14 @@ Home Page:	http://www.iana.org/time-zones
 Mailing List:	tz@iana.org
 Responsible:	kleink, christos, apb
 License:	Public domain
-Location:	lib/libc/time,share/zoneinfo
+Location:	lib/libc/time/zoneinfo, external/public-domain/tz/share
 Notes:
 Don't use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
 Diffs are now applied by hand, since we have too many diffs (re-entrant tzcode,
 register removal) to apply. The diffs have been submitted upstream but there
 is too much inertia to apply them. Check for .gitignore files.
+For the data files, do use external/public-domain/tz/tzdata2netbsd. You might
+need to download the NEWS file separately if it's missing.
 
 Package:	wpa_supplicant/hostapd
 Version:	2.0
