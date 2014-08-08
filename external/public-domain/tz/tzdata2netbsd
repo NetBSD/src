@@ -1,8 +1,9 @@
-# $NetBSD: tzdata2netbsd,v 1.1 2014/08/08 09:08:19 apb Exp $
+# $NetBSD: tzdata2netbsd,v 1.2 2014/08/08 09:47:28 apb Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
-# 0. Be in an up-to-date checkout of src/share/zoneinfo from NetBSD-current.
+# 0. Be in an up-to-date checkout of src/external/public-domain/tz
+#    from NetBSD-current.
 # 1. Edit OLDVER and NEWVER below.
 # 3. Run this script.  You will be prompted for confirmation before
 #    anything major (such as a cvs operation).
@@ -31,7 +32,7 @@ SIGURL="${DISTURL}.asc"
 NEWSURL="https://github.com/eggert/tz/raw/${GITHUBTAG}/NEWS"
 
 # Directories
-REPODIR="src/share/zoneinfo"	# relative to the NetSBD CVS repository
+REPODIR="src/external/public-domain/tz/dist" # relative to the NetBSD CVS repo
 WORKDIR="$(pwd)/update-work/${NEWVER}"
 EXTRACTDIR="${WORKDIR}/extract"
 
@@ -162,6 +163,12 @@ extract()
 	tar -z -xf "${DISTFILE}" -C "${EXTRACTDIR}"
 }
 
+addnews()
+{
+	[ -f "${EXTRACTDIR}/NEWS" ] && return
+	cp -p "${NEWSFILE}" "${EXTRACTDIR}"/NEWS
+}
+
 # Find the relevant part of the NEWS file for all releases between
 # OLDVER and NEWVER, and save them to NEWSTRIMFILE.
 #
@@ -198,7 +205,7 @@ EDIT ME: generated from ${NEWSFILE}.
 EDIT ME: 
 EOF
 	awk -v oldver="${OLDVER}" -v newver="${NEWVER}" \
-	    -v disturl="${DISTURL}" \
+	    -v disturl="${DISTURL}" -v newsurl="${NEWSURL}" \
 	    '
 		BEGIN {
 			bullet = "  * ";
@@ -207,6 +214,7 @@ EOF
 			goodsection = 0;
 			havesentence = 0;
 			print "Import tzdata"newver" from "disturl;
+			print "and NEWS file from "newsurl;
 		}
 		/^Release/ {
 			# "Release <version> - <date>"
@@ -323,6 +331,7 @@ main()
 	fetch
 	checksig
 	extract
+	addnews
 	trimnews
 	mkimportmsg
 	editimportmsg
