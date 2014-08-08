@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.167 2014/08/05 08:52:10 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.168 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.167 2014/08/05 08:52:10 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.168 2014/08/08 03:05:45 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,6 +369,52 @@ unp_setaddr(struct socket *so, struct mbuf *nam, bool peeraddr)
 }
 
 static int
+unp_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	struct unpcb *unp = sotounpcb(so);
+	struct socket *so2;
+	u_int newhiwat;
+
+	KASSERT(solocked(so));
+	KASSERT(unp != NULL);
+
+	switch (so->so_type) {
+
+	case SOCK_DGRAM:
+		panic("uipc 1");
+		/*NOTREACHED*/
+
+	case SOCK_SEQPACKET: /* FALLTHROUGH */
+	case SOCK_STREAM:
+#define	rcv (&so->so_rcv)
+#define snd (&so2->so_snd)
+		if (unp->unp_conn == 0)
+			break;
+		so2 = unp->unp_conn->unp_socket;
+		KASSERT(solocked2(so, so2));
+		/*
+		 * Adjust backpressure on sender
+		 * and wakeup any waiting to write.
+		 */
+		snd->sb_mbmax += unp->unp_mbcnt - rcv->sb_mbcnt;
+		unp->unp_mbcnt = rcv->sb_mbcnt;
+		newhiwat = snd->sb_hiwat + unp->unp_cc - rcv->sb_cc;
+		(void)chgsbsize(so2->so_uidinfo,
+		    &snd->sb_hiwat, newhiwat, RLIM_INFINITY);
+		unp->unp_cc = rcv->sb_cc;
+		sowwakeup(so2);
+#undef snd
+#undef rcv
+		break;
+
+	default:
+		panic("uipc 2");
+	}
+
+	return 0;
+}
+
+static int
 unp_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -520,8 +566,6 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct unpcb *unp;
-	struct socket *so2;
-	u_int newhiwat;
 	int error = 0;
 
 	KASSERT(req != PRU_ATTACH);
@@ -537,6 +581,7 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -553,41 +598,6 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 	case PRU_CONNECT2:
 		error = unp_connect2(so, (struct socket *)nam, PRU_CONNECT2);
-		break;
-
-	case PRU_RCVD:
-		switch (so->so_type) {
-
-		case SOCK_DGRAM:
-			panic("uipc 1");
-			/*NOTREACHED*/
-
-		case SOCK_SEQPACKET: /* FALLTHROUGH */
-		case SOCK_STREAM:
-#define	rcv (&so->so_rcv)
-#define snd (&so2->so_snd)
-			if (unp->unp_conn == 0)
-				break;
-			so2 = unp->unp_conn->unp_socket;
-			KASSERT(solocked2(so, so2));
-			/*
-			 * Adjust backpressure on sender
-			 * and wakeup any waiting to write.
-			 */
-			snd->sb_mbmax += unp->unp_mbcnt - rcv->sb_mbcnt;
-			unp->unp_mbcnt = rcv->sb_mbcnt;
-			newhiwat = snd->sb_hiwat + unp->unp_cc - rcv->sb_cc;
-			(void)chgsbsize(so2->so_uidinfo,
-			    &snd->sb_hiwat, newhiwat, RLIM_INFINITY);
-			unp->unp_cc = rcv->sb_cc;
-			sowwakeup(so2);
-#undef snd
-#undef rcv
-			break;
-
-		default:
-			panic("uipc 2");
-		}
 		break;
 
 	default:
@@ -1925,6 +1935,7 @@ const struct pr_usrreqs unp_usrreqs = {
 	.pr_stat	= unp_stat,
 	.pr_peeraddr	= unp_peeraddr,
 	.pr_sockaddr	= unp_sockaddr,
+	.pr_rcvd	= unp_rcvd,
 	.pr_recvoob	= unp_recvoob,
 	.pr_send	= unp_send,
 	.pr_sendoob	= unp_sendoob,

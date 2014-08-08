@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.143 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.144 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.143 2014/08/05 07:55:32 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.144 2014/08/08 03:05:45 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -715,6 +715,14 @@ rip_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+rip_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 rip_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -802,6 +810,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -832,10 +841,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_RCVD:
-		error = EOPNOTSUPP;
-		break;
-
 	default:
 		panic("rip_usrreq");
 	}
@@ -858,6 +863,7 @@ PR_WRAP_USRREQS(rip)
 #define	rip_stat	rip_stat_wrapper
 #define	rip_peeraddr	rip_peeraddr_wrapper
 #define	rip_sockaddr	rip_sockaddr_wrapper
+#define	rip_rcvd	rip_rcvd_wrapper
 #define	rip_recvoob	rip_recvoob_wrapper
 #define	rip_send	rip_send_wrapper
 #define	rip_sendoob	rip_sendoob_wrapper
@@ -877,6 +883,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pr_stat	= rip_stat,
 	.pr_peeraddr	= rip_peeraddr,
 	.pr_sockaddr	= rip_sockaddr,
+	.pr_rcvd	= rip_rcvd,
 	.pr_recvoob	= rip_recvoob,
 	.pr_send	= rip_send,
 	.pr_sendoob	= rip_sendoob,

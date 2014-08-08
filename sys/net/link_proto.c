@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.22 2014/08/05 07:55:31 rtr Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.23 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.22 2014/08/05 07:55:31 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.23 2014/08/08 03:05:45 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -61,6 +61,7 @@ static int link_ioctl(struct socket *, u_long, void *, struct ifnet *);
 static int link_stat(struct socket *, struct stat *);
 static int link_peeraddr(struct socket *, struct mbuf *);
 static int link_sockaddr(struct socket *, struct mbuf *);
+static int link_rcvd(struct socket *, int, struct lwp *);
 static int link_recvoob(struct socket *, struct mbuf *, int);
 static int link_send(struct socket *, struct mbuf *, struct mbuf *,
     struct mbuf *, struct lwp *);
@@ -89,6 +90,7 @@ static const struct pr_usrreqs link_usrreqs = {
 	.pr_stat	= link_stat,
 	.pr_peeraddr	= link_peeraddr,
 	.pr_sockaddr	= link_sockaddr,
+	.pr_rcvd	= link_rcvd,
 	.pr_recvoob	= link_recvoob,
 	.pr_send	= link_send,
 	.pr_sendoob	= link_sendoob,
@@ -346,6 +348,14 @@ link_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+link_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 link_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -387,6 +397,7 @@ link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
