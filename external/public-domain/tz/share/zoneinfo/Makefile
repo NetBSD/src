@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2014/08/08 09:06:41 apb Exp $
+#	$NetBSD: Makefile,v 1.2 2014/08/08 09:17:03 apb Exp $
 
 .include <bsd.own.mk>
+.include "../../Makefile.inc"
+
+.PATH: ${TZDISTDIR}
 
 # If you want something other than Eastern United States time as a template
 # for handling POSIX-style time zone environment variables,
@@ -44,7 +47,7 @@ TZDIR=	/usr/share/zoneinfo
 REDO=		posix_only
 
 # Since "." may not be in PATH...
-YEARISTYPE=	"${HOST_SH} ${.CURDIR}/yearistype.sh"
+YEARISTYPE=	"${HOST_SH} ${TZDISTDIR}/yearistype.sh"
 
 PRIMARY_YDATA=	africa antarctica asia australasia \
 		europe northamerica southamerica
@@ -61,23 +64,23 @@ TZBUILDDIR=	${.OBJDIR}/builddir
 posix_only: ${TDATA}
 	${_MKTARGET_CREATE}
 	mkdir -p ${TZBUILDDIR}
-	cd ${.CURDIR} && \
+	cd ${TZDISTDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L /dev/null ${TDATA}
 
 .PHONY:	right_only
 right_only: leapseconds ${TDATA}
 	${_MKTARGET_CREATE}
 	mkdir -p ${TZBUILDDIR}
-	cd ${.CURDIR} && \
+	cd ${TZDISTDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L leapseconds ${TDATA}
 
 .PHONY:	other_two
 other_two: leapseconds ${TDATA}
 	${_MKTARGET_CREATE}
 	mkdir -p ${TZBUILDDIR}
-	cd ${.CURDIR} && \
+	cd ${TZDISTDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/posix -L /dev/null ${TDATA}
-	cd ${.CURDIR} && \
+	cd ${TZDISTDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/right -L leapseconds ${TDATA}
 
 .PHONY:	posix_right
@@ -96,7 +99,7 @@ TOOL_PAX.unpriv=
 afterinstall: ${DATA} ${REDO} ${TABDATA}
 	${_MKMSG_CREATE} ${POSIXRULES}
 	mkdir -p ${TZBUILDDIR}
-	cd ${.CURDIR} && \
+	cd ${TZDISTDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -p ${POSIXRULES}
 	cd ${TZBUILDDIR} && \
 	    find . -type f -print | xargs ${TOOL_STAT} -qf '%d,%i %N' | sort \
@@ -133,7 +136,7 @@ afterinstall: ${DATA} ${REDO} ${TABDATA}
 	done
 	for f in ${TABDATA}; do \
 		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-			${.CURDIR}/$$f ${DESTDIR}${TZDIR}; \
+			${TZDISTDIR}/$$f ${DESTDIR}${TZDIR}; \
 	done
 .else	# ${MKSHARE} == "no"
 afterinstall:
