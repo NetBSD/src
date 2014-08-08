@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/08/06 14:10:42 isaki Exp $
+#	$NetBSD: Makefile,v 1.6 2014/08/08 15:19:51 isaki Exp $
 
 NOMAN=		# defined
 
@@ -22,7 +22,6 @@ BINMODE=	444
 STRIPFLAG=
 
 BFDNAME=	a.out-m68k-netbsd
-STRIP?=		/usr/bin/strip
 
 # XXX shared sources should be in COMMONDIR
 BOOTDIR=	${.CURDIR}/../boot

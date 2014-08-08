@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2012/04/05 12:01:36 isaki Exp $
+#	$NetBSD: Makefile,v 1.17 2014/08/08 15:19:51 isaki Exp $
 
 NOMAN=		# defined
 .include <bsd.own.mk>
@@ -14,8 +14,6 @@ PROG=		${BOOT}
 BINDIR=		/usr/mdec
 BINMODE=	444
 STRIPFLAG=
-
-STRIP?=		/usr/bin/strip
 
 SRCS=		srt0.S mboot.c
 KERN!=		cd ${.CURDIR}/../../../..; pwd
