@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.58 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.59 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -110,7 +110,7 @@ struct protosw {
 #define	PR_ATOMIC	0x01		/* exchange atomic messages only */
 #define	PR_ADDR		0x02		/* addresses given with messages */
 #define	PR_CONNREQUIRED	0x04		/* connection required by protocol */
-#define	PR_WANTRCVD	0x08		/* want PRU_RCVD calls */
+#define	PR_WANTRCVD	0x08		/* want pr_rcvd() calls */
 #define	PR_RIGHTS	0x10		/* passes capabilities */
 #define	PR_LISTEN	0x20		/* supports listen(2) and accept(2) */
 #define	PR_LASTHDR	0x40		/* enforce ipsec policy; last header */
@@ -249,6 +249,7 @@ struct pr_usrreqs {
 	int	(*pr_stat)(struct socket *, struct stat *);
 	int	(*pr_peeraddr)(struct socket *, struct mbuf *);
 	int	(*pr_sockaddr)(struct socket *, struct mbuf *);
+	int	(*pr_rcvd)(struct socket *, int, struct lwp *);
 	int	(*pr_recvoob)(struct socket *, struct mbuf *, int);
 	int	(*pr_send)(struct socket *, struct mbuf *, struct mbuf *,
 	    struct mbuf *, struct lwp *);
@@ -403,6 +404,16 @@ name##_sockaddr_wrapper(struct socket *a, struct mbuf *b)	\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
 	rv = name##_sockaddr(a, b);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_rcvd_wrapper(struct socket *a, int b,		\
+    struct lwp *c)					\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_rcvd(a, b, c);			\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }							\

@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.56 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.57 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.56 2014/08/05 07:55:32 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.57 2014/08/08 03:05:45 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -79,6 +79,7 @@ static int	sockin_ioctl(struct socket *, u_long, void *, struct ifnet *);
 static int	sockin_stat(struct socket *, struct stat *);
 static int	sockin_peeraddr(struct socket *, struct mbuf *);
 static int	sockin_sockaddr(struct socket *, struct mbuf *);
+static int	sockin_rcvd(struct socket *, int, struct lwp *);
 static int	sockin_recvoob(struct socket *, struct mbuf *, int);
 static int	sockin_send(struct socket *, struct mbuf *, struct mbuf *,
 			    struct mbuf *, struct lwp *);
@@ -101,6 +102,7 @@ static const struct pr_usrreqs sockin_usrreqs = {
 	.pr_stat = sockin_stat,
 	.pr_peeraddr = sockin_peeraddr,
 	.pr_sockaddr = sockin_sockaddr,
+	.pr_rcvd = sockin_rcvd,
 	.pr_recvoob = sockin_recvoob,
 	.pr_send = sockin_send,
 	.pr_sendoob = sockin_sendoob,
@@ -592,6 +594,14 @@ sockin_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+sockin_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	panic("sockin_rcvd: IMPLEMENT ME, rcvd not supported");
+}
+
+static int
 sockin_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -684,6 +694,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);

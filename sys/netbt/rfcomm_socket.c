@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.31 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.32 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.31 2014/08/05 07:55:32 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.32 2014/08/08 03:05:45 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -108,7 +108,7 @@ rfcomm_attach(struct socket *so, int proto)
 	if (error)
 		return error;
 
-	error = rfcomm_rcvd(so->so_pcb, sbspace(&so->so_rcv));
+	error = rfcomm_rcvd_pcb(so->so_pcb, sbspace(&so->so_rcv));
 	if (error) {
 		rfcomm_detach_pcb((struct rfcomm_dlc **)&so->so_pcb);
 		return error;
@@ -283,6 +283,19 @@ rfcomm_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+rfcomm_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	return rfcomm_rcvd_pcb(pcb, sbspace(&so->so_rcv));
+}
+
+static int
 rfcomm_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -340,9 +353,6 @@ rfcomm_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
  * User Request.
  * up is socket
  * m is optional mbuf chain containing message
- * nam is either
- *	optional mbuf chain containing an address
- *	message flags (PRU_RCVD)
  * ctl is either
  *	optional mbuf chain containing socket options
  *	optional interface pointer PRU_PURGEIF
@@ -372,6 +382,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -386,9 +397,6 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_RCVD:
-		return rfcomm_rcvd(pcb, sbspace(&up->so_rcv));
-
 	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
@@ -576,6 +584,7 @@ PR_WRAP_USRREQS(rfcomm)
 #define	rfcomm_stat		rfcomm_stat_wrapper
 #define	rfcomm_peeraddr		rfcomm_peeraddr_wrapper
 #define	rfcomm_sockaddr		rfcomm_sockaddr_wrapper
+#define	rfcomm_rcvd		rfcomm_rcvd_wrapper
 #define	rfcomm_recvoob		rfcomm_recvoob_wrapper
 #define	rfcomm_send		rfcomm_send_wrapper
 #define	rfcomm_sendoob		rfcomm_sendoob_wrapper
@@ -595,6 +604,7 @@ const struct pr_usrreqs rfcomm_usrreqs = {
 	.pr_stat	= rfcomm_stat,
 	.pr_peeraddr	= rfcomm_peeraddr,
 	.pr_sockaddr	= rfcomm_sockaddr,
+	.pr_rcvd	= rfcomm_rcvd,
 	.pr_recvoob	= rfcomm_recvoob,
 	.pr_send	= rfcomm_send,
 	.pr_sendoob	= rfcomm_sendoob,

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.215 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.216 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.215 2014/08/05 07:55:32 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.216 2014/08/08 03:05:45 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1041,6 +1041,14 @@ udp_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+udp_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 udp_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -1131,6 +1139,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -1161,10 +1170,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	switch (req) {
 	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
-
-	case PRU_RCVD:
 		error = EOPNOTSUPP;
 		break;
 
@@ -1407,6 +1412,7 @@ PR_WRAP_USRREQS(udp)
 #define	udp_stat	udp_stat_wrapper
 #define	udp_peeraddr	udp_peeraddr_wrapper
 #define	udp_sockaddr	udp_sockaddr_wrapper
+#define	udp_rcvd	udp_rcvd_wrapper
 #define	udp_recvoob	udp_recvoob_wrapper
 #define	udp_send	udp_send_wrapper
 #define	udp_sendoob	udp_sendoob_wrapper
@@ -1426,6 +1432,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pr_stat	= udp_stat,
 	.pr_peeraddr	= udp_peeraddr,
 	.pr_sockaddr	= udp_sockaddr,
+	.pr_rcvd	= udp_rcvd,
 	.pr_recvoob	= udp_recvoob,
 	.pr_send	= udp_send,
 	.pr_sendoob	= udp_sendoob,
