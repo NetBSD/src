@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.138 2014/06/13 01:17:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.139 2014/08/08 19:38:47 apb Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR+=	bc
 SUBDIR+=	c89 c99
-SUBDIR+=	dc diffutils gkermit
+SUBDIR+=	dc diffutils
 SUBDIR+=	rcs send-pr texinfo
 
 .if ${MKBSDGREP} == "no"
