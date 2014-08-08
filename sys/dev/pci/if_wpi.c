@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.67 2014/08/07 22:10:05 jmcneill Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.68 2014/08/08 10:17:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.67 2014/08/07 22:10:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.68 2014/08/08 10:17:07 jmcneill Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -102,7 +102,6 @@ static struct	ieee80211_node * wpi_node_alloc(struct ieee80211_node_table *);
 static void	wpi_newassoc(struct ieee80211_node *, int);
 static int	wpi_media_change(struct ifnet *);
 static int	wpi_newstate(struct ieee80211com *, enum ieee80211_state, int);
-static void	wpi_fix_channel(struct ieee80211com *, struct mbuf *);
 static void	wpi_mem_lock(struct wpi_softc *);
 static void	wpi_mem_unlock(struct wpi_softc *);
 static uint32_t	wpi_mem_read(struct wpi_softc *, uint16_t);
@@ -987,44 +986,6 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 }
 
 /*
- * XXX: Hack to set the current channel to the value advertised in beacons or
- * probe responses. Only used during AP detection.
- * XXX: Duplicated from if_iwi.c
- */
-static void
-wpi_fix_channel(struct ieee80211com *ic, struct mbuf *m)
-{
-	struct ieee80211_frame *wh;
-	uint8_t subtype;
-	uint8_t *frm, *efrm;
-
-	wh = mtod(m, struct ieee80211_frame *);
-
-	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_MGT)
-		return;
-
-	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
-
-	if (subtype != IEEE80211_FC0_SUBTYPE_BEACON &&
-	    subtype != IEEE80211_FC0_SUBTYPE_PROBE_RESP)
-		return;
-
-	frm = (uint8_t *)(wh + 1);
-	efrm = mtod(m, uint8_t *) + m->m_len;
-
-	frm += 12;	/* skip tstamp, bintval and capinfo fields */
-	while (frm < efrm) {
-		if (*frm == IEEE80211_ELEMID_DSPARMS)
-#if IEEE80211_CHAN_MAX < 255
-		if (frm[2] <= IEEE80211_CHAN_MAX)
-#endif
-			ic->ic_curchan = &ic->ic_channels[frm[2]];
-
-		frm += frm[1] + 2;
-	}
-}
-
-/*
  * Grab exclusive access to NIC memory.
  */
 static void
@@ -1553,9 +1514,6 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
-
-	if (ic->ic_state == IEEE80211_S_SCAN)
-		wpi_fix_channel(ic, m);
 
 	if (sc->sc_drvbpf != NULL) {
 		struct wpi_rx_radiotap_header *tap = &sc->sc_rxtap;
