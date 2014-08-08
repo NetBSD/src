@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1083 2014/08/06 19:24:00 apb Exp $
+# $NetBSD: mi,v 1.1084 2014/08/08 19:34:35 apb Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -474,6 +474,7 @@
 ./usr/bin/du					base-util-bin
 ./usr/bin/egrep					base-util-bin
 ./usr/bin/eject					base-util-bin
+./usr/bin/ekermit				base-util-bin
 ./usr/bin/env					base-util-bin
 ./usr/bin/error					base-util-bin
 ./usr/bin/ex					base-util-bin
