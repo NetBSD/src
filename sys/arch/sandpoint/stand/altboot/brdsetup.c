@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.34 2014/08/05 17:55:20 joerg Exp $ */
+/* $NetBSD: brdsetup.c,v 1.35 2014/08/08 21:18:10 joerg Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -859,7 +859,7 @@ _rtt(void)
 		asm volatile ("sync; isync");
 		run(0, 0, 0, 0, (void *)0xFFF00100); /* reset entry */
 	}
-	/*NOTREACHED*/
+	__unreachable();
 }
 
 satime_t
