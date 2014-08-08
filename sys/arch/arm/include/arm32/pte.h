@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.17 2014/08/08 07:47:05 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.18 2014/08/08 07:47:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -202,13 +202,13 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_TYPE_T	0x03		/* Tiny Page (not armv7) */
 #define	L2_TYPE_MASK	0x03		/* mask of type bits */
 
-	/*
-	 * This L2 Descriptor type is available on XScale processors
-	 * when using a Coarse L1 Descriptor.  The Extended Small
-	 * Descriptor has the same format as the XScale Tiny Descriptor,
-	 * but describes a 4K page, rather than a 1K page.
-	 * For V6 MMU, this is used when XP bit is cleared.
-	 */
+/*
+ * This L2 Descriptor type is available on XScale processors
+ * when using a Coarse L1 Descriptor.  The Extended Small
+ * Descriptor has the same format as the XScale Tiny Descriptor,
+ * but describes a 4K page, rather than a 1K page.
+ * For V6 MMU, this is used when XP bit is cleared.
+ */
 #define	L2_TYPE_XS	0x03		/* XScale/ARMv6 Extended Small Page */
 
 #define	L2_B		0x00000004	/* Bufferable page */
