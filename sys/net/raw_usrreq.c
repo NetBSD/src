@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.50 2014/08/05 07:55:31 rtr Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.51 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.50 2014/08/05 07:55:31 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.51 2014/08/08 03:05:45 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -215,6 +215,7 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -236,10 +237,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * nothing else around it should go to).
 	 */
 	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
-
-	case PRU_RCVD:
 		error = EOPNOTSUPP;
 		break;
 

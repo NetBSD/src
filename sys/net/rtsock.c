@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.161 2014/08/05 07:55:31 rtr Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.162 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.161 2014/08/05 07:55:31 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.162 2014/08/08 03:05:45 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -348,6 +348,14 @@ COMPATNAME(route_sockaddr)(struct socket *so, struct mbuf *nam)
 }
 
 static int
+COMPATNAME(route_rcvd)(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 COMPATNAME(route_recvoob)(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -402,6 +410,7 @@ COMPATNAME(route_usrreq)(struct socket *so, int req, struct mbuf *m,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -1512,6 +1521,7 @@ static const struct pr_usrreqs route_usrreqs = {
 	.pr_stat	= COMPATNAME(route_stat_wrapper),
 	.pr_peeraddr	= COMPATNAME(route_peeraddr_wrapper),
 	.pr_sockaddr	= COMPATNAME(route_sockaddr_wrapper),
+	.pr_rcvd	= COMPATNAME(route_rcvd_wrapper),
 	.pr_recvoob	= COMPATNAME(route_recvoob_wrapper),
 	.pr_send	= COMPATNAME(route_send_wrapper),
 	.pr_sendoob	= COMPATNAME(route_sendoob_wrapper),

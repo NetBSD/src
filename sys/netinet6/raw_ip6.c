@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.134 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.135 2014/08/08 03:05:45 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.134 2014/08/05 07:55:32 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.135 2014/08/08 03:05:45 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -830,6 +830,14 @@ rip6_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+rip6_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 rip6_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -920,6 +928,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -935,13 +944,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 
 	switch (req) {
 	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
-
-	/*
-	 * Not supported.
-	 */
-	case PRU_RCVD:
 		error = EOPNOTSUPP;
 		break;
 
@@ -1006,6 +1008,7 @@ PR_WRAP_USRREQS(rip6)
 #define	rip6_stat		rip6_stat_wrapper
 #define	rip6_peeraddr		rip6_peeraddr_wrapper
 #define	rip6_sockaddr		rip6_sockaddr_wrapper
+#define	rip6_rcvd		rip6_rcvd_wrapper
 #define	rip6_recvoob		rip6_recvoob_wrapper
 #define	rip6_send		rip6_send_wrapper
 #define	rip6_sendoob		rip6_sendoob_wrapper
@@ -1025,6 +1028,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pr_stat	= rip6_stat,
 	.pr_peeraddr	= rip6_peeraddr,
 	.pr_sockaddr	= rip6_sockaddr,
+	.pr_rcvd	= rip6_rcvd,
 	.pr_recvoob	= rip6_recvoob,
 	.pr_send	= rip6_send,
 	.pr_sendoob	= rip6_sendoob,

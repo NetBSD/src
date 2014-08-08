@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.20 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.21 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.20 2014/08/05 07:55:32 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.21 2014/08/08 03:05:45 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -406,7 +406,7 @@ rfcomm_send_pcb(struct rfcomm_dlc *dlc, struct mbuf *m)
 }
 
 /*
- * rfcomm_rcvd(dlc, space)
+ * rfcomm_rcvd_pcb(dlc, space)
  *
  * Indicate space now available in receive buffer
  *
@@ -415,7 +415,7 @@ rfcomm_send_pcb(struct rfcomm_dlc *dlc, struct mbuf *m)
  * buffer after that.
  */
 int
-rfcomm_rcvd(struct rfcomm_dlc *dlc, size_t space)
+rfcomm_rcvd_pcb(struct rfcomm_dlc *dlc, size_t space)
 {
 
 	KASSERT(dlc != NULL);
