@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2014/01/12 15:26:30 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.30 2014/08/08 16:56:31 joerg Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 
@@ -16,7 +16,7 @@ CPPFLAGS+=	-DHEAP_VARIABLE
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
 
-DBG=		-Os -mmultiple
+DBG=		-Os
 
 SRCS+=		ofwmagic.S
 .PATH:		${S}/arch/powerpc/powerpc

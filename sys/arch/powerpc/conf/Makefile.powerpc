@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.55 2014/08/05 15:40:59 apb Exp $
+#	$NetBSD: Makefile.powerpc,v 1.56 2014/08/08 16:56:31 joerg Exp $
 #
 # Makefile for NetBSD
 #
@@ -46,7 +46,6 @@ CFLAGS+=	-Wa,-maltivec
 .if ${PPCDIR} == "booke"
 DEFCOPTS=	-O2
 CFLAGS+=	-fstack-protector
-CFLAGS+=	-mmultiple -misel
 .endif
 CFLAGS+=	-msdata=none
 CFLAGS+=	-msoft-float ${CCPUOPTS}

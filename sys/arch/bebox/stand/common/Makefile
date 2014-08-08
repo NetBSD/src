@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/08/21 06:53:10 matt Exp $
+#	$NetBSD: Makefile,v 1.4 2014/08/08 16:56:31 joerg Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -9,7 +9,7 @@ CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I. -I${S} -I${.OBJDIR}
 CPPFLAGS+= -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 
-CFLAGS= -Os -mmultiple -ffreestanding
+CFLAGS= -Os -ffreestanding
 
 .include <bsd.prog.mk>
 .include <bsd.klinks.mk>

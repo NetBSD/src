@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.122 2014/08/07 16:51:56 gdt Exp $
+#	$NetBSD: INSTALL,v 1.123 2014/08/08 16:56:31 joerg Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -7,7 +7,7 @@ include		"arch/macppc/conf/std.macppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os -mmultiple -pipe" # -Os -mmultiple to reduce size.
+makeoptions	COPTS="-Os" # Reduce size.
 
 maxusers	12
 
