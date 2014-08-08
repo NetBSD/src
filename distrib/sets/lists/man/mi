@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1483 2014/08/08 19:38:47 apb Exp $
+# $NetBSD: mi,v 1.1484 2014/08/08 21:41:46 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -155,6 +155,7 @@
 ./usr/share/man/cat1/ed.0			man-util-catman		.cat
 ./usr/share/man/cat1/egrep.0			man-util-catman		.cat
 ./usr/share/man/cat1/eject.0			man-util-catman		.cat
+./usr/share/man/cat1/ekermit.0			man-util-catman		.cat
 ./usr/share/man/cat1/env.0			man-util-catman		.cat
 ./usr/share/man/cat1/error.0			man-util-catman		.cat
 ./usr/share/man/cat1/ex.0			man-util-catman		.cat
@@ -3279,6 +3280,7 @@
 ./usr/share/man/html1/ed.html			man-util-htmlman	html
 ./usr/share/man/html1/egrep.html		man-util-htmlman	html
 ./usr/share/man/html1/eject.html		man-util-htmlman	html
+./usr/share/man/html1/ekermit.html		man-util-htmlman	html
 ./usr/share/man/html1/env.html			man-util-htmlman	html
 ./usr/share/man/html1/error.html		man-util-htmlman	html
 ./usr/share/man/html1/ex.html			man-util-htmlman	html
@@ -6016,6 +6018,7 @@
 ./usr/share/man/man1/ed.1			man-util-man		.man
 ./usr/share/man/man1/egrep.1			man-util-man		.man
 ./usr/share/man/man1/eject.1			man-util-man		.man
+./usr/share/man/man1/ekermit.1			man-util-man		.man
 ./usr/share/man/man1/env.1			man-util-man		.man
 ./usr/share/man/man1/error.1			man-util-man		.man
 ./usr/share/man/man1/ex.1			man-util-man		.man
