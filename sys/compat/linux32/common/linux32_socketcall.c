@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socketcall.c,v 1.7 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_socketcall.c,v 1.7.26.1 2014/08/08 03:14:10 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.7 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.7.26.1 2014/08/08 03:14:10 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,7 +96,7 @@ linux32_sys_socketcall(struct lwp *l, const struct linux32_sys_socketcall_args *
 	union linux32_socketcall_args ua;
 	int error;
 
-	if (SCARG(uap, what) < 0 || SCARG(uap, what) > LINUX32_MAX_SOCKETCALL)
+	if (SCARG(uap, what) <= 0 || SCARG(uap, what) > LINUX32_MAX_SOCKETCALL)
 		return ENOSYS;
 
 	if ((error = copyin(SCARG_P32(uap, args), &ua,
