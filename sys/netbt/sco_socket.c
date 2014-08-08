@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.31 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.32 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.31 2014/08/05 07:55:32 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.32 2014/08/08 03:05:45 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -266,6 +266,14 @@ sco_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+sco_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 sco_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -359,6 +367,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -375,9 +384,6 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_RCVD:
-		return EOPNOTSUPP;	/* (no release) */
-
 	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
@@ -532,6 +538,7 @@ PR_WRAP_USRREQS(sco)
 #define	sco_stat		sco_stat_wrapper
 #define	sco_peeraddr		sco_peeraddr_wrapper
 #define	sco_sockaddr		sco_sockaddr_wrapper
+#define	sco_rcvd		sco_rcvd_wrapper
 #define	sco_recvoob		sco_recvoob_wrapper
 #define	sco_send		sco_send_wrapper
 #define	sco_sendoob		sco_sendoob_wrapper
@@ -551,6 +558,7 @@ const struct pr_usrreqs sco_usrreqs = {
 	.pr_stat	= sco_stat,
 	.pr_peeraddr	= sco_peeraddr,
 	.pr_sockaddr	= sco_sockaddr,
+	.pr_rcvd	= sco_rcvd,
 	.pr_recvoob	= sco_recvoob,
 	.pr_send	= sco_send,
 	.pr_sendoob	= sco_sendoob,

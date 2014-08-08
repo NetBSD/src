@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.29 2014/08/05 07:55:31 rtr Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.30 2014/08/08 03:05:45 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.29 2014/08/05 07:55:31 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.30 2014/08/08 03:05:45 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -275,6 +275,14 @@ l2cap_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+l2cap_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 l2cap_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -342,9 +350,6 @@ l2cap_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
  * User Request.
  * up is socket
  * m is optional mbuf chain containing message
- * nam is either
- *	optional mbuf chain containing an address
- *	message flags (PRU_RCVD)
  * ctl is either
  *	optional mbuf chain containing socket options
  *	optional interface pointer PRU_PURGEIF
@@ -374,6 +379,7 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -389,9 +395,6 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_RCVD:
-		return EOPNOTSUPP;	/* (no release) */
-
 	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
@@ -567,6 +570,7 @@ PR_WRAP_USRREQS(l2cap)
 #define	l2cap_stat		l2cap_stat_wrapper
 #define	l2cap_peeraddr		l2cap_peeraddr_wrapper
 #define	l2cap_sockaddr		l2cap_sockaddr_wrapper
+#define	l2cap_rcvd		l2cap_rcvd_wrapper
 #define	l2cap_recvoob		l2cap_recvoob_wrapper
 #define	l2cap_send		l2cap_send_wrapper
 #define	l2cap_sendoob		l2cap_sendoob_wrapper
@@ -586,6 +590,7 @@ const struct pr_usrreqs l2cap_usrreqs = {
 	.pr_stat	= l2cap_stat,
 	.pr_peeraddr	= l2cap_peeraddr,
 	.pr_sockaddr	= l2cap_sockaddr,
+	.pr_rcvd	= l2cap_rcvd,
 	.pr_recvoob	= l2cap_recvoob,
 	.pr_send	= l2cap_send,
 	.pr_sendoob	= l2cap_sendoob,

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.41 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.42 2014/08/08 03:05:45 rtr Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.41 2014/08/05 07:55:32 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.42 2014/08/08 03:05:45 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -609,6 +609,14 @@ key_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+key_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 key_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
@@ -666,6 +674,7 @@ key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
@@ -698,6 +707,7 @@ PR_WRAP_USRREQS(key)
 #define	key_stat	key_stat_wrapper
 #define	key_peeraddr	key_peeraddr_wrapper
 #define	key_sockaddr	key_sockaddr_wrapper
+#define	key_rcvd	key_rcvd_wrapper
 #define	key_recvoob	key_recvoob_wrapper
 #define	key_send	key_send_wrapper
 #define	key_sendoob	key_sendoob_wrapper
@@ -717,6 +727,7 @@ const struct pr_usrreqs key_usrreqs = {
 	.pr_stat	= key_stat,
 	.pr_peeraddr	= key_peeraddr,
 	.pr_sockaddr	= key_sockaddr,
+	.pr_rcvd	= key_rcvd,
 	.pr_recvoob	= key_recvoob,
 	.pr_send	= key_send,
 	.pr_sendoob	= key_sendoob,
