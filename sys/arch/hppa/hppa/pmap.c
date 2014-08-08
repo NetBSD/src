@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 2012/02/28 07:30:30 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99 2014/08/08 07:30:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2012/02/28 07:30:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2014/08/08 07:30:51 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -157,7 +157,7 @@ u_int	hppa_prot[8];
 u_int	sid_counter;
 
 /*
- * Page 3-6 of the "PA-RISC 1.1 Architecture and Instruction Set 
+ * Page 3-6 of the "PA-RISC 1.1 Architecture and Instruction Set
  * Reference Manual" (HP part number 09740-90039) defines equivalent
  * and non-equivalent virtual addresses in the cache.
  *
@@ -438,7 +438,7 @@ pmap_pte_flush(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 	if (pmap_hpt) {
 		struct hpt_entry *hpt;
 		hpt = pmap_hash(pmap, va);
-		if (hpt->hpt_valid && 
+		if (hpt->hpt_valid &&
 		    hpt->hpt_space == pmap->pm_space &&
 		    hpt->hpt_vpn == ((va >> 1) & 0x7fff0000))
 			hpt->hpt_space = 0xffff;
@@ -802,13 +802,13 @@ pmap_bootstrap(vaddr_t vstart)
 
 	/*
 	 * The kernel text, data, and bss must be direct-mapped,
-	 * because the kernel often runs in physical mode, and 
-	 * anyways the loader loaded the kernel into physical 
+	 * because the kernel often runs in physical mode, and
+	 * anyways the loader loaded the kernel into physical
 	 * memory exactly where it was linked.
 	 *
 	 * All memory already allocated after bss, either by
 	 * our caller or by this function itself, must also be
-	 * direct-mapped, because it's completely unmanaged 
+	 * direct-mapped, because it's completely unmanaged
 	 * and was allocated in physical mode.
 	 *
 	 * BTLB entries are used to do this direct mapping.
@@ -869,7 +869,7 @@ pmap_bootstrap(vaddr_t vstart)
 
 			/* Coalesce BTLB entries whenever possible. */
 			while (btlb_j > 0 &&
-			    btlb_entry_vm_prot[btlb_j] == 
+			    btlb_entry_vm_prot[btlb_j] ==
 				btlb_entry_vm_prot[btlb_j - 1] &&
 			    btlb_entry_size[btlb_j] ==
 				btlb_entry_size[btlb_j - 1] &&
@@ -912,14 +912,14 @@ pmap_bootstrap(vaddr_t vstart)
 				size <<= 1;
 			btlb_entry_start[btlb_j] = addr;
 			btlb_entry_size[btlb_j] = size;
-			btlb_entry_vm_prot[btlb_j] = 
+			btlb_entry_vm_prot[btlb_j] =
 			    VM_PROT_READ | VM_PROT_WRITE;
 
 			/* Move on. */
 			addr =
 			    btlb_entry_start[btlb_j] + btlb_entry_size[btlb_j];
 			btlb_j++;
-		} 
+		}
 
 		/* Now insert all of the BTLB entries. */
 		for (btlb_i = 0; btlb_i < btlb_j; btlb_i++) {
@@ -1029,7 +1029,7 @@ pmap_init(void)
 	DPRINTF(PDB_FOLLOW|PDB_INIT, ("%s(): done\n", __func__));
 }
 
-/* 
+/*
  * How much virtual space does this kernel have?
  */
 void
@@ -1536,7 +1536,7 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 	struct pv_entry *pve;
 	int res;
 
-	DPRINTF(PDB_FOLLOW|PDB_BITS, 
+	DPRINTF(PDB_FOLLOW|PDB_BITS,
 	    ("%s(%p, %x, %x)\n", __func__, pg, set, clear));
 
 	KASSERT((set & clear) == 0);
