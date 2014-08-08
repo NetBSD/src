@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.16 2014/07/31 08:04:57 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.17 2014/08/08 07:47:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -250,8 +250,8 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  */
 #define	AP_KR		0x00		/* kernel read */
 #define	AP_KRW		0x01		/* kernel read/write */
-#define	AP_KRWUR	0x02		/* kernel read/write usr read */
-#define	AP_KRWURW	0x03		/* kernel read/write usr read/write */
+#define	AP_KRWUR	0x02		/* kernel read/write user read */
+#define	AP_KRWURW	0x03		/* kernel read/write user read/write */
 
 /*
  * Note: These values assume the S (System) and the R (ROM) bits are clear and
@@ -269,9 +269,9 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  * Also used for ARMv6 with XP bit set.
  */
 #define	AP7_KR		0x21		/* kernel read */
-#define	AP7_KRUR	0x23		/* kernel read usr read */
+#define	AP7_KRUR	0x23		/* kernel read user read */
 #define	AP7_KRW		0x01		/* kernel read/write */
-#define	AP7_KRWURW	0x03		/* kernel read/write usr read/write */
+#define	AP7_KRWURW	0x03		/* kernel read/write user read/write */
 
 /*
  * Domain Types for the Domain Access Control Register.
