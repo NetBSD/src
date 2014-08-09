@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.38 2013/11/17 18:58:28 alnsn Exp $
+# $NetBSD: md.amd64,v 1.39 2014/08/09 12:34:05 bad Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -119,6 +119,8 @@
 ./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/tvpll				base-kernel-modules	kmod
 ./@MODULEDIR@/tvpll/tvpll.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ubsec				base-kernel-modules	kmod
+./@MODULEDIR@/ubsec/ubsec.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/vmt				base-kernel-modules	kmod
 ./@MODULEDIR@/vmt/vmt.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/wbsio				base-kernel-modules	kmod
