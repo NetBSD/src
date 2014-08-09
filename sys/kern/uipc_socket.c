@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.233 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.234 2014/08/09 05:33:00 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.233 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.234 2014/08/09 05:33:00 rtr Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -836,8 +836,7 @@ soconnect2(struct socket *so1, struct socket *so2)
 {
 	KASSERT(solocked2(so1, so2));
 
-	return (*so1->so_proto->pr_usrreqs->pr_generic)(so1,
-	    PRU_CONNECT2, NULL, (struct mbuf *)so2, NULL, NULL);
+	return (*so1->so_proto->pr_usrreqs->pr_connect2)(so1, so2);
 }
 
 int
