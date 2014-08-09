@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.43 2014/08/09 10:33:46 mlelstv Exp $
+.\"	$NetBSD: tunefs.8,v 1.44 2014/08/09 10:41:05 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)tunefs.8	8.3 (Berkeley) 5/3/95
 .\"
-.Dd December 3, 2012
+.Dd August 9, 2014
 .Dt TUNEFS 8
 .Os
 .Sh NAME
@@ -153,13 +153,17 @@ can be used to enable/disable all types at once.
 After enabling a quota,
 .Xr fsck_ffs 8
 has to be run to compute the correct quota values.
-.Pp
 .It Fl S Ar sectorsize
 changes the fsbtodb value in the superblock to reflect a particular
-physical sector size. This value is ignored by the NetBSD kernel but
-needed by tools like
+physical sector size.
+This value is ignored by the
+.Nx
+kernel but needed by tools like
 .Xr fsck_ffs  8
-to access disk blocks correctly. The minimum value is DEV_BSIZE (512).
+to access disk blocks correctly.
+The minimum value is
+.Dv DEV_BSIZE
+(512).
 .Pp
 Changing the fsbtodb value becomes necessary when a filesystem image
 is created for one sector size and then transferred to a device with
