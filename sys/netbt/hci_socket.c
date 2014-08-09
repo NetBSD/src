@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.39 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.40 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.39 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.40 2014/08/09 05:33:01 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -552,6 +552,14 @@ hci_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 static int
+hci_connect2(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 hci_disconnect(struct socket *so)
 {
 	struct hci_pcb *pcb = so->so_pcb;
@@ -712,6 +720,13 @@ hci_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	return EOPNOTSUPP;
 }
 
+static int
+hci_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	return EOPNOTSUPP;
+}
+
 /*
  * User Request.
  * up is socket
@@ -726,7 +741,7 @@ static int
 hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
-	struct hci_pcb *pcb = (struct hci_pcb *)up->so_pcb;
+	struct hci_pcb *pcb = up->so_pcb;
 	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
@@ -736,6 +751,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -747,11 +763,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
-
-	switch(req) {
-	case PRU_PURGEIF:
-		return EOPNOTSUPP;
-	}
+	KASSERT(req != PRU_PURGEIF);
 
 	/* anything after here *requires* a pcb */
 	if (pcb == NULL) {
@@ -760,7 +772,6 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -994,6 +1005,7 @@ PR_WRAP_USRREQS(hci)
 #define	hci_bind		hci_bind_wrapper
 #define	hci_listen		hci_listen_wrapper
 #define	hci_connect		hci_connect_wrapper
+#define	hci_connect2		hci_connect2_wrapper
 #define	hci_disconnect		hci_disconnect_wrapper
 #define	hci_shutdown		hci_shutdown_wrapper
 #define	hci_abort		hci_abort_wrapper
@@ -1005,6 +1017,7 @@ PR_WRAP_USRREQS(hci)
 #define	hci_recvoob		hci_recvoob_wrapper
 #define	hci_send		hci_send_wrapper
 #define	hci_sendoob		hci_sendoob_wrapper
+#define	hci_purgeif		hci_purgeif_wrapper
 #define	hci_usrreq		hci_usrreq_wrapper
 
 const struct pr_usrreqs hci_usrreqs = {
@@ -1014,6 +1027,7 @@ const struct pr_usrreqs hci_usrreqs = {
 	.pr_bind	= hci_bind,
 	.pr_listen	= hci_listen,
 	.pr_connect	= hci_connect,
+	.pr_connect2	= hci_connect2,
 	.pr_disconnect	= hci_disconnect,
 	.pr_shutdown	= hci_shutdown,
 	.pr_abort	= hci_abort,
@@ -1025,5 +1039,6 @@ const struct pr_usrreqs hci_usrreqs = {
 	.pr_recvoob	= hci_recvoob,
 	.pr_send	= hci_send,
 	.pr_sendoob	= hci_sendoob,
+	.pr_purgeif	= hci_purgeif,
 	.pr_generic	= hci_usrreq,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.30 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.31 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.30 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.31 2014/08/09 05:33:01 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -192,6 +192,17 @@ l2cap_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 static int
+l2cap_connect2(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	if (so->so_pcb == NULL)
+		return EINVAL;
+
+	return EOPNOTSUPP;
+}
+
+static int
 l2cap_disconnect(struct socket *so)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
@@ -346,13 +357,19 @@ l2cap_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	return EOPNOTSUPP;
 }
 
+static int
+l2cap_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	return EOPNOTSUPP;
+}
+
 /*
  * User Request.
  * up is socket
  * m is optional mbuf chain containing message
  * ctl is either
  *	optional mbuf chain containing socket options
- *	optional interface pointer PRU_PURGEIF
  * l is pointer to process requesting action (if any)
  *
  * we are responsible for disposing of m and ctl if
@@ -372,6 +389,7 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -383,11 +401,7 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
-
-	switch (req) {
-	case PRU_PURGEIF:
-		return EOPNOTSUPP;
-	}
+	KASSERT(req != PRU_PURGEIF);
 
 	if (pcb == NULL) {
 		err = EINVAL;
@@ -395,7 +409,6 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -563,6 +576,7 @@ PR_WRAP_USRREQS(l2cap)
 #define	l2cap_bind		l2cap_bind_wrapper
 #define	l2cap_listen		l2cap_listen_wrapper
 #define	l2cap_connect		l2cap_connect_wrapper
+#define	l2cap_connect2		l2cap_connect2_wrapper
 #define	l2cap_disconnect	l2cap_disconnect_wrapper
 #define	l2cap_shutdown		l2cap_shutdown_wrapper
 #define	l2cap_abort		l2cap_abort_wrapper
@@ -574,6 +588,7 @@ PR_WRAP_USRREQS(l2cap)
 #define	l2cap_recvoob		l2cap_recvoob_wrapper
 #define	l2cap_send		l2cap_send_wrapper
 #define	l2cap_sendoob		l2cap_sendoob_wrapper
+#define	l2cap_purgeif		l2cap_purgeif_wrapper
 #define	l2cap_usrreq		l2cap_usrreq_wrapper
 
 const struct pr_usrreqs l2cap_usrreqs = {
@@ -583,6 +598,7 @@ const struct pr_usrreqs l2cap_usrreqs = {
 	.pr_bind	= l2cap_bind,
 	.pr_listen	= l2cap_listen,
 	.pr_connect	= l2cap_connect,
+	.pr_connect2	= l2cap_connect2,
 	.pr_disconnect	= l2cap_disconnect,
 	.pr_shutdown	= l2cap_shutdown,
 	.pr_abort	= l2cap_abort,
@@ -594,5 +610,6 @@ const struct pr_usrreqs l2cap_usrreqs = {
 	.pr_recvoob	= l2cap_recvoob,
 	.pr_send	= l2cap_send,
 	.pr_sendoob	= l2cap_sendoob,
+	.pr_purgeif	= l2cap_purgeif,
 	.pr_generic	= l2cap_usrreq,
 };

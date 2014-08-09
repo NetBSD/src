@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.199 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.200 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.199 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.200 2014/08/09 05:33:01 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -224,19 +224,13 @@ static int
 tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
-	int s;
-	int error = 0;
-	int ostate = 0;
-
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -248,65 +242,13 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
-	s = splsoftnet();
+	KASSERT(solocked(so));
 
-	if (req == PRU_PURGEIF) {
-		mutex_enter(softnet_lock);
-		switch (so->so_proto->pr_domain->dom_family) {
-#ifdef INET
-		case PF_INET:
-			in_pcbpurgeif0(&tcbtable, (struct ifnet *)control);
-			in_purgeif((struct ifnet *)control);
-			in_pcbpurgeif(&tcbtable, (struct ifnet *)control);
-			break;
-#endif
-#ifdef INET6
-		case PF_INET6:
-			in6_pcbpurgeif0(&tcbtable, (struct ifnet *)control);
-			in6_purgeif((struct ifnet *)control);
-			in6_pcbpurgeif(&tcbtable, (struct ifnet *)control);
-			break;
-#endif
-		default:
-			mutex_exit(softnet_lock);
-			splx(s);
-			return (EAFNOSUPPORT);
-		}
-		mutex_exit(softnet_lock);
-		splx(s);
-		return (0);
-	}
+	panic("tcp_usrreq");
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0) {
-		splx(s);
-		return error;
-	}
-
-	ostate = tcp_debug_capture(tp, req);
-
-	KASSERT(!control);
-#ifdef INET6
-	/* XXX: KASSERT((inp != NULL) ^ (in6p != NULL)); */
-#endif
-
-	switch (req) {
-
-	/*
-	 * Create a TCP connection between two sockets.
-	 */
-	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
-
-	default:
-		panic("tcp_usrreq");
-	}
-
-	tcp_debug_trace(so, tp, ostate, req);
-	splx(s);
-
-	return error;
+	return 0;
 }
 
 static void
@@ -879,6 +821,27 @@ release:
 }
 
 static int
+tcp_connect2(struct socket *so, struct socket *so2)
+{
+	struct inpcb *inp = NULL;
+	struct in6pcb *in6p = NULL;
+	struct tcpcb *tp = NULL;
+	int error = 0;
+	int ostate = 0;
+
+	KASSERT(solocked(so));
+
+	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
+		return error;
+
+	ostate = tcp_debug_capture(tp, PRU_CONNECT2);
+
+	tcp_debug_trace(so, tp, ostate, PRU_CONNECT2);
+
+	return EOPNOTSUPP;
+}
+
+static int
 tcp_disconnect(struct socket *so)
 {
 	struct inpcb *inp = NULL;
@@ -1201,6 +1164,39 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	splx(s);
 
 	return error;
+}
+
+static int
+tcp_purgeif(struct socket *so, struct ifnet *ifp)
+{
+	int s;
+
+	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	switch (so->so_proto->pr_domain->dom_family) {
+#ifdef INET
+	case PF_INET:
+		in_pcbpurgeif0(&tcbtable, ifp);
+		in_purgeif(ifp);
+		in_pcbpurgeif(&tcbtable, ifp);
+		break;
+#endif
+#ifdef INET6
+	case PF_INET6:
+		in6_pcbpurgeif0(&tcbtable, ifp);
+		in6_purgeif(ifp);
+		in6_pcbpurgeif(&tcbtable, ifp);
+		break;
+#endif
+	default:
+		mutex_exit(softnet_lock);
+		splx(s);
+		return EAFNOSUPPORT;
+	}
+	mutex_exit(softnet_lock);
+	splx(s);
+
+	return 0;
 }
 
 /*
@@ -2443,6 +2439,7 @@ PR_WRAP_USRREQS(tcp)
 #define	tcp_bind	tcp_bind_wrapper
 #define	tcp_listen	tcp_listen_wrapper
 #define	tcp_connect	tcp_connect_wrapper
+#define	tcp_connect2	tcp_connect2_wrapper
 #define	tcp_disconnect	tcp_disconnect_wrapper
 #define	tcp_shutdown	tcp_shutdown_wrapper
 #define	tcp_abort	tcp_abort_wrapper
@@ -2454,6 +2451,7 @@ PR_WRAP_USRREQS(tcp)
 #define	tcp_recvoob	tcp_recvoob_wrapper
 #define	tcp_send	tcp_send_wrapper
 #define	tcp_sendoob	tcp_sendoob_wrapper
+#define	tcp_purgeif	tcp_purgeif_wrapper
 #define	tcp_usrreq	tcp_usrreq_wrapper
 
 const struct pr_usrreqs tcp_usrreqs = {
@@ -2463,6 +2461,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pr_bind	= tcp_bind,
 	.pr_listen	= tcp_listen,
 	.pr_connect	= tcp_connect,
+	.pr_connect2	= tcp_connect2,
 	.pr_disconnect	= tcp_disconnect,
 	.pr_shutdown	= tcp_shutdown,
 	.pr_abort	= tcp_abort,
@@ -2474,5 +2473,6 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pr_recvoob	= tcp_recvoob,
 	.pr_send	= tcp_send,
 	.pr_sendoob	= tcp_sendoob,
+	.pr_purgeif	= tcp_purgeif,
 	.pr_generic	= tcp_usrreq,
 };
