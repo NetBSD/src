@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.144 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.145 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.144 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.145 2014/08/09 05:33:01 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -624,6 +624,14 @@ rip_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 static int
+rip_connect2(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 rip_disconnect(struct socket *so)
 {
 	struct inpcb *inp = sotoinpcb(so);
@@ -790,19 +798,33 @@ rip_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	return EOPNOTSUPP;
 }
 
+static int
+rip_purgeif(struct socket *so, struct ifnet *ifp)
+{
+	int s;
+
+	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	in_pcbpurgeif0(&rawcbtable, ifp);
+	in_purgeif(ifp);
+	in_pcbpurgeif(&rawcbtable, ifp);
+	mutex_exit(softnet_lock);
+	splx(s);
+
+	return 0;
+}
+
 int
 rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
-	struct inpcb *inp;
-	int s, error = 0;
-
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -814,39 +836,16 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
-
-	s = splsoftnet();
-	if (req == PRU_PURGEIF) {
-		mutex_enter(softnet_lock);
-		in_pcbpurgeif0(&rawcbtable, (struct ifnet *)control);
-		in_purgeif((struct ifnet *)control);
-		in_pcbpurgeif(&rawcbtable, (struct ifnet *)control);
-		mutex_exit(softnet_lock);
-		splx(s);
-		return 0;
-	}
+	KASSERT(req != PRU_PURGEIF);
 
 	KASSERT(solocked(so));
-	inp = sotoinpcb(so);
 
-	KASSERT(!control);
-	if (inp == NULL) {
-		splx(s);
+	if (sotoinpcb(so) == NULL)
 		return EINVAL;
-	}
 
-	switch (req) {
+	panic("rip_usrreq");
 
-	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
-
-	default:
-		panic("rip_usrreq");
-	}
-	splx(s);
-
-	return error;
+	return 0;
 }
 
 PR_WRAP_USRREQS(rip)
@@ -856,6 +855,7 @@ PR_WRAP_USRREQS(rip)
 #define	rip_bind	rip_bind_wrapper
 #define	rip_listen	rip_listen_wrapper
 #define	rip_connect	rip_connect_wrapper
+#define	rip_connect2	rip_connect2_wrapper
 #define	rip_disconnect	rip_disconnect_wrapper
 #define	rip_shutdown	rip_shutdown_wrapper
 #define	rip_abort	rip_abort_wrapper
@@ -867,6 +867,7 @@ PR_WRAP_USRREQS(rip)
 #define	rip_recvoob	rip_recvoob_wrapper
 #define	rip_send	rip_send_wrapper
 #define	rip_sendoob	rip_sendoob_wrapper
+#define	rip_purgeif	rip_purgeif_wrapper
 #define	rip_usrreq	rip_usrreq_wrapper
 
 const struct pr_usrreqs rip_usrreqs = {
@@ -876,6 +877,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pr_bind	= rip_bind,
 	.pr_listen	= rip_listen,
 	.pr_connect	= rip_connect,
+	.pr_connect2	= rip_connect2,
 	.pr_disconnect	= rip_disconnect,
 	.pr_shutdown	= rip_shutdown,
 	.pr_abort	= rip_abort,
@@ -887,6 +889,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pr_recvoob	= rip_recvoob,
 	.pr_send	= rip_send,
 	.pr_sendoob	= rip_sendoob,
+	.pr_purgeif	= rip_purgeif,
 	.pr_generic	= rip_usrreq,
 };
 

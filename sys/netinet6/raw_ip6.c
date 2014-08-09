@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.135 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.136 2014/08/09 05:33:01 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.135 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136 2014/08/09 05:33:01 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -755,6 +755,14 @@ rip6_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 static int
+rip6_connect2(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 rip6_disconnect(struct socket *so)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
@@ -911,16 +919,29 @@ rip6_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	return EOPNOTSUPP;
 }
 
+static int
+rip6_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	mutex_enter(softnet_lock);
+	in6_pcbpurgeif0(&raw6cbtable, ifp);
+	in6_purgeif(ifp);
+	in6_pcbpurgeif(&raw6cbtable, ifp);
+	mutex_exit(softnet_lock);
+
+	return 0;
+}
+
 int
 rip6_usrreq(struct socket *so, int req, struct mbuf *m, 
 	struct mbuf *nam, struct mbuf *control, struct lwp *l)
 {
-	int error = 0;
 
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -931,28 +952,12 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	KASSERT(req != PRU_RCVD);
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
+	KASSERT(req != PRU_PURGEIF);
 	KASSERT(req != PRU_SENDOOB);
 
-	if (req == PRU_PURGEIF) {
-		mutex_enter(softnet_lock);
-		in6_pcbpurgeif0(&raw6cbtable, (struct ifnet *)control);
-		in6_purgeif((struct ifnet *)control);
-		in6_pcbpurgeif(&raw6cbtable, (struct ifnet *)control);
-		mutex_exit(softnet_lock);
-		return 0;
-	}
+	panic("rip6_usrreq");
 
-	switch (req) {
-	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
-
-	default:
-		panic("rip6_usrreq");
-	}
-	if (m != NULL)
-		m_freem(m);
-	return error;
+	return 0;
 }
 
 static int
@@ -1001,6 +1006,7 @@ PR_WRAP_USRREQS(rip6)
 #define	rip6_bind		rip6_bind_wrapper
 #define	rip6_listen		rip6_listen_wrapper
 #define	rip6_connect		rip6_connect_wrapper
+#define	rip6_connect2		rip6_connect2_wrapper
 #define	rip6_disconnect		rip6_disconnect_wrapper
 #define	rip6_shutdown		rip6_shutdown_wrapper
 #define	rip6_abort		rip6_abort_wrapper
@@ -1012,6 +1018,7 @@ PR_WRAP_USRREQS(rip6)
 #define	rip6_recvoob		rip6_recvoob_wrapper
 #define	rip6_send		rip6_send_wrapper
 #define	rip6_sendoob		rip6_sendoob_wrapper
+#define	rip6_purgeif		rip6_purgeif_wrapper
 #define	rip6_usrreq		rip6_usrreq_wrapper
 
 const struct pr_usrreqs rip6_usrreqs = {
@@ -1021,6 +1028,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pr_bind	= rip6_bind,
 	.pr_listen	= rip6_listen,
 	.pr_connect	= rip6_connect,
+	.pr_connect2	= rip6_connect2,
 	.pr_disconnect	= rip6_disconnect,
 	.pr_shutdown	= rip6_shutdown,
 	.pr_abort	= rip6_abort,
@@ -1032,5 +1040,6 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pr_recvoob	= rip6_recvoob,
 	.pr_send	= rip6_send,
 	.pr_sendoob	= rip6_sendoob,
+	.pr_purgeif	= rip6_purgeif,
 	.pr_generic	= rip6_usrreq,
 };
