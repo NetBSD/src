@@ -1,3 +1,5 @@
-# $NetBSD: ad.mips,v 1.1 2013/04/30 23:41:24 matt Exp $
+# $NetBSD: ad.mips,v 1.2 2014/08/09 12:34:05 bad Exp $
 ./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/ubsec				base-kernel-modules	kmod
+./@MODULEDIR@/ubsec/ubsec.kmod			base-kernel-modules	kmod
