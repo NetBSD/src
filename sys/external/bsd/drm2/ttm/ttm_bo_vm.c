@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.1 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.2 2014/08/09 00:18:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.1 2014/07/16 20:59:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.2 2014/08/09 00:18:58 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -183,7 +183,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 			    ((startpage + i) << PAGE_SHIFT), vm_prot, 0);
 		else
 			paddr = page_to_phys(u.ttm->pages[startpage + i]);
-		ret = -pmap_enter(ufi->orig_map->pmap, vaddr + i*PAGE_SHIFT,
+		ret = -pmap_enter(ufi->orig_map->pmap, vaddr + i*PAGE_SIZE,
 		    paddr, vm_prot, (PMAP_CANFAIL | pgprot));
 		if (ret)
 			goto out3;
