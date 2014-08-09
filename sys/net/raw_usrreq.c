@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.51 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.52 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.51 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.52 2014/08/09 05:33:01 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -199,8 +199,6 @@ int
 raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
-	struct rawcb *rp = sotorawcb(so);
-	int s, error = 0;
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
@@ -208,6 +206,7 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -219,33 +218,12 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
-	s = splsoftnet();
-	KERNEL_LOCK(1, NULL);
+	if (sotorawcb(so) == NULL)
+		return EINVAL;
 
-	KASSERT(!control);
-	if (rp == NULL) {
-		error = EINVAL;
-		goto release;
-	}
+	panic("raw_usrreq");
 
-	switch (req) {
-	/*
-	 * If a socket isn't bound to a single address,
-	 * the raw input routine will hand it anything
-	 * within that protocol family (assuming there's
-	 * nothing else around it should go to).
-	 */
-	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
-
-	default:
-		panic("raw_usrreq");
-	}
-
-release:
-	KERNEL_UNLOCK_ONE(NULL);
-	splx(s);
-	return (error);
+	return 0;
 }
