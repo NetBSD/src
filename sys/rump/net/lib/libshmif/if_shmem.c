@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.61 2014/05/28 20:57:22 justin Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.62 2014/08/09 09:43:49 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.61 2014/05/28 20:57:22 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.62 2014/08/09 09:43:49 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -566,6 +566,7 @@ shmif_start(struct ifnet *ifp)
 
 		m_freem(m0);
 		wrote = true;
+		ifp->if_opackets++;
 
 		DPRINTF(("shmif_start: send %d bytes at off %d\n",
 		    pktsize, busmem->shm_last));
@@ -755,6 +756,7 @@ shmif_rcv(void *arg)
 		}
 
 		if (passup) {
+			ifp->if_ipackets++;
 			KERNEL_LOCK(1, NULL);
 			bpf_mtap(ifp, m);
 			ifp->if_input(ifp, m);
