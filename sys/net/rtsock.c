@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.162 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.163 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.162 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.163 2014/08/09 05:33:01 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -258,6 +258,14 @@ COMPATNAME(route_connect)(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 static int
+COMPATNAME(route_connect2)(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 COMPATNAME(route_disconnect)(struct socket *so)
 {
 	struct rawcb *rp = sotorawcb(so);
@@ -390,6 +398,14 @@ COMPATNAME(route_sendoob)(struct socket *so, struct mbuf *m,
 
 	return EOPNOTSUPP;
 }
+static int
+COMPATNAME(route_purgeif)(struct socket *so, struct ifnet *ifp)
+{
+
+	panic("route_purgeif");
+
+	return EOPNOTSUPP;
+}
 
 static int
 COMPATNAME(route_usrreq)(struct socket *so, int req, struct mbuf *m,
@@ -403,6 +419,7 @@ COMPATNAME(route_usrreq)(struct socket *so, int req, struct mbuf *m,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -414,6 +431,7 @@ COMPATNAME(route_usrreq)(struct socket *so, int req, struct mbuf *m,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
 	s = splsoftnet();
 	error = raw_usrreq(so, req, m, nam, control, l);
@@ -1514,6 +1532,7 @@ static const struct pr_usrreqs route_usrreqs = {
 	.pr_bind	= COMPATNAME(route_bind_wrapper),
 	.pr_listen	= COMPATNAME(route_listen_wrapper),
 	.pr_connect	= COMPATNAME(route_connect_wrapper),
+	.pr_connect2	= COMPATNAME(route_connect2_wrapper),
 	.pr_disconnect	= COMPATNAME(route_disconnect_wrapper),
 	.pr_shutdown	= COMPATNAME(route_shutdown_wrapper),
 	.pr_abort	= COMPATNAME(route_abort_wrapper),
@@ -1525,6 +1544,7 @@ static const struct pr_usrreqs route_usrreqs = {
 	.pr_recvoob	= COMPATNAME(route_recvoob_wrapper),
 	.pr_send	= COMPATNAME(route_send_wrapper),
 	.pr_sendoob	= COMPATNAME(route_sendoob_wrapper),
+	.pr_purgeif	= COMPATNAME(route_purgeif_wrapper),
 	.pr_generic	= COMPATNAME(route_usrreq_wrapper),
 };
 

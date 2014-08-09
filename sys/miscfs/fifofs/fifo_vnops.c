@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.76 2014/07/25 08:20:52 dholland Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.77 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.76 2014/07/25 08:20:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.77 2014/08/09 05:33:01 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ fifo_open(void *v)
 		}
 		fip->fi_writesock = wso;
 		solock(wso);
-		if ((error = unp_connect2(wso, rso, PRU_CONNECT2)) != 0) {
+		if ((error = unp_connect2(wso, rso)) != 0) {
 			sounlock(wso);
 			(void)soclose(wso);
 			(void)soclose(rso);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.32 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.33 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.32 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.33 2014/08/09 05:33:01 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -200,6 +200,19 @@ rfcomm_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 static int
+rfcomm_connect2(struct socket *so, struct socket *so2)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	return EOPNOTSUPP;
+}
+
+static int
 rfcomm_disconnect(struct socket *so)
 {
 	struct rfcomm_dlc *pcb = so->so_pcb;
@@ -349,13 +362,19 @@ rfcomm_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	return EOPNOTSUPP;
 }
 
+static int
+rfcomm_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	return EOPNOTSUPP;
+}
+
 /*
  * User Request.
  * up is socket
  * m is optional mbuf chain containing message
  * ctl is either
  *	optional mbuf chain containing socket options
- *	optional interface pointer PRU_PURGEIF
  * l is pointer to process requesting action (if any)
  *
  * we are responsible for disposing of m and ctl if
@@ -375,6 +394,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -386,18 +406,14 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
-	switch (req) {
-	case PRU_PURGEIF:
-		return EOPNOTSUPP;
-	}
 	if (pcb == NULL) {
 		err = EINVAL;
 		goto release;
 	}
 
 	switch(req) {
-	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -577,6 +593,7 @@ PR_WRAP_USRREQS(rfcomm)
 #define	rfcomm_bind		rfcomm_bind_wrapper
 #define	rfcomm_listen		rfcomm_listen_wrapper
 #define	rfcomm_connect		rfcomm_connect_wrapper
+#define	rfcomm_connect2		rfcomm_connect2_wrapper
 #define	rfcomm_disconnect	rfcomm_disconnect_wrapper
 #define	rfcomm_shutdown		rfcomm_shutdown_wrapper
 #define	rfcomm_abort		rfcomm_abort_wrapper
@@ -588,6 +605,7 @@ PR_WRAP_USRREQS(rfcomm)
 #define	rfcomm_recvoob		rfcomm_recvoob_wrapper
 #define	rfcomm_send		rfcomm_send_wrapper
 #define	rfcomm_sendoob		rfcomm_sendoob_wrapper
+#define	rfcomm_purgeif		rfcomm_purgeif_wrapper
 #define	rfcomm_usrreq		rfcomm_usrreq_wrapper
 
 const struct pr_usrreqs rfcomm_usrreqs = {
@@ -597,6 +615,7 @@ const struct pr_usrreqs rfcomm_usrreqs = {
 	.pr_bind	= rfcomm_bind,
 	.pr_listen	= rfcomm_listen,
 	.pr_connect	= rfcomm_connect,
+	.pr_connect2	= rfcomm_connect2,
 	.pr_disconnect	= rfcomm_disconnect,
 	.pr_shutdown	= rfcomm_shutdown,
 	.pr_abort	= rfcomm_abort,
@@ -608,5 +627,6 @@ const struct pr_usrreqs rfcomm_usrreqs = {
 	.pr_recvoob	= rfcomm_recvoob,
 	.pr_send	= rfcomm_send,
 	.pr_sendoob	= rfcomm_sendoob,
+	.pr_purgeif	= rfcomm_purgeif,
 	.pr_generic	= rfcomm_usrreq,
 };

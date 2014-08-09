@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.171 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.172 2014/08/09 05:33:00 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.171 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.172 2014/08/09 05:33:00 rtr Exp $");
 
 #include "opt_pipe.h"
 
@@ -1276,7 +1276,7 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 	wf->f_data = wso;
 	retval[1] = fd;
 	solock(wso);
-	error = unp_connect2(wso, rso, PRU_CONNECT2);
+	error = unp_connect2(wso, rso);
 	sounlock(wso);
 	if (error != 0)
 		goto free4;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.32 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.33 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.32 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.33 2014/08/09 05:33:01 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -180,6 +180,19 @@ sco_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 
 	soisconnecting(so);
 	return sco_connect_pcb(pcb, sa);
+}
+
+static int
+sco_connect2(struct socket *so, struct socket *so2)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	return EOPNOTSUPP;
 }
 
 static int
@@ -335,6 +348,13 @@ sco_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	return EOPNOTSUPP;
 }
 
+static int
+sco_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	return EOPNOTSUPP;
+}
+
 /*
  * User Request.
  * up is socket
@@ -350,7 +370,7 @@ static int
 sco_usrreq(struct socket *up, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
-	struct sco_pcb *pcb = (struct sco_pcb *)up->so_pcb;
+	struct sco_pcb *pcb = up->so_pcb;
 	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
@@ -360,6 +380,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -371,11 +392,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
-
-	switch(req) {
-	case PRU_PURGEIF:
-		return EOPNOTSUPP;
-	}
+	KASSERT(req != PRU_PURGEIF);
 
 	/* anything after here *requires* a pcb */
 	if (pcb == NULL) {
@@ -384,7 +401,6 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -531,6 +547,7 @@ PR_WRAP_USRREQS(sco)
 #define	sco_bind		sco_bind_wrapper
 #define	sco_listen		sco_listen_wrapper
 #define	sco_connect		sco_connect_wrapper
+#define	sco_connect2		sco_connect2_wrapper
 #define	sco_disconnect		sco_disconnect_wrapper
 #define	sco_shutdown		sco_shutdown_wrapper
 #define	sco_abort		sco_abort_wrapper
@@ -542,6 +559,7 @@ PR_WRAP_USRREQS(sco)
 #define	sco_recvoob		sco_recvoob_wrapper
 #define	sco_send		sco_send_wrapper
 #define	sco_sendoob		sco_sendoob_wrapper
+#define	sco_purgeif		sco_purgeif_wrapper
 #define	sco_usrreq		sco_usrreq_wrapper
 
 const struct pr_usrreqs sco_usrreqs = {
@@ -551,6 +569,7 @@ const struct pr_usrreqs sco_usrreqs = {
 	.pr_bind	= sco_bind,
 	.pr_listen	= sco_listen,
 	.pr_connect	= sco_connect,
+	.pr_connect2	= sco_connect2,
 	.pr_disconnect	= sco_disconnect,
 	.pr_shutdown	= sco_shutdown,
 	.pr_abort	= sco_abort,
@@ -562,5 +581,6 @@ const struct pr_usrreqs sco_usrreqs = {
 	.pr_recvoob	= sco_recvoob,
 	.pr_send	= sco_send,
 	.pr_sendoob	= sco_sendoob,
+	.pr_purgeif	= sco_purgeif,
 	.pr_generic	= sco_usrreq,
 };

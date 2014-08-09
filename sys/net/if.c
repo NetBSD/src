@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.289 2014/07/31 06:35:47 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.290 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.289 2014/07/31 06:35:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.290 2014/08/09 05:33:01 rtr Exp $");
 
 #include "opt_inet.h"
 
@@ -800,9 +800,7 @@ again:
 		     pr < dp->dom_protoswNPROTOSW; pr++) {
 			so.so_proto = pr;
 			if (pr->pr_usrreqs) {
-				(void) (*pr->pr_usrreqs->pr_generic)(&so,
-				    PRU_PURGEIF, NULL, NULL,
-				    (struct mbuf *) ifp, curlwp);
+				(void) (*pr->pr_usrreqs->pr_purgeif)(&so, ifp);
 				purged = 1;
 			}
 		}
@@ -852,9 +850,7 @@ again:
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++) {
 			so.so_proto = pr;
 			if (pr->pr_usrreqs && pr->pr_flags & PR_PURGEIF)
-				(void)(*pr->pr_usrreqs->pr_generic)(&so,
-				    PRU_PURGEIF, NULL, NULL,
-				    (struct mbuf *)ifp, curlwp);
+				(void)(*pr->pr_usrreqs->pr_purgeif)(&so, ifp);
 		}
 	}
 

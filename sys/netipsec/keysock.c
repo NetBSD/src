@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.42 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.43 2014/08/09 05:33:01 rtr Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.42 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.43 2014/08/09 05:33:01 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -519,6 +519,14 @@ key_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 static int
+key_connect2(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 key_disconnect(struct socket *so)
 {
 	struct rawcb *rp = sotorawcb(so);
@@ -651,6 +659,15 @@ key_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	return EOPNOTSUPP;
 }
 
+static int
+key_purgeif(struct socket *so, struct ifnet *ifa)
+{
+
+	panic("key_purgeif");
+
+	return EOPNOTSUPP;
+}
+
 /*
  * key_usrreq()
  * derived from net/rtsock.c:route_usrreq()
@@ -667,6 +684,7 @@ key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -678,6 +696,7 @@ key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
 	s = splsoftnet();
 	error = raw_usrreq(so, req, m, nam, control, l);
@@ -700,6 +719,7 @@ PR_WRAP_USRREQS(key)
 #define	key_bind	key_bind_wrapper
 #define	key_listen	key_listen_wrapper
 #define	key_connect	key_connect_wrapper
+#define	key_connect2	key_connect2_wrapper
 #define	key_disconnect	key_disconnect_wrapper
 #define	key_shutdown	key_shutdown_wrapper
 #define	key_abort	key_abort_wrapper
@@ -711,6 +731,7 @@ PR_WRAP_USRREQS(key)
 #define	key_recvoob	key_recvoob_wrapper
 #define	key_send	key_send_wrapper
 #define	key_sendoob	key_sendoob_wrapper
+#define	key_purgeif	key_purgeif_wrapper
 #define	key_usrreq	key_usrreq_wrapper
 
 const struct pr_usrreqs key_usrreqs = {
@@ -720,6 +741,7 @@ const struct pr_usrreqs key_usrreqs = {
 	.pr_bind	= key_bind,
 	.pr_listen	= key_listen,
 	.pr_connect	= key_connect,
+	.pr_connect2	= key_connect2,
 	.pr_disconnect	= key_disconnect,
 	.pr_shutdown	= key_shutdown,
 	.pr_abort	= key_abort,
@@ -731,6 +753,7 @@ const struct pr_usrreqs key_usrreqs = {
 	.pr_recvoob	= key_recvoob,
 	.pr_send	= key_send,
 	.pr_sendoob	= key_sendoob,
+	.pr_purgeif	= key_purgeif,
 	.pr_generic	= key_usrreq,
 };
 
