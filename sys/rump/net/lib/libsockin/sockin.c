@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.57 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.58 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.57 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.58 2014/08/09 05:33:01 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -69,6 +69,7 @@ static void	sockin_init(void);
 static int	sockin_attach(struct socket *, int);
 static void	sockin_detach(struct socket *);
 static int	sockin_accept(struct socket *, struct mbuf *);
+static int	sockin_connect2(struct socket *, struct socket *);
 static int	sockin_bind(struct socket *, struct mbuf *, struct lwp *);
 static int	sockin_listen(struct socket *, struct lwp *);
 static int	sockin_connect(struct socket *, struct mbuf *, struct lwp *);
@@ -84,6 +85,7 @@ static int	sockin_recvoob(struct socket *, struct mbuf *, int);
 static int	sockin_send(struct socket *, struct mbuf *, struct mbuf *,
 			    struct mbuf *, struct lwp *);
 static int	sockin_sendoob(struct socket *, struct mbuf *, struct mbuf *);
+static int	sockin_purgeif(struct socket *, struct ifnet *);
 static int	sockin_usrreq(struct socket *, int, struct mbuf *,
 			      struct mbuf *, struct mbuf *, struct lwp *);
 static int	sockin_ctloutput(int op, struct socket *, struct sockopt *);
@@ -95,6 +97,7 @@ static const struct pr_usrreqs sockin_usrreqs = {
 	.pr_bind = sockin_bind,
 	.pr_listen = sockin_listen,
 	.pr_connect = sockin_connect,
+	.pr_connect2 = sockin_connect2,
 	.pr_disconnect = sockin_disconnect,
 	.pr_shutdown = sockin_shutdown,
 	.pr_abort = sockin_abort,
@@ -106,6 +109,7 @@ static const struct pr_usrreqs sockin_usrreqs = {
 	.pr_recvoob = sockin_recvoob,
 	.pr_send = sockin_send,
 	.pr_sendoob = sockin_sendoob,
+	.pr_purgeif = sockin_purgeif,
 	.pr_generic = sockin_usrreq,
 };
 
@@ -525,6 +529,14 @@ sockin_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 static int
+sockin_connect2(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	panic("sockin_connect2: IMPLEMENT ME, connect2 not supported");
+}
+
+static int
 sockin_disconnect(struct socket *so)
 {
 	KASSERT(solocked(so));
@@ -678,15 +690,21 @@ sockin_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 }
 
 static int
+sockin_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	panic("sockin_purgeif: IMPLEMENT ME, purgeif not supported");
+}
+
+static int
 sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
-	int error = 0;
-
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -698,13 +716,11 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
-	switch (req) {
-	default:
-		panic("sockin_usrreq: IMPLEMENT ME, req %d not supported", req);
-	}
+	panic("sockin_usrreq: IMPLEMENT ME, req %d not supported", req);
 
-	return error;
+	return 0;
 }
 
 static int
