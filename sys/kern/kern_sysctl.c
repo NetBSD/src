@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.251 2014/06/12 22:10:04 joerg Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.252 2014/08/09 07:05:42 gson Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.251 2014/06/12 22:10:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.252 2014/08/09 07:05:42 gson Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1423,9 +1423,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 {
 	int error, rw;
 	size_t sz, len;
-	void *d, *d_out;
-	uint64_t qval;
-	int ival;
+	void *d;
 
 	KASSERT(rw_lock_held(&sysctl_treelock));
 
@@ -1501,38 +1499,13 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		d = __UNCONST(&rnode->sysctl_qdata);
 	} else
 		d = rnode->sysctl_data;
-	d_out = d;
 
-	sz = rnode->sysctl_size;
-	switch (SYSCTL_TYPE(rnode->sysctl_flags)) {
-	case CTLTYPE_INT:
-		/* Allow for 64bit read of 32bit value */
-		if (*oldlenp != sz && *oldlenp == sizeof (uint64_t)) {
-			qval = *(int *)d;
-			d_out = &qval;
-			sz =  sizeof (uint64_t);
-		}
-		break;
-	case CTLTYPE_QUAD:
-		/* Allow for 32bit read of 64bit value */
-		if (*oldlenp != sz && *oldlenp == sizeof (int)) {
-			qval = *(uint64_t *)d;
-			ival = qval;
-			/* Replace out of range values with -1 */
-			if (ival != qval)
-				ival = -1;
-			d_out = &ival;
-			sz =  sizeof (int);
-		}
-		break;
-	case CTLTYPE_STRING:
+	if (SYSCTL_TYPE(rnode->sysctl_flags) == CTLTYPE_STRING)
 		sz = strlen(d) + 1; /* XXX@@@ possible fault here */
-		break;
-	default:
-		break;
-	}
+	else
+		sz = rnode->sysctl_size;
 	if (oldp != NULL) {
-		error = sysctl_copyout(l, d_out, oldp, MIN(sz, *oldlenp));
+		error = sysctl_copyout(l, d, oldp, MIN(sz, *oldlenp));
 		if (error) {
 			DPRINTF(("%s: bad copyout %d\n", __func__, error));
 			return error;
@@ -1575,27 +1548,6 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	}
 	case CTLTYPE_INT:
 	case CTLTYPE_QUAD:
-		/* Allow 32bit of 64bit integers */
-		if (newlen == sizeof (uint64_t)) {
-			error = sysctl_copyin(l, newp, &qval, sizeof qval);
-		} else if (newlen == sizeof (int)) {
-			error = sysctl_copyin(l, newp, &ival, sizeof ival);
-			qval = ival;
-		} else {
-			goto bad_size;
-		}
-		if (!error) {
-			if (SYSCTL_TYPE(rnode->sysctl_flags) == CTLTYPE_INT) {
-				ival = qval;
-				/* Error out of range values */
-				if (ival != qval)
-					goto bad_size;
-				*(int *)d = ival;
-			} else {
-				*(uint64_t *)d = qval;
-			}
-		}
-		break;
 	case CTLTYPE_STRUCT:
 		/*
 		 * these data must be *exactly* the same size coming
