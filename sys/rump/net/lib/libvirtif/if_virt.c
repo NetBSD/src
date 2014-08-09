@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.47 2014/04/02 19:44:15 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.48 2014/08/09 09:47:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.47 2014/04/02 19:44:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.48 2014/08/09 09:47:02 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -310,6 +310,7 @@ virtif_start(struct ifnet *ifp)
 		VIFHYPER_SEND(sc->sc_viu, io, i);
 
 		m_freem(m0);
+		ifp->if_opackets++;
 	}
 
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -372,6 +373,7 @@ VIF_DELIVERPKT(struct virtif_sc *sc, struct iovec *iov, size_t iovlen)
 	}
 
 	if (passup) {
+		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 		KERNEL_LOCK(1, NULL);
 		bpf_mtap(ifp, m);
