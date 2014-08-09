@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.17 2014/08/07 02:28:52 jmcneill Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.18 2014/08/09 15:07:06 jmcneill Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -79,8 +79,7 @@ struct wpi_tx_ring {
 	int			cur;
 };
 
-#define WPI_RBUF_COUNT	(WPI_RX_RING_COUNT + 16)
-#define WPI_RBUF_LOW_LIMIT	8
+#define WPI_RBUF_COUNT	(WPI_RX_RING_COUNT * 2)
 
 struct wpi_softc;
 
