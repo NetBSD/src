@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2014/05/05 21:04:09 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.54 2014/08/09 12:40:14 bad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1093,9 +1093,8 @@ undo_option(struct hashtab *ht, struct nvlist **npp,
 		/*
 		 * -U command line option removals are always silent
 		 */
-		if (handling_cmdlineopts)
-			return 0;
-		cfgerror("%s `%s' is not defined", type, name);
+		if (!handling_cmdlineopts)
+			cfgwarn("%s `%s' is not defined", type, name);
 		return (1);
 	}
 	if (npp == NULL)
