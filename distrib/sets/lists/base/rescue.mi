@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.35 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: rescue.mi,v 1.36 2014/08/09 18:32:34 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -34,6 +34,7 @@
 ./rescue/echo					base-rescue-root
 ./rescue/ed					base-rescue-root
 ./rescue/egrep					base-rescue-root
+./rescue/ekermit				base-rescue-root
 ./rescue/ex					base-rescue-root
 ./rescue/expr					base-rescue-root
 ./rescue/fdisk					base-rescue-root
