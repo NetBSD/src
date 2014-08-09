@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1904 2014/07/25 21:43:13 joerg Exp $
+#	$NetBSD: mi,v 1.1905 2014/08/09 19:06:49 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -263,8 +263,11 @@
 ./usr/include/c++/deque				comp-cxx-include	libcxx
 ./usr/include/c++/dynarray			comp-obsolete		obsolete
 ./usr/include/c++/exception			comp-cxx-include	libcxx
+./usr/include/c++/experimental/__config		comp-cxx-include	libcxx
 ./usr/include/c++/experimental/dynarray		comp-cxx-include	libcxx
 ./usr/include/c++/experimental/optional		comp-cxx-include	libcxx
+./usr/include/c++/experimental/string_view	comp-cxx-include	libcxx
+./usr/include/c++/experimental/utility		comp-cxx-include	libcxx
 ./usr/include/c++/ext/__hash			comp-cxx-include	libcxx
 ./usr/include/c++/ext/hash_map			comp-cxx-include	libcxx
 ./usr/include/c++/ext/hash_set			comp-cxx-include	libcxx
