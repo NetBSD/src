@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.5 2013/10/17 21:23:05 christos Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.6 2014/08/09 13:34:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.5 2013/10/17 21:23:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.6 2014/08/09 13:34:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -305,7 +305,7 @@ dtv_demux_open(struct dtv_softc *sc, int flags, int mode, lwp_t *l)
 	/* Default operation mode is unconfigured */
 	demux->dd_mode = DTV_DEMUX_MODE_NONE;
 	selinit(&demux->dd_sel);
-	mutex_init(&demux->dd_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&demux->dd_lock, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&demux->dd_section_cv, "dtvsec");
 
 	error = fd_allocfile(&fp, &fd);
