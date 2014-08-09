@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.62 2014/08/08 03:05:45 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.63 2014/08/09 05:33:01 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.62 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.63 2014/08/09 05:33:01 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -88,6 +88,7 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -99,15 +100,10 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
 	ddp = sotoddpcb(so);
 
-	if (req == PRU_PURGEIF) {
-		mutex_enter(softnet_lock);
-		at_purgeif((struct ifnet *) rights);
-		mutex_exit(softnet_lock);
-		return (0);
-	}
 	if (rights && rights->m_len) {
 		error = EINVAL;
 		goto release;
@@ -117,7 +113,6 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		goto release;
 	}
 	switch (req) {
-	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -454,6 +449,14 @@ ddp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 static int
+ddp_connect2(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 ddp_disconnect(struct socket *so)
 {
 	struct ddpcb *ddp = sotoddpcb(so);
@@ -584,6 +587,17 @@ ddp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	return EOPNOTSUPP;
 }
 
+static int
+ddp_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	mutex_enter(softnet_lock);
+	at_purgeif(ifp);
+	mutex_exit(softnet_lock);
+
+	return 0;
+}
+
 /*
  * For the moment, this just find the pcb with the correct local address.
  * In the future, this will actually do some real searching, so we can use
@@ -661,6 +675,7 @@ PR_WRAP_USRREQS(ddp)
 #define	ddp_bind	ddp_bind_wrapper
 #define	ddp_listen	ddp_listen_wrapper
 #define	ddp_connect	ddp_connect_wrapper
+#define	ddp_connect2	ddp_connect2_wrapper
 #define	ddp_disconnect	ddp_disconnect_wrapper
 #define	ddp_shutdown	ddp_shutdown_wrapper
 #define	ddp_abort	ddp_abort_wrapper
@@ -672,6 +687,7 @@ PR_WRAP_USRREQS(ddp)
 #define	ddp_recvoob	ddp_recvoob_wrapper
 #define	ddp_send	ddp_send_wrapper
 #define	ddp_sendoob	ddp_sendoob_wrapper
+#define	ddp_purgeif	ddp_purgeif_wrapper
 #define	ddp_usrreq	ddp_usrreq_wrapper
 
 const struct pr_usrreqs ddp_usrreqs = {
@@ -681,6 +697,7 @@ const struct pr_usrreqs ddp_usrreqs = {
 	.pr_bind	= ddp_bind,
 	.pr_listen	= ddp_listen,
 	.pr_connect	= ddp_connect,
+	.pr_connect2	= ddp_connect2,
 	.pr_disconnect	= ddp_disconnect,
 	.pr_shutdown	= ddp_shutdown,
 	.pr_abort	= ddp_abort,
@@ -692,6 +709,7 @@ const struct pr_usrreqs ddp_usrreqs = {
 	.pr_recvoob	= ddp_recvoob,
 	.pr_send	= ddp_send,
 	.pr_sendoob	= ddp_sendoob,
+	.pr_purgeif	= ddp_purgeif,
 	.pr_generic	= ddp_usrreq,
 };
 

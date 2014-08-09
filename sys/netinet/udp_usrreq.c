@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.216 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.217 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.216 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217 2014/08/09 05:33:01 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -950,6 +950,14 @@ udp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 static int
+udp_connect2(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 udp_disconnect(struct socket *so)
 {
 	struct inpcb *inp = sotoinpcb(so);
@@ -1120,18 +1128,32 @@ udp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 }
 
 static int
+udp_purgeif(struct socket *so, struct ifnet *ifp)
+{
+	int s;
+
+	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	in_pcbpurgeif0(&udbtable, ifp);
+	in_purgeif(ifp);
+	in_pcbpurgeif(&udbtable, ifp);
+	mutex_exit(softnet_lock);
+	splx(s);
+
+	return 0;
+}
+
+static int
 udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
-	struct inpcb *inp;
-	int s, error = 0;
-
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -1143,42 +1165,16 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
-
-	s = splsoftnet();
-	if (req == PRU_PURGEIF) {
-		mutex_enter(softnet_lock);
-		in_pcbpurgeif0(&udbtable, (struct ifnet *)control);
-		in_purgeif((struct ifnet *)control);
-		in_pcbpurgeif(&udbtable, (struct ifnet *)control);
-		mutex_exit(softnet_lock);
-		splx(s);
-		return 0;
-	}
+	KASSERT(req != PRU_PURGEIF);
 
 	KASSERT(solocked(so));
-	inp = sotoinpcb(so);
 
-	KASSERT(!control);
-	if (inp == NULL) {
-		splx(s);
+	if (sotoinpcb(so) == NULL)
 		return EINVAL;
-	}
 
-	/*
-	 * Note: need to block udp_input while changing
-	 * the udp pcb queue and/or pcb addresses.
-	 */
-	switch (req) {
-	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
+	panic("udp_usrreq");
 
-	default:
-		panic("udp_usrreq");
-	}
-	splx(s);
-
-	return error;
+	return 0;
 }
 
 static int
@@ -1405,6 +1401,7 @@ PR_WRAP_USRREQS(udp)
 #define	udp_bind	udp_bind_wrapper
 #define	udp_listen	udp_listen_wrapper
 #define	udp_connect	udp_connect_wrapper
+#define	udp_connect2	udp_connect2_wrapper
 #define	udp_disconnect	udp_disconnect_wrapper
 #define	udp_shutdown	udp_shutdown_wrapper
 #define	udp_abort	udp_abort_wrapper
@@ -1416,6 +1413,7 @@ PR_WRAP_USRREQS(udp)
 #define	udp_recvoob	udp_recvoob_wrapper
 #define	udp_send	udp_send_wrapper
 #define	udp_sendoob	udp_sendoob_wrapper
+#define	udp_purgeif	udp_purgeif_wrapper
 #define	udp_usrreq	udp_usrreq_wrapper
 
 const struct pr_usrreqs udp_usrreqs = {
@@ -1425,6 +1423,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pr_bind	= udp_bind,
 	.pr_listen	= udp_listen,
 	.pr_connect	= udp_connect,
+	.pr_connect2	= udp_connect2,
 	.pr_disconnect	= udp_disconnect,
 	.pr_shutdown	= udp_shutdown,
 	.pr_abort	= udp_abort,
@@ -1436,5 +1435,6 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pr_recvoob	= udp_recvoob,
 	.pr_send	= udp_send,
 	.pr_sendoob	= udp_sendoob,
+	.pr_purgeif	= udp_purgeif,
 	.pr_generic	= udp_usrreq,
 };

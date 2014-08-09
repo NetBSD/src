@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.114 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.115 2014/08/09 05:33:01 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.114 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.115 2014/08/09 05:33:01 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -731,6 +731,14 @@ udp6_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 static int
+udp6_connect2(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 udp6_disconnect(struct socket *so)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
@@ -875,11 +883,23 @@ udp6_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	return EOPNOTSUPP;
 }
 
+static int
+udp6_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	mutex_enter(softnet_lock);
+	in6_pcbpurgeif0(&udbtable, ifp);
+	in6_purgeif(ifp);
+	in6_pcbpurgeif(&udbtable, ifp);
+	mutex_exit(softnet_lock);
+
+	return 0;
+}
+
 int
 udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
     struct mbuf *control, struct lwp *l)
 {
-	struct in6pcb *in6p = sotoin6pcb(so);
 	int error = 0;
 
 	KASSERT(req != PRU_ATTACH);
@@ -888,6 +908,7 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -899,22 +920,14 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	KASSERT(req != PRU_RCVOOB);
 	KASSERT(req != PRU_SEND);
 	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
-	if (req == PRU_PURGEIF) {
-		mutex_enter(softnet_lock);
-		in6_pcbpurgeif0(&udbtable, (struct ifnet *)control);
-		in6_purgeif((struct ifnet *)control);
-		in6_pcbpurgeif(&udbtable, (struct ifnet *)control);
-		mutex_exit(softnet_lock);
-		return 0;
-	}
-	if (in6p == NULL) {
+	if (sotoin6pcb(so) == NULL) {
 		error = EINVAL;
 		goto release;
 	}
 
 	switch (req) {
-	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -1009,6 +1022,7 @@ PR_WRAP_USRREQS(udp6)
 #define	udp6_bind	udp6_bind_wrapper
 #define	udp6_listen	udp6_listen_wrapper
 #define	udp6_connect	udp6_connect_wrapper
+#define	udp6_connect2	udp6_connect2_wrapper
 #define	udp6_disconnect	udp6_disconnect_wrapper
 #define	udp6_shutdown	udp6_shutdown_wrapper
 #define	udp6_abort	udp6_abort_wrapper
@@ -1020,6 +1034,7 @@ PR_WRAP_USRREQS(udp6)
 #define	udp6_recvoob	udp6_recvoob_wrapper
 #define	udp6_send	udp6_send_wrapper
 #define	udp6_sendoob	udp6_sendoob_wrapper
+#define	udp6_purgeif	udp6_purgeif_wrapper
 #define	udp6_usrreq	udp6_usrreq_wrapper
 
 const struct pr_usrreqs udp6_usrreqs = {
@@ -1029,6 +1044,7 @@ const struct pr_usrreqs udp6_usrreqs = {
 	.pr_bind	= udp6_bind,
 	.pr_listen	= udp6_listen,
 	.pr_connect	= udp6_connect,
+	.pr_connect2	= udp6_connect2,
 	.pr_disconnect	= udp6_disconnect,
 	.pr_shutdown	= udp6_shutdown,
 	.pr_abort	= udp6_abort,
@@ -1040,5 +1056,6 @@ const struct pr_usrreqs udp6_usrreqs = {
 	.pr_recvoob	= udp6_recvoob,
 	.pr_send	= udp6_send,
 	.pr_sendoob	= udp6_sendoob,
+	.pr_purgeif	= udp6_purgeif,
 	.pr_generic	= udp6_usrreq,
 };

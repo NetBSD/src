@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.59 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.60 2014/08/09 05:33:01 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -117,7 +117,7 @@ struct protosw {
 #define	PR_ABRTACPTDIS	0x80		/* abort on accept(2) to disconnected
 					   socket */
 #define PR_PURGEIF	0x100		/* might store struct ifnet pointer;
-					   PRU_PURGEIF must be called on ifnet
+					   pr_purgeif() must be called on ifnet
 					   deletion */
 
 /*
@@ -239,9 +239,10 @@ struct pr_usrreqs {
 	int	(*pr_attach)(struct socket *, int);
 	void	(*pr_detach)(struct socket *);
 	int	(*pr_accept)(struct socket *, struct mbuf *);
+	int	(*pr_connect)(struct socket *, struct mbuf *, struct lwp *);
+	int	(*pr_connect2)(struct socket *, struct socket *);
 	int	(*pr_bind)(struct socket *, struct mbuf *, struct lwp *);
 	int	(*pr_listen)(struct socket *, struct lwp *);
-	int	(*pr_connect)(struct socket *, struct mbuf *, struct lwp *);
 	int	(*pr_disconnect)(struct socket *);
 	int	(*pr_shutdown)(struct socket *);
 	int	(*pr_abort)(struct socket *);
@@ -254,6 +255,7 @@ struct pr_usrreqs {
 	int	(*pr_send)(struct socket *, struct mbuf *, struct mbuf *,
 	    struct mbuf *, struct lwp *);
 	int	(*pr_sendoob)(struct socket *, struct mbuf *, struct mbuf *);
+	int	(*pr_purgeif)(struct socket *, struct ifnet *);
 	int	(*pr_generic)(struct socket *, int, struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct lwp *);
 };
@@ -331,6 +333,16 @@ name##_connect_wrapper(struct socket *a,		\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
 	rv = name##_connect(a, b, c);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_connect2_wrapper(struct socket *a,		\
+    struct socket *b)					\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_connect2(a, b);			\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }							\
@@ -444,6 +456,16 @@ name##_sendoob_wrapper(struct socket *a,		\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
 	rv = name##_sendoob(a, b, c);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_purgeif_wrapper(struct socket *a,		\
+    struct ifnet *b)					\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_purgeif(a, b);			\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }							\
