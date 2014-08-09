@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2014/06/10 04:28:39 he Exp $
+# $NetBSD: Makefile,v 1.35 2014/08/09 07:04:03 gson Exp $
 
 NOMAN=		# defined
 
@@ -14,6 +14,7 @@ TESTS_C+=	t_mqueue
 TESTS_C+=	t_sysv
 TESTS_C+=	t_subr_prf
 TESTS_C+=	t_kauth_pr_47598
+TESTS_C+=	t_sysctl
 
 TESTS_SH=	t_umount
 TESTS_SH+=	t_umountstress

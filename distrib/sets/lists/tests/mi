@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.583 2014/08/07 14:22:13 jmmv Exp $
+# $NetBSD: mi,v 1.584 2014/08/09 07:04:03 gson Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2093,6 +2093,7 @@
 ./usr/tests/kernel/t_rnd			tests-kernel-tests		atf,rump
 ./usr/tests/kernel/t_sigaction			tests-obsolete			obsolete
 ./usr/tests/kernel/t_subr_prf			tests-kernel-tests		atf
+./usr/tests/kernel/t_sysctl			tests-kernel-tests		atf
 ./usr/tests/kernel/t_sysv			tests-kernel-tests		atf
 ./usr/tests/kernel/t_time			tests-obsolete			obsolete
 ./usr/tests/kernel/t_ucontext			tests-obsolete			obsolete
