@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.137 2014/08/09 12:34:05 bad Exp $
+#	$NetBSD: Makefile,v 1.138 2014/08/09 22:10:35 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -143,11 +143,11 @@ SUBDIR+=	vmt
 .endif
 
 .if ${MACHINE_ARCH} == "alpha" || \
-    !empty(${MACHINE_ARCH:Mearm*}) || !empty(${MACHINE_ARCH:Marm*}) || \
+    !empty(MACHINE_ARCH:Mearm*) || !empty(MACHINE_ARCH:Marm*) || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "ia64" || \
     ${MACHINE_ARCH} == "hppa" || \
-    !empty(${MACHINE_ARCH:Mmips*}) || \
+    !empty(MACHINE_ARCH:Mmips*) || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "x86_64"
