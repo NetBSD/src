@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.63 2014/01/06 08:56:34 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.64 2014/08/09 03:17:11 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1554,7 +1554,7 @@ perfuse_node_getattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct fuse_attr_out *fao;
 	int error = 0;
 	
-	if (pnd->pnd_flags & PND_REMOVED)
+	if ((pnd->pnd_flags & PND_REMOVED) && !(pnd->pnd_flags & PND_OPEN))
 		return ENOENT;
 
 	node_ref(opc);
