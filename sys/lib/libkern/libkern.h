@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.113.2.1 2014/04/07 01:10:55 tls Exp $	*/
+/*	$NetBSD: libkern.h,v 1.113.2.2 2014/08/09 07:45:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -380,6 +380,7 @@ unsigned int	popcount64(uint64_t) __constfunc;
 void	*explicit_memset(void *, int, size_t);
 int	consttime_memequal(const void *, const void *, size_t);
 
+#ifdef notyet
 /*
  * LZF hashtable/state size: on uncompressible data and on a system with
  * a sufficiently large d-cache, a larger table produces a considerable
@@ -396,5 +397,6 @@ unsigned int lzf_compress_r (const void *const, unsigned int, void *,
 			     unsigned int, LZF_STATE);
 unsigned int lzf_decompress (const void *const, unsigned int, void *,
 			     unsigned int);
+#endif
 
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

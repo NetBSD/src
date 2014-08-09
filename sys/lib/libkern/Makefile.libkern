@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.32.2.2 2014/07/17 14:03:33 tls Exp $
+#	$NetBSD: Makefile.libkern,v 1.32.2.3 2014/08/09 07:45:03 tls Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -94,8 +94,8 @@ SRCS+=	explicit_memset.c consttime_memequal.c
 SRCS+=	cdbr.c
 SRCS+=	mi_vector_hash.c
 
-.PATH:	${NETBSDSRCDIR}/external/bsd/liblzf/dist
-SRCS+=	lzf_c.c lzf_d.c
+#.PATH:	${NETBSDSRCDIR}/external/bsd/liblzf/dist
+#SRCS+=	lzf_c.c lzf_d.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
