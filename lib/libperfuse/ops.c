@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.64 2014/08/09 03:17:11 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.65 2014/08/09 19:06:50 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -3359,9 +3359,17 @@ perfuse_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 */
 	foh = GET_OUTHDR(ps, pm);
 	np = (char *)(void *)(foh + 1);
+	len = foh->len - sizeof(*foh);
+
+	if (attrsize != NULL)
+		*attrsize = len;
 
 	if (resid != NULL) {
-		len = MAX(foh->len - sizeof(*foh), *resid);
+		if (*resid < len) {
+			error = ERANGE;
+			goto out;
+		}
+
 		(void)memcpy(attr, np, len);
 		*resid -= len;
 	}
