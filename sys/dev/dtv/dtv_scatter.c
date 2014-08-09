@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_scatter.c,v 1.1 2011/07/09 14:46:56 jmcneill Exp $ */
+/* $NetBSD: dtv_scatter.c,v 1.2 2014/08/09 13:34:10 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_scatter.c,v 1.1 2011/07/09 14:46:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_scatter.c,v 1.2 2014/08/09 13:34:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -48,14 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: dtv_scatter.c,v 1.1 2011/07/09 14:46:56 jmcneill Exp
 
 #include <dev/dtv/dtvvar.h>
 
-#define IPL_DTV		IPL_VM
-#define spldtv()	splvm()
-
 void
 dtv_scatter_buf_init(struct dtv_scatter_buf *sb)
 {
 	sb->sb_pool = pool_cache_init(PAGE_SIZE, 0, 0, 0,
-				      "dtvscatter", NULL, IPL_DTV,
+				      "dtvscatter", NULL, IPL_SCHED,
 				      NULL, NULL, NULL);
 	sb->sb_size = 0;
 	sb->sb_npages = 0;
