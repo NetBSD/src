@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.43 2013/11/17 18:58:28 alnsn Exp $
+# $NetBSD: md.i386,v 1.44 2014/08/09 12:34:05 bad Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -141,6 +141,8 @@
 ./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/tvpll				base-kernel-modules	kmod
 ./@MODULEDIR@/tvpll/tvpll.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ubsec				base-kernel-modules	kmod
+./@MODULEDIR@/ubsec/ubsec.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/viac7temp				base-kernel-modules	kmod
 ./@MODULEDIR@/viac7temp/viac7temp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/viadrm				base-kernel-modules	kmod
