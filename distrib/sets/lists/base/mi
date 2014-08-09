@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1085 2014/08/08 19:38:47 apb Exp $
+# $NetBSD: mi,v 1.1086 2014/08/09 11:33:53 apb Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -500,6 +500,7 @@
 ./usr/bin/getent				base-util-bin
 ./usr/bin/getextattr				base-util-bin
 ./usr/bin/getopt				base-util-bin
+./usr/bin/gkermit				base-obsolete		obsolete
 ./usr/bin/grep					base-util-bin
 ./usr/bin/groups				base-util-bin
 ./usr/bin/gss					base-obsolete		obsolete
