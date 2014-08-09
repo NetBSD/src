@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.40.2.2 2014/07/17 14:03:33 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.40.2.3 2014/08/09 06:19:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -226,6 +226,8 @@ extern int	rnd_initial_entropy;
 
 extern int	rnd_ready;
 extern int	rnd_printing;		/* XXX recursion through printf */
+
+extern int	rnd_blockonce;
 
 #endif /* _KERNEL */
 

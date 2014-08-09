@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1090.2.1 2014/07/17 14:03:33 tls Exp $
+#	$NetBSD: files,v 1.1090.2.2 2014/08/09 06:19:50 tls Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -160,12 +160,14 @@ include "crypto/cast128/files.cast128"
 include "crypto/rijndael/files.rijndael"
 include "crypto/skipjack/files.skipjack"
 include "crypto/camellia/files.camellia"
-include "crypto/ccrand/files.ccrand"
 # General-purpose crypto processing framework.
 include "opencrypto/files.opencrypto"
 
 # NIST SP800.90 CTR DRBG
 include "crypto/nist_ctr_drbg/files.nist_ctr_drbg"
+
+# ChaCha-based fast PRNG
+include "crypto/cprng_fast/files.cprng_fast"
 
 #
 # Kernel history/tracing. Old UVMHIST depends upon this.
