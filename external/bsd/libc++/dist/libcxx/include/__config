@@ -313,10 +313,16 @@ typedef __char32_t char32_t;
 #define _LIBCPP_HAS_NO_CONSTEXPR
 #endif
 
+#if !(__has_feature(cxx_relaxed_constexpr))
+#define _LIBCPP_HAS_NO_CXX14_CONSTEXPR
+#endif
+
 #if __ISO_C_VISIBLE >= 2011 || __cplusplus >= 201103L
 #if defined(__FreeBSD__)
 #define _LIBCPP_HAS_QUICK_EXIT
 #define _LIBCPP_HAS_C11_FEATURES
+#elif defined(__ANDROID__)
+#define _LIBCPP_HAS_QUICK_EXIT
 #elif defined(__linux__)
 #include <features.h>
 #if __GLIBC_PREREQ(2, 15)
@@ -339,7 +345,11 @@ typedef __char32_t char32_t;
 #endif
 
 #if __has_feature(underlying_type)
-#  define _LIBCXX_UNDERLYING_TYPE(T) __underlying_type(T)
+#  define _LIBCPP_UNDERLYING_TYPE(T) __underlying_type(T)
+#endif
+
+#if __has_feature(is_literal)
+#  define _LIBCPP_IS_LITERAL(T) __is_literal(T)
 #endif
 
 // Inline namespaces are available in Clang regardless of C++ dialect.
@@ -363,12 +373,27 @@ namespace std {
 
 #define _LIBCPP_NORETURN __attribute__((noreturn))
 
+#if _GNUC_VER >= 407
+#define _LIBCPP_UNDERLYING_TYPE(T) __underlying_type(T)
+#define _LIBCPP_IS_LITERAL(T) __is_literal_type(T)
+#endif
+
 #if !__EXCEPTIONS
 #define _LIBCPP_NO_EXCEPTIONS
 #endif
 
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+
+// constexpr was added to GCC in 4.6.
+#if _GNUC_VER < 406
 #define _LIBCPP_HAS_NO_CONSTEXPR
+// Can only use constexpr in c++11 mode.
+#elif !defined(__GXX_EXPERIMENTAL_CXX0X__) && __cplusplus < 201103L
+#define _LIBCPP_HAS_NO_CONSTEXPR
+#endif
+
+// No version of GCC supports relaxed constexpr rules
+#define _LIBCPP_HAS_NO_CXX14_CONSTEXPR
 
 #define _NOEXCEPT throw()
 #define _NOEXCEPT_(x)
@@ -439,6 +464,7 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 #define _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER
 #define _LIBCPP_HAS_NO_CONSTEXPR
+#define _LIBCPP_HAS_NO_CXX14_CONSTEXPR
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 #define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
@@ -543,10 +569,18 @@ template <unsigned> struct __static_assert_check {};
 #define __has_feature(__x) 0
 #endif
 
+#ifndef __has_builtin
+#define __has_builtin(__x) 0
+#endif
+
 #if __has_feature(cxx_explicit_conversions) || defined(__IBMCPP__)
 #   define _LIBCPP_EXPLICIT explicit
 #else
 #   define _LIBCPP_EXPLICIT
+#endif
+
+#if !__has_builtin(__builtin_operator_new) || !__has_builtin(__builtin_operator_delete)
+#   define _LIBCPP_HAS_NO_BUILTIN_OPERATOR_NEW_DELETE
 #endif
 
 #ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
@@ -608,8 +642,10 @@ template <unsigned> struct __static_assert_check {};
 #ifndef _LIBCPP_STD_VER
 #  if  __cplusplus <= 201103L
 #    define _LIBCPP_STD_VER 11
+#  elif __cplusplus <= 201402L
+#    define _LIBCPP_STD_VER 14
 #  else
-#    define _LIBCPP_STD_VER 13  // current year, or date of c++14 ratification
+#    define _LIBCPP_STD_VER 15  // current year, or date of c++17 ratification
 #  endif
 #endif  // _LIBCPP_STD_VER
 
@@ -620,13 +656,17 @@ template <unsigned> struct __static_assert_check {};
 #endif
 
 #if _LIBCPP_STD_VER <= 11
-#define _LIBCPP_CONSTEXPR_AFTER_CXX11
 #define _LIBCPP_EXPLICIT_AFTER_CXX11
 #define _LIBCPP_DEPRECATED_AFTER_CXX11
 #else
-#define _LIBCPP_CONSTEXPR_AFTER_CXX11 constexpr
 #define _LIBCPP_EXPLICIT_AFTER_CXX11 explicit
 #define _LIBCPP_DEPRECATED_AFTER_CXX11 [[deprecated]]
+#endif
+
+#if _LIBCPP_STD_VER > 11 && !defined(_LIBCPP_HAS_NO_CXX14_CONSTEXPR)
+#define _LIBCPP_CONSTEXPR_AFTER_CXX11 constexpr
+#else
+#define _LIBCPP_CONSTEXPR_AFTER_CXX11
 #endif
 
 #ifndef _LIBCPP_HAS_NO_ASAN
