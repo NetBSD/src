@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42 2014/08/10 11:30:51 martin Exp $
+# $NetBSD: Makefile,v 1.43 2014/08/10 12:01:57 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -41,7 +41,8 @@ TESTS_C+=	t_time
 TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
 
-.if ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm" \
+# add back || ${MACHINE_CPU} == "arm" once feenableexcept() is implemented
+.if ${MACHINE_CPU} == "aarch64" \
     || ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" \
     || ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS.t_siginfo.c+=	-DHAVE_FENV
