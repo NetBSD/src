@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.65 2014/08/09 19:06:50 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.66 2014/08/10 03:22:33 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -3323,6 +3323,10 @@ perfuse_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	char *np;
 	int error;
 
+	/* system namespace attrs are not accessible to non root users */
+	if (attrns == EXTATTR_NAMESPACE_SYSTEM && !puffs_cred_isjuggernaut(pcr))
+		return EPERM;
+
 	node_ref(opc);
 	ps = puffs_getspecific(pu);
 	attrname = perfuse_native_ns(attrns, attrname, fuse_attrname);
@@ -3367,6 +3371,7 @@ perfuse_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if (resid != NULL) {
 		if (*resid < len) {
 			error = ERANGE;
+			ps->ps_destroy_msg(pm);
 			goto out;
 		}
 
@@ -3396,6 +3401,10 @@ perfuse_node_setextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	char *np;
 	int error;
 	
+	/* system namespace attrs are not accessible to non root users */
+	if (attrns == EXTATTR_NAMESPACE_SYSTEM && !puffs_cred_isjuggernaut(pcr))
+		return EPERM;
+
 	node_ref(opc);
 	ps = puffs_getspecific(pu);
 	attrname = perfuse_native_ns(attrns, attrname, fuse_attrname);
@@ -3436,9 +3445,13 @@ perfuse_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct fuse_getxattr_out *fgo;
 	struct fuse_out_header *foh;
 	char *np;
-	size_t len, puffs_len;
+	size_t len, puffs_len, i, attrlen, outlen;
 	int error;
 	
+	/* system namespace attrs are not accessible to non root users */
+	if (attrns == EXTATTR_NAMESPACE_SYSTEM && !puffs_cred_isjuggernaut(pcr))
+		return EPERM;
+
 	node_ref(opc);
 
 	ps = puffs_getspecific(pu);
@@ -3478,28 +3491,44 @@ perfuse_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	np = (char *)(void *)(foh + 1);
 	puffs_len = foh->len - sizeof(*foh);
 
-	if (attrs != NULL) {
-#ifdef PUFFS_EXTATTR_LIST_LENPREFIX
-		/* 
-		 * Convert the FUSE reply to length prefixed strings
-		 * if this is what the kernel wants.
-		 */
-		if (flag & PUFFS_EXTATTR_LIST_LENPREFIX) {
-			size_t i, attrlen;
-
-			for (i = 0; i < puffs_len; i += attrlen + 1) {
-				attrlen = strlen(np + i);
-				(void)memmove(np + i + 1, np + i, attrlen);
-				*(np + i) = (uint8_t)attrlen;
-			}	
-		}
-#endif /* PUFFS_EXTATTR_LIST_LENPREFIX */
-		(void)memcpy(attrs, np, puffs_len);
-		*resid -= puffs_len;
-	}
-
-	if (attrsize != NULL) 
+	if (attrsize != NULL)
 		*attrsize = puffs_len;
+
+	if (attrs != NULL) {
+		if (*resid < puffs_len) {
+			error = ERANGE;
+			ps->ps_destroy_msg(pm);
+			goto out;
+		}
+
+		outlen = 0;
+	
+		for (i = 0; i < puffs_len; i += attrlen + 1) {
+			attrlen = strlen(np + i);
+
+			/*
+			 * Filter attributes per namespace
+			 */
+			if (!perfuse_ns_match(attrns, np + i))
+				continue;
+
+#ifdef PUFFS_EXTATTR_LIST_LENPREFIX
+			/* 
+			 * Convert the FUSE reply to length prefixed strings
+			 * if this is what the kernel wants.
+			 */
+			if (flag & PUFFS_EXTATTR_LIST_LENPREFIX) {
+				(void)memcpy(attrs + outlen + 1,
+					     np + i, attrlen);
+				*(attrs + outlen) = (uint8_t)attrlen;
+			} else 
+#endif /* PUFFS_EXTATTR_LIST_LENPREFIX */
+			(void)memcpy(attrs + outlen, np + i, attrlen + 1);
+			outlen += attrlen + 1;
+		}	
+
+		*resid -= outlen;
+	}
 
 	ps->ps_destroy_msg(pm);
 	error = 0;
@@ -3520,6 +3549,10 @@ perfuse_node_deleteextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	char *np;
 	int error;
 	
+	/* system namespace attrs are not accessible to non root users */
+	if (attrns == EXTATTR_NAMESPACE_SYSTEM && !puffs_cred_isjuggernaut(pcr))
+		return EPERM;
+
 	node_ref(opc);
 
 	ps = puffs_getspecific(pu);
