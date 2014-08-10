@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1962 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1963 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -412,10 +412,16 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	hp300: Add HP9000/425e RTC support. [tsutsui 20140419]
 	ubsec(4): Add support for AES-CBC modes and BCM586x chips.
 		[bad 20140419]
+	hp300: Add proper consinit(9) support for sti(4) at sgc framebuffer on
+		HP9000/425e. [tsutsui 20140420]
 	bcmgpio(4): Add BCM2835 GPIO obio driver.
 		[kardel 20140422]
 	kerberos(8): Update to latest Heimdal-1-5-branch.
 		[pettai 20140424]
+	hp300: Make the Apollo Domain keyboard actually work.
+		[tsutsui 20140424]
+	hp300: Enable sti(4) driver for HP9000/425e console graphics on
+		install kernels. [tsutsui 20140430]
 	libc: Update to tzcode2014c. [christos 20140513]
 	zoneinfo: Import tzdata2014c. [apb 20140515]
 	hythygtemp(4): Add HYT-221/271/939 humidity/temperature iic sensor
@@ -425,6 +431,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	gcc(1): Import version 4.8.3.  [skrll 20140527]
 	openldap: Import 2.4.39 [tron 20140528]
 	libc: Update to tzcode2014d. [christos 20140528]
+	alpha: Fix wrong disk cylinder detection during sysinst installation
+		onto a disk disklabel'ed by Tru64 as reported in PR/48697.
+		[tsutsui 20140602]
 	OpenSSL: Imported 1.0.1h [christos 20140605]
 	vax: Switch to GCC 4.8 [matt 20140605]
 	vmx(4): Add VMware VMXNET3 driver, from OpenBSD [hikaru 20140610]
@@ -435,11 +444,21 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	dhcpcd(8): Import dhcpcd-6.4.0 [roy 20140614]
 	pigz(1): Update to pigz-2.3.1 [tls 20140615]
 	gdb(1): Updated to 7.7.1.  [christos 20140622]
+	m68k: Use "-O2 -fno-reorder-blocks" for the default optimization
+		by default to avoid unexpected code size growth by
+		-freorder-blocks option on m68k. [tsutsui 20140705]
+	m68k: Use "-O2 -fno-reorder-blocks" for most kernels as userland.
+		[tsutsui 20140705]
 	/usr/share/doc: Install formatted docs instead of nroff sources,
 		and reorganize. [dholland 20140705]
+	x68k: Make bootloader probe actual memory size and warn if memory size
+		value stored in SRAM is different, for machines with dead
+		battery.  [tsutsui 20140706]
 	postfix(1): Import version 2.11.1 [tron 20140706]
 	bind: Import version 9.10.0-P2 [spz 20140708]
 	dhcp: Import version 4.3.0 [spz 20140712]
+	luna68k: Add ANSI text color support for 8bpp color framebuffer.
+		[tsutsui 20140713]
 	dhcpcd(8): Import dhcpcd-6.4.2 [roy 20140714]
 	wskbd(4): Added belgian keyboard layouts (KB_BE) to pckbd(4) and
 		ukbd(4). [mbalmer 20140714]
@@ -448,19 +467,33 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	tifb(4): added an experimental driver for the Texas Instruments AM335x
 		SoC's graphic controller. [bouyer 20140716]
 	lua: Updated to 5.3 work3 [lneto 20140719]
+	luna68k: Add WSDISPLAY_COMPAT_RAWKBD support so that keyboard on
+		Xserver works without xmodmap(1) tweaks. [tsutsui 20140720]
 	urtwn(4): Add support for Realtek RTL8188EUS and RTL8188ETV chipsets.
 		Ported from FreeBSD. [nonaka 20140720]
+	luna68k: Make wsfb Xserver work as monochrome server even with
+		4bpp/8bpp color framebuffers. [tsutsui 20140721]
 	wm(4): Add internal SERDES support older than 82575.
 		[msaitoh 20140722]
 	tmux(1): Import of tmux 1.9a.  [christos 20140724]
 	kernel: Added fdiscard and posix_fallocate system calls.
 		[dholland 20140725]
 	arm: Add support for the Kobo touch (i.MX50). [hkenken 20140725]
+	luna68k: Reset console ANSI color palette properly after returning to
+		WSDISPLAYIO_MODE_EMUL, i.e. on exiting Xserver.
+		[tsutsui 20140725]
+	atari: Adjust VM related constants so that larger packages can be built
+		on TT030. [tsutsui 20140726]
+	sun3: Move bootloader address to allow loading growing GENERIC kernels.
+		[tsutsui 20140726]
 	dhcpcd(8): Import dhcpcd-6.4.3 [roy 20140730]
 	timeout(1): Import from FreeBSD [christos 20140801]
 	build: New BUILDINFO variable may be passed to build.sh, and exposed
 		in /etc/release, as well as in sysctl kern.buildinfo.
 		[apb 20140803]
+	x68k: Add a 'switch' command to bootloader to display and modify
+		SRAM parameters as NetBSD's memswitch(8) and Human68k's
+		SWITCH.X commands. [isaki 20140805]
 	zoneinfo: Import tzdata2014f. [apb 20140806]
 	ekermit(1): Add BSD-licenced ekermit, and remove GPL-licenced
 		gkermit. [apb 20140808]
