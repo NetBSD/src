@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.161 2014/08/10 05:57:31 matt Exp $
+#  $NetBSD: Makefile,v 1.162 2014/08/10 20:48:34 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -67,6 +67,7 @@ COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
 	s_nearbyint.c s_rintl.c
 COPTS.e_sqrtl.c += -DHAVE_FENV_H
+COPTS.fenv.c+=	-mfpu=vfp
 .if (${MKSOFTFLOAT} == "no")
 ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 .else
