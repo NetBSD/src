@@ -1,6 +1,4 @@
-/*	$NetBSD: compat___semctl13.c,v 1.3 2011/01/31 22:51:39 christos Exp $	*/
-
-/*	$NetBSD: compat___semctl13.c,v 1.3 2011/01/31 22:51:39 christos Exp $ */
+/*	$NetBSD: compat___semctl13.c,v 1.4 2014/08/10 17:55:08 joerg Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -39,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat___semctl13.c,v 1.3 2011/01/31 22:51:39 christos Exp $");
+__RCSID("$NetBSD: compat___semctl13.c,v 1.4 2014/08/10 17:55:08 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -49,6 +47,9 @@ __RCSID("$NetBSD: compat___semctl13.c,v 1.3 2011/01/31 22:51:39 christos Exp $")
 #include <compat/sys/time.h>
 #include <sys/sem.h>
 #include <compat/sys/sem.h>
+#ifdef __lint__
+#include <string.h>
+#endif
 
 __warn_references(__semctl13,
     "warning: reference to compatibility __semctl13(); include <sys/sem.h> to generate correct reference")
