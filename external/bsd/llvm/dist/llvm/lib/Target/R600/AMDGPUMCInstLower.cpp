@@ -15,13 +15,16 @@
 
 #include "AMDGPUMCInstLower.h"
 #include "AMDGPUAsmPrinter.h"
+#include "AMDGPUTargetMachine.h"
 #include "InstPrinter/AMDGPUInstPrinter.h"
 #include "R600InstrInfo.h"
 #include "SIInstrInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCObjectStreamer.h"
@@ -76,6 +79,20 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_MachineBasicBlock:
       MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
                                    MO.getMBB()->getSymbol(), Ctx));
+      break;
+    case MachineOperand::MO_GlobalAddress: {
+      const GlobalValue *GV = MO.getGlobal();
+      MCSymbol *Sym = Ctx.GetOrCreateSymbol(StringRef(GV->getName()));
+      MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(Sym, Ctx));
+      break;
+    }
+    case MachineOperand::MO_TargetIndex: {
+      assert(MO.getIndex() == AMDGPU::TI_CONSTDATA_START);
+      MCSymbol *Sym = Ctx.GetOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
+      const MCSymbolRefExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+      MCOp = MCOperand::CreateExpr(Expr);
+      break;
+    }
     }
     OutMI.addOperand(MCOp);
   }
@@ -87,7 +104,7 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
 #ifdef _DEBUG
   StringRef Err;
-  if (!TM.getInstrInfo()->verifyInstruction(MI, Err)) {
+  if (!TM.getSubtargetImpl()->getInstrInfo()->verifyInstruction(MI, Err)) {
     errs() << "Warning: Illegal instruction detected: " << Err << "\n";
     MI->dump();
   }
@@ -111,8 +128,9 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       std::string &DisasmLine = DisasmLines.back();
       raw_string_ostream DisasmStream(DisasmLine);
 
-      AMDGPUInstPrinter InstPrinter(*TM.getMCAsmInfo(), *TM.getInstrInfo(),
-                                    *TM.getRegisterInfo());
+      AMDGPUInstPrinter InstPrinter(*TM.getMCAsmInfo(),
+                                    *TM.getSubtargetImpl()->getInstrInfo(),
+                                    *TM.getSubtargetImpl()->getRegisterInfo());
       InstPrinter.printInst(&TmpInst, DisasmStream, StringRef());
 
       // Disassemble instruction/operands to hex representation.

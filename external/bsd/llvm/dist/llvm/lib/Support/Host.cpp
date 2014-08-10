@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This header file implements the operating system Host concept.
+//  This file implements the operating system Host concept.
 //
 //===----------------------------------------------------------------------===//
 
@@ -570,6 +570,8 @@ StringRef sys::getHostCPUName() {
     .Case("A2", "a2")
     .Case("POWER6", "pwr6")
     .Case("POWER7", "pwr7")
+    .Case("POWER8", "pwr8")
+    .Case("POWER8E", "pwr8")
     .Default(generic);
 }
 #elif defined(__linux__) && defined(__arm__)
@@ -744,7 +746,7 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
       .Default("");
 
 #if defined(__aarch64__)
-    // We need to check crypto seperately since we need all of the crypto
+    // We need to check crypto separately since we need all of the crypto
     // extensions to enable the subtarget feature
     if (CPUFeatures[I] == "aes")
       crypto |= CAP_AES;
