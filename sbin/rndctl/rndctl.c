@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.28 2014/08/10 16:44:32 tls Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.29 2014/08/10 17:13:14 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -33,7 +33,7 @@
 #include <sha1.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.28 2014/08/10 16:44:32 tls Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.29 2014/08/10 17:13:14 wiz Exp $");
 #endif
 
 
@@ -84,9 +84,9 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s -CEce [-d devname | -t devtype]\n",
+	fprintf(stderr, "usage: %s [-CEce] [-d devname | -t devtype]\n",
 	    getprogname());
-	fprintf(stderr, "       %s -ls [-d devname | -t devtype]\n",
+	fprintf(stderr, "       %s [-lsv] [-d devname | -t devtype]\n",
 	    getprogname());
 	fprintf(stderr, "	%s -[L|S] save-file\n", getprogname());
 	exit(1);
