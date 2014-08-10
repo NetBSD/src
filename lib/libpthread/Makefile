@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.83 2013/10/09 22:33:41 matt Exp $
+#	$NetBSD: Makefile,v 1.84 2014/08/10 23:25:49 matt Exp $
 #
 
 WARNS?=	5
@@ -8,6 +8,9 @@ WARNS?=	5
 .if defined(PTHREAD_MACHINE_ARCH) && !empty(PTHREAD_MACHINE_ARCH) && \
     exists(${.CURDIR}/arch/${PTHREAD_MACHINE_ARCH})
 ARCHSUBDIR=	${PTHREAD_MACHINE_ARCH}
+.elif defined(PTHREAD_MACHINE_CPU) && !empty(PTHREAD_MACHINE_CPU) && \
+    exists(${.CURDIR}/arch/${PTHREAD_MACHINE_CPU})
+ARCHSUBDIR=	${PTHREAD_MACHINE_CPU}
 .elif exists(${.CURDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=	${MACHINE_ARCH}
 .elif exists(${.CURDIR}/arch/${MACHINE_CPU}) 
