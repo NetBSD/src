@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.105 2014/03/24 14:15:38 szptvlfn Exp $
+#	$NetBSD: INSTALL,v 1.106 2014/08/10 06:35:56 isaki Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.105 $"
+#ident 		"INSTALL-$Revision: 1.106 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -18,7 +18,7 @@ maxusers	4
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on memory-disk
 options 	MEMORY_DISK_SERVER=0	# No user space hooks
-options 	MEMORY_DISK_ROOT_SIZE=3200
+options 	MEMORY_DISK_ROOT_SIZE=3400
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 ## System kernel configuration.  See options(4) for more detail.
