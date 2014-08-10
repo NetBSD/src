@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.57 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.58 2014/08/10 16:44:36 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.57 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.58 2014/08/10 16:44:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -814,7 +814,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 #ifdef PCN_EVENT_COUNTERS
 	/* Attach event counters. */

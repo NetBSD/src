@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.16 2014/06/29 11:18:40 mrg Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.17 2014/08/10 16:44:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.16 2014/06/29 11:18:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.17 2014/08/10 16:44:34 tls Exp $");
 
 #include "debug_playstation2.h"
 
@@ -260,7 +260,7 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, DEVNAME,
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 #endif
 }
 

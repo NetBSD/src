@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.230 2014/02/25 18:30:11 pooka Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.231 2014/08/10 16:44:36 tls Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.230 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.231 2014/08/10 16:44:36 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -110,11 +110,18 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.230 2014/02/25 18:30:11 pooka Ex
 
 #include <sys/disk.h>
 
+#include <sys/rnd.h>
+
 #include <machine/limits.h>
 
 /*
  * Autoconfiguration subroutines.
  */
+
+/*
+ * Device autoconfiguration timings are mixed into the entropy pool.
+ */
+extern krndsource_t rnd_autoconf_source;
 
 /*
  * ioconf.c exports exactly two names: cfdata and cfroots.  All system
@@ -1051,6 +1058,14 @@ config_found_sm_loc(device_t parent,
 		aprint_normal("%s", msgs[(*print)(aux, device_xname(parent))]);
 	}
 
+	/*
+	 * This has the effect of mixing in a single timestamp to the
+	 * entropy pool.  Experiments indicate the estimator will almost
+	 * always attribute one bit of entropy to this sample; analysis
+	 * of device attach/detach timestamps on FreeBSD indicates 4
+	 * bits of entropy/sample so this seems appropriately conservative.
+	 */
+	rnd_add_uint32(&rnd_autoconf_source, 0);
 	return NULL;
 }
 

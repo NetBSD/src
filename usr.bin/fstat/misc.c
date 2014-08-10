@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.13 2013/07/01 15:22:00 riastradh Exp $	*/
+/*	$NetBSD: misc.c,v 1.14 2014/08/10 16:44:37 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.13 2013/07/01 15:22:00 riastradh Exp $");
+__RCSID("$NetBSD: misc.c,v 1.14 2014/08/10 16:44:37 tls Exp $");
 
 #define _KMEMUSER
 #include <stdbool.h>
@@ -53,8 +53,8 @@ __RCSID("$NetBSD: misc.c,v 1.13 2013/07/01 15:22:00 riastradh Exp $");
 #define _LIB_LIBKERN_LIBKERN_H_
 #define mutex_enter(a)
 #define mutex_exit(a)
-#include <sys/cprng.h>
 #undef _KERNEL
+#include <sys/cprng.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 
