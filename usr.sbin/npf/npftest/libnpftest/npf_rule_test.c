@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rule_test.c,v 1.11 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.12 2014/08/10 19:09:43 rmind Exp $	*/
 
 /*
  * NPF ruleset test.
@@ -114,7 +114,7 @@ npf_blockall_rule(void)
 	prop_dictionary_t rldict;
 
 	rldict = prop_dictionary_create();
-	prop_dictionary_set_uint32(rldict, "attributes",
+	prop_dictionary_set_uint32(rldict, "attr",
 	    NPF_RULE_IN | NPF_RULE_OUT | NPF_RULE_DYNAMIC);
 	return npf_rule_alloc(rldict);
 }

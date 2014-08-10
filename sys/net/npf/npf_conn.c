@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.9 2014/07/26 16:42:03 rmind Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.10 2014/08/10 19:09:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.9 2014/07/26 16:42:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.10 2014/08/10 19:09:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -809,11 +809,11 @@ npf_conn_worker(void)
 }
 
 /*
- * npf_conn_export: construct a list of connections prepared for saving.
+ * npf_conndb_export: construct a list of connections prepared for saving.
  * Note: this is expected to be an expensive operation.
  */
 int
-npf_conn_export(prop_array_t conlist)
+npf_conndb_export(prop_array_t conlist)
 {
 	npf_conn_t *con, *prev;
 
@@ -830,39 +830,55 @@ npf_conn_export(prop_array_t conlist)
 	con = npf_conndb_getlist(conn_db);
 	while (con) {
 		npf_conn_t *next = con->c_next;
-		prop_data_t d;
+		prop_dictionary_t cdict;
 
-		if ((con->c_flags & (CONN_ACTIVE|CONN_EXPIRE)) != CONN_ACTIVE)
-			goto skip;
-
-		prop_dictionary_t cdict = prop_dictionary_create();
-		prop_dictionary_set_uint32(cdict, "flags", con->c_flags);
-		prop_dictionary_set_uint32(cdict, "proto", con->c_proto);
-		/* FIXME: interface-id */
-
-		d = prop_data_create_data(&con->c_state, sizeof(npf_state_t));
-		prop_dictionary_set_and_rel(cdict, "state", d);
-
-		const uint32_t *fkey = con->c_forw_entry.ck_key;
-		d = prop_data_create_data(fkey, NPF_CONN_MAXKEYLEN);
-		prop_dictionary_set_and_rel(cdict, "forw-key", d);
-
-		const uint32_t *bkey = con->c_back_entry.ck_key;
-		d = prop_data_create_data(bkey, NPF_CONN_MAXKEYLEN);
-		prop_dictionary_set_and_rel(cdict, "back-key", d);
-
-		if (con->c_nat) {
-			npf_nat_export(cdict, con->c_nat);
+		if ((cdict = npf_conn_export(con)) != NULL) {
+			prop_array_add(conlist, cdict);
+			prop_object_release(cdict);
 		}
-		prop_array_add(conlist, cdict);
-		prop_object_release(cdict);
-skip:
 		prev = con;
 		con = next;
 	}
 	npf_conndb_settail(conn_db, prev);
 	mutex_exit(&conn_lock);
 	return 0;
+}
+
+/*
+ * npf_conn_export: serialise a single connection.
+ */
+prop_dictionary_t
+npf_conn_export(const npf_conn_t *con)
+{
+	prop_dictionary_t cdict;
+	prop_data_t d;
+
+	if ((con->c_flags & (CONN_ACTIVE|CONN_EXPIRE)) != CONN_ACTIVE) {
+		return NULL;
+	}
+	cdict = prop_dictionary_create();
+	prop_dictionary_set_uint32(cdict, "flags", con->c_flags);
+	prop_dictionary_set_uint32(cdict, "proto", con->c_proto);
+	if (con->c_ifid) {
+		const char *ifname = npf_ifmap_getname(con->c_ifid);
+		prop_dictionary_set_cstring(cdict, "ifname", ifname);
+	}
+
+	d = prop_data_create_data(&con->c_state, sizeof(npf_state_t));
+	prop_dictionary_set_and_rel(cdict, "state", d);
+
+	const uint32_t *fkey = con->c_forw_entry.ck_key;
+	d = prop_data_create_data(fkey, NPF_CONN_MAXKEYLEN);
+	prop_dictionary_set_and_rel(cdict, "forw-key", d);
+
+	const uint32_t *bkey = con->c_back_entry.ck_key;
+	d = prop_data_create_data(bkey, NPF_CONN_MAXKEYLEN);
+	prop_dictionary_set_and_rel(cdict, "back-key", d);
+
+	if (con->c_nat) {
+		npf_nat_export(cdict, con->c_nat);
+	}
+	return cdict;
 }
 
 /*
@@ -876,6 +892,7 @@ npf_conn_import(npf_conndb_t *cd, prop_dictionary_t cdict,
 	npf_conn_t *con;
 	npf_connkey_t *fw, *bk;
 	prop_object_t obj;
+	const char *ifname;
 	const void *d;
 
 	/* Allocate a connection and initialise it (clear first). */
@@ -887,6 +904,11 @@ npf_conn_import(npf_conndb_t *cd, prop_dictionary_t cdict,
 	prop_dictionary_get_uint32(cdict, "flags", &con->c_flags);
 	con->c_flags &= PFIL_ALL | CONN_ACTIVE | CONN_PASS;
 	getnanouptime(&con->c_atime);
+
+	if (prop_dictionary_get_cstring_nocopy(cdict, "ifname", &ifname) &&
+	    (con->c_ifid = npf_ifmap_register(ifname)) == 0) {
+		goto err;
+	}
 
 	obj = prop_dictionary_get(cdict, "state");
 	if ((d = prop_data_data_nocopy(obj)) == NULL ||

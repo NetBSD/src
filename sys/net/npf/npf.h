@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.46 2014/07/23 01:48:05 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.47 2014/08/10 19:09:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		16
+#define	NPF_VERSION		17
 
 /*
  * Public declarations and definitions.

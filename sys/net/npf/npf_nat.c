@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.31 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.32 2014/08/10 19:09:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.31 2014/07/23 01:25:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.32 2014/08/10 19:09:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -211,19 +211,19 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *rset)
 	LIST_INIT(&np->n_nat_list);
 
 	/* Translation IP, mask and port (if applicable). */
-	obj = prop_dictionary_get(natdict, "translation-ip");
+	obj = prop_dictionary_get(natdict, "nat-ip");
 	np->n_alen = prop_data_size(obj);
 	if (np->n_alen == 0 || np->n_alen > sizeof(npf_addr_t)) {
 		goto err;
 	}
 	memcpy(&np->n_taddr, prop_data_data_nocopy(obj), np->n_alen);
-	prop_dictionary_get_uint8(natdict, "translation-mask", &np->n_tmask);
-	prop_dictionary_get_uint16(natdict, "translation-port", &np->n_tport);
+	prop_dictionary_get_uint8(natdict, "nat-mask", &np->n_tmask);
+	prop_dictionary_get_uint16(natdict, "nat-port", &np->n_tport);
 
-	prop_dictionary_get_uint32(natdict, "translation-algo", &np->n_algo);
+	prop_dictionary_get_uint32(natdict, "nat-algo", &np->n_algo);
 	switch (np->n_algo) {
 	case NPF_ALGO_NPT66:
-		prop_dictionary_get_uint16(natdict, "npt66-adjustment",
+		prop_dictionary_get_uint16(natdict, "npt66-adj",
 		    &np->n_npt66_adj);
 		break;
 	default:
@@ -256,6 +256,30 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *rset)
 err:
 	kmem_free(np, sizeof(npf_natpolicy_t));
 	return NULL;
+}
+
+int
+npf_nat_policyexport(const npf_natpolicy_t *np, prop_dictionary_t natdict)
+{
+	prop_data_t d;
+
+	prop_dictionary_set_int32(natdict, "type", np->n_type);
+	prop_dictionary_set_uint32(natdict, "flags", np->n_flags);
+
+	d = prop_data_create_data(&np->n_taddr, np->n_alen);
+	prop_dictionary_set_and_rel(natdict, "nat-ip", d);
+
+	prop_dictionary_set_uint8(natdict, "nat-mask", np->n_tmask);
+	prop_dictionary_set_uint16(natdict, "nat-port", np->n_tport);
+	prop_dictionary_set_uint32(natdict, "nat-algo", np->n_algo);
+
+	switch (np->n_algo) {
+	case NPF_ALGO_NPT66:
+		prop_dictionary_set_uint16(natdict, "npt66-adj", np->n_npt66_adj);
+		break;
+	}
+	prop_dictionary_set_uint64(natdict, "nat-policy", np->n_id);
+	return 0;
 }
 
 /*

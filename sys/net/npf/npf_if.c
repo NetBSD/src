@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_if.c,v 1.3 2014/07/19 18:24:16 rmind Exp $	*/
+/*	$NetBSD: npf_if.c,v 1.4 2014/08/10 19:09:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.3 2014/07/19 18:24:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.4 2014/08/10 19:09:43 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -152,12 +152,25 @@ npf_ifmap_flush(void)
 }
 
 u_int
-npf_ifmap_id(const ifnet_t *ifp)
+npf_ifmap_getid(const ifnet_t *ifp)
 {
 	const u_int i = (uintptr_t)ifp->if_pf_kif;
 
 	KASSERT(i == INACTIVE_ID || (i > 0 && i <= npf_ifmap_cnt));
 	return i;
+}
+
+const char *
+npf_ifmap_getname(const u_int id)
+{
+	const char *ifname;
+
+	KASSERT(npf_config_locked_p());
+	KASSERT(id > 0 && id <= npf_ifmap_cnt);
+
+	ifname = npf_ifmap[id - 1].n_ifname;
+	KASSERT(ifname[0] != '\0');
+	return ifname;
 }
 
 void

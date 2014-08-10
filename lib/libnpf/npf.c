@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.31 2014/07/23 05:00:38 htodd Exp $	*/
+/*	$NetBSD: npf.c,v 1.32 2014/08/10 19:09:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.31 2014/07/23 05:00:38 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.32 2014/08/10 19:09:43 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -152,7 +152,7 @@ npf_config_submit(nl_config_t *ncf, int fd)
 	prop_dictionary_set(npf_dict, "algs", ncf->ncf_alg_list);
 	prop_dictionary_set(npf_dict, "rprocs", ncf->ncf_rproc_list);
 	prop_dictionary_set(npf_dict, "tables", ncf->ncf_table_list);
-	prop_dictionary_set(npf_dict, "translation", ncf->ncf_nat_list);
+	prop_dictionary_set(npf_dict, "nat", ncf->ncf_nat_list);
 	prop_dictionary_set_bool(npf_dict, "flush", ncf->ncf_flush);
 	if (ncf->ncf_debug) {
 		prop_dictionary_set(npf_dict, "debug", ncf->ncf_debug);
@@ -193,7 +193,7 @@ _npf_config_consdict(prop_dictionary_t npf_dict)
 	ncf->ncf_rules_list = prop_dictionary_get(npf_dict, "rules");
 	ncf->ncf_rproc_list = prop_dictionary_get(npf_dict, "rprocs");
 	ncf->ncf_table_list = prop_dictionary_get(npf_dict, "tables");
-	ncf->ncf_nat_list = prop_dictionary_get(npf_dict, "translation");
+	ncf->ncf_nat_list = prop_dictionary_get(npf_dict, "nat");
 	return ncf;
 }
 
@@ -502,10 +502,10 @@ npf_rule_create(const char *name, uint32_t attr, const char *ifname)
 	if (name) {
 		prop_dictionary_set_cstring(rldict, "name", name);
 	}
-	prop_dictionary_set_uint32(rldict, "attributes", attr);
+	prop_dictionary_set_uint32(rldict, "attr", attr);
 
 	if (ifname) {
-		prop_dictionary_set_cstring(rldict, "interface", ifname);
+		prop_dictionary_set_cstring(rldict, "ifname", ifname);
 	}
 	rl->nrl_dict = rldict;
 	return rl;
@@ -566,7 +566,7 @@ npf_rule_setprio(nl_rule_t *rl, pri_t pri)
 {
 	prop_dictionary_t rldict = rl->nrl_dict;
 
-	prop_dictionary_set_int32(rldict, "priority", pri);
+	prop_dictionary_set_int32(rldict, "prio", pri);
 	return 0;
 }
 
@@ -675,7 +675,7 @@ npf_rule_getattr(nl_rule_t *rl)
 	prop_dictionary_t rldict = rl->nrl_dict;
 	uint32_t attr = 0;
 
-	prop_dictionary_get_uint32(rldict, "attributes", &attr);
+	prop_dictionary_get_uint32(rldict, "attr", &attr);
 	return attr;
 }
 
@@ -685,7 +685,7 @@ npf_rule_getinterface(nl_rule_t *rl)
 	prop_dictionary_t rldict = rl->nrl_dict;
 	const char *ifname = NULL;
 
-	prop_dictionary_get_cstring_nocopy(rldict, "interface", &ifname);
+	prop_dictionary_get_cstring_nocopy(rldict, "ifname", &ifname);
 	return ifname;
 }
 
@@ -845,7 +845,7 @@ npf_rproc_getname(nl_rproc_t *rp)
 }
 
 /*
- * TRANSLATION INTERFACE.
+ * NAT INTERFACE.
  */
 
 nl_nat_t *
@@ -869,7 +869,7 @@ npf_nat_create(int type, u_int flags, const char *ifname,
 	attr = NPF_RULE_PASS | NPF_RULE_FINAL |
 	    (type == NPF_NATOUT ? NPF_RULE_OUT : NPF_RULE_IN);
 
-	/* Create a rule for NAT policy.  Next, will add translation data. */
+	/* Create a rule for NAT policy.  Next, will add NAT data. */
 	rl = npf_rule_create(NULL, attr, ifname);
 	if (rl == NULL) {
 		return NULL;
@@ -886,12 +886,12 @@ npf_nat_create(int type, u_int flags, const char *ifname,
 		npf_rule_destroy(rl);
 		return NULL;
 	}
-	prop_dictionary_set(rldict, "translation-ip", addrdat);
-	prop_dictionary_set_uint32(rldict, "translation-mask", mask);
+	prop_dictionary_set(rldict, "nat-ip", addrdat);
+	prop_dictionary_set_uint32(rldict, "nat-mask", mask);
 	prop_object_release(addrdat);
 
 	/* Translation port (for redirect case). */
-	prop_dictionary_set_uint16(rldict, "translation-port", port);
+	prop_dictionary_set_uint16(rldict, "nat-port", port);
 
 	return (nl_nat_t *)rl;
 }
@@ -901,7 +901,7 @@ npf_nat_insert(nl_config_t *ncf, nl_nat_t *nt, pri_t pri __unused)
 {
 	prop_dictionary_t rldict = nt->nrl_dict;
 
-	prop_dictionary_set_int32(rldict, "priority", NPF_PRI_LAST);
+	prop_dictionary_set_int32(rldict, "prio", NPF_PRI_LAST);
 	prop_array_add(ncf->ncf_nat_list, rldict);
 	return 0;
 }
@@ -917,7 +917,7 @@ int
 npf_nat_setalgo(nl_nat_t *nt, u_int algo)
 {
 	prop_dictionary_t rldict = nt->nrl_dict;
-	prop_dictionary_set_uint32(rldict, "translation-algo", algo);
+	prop_dictionary_set_uint32(rldict, "nat-algo", algo);
 	return 0;
 }
 
@@ -930,7 +930,7 @@ npf_nat_setnpt66(nl_nat_t *nt, uint16_t adj)
 	if ((error = npf_nat_setalgo(nt, NPF_ALGO_NPT66)) != 0) {
 		return error;
 	}
-	prop_dictionary_set_uint16(rldict, "npt66-adjustment", adj);
+	prop_dictionary_set_uint16(rldict, "npt66-adj", adj);
 	return 0;
 }
 
@@ -958,13 +958,13 @@ void
 npf_nat_getmap(nl_nat_t *nt, npf_addr_t *addr, size_t *alen, in_port_t *port)
 {
 	prop_dictionary_t rldict = nt->nrl_dict;
-	prop_object_t obj = prop_dictionary_get(rldict, "translation-ip");
+	prop_object_t obj = prop_dictionary_get(rldict, "nat-ip");
 
 	*alen = prop_data_size(obj);
 	memcpy(addr, prop_data_data_nocopy(obj), *alen);
 
 	*port = 0;
-	prop_dictionary_get_uint16(rldict, "translation-port", port);
+	prop_dictionary_get_uint16(rldict, "nat-port", port);
 }
 
 /*
