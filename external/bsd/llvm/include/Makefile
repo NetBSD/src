@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2014/05/30 18:28:13 joerg Exp $
+#	$NetBSD: Makefile,v 1.32 2014/08/10 17:34:21 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -9,6 +9,8 @@ INCS=	__wmmintrin_aes.h \
 	__wmmintrin_pclmul.h \
 	ammintrin.h \
 	avx2intrin.h \
+	avx512fintrin.h \
+	avx512erintrin.h \
 	avxintrin.h \
 	bmi2intrin.h \
 	bmiintrin.h \
@@ -38,6 +40,8 @@ INCS=	__wmmintrin_aes.h \
 	xopintrin.h
 .elif ${MACHINE_ARCH} == "powerpc"
 INCS=	altivec.h
+.elif ${MACHINE_CPU} == "arm"
+INCS=	arm_acle.h
 .endif
 INCSDIR=	/usr/include/clang-${CLANG_VERSION}
 
@@ -56,7 +60,7 @@ HEADER=	\
 	${CLANG_SRCDIR}/include/clang/Basic \
 	${CLANG_SRCDIR}/include/clang/Driver
 
-TABLEGEN_SRC=	Intrinsics.td Options.td CC1AsOptions.td 
+TABLEGEN_SRC=	Intrinsics.td Options.td
 
 TABLEGEN_OUTPUT.Intrinsics.td= \
 	llvm/IR/Intrinsics.gen|-gen-intrinsic
@@ -124,10 +128,6 @@ CLANG_TABLEGEN_OUTPUT.arm_neon.td= \
 TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
 TABLEGEN_OUTPUT.Options.td= \
 	clang/Driver/Options.inc|-gen-opt-parser-defs
-
-TABLEGEN_INCLUDES.CC1AsOptions.td=	-I${CLANG_SRCDIR}/include/clang/Driver
-TABLEGEN_OUTPUT.CC1AsOptions.td= \
-	clang/Driver/CC1AsOptions.inc|-gen-opt-parser-defs
 
 .include "${.PARSEDIR}/../tablegen.mk"
 
