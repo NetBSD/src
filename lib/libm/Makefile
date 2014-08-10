@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.162 2014/08/10 20:48:34 joerg Exp $
+#  $NetBSD: Makefile,v 1.163 2014/08/10 23:25:50 matt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -47,10 +47,13 @@ USE_SHLIBDIR=	yes
 # require this for the value of I387_LIBM from mk.conf, if set.
 .include <bsd.own.mk>
 
+LIBC_MACHINE_ARCH?=	${MACHINE_ARCH}
+LIBC_MACHINE_CPU?=	${MACHINE_CPU}
+
 # compiler_rt uses typeof() and __extension__
 LINTFLAGS += -g
 
-.if (${MACHINE_CPU} == "aarch64")
+.if (${LIBC_MACHINE_CPU} == "aarch64")
 .PATH: ${.CURDIR}/arch/aarch64
 ARCH_SRCS = e_sqrt.S e_sqrtf.S s_fabsf.S
 ARCH_SRCS+= s_fma.S s_fmaf.S s_fmax.S s_fmaxf.S s_fmin.S s_fminf.S
@@ -58,11 +61,11 @@ COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COMMON_SRCS+= fenv.c
 COMMON_SRCS+= e_sqrtl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
-.elif (${MACHINE_ARCH} == "alpha")
+.elif (${LIBC_MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
-.elif (${MACHINE_CPU} == "arm")
+.elif (${LIBC_MACHINE_CPU} == "arm")
 .PATH: ${.CURDIR}/arch/arm
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
 	s_nearbyint.c s_rintl.c
@@ -75,12 +78,12 @@ ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 ${i} ${i:.o=.po} ${i:.o=.pico} ${i:.o=.go} ${i:.o=.ln}: ${i:.o=.c}
 .endfor
 .endif
-.elif (${MACHINE_ARCH} == "sparc")
+.elif (${LIBC_MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
 COMMON_SRCS+= fenv.c
 COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
-.elif (${MACHINE_ARCH} == "sparc64")
+.elif (${LIBC_MACHINE_ARCH} == "sparc64")
 .PATH: ${.CURDIR}/arch/sparc64
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
 	s_nearbyint.c s_rintl.c
@@ -89,9 +92,9 @@ COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COMMON_SRCS+= s_nexttoward.c
 .endif
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
-.elif ((${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64"))
+.elif ((${LIBC_MACHINE_ARCH} == "i386") || (${LIBC_MACHINE_ARCH} == "x86_64"))
 
-.if (${MACHINE_ARCH} == "x86_64")
+.if (${LIBC_MACHINE_ARCH} == "x86_64")
 .PATH: ${.CURDIR}/arch/x86_64
 .endif
 .PATH:	${.CURDIR}/arch/i387
@@ -113,10 +116,10 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 # do not pick up the i387 asm version, it is incorrect
 s_modf.o s_modf.pico s_modf.po s_modf.d: s_modf.c
 
-.if (${MACHINE_ARCH} == "i386")
+.if (${LIBC_MACHINE_ARCH} == "i386")
 SUBDIR=arch/i387
 .endif
-.elif (${MACHINE_ARCH} == "m68k")
+.elif (${LIBC_MACHINE_ARCH} == "m68k")
 .if defined(M68060)
 .PATH:	${.CURDIR}/arch/m68060
 .include "${.CURDIR}/arch/m68060/Makefile.list"
@@ -137,7 +140,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 .endif
 .endif
 # end of m68k
-.elif (${MACHINE_ARCH} == "vax")
+.elif (${LIBC_MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
 
 #NOIEEE_ARCH= n_infnan.S n_argred.S n_sqrt.S
@@ -154,11 +157,11 @@ WARNS?=5
 .PATH:	${.CURDIR}/src
 .PATH:	${.CURDIR}/noieee_src
 
-.if (${MACHINE_ARCH} == "alpha")
+.if (${LIBC_MACHINE_ARCH} == "alpha")
 COPTS+= -mfp-rounding-mode=d
 .endif
 
-.if (${MACHINE_ARCH} != "vax")
+.if (${LIBC_MACHINE_ARCH} != "vax")
 CPPFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
 # XXX noieee libm is gross
 COPTS+=	-fno-strict-aliasing
@@ -229,7 +232,7 @@ NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
 # NetBSD's C library supplies these functions:
 #COMMON_SRCS+=	s_fabs.c s_frexp.c s_isinf.c s_isnan.c s_ldexp.c s_modf.c
 
-.if (${MACHINE_ARCH} == "vax")
+.if (${LIBC_MACHINE_ARCH} == "vax")
 SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}
 .else
 SRCS=	${COMMON_SRCS}
@@ -244,13 +247,13 @@ SRCS+= ${ARCH_ADDS}
     SRCS:=${SRCS:S/^${i:S/.S/.c/}/$i/}
 .endfor
 
-.if (${MACHINE_ARCH} == "vax") # XXX until POLYD is written.
+.if (${LIBC_MACHINE_ARCH} == "vax") # XXX until POLYD is written.
 .PATH:	${.CURDIR}/arch/vax
 SRCS:=${SRCS} n_sqrt.S n_argred.S n_infnan.S n_atan2.S n_cabs.S n_cbrt.S \
 	n_support.S n_scalbn.S
 .endif
 
-.if (${MACHINE_ARCH} == "i386")
+.if (${LIBC_MACHINE_ARCH} == "i386")
 # XXX this gets miscompiled. There should be a better fix.
 COPTS.s_tanh.c+= -O0
 .endif
