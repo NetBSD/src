@@ -1,7 +1,7 @@
-# $NetBSD: shl.mi,v 1.70 2014/07/25 08:32:22 dholland Exp $
+# $NetBSD: shl.mi,v 1.71 2014/08/10 08:07:50 spz Exp $
 ./usr/libdata/debug/lib/libc.so.12.193.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
-./usr/libdata/debug/lib/libcrypto.so.8.2.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libcrypto.so.8.3.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libedit.so.3.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libevent.so.4.0.debug		comp-sys-debug	debug
@@ -63,7 +63,7 @@
 ./usr/libdata/debug/usr/lib/libc.so.12.193.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcom_err.so.7.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libcrypto.so.8.2.debug	comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libcrypto.so.8.3.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libcrypto_idea.so.7.0.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_mdc2.so.7.0.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug
@@ -248,7 +248,7 @@
 ./usr/libdata/debug/usr/lib/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libssh.so.22.0.debug	comp-secsh-debug	crypto,debug
-./usr/libdata/debug/usr/lib/libssl.so.10.3.debug		comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libssl.so.10.4.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,libstdcxx

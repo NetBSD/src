@@ -76,7 +76,7 @@ void OPENSSL_cpuid_setup(void)
 	sigdelset(&all_masked,SIGBUS);
 	sigdelset(&all_masked,SIGSEGV);
 
-	if ((e=getenv("OPENSSL_ppccap")) != NULL)
+	if ((e=getenv("OPENSSL_ppccap")))
 		{
 		OPENSSL_ppccap_P=strtoul(e,NULL,0);
 		return;
@@ -117,7 +117,6 @@ void OPENSSL_cpuid_setup(void)
 
 	if (sigsetjmp(ill_jmp,1) == 0)
 		{
-		void OPENSSL_altivec_probe();
 		OPENSSL_altivec_probe();
 		OPENSSL_ppccap_P |= PPC_ALTIVEC;
 		}
