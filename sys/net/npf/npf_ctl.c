@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.36 2014/07/25 23:07:21 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.37 2014/08/10 19:09:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.36 2014/07/25 23:07:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.37 2014/08/10 19:09:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -356,7 +356,7 @@ npf_mk_singlerule(prop_dictionary_t rldict, npf_rprocset_t *rpset,
 	return 0;
 err:
 	npf_rule_free(rl);
-	prop_dictionary_get_int32(rldict, "priority", &p); /* XXX */
+	prop_dictionary_get_int32(rldict, "prio", &p); /* XXX */
 	prop_dictionary_set_int32(errdict, "id", p);
 	return error;
 }
@@ -545,7 +545,7 @@ npfctl_load(u_long cmd, void *data)
 	}
 
 	/* NAT policies. */
-	natlist = prop_dictionary_get(npf_dict, "translation");
+	natlist = prop_dictionary_get(npf_dict, "nat");
 	if ((nitems = prop_array_count(natlist)) > NPF_MAX_RULES) {
 		goto fail;
 	}
@@ -555,6 +555,7 @@ npfctl_load(u_long cmd, void *data)
 	if (error) {
 		goto fail;
 	}
+	prop_dictionary_remove(npf_dict, "nat");
 
 	/* Tables. */
 	tables = prop_dictionary_get(npf_dict, "tables");
@@ -652,27 +653,37 @@ int
 npfctl_save(u_long cmd, void *data)
 {
 	struct plistref *pref = data;
+	prop_array_t conlist, natlist;
 	prop_dictionary_t npf_dict;
-	prop_array_t conlist;
 	int error;
 
-	npf_config_enter();
 	conlist = prop_array_create();
+	natlist = prop_array_create();
 
-	/* Serialise the connections. */
-	error = npf_conn_export(conlist);
+	/*
+	 * Serialise the connections and NAT policies.
+	 */
+	npf_config_enter();
+	error = npf_conndb_export(conlist);
 	if (error) {
-		prop_object_release(conlist);
 		goto out;
 	}
-
+	error = npf_ruleset_export(npf_config_natset(), natlist);
+	if (error) {
+		goto out;
+	}
 	npf_dict = npf_config_dict();
-	prop_dictionary_set_bool(npf_dict, "active", npf_pfil_registered_p());
+	prop_dictionary_set_and_rel(npf_dict, "nat", natlist);
 	prop_dictionary_set_and_rel(npf_dict, "conn-list", conlist);
-
+	prop_dictionary_set_bool(npf_dict, "active", npf_pfil_registered_p());
 	error = prop_dictionary_copyout_ioctl(pref, cmd, npf_dict);
 out:
 	npf_config_exit();
+
+	if (error) {
+		prop_object_release(conlist);
+		prop_object_release(natlist);
+	}
 	return error;
 }
 
