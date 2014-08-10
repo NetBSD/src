@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.16 2009/03/14 21:04:16 dsl Exp $ */
+/*	$NetBSD: devopen.c,v 1.17 2014/08/10 16:53:22 martin Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,7 +43,6 @@
 
 #include "vaxstand.h"
 
-int	atoi(char *);
 int nexaddr, csrbase;
 
 int
