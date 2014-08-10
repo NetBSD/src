@@ -89,6 +89,7 @@ int	cmd_migrate(int, char *[]);
 int	cmd_recover(int, char *[]);
 int	cmd_remove(int, char *[]);
 int	cmd_resize(int, char *[]);
+int	cmd_restore(int, char *[]);
 int	cmd_set(int, char *[]);
 int	cmd_show(int, char *[]);
 int	cmd_unset(int, char *[]);
