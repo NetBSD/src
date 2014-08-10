@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/05/30 18:28:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2014/08/10 17:35:08 joerg Exp $
 
 LIB=	lldbTarget
 
@@ -15,11 +15,15 @@ SRCS+=	ABI.cpp \
 	JITLoaderList.cpp \
 	LanguageRuntime.cpp \
 	Memory.cpp \
+	NativeRegisterContext.cpp \
+	NativeRegisterContextRegisterInfo.cpp \
 	ObjCLanguageRuntime.cpp \
 	OperatingSystem.cpp \
 	PathMappingList.cpp \
 	Platform.cpp \
 	Process.cpp \
+	ProcessInfo.cpp \
+	ProcessLaunchInfo.cpp \
 	Queue.cpp \
 	QueueItem.cpp \
 	QueueList.cpp \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/05/30 18:28:15 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2014/08/10 17:34:22 joerg Exp $
 
 LIB=	clangCodeGen
 
@@ -35,7 +35,6 @@ SRCS+=	BackendUtil.cpp \
 	CGOpenCLRuntime.cpp \
 	CGOpenMPRuntime.cpp \
 	CGRecordLayoutBuilder.cpp \
-	CGRTTI.cpp \
 	CGStmt.cpp \
 	CGStmtOpenMP.cpp \
 	CGVTables.cpp \
@@ -47,10 +46,12 @@ SRCS+=	BackendUtil.cpp \
 	CodeGenPGO.cpp \
 	CodeGenTBAA.cpp \
 	CodeGenTypes.cpp \
+	CoverageMappingGen.cpp \
 	ItaniumCXXABI.cpp \
 	MicrosoftCXXABI.cpp \
-	MicrosoftRTTI.cpp \
 	ModuleBuilder.cpp \
+	SanitizerBlacklist.cpp \
+	SanitizerMetadata.cpp \
 	TargetInfo.cpp
 
 .if defined(HOSTLIB)

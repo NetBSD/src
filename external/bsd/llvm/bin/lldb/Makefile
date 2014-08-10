@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/05/30 18:28:13 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2014/08/10 17:34:20 joerg Exp $
 
 PROG_CXX=	lldb
 NOMAN=		yes
@@ -56,6 +56,7 @@ LLDB_LIBS+= \
 	PluginObjectFilePECOFF \
 	PluginPlatformNetBSD \
 	PluginPlatformGDB \
+	PluginPlatformKalimba \
 	PluginPlatformLinux \
 	PluginPlatformMacOSX \
 	PluginPlatformPOSIX \
