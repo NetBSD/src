@@ -1,4 +1,4 @@
-//===-- lib/addsf3.c - Single-precision addition ------------------*- C -*-===//
+//===-- lib/addtf3.c - Quad-precision addition --------------------*- C -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,19 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements single-precision soft-float addition with the IEEE-754
+// This file implements quad-precision soft-float addition with the IEEE-754
 // default rounding (to nearest, ties to even).
 //
 //===----------------------------------------------------------------------===//
 
-#define SINGLE_PRECISION
+#define QUAD_PRECISION
+#include "fp_lib.h"
+
+#if defined(CRT_HAS_128BIT) && defined(CRT_LDBL_128BIT)
 #include "fp_add_impl.inc"
 
-ARM_EABI_FNALIAS(fadd, addsf3)
-
-COMPILER_RT_ABI float __addsf3(float a, float b) {
+COMPILER_RT_ABI long double __addtf3(long double a, long double b){
     return __addXf3__(a, b);
 }
+
+#endif

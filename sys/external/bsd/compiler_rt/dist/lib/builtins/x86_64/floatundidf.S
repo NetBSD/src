@@ -17,14 +17,25 @@
 
 #ifdef __x86_64__
 
-#ifndef __ELF__
-.const
+#if defined(__APPLE__)
+	.const
+#elif defined(__ELF__)
+	.section .rodata
+#else
+	.section .rdata,"rd"
 #endif
-.balign 4
-twop52: .quad 0x4330000000000000
+
+	.balign 16
+twop52:
+	.quad 0x4330000000000000
+
+	.balign 16
 twop84_plus_twop52:
-		.quad 0x4530000000100000
-twop84: .quad 0x4530000000000000
+	.quad 0x4530000000100000
+
+	.balign 16
+twop84:
+	.quad 0x4530000000000000
 
 #define REL_ADDR(_a)	(_a)(%rip)
 
