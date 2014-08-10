@@ -443,7 +443,7 @@ int srp_verify_server_param(SSL *s, int *al)
 
 	return 1;
 	}
-	
+
 
 int SRP_Calc_A_param(SSL *s)
 	{
