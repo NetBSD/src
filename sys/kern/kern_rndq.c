@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.24 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.25 2014/08/10 18:33:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,9 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.24 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.25 2014/08/10 18:33:41 joerg Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/select.h>
@@ -424,6 +425,7 @@ rnd_dv_estimate(krndsource_t *rs, uint32_t v)
 	return ret;
 }
 
+#if defined(__HAVE_CPU_COUNTER)
 static void
 rnd_skew(void *arg)
 {
@@ -460,6 +462,7 @@ rnd_skew(void *arg)
 		callout_schedule(&skew_callout, 1);
 	}
 }
+#endif
 
 /*
  * initialize the global random pool for our use.
