@@ -329,6 +329,7 @@ public:
 
   QualType getReturnType() const { return MethodDeclType; }
   void setReturnType(QualType T) { MethodDeclType = T; }
+  SourceRange getReturnTypeSourceRange() const;
 
   /// \brief Determine the type of an expression that sends a message to this
   /// function.
@@ -955,6 +956,10 @@ public:
   void mergeClassExtensionProtocolList(ObjCProtocolDecl *const* List,
                                        unsigned Num,
                                        ASTContext &C);
+
+  /// Produce a name to be used for class's metadata. It comes either via
+  /// objc_runtime_name attribute or class name.
+  StringRef getObjCRuntimeNameAsString() const;
 
   /// Returns the designated initializers for the interface.
   ///
@@ -1653,6 +1658,10 @@ public:
   /// \brief Starts the definition of this Objective-C protocol.
   void startDefinition();
 
+  /// Produce a name to be used for protocol's metadata. It comes either via
+  /// objc_runtime_name attribute or protocol name.
+  StringRef getObjCRuntimeNameAsString() const;
+
   SourceRange getSourceRange() const override LLVM_READONLY {
     if (isThisDeclarationADefinition())
       return ObjCContainerDecl::getSourceRange();
@@ -1927,8 +1936,8 @@ public:
 
   /// getIdentifier - Get the identifier that names the category
   /// interface associated with this implementation.
-  /// FIXME: This is a bad API, we are overriding the NamedDecl::getIdentifier()
-  /// to mean something different. For example:
+  /// FIXME: This is a bad API, we are hiding NamedDecl::getIdentifier()
+  /// with a different meaning. For example:
   /// ((NamedDecl *)SomeCategoryImplDecl)->getIdentifier()
   /// returns the class interface name, whereas
   /// ((ObjCCategoryImplDecl *)SomeCategoryImplDecl)->getIdentifier()
@@ -1945,11 +1954,9 @@ public:
   /// getName - Get the name of identifier for the class interface associated
   /// with this implementation as a StringRef.
   //
-  // FIXME: This is a bad API, we are overriding the NamedDecl::getName, to mean
-  // something different.
-  StringRef getName() const {
-    return Id ? Id->getNameStart() : "";
-  }
+  // FIXME: This is a bad API, we are hiding NamedDecl::getName with a different
+  // meaning.
+  StringRef getName() const { return Id ? Id->getName() : StringRef(); }
 
   /// @brief Get the name of the class associated with this interface.
   //
@@ -2089,8 +2096,8 @@ public:
   /// getName - Get the name of identifier for the class interface associated
   /// with this implementation as a StringRef.
   //
-  // FIXME: This is a bad API, we are overriding the NamedDecl::getName, to mean
-  // something different.
+  // FIXME: This is a bad API, we are hiding NamedDecl::getName with a different
+  // meaning.
   StringRef getName() const {
     assert(getIdentifier() && "Name is not a simple identifier");
     return getIdentifier()->getName();
@@ -2102,6 +2109,10 @@ public:
   std::string getNameAsString() const {
     return getName();
   }
+    
+  /// Produce a name to be used for class's metadata. It comes either via
+  /// class's objc_runtime_name attribute or class name.
+  StringRef getObjCRuntimeNameAsString() const;
 
   const ObjCInterfaceDecl *getSuperClass() const { return SuperClass; }
   ObjCInterfaceDecl *getSuperClass() { return SuperClass; }

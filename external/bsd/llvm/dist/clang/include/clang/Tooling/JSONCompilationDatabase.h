@@ -53,14 +53,14 @@ public:
   ///
   /// Returns NULL and sets ErrorMessage if the database could not be
   /// loaded from the given file.
-  static JSONCompilationDatabase *loadFromFile(StringRef FilePath,
-                                               std::string &ErrorMessage);
+  static std::unique_ptr<JSONCompilationDatabase>
+  loadFromFile(StringRef FilePath, std::string &ErrorMessage);
 
   /// \brief Loads a JSON compilation database from a data buffer.
   ///
   /// Returns NULL and sets ErrorMessage if the database could not be loaded.
-  static JSONCompilationDatabase *loadFromBuffer(StringRef DatabaseString,
-                                                 std::string &ErrorMessage);
+  static std::unique_ptr<JSONCompilationDatabase>
+  loadFromBuffer(StringRef DatabaseString, std::string &ErrorMessage);
 
   /// \brief Returns all compile comamnds in which the specified file was
   /// compiled.
@@ -81,8 +81,9 @@ public:
 
 private:
   /// \brief Constructs a JSON compilation database on a memory buffer.
-  JSONCompilationDatabase(llvm::MemoryBuffer *Database)
-    : Database(Database), YAMLStream(Database->getBuffer(), SM) {}
+  JSONCompilationDatabase(std::unique_ptr<llvm::MemoryBuffer> Database)
+      : Database(std::move(Database)),
+        YAMLStream(this->Database->getBuffer(), SM) {}
 
   /// \brief Parses the database file and creates the index.
   ///

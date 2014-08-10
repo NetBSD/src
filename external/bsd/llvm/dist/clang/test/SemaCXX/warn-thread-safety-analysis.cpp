@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wthread-safety -Wthread-safety-beta -fcxx-exceptions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wthread-safety -Wthread-safety-beta -Wno-thread-safety-negative -fcxx-exceptions %s
 
 // FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety -std=c++11 -Wc++98-compat %s
 // FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety %s
@@ -35,6 +35,9 @@ class  __attribute__((lockable)) Mutex {
   bool TryLock() __attribute__((exclusive_trylock_function(true)));
   bool ReaderTryLock() __attribute__((shared_trylock_function(true)));
   void LockWhen(const int &cond) __attribute__((exclusive_lock_function));
+
+  // for negative capabilities
+  const Mutex& operator!() const { return *this; }
 
   void AssertHeld()       ASSERT_EXCLUSIVE_LOCK();
   void AssertReaderHeld() ASSERT_SHARED_LOCK();
@@ -92,6 +95,13 @@ class MyString {
 public:
   MyString(const char* s);
   ~MyString();
+};
+
+
+template <class K, class T>
+class MyMap {
+public:
+  T& operator[](const K& k);
 };
 
 
@@ -2280,6 +2290,15 @@ void test() {
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Lock();
   (a > 0 ? fooArray[1] : fooArray[b]).a = 0;
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Unlock();
+}
+
+
+void test2() {
+  Foo *fooArray;
+  Bar bar;
+  int a;
+  int b;
+  int c;
 
   bar.getFoo().mu_.Lock();
   bar.getFooey().a = 0; // \
@@ -2295,20 +2314,20 @@ void test() {
 
   bar.getFoo3(a, b).mu_.Lock();
   bar.getFoo3(a, c).a = 0;  // \
-    // expected-warning {{writing variable 'a' requires holding mutex 'bar.getFoo3(a,c).mu_' exclusively}} \
-    // expected-note {{'bar.getFoo3(a,b).mu_'}}
+    // expected-warning {{writing variable 'a' requires holding mutex 'bar.getFoo3(a, c).mu_' exclusively}} \
+    // expected-note {{found near match 'bar.getFoo3(a, b).mu_'}}
   bar.getFoo3(a, b).mu_.Unlock();
 
   getBarFoo(bar, a).mu_.Lock();
   getBarFoo(bar, b).a = 0;  // \
-    // expected-warning {{writing variable 'a' requires holding mutex 'getBarFoo(bar,b).mu_' exclusively}} \
-    // expected-note {{'getBarFoo(bar,a).mu_'}}
+    // expected-warning {{writing variable 'a' requires holding mutex 'getBarFoo(bar, b).mu_' exclusively}} \
+    // expected-note {{found near match 'getBarFoo(bar, a).mu_'}}
   getBarFoo(bar, a).mu_.Unlock();
 
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Lock();
   (a > 0 ? fooArray[b] : fooArray[c]).a = 0; // \
-    // expected-warning {{writing variable 'a' requires holding mutex '((a#_)#_#fooArray[b]).mu_' exclusively}} \
-    // expected-note {{'((a#_)#_#fooArray[_]).mu_'}}
+    // expected-warning {{writing variable 'a' requires holding mutex '((0 < a) ? fooArray[b] : fooArray[c]).mu_' exclusively}} \
+    // expected-note {{found near match '((0 < a) ? fooArray[1] : fooArray[b]).mu_'}}
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Unlock();
 }
 
@@ -4378,3 +4397,251 @@ class Foo {
 };
 
 }  // end namespace ThreadAttributesOnLambdas
+
+
+
+namespace AttributeExpressionCornerCases {
+
+class Foo {
+  int a GUARDED_BY(getMu());
+
+  Mutex* getMu()   LOCK_RETURNED("");
+  Mutex* getUniv() LOCK_RETURNED("*");
+
+  void test1() {
+    a = 0;
+  }
+
+  void test2() EXCLUSIVE_LOCKS_REQUIRED(getUniv()) {
+    a = 0;
+  }
+
+  void foo(Mutex* mu) EXCLUSIVE_LOCKS_REQUIRED(mu);
+
+  void test3() {
+    foo(nullptr);
+  }
+};
+
+
+class MapTest {
+  struct MuCell { Mutex* mu; };
+
+  MyMap<MyString, Mutex*> map;
+  MyMap<MyString, MuCell> mapCell;
+
+  int a GUARDED_BY(map["foo"]);
+  int b GUARDED_BY(mapCell["foo"].mu);
+
+  void test() {
+    map["foo"]->Lock();
+    a = 0;
+    map["foo"]->Unlock();
+  }
+
+  void test2() {
+    mapCell["foo"].mu->Lock();
+    b = 0;
+    mapCell["foo"].mu->Unlock();
+  }
+};
+
+
+class PreciseSmartPtr {
+  SmartPtr<Mutex> mu;
+  int val GUARDED_BY(mu);
+
+  static bool compare(PreciseSmartPtr& a, PreciseSmartPtr &b) {
+    a.mu->Lock();
+    bool result = (a.val == b.val);   // expected-warning {{reading variable 'val' requires holding mutex 'b.mu'}} \
+                                      // expected-note {{found near match 'a.mu'}}
+    a.mu->Unlock();
+    return result;
+  }
+};
+
+
+class SmartRedeclare {
+  SmartPtr<Mutex> mu;
+  int val GUARDED_BY(mu);
+
+  void test()  EXCLUSIVE_LOCKS_REQUIRED(mu);
+  void test2() EXCLUSIVE_LOCKS_REQUIRED(mu.get());
+  void test3() EXCLUSIVE_LOCKS_REQUIRED(mu.get());
+};
+
+
+void SmartRedeclare::test() EXCLUSIVE_LOCKS_REQUIRED(mu.get()) {
+  val = 0;
+}
+
+void SmartRedeclare::test2() EXCLUSIVE_LOCKS_REQUIRED(mu) {
+  val = 0;
+}
+
+void SmartRedeclare::test3() {
+  val = 0;
+}
+
+
+namespace CustomMutex {
+
+
+class LOCKABLE BaseMutex { };
+class DerivedMutex : public BaseMutex { };
+
+void customLock(const BaseMutex *m)   EXCLUSIVE_LOCK_FUNCTION(m);
+void customUnlock(const BaseMutex *m) UNLOCK_FUNCTION(m);
+
+static struct DerivedMutex custMu;
+
+static void doSomethingRequiringLock() EXCLUSIVE_LOCKS_REQUIRED(custMu) { }
+
+void customTest() {
+  customLock(reinterpret_cast<BaseMutex*>(&custMu));  // ignore casts
+  doSomethingRequiringLock();
+  customUnlock(reinterpret_cast<BaseMutex*>(&custMu));
+}
+
+} // end namespace CustomMutex
+
+} // end AttributeExpressionCornerCases
+
+
+namespace ScopedLockReturnedInvalid {
+
+class Opaque;
+
+Mutex* getMutex(Opaque* o) LOCK_RETURNED("");
+
+void test(Opaque* o) {
+  MutexLock lock(getMutex(o));
+}
+
+}  // end namespace ScopedLockReturnedInvalid
+
+
+namespace NegativeRequirements {
+
+class Bar {
+  Mutex mu;
+  int a GUARDED_BY(mu);
+
+public:
+  void baz() EXCLUSIVE_LOCKS_REQUIRED(!mu) {
+    mu.Lock();
+    a = 0;
+    mu.Unlock();
+  }
+};
+
+
+class Foo {
+  Mutex mu;
+  int a GUARDED_BY(mu);
+
+public:
+  void foo() {
+    mu.Lock();    // warning?  needs !mu?
+    baz();        // expected-warning {{cannot call function 'baz' while mutex 'mu' is held}}
+    bar();
+    mu.Unlock();
+  }
+
+  void bar() {
+    bar2();       // expected-warning {{calling function 'bar2' requires holding  '!mu'}}
+  }
+
+  void bar2() EXCLUSIVE_LOCKS_REQUIRED(!mu) {
+    baz();
+  }
+
+  void baz() EXCLUSIVE_LOCKS_REQUIRED(!mu) {
+    mu.Lock();
+    a = 0;
+    mu.Unlock();
+  }
+
+  void test() {
+    Bar b;
+    b.baz();     // no warning -- in different class.
+  }
+};
+
+}   // end namespace NegativeRequirements
+
+
+namespace NegativeThreadRoles {
+
+typedef int __attribute__((capability("role"))) ThreadRole;
+
+void acquire(ThreadRole R) __attribute__((exclusive_lock_function(R))) __attribute__((no_thread_safety_analysis)) {}
+void release(ThreadRole R) __attribute__((unlock_function(R))) __attribute__((no_thread_safety_analysis)) {}
+
+ThreadRole FlightControl, Logger;
+
+extern void enque_log_msg(const char *msg);
+void log_msg(const char *msg) {
+  enque_log_msg(msg);
+}
+
+void dispatch_log(const char *msg) __attribute__((requires_capability(!FlightControl))) {}
+void dispatch_log2(const char *msg) __attribute__((requires_capability(Logger))) {}
+
+void flight_control_entry(void) __attribute__((requires_capability(FlightControl))) {
+  dispatch_log("wrong"); /* expected-warning {{cannot call function 'dispatch_log' while mutex 'FlightControl' is held}} */
+  dispatch_log2("also wrong"); /* expected-warning {{calling function 'dispatch_log2' requires holding role 'Logger' exclusively}} */
+}
+
+void spawn_fake_flight_control_thread(void) {
+  acquire(FlightControl);
+  flight_control_entry();
+  release(FlightControl);
+}
+
+extern const char *deque_log_msg(void) __attribute__((requires_capability(Logger)));
+void logger_entry(void) __attribute__((requires_capability(Logger))) {
+  const char *msg;
+
+  while ((msg = deque_log_msg())) {
+    dispatch_log(msg);
+  }
+}
+
+void spawn_fake_logger_thread(void) {
+  acquire(Logger);
+  logger_entry();
+  release(Logger);
+}
+
+int main(void) {
+  spawn_fake_flight_control_thread();
+  spawn_fake_logger_thread();
+
+  for (;;)
+    ; /* Pretend to dispatch things. */
+
+  return 0;
+}
+
+} // end namespace NegativeThreadRoles
+
+
+namespace AssertSharedExclusive {
+
+void doSomething();
+
+class Foo {
+  Mutex mu;
+  int a GUARDED_BY(mu);
+
+  void test() SHARED_LOCKS_REQUIRED(mu) {
+    mu.AssertHeld();
+    if (a > 0)
+      doSomething();
+  }
+};
+
+} // end namespace AssertSharedExclusive
+
+
