@@ -30,10 +30,12 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: spe_subr.S,v 1.3 2012/05/20 06:17:28 matt Exp $")
+RCSID("$NetBSD: spe_subr.S,v 1.4 2014/08/10 18:08:33 joerg Exp $")
 
 	.text
+#ifndef __clang__
 	.machine	e500x2
+#endif
 /*
  * Lintstub: void vec_load_from_vreg(const struct vreg *);
  */
