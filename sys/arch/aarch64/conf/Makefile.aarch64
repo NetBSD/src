@@ -1,0 +1,123 @@
+#	$NetBSD: Makefile.aarch64,v 1.1 2014/08/10 05:47:37 matt Exp $
+
+# Makefile for NetBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/<arch>/conf/``machineid''
+# after which you should do
+#	config machineid
+# Machine generic makefile changes should be made in
+#	/sys/arch/arm/conf/Makefile.arm
+# after which config should be rerun for all machines of that type.
+#
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
+# A better way is to specify -g only for a few files.
+#
+#	makeoptions DEBUGLIST="uvm* trap if_*"
+
+USETOOLS?=	no
+NEED_OWN_INSTALL_TARGET?=no
+.include <bsd.own.mk>
+
+##
+## (1) port identification
+##
+THISA64=	$S/arch/${MACHINE}
+A64=		$S/arch/aarch64
+GENASSYM_CONF=	${A64}/aarch64/genassym.cf
+.-include "$S/arch/${MACHINE}/conf/Makefile.${MACHINE}.inc"
+
+##
+## (2) compile settings
+##
+# CPPFLAGS set by platform-specific Makefile fragment.
+CFLAGS+=	 -fomit-frame-pointer
+
+##
+## (3) libkern and compat
+##
+KERN_AS=	obj
+
+##
+## (4) local objects, compile rules, and dependencies
+##
+MD_OBJS+=	${SYSTEM_FIRST_OBJ} locore.o
+MD_CFILES+=
+MD_SFILES+=	${SYSTEM_FIRST_SFILE} ${A64}/aarch64/locore.S
+
+.if defined(SYSTEM_FIRST_OBJ)
+${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
+	${NORMAL_S}
+.endif
+
+locore.o: ${A64}/aarch64/locore.S assym.h
+	${NORMAL_S}
+
+##
+## (5) link settings
+##
+LDSCRIPT?=	${A64}/conf/kern.ldscript
+LOADADDRESS?=	0xFFFFFFFF00000000
+LINKFLAGS_NORMAL=	-X
+.if "${LDSCRIPT}" != ""
+LINKFLAGS_NORMAL+=	-T ${LDSCRIPT}
+.endif
+
+# Strip AArch64 mapping symbols from the kernel image, as they interfere
+# with ddb. Do it differently if 'makeoptions DEBUG="-g"' was specified.
+.if !defined(DEBUG) || empty(DEBUG:M-g*)
+SYSTEM_LD_TAIL?=	${SYSTEM_LD_TAIL_DBSYM}; \
+			${OBJCOPY} --strip-symbol='$$k'	\
+				   --strip-symbol='$$d' $@ ;\
+			${SIZE} $@; chmod 755 $@
+.else
+STRIPFLAGS=-g --strip-symbol='$$x' --strip-symbol='$$d'
+.endif
+
+##
+## (6) port specific target dependencies
+##
+
+# depend on DIAGNOSTIC etc.
+cpuswitch.o fault.o machdep.o: Makefile
+
+# various assembly files that depend on assym.h
+atomic.o bcopy_page.o bcopyinout.o copystr.o cpuswitch.o cpu_in_cksum.o: assym.h
+exception.o sigcode.o: assym.h
+spl.o vectors.o: assym.h
+
+##
+## (7) misc settings
+##
+
+##
+## (8) config(8) generated machinery
+##
+%INCLUDES
+
+%OBJS
+
+%CFILES
+
+%SFILES
+
+%LOAD
+
+%RULES
+
+##
+## (9) after the config file is inserted
+##
+
+##
+## (10) port independent kernel machinery
+##
+
+.include "$S/conf/Makefile.kern.inc"
+
+##
+## (11) Appending make options.
+##
+%MAKEOPTIONSAPPEND

@@ -1,0 +1,8 @@
+# $NetBSD: files.evbarm64,v 1.1 2014/08/10 05:47:38 matt Exp $
+
+maxpartitions   16
+maxusers        2 16 64
+
+defflag	opt_plcom.h		PLCOM_DEBUG
+device	plcom { }: tty
+file	arch/evbarm/dev/plcom.c		plcom needs-flag

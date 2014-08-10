@@ -1,0 +1,271 @@
+# $NetBSD: A64EMUL,v 1.1 2014/08/10 05:47:38 matt Exp $
+#
+# This machine description file is used to generate the default NetBSD
+# kernel.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+include 	"arch/evbarm64/conf/std.a64emul"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+ident		"A64EMUL-$Revision: 1.1 $"
+
+maxusers 32
+
+# CPU Support
+options 	CORTEX_A53
+options 	CORTEX_A57
+
+# Standard system options
+options 	KTRACE			# System call tracing support
+options 	NTP			# kernel PLL for NTP
+
+# Enable experimental buffer queue strategy for better responsiveness under
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
+
+# Diagnostic/debugging support options
+options 	DIAGNOSTIC		# Cheap kernel consistency checks
+#options 	DEBUG			# Expensive debugging checks/support
+#options 	KMEMSTATS		# Collect kmem usage statistics
+options 	DDB			# kernel debugger
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+makeoptions	DEBUG="-g"
+#makeoptions	DEBUGLIST="pattern1 pattern2 ..."
+
+#options 	KGDB			# Remote kernel GDB support
+#options 	KGDB_DEVNAME="\"com\""	# device to use for KGDB
+
+# File systems
+file-system	FFS		# Fast file system
+file-system	MFS		# Memory-based file system
+file-system	LFS		# Log-structured file system
+file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
+file-system	ADOSFS		# AmigaDOS-compatible file system
+file-system	MSDOSFS		# MS-DOS-compatible file system
+file-system	NTFS		# Windows/NT file system (experimental)
+file-system	EXT2FS		# Linux ext2 file system
+file-system	NFS		# Sun NFS-compatible file system client
+file-system	NULLFS		# Null file system layer
+file-system	KERNFS		# Kernel variable file system (/kern)
+file-system	FDESC		# File descriptor file system (/dev/fd)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+file-system	UMAPFS		# User-mapping file system layer
+file-system	PROCFS		# Process file system (/proc)
+file-system	UNION		# union file system
+file-system	CODA		# CODA distributed file system
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+
+# File system options
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
+options 	FFS_EI		# FFS Endian Independent support
+options 	WAPBL		# File system journaling support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options 	NFSSERVER	# Sun NFS-compatible file system server
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# 4.3BSD compatibility.  Should be optional, but necessary for now.
+options 	COMPAT_43
+
+# Binary compatibility with previous versions of NetBSD.
+#options 	COMPAT_09
+#options 	COMPAT_10
+#options 	COMPAT_11
+#options 	COMPAT_12
+#options 	COMPAT_13
+#options 	COMPAT_14
+#options 	COMPAT_15
+#options 	COMPAT_16
+#options 	COMPAT_20
+#options 	COMPAT_30	# NetBSD 3.0 compatibility.
+#options 	COMPAT_40	# NetBSD 4.0 compatibility.
+#options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+# OSF/1 binary compatibility
+
+# Linux binary compatibility
+#options 	COMPAT_LINUX
+#options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# System V-like message queues
+options 	SYSVMSG
+
+# System V-like semaphores
+options 	SYSVSEM
+
+# System V-like shared memory
+options 	SYSVSHM
+
+# p1003.1b semaphore support
+
+# Loadable Kernel Modules
+
+# Disable kernel security.
+#options 	INSECURE
+
+# Misc. options
+#options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	MIIVERBOSE		# verbose PHY autoconfig messages
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
+#options 	SCSIVERBOSE		# Verbose SCSI errors
+#options 	USBVERBOSE		# verbose USB device autoconfig messages
+#options 	EXTENT_DEBUG		# extent alloc/dealloc code debugging
+#options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
+options 	USERCONF		# userconf(4) support
+#options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# The Alpha console firmware network boots using the BOOTP
+# protocol, so we ask the NFS code to use BOOTP/DHCP as well,
+# in case we have NFS root.
+options 	NFS_BOOT_DHCP		# superset of BOOTP
+
+config		netbsd	root on ? type ?
+#config		netbsd	root on sd0 type ffs
+#config		netbsd	root on ? type nfs
+
+mainbus0 at	root
+cpunode*	at	mainbus0
+cpucore*	at	cpunode? core ?
+cpu*		at	cpucore? thread ?
+a64gic*		at	mainbus0
+a64gtmr*	at	mainbus0
+
+sm*		at	mainbus0 addr 0x202000000 size 0x10000 intr 46
+
+obio*		at	mainbus0 addr 0x000000 size 0x200000
+
+plcom0		at	obio?	addr 0x90000 size 0x1000 intr 37
+plcom1		at	obio?	addr 0xa0000 size 0x1000 intr 38
+plcom2		at	obio?	addr 0xb0000 size 0x1000 intr 39
+plcom3		at	obio?	addr 0xc0000 size 0x1000 intr 40
+
+#
+# accept filters
+#pseudo-device   accf_data		# "dataready" accept filter
+#pseudo-device   accf_http		# "httpready" accept filter
+
+pseudo-device 	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
+
+pseudo-device	bpfilter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+#pseudo-device	ccd		
+#pseudo-device	cgd			# cryptographic disk devices
+#pseudo-device	raid			# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+#pseudo-device	fss			# file system snapshot device
+#pseudo-device	ipfilter
+pseudo-device	loop
+pseudo-device	md		
+#pseudo-device	ppp		
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	pty			# pseudo-terminals
+#pseudo-device	sl		
+#pseudo-device	strip		
+pseudo-device	tun		
+pseudo-device	tap			# virtual Ethernet
+pseudo-device	vnd		
+#options 	VND_COMPRESSION		# compressed vnd(4)
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+#pseudo-device	sequencer		# MIDI sequencer
+#options 	RND_COM			# use "com" randomness too
+# a pseudo device needed for Coda	# also needs CODA (above)
+pseudo-device	vcoda			# coda minicache <-> venus comm.
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb			# experimental - SMB requester
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	wsfont
+pseudo-device	wsmux			# mouse and keyboad multiplexing
+pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+pseudo-device	lockstat		# lock profiling
+#pseudo-device	bcsp			# BlueCore Serial Protocol
+#pseudo-device	btuart			# Bluetooth HCI UART (H4)
+pseudo-device	putter			# for puffs and pud
+
+#options	FILEASSOC		# fileassoc(9) - required for Veriexec
+
+# Veriexec
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options 	VERIFIED_EXEC_FP_RMD160
+#options 	VERIFIED_EXEC_FP_SHA256
+#options 	VERIFIED_EXEC_FP_SHA384
+#options 	VERIFIED_EXEC_FP_SHA512
+#options 	VERIFIED_EXEC_FP_SHA1
+#options 	VERIFIED_EXEC_FP_MD5
+
+#options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+#options PAX_SEGVGUARD=0			# PaX Segmentation fault guard
+#options PAX_ASLR=0			# PaX Address Space Layout Randomization
