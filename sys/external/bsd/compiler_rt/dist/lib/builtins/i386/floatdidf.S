@@ -7,12 +7,21 @@
 
 #ifdef __i386__
 
-#ifndef __ELF__
-.const
+#if defined(__APPLE__)
+	.const
+#elif defined(__ELF__)
+	.section .rodata
+#else
+	.section .rdata,"rd"
 #endif
-.balign 4
-twop52: .quad 0x4330000000000000
-twop32: .quad 0x41f0000000000000
+
+	.balign 16
+twop52:
+	.quad 0x4330000000000000
+
+	.balign 16
+twop32:
+	.quad 0x41f0000000000000
 
 #define REL_ADDR(_a)	(_a)-0b(%eax)
 
