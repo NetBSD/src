@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.6 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.6.2.1 2014/08/10 07:06:36 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -609,7 +609,7 @@ ns_os_changeuser(void) {
 }
 
 void
-ns_os_adjustnofile() {
+ns_os_adjustnofile(void) {
 #ifdef HAVE_LINUXTHREADS
 	isc_result_t result;
 	isc_resourcevalue_t newvalue;

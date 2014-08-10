@@ -13,96 +13,85 @@ PICKUP(8)                                                            PICKUP(8)
        <b>pickup</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The  <a href="pickup.8.html"><b>pickup</b>(8)</a>  daemon  waits  for hints that new mail has
-       been dropped into the <b>maildrop</b>  directory,  and  feeds  it
-       into  the  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon.   Ill-formatted  files  are
-       deleted without notifying the  originator.   This  program
-       expects to be run from the <a href="master.8.html"><b>master</b>(8)</a> process manager.
+       The  <a href="pickup.8.html"><b>pickup</b>(8)</a>  daemon  waits  for hints that new mail has been dropped
+       into the <b>maildrop</b> directory, and feeds it into the  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon.
+       Ill-formatted files are deleted without notifying the originator.  This
+       program expects to be run from the <a href="master.8.html"><b>master</b>(8)</a> process manager.
 
 <b>STANDARDS</b>
-       None. The <a href="pickup.8.html"><b>pickup</b>(8)</a> daemon does not interact with the out-
-       side world.
+       None. The <a href="pickup.8.html"><b>pickup</b>(8)</a> daemon does not interact with the outside world.
 
 <b>SECURITY</b>
-       The <a href="pickup.8.html"><b>pickup</b>(8)</a> daemon is moderately security sensitive.  It
-       runs  with  fixed  low privilege and can run in a chrooted
-       environment.  However, the program reads files from poten-
-       tially hostile users.  The <a href="pickup.8.html"><b>pickup</b>(8)</a> daemon opens no files
-       for writing, is careful about  what  files  it  opens  for
-       reading, and does not actually touch any data that is sent
-       to its public service endpoint.
+       The <a href="pickup.8.html"><b>pickup</b>(8)</a> daemon is moderately security  sensitive.  It  runs  with
+       fixed  low  privilege  and can run in a chrooted environment.  However,
+       the program reads files from potentially hostile users.  The  <a href="pickup.8.html"><b>pickup</b>(8)</a>
+       daemon opens no files for writing, is careful about what files it opens
+       for reading, and does not actually touch any data that is sent  to  its
+       public service endpoint.
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>BUGS</b>
-       The  <a href="pickup.8.html"><b>pickup</b>(8)</a>  daemon  copies  mail  from  file  to   the
-       <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon.   It could avoid message copying over-
-       head by sending a file descriptor instead  of  file  data,
-       but  then the already complex <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon would have
-       to deal with unfiltered user data.
+       The  <a href="pickup.8.html"><b>pickup</b>(8)</a>  daemon  copies mail from file to the <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon.
+       It could avoid message copying overhead by sending  a  file  descriptor
+       instead  of  file  data, but then the already complex <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon
+       would have to deal with unfiltered user data.
 
 <b>CONFIGURATION PARAMETERS</b>
-       As the  <a href="pickup.8.html"><b>pickup</b>(8)</a>  daemon  is  a  relatively  long-running
-       process,  up  to  an hour may pass before a <a href="postconf.5.html"><b>main.cf</b></a> change
-       takes effect.  Use the command "<b>postfix reload</b>" command to
-       speed up a change.
+       As the <a href="pickup.8.html"><b>pickup</b>(8)</a> daemon is a relatively long-running process, up to  an
+       hour  may  pass  before a <a href="postconf.5.html"><b>main.cf</b></a> change takes effect.  Use the command
+       "<b>postfix reload</b>" command to speed up a change.
 
-       The  text  below  provides  only  a parameter summary. See
-       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
+       The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
+       more details including examples.
 
 <b>CONTENT INSPECTION CONTROLS</b>
        <b><a href="postconf.5.html#content_filter">content_filter</a> (empty)</b>
-              After the message is queued, send the  entire  mes-
-              sage to the specified <i>transport:destination</i>.
+              After  the  message  is  queued,  send the entire message to the
+              specified <i>transport:destination</i>.
 
        <b><a href="postconf.5.html#receive_override_options">receive_override_options</a> (empty)</b>
-              Enable  or  disable  recipient validation, built-in
-              content filtering, or address mapping.
+              Enable or disable recipient validation, built-in content filter-
+              ing, or address mapping.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
-              <a href="master.5.html">master.cf</a> configuration files.
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              figuration files.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The time limit for sending or receiving information
-              over an internal communication channel.
+              The time limit for sending  or  receiving  information  over  an
+              internal communication channel.
 
        <b><a href="postconf.5.html#line_length_limit">line_length_limit</a> (2048)</b>
-              Upon input, long lines are chopped up  into  pieces
-              of  at  most this length; upon delivery, long lines
-              are reconstructed.
+              Upon  input,  long  lines  are chopped up into pieces of at most
+              this length; upon delivery, long lines are reconstructed.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time  that  an  idle  Postfix
-              daemon  process  waits  for  an incoming connection
-              before terminating voluntarily.
+              The maximum amount of time that an idle Postfix  daemon  process
+              waits for an incoming connection before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The maximal number of incoming connections  that  a
-              Postfix  daemon  process will service before termi-
-              nating voluntarily.
+              The maximal number of incoming connections that a Postfix daemon
+              process will service before terminating voluntarily.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID  of  a  Postfix  command  or  daemon
-              process.
+              The process ID of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
-              process.
+              The process name of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
-              tory.
+              The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name  that  is  prepended to the
-              process name in syslog  records,  so  that  "smtpd"
-              becomes, for example, "postfix/smtpd".
+              The  mail  system  name that is prepended to the process name in
+              syslog records, so that "smtpd"  becomes,  for  example,  "post-
+              fix/smtpd".
 
 <b>SEE ALSO</b>
        <a href="cleanup.8.html">cleanup(8)</a>, message canonicalization
@@ -114,8 +103,7 @@ PICKUP(8)                                                            PICKUP(8)
        syslogd(8), system logging
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

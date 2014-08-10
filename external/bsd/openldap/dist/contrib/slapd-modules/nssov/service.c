@@ -1,10 +1,10 @@
-/*	$NetBSD: service.c,v 1.1.1.3 2010/12/12 15:19:11 adam Exp $	*/
+/*	$NetBSD: service.c,v 1.1.1.3.24.1 2014/08/10 07:09:44 tls Exp $	*/
 
 /* service.c - service lookup routines */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/service.c,v 1.1.2.6 2010/04/15 21:32:57 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2014 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -219,7 +219,7 @@ NSSOV_HANDLE(
 	READ_STRING(fp,cbp.pbuf);
 	cbp.prot.bv_len = tmpint32;
 	cbp.prot.bv_val = tmpint32 ? cbp.pbuf : NULL;,
-	Debug(LDAP_DEBUG_TRACE,"nssov_service_byname(%s,%s)\n",cbp.name.bv_val,cbp.prot.bv_val,0);,
+	Debug(LDAP_DEBUG_TRACE,"nssov_service_byname(%s,%s)\n",cbp.name.bv_val,cbp.prot.bv_val ? cbp.prot.bv_val : "",0);,
 	NSLCD_ACTION_SERVICE_BYNAME,
 	mkfilter_service_byname(cbp.mi,&cbp.name,&cbp.prot,&filter)
 )

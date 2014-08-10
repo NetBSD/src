@@ -1,4 +1,4 @@
-/*	$NetBSD: db_cpu.c,v 1.5 2013/11/24 21:58:38 rmind Exp $	*/
+/*	$NetBSD: db_cpu.c,v 1.5.2.1 2014/08/10 06:54:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.5 2013/11/24 21:58:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.5.2.1 2014/08/10 06:54:38 tls Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -42,23 +42,37 @@ __KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.5 2013/11/24 21:58:38 rmind Exp $");
 
 #include <ddb/ddb.h>
 
-static struct cpu_info **cpu_info_addr;
+static int		db_ncpu;
+static struct cpu_info	**db_cpu_infos;
+
+static void
+db_cpu_init(void)
+{
+	db_expr_t addr;
+
+	db_value_of_name("ncpu", &addr);
+	db_read_bytes((db_addr_t)addr, sizeof(db_ncpu), (char *)&db_ncpu);
+
+	db_value_of_name("cpu_infos", &addr);
+	db_read_bytes((db_addr_t)addr, sizeof(db_cpu_infos),
+	    (char *)&db_cpu_infos);
+}
 
 static struct cpu_info *
-db_cpu_index(u_int idx)
+db_cpu_by_index(u_int idx)
 {
-	db_addr_t slot_addr = (db_addr_t)(cpu_info_addr + idx);
 	struct cpu_info *ci;
 
-	db_read_bytes(slot_addr, sizeof(ci), (char *)&ci);
+	db_read_bytes((db_addr_t)&db_cpu_infos[idx], sizeof(ci), (char *)&ci);
 	return ci;
 }
 
 struct cpu_info *
 db_cpu_first(void)
 {
-	db_value_of_name("cpu_infos", (db_expr_t *)&cpu_info_addr);
-	return db_cpu_index(0);
+
+	db_cpu_init();
+	return db_cpu_by_index(0);
 }
 
 struct cpu_info *
@@ -67,5 +81,7 @@ db_cpu_next(struct cpu_info *ci)
 	u_int idx;
 
 	db_read_bytes((db_addr_t)&ci->ci_index, sizeof(idx), (char *)&idx);
-	return db_cpu_index(idx + 1);
+	if ((idx + 1) >= (u_int)db_ncpu)
+		return NULL;
+	return db_cpu_by_index(idx + 1);
 }

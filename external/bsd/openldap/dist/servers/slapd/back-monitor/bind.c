@@ -1,10 +1,10 @@
-/*	$NetBSD: bind.c,v 1.1.1.3 2010/12/12 15:23:13 adam Exp $	*/
+/*	$NetBSD: bind.c,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
 /* bind.c - monitor backend bind routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/bind.c,v 1.17.2.5 2010/04/13 20:23:32 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

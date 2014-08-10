@@ -15,8 +15,8 @@
 #include "llvm/ADT/Triple.h"
 #include "../lib/Transforms/Instrumentation/DebugIR.h"
 #include "llvm/Config/config.h"
-#include "llvm/DIBuilder.h"
-#include "llvm/DebugInfo.h"
+#include "llvm/IR/DIBuilder.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -90,8 +90,8 @@ protected:
 
   LLVMContext Context;
   char *cwd;
-  OwningPtr<Module> M;
-  OwningPtr<DebugIR> D;
+  std::unique_ptr<Module> M;
+  std::unique_ptr<DebugIR> D;
 };
 
 // Test empty named Module that is not supposed to be output to disk.
@@ -278,7 +278,7 @@ TEST_F(TestDebugIR, ExistingMetadataRetained) {
   // verify DebugIR did not generate a file
   ASSERT_FALSE(removeIfExists(Path)) << "Unexpected file " << Path;
 
-  DICompileUnit CU(*Finder.compile_unit_begin());
+  DICompileUnit CU(*Finder.compile_units().begin());
 
   // Verify original CU information is retained
   ASSERT_EQ(Filename, CU.getFilename());

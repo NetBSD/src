@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc.c,v 1.5 2014/04/01 17:49:17 riastradh Exp $	*/
+/*	$NetBSD: apple_smc.c,v 1.5.2.1 2014/08/10 06:54:52 tls Exp $	*/
 
 /*
  * Apple System Management Controller
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.5 2014/04/01 17:49:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.5.2.1 2014/08/10 06:54:52 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -480,6 +480,7 @@ apple_smc_key_search(struct apple_smc_tag *smc, const char *name,
 {
 	struct apple_smc_key *key;
 	uint32_t start = 0, end = apple_smc_nkeys(smc), median;
+	int cmp;
 	int error;
 
 	/* Do a binary search on the SMC's key space.  */
@@ -489,10 +490,14 @@ apple_smc_key_search(struct apple_smc_tag *smc, const char *name,
 		if (error)
 			return error;
 
-		if (memcmp(name, apple_smc_key_name(key), 4) < 0)
+		cmp = memcmp(name, apple_smc_key_name(key), 4);
+		if (cmp < 0)
 			end = median;
-		else
+		else if (cmp > 0)
 			start = (median + 1);
+		else
+			start = end = median; /* stop here */
+
 		apple_smc_release_key(smc, key);
 	}
 

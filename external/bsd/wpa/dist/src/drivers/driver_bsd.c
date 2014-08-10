@@ -853,12 +853,13 @@ bsd_init(struct hostapd_data *hapd, struct wpa_init_params *params)
 
 	return drv;
 bad:
-	if (drv->sock_xmit != NULL)
-		l2_packet_deinit(drv->sock_xmit);
-	if (drv->sock >= 0)
-		close(drv->sock);
-	if (drv != NULL)
+	if (drv != NULL) {
+		if (drv->sock_xmit != NULL)
+			l2_packet_deinit(drv->sock_xmit);
+		if (drv->sock >= 0)
+			close(drv->sock);
 		os_free(drv);
+	}
 	return NULL;
 }
 
@@ -1353,7 +1354,7 @@ wpa_driver_bsd_add_scan_entry(struct wpa_scan_results *res,
 	result->freq = sr->isr_freq;
 	result->beacon_int = sr->isr_intval;
 	result->caps = sr->isr_capinfo;
-	result->qual = sr->isr_rssi;
+	result->level = sr->isr_rssi;
 	result->noise = sr->isr_noise;
 
 	pos = (u8 *)(result + 1);

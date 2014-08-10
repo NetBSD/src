@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.152 2014/03/11 20:32:05 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.152.2.1 2014/08/10 06:56:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.152 2014/03/11 20:32:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.152.2.1 2014/08/10 06:56:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -100,6 +100,7 @@ static unsigned long curphysmem;
 static unsigned long dddlim;		/* 90% of memory limit used */
 #define NEED_PAGEDAEMON() \
     (rump_physmemlimit != RUMPMEM_UNLIMITED && curphysmem > dddlim)
+#define PDRESERVE (2*MAXPHYS)
 
 /*
  * Try to free two pages worth of pages from objects.
@@ -306,14 +307,18 @@ uvm_init(void)
 
 		if (rump_physmemlimit / mult != tmp)
 			panic("uvm_init: RUMP_MEMLIMIT overflow: %s", buf);
-		/* it's not like we'd get far with, say, 1 byte, but ... */
-		if (rump_physmemlimit < 1024*1024)
-			printf("uvm_init: WARNING: <1MB RAM limit, "
-			    "hope you know what you're doing\n");
 
 		/* reserve some memory for the pager */
+		if (rump_physmemlimit <= PDRESERVE)
+			panic("uvm_init: system reserves %d bytes of mem, "
+			    "only %lu bytes given",
+			    PDRESERVE, rump_physmemlimit);
 		pdlimit = rump_physmemlimit;
-		rump_physmemlimit -= 2*MAXPHYS;
+		rump_physmemlimit -= PDRESERVE;
+
+		if (pdlimit < 1024*1024)
+			printf("uvm_init: WARNING: <1MB RAM limit, "
+			    "hope you know what you're doing\n");
 
 #define HUMANIZE_BYTES 9
 		CTASSERT(sizeof(buf) >= HUMANIZE_BYTES);
@@ -327,7 +332,20 @@ uvm_init(void)
 
 	TAILQ_INIT(&vmpage_lruqueue);
 
-	uvmexp.free = 1024*1024; /* XXX: arbitrary & not updated */
+	if (rump_physmemlimit == RUMPMEM_UNLIMITED) {
+		uvmexp.npages = physmem;
+	} else {
+		uvmexp.npages = pdlimit >> PAGE_SHIFT;
+		uvmexp.reserve_pagedaemon = PDRESERVE >> PAGE_SHIFT;
+		uvmexp.freetarg = (rump_physmemlimit-dddlim) >> PAGE_SHIFT;
+	}
+	/*
+	 * uvmexp.free is not used internally or updated.  The reason is
+	 * that the memory hypercall allocator is allowed to allocate
+	 * non-page sized chunks.  We use a byte count in curphysmem
+	 * instead.
+	 */
+	uvmexp.free = uvmexp.npages;
 
 #ifndef __uvmexp_pagesize
 	uvmexp.pagesize = PAGE_SIZE;
@@ -402,7 +420,11 @@ void
 uvm_init_limits(struct proc *p)
 {
 
-	PUNLIMIT(RLIMIT_STACK);
+#ifndef DFLSSIZ
+#define DFLSSIZ (16*1024*1024)
+#endif
+	p->p_rlimit[RLIMIT_STACK].rlim_cur = DFLSSIZ;
+	p->p_rlimit[RLIMIT_STACK].rlim_max = MAXSSIZ;
 	PUNLIMIT(RLIMIT_DATA);
 	PUNLIMIT(RLIMIT_RSS);
 	PUNLIMIT(RLIMIT_AS);
@@ -456,9 +478,15 @@ static LIST_HEAD(, pagerinfo) pagerlist = LIST_HEAD_INITIALIZER(pagerlist);
 
 /*
  * Pager "map" in routine.  Instead of mapping, we allocate memory
- * and copy page contents there.  Not optimal or even strictly
- * correct (the caller might modify the page contents after mapping
- * them in), but what the heck.  Assumes UVMPAGER_MAPIN_WAITOK.
+ * and copy page contents there.  The reason for copying instead of
+ * mapping is simple: we do not assume we are running on virtual
+ * memory.  Even if we could emulate virtual memory in some envs
+ * such as userspace, copying is much faster than trying to awkardly
+ * cope with remapping (see "Design and Implementation" pp.95-98).
+ * The downside of the approach is that the pager requires MAXPHYS
+ * free memory to perform paging, but short of virtual memory or
+ * making the pager do I/O in page-sized chunks we cannot do much
+ * about that.
  */
 vaddr_t
 uvm_pagermapin(struct vm_page **pgs, int npages, int flags)
@@ -911,6 +939,21 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
 	return 0;
 }
 
+vaddr_t
+uvm_uarea_alloc(void)
+{
+
+	/* non-zero */
+	return (vaddr_t)11;
+}
+
+void
+uvm_uarea_free(vaddr_t uarea)
+{
+
+	/* nata, so creamy */
+}
+
 /*
  * Routines related to the Page Baroness.
  */
@@ -1105,8 +1148,7 @@ uvm_pageout(void *arg)
 		 * And then drain the pools.  Wipe them out ... all of them.
 		 */
 		for (pp_first = NULL;;) {
-			if (rump_vfs_drainbufs)
-				rump_vfs_drainbufs(10 /* XXX: estimate! */);
+			rump_vfs_drainbufs(10 /* XXX: estimate! */);
 
 			succ = pool_drain(&pp);
 			if (succ || pp == pp_first)

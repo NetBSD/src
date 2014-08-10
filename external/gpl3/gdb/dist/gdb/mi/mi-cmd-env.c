@@ -1,5 +1,5 @@
 /* MI Command Set - environment commands.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat Inc.
 
@@ -31,8 +31,8 @@
 #include "ui-out.h"
 #include "top.h"
 
-#include "gdb_string.h"
-#include "gdb_stat.h"
+#include <string.h>
+#include <sys/stat.h>
 
 static void env_mod_path (char *dirname, char **which_path);
 

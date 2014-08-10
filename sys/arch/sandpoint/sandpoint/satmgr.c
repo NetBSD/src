@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.25 2014/03/16 05:20:25 dholland Exp $ */
+/* $NetBSD: satmgr.c,v 1.25.2.1 2014/08/10 06:54:07 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ const struct cdevsw satmgr_cdevsw = {
 	.d_poll = satpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = satkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

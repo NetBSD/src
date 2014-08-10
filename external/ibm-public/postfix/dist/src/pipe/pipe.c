@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.c,v 1.1.1.3 2011/03/02 19:32:24 tron Exp $	*/
+/*	$NetBSD: pipe.c,v 1.1.1.3.20.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -199,27 +199,27 @@
 /*	$(\fIname\fR) are also recognized.  Specify \fB$$\fR where a single
 /*	\fB$\fR is wanted.
 /* .RS
-/* .IP \fB${\fBclient_address\fR}\fR
+/* .IP \fB${client_address}\fR
 /*	This macro expands to the remote client network address.
 /* .sp
 /*	This feature is available as of Postfix 2.2.
-/* .IP \fB${\fBclient_helo\fR}\fR
+/* .IP \fB${client_helo}\fR
 /*	This macro expands to the remote client HELO command parameter.
 /* .sp
 /*	This feature is available as of Postfix 2.2.
-/* .IP \fB${\fBclient_hostname\fR}\fR
+/* .IP \fB${client_hostname}\fR
 /*	This macro expands to the remote client hostname.
 /* .sp
 /*	This feature is available as of Postfix 2.2.
-/* .IP \fB${\fBclient_port\fR}\fR
+/* .IP \fB${client_port}\fR
 /*	This macro expands to the remote client TCP port number.
 /* .sp
 /*	This feature is available as of Postfix 2.5.
-/* .IP \fB${\fBclient_protocol\fR}\fR
+/* .IP \fB${client_protocol}\fR
 /*	This macro expands to the remote client protocol.
 /* .sp
 /*	This feature is available as of Postfix 2.2.
-/* .IP \fB${\fBdomain\fR}\fR
+/* .IP \fB${domain}\fR
 /*	This macro expands to the domain portion of the recipient
 /*	address.  For example, with an address \fIuser+foo@domain\fR
 /*	the domain is \fIdomain\fR.
@@ -227,81 +227,85 @@
 /*	This information is modified by the \fBh\fR flag for case folding.
 /* .sp
 /*	This feature is available as of Postfix 2.5.
-/* .IP \fB${\fBextension\fR}\fR
+/* .IP \fB${extension}\fR
 /*	This macro expands to the extension part of a recipient address.
 /*	For example, with an address \fIuser+foo@domain\fR the extension is
 /*	\fIfoo\fR.
 /* .sp
-/*	A command-line argument that contains \fB${\fBextension\fR}\fR expands
+/*	A command-line argument that contains \fB${extension}\fR expands
 /*	into as many command-line arguments as there are recipients.
 /* .sp
 /*	This information is modified by the \fBu\fR flag for case folding.
-/* .IP \fB${\fBmailbox\fR}\fR
+/* .IP \fB${mailbox}\fR
 /*	This macro expands to the complete local part of a recipient address.
 /*	For example, with an address \fIuser+foo@domain\fR the mailbox is
 /*	\fIuser+foo\fR.
 /* .sp
-/*	A command-line argument that contains \fB${\fBmailbox\fR}\fR
+/*	A command-line argument that contains \fB${mailbox}\fR
 /*	expands to as many command-line arguments as there are recipients.
 /* .sp
 /*	This information is modified by the \fBu\fR flag for case folding.
-/* .IP \fB${\fBnexthop\fR}\fR
+/* .IP \fB${nexthop}\fR
 /*	This macro expands to the next-hop hostname.
 /* .sp
 /*	This information is modified by the \fBh\fR flag for case folding.
-/* .IP \fB${\fBoriginal_recipient\fR}\fR
+/* .IP \fB${original_recipient}\fR
 /*	This macro expands to the complete recipient address before any
 /*	address rewriting or aliasing.
 /* .sp
 /*	A command-line argument that contains
-/*	\fB${\fBoriginal_recipient\fR}\fR expands to as many
+/*	\fB${original_recipient}\fR expands to as many
 /*	command-line arguments as there are recipients.
 /* .sp
 /*	This information is modified by the \fBhqu\fR flags for quoting
 /*	and case folding.
 /* .sp
 /*	This feature is available as of Postfix 2.5.
-/* .IP \fB${\fBrecipient\fR}\fR
+/* .IP \fB${queue_id}\fR
+/*	This macro expands to the queue id.
+/* .sp
+/*	This feature is available as of Postfix 2.11.
+/* .IP \fB${recipient}\fR
 /*	This macro expands to the complete recipient address.
 /* .sp
-/*	A command-line argument that contains \fB${\fBrecipient\fR}\fR
+/*	A command-line argument that contains \fB${recipient}\fR
 /*	expands to as many command-line arguments as there are recipients.
 /* .sp
 /*	This information is modified by the \fBhqu\fR flags for quoting
 /*	and case folding.
-/* .IP \fB${\fBsasl_method\fR}\fR
+/* .IP \fB${sasl_method}\fR
 /*	This macro expands to the name of the SASL authentication
 /*	mechanism in the AUTH command when the Postfix SMTP server
 /*	received the message.
 /* .sp
 /*	This feature is available as of Postfix 2.2.
-/* .IP \fB${\fBsasl_sender\fR}\fR
+/* .IP \fB${sasl_sender}\fR
 /*	This macro expands to the SASL sender name (i.e. the original
 /*	submitter as per RFC 4954) in the MAIL FROM command when
 /*	the Postfix SMTP server received the message.
 /* .sp
 /*	This feature is available as of Postfix 2.2.
-/* .IP \fB${\fBsasl_username\fR}\fR
+/* .IP \fB${sasl_username}\fR
 /*	This macro expands to the SASL user name in the AUTH command
 /*	when the Postfix SMTP server received the message.
 /* .sp
 /*	This feature is available as of Postfix 2.2.
-/* .IP \fB${\fBsender\fR}\fR
+/* .IP \fB${sender}\fR
 /*	This macro expands to the envelope sender address. By default,
 /*	the null sender address expands to MAILER-DAEMON; this can
 /*	be changed with the \fBnull_sender\fR attribute, as described
 /*	above.
 /* .sp
 /*	This information is modified by the \fBq\fR flag for quoting.
-/* .IP \fB${\fBsize\fR}\fR
+/* .IP \fB${size}\fR
 /*	This macro expands to Postfix's idea of the message size, which
 /*	is an approximation of the size of the message as delivered.
-/* .IP \fB${\fBuser\fR}\fR
+/* .IP \fB${user}\fR
 /*	This macro expands to the username part of a recipient address.
 /*	For example, with an address \fIuser+foo@domain\fR the username
 /*	part is \fIuser\fR.
 /* .sp
-/*	A command-line argument that contains \fB${\fBuser\fR}\fR expands
+/*	A command-line argument that contains \fB${user}\fR expands
 /*	into as many command-line arguments as there are recipients.
 /* .sp
 /*	This information is modified by the \fBu\fR flag for case folding.
@@ -392,7 +396,9 @@
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* .IP "\fBrecipient_delimiter (empty)\fR"
-/*	The separator between user names and address extensions (user+foo).
+/*	The set of characters that can separate a user name from its
+/*	extension (example: user+foo), or a .forward file name from its
+/*	extension (example: .forward+foo).
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
@@ -502,6 +508,7 @@
 #define PIPE_DICT_SASL_METHOD	"sasl_method"	/* key */
 #define PIPE_DICT_SASL_USERNAME	"sasl_username"	/* key */
 #define PIPE_DICT_SASL_SENDER	"sasl_sender"	/* key */
+#define PIPE_DICT_QUEUE_ID	"queue_id"	/* key */
 
  /*
   * Flags used to pass back the type of special parameter found by
@@ -601,6 +608,7 @@ static int parse_callback(int type, VSTRING *buf, char *context)
 	PIPE_DICT_SASL_METHOD, 0,
 	PIPE_DICT_SASL_USERNAME, 0,
 	PIPE_DICT_SASL_SENDER, 0,
+	PIPE_DICT_QUEUE_ID, 0,
 	0, 0,
     };
     struct cmd_flags *p;
@@ -719,7 +727,7 @@ static ARGV *expand_argv(const char *service, char **argv,
 			msg_warn("no @ in recipient address: %s",
 				 rcpt_list->info[i].address);
 		    if (*var_rcpt_delim)
-			split_addr(STR(buf), *var_rcpt_delim);
+			split_addr(STR(buf), var_rcpt_delim);
 		    if (*STR(buf) == 0)
 			continue;
 		    dict_update(PIPE_DICT_TABLE, PIPE_DICT_USER, STR(buf));
@@ -737,7 +745,7 @@ static ARGV *expand_argv(const char *service, char **argv,
 			msg_warn("no @ in recipient address: %s",
 				 rcpt_list->info[i].address);
 		    if (*var_rcpt_delim == 0
-		      || (ext = split_addr(STR(buf), *var_rcpt_delim)) == 0)
+			|| (ext = split_addr(STR(buf), var_rcpt_delim)) == 0)
 			ext = "";		/* insert null arg */
 		    dict_update(PIPE_DICT_TABLE, PIPE_DICT_EXTENSION, ext);
 		}
@@ -1221,6 +1229,8 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
 		request->sasl_username);
     dict_update(PIPE_DICT_TABLE, PIPE_DICT_SASL_SENDER,
 		request->sasl_sender);
+    dict_update(PIPE_DICT_TABLE, PIPE_DICT_QUEUE_ID,
+		request->queue_id);
     vstring_free(buf);
 
     if ((expanded_argv = expand_argv(service, attr.command,

@@ -1,10 +1,10 @@
-/*	$NetBSD: addpartial-overlay.c,v 1.1.1.3 2010/12/12 15:18:53 adam Exp $	*/
+/*	$NetBSD: addpartial-overlay.c,v 1.1.1.3.24.1 2014/08/10 07:09:43 tls Exp $	*/
 
 /* addpartial-overlay.c */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/addpartial/addpartial-overlay.c,v 1.1.2.6 2010/04/13 20:22:25 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2010 The OpenLDAP Foundation.
+ * Copyright 2004-2014 The OpenLDAP Foundation.
  * Portions Copyright (C) 2004 Virginia Tech, David Hawes.
  * All rights reserved.
  *
@@ -45,7 +45,6 @@ static slap_overinst addpartial;
 static int addpartial_add( Operation *op, SlapReply *rs)
 {
     Operation nop = *op;
-    SlapReply nrs = { REP_RESULT };
     Entry *toAdd = NULL;
     Entry *found = NULL;
     slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
@@ -260,12 +259,6 @@ static int addpartial_add( Operation *op, SlapReply *rs)
                 Debug(LDAP_DEBUG_TRACE, "%s: mods to do...\n",
                       addpartial.on_bi.bi_type, 0, 0);
 
-                memset(&nrs, 0, sizeof(nrs));
-                nrs.sr_type = REP_RESULT;
-                nrs.sr_err = LDAP_SUCCESS;
-                nrs.sr_entry = NULL;
-                nrs.sr_text = NULL;
-
                 nop.o_tag = LDAP_REQ_MODIFY;
                 nop.orm_modlist = mods;
                 nop.orm_no_opattrs = 0;
@@ -283,6 +276,7 @@ static int addpartial_add( Operation *op, SlapReply *rs)
 
                 if(nop.o_bd->be_modify)
                 {
+                    SlapReply nrs = { REP_RESULT };
                     rc = (nop.o_bd->be_modify)(&nop, &nrs);
                 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.63 2013/03/01 18:25:57 joerg Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.63.10.1 2014/08/10 06:56:25 tls Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.63 2013/03/01 18:25:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.63.10.1 2014/08/10 06:56:25 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -77,11 +77,16 @@ int ip_gif_ttl = GIF_TTL;
 int ip_gif_ttl = 0;
 #endif
 
-const struct protosw in_gif_protosw =
-{ SOCK_RAW,	&inetdomain,	0/* IPPROTO_IPV[46] */,	PR_ATOMIC|PR_ADDR,
-  in_gif_input, rip_output,	0,		rip_ctloutput,
-  rip_usrreq,
-  0,            0,              0,              0,
+const struct protosw in_gif_protosw = {
+	.pr_type	= SOCK_RAW,
+	.pr_domain	= &inetdomain,
+	.pr_protocol	= 0 /* IPPROTO_IPV[46] */,
+	.pr_flags	= PR_ATOMIC|PR_ADDR,
+	.pr_input	= in_gif_input,
+	.pr_output	= rip_output,
+	.pr_ctlinput	= NULL,
+	.pr_ctloutput	= rip_ctloutput,
+	.pr_usrreqs	= &rip_usrreqs,
 };
 
 int

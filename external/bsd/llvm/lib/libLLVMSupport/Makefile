@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2014/03/04 21:05:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.26.2.1 2014/08/10 07:09:09 tls Exp $
 
 LIB=	LLVMSupport
 
@@ -18,7 +18,6 @@ SRCS+=	APFloat.cpp \
 	circular_raw_ostream.cpp \
 	CommandLine.cpp \
 	Compression.cpp \
-	ConstantRange.cpp \
 	ConvertUTF.c \
 	ConvertUTFWrapper.cpp \
 	CrashRecoveryContext.cpp \
@@ -117,15 +116,6 @@ SRCS+=	Host.inc \
 .for src in ${SRCS:M*.c}
 CPPFLAGS.${src}+=	-std=gnu99
 .endfor
-
-.if !defined(HOSTLIB) && !empty(MACHINE_ARCH:M*arm*)
-# Missing __sync_fetch_and_add_4
-# Missing __sync_fetch_and_sub_4
-# Missing __sync_lock_test_and_set_4
-# Missing __sync_val_compare_and_swap_4
-# Missing __atomic_fetch_add_4
-COPTS.Atomic.cpp+= -march=armv6
-.endif
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

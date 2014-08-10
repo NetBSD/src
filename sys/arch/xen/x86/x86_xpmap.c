@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.52 2013/11/10 01:19:13 jnemeth Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.52.2.1 2014/08/10 06:54:11 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.52 2013/11/10 01:19:13 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.52.2.1 2014/08/10 06:54:11 tls Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -488,6 +488,35 @@ xen_vcpu_bcast_invlpg(vaddr_t sva, vaddr_t eva)
 	}
 
 	return;
+}
+
+/* Copy a page */
+void
+xen_copy_page(paddr_t srcpa, paddr_t dstpa)
+{
+	mmuext_op_t op;
+
+	op.cmd = MMUEXT_COPY_PAGE;
+	op.arg1.mfn = xpmap_ptom(dstpa) >> PAGE_SHIFT;
+	op.arg2.src_mfn = xpmap_ptom(srcpa) >> PAGE_SHIFT;
+
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+		panic(__func__);
+	}
+}
+
+/* Zero a physical page */
+void
+xen_pagezero(paddr_t pa)
+{
+	mmuext_op_t op;
+
+	op.cmd = MMUEXT_CLEAR_PAGE;
+	op.arg1.mfn = xpmap_ptom(pa) >> PAGE_SHIFT;
+
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+		panic(__func__);
+	}
 }
 
 int

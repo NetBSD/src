@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.20 2011/02/08 20:20:13 rmind Exp $	*/
+/*	$NetBSD: rtc.c,v 1.20.28.1 2014/08/10 06:53:57 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.20 2011/02/08 20:20:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.20.28.1 2014/08/10 06:53:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,10 @@ static int
 rtcmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
+
+	/* 425e doesn't have the traditional RTC at intio */
+	if (machineid == HP_425 && mmuid == MMUID_425_E)
+		return 0;
 
 	if (strcmp("rtc", ia->ia_modname) != 0)
 		return 0;

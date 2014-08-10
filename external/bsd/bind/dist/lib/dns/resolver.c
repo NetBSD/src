@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.18 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.18.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -17,11 +17,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
-
 /*! \file */
 
 #include <config.h>
+#include <ctype.h>
 
 #include <isc/log.h>
 #include <isc/platform.h>
@@ -462,13 +461,14 @@ struct dns_resolver {
 #define VALID_RESOLVER(res)		ISC_MAGIC_VALID(res, RES_MAGIC)
 
 /*%
- * Private addrinfo flags.  These must not conflict with DNS_FETCHOPT_NOEDNS0,
- * which we also use as an addrinfo flag.
+ * Private addrinfo flags.  These must not conflict with DNS_FETCHOPT_NOEDNS0
+ * (0x008) which we also use as an addrinfo flag.
  */
 #define FCTX_ADDRINFO_MARK              0x0001
 #define FCTX_ADDRINFO_FORWARDER         0x1000
 #define FCTX_ADDRINFO_TRIED             0x2000
 #define FCTX_ADDRINFO_EDNSOK            0x4000
+#define FCTX_ADDRINFO_NOSIT             0x8000
 
 #define UNMARKED(a)                     (((a)->flags & FCTX_ADDRINFO_MARK) \
 					 == 0)
@@ -476,6 +476,8 @@ struct dns_resolver {
 					 FCTX_ADDRINFO_FORWARDER) != 0)
 #define TRIED(a)                        (((a)->flags & \
 					 FCTX_ADDRINFO_TRIED) != 0)
+#define NOSIT(a)                        (((a)->flags & \
+					 FCTX_ADDRINFO_NOSIT) != 0)
 
 #define NXDOMAIN(r) (((r)->attributes & DNS_RDATASETATTR_NXDOMAIN) != 0)
 #define NEGATIVE(r) (((r)->attributes & DNS_RDATASETATTR_NEGATIVE) != 0)
@@ -2066,6 +2068,10 @@ resquery_send(resquery_t *query) {
 				(void) dns_peer_getrequestsit(peer, &reqsit);
 #endif
 			}
+#ifdef ISC_PLATFORM_USESIT
+			if (NOSIT(query->addrinfo))
+				reqsit = ISC_FALSE;
+#endif
 			if (reqnsid) {
 				INSIST(ednsopt < DNS_EDNSOPTIONS);
 				ednsopts[ednsopt].code = DNS_OPT_NSID;
@@ -6938,21 +6944,34 @@ log_nsid(isc_buffer_t *opt, size_t nsid_len, resquery_t *query,
 	static const char hex[17] = "0123456789abcdef";
 	char addrbuf[ISC_SOCKADDR_FORMATSIZE];
 	isc_uint16_t buflen, i;
-	unsigned char *p, *buf, *nsid;
+	unsigned char *p, *nsid;
+	unsigned char *buf = NULL, *pbuf = NULL;
 
 	/* Allocate buffer for storing hex version of the NSID */
 	buflen = (isc_uint16_t)nsid_len * 2 + 1;
 	buf = isc_mem_get(mctx, buflen);
 	if (buf == NULL)
-		return;
+		goto cleanup;
+	pbuf = isc_mem_get(mctx, nsid_len + 1);
+	if (pbuf == NULL)
+		goto cleanup;
 
 	/* Convert to hex */
 	p = buf;
 	nsid = isc_buffer_current(opt);
 	for (i = 0; i < nsid_len; i++) {
-		*p++ = hex[(nsid[0] >> 4) & 0xf];
-		*p++ = hex[nsid[0] & 0xf];
-		nsid++;
+		*p++ = hex[(nsid[i] >> 4) & 0xf];
+		*p++ = hex[nsid[i] & 0xf];
+	}
+	*p = '\0';
+
+	/* Make printable version */
+	p = pbuf;
+	for (i = 0; i < nsid_len; i++) {
+		if (isprint(nsid[i]))
+			*p++ = nsid[i];
+		else
+			*p++ = '.';
 	}
 	*p = '\0';
 
@@ -6960,11 +6979,12 @@ log_nsid(isc_buffer_t *opt, size_t nsid_len, resquery_t *query,
 			    sizeof(addrbuf));
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
 		      DNS_LOGMODULE_RESOLVER, level,
-		      "received NSID '%s' from %s", buf, addrbuf);
-
-	/* Clean up */
-	isc_mem_put(mctx, buf, buflen);
-	return;
+		      "received NSID %s (\"%s\") from %s", buf, pbuf, addrbuf);
+ cleanup:
+	if (pbuf != NULL)
+		isc_mem_put(mctx, pbuf, nsid_len + 1);
+	if (buf != NULL)
+		isc_mem_put(mctx, buf, buflen);
 }
 
 static isc_boolean_t
@@ -7267,6 +7287,19 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 	if (opt != NULL)
 		process_opt(query, opt);
 
+#ifdef notyet
+#ifdef ISC_PLATFORM_USESIT
+	if (message->sitbad) {
+		/*
+		 * If the SIT is bad assume it is a attack and retry.
+		 */
+		resend = ISC_TRUE;
+		/* XXXMPA log it */
+		goto done;
+	}
+#endif
+#endif
+
 	/*
 	 * If the message is signed, check the signature.  If not, this
 	 * returns success anyway.
@@ -7410,6 +7443,9 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 		case dns_rcode_refused:
 			inc_stats(fctx->res, dns_resstatscounter_refused);
 			break;
+		case dns_rcode_badvers:
+			inc_stats(fctx->res, dns_resstatscounter_badvers);
+			break;
 		default:
 			inc_stats(fctx->res, dns_resstatscounter_othererror);
 			break;
@@ -7421,6 +7457,24 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 	 */
 	if (message->rcode != dns_rcode_noerror &&
 	    message->rcode != dns_rcode_nxdomain) {
+#ifdef ISC_PLATFORM_USESIT
+		unsigned char sit[64];
+
+		/*
+		 * Some servers do not ignore unknown EDNS options.
+		 */
+		if (!NOSIT(query->addrinfo) &&
+		    (message->rcode == dns_rcode_formerr ||
+		     message->rcode == dns_rcode_notimp ||
+		     message->rcode == dns_rcode_refused) &&
+		     dns_adb_getsit(fctx->adb, query->addrinfo,
+				   sit, sizeof(sit)) == 0U) {
+			dns_adb_changeflags(fctx->adb, query->addrinfo,
+					    FCTX_ADDRINFO_NOSIT,
+					    FCTX_ADDRINFO_NOSIT);
+			resend = ISC_TRUE;
+		} else
+#endif
 		if (((message->rcode == dns_rcode_formerr ||
 		      message->rcode == dns_rcode_notimp) ||
 		     (message->rcode == dns_rcode_servfail &&
@@ -7474,6 +7528,23 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 		} else if (message->rcode == dns_rcode_badvers) {
 			unsigned int flags, mask;
 			unsigned int version;
+#ifdef ISC_PLATFORM_USESIT
+			unsigned char sit[64];
+
+			/*
+			 * Some servers return BADVERS to unknown
+			 * EDNS options.  This cannot be long term
+			 * strategy.  Do not disable SIT if we have
+			 * already have received a SIT from this
+			 * server.
+			 */
+			if (dns_adb_getsit(fctx->adb, query->addrinfo,
+					   sit, sizeof(sit)) == 0U) {
+				dns_adb_changeflags(fctx->adb, query->addrinfo,
+						    FCTX_ADDRINFO_NOSIT,
+						    FCTX_ADDRINFO_NOSIT);
+			}
+#endif
 
 			resend = ISC_TRUE;
 			INSIST(opt != NULL);

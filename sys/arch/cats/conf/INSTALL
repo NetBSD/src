@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.92 2014/03/02 13:24:38 joerg Exp $
+#	$NetBSD: INSTALL,v 1.92.2.1 2014/08/10 06:53:53 tls Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -132,7 +132,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
-#options 	DIAGNOSTIC	# internally consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

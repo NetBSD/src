@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.5 2011/07/01 19:24:14 dyoung Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.5.26.1 2014/08/10 06:53:49 tls Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.5 2011/07/01 19:24:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.5.26.1 2014/08/10 06:53:49 tls Exp $");
 
 #include "opt_pcifixup.h"
 
@@ -92,11 +92,11 @@ rbus_pccbb_parent_mem(struct pci_attach_args *pa)
 	 * which is not recognised by the kernel as already reserved.
 	 */
 
-	if (start < rbus_min_start) 
+	if (start < rbus_min_start)
 		start = rbus_min_start;
 
 	size = ex->ex_end - start;
-  
+
 	return rbus_new_root_share(pa->pa_memt, ex, start, size, 0);
 }
 

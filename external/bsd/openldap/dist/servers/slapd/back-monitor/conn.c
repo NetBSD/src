@@ -1,10 +1,10 @@
-/*	$NetBSD: conn.c,v 1.1.1.3 2010/12/12 15:23:14 adam Exp $	*/
+/*	$NetBSD: conn.c,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
 /* conn.c - deal with connection subsystem */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/conn.c,v 1.72.2.11 2010/04/19 16:53:03 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -79,7 +79,7 @@ monitor_subsys_conn_init(
 	 */
 	BER_BVSTR( &bv, "cn=Max File Descriptors" );
 	e = monitor_entry_stub( &ms->mss_dn, &ms->mss_ndn, &bv,
-		mi->mi_oc_monitorCounterObject, mi, NULL, NULL );
+		mi->mi_oc_monitorCounterObject, NULL, NULL );
 	
 	if ( e == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -124,7 +124,7 @@ monitor_subsys_conn_init(
 	 */
 	BER_BVSTR( &bv, "cn=Total" );
 	e = monitor_entry_stub( &ms->mss_dn, &ms->mss_ndn, &bv,
-		mi->mi_oc_monitorCounterObject, mi, NULL, NULL );
+		mi->mi_oc_monitorCounterObject, NULL, NULL );
 	
 	if ( e == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -163,7 +163,7 @@ monitor_subsys_conn_init(
 	 */
 	BER_BVSTR( &bv, "cn=Current" );
 	e = monitor_entry_stub( &ms->mss_dn, &ms->mss_ndn, &bv,
-		mi->mi_oc_monitorCounterObject, mi, NULL, NULL );
+		mi->mi_oc_monitorCounterObject, NULL, NULL );
 
 	if ( e == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -225,7 +225,7 @@ monitor_subsys_conn_update(
 
 	} else if ( dn_match( &rdn, &current_bv ) ) {
 		Connection	*c;
-		int		connindex;
+		ber_socket_t	connindex;
 
 		for ( n = 0, c = connection_first( &connindex );
 				c != NULL;
@@ -294,7 +294,7 @@ conn_create(
 		"cn=Connection %ld", c->c_connid );
 	bv.bv_val = buf;
 	e = monitor_entry_stub( &ms->mss_dn, &ms->mss_ndn, &bv, 
-		mi->mi_oc_monitorConnection, mi, &ctmbv, &mtmbv );
+		mi->mi_oc_monitorConnection, &ctmbv, &mtmbv );
 
 	if ( e == NULL) {
 		Debug( LDAP_DEBUG_ANY,
@@ -447,7 +447,7 @@ monitor_subsys_conn_create(
 
 	if ( ndn == NULL ) {
 		Connection	*c;
-		int		connindex;
+		ber_socket_t	connindex;
 		Entry		*e = NULL,
 				*e_tmp = NULL;
 
@@ -483,7 +483,7 @@ monitor_subsys_conn_create(
 
 	} else {
 		Connection		*c;
-		int			connindex;
+		ber_socket_t		connindex;
 		unsigned long 		connid;
 		char			*next = NULL;
 		static struct berval	nconn_bv = BER_BVC( "cn=connection " );

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.1.1.8 2014/01/18 17:04:20 tron Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.1.1.8.2.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -16,10 +16,15 @@
 /*	char	*var_tls_null_clist;
 /*	char	*var_tls_eecdh_strong;
 /*	char	*var_tls_eecdh_ultra;
+/*	char	*var_tls_dane_agility;
+/*	char	*var_tls_dane_digests;
 /*	int	var_tls_daemon_rand_bytes;
-/*	bool    var_tls_append_def_CA;
+/*	bool	var_tls_append_def_CA;
+/*	bool	var_tls_dane_taa_dgst;
 /*	bool	var_tls_preempt_clist;
 /*	bool	var_tls_bc_pkey_fprint;
+/*	bool	var_tls_multi_wildcard;
+/*	char	*var_tls_mgr_service;
 /*
 /*	TLS_APPL_STATE *tls_alloc_app_context(ssl_ctx, log_mask)
 /*	SSL_CTX	*ssl_ctx;
@@ -74,6 +79,13 @@
 /*	int	tls_log_mask(log_param, log_level)
 /*	const char *log_param;
 /*	const char *log_level;
+/*
+/*	void	 tls_update_app_logmask(app_ctx, log_mask)
+/*	TLS_APPL_STATE *app_ctx;
+/*	int      log_mask;
+/*
+/*	int	tls_validate_digest(dgst)
+/*	const char *dgst;
 /* DESCRIPTION
 /*	This module implements routines that support the TLS client
 /*	and server internals.
@@ -138,6 +150,12 @@
 /*	tls_log_mask() converts a TLS log_level value from string
 /*	to mask.  The main.cf parameter name is passed along for
 /*	diagnostics.
+/*
+/*	tls_update_app_logmask() changes the log mask of the
+/*	application TLS context to the new setting.
+/*
+/*	tls_validate_digest() returns non-zero if the named digest
+/*	is usable and zero otherwise.
 /* LICENSE
 /* .ad
 /* .fi
@@ -206,9 +224,15 @@ char   *var_tls_null_clist;
 int     var_tls_daemon_rand_bytes;
 char   *var_tls_eecdh_strong;
 char   *var_tls_eecdh_ultra;
+char   *var_tls_dane_agility;
+char   *var_tls_dane_digests;
 bool    var_tls_append_def_CA;
 char   *var_tls_bug_tweaks;
+char   *var_tls_ssl_options;
 bool    var_tls_bc_pkey_fprint;
+bool    var_tls_dane_taa_dgst;
+bool    var_tls_multi_wildcard;
+char   *var_tls_mgr_service;
 
 #ifdef VAR_TLS_PREEMPT_CLIST
 bool    var_tls_preempt_clist;
@@ -313,6 +337,31 @@ static const LONG_NAME_MASK ssl_bug_tweaks[] = {
 };
 
  /*
+  * SSL_OP_MUMBLE option name <=> mask conversion for options that are not
+  * (or may in the future not be) in SSL_OP_ALL.  These enable optional
+  * behavior, rather than bug interoperability work-arounds.
+  */
+#define NAME_SSL_OP(x)	#x, SSL_OP_##x
+static const LONG_NAME_MASK ssl_op_tweaks[] = {
+
+#ifndef SSL_OP_LEGACY_SERVER_CONNECT
+#define SSL_OP_LEGACY_SERVER_CONNECT	0
+#endif
+    NAME_SSL_OP(LEGACY_SERVER_CONNECT),
+
+#ifndef SSL_OP_NO_TICKET
+#define SSL_OP_NO_TICKET		0
+#endif
+    NAME_SSL_OP(NO_TICKET),
+
+#ifndef SSL_OP_NO_COMPRESSION
+#define SSL_OP_NO_COMPRESSION		0
+#endif
+    NAME_SSL_OP(NO_COMPRESSION),
+    0, 0,
+};
+
+ /*
   * Ciphersuite name <=> code conversion.
   */
 const NAME_CODE tls_cipher_grade_table[] = {
@@ -400,6 +449,13 @@ int     tls_log_mask(const char *log_param, const char *log_level)
     return (mask);
 }
 
+/* tls_update_app_logmask - update log level after init */
+
+void    tls_update_app_logmask(TLS_APPL_STATE *app_ctx, int log_mask)
+{
+    app_ctx->log_mask = log_mask;
+}
+
 /* tls_exclude_missing - Append exclusions for missing ciphers */
 
 static const char *tls_exclude_missing(SSL_CTX *ctx, VSTRING *buf)
@@ -407,8 +463,7 @@ static const char *tls_exclude_missing(SSL_CTX *ctx, VSTRING *buf)
     const char *myname = "tls_exclude_missing";
     static ARGV *exclude;		/* Cached */
     SSL    *s = 0;
-
-    STACK_OF(SSL_CIPHER) * ciphers;
+    ssl_cipher_stack_t *ciphers;
     SSL_CIPHER *c;
     const cipher_probe_t *probe;
     int     alg_bits;
@@ -560,6 +615,10 @@ void    tls_param_init(void)
 	VAR_TLS_EECDH_STRONG, DEF_TLS_EECDH_STRONG, &var_tls_eecdh_strong, 1, 0,
 	VAR_TLS_EECDH_ULTRA, DEF_TLS_EECDH_ULTRA, &var_tls_eecdh_ultra, 1, 0,
 	VAR_TLS_BUG_TWEAKS, DEF_TLS_BUG_TWEAKS, &var_tls_bug_tweaks, 0, 0,
+	VAR_TLS_SSL_OPTIONS, DEF_TLS_SSL_OPTIONS, &var_tls_ssl_options, 0, 0,
+	VAR_TLS_DANE_AGILITY, DEF_TLS_DANE_AGILITY, &var_tls_dane_agility, 1, 0,
+	VAR_TLS_DANE_DIGESTS, DEF_TLS_DANE_DIGESTS, &var_tls_dane_digests, 1, 0,
+	VAR_TLS_MGR_SERVICE, DEF_TLS_MGR_SERVICE, &var_tls_mgr_service, 1, 0,
 	0,
     };
     static const CONFIG_INT_TABLE int_table[] = {
@@ -569,9 +628,9 @@ void    tls_param_init(void)
     static const CONFIG_BOOL_TABLE bool_table[] = {
 	VAR_TLS_APPEND_DEF_CA, DEF_TLS_APPEND_DEF_CA, &var_tls_append_def_CA,
 	VAR_TLS_BC_PKEY_FPRINT, DEF_TLS_BC_PKEY_FPRINT, &var_tls_bc_pkey_fprint,
-#if OPENSSL_VERSION_NUMBER >= 0x0090700fL	/* OpenSSL 0.9.7 and later */
+	VAR_TLS_DANE_TAA_DGST, DEF_TLS_DANE_TAA_DGST, &var_tls_dane_taa_dgst,
 	VAR_TLS_PREEMPT_CLIST, DEF_TLS_PREEMPT_CLIST, &var_tls_preempt_clist,
-#endif
+	VAR_TLS_MULTI_WILDCARD, DEF_TLS_MULTI_WILDCARD, &var_tls_multi_wildcard,
 	0,
     };
     static int init_done;
@@ -749,13 +808,20 @@ TLS_SESS_STATE *tls_alloc_sess_context(int log_mask, const char *namaddr)
     TLScontext->serverid = 0;
     TLScontext->peer_CN = 0;
     TLScontext->issuer_CN = 0;
-    TLScontext->peer_fingerprint = 0;
+    TLScontext->peer_cert_fprint = 0;
     TLScontext->peer_pkey_fprint = 0;
     TLScontext->protocol = 0;
     TLScontext->cipher_name = 0;
     TLScontext->log_mask = log_mask;
     TLScontext->namaddr = lowercase(mystrdup(namaddr));
-    TLScontext->fpt_dgst = 0;
+    TLScontext->mdalg = 0;			/* Alias for props->mdalg */
+    TLScontext->dane = 0;			/* Alias for props->dane */
+    TLScontext->errordepth = -1;
+    TLScontext->tadepth = -1;
+    TLScontext->errorcode = X509_V_OK;
+    TLScontext->errorcert = 0;
+    TLScontext->untrusted = 0;
+    TLScontext->trusted = 0;
 
     return (TLScontext);
 }
@@ -782,12 +848,16 @@ void    tls_free_context(TLS_SESS_STATE *TLScontext)
 	myfree(TLScontext->peer_CN);
     if (TLScontext->issuer_CN)
 	myfree(TLScontext->issuer_CN);
-    if (TLScontext->peer_fingerprint)
-	myfree(TLScontext->peer_fingerprint);
+    if (TLScontext->peer_cert_fprint)
+	myfree(TLScontext->peer_cert_fprint);
     if (TLScontext->peer_pkey_fprint)
 	myfree(TLScontext->peer_pkey_fprint);
-    if (TLScontext->fpt_dgst)
-	myfree(TLScontext->fpt_dgst);
+    if (TLScontext->errorcert)
+	X509_free(TLScontext->errorcert);
+    if (TLScontext->untrusted)
+	sk_X509_pop_free(TLScontext->untrusted, X509_free);
+    if (TLScontext->trusted)
+	sk_X509_pop_free(TLScontext->trusted, X509_free);
 
     myfree((char *) TLScontext);
 }
@@ -895,7 +965,7 @@ long    tls_bug_bits(void)
      * breaking on all 0.9.8[ab] systems that have zlib support enabled.
      */
     if (lib_version >= 0x00908000L && lib_version <= 0x0090802fL) {
-	STACK_OF(SSL_COMP) * comp_methods;
+	ssl_comp_stack_t *comp_methods = SSL_COMP_get_compression_methods();
 
 	comp_methods = SSL_COMP_get_compression_methods();
 	if (comp_methods != 0 && sk_SSL_COMP_num(comp_methods) > 0)
@@ -916,6 +986,20 @@ long    tls_bug_bits(void)
 	bits &= ~SSL_OP_SAFARI_ECDHE_ECDSA_BUG;
 #endif
     }
+
+    /*
+     * Allow users to set options not in SSL_OP_ALL, and not already managed
+     * via other Postfix parameters.
+     */
+    if (*var_tls_ssl_options) {
+	long    enable;
+
+	enable = long_name_mask_opt(VAR_TLS_SSL_OPTIONS, ssl_op_tweaks,
+				    var_tls_ssl_options, NAME_MASK_ANY_CASE |
+				    NAME_MASK_NUMBER | NAME_MASK_WARN);
+	enable &= ~(SSL_OP_ALL | TLS_SSL_OP_MANAGED_BITS);
+	bits |= enable;
+    }
     return (bits);
 }
 
@@ -929,17 +1013,14 @@ void    tls_print_errors(void)
     const char *data;
     int     line;
     int     flags;
-    unsigned long thread;
 
-    thread = CRYPTO_thread_id();
     while ((err = ERR_get_error_line_data(&file, &line, &data, &flags)) != 0) {
 	ERR_error_string_n(err, buffer, sizeof(buffer));
 	if (flags & ERR_TXT_STRING)
-	    msg_warn("TLS library problem: %lu:%s:%s:%d:%s:",
-		     thread, buffer, file, line, data);
+	    msg_warn("TLS library problem: %s:%s:%d:%s:",
+		     buffer, file, line, data);
 	else
-	    msg_warn("TLS library problem: %lu:%s:%s:%d:",
-		     thread, buffer, file, line);
+	    msg_warn("TLS library problem: %s:%s:%d:", buffer, file, line);
     }
 }
 
@@ -1072,6 +1153,49 @@ long    tls_bio_dump_cb(BIO *bio, int cmd, const char *argp, int argi,
 	tls_dump_buffer((unsigned char *) argp, (int) ret);
     }
     return (ret);
+}
+
+int     tls_validate_digest(const char *dgst)
+{
+    const EVP_MD *md_alg;
+    unsigned int md_len;
+
+    /*
+     * Register SHA-2 digests, if implemented and not already registered.
+     * Improves interoperability with clients and servers that prematurely
+     * deploy SHA-2 certificates.  Also facilitates DANE and TA support.
+     */
+#if defined(LN_sha256) && defined(NID_sha256) && !defined(OPENSSL_NO_SHA256)
+    if (!EVP_get_digestbyname(LN_sha224))
+	EVP_add_digest(EVP_sha224());
+    if (!EVP_get_digestbyname(LN_sha256))
+	EVP_add_digest(EVP_sha256());
+#endif
+#if defined(LN_sha512) && defined(NID_sha512) && !defined(OPENSSL_NO_SHA512)
+    if (!EVP_get_digestbyname(LN_sha384))
+	EVP_add_digest(EVP_sha384());
+    if (!EVP_get_digestbyname(LN_sha512))
+	EVP_add_digest(EVP_sha512());
+#endif
+
+    /*
+     * If the administrator specifies an unsupported digest algorithm, fail
+     * now, rather than in the middle of a TLS handshake.
+     */
+    if ((md_alg = EVP_get_digestbyname(dgst)) == 0) {
+	msg_warn("Digest algorithm \"%s\" not found", dgst);
+	return (0);
+    }
+
+    /*
+     * Sanity check: Newer shared libraries may use larger digests.
+     */
+    if ((md_len = EVP_MD_size(md_alg)) > EVP_MAX_MD_SIZE) {
+	msg_warn("Digest algorithm \"%s\" output size %u too large",
+		 dgst, md_len);
+	return (0);
+    }
+    return (1);
 }
 
 #else

@@ -19,7 +19,7 @@ SYSTEMTESTTOP=..
 
 . ./clean.sh
 
-test -e $RANDFILE || $GENRANDOM 400 $RANDFILE
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 echo "I:generating keys and preparing zones"
 cd ns1 && sh keygen.sh

@@ -1,4 +1,4 @@
-/*	$NetBSD: sitara_cmreg.h,v 1.1 2013/04/17 15:04:39 bouyer Exp $	*/
+/*	$NetBSD: sitara_cmreg.h,v 1.1.10.1 2014/08/10 06:53:52 tls Exp $	*/
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -39,6 +39,12 @@
 #define SCM_REVISION_CUSTOM(x)	(((x) & 0x000000c0) >>  6)
 #define SCM_REVISION_MINOR(x)	(((x) & 0x0000001f) >>  0)
 
+#define OMAP2SCM_USB_CTL0	0x620
+#define OMAP2SCM_USB_CTL1	0x628
+#define OMAP2SCM_USB_CTLx_SESSIONEND	0x100000
+#define OMAP2SCM_USB_CTLx_VBUSDET	0x080000
+#define OMAP2SCM_USB_CTLx_OTGPHY_PWD	0x000002
+#define OMAP2SCM_USB_CTLx_CMPHY_PWD	0x000001
 #define OMAP2SCM_MAC_ID0_LO	0x630
 #define OMAP2SCM_MAC_ID0_HI	0x634
 

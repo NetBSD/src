@@ -132,7 +132,7 @@ int sigwait(const unsigned int *set, int *sig);
 #endif /** SHUTUP_STDARG_CAST && __GNUC__ */
 
 /** define if the system has a random number generating device */
-#define PATH_RANDOMDEV "/dev/random"
+#define PATH_RANDOMDEV "/dev/urandom"
 
 /** define if pthread_attr_getstacksize() is available */
 #define HAVE_PTHREAD_ATTR_GETSTACKSIZE 1
@@ -334,8 +334,14 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <net/route.h> header file. */
 #define HAVE_NET_ROUTE_H 1
 
+/* Define if your OpenSSL version supports AES */
+#define HAVE_OPENSSL_AES 1
+
 /* Define if your OpenSSL version supports ECDSA. */
 #define HAVE_OPENSSL_ECDSA 1
+
+/* Define if your OpenSSL version supports EVP AES */
+#define HAVE_OPENSSL_EVP_AES 1
 
 /* Define if your OpenSSL version supports GOST. */
 #define HAVE_OPENSSL_GOST 1

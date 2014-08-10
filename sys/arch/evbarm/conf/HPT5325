@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.18 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: HPT5325,v 1.18.4.1 2014/08/10 06:53:54 tls Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -94,6 +94,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
@@ -150,7 +151,7 @@ options 	BUFQ_PRIOCSCAN
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

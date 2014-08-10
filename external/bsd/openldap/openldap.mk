@@ -1,4 +1,4 @@
-#	$NetBSD: openldap.mk,v 1.5 2010/12/12 16:10:42 adam Exp $
+#	$NetBSD: openldap.mk,v 1.5.24.1 2014/08/10 07:09:41 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ LDAP_RUNDIR=	/var/openldap
 CPPFLAGS+=	-I${LDAP_SRCDIR}/include
 CPPFLAGS+=	-I${LDAP_DISTDIR}/include
 
-.for _LIB in lutil		# XXX lber ldap ldap_r lunicode rewrite
+.for _LIB in lutil ldap		# XXX lber ldap_r lunicode rewrite
 .if !defined(LDAPOBJDIR.${_LIB})
 LDAPOBJDIR.${_LIB}!=	cd ${LDAP_SRCDIR}/lib/lib${_LIB} && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=	LDAPOBJDIR.${_LIB}

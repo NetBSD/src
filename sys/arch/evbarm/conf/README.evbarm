@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.7 2013/09/30 13:38:16 kiyohara Exp $
+$NetBSD: README.evbarm,v 1.7.2.1 2014/08/10 06:53:55 tls Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -24,6 +24,7 @@ IQ80310		2001/09/05	Intel IQ80310 eval board
 IQ80321		2002/03/27	Intel IQ321 eval board
 IXDP425		2003/04/08	Intel IXDP425/IXCDP1100 development platform
 IXM1200		2002/07/15	Intel IMX1200 eval board
+KOBO		2014/07/25	Kobo touch (eReaders)
 KUROBOX_PRO	2010/10/02	Kuroutoshikou KURO-BOX/PRO
 LUBBOCK		2003/06/18	Intel Lubbock DBPXA250 board
 MARVELL_NAS	2010/10/02	Generic Marvell SoC based NAS

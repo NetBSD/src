@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_usb.c,v 1.1 2010/11/30 13:05:27 bsh Exp $	*/
+/*	$NetBSD: imx51_usb.c,v 1.1.34.1 2014/08/10 06:53:51 tls Exp $	*/
 /*
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.1 2010/11/30 13:05:27 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.1.34.1 2014/08/10 06:53:51 tls Exp $");
+
+#include "opt_imx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.1 2010/11/30 13:05:27 bsh Exp $");
 #include "locators.h"
 
 static int 	imxusbc_search(device_t, cfdata_t, const int *, void *);
+static int	imxusbc_print(void *, const char *);
 
 
 int
@@ -82,8 +85,17 @@ imxusbc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.aa_irq = cf->cf_loc[IMXUSBCCF_IRQ];
 
         if (config_match(parent, cf, &aa) > 0)
-                config_attach(parent, cf, &aa, NULL);
+                config_attach(parent, cf, &aa, imxusbc_print);
 
         return 0;
 }
 
+/* ARGSUSED */
+static int
+imxusbc_print(void *aux, const char *name __unused)
+{
+	struct imxusbc_attach_args *aa = aux;
+
+	aprint_normal(" unit %d irq %d", aa->aa_unit, aa->aa_irq);
+	return (UNCONF);
+}

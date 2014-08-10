@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2014/03/04 21:05:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2014/08/10 07:09:09 tls Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -19,6 +19,7 @@ SRCS+=	ADCE.cpp \
 	IndVarSimplify.cpp \
 	JumpThreading.cpp \
 	LICM.cpp \
+	LoadCombine.cpp \
 	LoopDeletion.cpp \
 	LoopIdiomRecognize.cpp \
 	LoopInstSimplify.cpp \
@@ -38,6 +39,7 @@ SRCS+=	ADCE.cpp \
 	Scalar.cpp \
 	ScalarReplAggregates.cpp \
 	Scalarizer.cpp \
+	SeparateConstOffsetFromGEP.cpp \
 	SimplifyCFGPass.cpp \
 	Sink.cpp \
 	StructurizeCFG.cpp \

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4.c,v 1.1.1.5 2014/03/14 11:27:36 roy Exp $");
+ __RCSID("$NetBSD: ipv4.c,v 1.1.1.5.2.1 2014/08/10 07:06:59 tls Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -52,10 +52,9 @@
 #include "common.h"
 #include "dhcpcd.h"
 #include "dhcp.h"
+#include "if.h"
 #include "if-options.h"
-#include "if-pref.h"
 #include "ipv4.h"
-#include "net.h"
 #include "script.h"
 
 #define IPV4_LOOPBACK_ROUTE
@@ -64,10 +63,10 @@
 #undef IPV4_LOOPBACK_ROUTE
 #endif
 
-int
+uint8_t
 inet_ntocidr(struct in_addr address)
 {
-	int cidr = 0;
+	uint8_t cidr = 0;
 	uint32_t mask = htonl(address.s_addr);
 
 	while (mask) {
@@ -86,13 +85,13 @@ inet_cidrtoaddr(int cidr, struct in_addr *addr)
 		errno = EINVAL;
 		return -1;
 	}
-	ocets = (cidr + 7) / 8;
+	ocets = (cidr + 7) / NBBY;
 
 	addr->s_addr = 0;
 	if (ocets > 0) {
 		memset(&addr->s_addr, 255, (size_t)ocets - 1);
 		memset((unsigned char *)&addr->s_addr + (ocets - 1),
-		    (256 - (1 << (32 - cidr) % 8)), 1);
+		    (256 - (1 << (32 - cidr) % NBBY)), 1);
 	}
 
 	return 0;
@@ -183,6 +182,79 @@ ipv4_init(struct dhcpcd_ctx *ctx)
 	return 0;
 }
 
+
+/* Interface comparer for working out ordering. */
+static int
+ipv4_ifcmp(const struct interface *si, const struct interface *ti)
+{
+	int sill, till;
+	const struct dhcp_state *sis, *tis;
+
+	sis = D_CSTATE(si);
+	tis = D_CSTATE(ti);
+	if (sis && !tis)
+		return -1;
+	if (!sis && tis)
+		return 1;
+	if (!sis && !tis)
+		return 0;
+	/* If one has a lease and the other not, it takes precedence. */
+	if (sis->new && !tis->new)
+		return -1;
+	if (!sis->new && tis->new)
+		return 1;
+	/* If we are either, they neither have a lease, or they both have.
+	 * We need to check for IPv4LL and make it non-preferred. */
+	if (sis->new && tis->new) {
+		sill = (sis->new->cookie == htonl(MAGIC_COOKIE));
+		till = (tis->new->cookie == htonl(MAGIC_COOKIE));
+		if (!sill && till)
+			return 1;
+		if (sill && !till)
+			return -1;
+	}
+	/* Then carrier status. */
+	if (si->carrier > ti->carrier)
+		return -1;
+	if (si->carrier < ti->carrier)
+		return 1;
+	/* Finally, metric */
+	if (si->metric < ti->metric)
+		return -1;
+	if (si->metric > ti->metric)
+		return 1;
+	return 0;
+}
+
+/* Sort the interfaces into a preferred order - best first, worst last. */
+void
+ipv4_sortinterfaces(struct dhcpcd_ctx *ctx)
+{
+	struct if_head sorted;
+	struct interface *ifp, *ift;
+
+	if (ctx->ifaces == NULL ||
+	    (ifp = TAILQ_FIRST(ctx->ifaces)) == NULL ||
+	    TAILQ_NEXT(ifp, next) == NULL)
+		return;
+
+	TAILQ_INIT(&sorted);
+	TAILQ_REMOVE(ctx->ifaces, ifp, next);
+	TAILQ_INSERT_HEAD(&sorted, ifp, next);
+	while ((ifp = TAILQ_FIRST(ctx->ifaces))) {
+		TAILQ_REMOVE(ctx->ifaces, ifp, next);
+		TAILQ_FOREACH(ift, &sorted, next) {
+			if (ipv4_ifcmp(ifp, ift) == -1) {
+				TAILQ_INSERT_BEFORE(ift, ifp, next);
+				break;
+			}
+		}
+		if (ift == NULL)
+			TAILQ_INSERT_TAIL(&sorted, ifp, next);
+	}
+	TAILQ_CONCAT(ctx->ifaces, &sorted, next);
+}
+
 static struct rt *
 find_route(struct rt_head *rts, const struct rt *r, const struct rt *srt)
 {
@@ -262,11 +334,11 @@ nc_route(int add, struct rt *ort, struct rt *nrt)
 	 * prefer the interface.
 	 * This also has the nice side effect of flushing ARP entries so
 	 * we don't have to do that manually. */
-	if (ipv4_deleteroute(ort) == -1 && errno != ESRCH)
-		syslog(LOG_ERR, "%s: ipv4_deleteroute: %m", ort->iface->name);
-	if (!ipv4_addroute(nrt))
+	if (if_delroute(ort) == -1 && errno != ESRCH)
+		syslog(LOG_ERR, "%s: ipv4_delroute: %m", ort->iface->name);
+	if (!if_addroute(nrt))
 		return 0;
-	syslog(LOG_ERR, "%s: ipv4_addroute: %m", nrt->iface->name);
+	syslog(LOG_ERR, "%s: if_addroute: %m", nrt->iface->name);
 	return -1;
 }
 
@@ -276,9 +348,9 @@ d_route(struct rt *rt)
 	int retval;
 
 	desc_route("deleting", rt);
-	retval = ipv4_deleteroute(rt);
+	retval = if_delroute(rt);
 	if (retval != 0 && errno != ENOENT && errno != ESRCH)
-		syslog(LOG_ERR,"%s: ipv4_deleteroute: %m", rt->iface->name);
+		syslog(LOG_ERR,"%s: if_delroute: %m", rt->iface->name);
 	return retval;
 }
 
@@ -567,7 +639,7 @@ delete_address1(struct interface *ifp,
 
 	syslog(LOG_DEBUG, "%s: deleting IP address %s/%d",
 	    ifp->name, inet_ntoa(*addr), inet_ntocidr(*net));
-	r = ipv4_deleteaddress(ifp, addr, net);
+	r = if_deladdress(ifp, addr, net);
 	if (r == -1 && errno != EADDRNOTAVAIL && errno != ENXIO &&
 	    errno != ENODEV)
 		syslog(LOG_ERR, "%s: %s: %m", ifp->name, __func__);
@@ -636,7 +708,7 @@ ipv4_applyaddr(void *arg)
 
 	/* As we are now adjusting an interface, we need to ensure
 	 * we have them in the right order for routing and configuration. */
-	sort_interfaces(ifp->ctx);
+	ipv4_sortinterfaces(ifp->ctx);
 
 	if (state == NULL)
 		return;
@@ -669,13 +741,13 @@ ipv4_applyaddr(void *arg)
 		    ifp->name, inet_ntoa(lease->addr),
 		    inet_ntocidr(lease->net));
 		if (ifo->options & DHCPCD_NOALIAS)
-			r = ipv4_setaddress(ifp,
+			r = if_setaddress(ifp,
 			    &lease->addr, &lease->net, &lease->brd);
 		else
-			r = ipv4_addaddress(ifp,
+			r = if_addaddress(ifp,
 			    &lease->addr, &lease->net, &lease->brd);
 		if (r == -1 && errno != EEXIST) {
-			syslog(LOG_ERR, "%s: ipv4_addaddress: %m", __func__);
+			syslog(LOG_ERR, "%s: if_addaddress: %m", __func__);
 			return;
 		}
 		istate = ipv4_getstate(ifp);
@@ -701,7 +773,7 @@ ipv4_applyaddr(void *arg)
 		rt->iface = ifp;
 		rt->metric = 0;
 		if (!find_route(ifp->ctx->ipv4_routes, rt, NULL))
-			ipv4_deleteroute(rt);
+			if_delroute(rt);
 		free(rt);
 	}
 

@@ -1,5 +1,5 @@
-#	Id: Makefile.in,v 1.22 2012/03/15 09:22:13 plunky Exp 	
-#	$NetBSD: Makefile.in,v 1.1.1.5 2012/03/26 14:27:05 plunky Exp $
+#	Id: Makefile.in,v 1.23 2012/09/25 11:17:17 plunky Exp 	
+#	$NetBSD: Makefile.in,v 1.1.1.5.10.1 2014/08/10 07:10:07 tls Exp $
 #
 # Makefile for the Fortran 77 compiler
 #
@@ -29,7 +29,6 @@ exec_prefix = @exec_prefix@
 libexecdir = @libexecdir@
 datarootdir = @datarootdir@
 mandir = @mandir@
-strip = @strip@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
@@ -178,10 +177,6 @@ $(DEST): $(OBJS)
 install: $(DEST)
 	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
 	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(libexecdir)
-	@if [ $(strip) = yes ]; then				\
-		strip $(DESTDIR)$(libexecdir)/$(DEST) ;		\
-		echo strip $(DESTDIR)$(libexecdir)/$(DEST) ;	\
-	fi
 
 clean:
 	rm -f $(DEST) $(OBJS) $(MKEXT) $(LOBJS)	\

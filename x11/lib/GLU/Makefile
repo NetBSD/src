@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2013/09/12 17:14:20 joerg Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2014/08/10 07:00:41 tls Exp $
 
 NOLINT=		1	# XTODO: tess.ln SIGSEGVs lint :(
 
@@ -69,7 +69,7 @@ LIBDPLIBS=\
 .include <bsd.lib.mk>
 
 # Many const char * vs char * issues in xsrc/xfree
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45
+.if defined(HAVE_GCC)
 # XXX -Wno-deprecated doesn't work?
 CXXFLAGS+=	-Wno-error
 .endif

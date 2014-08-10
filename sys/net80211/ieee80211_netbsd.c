@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.25 2014/02/25 18:30:12 pooka Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.25.2.1 2014/08/10 06:56:18 tls Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.25 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.25.2.1 2014/08/10 06:56:18 tls Exp $");
 #endif
 
 /*
@@ -68,6 +68,8 @@ static struct ieee80211_node *ieee80211_node_walkfirst(
     struct ieee80211_node_walk *, u_short);
 static int ieee80211_sysctl_node(SYSCTLFN_ARGS);
 
+static void ieee80211_sysctl_setup(void);
+
 #ifdef IEEE80211_DEBUG
 int	ieee80211_debug = 0;
 #endif
@@ -80,6 +82,8 @@ static int
 ieee80211_init0(void)
 {
 	ieee80211_setup_func * const *ieee80211_setup, f;
+
+	ieee80211_sysctl_setup();
 
 	if (max_linkhdr < ALIGN(sizeof(struct ieee80211_qosframe_addr4))) {
 		max_linkhdr = ALIGN(sizeof(struct ieee80211_qosframe_addr4));
@@ -459,27 +463,31 @@ cleanup:
  *
  * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
-SYSCTL_SETUP(sysctl_ieee80211, "sysctl ieee80211 subtree setup")
+static struct sysctllog *ieee80211_sysctllog;
+static void
+ieee80211_sysctl_setup(void)
 {
 	int rc;
 	const struct sysctlnode *cnode, *rnode;
 
-	if ((rnode = ieee80211_sysctl_treetop(clog)) == NULL)
+	if ((rnode = ieee80211_sysctl_treetop(&ieee80211_sysctllog)) == NULL)
 		return;
 
-	if ((rc = sysctl_createv(clog, 0, &rnode, NULL,
+	if ((rc = sysctl_createv(&ieee80211_sysctllog, 0, &rnode, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "nodes", "client/peer stations",
 	    ieee80211_sysctl_node, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 #ifdef IEEE80211_DEBUG
 	/* control debugging printfs */
-	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	if ((rc = sysctl_createv(&ieee80211_sysctllog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "debug", SYSCTL_DESCR("control debugging printfs"),
 	    NULL, 0, &ieee80211_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 #endif /* IEEE80211_DEBUG */
+
+	ieee80211_rssadapt_sysctl_setup(&ieee80211_sysctllog);
 
 	return;
 err:

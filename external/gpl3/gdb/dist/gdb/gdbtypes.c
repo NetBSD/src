@@ -1,6 +1,6 @@
 /* Support routines for manipulating internal types for GDB.
 
-   Copyright (C) 1992-2013 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -20,7 +20,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "bfd.h"
 #include "symtab.h"
 #include "symfile.h"
@@ -37,6 +37,9 @@
 #include "gdb_assert.h"
 #include "hashtab.h"
 #include "exceptions.h"
+#include "cp-support.h"
+#include "bcache.h"
+#include "dwarf2loc.h"
 
 /* Initialize BADNESS constants.  */
 
@@ -107,8 +110,8 @@ const struct floatformat *floatformats_vax_d[BFD_ENDIAN_UNKNOWN] = {
   &floatformat_vax_d
 };
 const struct floatformat *floatformats_ibm_long_double[BFD_ENDIAN_UNKNOWN] = {
-  &floatformat_ibm_long_double,
-  &floatformat_ibm_long_double
+  &floatformat_ibm_long_double_big,
+  &floatformat_ibm_long_double_little
 };
 
 /* Should opaque types be resolved?  */
@@ -236,6 +239,21 @@ get_type_arch (const struct type *type)
     return get_objfile_arch (TYPE_OWNER (type).objfile);
   else
     return TYPE_OWNER (type).gdbarch;
+}
+
+/* See gdbtypes.h.  */
+
+struct type *
+get_target_type (struct type *type)
+{
+  if (type != NULL)
+    {
+      type = TYPE_TARGET_TYPE (type);
+      if (type != NULL)
+	type = check_typedef (type);
+    }
+
+  return type;
 }
 
 /* Alloc a new type instance structure, fill it with some defaults,
@@ -1186,7 +1204,8 @@ type_name_no_tag_or_error (struct type *type)
   name = type_name_no_tag (saved_type);
   objfile = TYPE_OBJFILE (saved_type);
   error (_("Invalid anonymous type %s [in module %s], GCC PR debug/47510 bug?"),
-	 name ? name : "<anonymous>", objfile ? objfile->name : "<arch>");
+	 name ? name : "<anonymous>",
+	 objfile ? objfile_name (objfile) : "<arch>");
 }
 
 /* Lookup a typedef or primitive type named NAME, visible in lexical
@@ -1351,7 +1370,7 @@ lookup_template_type (char *name, struct type *type,
    If NAME is the name of a baseclass type, return that type.  */
 
 struct type *
-lookup_struct_elt_type (struct type *type, char *name, int noerr)
+lookup_struct_elt_type (struct type *type, const char *name, int noerr)
 {
   int i;
   char *typename;
@@ -1764,8 +1783,8 @@ check_stub_method (struct type *type, int method_id, int signature_id)
   struct gdbarch *gdbarch = get_type_arch (type);
   struct fn_field *f;
   char *mangled_name = gdb_mangle_name (type, method_id, signature_id);
-  char *demangled_name = cplus_demangle (mangled_name,
-					 DMGL_PARAMS | DMGL_ANSI);
+  char *demangled_name = gdb_demangle (mangled_name,
+				       DMGL_PARAMS | DMGL_ANSI);
   char *argtypetext, *p;
   int depth = 0, argcount = 1;
   struct field *argtypes;
@@ -2456,9 +2475,238 @@ types_equal (struct type *a, struct type *b)
   if (a == b)
     return 1;
 
+  /* Two function types are equal if their argument and return types
+     are equal.  */
+  if (TYPE_CODE (a) == TYPE_CODE_FUNC)
+    {
+      int i;
+
+      if (TYPE_NFIELDS (a) != TYPE_NFIELDS (b))
+	return 0;
+      
+      if (!types_equal (TYPE_TARGET_TYPE (a), TYPE_TARGET_TYPE (b)))
+	return 0;
+
+      for (i = 0; i < TYPE_NFIELDS (a); ++i)
+	if (!types_equal (TYPE_FIELD_TYPE (a, i), TYPE_FIELD_TYPE (b, i)))
+	  return 0;
+
+      return 1;
+    }
+
   return 0;
 }
+
+/* Deep comparison of types.  */
 
+/* An entry in the type-equality bcache.  */
+
+typedef struct type_equality_entry
+{
+  struct type *type1, *type2;
+} type_equality_entry_d;
+
+DEF_VEC_O (type_equality_entry_d);
+
+/* A helper function to compare two strings.  Returns 1 if they are
+   the same, 0 otherwise.  Handles NULLs properly.  */
+
+static int
+compare_maybe_null_strings (const char *s, const char *t)
+{
+  if (s == NULL && t != NULL)
+    return 0;
+  else if (s != NULL && t == NULL)
+    return 0;
+  else if (s == NULL && t== NULL)
+    return 1;
+  return strcmp (s, t) == 0;
+}
+
+/* A helper function for check_types_worklist that checks two types for
+   "deep" equality.  Returns non-zero if the types are considered the
+   same, zero otherwise.  */
+
+static int
+check_types_equal (struct type *type1, struct type *type2,
+		   VEC (type_equality_entry_d) **worklist)
+{
+  CHECK_TYPEDEF (type1);
+  CHECK_TYPEDEF (type2);
+
+  if (type1 == type2)
+    return 1;
+
+  if (TYPE_CODE (type1) != TYPE_CODE (type2)
+      || TYPE_LENGTH (type1) != TYPE_LENGTH (type2)
+      || TYPE_UNSIGNED (type1) != TYPE_UNSIGNED (type2)
+      || TYPE_NOSIGN (type1) != TYPE_NOSIGN (type2)
+      || TYPE_VARARGS (type1) != TYPE_VARARGS (type2)
+      || TYPE_VECTOR (type1) != TYPE_VECTOR (type2)
+      || TYPE_NOTTEXT (type1) != TYPE_NOTTEXT (type2)
+      || TYPE_INSTANCE_FLAGS (type1) != TYPE_INSTANCE_FLAGS (type2)
+      || TYPE_NFIELDS (type1) != TYPE_NFIELDS (type2))
+    return 0;
+
+  if (!compare_maybe_null_strings (TYPE_TAG_NAME (type1),
+				   TYPE_TAG_NAME (type2)))
+    return 0;
+  if (!compare_maybe_null_strings (TYPE_NAME (type1), TYPE_NAME (type2)))
+    return 0;
+
+  if (TYPE_CODE (type1) == TYPE_CODE_RANGE)
+    {
+      if (memcmp (TYPE_RANGE_DATA (type1), TYPE_RANGE_DATA (type2),
+		  sizeof (*TYPE_RANGE_DATA (type1))) != 0)
+	return 0;
+    }
+  else
+    {
+      int i;
+
+      for (i = 0; i < TYPE_NFIELDS (type1); ++i)
+	{
+	  const struct field *field1 = &TYPE_FIELD (type1, i);
+	  const struct field *field2 = &TYPE_FIELD (type2, i);
+	  struct type_equality_entry entry;
+
+	  if (FIELD_ARTIFICIAL (*field1) != FIELD_ARTIFICIAL (*field2)
+	      || FIELD_BITSIZE (*field1) != FIELD_BITSIZE (*field2)
+	      || FIELD_LOC_KIND (*field1) != FIELD_LOC_KIND (*field2))
+	    return 0;
+	  if (!compare_maybe_null_strings (FIELD_NAME (*field1),
+					   FIELD_NAME (*field2)))
+	    return 0;
+	  switch (FIELD_LOC_KIND (*field1))
+	    {
+	    case FIELD_LOC_KIND_BITPOS:
+	      if (FIELD_BITPOS (*field1) != FIELD_BITPOS (*field2))
+		return 0;
+	      break;
+	    case FIELD_LOC_KIND_ENUMVAL:
+	      if (FIELD_ENUMVAL (*field1) != FIELD_ENUMVAL (*field2))
+		return 0;
+	      break;
+	    case FIELD_LOC_KIND_PHYSADDR:
+	      if (FIELD_STATIC_PHYSADDR (*field1)
+		  != FIELD_STATIC_PHYSADDR (*field2))
+		return 0;
+	      break;
+	    case FIELD_LOC_KIND_PHYSNAME:
+	      if (!compare_maybe_null_strings (FIELD_STATIC_PHYSNAME (*field1),
+					       FIELD_STATIC_PHYSNAME (*field2)))
+		return 0;
+	      break;
+	    case FIELD_LOC_KIND_DWARF_BLOCK:
+	      {
+		struct dwarf2_locexpr_baton *block1, *block2;
+
+		block1 = FIELD_DWARF_BLOCK (*field1);
+		block2 = FIELD_DWARF_BLOCK (*field2);
+		if (block1->per_cu != block2->per_cu
+		    || block1->size != block2->size
+		    || memcmp (block1->data, block2->data, block1->size) != 0)
+		  return 0;
+	      }
+	      break;
+	    default:
+	      internal_error (__FILE__, __LINE__, _("Unsupported field kind "
+						    "%d by check_types_equal"),
+			      FIELD_LOC_KIND (*field1));
+	    }
+
+	  entry.type1 = FIELD_TYPE (*field1);
+	  entry.type2 = FIELD_TYPE (*field2);
+	  VEC_safe_push (type_equality_entry_d, *worklist, &entry);
+	}
+    }
+
+  if (TYPE_TARGET_TYPE (type1) != NULL)
+    {
+      struct type_equality_entry entry;
+
+      if (TYPE_TARGET_TYPE (type2) == NULL)
+	return 0;
+
+      entry.type1 = TYPE_TARGET_TYPE (type1);
+      entry.type2 = TYPE_TARGET_TYPE (type2);
+      VEC_safe_push (type_equality_entry_d, *worklist, &entry);
+    }
+  else if (TYPE_TARGET_TYPE (type2) != NULL)
+    return 0;
+
+  return 1;
+}
+
+/* Check types on a worklist for equality.  Returns zero if any pair
+   is not equal, non-zero if they are all considered equal.  */
+
+static int
+check_types_worklist (VEC (type_equality_entry_d) **worklist,
+		      struct bcache *cache)
+{
+  while (!VEC_empty (type_equality_entry_d, *worklist))
+    {
+      struct type_equality_entry entry;
+      int added;
+
+      entry = *VEC_last (type_equality_entry_d, *worklist);
+      VEC_pop (type_equality_entry_d, *worklist);
+
+      /* If the type pair has already been visited, we know it is
+	 ok.  */
+      bcache_full (&entry, sizeof (entry), cache, &added);
+      if (!added)
+	continue;
+
+      if (check_types_equal (entry.type1, entry.type2, worklist) == 0)
+	return 0;
+    }
+
+  return 1;
+}
+
+/* Return non-zero if types TYPE1 and TYPE2 are equal, as determined by a
+   "deep comparison".  Otherwise return zero.  */
+
+int
+types_deeply_equal (struct type *type1, struct type *type2)
+{
+  volatile struct gdb_exception except;
+  int result = 0;
+  struct bcache *cache;
+  VEC (type_equality_entry_d) *worklist = NULL;
+  struct type_equality_entry entry;
+
+  gdb_assert (type1 != NULL && type2 != NULL);
+
+  /* Early exit for the simple case.  */
+  if (type1 == type2)
+    return 1;
+
+  cache = bcache_xmalloc (NULL, NULL);
+
+  entry.type1 = type1;
+  entry.type2 = type2;
+  VEC_safe_push (type_equality_entry_d, worklist, &entry);
+
+  TRY_CATCH (except, RETURN_MASK_ALL)
+    {
+      result = check_types_worklist (&worklist, cache);
+    }
+  /* check_types_worklist calls several nested helper functions,
+     some of which can raise a GDB Exception, so we just check
+     and rethrow here.  If there is a GDB exception, a comparison
+     is not capable (or trusted), so exit.  */
+  bcache_xfree (cache);
+  VEC_free (type_equality_entry_d, worklist);
+  /* Rethrow if there was a problem.  */
+  if (except.reason < 0)
+    throw_exception (except);
+
+  return result;
+}
+
 /* Compare one type (PARM) for compatibility with another (ARG).
  * PARM is intended to be the parameter type of a function; and
  * ARG is the supplied argument's type.  This function tests if
@@ -4049,9 +4297,7 @@ objfile_type (struct objfile *objfile)
 		 "<thread local variable, no debug info>", objfile);
 
   /* NOTE: on some targets, addresses and pointers are not necessarily
-     the same --- for example, on the D10V, pointers are 16 bits long,
-     but addresses are 32 bits long.  See doc/gdbint.texinfo,
-     ``Pointers Are Not Always Addresses''.
+     the same.
 
      The upshot is:
      - gdb's `struct type' always describes the target's
@@ -4063,12 +4309,6 @@ objfile_type (struct objfile *objfile)
        since target_read_memory takes a CORE_ADDR as an argument, it
        can access any memory on the target, even if the processor has
        separate code and data address spaces.
-
-     So, for example:
-     - If v is a value holding a D10V code pointer, its contents are
-       in target form: a big-endian address left-shifted two bits.
-     - If p is a D10V pointer type, TYPE_LENGTH (p) == 2, just as
-       sizeof (void *) == 2 on the target.
 
      In this context, objfile_type->builtin_core_addr is a bit odd:
      it's a target type for a value the target will never see.  It's

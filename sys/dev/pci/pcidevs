@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1184 2014/03/15 10:30:41 kiyohara Exp $
+$NetBSD: pcidevs,v 1.1184.2.1 2014/08/10 06:54:54 tls Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1175,6 +1175,10 @@ product ATTANSIC AR8132		0x1062	AR8132 Fast Ethernet Adapter
 product ATTANSIC AR8131		0x1063	AR8131 Gigabit Ethernet Adapter
 product ATTANSIC AR8151		0x1073	AR8151 v1.0 Gigabit Ethernet Adapter
 product ATTANSIC AR8151_V2	0x1083	AR8151 v2.0 Gigabit Ethernet Adapter
+product ATTANSIC AR8162		0x1090	AR8162
+product ATTANSIC AR8161		0x1091	AR8161
+product ATTANSIC AR8172		0x10a0	AR8172
+product ATTANSIC AR8171		0x10a1	AR8171
 product ATTANSIC ETHERNET_100	0x2048	L2 100 Mbit Ethernet Adapter
 product ATTANSIC AR8152_B	0x2060	AR8152 v1.1 Fast Ethernet Adapter
 product ATTANSIC AR8152_B2	0x2062	AR8152 v2.0 Fast Ethernet Adapter
@@ -1535,6 +1539,8 @@ product AMCIRCUITS ADDI7800	0x818e	ADDI-DATA APCI-7800 8-port Serial
 product AMCIRCUITS S5920	0x5920	S5920 PCI Target
 
 /* ASPEED Technology products */
+product ASPEED AST1150		0x1150	AST1150 PCIe-to-PCI bridge
+product ASPEED AST1180		0x1180	AST1180
 product ASPEED AST2000		0x2000	ASPEED Graphics Family
 
 /* Atheros Communications products */
@@ -2409,6 +2415,9 @@ product HP HPSA_10		0x3239	Smart Array
 product HP HPSA_11		0x323a	Smart Array
 product HP HPSA_12		0x323b	Smart Array
 product HP HPSA_13		0x323c	Smart Array
+product HP USB			0x3300	iLO3 Virtual USB
+product HP ILO3_SLAVE		0x3306	iLO3 Slave
+product HP ILO3_MGMT		0x3307	iLO3 Management
 product HP RS780_PPB_GFX	0x9602  (AMD) RS780 PCI-PCI Bridge (int gfx)
 
 /* Hifn products */
@@ -2534,7 +2543,10 @@ product INTEL WIFI_LINK_1030_2	0x008b	Centrino Wireless-N 1030
 product INTEL WIFI_LINK_6230_1	0x0090	Centrino Advanced-N 6230
 product INTEL WIFI_LINK_6230_2	0x0091	Centrino Advanced-N 6230
 product INTEL SANDYBRIDGE_HB	0x0100	Sandy Bridge Host Bridge
+product INTEL SANDYBRIDGE_PCIE	0x0101	Sandy Bridge PCIe Root port
 product INTEL SANDYBRIDGE_IGD	0x0102	Sandy Bridge Integrated Graphics Device
+product INTEL SANDYBRIDGE_PCIE_1 0x0105	Sandy Bridge PCIe Root port
+product INTEL SANDYBRIDGE_PCIE_2 0x0109	Sandy Bridge PCIe Root port
 product INTEL SANDYBRIDGE_IGD_1	0x0112	Sandy Bridge Integrated Graphics Device
 product INTEL SANDYBRIDGE_IGD_2	0x0122	Sandy Bridge Integrated Graphics Device
 product INTEL SANDYBRIDGE_M_HB	0x0104	Sandy Bridge Host Bridge
@@ -2544,18 +2556,24 @@ product INTEL SANDYBRIDGE_M_IGD_2	0x0126	Sandy Bridge Integrated Graphics Device
 product INTEL SANDYBRIDGE_S_HB	0x0108	Sandy Bridge Host Bridge
 product INTEL SANDYBRIDGE_S_IGD	0x010A	Sandy Bridge Integrated Graphics Device
 product INTEL IVYBRIDGE_HB	0x0150	Ivy Bridge Host Bridge
+product INTEL IVYBRIDGE_PCIE	0x0151	Ivy Bridge PCI Express Root Port
 product INTEL IVYBRIDGE_IGD	0x0152	Ivy Bridge Integrated Graphics Device
-product INTEL IVYBRIDGE_IGD_1	0x0162	Ivy Bridge Integrated Graphics Device
 product INTEL IVYBRIDGE_M_HB	0x0154	Ivy Bridge Host Bridge
+product INTEL IVYBRIDGE_PCIE_1	0x0155	Ivy Bridge PCI Express Root Port
 product INTEL IVYBRIDGE_M_IGD	0x0156	Ivy Bridge Integrated Graphics Device
-product INTEL IVYBRIDGE_M_IGD_1	0x0166	Ivy Bridge Integrated Graphics Device
 product INTEL IVYBRIDGE_S_HB	0x0158	Ivy Bridge Host Bridge
+product INTEL IVYBRIDGE_PCIE_2	0x0159	Ivy Bridge PCI Express Root Port
 product INTEL IVYBRIDGE_S_IGD	0x015a	Ivy Bridge Integrated Graphics Device
+product INTEL IVYBRIDGE_PCIE_3	0x015d	Ivy Bridge PCI Express Root Port
+product INTEL IVYBRIDGE_IGD_1	0x0162	Ivy Bridge Integrated Graphics Device
+product INTEL IVYBRIDGE_M_IGD_1	0x0166	Ivy Bridge Integrated Graphics Device
 product INTEL IVYBRIDGE_S_IGD_1	0x016a	Ivy Bridge Integrated Graphics Device
 product INTEL 80312		0x030d	80312 I/O Companion Chip
 product INTEL 80321		0x0319	80321 I/O Processor
+product INTEL 6700PXH_IOXAPIC	0x0326	6700PXH IOxAPIC
 product INTEL 6700PXH_PCIE0	0x0329	6700PXH PCI Express-to-PCI Bridge #0
 product INTEL 6700PXH_PCIE1	0x032a	6700PXH PCI Express-to-PCI Bridge #1
+product INTEL 6702PXH_PCIX	0x032c	6702PXH PCI Express-to-PCIX
 product INTEL 80331		0x0335	Lindsay I/O Processor PCI-X Bridge
 product INTEL 41210A		0x0340	Serial to Parallel PCI Bridge A
 product INTEL 41210B		0x0341	Serial to Parallel PCI Bridge B
@@ -2566,7 +2584,11 @@ product INTEL SRCU42E		0x0408	SCSI RAID Controller
 product INTEL SRCS28X		0x0409	SATA RAID Controller
 product INTEL HASWELL_IGD	0x0402	Haswell Integrated Graphics Device
 product INTEL HASWELL_IGD_1	0x0412	Haswell Integrated Graphics Device
-product INTEL I347AT4		0x0438	I347-AT4 Gigabit Network Connection
+product INTEL DH89XX_QA		0x0434	DH89xx QuiskAssit
+product INTEL DH89XXCC_SGMII	0x0438	DH89XXCC SGMII
+product INTEL DH89XXCC_SERDES	0x043a	DH89XXCC SerDes
+product INTEL DH89XXCC_BPLANE	0x043c	DH89XXCC backplane
+product INTEL DH89XXCC_SFP	0x0440	DH89XXCC SFP
 product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge
 product INTEL CDC		0x0483	82424ZX Cache and DRAM Controller
 product INTEL SIO		0x0484	82378ZB System I/O
@@ -2608,6 +2630,7 @@ product INTEL CORE4G_R_ULT_GT3_2 0x0a2e	Iris Graphics 5100
 product INTEL HASWELL_HOST_DRAM	0x0c00	Haswell Host Bridge, DRAM
 product INTEL HASWELL_PCIE16	0x0c01	Haswell PCI-E x16 Controller
 product INTEL HASWELL_PCIE8	0x0c05	Haswell PCI-E x8 Controller
+product INTEL XE3_12KV3_HOST_DRAM 0x0c08 Xeon E3-1200 v3 Host Bridge, DRAM
 product INTEL HASWELL_PCIE4	0x0c09	Haswell PCI-E x4 Controller
 product INTEL HASWELL_MINI_HDA	0x0c0c	Haswell Mini HD Audio Controller
 product INTEL S1200_PCIE_1	0x0c46	Atom S1200 PCIe Root Port 1
@@ -2628,6 +2651,23 @@ product INTEL S1200_ILB		0x0c60	Atom S1200 LPC bridge
 product INTEL S1200_S1220	0x0c72	Atom S1220 Internal
 product INTEL S1200_S1240	0x0c73	Atom S1240 Internal
 product INTEL S1200_S1260	0x0c75	Atom S1260 Internal
+product INTEL BAYTRAIL_HB	0x0f00	Bay Trail Processor Transaction Router
+product INTEL BAYTRAIL_HDA	0x0f04	Bay Trail HD Audio
+product INTEL BAYTRAIL_PCU_SMB	0x0f12	Bay Trail PCU SMBus
+product INTEL BAYTRAIL_SCC	0x0f16	Bay Trail Storage Control Cluster
+product INTEL BAYTRAIL_TXE	0x0f18	Bay Trail Trusted Execution Engine
+product INTEL BAYTRAIL_PCU_LPC	0x0f1c	Bay Trail LPC Interface Bridge
+product INTEL BAYTRAIL_SATA_IDE_0 0x0f20 Bay Trail SATA (IDE)
+product INTEL BAYTRAIL_SATA_IDE_1 0x0f21 Bay Trail SATA (IDE)
+product INTEL BAYTRAIL_SATA_AHCI_0 0x0f22 Bay Trail SATA (AHCI)
+product INTEL BAYTRAIL_SATA_AHCI_1 0x0f23 Bay Trail SATA (AHCI)
+product INTEL BAYTRAIL_IGD	0x0f31	Bay Trail Integrated Graphics Device
+product INTEL BAYTRAIL_EHCI	0x0f34	Bay Trail USB EHCI
+product INTEL BAYTRAIL_XHCI	0x0f35	Bay Trail USB xHCI
+product INTEL BAYTRAIL_PCIE_1	0x0f48	Bay Trail PCIE Root Port
+product INTEL BAYTRAIL_PCIE_2	0x0f4a	Bay Trail PCIE Root Port
+product INTEL BAYTRAIL_PCIE_3	0x0f4c	Bay Trail PCIE Root Port
+product INTEL BAYTRAIL_PCIE_4	0x0f4e	Bay Trail PCIE Root Port
 product INTEL 82542		0x1000	i82542 Gigabit Ethernet
 product INTEL 82543GC_FIBER	0x1001	i82453GC 1000baseX Ethernet
 product INTEL MODEM56		0x1002	56k Modem
@@ -2816,6 +2856,7 @@ product INTEL I350_SERDES 	0x1523	I350 Gigabit Backplane Connection
 product INTEL I350_SGMII 	0x1524	I350 Gigabit Connection
 product INTEL 82801J_D_BM_V	0x1525	82567V LAN Controller
 product INTEL 82580_QUAD_FIBER 	0x1527	82580 quad-1000BaseX Ethernet
+product INTEL X540_AT2	 	0x1528	X540-AT2 10Gbase-T Ethernet
 product INTEL I210_T1 		0x1533	I210-T1 Ethernet Server Adapter
 product INTEL I210_COPPER_OEM1	0x1534	I210 Ethernet (COPPER OEM)
 product INTEL I210_COPPER_IT	0x1535	I210 Ethernet (COPPER IT)
@@ -2825,6 +2866,7 @@ product INTEL I210_SGMII	0x1538	I210 Ethernet (SGMII)
 product INTEL I211_COPPER	0x1539	I211 Ethernet (COPPER)
 product INTEL I217_LM		0x153a	I217-LM Ethernet Connection
 product INTEL I217_V		0x153b	I217-V Ethernet Connection
+product INTEL 82599_SFP_SF2	0x154d	82599 (SFP+) 10 GbE Controller
 product INTEL I218_V		0x1559	I218-V Ethernet Connection
 product INTEL I218_LM		0x155a	I218-LM Ethernet Connection
 product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
@@ -2997,6 +3039,19 @@ product INTEL C2000_1000KX	0x1f40	C2000 Ethernet(1000BASE-KX)
 product INTEL C2000_SGMII	0x1f41	C2000 Ethernet(SGMII)
 product INTEL C2000_DUMMYGBE	0x1f42	C2000 Ethernet(Dummy function)
 product INTEL C2000_25GBE	0x1f45	C2000 Ethernet(2.5Gbe)
+product INTEL DH89XX_LPC	0x2310	DH89xx LPC Controller
+product INTEL DH89XX_SATA_1	0x2323	DH89xx SATA Controller
+product INTEL DH89XX_SATA_2	0x2326	DH89xx SATA Controller
+product INTEL DH89XX_SMB	0x2330	DH89xx SMBus Host Controller
+product INTEL DH89XX_THERMAL	0x2332	DH89xx Thermal Subsystem
+product INTEL DH89XX_USB	0x2334	DH89xx USB EHCI
+product INTEL DH89XX_PCIE_1	0x2342	DH89xx PCIe Root Port
+product INTEL DH89XX_PCIE_2	0x2344	DH89xx PCIe Root Port
+product INTEL DH89XX_PCIE_3	0x2346	DH89xx PCIe Root Port
+product INTEL DH89XX_PCIE_4	0x2348	DH89xx PCIe Root Port
+product INTEL DH89XX_WDT	0x2360	DH89xx Watchdog Timer for Core Reset
+product INTEL DH89XX_MEI_1	0x2364	DH89xx MEI Controller
+product INTEL DH89XX_MEI_2	0x2365	DH89xx MEI Controller
 product INTEL 82801AA_LPC	0x2410	82801AA LPC Interface Bridge
 product INTEL 82801AA_IDE	0x2411	82801AA IDE Controller
 product INTEL 82801AA_USB	0x2412	82801AA USB Controller
@@ -3306,7 +3361,13 @@ product INTEL 82Q33_EXP		0x29d1  82Q35 PCI Express Bridge
 product INTEL 82Q33_IGD		0x29d2  82Q35 Integrated Graphics Device
 product INTEL 82Q33_IGD_1	0x29d3  82Q35 Integrated Graphics Device
 product INTEL 82Q33_KT		0x29d7  82Q33 KT
+product INTEL 82X38_HB		0x29e0	82X38 Host Bridge
+product INTEL 82X38_PCIE_1	0x29e1	82X38 Host-Primary PCIe Bridge
+product INTEL 82X38_HECI	0x29e4	82X38 HECI
 product INTEL 82X38_KT		0x29e7  82X38 KT
+product INTEL 82X38_PCIE_2	0x29e9	82X38 Host-Secondary PCIe Bridge
+product INTEL 3200_HB		0x29f0	3200/3210 Host
+product INTEL 3200_PCIE		0x29f1	3200/3210 PCIE
 product INTEL 3200_KT		0x29f7  3200 KT
 product INTEL 82965PM_HB	0x2a00  82965PM Host Bridge
 product INTEL 80862A01		0x2a01  80862A01 Mobile PCI Express Root Port
@@ -3520,6 +3581,30 @@ product INTEL WIFI_LINK_5350_1	0x423a	WiFi Link 5350
 product INTEL WIFI_LINK_5350_2	0x423b	WiFi Link 5350
 product INTEL WIFI_LINK_5150_1	0x423c	WiFi Link 5150
 product INTEL WIFI_LINK_5150_2	0x423d	WiFi Link 5150
+product INTEL EP80579_HB	0x5020	EP80579 Host
+product INTEL EP80579_MEM	0x5021	EP80579 Memory
+product INTEL EP80579_EDMA	0x5023	EP80579 EDMA
+product INTEL EP80579_PCIE_1	0x5024	EP80579 PCIE
+product INTEL EP80579_PCIE_2	0x5025	EP80579 PCIE
+product INTEL EP80579_SATA	0x5028	EP80579 SATA
+product INTEL EP80579_AHCI	0x5029	EP80579 AHCI
+product INTEL EP80579_ASU	0x502c	EP80579 ASU
+product INTEL EP80579_RESERVED1	0x5030	EP80579 Reserved
+product INTEL EP80579_LPC	0x5031	EP80579 LPC
+product INTEL EP80579_SMB	0x5032	EP80579 SMBus
+product INTEL EP80579_UHCI	0x5033	EP80579 USB
+product INTEL EP80579_EHCI	0x5035	EP80579 USB
+product INTEL EP80579_PPB	0x5037	EP80579 PCI-PCI bridge
+product INTEL EP80579_CAN_1	0x5039	EP80579 CANbus
+product INTEL EP80579_CAN_2	0x503a	EP80579 CANbus
+product INTEL EP80579_SERIAL	0x503b	EP80579 Serial
+product INTEL EP80579_1588	0x503c	EP80579 1588
+product INTEL EP80579_LEB	0x503d	EP80579 LEB
+product INTEL EP80579_GCU	0x503e	EP80579 GCU
+product INTEL EP80579_RESERVED2	0x503f	EP80579 Reserved
+product INTEL EP80579_LAN_1	0x5040	EP80579 LAN
+product INTEL EP80579_LAN_2	0x5044	EP80579 LAN
+product INTEL EP80579_LAN_3	0x5048	EP80579 LAN
 product INTEL 80312_ATU		0x530d	80310 ATU
 product INTEL 82371SB_ISA	0x7000	82371SB (PIIX3) PCI-ISA Bridge
 product INTEL 82371SB_IDE	0x7010	82371SB (PIIX3) IDE Interface
@@ -3669,11 +3754,16 @@ product INTEL CORE4G_M_S_GSPI_0 0x9c65	Core 4G (mobile) Serial I/O GSPI
 product INTEL CORE4G_M_S_GSPI_1 0x9c66	Core 4G (mobile) Serial I/O GSPI
 product INTEL PINEVIEW_HB	0xa000	Pineview Host Bridge
 product INTEL PINEVIEW_IGD	0xa001	Pineview Integrated Graphics Device
+product INTEL PINEVIEW_IGD_1	0xa002	Pineview Integrated Graphics Device
 product INTEL PINEVIEW_M_HB	0xa010	Pineview Host Bridge
 product INTEL PINEVIEW_M_IGD	0xa011	Pineview Integrated Graphics Device
 product INTEL 21152		0xb152	S21152BB PCI-PCI Bridge
 product INTEL 21154		0xb154	S21152BA,S21154AE/BE PCI-PCI Bridge
 product INTEL 21555		0xb555	21555 Non-Transparent PCI-PCI Bridge
+product INTEL CP_DMI_1		0xd131	Core Processor DMI
+product INTEL CP_DMI_2		0xd132	Core Processor DMI
+product INTEL CP_PCIE_1		0xd138	Core Processor PCIe Root Port (x16 or x8 max)
+product INTEL CP_PCIE_2		0xd13a	Core Processor PCIe Root Port (x8 max)
 product INTEL CP_QPI_LINK	0xd150	Core Processor QPI Link
 product INTEL CP_QPI_RPREGS	0xd151	Core Processor QPI Routing and Protocol Registers
 product INTEL CP_SYS_MREGS	0xd155	Core Processor System Management Registers
@@ -3705,6 +3795,7 @@ product IODATA GVBCTV5DL	0xd012	GV-BCTV5DL/PCI TV tuner
 product ITE IT8152		0x8152	IT8152 Host Bridge
 product ITE IT8211		0x8211	IT8211 IDE Controller
 product ITE IT8212		0x8212	IT8212 IDE Controller
+product ITE IT8213		0x8213	IT8213 IDE Controller
 product ITE IT8888		0x8888	PCI-ISA Bridge
 product ITE IT8892		0x8892	PCIe-PCI Bridge
 
@@ -3852,6 +3943,7 @@ product MATROX G200_AGP		0x0521	MGA G200 AGP
 product MATROX G200E_SE		0x0522	MGA G200e (ServerEngines)
 product MATROX G400_AGP		0x0525	MGA G400 AGP
 product MATROX G200EW		0x0532	MGA G200eW
+product MATROX G200EH		0x0533	MGA G200eH
 product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX G100_PCI		0x1000	MGA G100 PCI
 product MATROX G100_AGP		0x1001	MGA G100 AGP
@@ -4527,6 +4619,7 @@ product NVIDIA	MCP79_AHCI_10	0x0abd	nForce MCP79 AHCI Controller
 product NVIDIA	MCP79_AHCI_11	0x0abe	nForce MCP79 AHCI Controller
 product NVIDIA	MCP79_AHCI_12	0x0abf	nForce MCP79 AHCI Controller
 product NVIDIA	GEFORCE_210_HDA	0x0be3	GeForce 210 High Definition Audio Controller
+product NVIDIA	GF_GT640M	0x0fd2	GeForce GT 640M
 product NVIDIA	GF116		0x1244	GeForce GTX 550 Ti
 
 /* Nvidia & SGS-Thomson Microelectronics */
@@ -4792,9 +4885,16 @@ product	RALINK	RT3090		0x3090	RT3090 802.11b/g/n
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
 
 /* RDC Semiconductor products */
-product RDC	IDE		0x1011	RDC IDE controller
-product RDC	PCIB		0x6036	RDC PCI-ISA bridge
-product RDC	R6040		0x6040	RDC R6040 10/100 Ethernet
+product RDC	R1010_IDE	0x1010	R1010 IDE controller
+product RDC	R1011_IDE	0x1011	R1011 IDE controller
+product RDC	R1012_IDE	0x1012	R1012 IDE controller
+product RDC	R6021_HB	0x6021	R6021 Host
+product RDC	R6025_HB	0x6025	R6025 Host
+product RDC	R6031_ISA	0x6031	R6031 PCI-ISA bridge
+product RDC	PCIB		0x6036	R6036 PCI-ISA bridge
+product RDC	R6040		0x6040	R6040 10/100 Ethernet
+product RDC	R6060_OHCI	0x6060	R6060 USB OHCI
+product RDC	R6061_EHCI	0x6061	R6061 USB EHCI
 
 /* Realtek products */
 product REALTEK RTS5209		0x5209	RTS5209 PCI-E Card Reader

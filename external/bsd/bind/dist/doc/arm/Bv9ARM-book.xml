@@ -18,7 +18,6 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- File: Id: Bv9ARM-book.xml,v 1.522 2012/01/31 03:35:40 each Exp  -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <title>BIND 9 Administrator Reference Manual</title>
 
@@ -73,7 +72,7 @@
       </para>
 
       <para>
-	This version of the manual corresponds to BIND version 9.9.
+	This version of the manual corresponds to BIND version 9.10.
       </para>
 
     </sect1>
@@ -1477,13 +1476,23 @@ controls {
 
 	<para>
 	  If you have to make changes to a dynamic zone
-	  manually, the following procedure will work: Disable dynamic updates
-	      to the zone using
+	  manually, the following procedure will work:
+	  Disable dynamic updates to the zone using
 	  <command>rndc freeze <replaceable>zone</replaceable></command>.
-	  This will also remove the zone's <filename>.jnl</filename> file
-	  and update the master file.  Edit the zone file.  Run
+	  This will update the zone's master file with the changes
+	  stored in its <filename>.jnl</filename> file.
+	  Edit the zone file.  Run
 	  <command>rndc thaw <replaceable>zone</replaceable></command>
 	  to reload the changed zone and re-enable dynamic updates.
+	</para>
+
+	<para>
+	  <command>rndc sync <replaceable>zone</replaceable></command>
+	  will update the zone file with changes from the journal file
+	  without stopping dynamic updates; this may be useful for viewing
+	  the current zone state.  To remove the <filename>.jnl</filename>
+	  file after updating the zone file, use
+	  <command>rndc sync -clean</command>.
 	</para>
 
       </sect2>
@@ -3401,7 +3410,9 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 		<entry colname="2">
 		  <para>
 		    Matches the IPv4 and IPv6 addresses of all network
-		    interfaces on the system.
+		    interfaces on the system.  When addresses are
+		    added or removed, the <command>localhost</command>
+		    ACL element is updated to reflect the changes.
 		  </para>
 		</entry>
 	      </row>
@@ -3413,6 +3424,9 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 		  <para>
 		    Matches any host on an IPv4 or IPv6 network
 		    for which the system has an interface.
+		    When addresses are added or removed,
+		    the <command>localnets</command>
+		    ACL element is updated to reflect the changes.
 		    Some systems do not provide a way to determine the prefix
 		    lengths of
 		    local IPv6 addresses.
@@ -4659,8 +4673,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<para>
 	  The <command>listen-on</command> statement specifies a
 	  list of
-	  addresses (and ports) that this instance of a lightweight resolver
-	  daemon
+	  IPv4 addresses (and ports) that this instance of a lightweight
+	  resolver daemon
 	  should accept requests on.  If no port is specified, port 921 is
 	  used.
 	  If this statement is omitted, requests will be accepted on
@@ -4939,6 +4953,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> resolver-query-timeout <replaceable>number</replaceable> ; </optional>
     <optional> deny-answer-addresses { <replaceable>address_match_list</replaceable> } <optional> except-from { <replaceable>namelist</replaceable> } </optional>;</optional>
     <optional> deny-answer-aliases { <replaceable>namelist</replaceable> } <optional> except-from { <replaceable>namelist</replaceable> } </optional>;</optional>
+    <optional> prefetch <replaceable>number</replaceable> <optional><replaceable>number</replaceable></optional> ; </optional>
+
     <optional> rate-limit {
 	<optional> domain <replaceable>domain</replaceable> ; </optional>
 	<optional> responses-per-second <optional>size <replaceable>number</replaceable></optional> <optional>ratio <replaceable>fixedpoint</replaceable></optional> <replaceable>number</replaceable> ; </optional>
@@ -4956,13 +4972,18 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<optional> exempt-clients  { <replaceable>address_match_list</replaceable> } ; </optional>
 	<optional> max-table-size <replaceable>number</replaceable> ; </optional>
 	<optional> min-table-size <replaceable>number</replaceable> ; </optional>
-      } ; </optional>
-    <optional> response-policy { <replaceable>zone_name</replaceable>
-	<optional> policy given | disabled | passthru | drop | nxdomain | nodata | cname <replaceable>domain</replaceable> </optional>
-	<optional> recursive-only <replaceable>yes_or_no</replaceable> </optional> <optional> max-policy-ttl <replaceable>number</replaceable> </optional> ;
-    } <optional> recursive-only <replaceable>yes_or_no</replaceable> </optional> <optional> max-policy-ttl <replaceable>number</replaceable> </optional>
-	<optional> break-dnssec <replaceable>yes_or_no</replaceable> </optional> <optional> min-ns-dots <replaceable>number</replaceable> </optional>
-	<optional> qname-wait-recurse <replaceable>yes_or_no</replaceable> </optional> ; </optional>
+    } ; </optional>
+    <optional> response-policy {
+	zone <replaceable>zone_name</replaceable> ;
+	<optional> policy <replaceable>given | disabled | passthru | drop | nxdomain | nodata | cname</replaceable> <replaceable>domain</replaceable> ; </optional>
+	<optional> recursive-only <replaceable>yes_or_no</replaceable> ; </optional>
+	<optional> max-policy-ttl <replaceable>number</replaceable> ; </optional> ;
+	<optional> recursive-only <replaceable>yes_or_no</replaceable> ; </optional>
+	<optional> max-policy-ttl <replaceable>number</replaceable> ; </optional>
+	<optional> break-dnssec <replaceable>yes_or_no</replaceable> ; </optional>
+	<optional> min-ns-dots <replaceable>number</replaceable> ; </optional>
+	<optional> qname-wait-recurse <replaceable>yes_or_no</replaceable> ; </optional>
+    } ; </optional>
 };
 </programlisting>
 
@@ -5694,34 +5715,34 @@ options {
 	  </varlistentry>
 
 	  <varlistentry>
-            <term><command>max-zone-ttl</command></term>
-            <listitem>
-              <para>
-                Specifies a maximum permissible TTL value.
-                When loading a zone file using a
-                <option>masterfile-format</option> of
-                <constant>text</constant> or <constant>raw</constant>,
-                any record encountered with a TTL higher than
-                <option>max-zone-ttl</option> will cause the zone to
-                be rejected.
-              </para>
-              <para>
-                This is useful in DNSSEC-signed zones because when
-                rolling to a new DNSKEY, the old key needs to remain
-                available until RRSIG records have expired from
-                caches.  The<option>max-zone-ttl</option> option guarantees
-                that the largest TTL in the zone will be no higher
-                the set value.
-              </para>
-              <para>
-                (NOTE: Because <constant>map</constant>-format files
-                load directly into memory, this option cannot be
-                used with them.)
-              </para>
-            </listitem>
-          </varlistentry>
+	    <term><command>max-zone-ttl</command></term>
+	    <listitem>
+	      <para>
+		Specifies a maximum permissible TTL value.
+		When loading a zone file using a
+		<option>masterfile-format</option> of
+		<constant>text</constant> or <constant>raw</constant>,
+		any record encountered with a TTL higher than
+		<option>max-zone-ttl</option> will cause the zone to
+		be rejected.
+	      </para>
+	      <para>
+		This is useful in DNSSEC-signed zones because when
+		rolling to a new DNSKEY, the old key needs to remain
+		available until RRSIG records have expired from
+		caches.  The<option>max-zone-ttl</option> option guarantees
+		that the largest TTL in the zone will be no higher
+		the set value.
+	      </para>
+	      <para>
+		(NOTE: Because <constant>map</constant>-format files
+		load directly into memory, this option cannot be
+		used with them.)
+	      </para>
+	    </listitem>
+	  </varlistentry>
 
-          <varlistentry>
+	  <varlistentry>
 	    <term><command>zone-statistics</command></term>
 	    <listitem>
 	      <para>
@@ -6260,31 +6281,36 @@ options {
 
 	    <varlistentry>
 	      <term><command>request-sit</command></term>
-	      <para>
-		If <userinput>yes</userinput>, then a SIT (Source Identity
-		Token) EDNS option is sent along with the query.  If the
-                resolver has previously talked to the server, the SIT
-                returned in the previous transaction is sent. This
-                is used by the server to determine whether the resolver
-                has talked to it before. A resolver sending the correct
-                SIT is assumed not to be an off-path attacker sending a
-                spoofed-source query; the query is therefore unlikely to
-                be part of a reflection/amplification attack, so resolvers
-                sending a correct SIT option are not subject to response
-                rate limiting (RRL).  Resolvers which do not send a correct
-                SIT option may be limited to receiving smaller responses
-                via the <command>nosit-udp-size</command> option.
-	      </para>
+	      <listitem>
+		<para>
+		  If <userinput>yes</userinput>, then a SIT (Source
+		  Identity Token) EDNS option is sent along with
+		  the query.  If the resolver has previously talked
+		  to the server, the SIT returned in the previous
+		  transaction is sent. This is used by the server
+		  to determine whether the resolver has talked to
+		  it before. A resolver sending the correct SIT is
+		  assumed not to be an off-path attacker sending a
+		  spoofed-source query; the query is therefore
+		  unlikely to be part of a reflection/amplification
+		  attack, so resolvers sending a correct SIT option
+		  are not subject to response rate limiting (RRL).
+		  Resolvers which do not send a correct SIT option
+		  may be limited to receiving smaller responses via
+		  the <command>nosit-udp-size</command> option.
+		</para>
+	      </listitem>
 	    </varlistentry>
 
 	    <varlistentry>
-	      <term><command>sit-secret</command></term>
-	      <para>
-		If set, this is a shared secret used for generating and
-		verifying Source Identity Token EDNS options within a
-		anycast cluster.  If not set the system will generate
-		a random secret at startup.
-	      </para>
+	      <term><command>sit-secret</command></term> <listitem>
+		<para>
+		  If set, this is a shared secret used for generating
+		  and verifying Source Identity Token EDNS options
+		  within a anycast cluster.  If not set the system
+		  will generate a random secret at startup.
+		</para>
+	      </listitem>
 	    </varlistentry>
 
 	    <varlistentry>
@@ -7261,53 +7287,53 @@ options {
 	    <varlistentry>
 	      <term><command>no-case-compress</command></term> <listitem>
 		<para>
-                  Specifies a list of addresses which require responses
-                  to use case-insensitive compression.  This ACL can be
-                  used when <command>named</command> needs to work with
-                  clients that do not comply with the requirement in RFC
-                  1034 to use case-insensitive name comparisons when
-                  checking for matching domain names.
-                </para>
-                <para>
-                  If left undefined, the ACL defaults to
-                  <command>none</command>: case-insensitive compression
-                  will be used for all clients.  If the ACL is defined and
-                  matches a client, then case will be ignored when
-                  compressing domain names in DNS responses sent to that
-                  client.
-                </para>
-                <para>
-                  This can result in slightly smaller responses: if
-                  a response contains the names "example.com" and
-                  "example.COM", case-insensitive compression would treat
-                  the second one as a duplicate.  It also ensures
-                  that the case of the query name exactly matches the
-                  case of the owner names of returned records, rather
-                  than matching the case of the records entered in
-                  the zone file.  This allows responses to exactly
-                  match the query, which is required by some clients
-                  due to incorrect use of case-sensitive comparisions.
-                </para>
-                <para>
-                  Case-insensitive compression is <emphasis>always</emphasis>
-                  used in AXFR and IXFR responses, regardless of whether
-                  the client matches this ACL.
-                </para>
-                <para>
-                  There are circusmstances in which <command>named</command>
-                  will not preserve the case of owner names of records:
-                  if a zone file defines records of different types with
-                  the same name, but the capitalization of the name is
-                  different (e.g., "www.example.com/A" and
-                  "WWW.EXAMPLE.COM/AAAA"), then all resposnes for that
-                  name will use the <emphasis>first</emphasis> version
-                  of the name that was used in the zone file.  This
-                  limitation may be addressed in a future release.  However,
-                  domain names specified in the rdata of resource records
-                  (i.e., records of type NS, MX, CNAME, etc) will always
-                  have their case preserved unless the client matches this
-                  ACL.
-                </para>
+		  Specifies a list of addresses which require responses
+		  to use case-insensitive compression.  This ACL can be
+		  used when <command>named</command> needs to work with
+		  clients that do not comply with the requirement in RFC
+		  1034 to use case-insensitive name comparisons when
+		  checking for matching domain names.
+		</para>
+		<para>
+		  If left undefined, the ACL defaults to
+		  <command>none</command>: case-insensitive compression
+		  will be used for all clients.  If the ACL is defined and
+		  matches a client, then case will be ignored when
+		  compressing domain names in DNS responses sent to that
+		  client.
+		</para>
+		<para>
+		  This can result in slightly smaller responses: if
+		  a response contains the names "example.com" and
+		  "example.COM", case-insensitive compression would treat
+		  the second one as a duplicate.  It also ensures
+		  that the case of the query name exactly matches the
+		  case of the owner names of returned records, rather
+		  than matching the case of the records entered in
+		  the zone file.  This allows responses to exactly
+		  match the query, which is required by some clients
+		  due to incorrect use of case-sensitive comparisions.
+		</para>
+		<para>
+		  Case-insensitive compression is <emphasis>always</emphasis>
+		  used in AXFR and IXFR responses, regardless of whether
+		  the client matches this ACL.
+		</para>
+		<para>
+		  There are circusmstances in which <command>named</command>
+		  will not preserve the case of owner names of records:
+		  if a zone file defines records of different types with
+		  the same name, but the capitalization of the name is
+		  different (e.g., "www.example.com/A" and
+		  "WWW.EXAMPLE.COM/AAAA"), then all resposnes for that
+		  name will use the <emphasis>first</emphasis> version
+		  of the name that was used in the zone file.  This
+		  limitation may be addressed in a future release.  However,
+		  domain names specified in the rdata of resource records
+		  (i.e., records of type NS, MX, CNAME, etc) will always
+		  have their case preserved unless the client matches this
+		  ACL.
+		</para>
 	      </listitem>
 	    </varlistentry>
 
@@ -7332,7 +7358,9 @@ options {
 	  <para>
 	    The interfaces and ports that the server will answer queries
 	    from may be specified using the <command>listen-on</command> option. <command>listen-on</command> takes
-	    an optional port and an <varname>address_match_list</varname>.
+	    an optional port and an <varname>address_match_list</varname>
+	    of IPv4 addresses.  (IPv6 addresses are ignored, with a
+	    logged warning.)
 	    The server will listen on all interfaces allowed by the address
 	    match list. If a port is not specified, port 53 will be used.
 	  </para>
@@ -7384,6 +7412,8 @@ listen-on port 1234 { !1.2.3.4; 1.2/16; };
 	    the server listens on a separate socket for each specified
 	    address,
 	    regardless of whether the desired API is supported by the system.
+	    IPv4 addresses specified in <command>listen-on-v6</command>
+	    will be ignored, with a logged warning.
 	  </para>
 
 	  <para>
@@ -8665,7 +8695,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	      <listitem>
 		<para>
 		  Specify a private RDATA type to be used when generating
-		  key signing records.  The default is
+		  signing state records.  The default is
 		  <literal>65534</literal>.
 		</para>
 		<para>
@@ -8673,13 +8703,20 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  in a future version once there is a standard type.
 		</para>
 		<para>
-		  These records can be removed from the zone once named
-		  has completed signing the zone with the matching key
-		  using <command>nsupdate</command> or
-		  <command>rndc signing -clear</command>.
-		  <command>rndc signing -clear</command> is the only supported
-		  way to remove these records from
-		  <command>inline-signing</command> zones.
+		  Signing state records are used to internally by
+		  <command>named</command> to track the current state of
+		  a zone-signing process, i.e., whether it is still active
+		  or has been completed.  The records can be inspected
+		  using the command
+		  <command>rndc signing -list <replaceable>zone</replaceable></command>.
+		  Once <command>named</command> has finished signing
+		  a zone with a particular key, the signing state
+		  record associated with that key can be removed from
+		  the zone by running
+		  <command>rndc signing -clear <replaceable>keyid/algorithm</replaceable> <replaceable>zone</replaceable></command>.
+		  To clear all of the completed signing state
+		  records for a zone, use
+		  <command>rndc signing -clear all <replaceable>zone</replaceable></command>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -8916,26 +8953,26 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  answer available.
 		</para>
 		<para>
-		  The <option>prefetch</option> specifies the the
+		  The <option>prefetch</option> specifies the
 		  "trigger" TTL value at which prefetch of the current
 		  query will take place: when a cache record with a
 		  lower TTL value is encountered during query processing,
 		  it will be refreshed.  Valid trigger TTL values are 1 to
-		  10 seconds.  Setting a trigger TTL to zero disables
-		  prefetch.
+		  10 seconds.  Values larger than 10 seconds will be silently
+		  reduced to 10.
+		  Setting a trigger TTL to zero (0) causes
+		  prefetch to be disabled.
+		  The default trigger TTL is <literal>2</literal>.
 		</para>
 		<para>
-		  An optional second argument can be used
-		  to set the smallest <emphasis>original</emphasis>
+		  An optional second argument specifies the "eligibility"
+		  TTL: the smallest <emphasis>original</emphasis>
 		  TTL value that will be accepted for a record to be
-		  eligible for prefetching.  The difference between
-		  the trigger TTL and the eligibility TTL must be
-		  at least 6 seconds.
-		</para>
-		<para>
-		  The default trigger and eligibility TTLs are
-		  <literal>2</literal> and <literal>9</literal>,
-		  respectively.
+		  eligible for prefetching.  The eligibility TTL must
+		  be at least six seconds longer than the trigger TTL;
+		  if it isn't, <command>named</command> will silently
+		  adjust it upward.
+		  The default eligibility TTL is <literal>9</literal>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -9837,9 +9874,9 @@ deny-answer-aliases { "example.net"; };
 	    DNSSEC requests (DO=1) unless <command>break-dnssec yes</command>
 	    is in use, because the response would depend on whether or not
 	    RRSIG records were found during resolution.
-            Using this option can cause error responses such as SERVFAIL to
-            appear to be rewritten, since no recursion is being done to
-            discover problems at the authoritative server.
+	    Using this option can cause error responses such as SERVFAIL to
+	    appear to be rewritten, since no recursion is being done to
+	    discover problems at the authoritative server.
 	  </para>
 
 	  <para>
@@ -9992,7 +10029,7 @@ example.com                 CNAME   rpz-tcp-only.
 	    Requests for any and all undefined subdomains of a given
 	    valid domain result in NXDOMAIN errors, and are identical
 	    regardless of query type.
-	    They are limited by <command>nxdomain-per-second</command>
+	    They are limited by <command>nxdomains-per-second</command>
 	    (default base <command>responses-per-second</command>).
 	    This controls some attacks using random names, but
 	    can be relaxed or turned off (set to 0)
@@ -10256,6 +10293,8 @@ rate-limit {
     <optional> bogus <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> provide-ixfr <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> request-ixfr <replaceable>yes_or_no</replaceable> ; </optional>
+    <optional> request-nsid <replaceable>yes_or_no</replaceable> ; </optional>
+    <optional> request-sit <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> edns <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> edns-udp-size <replaceable>number</replaceable> ; </optional>
     <optional> nosit-udp-size <replaceable>number</replaceable> ; </optional>
@@ -10472,6 +10511,23 @@ rate-limit {
 	    only <command>query-source-v6</command> can be specified.
 	  </para>
 
+	  <para>
+	    The <command>request-nsid</command> clause determines
+	    whether the local server will add a NSID EDNS option
+	    to requests sent to the server.  This overrides
+	    <command>request-nsid</command> set at the view or
+	    option level. 
+	  </para>
+
+	  <para>
+	    The <command>request-sit</command> clause determines
+	    whether the local server will add a SIT EDNS option
+	    to requests sent to the server.  This overrides
+	    <command>request-sit</command> set at the view or
+	    option level.  Named may determine that SIT is not
+	    supported by the remote server and not add a SIT
+	    EDNS option to requests.
+	  </para>
 	</sect2>
 
       <sect2 id="statschannels">
@@ -10674,8 +10730,8 @@ rate-limit {
 	  <title><command>managed-keys</command> Statement Grammar</title>
 
 <programlisting><command>managed-keys</command> {
-    <replaceable>name</replaceable> <literal>initial-key</literal> <replaceable>flags</replaceable> <replaceable>protocol</replaceable> <replaceable>algorithm</replaceable> <replaceable>key-data</replaceable> ;
-    <optional> <replaceable>name</replaceable> <literal>initial-key</literal> <replaceable>flags</replaceable> <replaceable>protocol</replaceable> <replaceable>algorithm</replaceable> <replaceable>key-data</replaceable> ; <optional>...</optional></optional>
+    <replaceable>name</replaceable> initial-key <replaceable>flags</replaceable> <replaceable>protocol</replaceable> <replaceable>algorithm</replaceable> <replaceable>key-data</replaceable> ;
+    <optional> <replaceable>name</replaceable> initial-key <replaceable>flags</replaceable> <replaceable>protocol</replaceable> <replaceable>algorithm</replaceable> <replaceable>key-data</replaceable> ; <optional>...</optional></optional>
 };
 </programlisting>
 
@@ -14184,8 +14240,9 @@ HOST-127.EXAMPLE. MX 0 .
 		    <para>
 		      This can be one of two forms: start-stop
 		      or start-stop/step. If the first form is used, then step
-		      is set to
-		      1. All of start, stop and step must be positive.
+		      is set to 1. start, stop and step must be positive
+		      integers between 0 and (2^31)-1. start must not be
+		      larger than stop.
 		    </para>
 		  </entry>
 		</row>
@@ -17610,7 +17667,7 @@ zone "example.com" {
       <title>Manual pages</title>
       <xi:include href="../../bin/dig/dig.docbook"/>
       <xi:include href="../../bin/dig/host.docbook"/>
-      <xi:include href="../../bin/delve/delve.docbook"/>
+      <xi:include href="../../bin/delv/delv.docbook"/>
       <xi:include href="../../bin/python/dnssec-checkds.docbook"/>
       <xi:include href="../../bin/python/dnssec-coverage.docbook"/>
       <xi:include href="../../bin/dnssec/dnssec-dsfromkey.docbook"/>

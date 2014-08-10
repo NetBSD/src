@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,18 @@
 
 #ifndef _LINUX_IO_H_
 #define _LINUX_IO_H_
+
+#include <asm/io.h>
+
+#define	arch_phys_wc_add	linux_arch_phys_wc_add
+#define	arch_phys_wc_del	linux_arch_phys_wc_del
+#define	phys_wc_to_mtrr_index	linux_phys_wc_to_mtrr_index
+
+int	linux_writecomb_init(void);
+void	linux_writecomb_fini(void);
+
+int	arch_phys_wc_add(unsigned long, unsigned long);
+void	arch_phys_wc_del(int);
+int	phys_wc_to_mtrr_index(int);
 
 #endif  /* _LINUX_IO_H_ */

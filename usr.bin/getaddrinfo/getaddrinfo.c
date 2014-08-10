@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.3 2014/03/19 01:24:32 ginsbach Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.3.2.1 2014/08/10 06:58:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getaddrinfo.c,v 1.3 2014/03/19 01:24:32 ginsbach Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.3.2.1 2014/08/10 06:58:08 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -131,6 +131,24 @@ main(int argc, char **argv)
 		usage();
 	if (argc == 1)
 		hostname = argv[0];
+
+	if (service != NULL) {
+		char *p;
+
+		if ((p = strchr(service, '/')) != NULL) {
+			if (hints.ai_protocol != 0) {
+				warnx("protocol already specified");
+				usage();
+			}
+			*p = '\0';
+			p++;
+			
+			if (!parse_protocol(p, &hints.ai_protocol)) {
+				warnx("invalid protocol: %s", p);
+				usage();
+			}
+		}
+	}
 
 	error = getaddrinfo(hostname, service, &hints, &addrinfo);
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.25 2013/10/25 11:35:55 martin Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.25.2.1 2014/08/10 06:56:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.25 2013/10/25 11:35:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.25.2.1 2014/08/10 06:56:58 tls Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -147,9 +147,16 @@ ffs_wapbl_replay_finish(struct mount *mp)
 		 * initialized in ufs_makeinode.  If so, just dallocate them.
 		 */
 		if (ip->i_mode == 0) {
-			UFS_WAPBL_BEGIN(mp);
-			ffs_vfree(vp, ip->i_number, wr->wr_inodes[i].wr_imode);
-			UFS_WAPBL_END(mp);
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error) {
+				printf("ffs_wapbl_replay_finish: "
+				    "unable to cleanup inode %" PRIu32 "\n",
+				    wr->wr_inodes[i].wr_inumber);
+			} else {
+				ffs_vfree(vp, ip->i_number,
+				    wr->wr_inodes[i].wr_imode);
+				UFS_WAPBL_END(mp);
+			}
 		}
 		vput(vp);
 	}
@@ -344,20 +351,18 @@ ffs_wapbl_start(struct mount *mp)
 #endif
 
 			if ((fs->fs_flags & FS_DOWAPBL) == 0) {
-				UFS_WAPBL_BEGIN(mp);
 				fs->fs_flags |= FS_DOWAPBL;
+				if ((error = UFS_WAPBL_BEGIN(mp)) != 0)
+					goto out;
 				error = ffs_sbupdate(ump, MNT_WAIT);
 				if (error) {
 					UFS_WAPBL_END(mp);
-					ffs_wapbl_stop(mp, MNT_FORCE);
-					return error;
+					goto out;
 				}
 				UFS_WAPBL_END(mp);
 				error = wapbl_flush(mp->mnt_wapbl, 1);
-				if (error) {
-					ffs_wapbl_stop(mp, MNT_FORCE);
-					return error;
-				}
+				if (error)
+					goto out;
 			}
 		} else if (fs->fs_flags & FS_DOWAPBL) {
 			fs->fs_fmod = 1;
@@ -384,6 +389,9 @@ ffs_wapbl_start(struct mount *mp)
 	}
 
 	return 0;
+out:
+	ffs_wapbl_stop(mp, MNT_FORCE);
+	return error;
 }
 
 int

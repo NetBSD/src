@@ -3,7 +3,7 @@
 # This assumes the compiler comes from pkgsrc/cross/gcc-mips-current
 # (as R5900 support is not available on other branches of gcc yet)
 root=/usr/pkg
-target=mipsel--netbsdelf
+target=mipsel--netbsd
 
 EXTERNAL_TOOLCHAIN=${root};		export EXTERNAL_TOOLCHAIN
 LD=${root}/bin/${target}-ld;		export LD
@@ -16,8 +16,8 @@ AR=${root}/bin/${target}-ar;		export AR
 NM=${root}/bin/${target}-nm;		export NM
 SIZE=${root}/bin/${target}-size;	export SIZE
 STRIP=${root}/bin/${target}-strip;	export STRIP
+OBJCOPY=${root}/bin/${target}-objcopy;	export OBJCOPY
 
 MAKE="make";				 export MAKE
 
-set -x
 exec $MAKE "$@"

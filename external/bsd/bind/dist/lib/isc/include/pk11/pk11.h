@@ -1,4 +1,4 @@
-/*	$NetBSD: pk11.h,v 1.1.1.1 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: pk11.h,v 1.1.1.1.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -71,7 +71,8 @@ typedef enum {
 	OP_DIGEST = 5,
 	OP_EC = 6,
 	OP_GOST = 7,
-	OP_MAX = 8
+	OP_AES = 8,
+	OP_MAX = 9
 } pk11_optype_t;
 
 /*%
@@ -83,8 +84,25 @@ void pk11_set_lib_name(const char *lib_name);
  * Set the PKCS#11 provider (aka library) path/name.
  */
 
+isc_result_t pk11_initialize(isc_mem_t *mctx, const char *engine);
+/*%<
+ * Initialize PKCS#11 device
+ *
+ * mctx:   memory context to attach to pk11_mctx.
+ * engine: PKCS#11 provider (aka library) path/name.
+ *
+ * returns:
+ *         ISC_R_SUCCESS
+ *         PK11_R_NOPROVIDER: can't load the provider
+ *         PK11_R_INITFAILED: C_Initialize() failed
+ *         PK11_R_NORANDOMSERVICE: can't find required random service
+ *         PK11_R_NODIGESTSERVICE: can't find required digest service
+ *         PK11_R_NOAESSERVICE: can't find required AES service
+ */
+
 isc_result_t pk11_get_session(pk11_context_t *ctx,
 			      pk11_optype_t optype,
+			      isc_boolean_t need_services,
 			      isc_boolean_t rw,
 			      isc_boolean_t logon,
 			      const char *pin,
@@ -92,6 +110,13 @@ isc_result_t pk11_get_session(pk11_context_t *ctx,
 /*%<
  * Initialize PKCS#11 device and acquire a session.
  *
+ * need_services:
+ * 	  if ISC_TRUE, this session requires full PKCS#11 API
+ * 	  support including random and digest services, and
+ * 	  the lack of these services will cause the session not
+ * 	  to be initialized.  If ISC_FALSE, the function will return
+ * 	  an error code indicating the missing service, but the
+ * 	  session will be usable for other purposes.
  * rw:    if ISC_TRUE, session will be read/write (useful for
  *        generating or destroying keys); otherwise read-only.
  * login: indicates whether to log in to the device
@@ -105,7 +130,7 @@ void pk11_return_session(pk11_context_t *ctx);
  * Release an active PKCS#11 session for reuse.
  */
 
-void pk11_shutdown(void);
+isc_result_t pk11_finalize(void);
 /*%<
  * Shut down PKCS#11 device and free all sessions.
  */
@@ -184,6 +209,15 @@ pkcs_C_FindObjects(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_PTR phObject,
 
 CK_RV
 pkcs_C_FindObjectsFinal(CK_SESSION_HANDLE hSession);
+
+CK_RV
+pkcs_C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism,
+		   CK_OBJECT_HANDLE hKey);
+
+CK_RV
+pkcs_C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
+	       CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData,
+	       CK_ULONG_PTR pulEncryptedDataLen);
 
 CK_RV
 pkcs_C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism);

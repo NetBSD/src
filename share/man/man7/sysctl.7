@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.79 2013/12/16 00:59:37 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.79.2.1 2014/08/10 06:53:25 tls Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd December 14, 2013
+.Dd August 3, 2014
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -198,6 +198,7 @@ privilege may change the value.
 .It hw.machine_arch	string	no
 .It hw.model	string	no
 .It hw.ncpu	integer	no
+.It hw.ncpuonline	integer	no
 .It hw.pagesize	integer	no
 .It hw.physmem	integer	no
 .It hw.physmem64	quad	no
@@ -249,7 +250,9 @@ The machine CPU class.
 .It Li hw.model ( HW_MODEL )
 The machine model.
 .It Li hw.ncpu ( HW_NCPU )
-The number of CPUs.
+The number of CPUs configured.
+.It Li hw.ncpuonline ( HW_NCPUONLINE )
+The number of CPUs online.
 .It Li hw.pagesize ( HW_PAGESIZE )
 The software page size.
 .It Li hw.physmem ( HW_PHYSMEM )
@@ -277,6 +280,7 @@ privilege may change the value.
 .It kern.argmax	integer	no
 .It kern.boothowto	integer	no
 .It kern.boottime	struct timeval	no
+.It kern.buildinfo	string	no
 .\".It kern.bufq	node	not applicable
 .It kern.ccpu	integer	no
 .It kern.clockrate	struct clockinfo	no
@@ -329,6 +333,7 @@ privilege may change the value.
 .It kern.ostype	string	no
 .\".It kern.panic_now	integer	yes
 .It kern.pipe	node	not applicable
+.It kern.pool	struct pool_sysctl	no
 .\" .It kern.posix	node	not applicable
 .It kern.posix1version	integer	no
 .It kern.posix_aio	integer	no
@@ -394,6 +399,9 @@ A
 .Vt struct timeval
 structure is returned.
 This structure contains the time that the system was booted.
+.It Li kern.buildinfo
+When the kernel is built, the build environment may optionally provide
+arbitrary information to be stored in this variable.
 .\" .It Li kern.bufq
 .\" XXX: Undocumented.
 .It Li kern.ccpu ( KERN_CCPU )
@@ -849,6 +857,12 @@ Number of
 .Dq big
 pipes.
 .El
+.It Li kern.pool
+Provides statistics about the
+.Xr pool 9
+and
+.Xr pool_cache 9
+subsystems.
 .\" XXX: Undocumented .It Li kern.posix ( ? )
 .\"	 This is a node in which the only variable is semmax.
 .It Li kern.posix1version ( KERN_POSIX1 )
@@ -1889,6 +1903,8 @@ The currently defined variable and names are:
 .Bl -column "blockacq_lifetime" "integer" "Changeable" -offset indent
 .It Sy Variable name	Type	Changeable
 .It debug	integer	yes
+.It enabled	integer	yes
+.It used	integer	no
 .It spi_try	integer	yes
 .It spi_min_value	integer	yes
 .It spi_max_value	integer	yes
@@ -1906,6 +1922,20 @@ The variables are as follows:
 Turn on debugging message from within the kernel.
 The value is a bitmap, as defined in
 .In netkey/key_debug.h .
+.It Li enabled
+Control processing of IPsec control messages.
+.Bl -tag -width indent
+.It 0
+Never allow IPsec processing
+.It 1
+Allow IPsec processing when SPD policies are present.
+.It 2
+Force IPsec processing even when SPD policies are not present.
+.El
+.It Li used
+Based on if IPsec is enabled, and SPD rule existance, show if
+IPsec is being used.
+Note that currenly once IPsec is being used, it cannot be disabled.
 .It Li spi_try
 The number of times the kernel will try to obtain an unique SPI
 when it generates it from random number generator.

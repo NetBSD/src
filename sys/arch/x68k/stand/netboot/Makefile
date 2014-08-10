@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/11/01 14:46:26 isaki Exp $
+#	$NetBSD: Makefile,v 1.2.12.1 2014/08/10 06:54:10 tls Exp $
 
 NOMAN=		# defined
 
@@ -22,14 +22,12 @@ BINMODE=	444
 STRIPFLAG=
 
 BFDNAME=	a.out-m68k-netbsd
-STRIP?=		/usr/bin/strip
-OBJCOPY?=	/usr/bin/objcopy
 
 # XXX shared sources should be in COMMONDIR
 BOOTDIR=	${.CURDIR}/../boot
 .PATH:		${BOOTDIR}
 
-SRCS=		srt0.S boot.c conf.c exec_image.S if_ne.c ne.c dp8390.c
+SRCS=		srt0.S boot.c conf.c switch.c exec_image.S if_ne.c ne.c dp8390.c
 S=		${.CURDIR}/../../../..
 M=		${.CURDIR}/../..
 COMMONDIR=	$M/stand/common
@@ -47,9 +45,11 @@ CPPFLAGS+=	-I$M/stand/libiocs -I${COMMONDIR}
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	-DTEXTADDR="0x${TEXT}" 
 CPPFLAGS+=	-DBOOT=\"${BOOT}\" -DBOOT_VERS=\"${VERSION}\"
+CPPFLAGS+=	-DNETBOOT
 CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
 CPPFLAGS+=	-DRTC_OFFSET=${RTC_OFFSET}
 CPPFLAGS+=	-DSUPPORT_BOOTP -DSUPPORT_DHCP
+#CPPFLAGS+=	-DDEBUG
 CFLAGS=		-Wno-main -Os -m68020-60
 LINKFLAGS=	-N -static -T ${BOOTDIR}/boot.ldscript
 LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}

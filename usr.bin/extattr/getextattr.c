@@ -1,4 +1,4 @@
-/*	$NetBSD: getextattr.c,v 1.10 2012/06/17 08:09:29 manu Exp $	*/
+/*	$NetBSD: getextattr.c,v 1.10.8.1 2014/08/10 06:58:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Networks Associates Technology, Inc.
@@ -310,8 +310,8 @@ main(int argc, char *argv[])
 
 			(void)close(fd);
 		} else {
-			val_len = strlen(argv[0]) + 1;
-			mkbuf(&buf, &buflen, val_len);
+			val_len = strlen(argv[0]);
+			mkbuf(&buf, &buflen, val_len + 1);
 			strcpy(buf, argv[0]); /* safe */
 			argc--; argv++;
 		}
@@ -406,7 +406,7 @@ main(int argc, char *argv[])
 				hexdump(buf, error);
 				continue;
 			} else {
-				fwrite(buf, buflen, 1, stdout);
+				fwrite(buf, error, 1, stdout);
 				printf("\n");
 				continue;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.32 2014/03/16 05:20:24 dholland Exp $	*/
+/*	$NetBSD: aed.c,v 1.32.2.1 2014/08/10 06:54:01 tls Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.32 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.32.2.1 2014/08/10 06:54:01 tls Exp $");
 
 #include "opt_adb.h"
 
@@ -90,6 +90,7 @@ const struct cdevsw aed_cdevsw = {
 	.d_poll = aedpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = aedkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

@@ -1,6 +1,6 @@
 /* Target-dependent header for the MIPS architecture, for GDB, the GNU Debugger.
 
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 
 #ifndef MIPS_TDEP_H
 #define MIPS_TDEP_H
+
+#include "objfiles.h"
 
 struct gdbarch;
 
@@ -192,5 +194,13 @@ extern void mips_write_pc (struct regcache *regcache, CORE_ADDR pc);
    registers.  */
 extern struct target_desc *mips_tdesc_gp32;
 extern struct target_desc *mips_tdesc_gp64;
+
+/* Return non-zero if PC is in a MIPS SVR4 lazy binding stub section.  */
+
+static inline int
+in_mips_stubs_section (CORE_ADDR pc)
+{
+  return pc_in_section (pc, ".MIPS.stubs");
+}
 
 #endif /* MIPS_TDEP_H */

@@ -1,5 +1,5 @@
 /* Architecture-dependent code for the Fujitsu FR-V, for GDB, the GNU Debugger.
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

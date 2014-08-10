@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.42 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.42.2.1 2014/08/10 06:54:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.42 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.42.2.1 2014/08/10 06:54:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -143,6 +143,7 @@ const struct cdevsw dmoverio_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

@@ -1,6 +1,6 @@
 /* Python interface to new object file loading events.
 
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,8 @@
 #include "defs.h"
 #include "py-event.h"
 
-static PyTypeObject new_objfile_event_object_type;
+static PyTypeObject new_objfile_event_object_type
+    CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object");
 
 static PyObject *
 create_new_objfile_event_object (struct objfile *objfile)

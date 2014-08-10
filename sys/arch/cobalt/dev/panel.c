@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.23 2014/03/16 05:20:23 dholland Exp $ */
+/* $NetBSD: panel.c,v 1.23.2.1 2014/08/10 06:53:53 tls Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.23 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.23.2.1 2014/08/10 06:53:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,7 @@ const struct cdevsw panel_cdevsw = {
 	.d_poll = panelpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

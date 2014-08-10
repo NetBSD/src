@@ -21,11 +21,11 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/CFG.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Support/GenericDomTree.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/GenericDomTree.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
@@ -68,10 +68,6 @@ public:
   typedef DominatorTreeBase<BasicBlock> Base;
 
   DominatorTree() : DominatorTreeBase<BasicBlock>(false) {}
-
-  // FIXME: This is no longer needed and should be removed when its uses are
-  // cleaned up.
-  Base& getBase() { return *this; }
 
   /// \brief Returns *false* if the other dominator tree matches this dominator
   /// tree.
@@ -176,17 +172,17 @@ public:
   DominatorTree &getDomTree() { return DT; }
   const DominatorTree &getDomTree() const { return DT; }
 
-  virtual bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
-  virtual void verifyAnalysis() const;
+  void verifyAnalysis() const override;
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
   }
 
-  virtual void releaseMemory() { DT.releaseMemory(); }
+  void releaseMemory() override { DT.releaseMemory(); }
 
-  virtual void print(raw_ostream &OS, const Module *M = 0) const;
+  void print(raw_ostream &OS, const Module *M = nullptr) const override;
 };
 
 } // End llvm namespace

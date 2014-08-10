@@ -67,7 +67,7 @@ private:
   static const unsigned SkipThreshold = 12;
 
   static char ID;
-  const TargetRegisterInfo *TRI;
+  const SIRegisterInfo *TRI;
   const SIInstrInfo *TII;
 
   bool shouldSkip(MachineBasicBlock *From, MachineBasicBlock *To);
@@ -92,11 +92,11 @@ private:
 
 public:
   SILowerControlFlowPass(TargetMachine &tm) :
-    MachineFunctionPass(ID), TRI(0), TII(0) { }
+    MachineFunctionPass(ID), TRI(nullptr), TII(nullptr) { }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  const char *getPassName() const {
+  const char *getPassName() const override {
     return "SI Lower control flow instructions";
   }
 
@@ -345,12 +345,13 @@ void SILowerControlFlowPass::LoadM0(MachineInstr &MI, MachineInstr *MovRel) {
           .addReg(AMDGPU::EXEC);
 
   // Read the next variant into VCC (lower 32 bits) <- also loop target
-  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_READFIRSTLANE_B32_e32), AMDGPU::VCC)
+  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_READFIRSTLANE_B32),
+          AMDGPU::VCC_LO)
           .addReg(Idx);
 
   // Move index from VCC into M0
   BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
-          .addReg(AMDGPU::VCC);
+          .addReg(AMDGPU::VCC_LO);
 
   // Compare the just read M0 value to all possible Idx values
   BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CMP_EQ_U32_e32), AMDGPU::VCC)
@@ -426,7 +427,7 @@ void SILowerControlFlowPass::IndirectDst(MachineInstr &MI) {
 
 bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
   TII = static_cast<const SIInstrInfo*>(MF.getTarget().getInstrInfo());
-  TRI = MF.getTarget().getRegisterInfo();
+  TRI = static_cast<const SIRegisterInfo*>(MF.getTarget().getRegisterInfo());
   SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
 
   bool HaveKill = false;
@@ -438,10 +439,10 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
        BI != BE; ++BI) {
 
     MachineBasicBlock &MBB = *BI;
-    for (MachineBasicBlock::iterator I = MBB.begin(), Next = llvm::next(I);
-         I != MBB.end(); I = Next) {
+    MachineBasicBlock::iterator I, Next;
+    for (I = MBB.begin(); I != MBB.end(); I = Next) {
+      Next = std::next(I);
 
-      Next = llvm::next(I);
       MachineInstr &MI = *I;
       if (TII->isDS(MI.getOpcode())) {
         NeedM0 = true;

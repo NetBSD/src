@@ -1,4 +1,4 @@
-#	$NetBSD: DNS323,v 1.5 2012/09/09 04:27:11 msaitoh Exp $
+#	$NetBSD: DNS323,v 1.5.12.1 2014/08/10 06:53:54 tls Exp $
 #
 #  DNS323 -- D-Link. DNS-323 platform kernel
 #
@@ -15,7 +15,7 @@ no options	CPU_SHEEVA
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

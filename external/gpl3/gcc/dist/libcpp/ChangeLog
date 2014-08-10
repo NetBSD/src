@@ -1,3 +1,40 @@
+2014-05-22  Release Manager
+
+	* GCC 4.8.3 released.
+
+2014-04-04  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	Backport from mainline
+	2013-11-18  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	* lex.c (search_line_fast): Correct for little endian.
+
+2014-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	Backport from mainline
+	2014-02-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR preprocessor/58844
+	* macro.c (enter_macro_context): Only push
+	macro_real_token_count (macro) tokens rather than
+	macro->count tokens, regardless of
+	CPP_OPTION (pfile, track-macro-expansion).
+
+	2014-02-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR preprocessor/56824
+	* line-map.c (linemap_compare_locations): Look through adhoc locations
+	for both l0 and l1.
+
+2014-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR preprocessor/60400
+	Backport from mainline
+	2013-06-24  Dehao Chen  <dehao@google.com>
+
+	* files.c (_cpp_stack_include): Fix the highest_location when header
+	file is guarded by #ifndef and is included twice.
+
 2013-10-16  Release Manager
 
 	* GCC 4.8.2 released.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dklist.c,v 1.9 2009/04/17 04:03:39 lukem Exp $	*/
+/*	$NetBSD: dklist.c,v 1.9.22.1 2014/08/10 06:59:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,52 +63,31 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dklist.c,v 1.9 2009/04/17 04:03:39 lukem Exp $");
+__RCSID("$NetBSD: dklist.c,v 1.9.22.1 2014/08/10 06:59:51 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/disk.h>
+#include <sys/iostat.h>
 #include <sys/ioctl.h>
+#include <sys/sysctl.h>
 
 #include <dev/ic/mlxreg.h>
 #include <dev/ic/mlxio.h>
 
+#include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
-#include <kvm.h>
 #include <limits.h>
-#include <nlist.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "extern.h"
 
 static SIMPLEQ_HEAD(, mlx_disk) mlx_disks;
-
-static struct nlist namelist[] = {
-#define X_DISK_COUNT	0
-	{ "_iostat_count", 0, 0, 0, 0 },	/* number of disks */
-#define X_DISKLIST	1
-	{ "_iostatlist", 0, 0, 0, 0 },	/* TAILQ of disks */
-	{ NULL, 0, 0, 0, 0 },
-};
-
-#define	KVM_ERROR(_string) {						\
-	warnx("%s", (_string));						\
-	errx(1, "%s", kvm_geterr(kd));					\
-}
-
-/*
- * Dereference the namelist pointer `v' and fill in the local copy 
- * 'p' which is of size 's'.
- */
-#define deref_nl(kd, v, p, s)	\
-    deref_kptr(kd, (void *)namelist[(v)].n_value, (p), (s));
-
-static void	deref_kptr(kvm_t *, void *, void *, size_t);
 
 void
 mlx_disk_init(void)
@@ -170,59 +149,20 @@ mlx_disk_add(const char *name)
 void
 mlx_disk_add_all(void)
 {
-	struct iostatlist_head iostat_head;
-	struct io_stats cur_drive, *drv;
-        char errbuf[_POSIX2_LINE_MAX];
-	char buf[12];
-	int i, ndrives;
-	kvm_t *kd;
+	struct io_sysctl *data;
+	size_t i, len;
+	static const int mib[3] = { CTL_HW, HW_IOSTATS, sizeof(*data) };
 
-	/* Open the kernel. */
-        if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
-		errx(1, "kvm_openfiles: %s", errbuf);
+	data = asysctl(mib, __arraycount(mib), &len);
+	len /= sizeof(*data);
 
-	/* Obtain the namelist symbols from the kernel. */
-	if (kvm_nlist(kd, namelist))
-		KVM_ERROR("kvm_nlist failed to read symbols.");
-
-	/* Get the number of attached drives. */
-	deref_nl(kd, X_DISK_COUNT, &ndrives, sizeof(ndrives));
-
-	if (ndrives < 0)
-		errx(EXIT_FAILURE, "invalid _disk_count %d.", ndrives);
-	if (ndrives == 0)
+	if (data == NULL || len == 0)
 		errx(EXIT_FAILURE, "no drives attached.");
 
-	/* Get a pointer to the first disk. */
-	deref_nl(kd, X_DISKLIST, &iostat_head, sizeof(iostat_head));
-	drv = TAILQ_FIRST(&iostat_head);
-
-	/* Try to add each disk to the list. */
-	for (i = 0; i < ndrives; i++) {
-		deref_kptr(kd, drv, &cur_drive, sizeof(cur_drive));
-		deref_kptr(kd, cur_drive.io_name, buf, sizeof(buf));
-		if (cur_drive.io_type == IOSTAT_DISK)
-			mlx_disk_add0(buf);
-		drv = TAILQ_NEXT(&cur_drive, io_link);
+	for (i = 0; i < len; ++i) {
+		if (data[i].type == IOSTAT_DISK)
+			mlx_disk_add0(data[i].name);
 	}
 
-	kvm_close(kd);
-}
-
-/*
- * Dereference the kernel pointer `kptr' and fill in the local copy pointed
- * to by `ptr'.  The storage space must be pre-allocated, and the size of
- * the copy passed in `len'.
- */
-static void
-deref_kptr(kvm_t *kd, void *kptr, void *ptr, size_t len)
-{
-	char buf[128];
-
-	if ((size_t)kvm_read(kd, (u_long)kptr, (char *)ptr, len) != len) {
-		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof buf, "can't dereference kptr 0x%lx",
-		    (u_long)kptr);
-		KVM_ERROR(buf);
-	}
+	free(data);
 }

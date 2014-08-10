@@ -1,5 +1,5 @@
 /* S-record download support for GDB, the GNU debugger.
-   Copyright (C) 1995-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_bfd.h"
 
 extern int remote_debug;
@@ -226,10 +226,10 @@ make_srec (char *srec, CORE_ADDR targ_addr, bfd *abfd, asection *sect,
 {
   unsigned char checksum;
   int tmp;
-  const static char hextab[] = "0123456789ABCDEF";
-  const static char data_code_table[] = "123";
-  const static char term_code_table[] = "987";
-  const static char header_code_table[] = "000";
+  static const char hextab[] = "0123456789ABCDEF";
+  static const char data_code_table[] = "123";
+  static const char term_code_table[] = "987";
+  static const char header_code_table[] = "000";
   char const *code_table;
   int addr_size;
   int payload_size;

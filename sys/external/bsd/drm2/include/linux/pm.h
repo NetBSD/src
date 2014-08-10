@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: pm.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,5 +40,9 @@ typedef struct {
 
 #define	PM_EVENT_PRETHAW		0
 #define	PM_EVENT_SUSPEND		1
+
+struct dev_pm_domain {
+	char dummy;		/* XXX */
+};
 
 #endif  /* _LINUX_PM_H_ */

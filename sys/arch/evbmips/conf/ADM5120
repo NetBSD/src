@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120,v 1.17 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: ADM5120,v 1.17.4.1 2014/08/10 06:53:56 tls Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.17.4.1 $"
 
 maxusers	32
 
@@ -94,6 +94,10 @@ options 	INET		# Internet protocols
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

@@ -182,7 +182,7 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
       }
     }
 
-    MachineInstr *MI = NULL;
+    MachineInstr *MI = nullptr;
 
     if (UseLEA) {
       MI =  addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr),
@@ -204,10 +204,10 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
 /// mergeSPUpdatesUp - Merge two stack-manipulating instructions upper iterator.
 static
 void mergeSPUpdatesUp(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
-                      unsigned StackPtr, uint64_t *NumBytes = NULL) {
+                      unsigned StackPtr, uint64_t *NumBytes = nullptr) {
   if (MBBI == MBB.begin()) return;
 
-  MachineBasicBlock::iterator PI = prior(MBBI);
+  MachineBasicBlock::iterator PI = std::prev(MBBI);
   unsigned Opc = PI->getOpcode();
   if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
        Opc == X86::ADD32ri || Opc == X86::ADD32ri8 ||
@@ -225,17 +225,18 @@ void mergeSPUpdatesUp(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
   }
 }
 
-/// mergeSPUpdatesDown - Merge two stack-manipulating instructions lower iterator.
+/// mergeSPUpdatesDown - Merge two stack-manipulating instructions lower
+/// iterator.
 static
 void mergeSPUpdatesDown(MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator &MBBI,
-                        unsigned StackPtr, uint64_t *NumBytes = NULL) {
+                        unsigned StackPtr, uint64_t *NumBytes = nullptr) {
   // FIXME:  THIS ISN'T RUN!!!
   return;
 
   if (MBBI == MBB.end()) return;
 
-  MachineBasicBlock::iterator NI = llvm::next(MBBI);
+  MachineBasicBlock::iterator NI = std::next(MBBI);
   if (NI == MBB.end()) return;
 
   unsigned Opc = NI->getOpcode();
@@ -257,19 +258,19 @@ void mergeSPUpdatesDown(MachineBasicBlock &MBB,
 }
 
 /// mergeSPUpdates - Checks the instruction before/after the passed
-/// instruction. If it is an ADD/SUB/LEA instruction it is deleted argument and the
-/// stack adjustment is returned as a positive value for ADD/LEA and a negative for
-/// SUB.
+/// instruction. If it is an ADD/SUB/LEA instruction it is deleted argument and
+/// the stack adjustment is returned as a positive value for ADD/LEA and a
+/// negative for SUB.
 static int mergeSPUpdates(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator &MBBI,
-                           unsigned StackPtr,
-                           bool doMergeWithPrevious) {
+                          MachineBasicBlock::iterator &MBBI, unsigned StackPtr,
+                          bool doMergeWithPrevious) {
   if ((doMergeWithPrevious && MBBI == MBB.begin()) ||
       (!doMergeWithPrevious && MBBI == MBB.end()))
     return 0;
 
-  MachineBasicBlock::iterator PI = doMergeWithPrevious ? prior(MBBI) : MBBI;
-  MachineBasicBlock::iterator NI = doMergeWithPrevious ? 0 : llvm::next(MBBI);
+  MachineBasicBlock::iterator PI = doMergeWithPrevious ? std::prev(MBBI) : MBBI;
+  MachineBasicBlock::iterator NI = doMergeWithPrevious ? nullptr
+                                                       : std::next(MBBI);
   unsigned Opc = PI->getOpcode();
   int Offset = 0;
 
@@ -304,12 +305,14 @@ static bool isEAXLiveIn(MachineFunction &MF) {
   return false;
 }
 
-void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
-                                                 MCSymbol *Label,
-                                                 unsigned FramePtr) const {
+void X86FrameLowering::emitCalleeSavedFrameMoves(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, DebugLoc DL,
+    unsigned FramePtr) const {
+  MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo &MMI = MF.getMMI();
   const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
+  const X86InstrInfo &TII = *TM.getInstrInfo();
 
   // Add callee saved registers to move list.
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
@@ -363,7 +366,11 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
       continue;
 
     unsigned DwarfReg = MRI->getDwarfRegNum(Reg, true);
-    MMI.addFrameInst(MCCFIInstruction::createOffset(Label, DwarfReg, Offset));
+    unsigned CFIIndex =
+        MMI.addFrameInst(MCCFIInstruction::createOffset(nullptr, DwarfReg,
+                                                        Offset));
+    BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+        .addCFIIndex(CFIIndex);
   }
 }
 
@@ -375,8 +382,9 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
 static bool usesTheStack(const MachineFunction &MF) {
   const MachineRegisterInfo &MRI = MF.getRegInfo();
 
-  for (MachineRegisterInfo::reg_iterator ri = MRI.reg_begin(X86::EFLAGS),
-       re = MRI.reg_end(); ri != re; ++ri)
+  for (MachineRegisterInfo::reg_instr_iterator
+       ri = MRI.reg_instr_begin(X86::EFLAGS), re = MRI.reg_instr_end();
+       ri != re; ++ri)
     if (ri->isCopy())
       return true;
 
@@ -441,7 +449,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       !MFI->adjustsStack() &&                           // No calls.
       !IsWin64 &&                                       // Win64 has no Red Zone
       !usesTheStack(MF) &&                              // Don't push and pop.
-      !MF.getTarget().Options.EnableSegmentedStacks) {  // Regular stack
+      !MF.shouldSplitStack()) {                         // Regular stack
     uint64_t MinSize = X86FI->getCalleeSavedFrameSize();
     if (HasFP) MinSize += SlotSize;
     StackSize = std::max(MinSize, StackSize > 128 ? StackSize - 128 : 0);
@@ -503,19 +511,20 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (needsFrameMoves) {
       // Mark the place where EBP/RBP was saved.
-      MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL))
-        .addSym(FrameLabel);
-
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaOffset(FrameLabel, 2 * stackGrowth));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(nullptr, 2 * stackGrowth));
+      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
 
       // Change the rule for the FramePtr to be an "offset" rule.
       unsigned DwarfFramePtr = RegInfo->getDwarfRegNum(FramePtr, true);
-      MMI.addFrameInst(MCCFIInstruction::createOffset(FrameLabel, DwarfFramePtr,
-                                                      2 * stackGrowth));
+      CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createOffset(nullptr,
+                                         DwarfFramePtr, 2 * stackGrowth));
+      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
 
     // Update EBP with the new base value.
@@ -526,18 +535,16 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
-      MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL))
-        .addSym(FrameLabel);
-
       // Define the current CFA to use the EBP/RBP register.
       unsigned DwarfFramePtr = RegInfo->getDwarfRegNum(FramePtr, true);
-      MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaRegister(FrameLabel, DwarfFramePtr));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaRegister(nullptr, DwarfFramePtr));
+      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
 
     // Mark the FramePtr as live-in in every block except the entry.
-    for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
+    for (MachineFunction::iterator I = std::next(MF.begin()), E = MF.end();
          I != E; ++I)
       I->addLiveIn(FramePtr);
   } else {
@@ -557,13 +564,12 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (!HasFP && needsFrameMoves) {
       // Mark callee-saved push instruction.
-      MCSymbol *Label = MMI.getContext().CreateTempSymbol();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL)).addSym(Label);
-
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaOffset(Label, StackOffset));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(nullptr, StackOffset));
+      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
       StackOffset += stackGrowth;
     }
   }
@@ -692,20 +698,20 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
   if (( (!HasFP && NumBytes) || PushedRegs) && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
-    MCSymbol *Label = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL))
-      .addSym(Label);
-
     if (!HasFP && NumBytes) {
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      MMI.addFrameInst(MCCFIInstruction::createDefCfaOffset(
-          Label, -StackSize + stackGrowth));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(nullptr,
+                                               -StackSize + stackGrowth));
+
+      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
 
     // Emit DWARF info specifying the offsets of the callee-saved registers.
     if (PushedRegs)
-      emitCalleeSavedFrameMoves(MF, Label, HasFP ? FramePtr : StackPtr);
+      emitCalleeSavedFrameMoves(MBB, MBBI, DL, HasFP ? FramePtr : StackPtr);
   }
 }
 
@@ -783,7 +789,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Skip the callee-saved pop instructions.
   while (MBBI != MBB.begin()) {
-    MachineBasicBlock::iterator PI = prior(MBBI);
+    MachineBasicBlock::iterator PI = std::prev(MBBI);
     unsigned Opc = PI->getOpcode();
 
     if (Opc != X86::POP32r && Opc != X86::POP64r && Opc != X86::DBG_VALUE &&
@@ -885,7 +891,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
         addReg(JumpTarget.getReg(), RegState::Kill);
     }
 
-    MachineInstr *NewMI = prior(MBBI);
+    MachineInstr *NewMI = std::prev(MBBI);
     NewMI->copyImplicitOps(MF, MBBI);
 
     // Delete the pseudo instruction TCRETURN.
@@ -904,7 +910,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   }
 }
 
-int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
+int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF,
+                                          int FI) const {
   const X86RegisterInfo *RegInfo =
     static_cast<const X86RegisterInfo*>(MF.getTarget().getRegisterInfo());
   const MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -1166,8 +1173,17 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   if (MF.getFunction()->isVarArg())
     report_fatal_error("Segmented stacks do not support vararg functions.");
   if (!STI.isTargetLinux() && !STI.isTargetDarwin() &&
-      !STI.isTargetWin32() && !STI.isTargetFreeBSD())
+      !STI.isTargetWin32() && !STI.isTargetWin64() && !STI.isTargetFreeBSD())
     report_fatal_error("Segmented stacks not supported on this platform.");
+
+  // Eventually StackSize will be calculated by a link-time pass; which will
+  // also decide whether checking code needs to be injected into this particular
+  // prologue.
+  StackSize = MFI->getStackSize();
+
+  // Do not generate a prologue for functions with a stack of size zero
+  if (StackSize == 0)
+    return;
 
   MachineBasicBlock *allocMBB = MF.CreateMachineBasicBlock();
   MachineBasicBlock *checkMBB = MF.CreateMachineBasicBlock();
@@ -1193,11 +1209,6 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   MF.push_front(allocMBB);
   MF.push_front(checkMBB);
 
-  // Eventually StackSize will be calculated by a link-time pass; which will
-  // also decide whether checking code needs to be injected into this particular
-  // prologue.
-  StackSize = MFI->getStackSize();
-
   // When the frame size is less than 256 we just compare the stack
   // boundary directly to the value of the stack pointer, per gcc.
   bool CompareStackPointer = StackSize < kSplitStackAvailable;
@@ -1210,6 +1221,9 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
     } else if (STI.isTargetDarwin()) {
       TlsReg = X86::GS;
       TlsOffset = 0x60 + 90*8; // See pthread_machdep.h. Steal TLS slot 90.
+    } else if (STI.isTargetWin64()) {
+      TlsReg = X86::GS;
+      TlsOffset = 0x28; // pvArbitrary, reserved for application use
     } else if (STI.isTargetFreeBSD()) {
       TlsReg = X86::FS;
       TlsOffset = 0x18;
@@ -1247,27 +1261,28 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
       BuildMI(checkMBB, DL, TII.get(X86::LEA32r), ScratchReg).addReg(X86::ESP)
         .addImm(1).addReg(0).addImm(-StackSize).addReg(0);
 
-    if (STI.isTargetLinux() || STI.isTargetWin32()) {
+    if (STI.isTargetLinux() || STI.isTargetWin32() || STI.isTargetWin64()) {
       BuildMI(checkMBB, DL, TII.get(X86::CMP32rm)).addReg(ScratchReg)
         .addReg(0).addImm(0).addReg(0).addImm(TlsOffset).addReg(TlsReg);
     } else if (STI.isTargetDarwin()) {
 
-      // TlsOffset doesn't fit into a mod r/m byte so we need an extra register
+      // TlsOffset doesn't fit into a mod r/m byte so we need an extra register.
       unsigned ScratchReg2;
       bool SaveScratch2;
       if (CompareStackPointer) {
-        // The primary scratch register is available for holding the TLS offset
+        // The primary scratch register is available for holding the TLS offset.
         ScratchReg2 = GetScratchRegister(Is64Bit, MF, true);
         SaveScratch2 = false;
       } else {
         // Need to use a second register to hold the TLS offset
         ScratchReg2 = GetScratchRegister(Is64Bit, MF, false);
 
-        // Unfortunately, with fastcc the second scratch register may hold an arg
+        // Unfortunately, with fastcc the second scratch register may hold an
+        // argument.
         SaveScratch2 = MF.getRegInfo().isLiveIn(ScratchReg2);
       }
 
-      // If Scratch2 is live-in then it needs to be saved
+      // If Scratch2 is live-in then it needs to be saved.
       assert((!MF.getRegInfo().isLiveIn(ScratchReg2) || SaveScratch2) &&
              "Scratch register is live-in and not saved");
 
@@ -1344,14 +1359,14 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 /// http://publications.uu.se/uu/fulltext/nbn_se_uu_diva-2688.pdf)
 ///
 /// CheckStack:
-///	  temp0 = sp - MaxStack
-///	  if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
+///       temp0 = sp - MaxStack
+///       if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
 /// OldStart:
-///	  ...
+///       ...
 /// IncStack:
-///	  call inc_stack   # doubles the stack space
-///	  temp0 = sp - MaxStack
-///	  if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
+///       call inc_stack   # doubles the stack space
+///       temp0 = sp - MaxStack
+///       if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
 void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
   const X86InstrInfo &TII = *TM.getInstrInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -1510,7 +1525,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     unsigned StackAlign = TM.getFrameLowering()->getStackAlignment();
     Amount = (Amount + StackAlign - 1) / StackAlign * StackAlign;
 
-    MachineInstr *New = 0;
+    MachineInstr *New = nullptr;
     if (Opcode == TII.getCallFrameSetupOpcode()) {
       New = BuildMI(MF, DL, TII.get(getSUBriOpcode(IsLP64, Amount)),
                     StackPtr)
@@ -1555,7 +1570,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // sure we restore the stack pointer immediately after the call, there may
     // be spill code inserted between the CALL and ADJCALLSTACKUP instructions.
     MachineBasicBlock::iterator B = MBB.begin();
-    while (I != B && !llvm::prior(I)->isCall())
+    while (I != B && !std::prev(I)->isCall())
       --I;
     MBB.insert(I, New);
   }

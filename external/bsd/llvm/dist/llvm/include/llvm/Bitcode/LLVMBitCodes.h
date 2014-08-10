@@ -311,7 +311,7 @@ namespace bitc {
     // 32 is unused.
     FUNC_CODE_DEBUG_LOC_AGAIN  = 33, // DEBUG_LOC_AGAIN
 
-    FUNC_CODE_INST_CALL        = 34, // CALL:       [attr, fnty, fnid, args...]
+    FUNC_CODE_INST_CALL        = 34, // CALL:    [attr, cc, fnty, fnid, args...]
 
     FUNC_CODE_DEBUG_LOC        = 35, // DEBUG_LOC:  [Line,Col,ScopeVal, IAVal]
     FUNC_CODE_INST_FENCE       = 36, // FENCE: [ordering, synchscope]
@@ -371,7 +371,8 @@ namespace bitc {
     ATTR_KIND_BUILTIN = 35,
     ATTR_KIND_COLD = 36,
     ATTR_KIND_OPTIMIZE_NONE = 37,
-    ATTR_KIND_IN_ALLOCA = 38
+    ATTR_KIND_IN_ALLOCA = 38,
+    ATTR_KIND_NON_NULL = 39
   };
 
 } // End bitc namespace

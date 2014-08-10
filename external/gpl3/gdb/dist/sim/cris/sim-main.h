@@ -1,5 +1,5 @@
 /* Main header for the CRIS simulator, based on the m32r header.
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.

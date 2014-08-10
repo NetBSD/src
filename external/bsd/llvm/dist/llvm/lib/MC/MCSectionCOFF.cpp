@@ -34,7 +34,7 @@ void MCSectionCOFF::setSelection(int Selection,
                                  const MCSectionCOFF *Assoc) const {
   assert(Selection != 0 && "invalid COMDAT selection type");
   assert((Selection == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) ==
-         (Assoc != 0) &&
+         (Assoc != nullptr) &&
     "associative COMDAT section must have an associated section");
   this->Selection = Selection;
   this->Assoc = Assoc;
@@ -62,7 +62,8 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
     OS << 'r';
   if (getCharacteristics() & COFF::IMAGE_SCN_MEM_DISCARDABLE)
     OS << 'n';
-
+  if (getCharacteristics() & COFF::IMAGE_SCN_CNT_INITIALIZED_DATA)
+    OS << 'd';
   OS << '"';
 
   if (getCharacteristics() & COFF::IMAGE_SCN_LNK_COMDAT) {

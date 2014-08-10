@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test050-syncrepl-multimaster,v 1.3.2.21 2010/04/19 19:14:36 quanah Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -122,7 +122,7 @@ dn: cn=module,cn=config
 changetype: add
 objectClass: olcModuleList
 cn: module
-olcModulePath: ../../../servers/slapd/overlays
+olcModulePath: $TESTWD/../servers/slapd/overlays
 olcModuleLoad: syncprov.la
 
 EOF
@@ -267,7 +267,7 @@ cat <<EOF >> $TMP
 dn: cn=module,cn=config
 objectClass: olcModuleList
 cn: module
-olcModulePath: ../../../servers/slapd/back-$BACKEND
+olcModulePath: $TESTWD/../servers/slapd/back-$BACKEND
 olcModuleLoad: back_$BACKEND.la
 
 EOF
@@ -311,8 +311,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-case $BACKEND in
-bdb | hdb)
+if test $INDEXDB = indexdb ; then
 	$LDAPMODIFY -D cn=config -H $URI1 -y $CONFIGPWF <<EOF >>$TESTOUT 2>&1
 dn: olcDatabase={1}$BACKEND,cn=config
 changetype: modify
@@ -326,8 +325,7 @@ EOF
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
 		exit $RC
 	fi
-	;;
-esac
+fi
 
 echo "Using ldapadd to populate server 1..."
 $LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD -f $LDIFORDERED \

@@ -204,7 +204,7 @@ public:
   }
 
   static TemplateArgument getEmptyPack() {
-    return TemplateArgument((TemplateArgument*)0, 0);
+    return TemplateArgument((TemplateArgument*)nullptr, 0);
   }
 
   /// \brief Create a new template argument pack by copying the given set of
@@ -567,7 +567,8 @@ struct ASTTemplateArgumentListInfo {
 
     /// Force ASTTemplateArgumentListInfo to the right alignment
     /// for the following array of TemplateArgumentLocs.
-    void *Aligner;
+    llvm::AlignedCharArray<
+        llvm::AlignOf<TemplateArgumentLoc>::Alignment, 1> Aligner;
   };
 
   /// \brief Retrieve the template arguments

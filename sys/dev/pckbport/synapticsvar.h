@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsvar.h,v 1.5 2011/09/10 18:38:20 jakllsch Exp $	*/
+/*	$NetBSD: synapticsvar.h,v 1.5.26.1 2014/08/10 06:54:57 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -42,12 +42,18 @@ struct synaptics_softc {
 	int	caps;
 
 	int	flags;
-#define	SYN_FLAG_HAS_MIDDLE_BUTTON	(1 << 0)
-#define	SYN_FLAG_HAS_BUTTONS_4_5	(1 << 1)
-#define	SYN_FLAG_HAS_UP_DOWN_BUTTONS	(1 << 2)
-#define	SYN_FLAG_HAS_PASSTHROUGH	(1 << 3)
-#define	SYN_FLAG_HAS_PALM_DETECT	(1 << 4)
-#define	SYN_FLAG_HAS_MULTI_FINGER	(1 << 5)
+#define	SYN_FLAG_HAS_MIDDLE_BUTTON		(1 << 0)
+#define	SYN_FLAG_HAS_BUTTONS_4_5		(1 << 1)
+#define	SYN_FLAG_HAS_UP_DOWN_BUTTONS		(1 << 2)
+#define	SYN_FLAG_HAS_PASSTHROUGH		(1 << 3)
+#define	SYN_FLAG_HAS_PALM_DETECT		(1 << 4)
+#define	SYN_FLAG_HAS_MULTI_FINGER		(1 << 5)
+#define	SYN_FLAG_HAS_MULTI_FINGER_REPORT	(1 << 6)
+#define	SYN_FLAG_HAS_VERTICAL_SCROLL		(1 << 7)
+#define	SYN_FLAG_HAS_HORIZONTAL_SCROLL		(1 << 8)
+#define	SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD	(1 << 9)
+#define	SYN_FLAG_HAS_TWO_BUTTON_CLICKPAD	(1 << 10)
+#define	SYN_FLAG_HAS_EXTENDED_WMODE		(1 << 11)
 
 	u_int	total_packets;		/* Total number of packets received */
 #define	SYN_TIME(sc,c)	(((sc)->total_packets >= (c)) ?		\
@@ -58,6 +64,7 @@ struct synaptics_softc {
 	int	prev_fingers;
 
 	int	gesture_start_x, gesture_start_y;
+	int	gesture_move_x, gesture_move_y;
 	u_int	gesture_start_packet;
 	u_int	gesture_tap_packet;
 

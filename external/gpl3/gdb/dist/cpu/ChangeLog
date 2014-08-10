@@ -1,3 +1,7 @@
+2013-12-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* epiphany.opc: Remove +x file mode.
+
 2013-03-08  Yann Sionneau  <yann.sionneau@gmail.com>
 
 	PR binutils/15241

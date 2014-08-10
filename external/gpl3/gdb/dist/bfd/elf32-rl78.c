@@ -1,6 +1,5 @@
 /* Renesas RL78 specific support for 32-bit ELF.
-   Copyright (C) 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2011-2013 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -461,12 +460,13 @@ rl78_elf_relocate_section
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned ATTRIBUTE_UNUSED;
+	  bfd_boolean ignored ATTRIBUTE_UNUSED;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes, h,
 				   sec, relocation, unresolved_reloc,
-				   warned);
+				   warned, ignored);
 
 	  name = h->root.root.string;
 	}
@@ -810,10 +810,13 @@ rl78_elf_relocate_section
 	  {
 	    int32_t tmp1, tmp2;
 
-	    RL78_STACK_POP (tmp2);
-	    RL78_STACK_POP (tmp1);
-	    tmp2 -= tmp1;
-	    RL78_STACK_PUSH (tmp2);
+	    /* For the expression "A - B", the assembler pushes A,
+	       then B, then OPSUB.  So the first op we pop is B, not
+	       A.  */
+	    RL78_STACK_POP (tmp2);	/* B */
+	    RL78_STACK_POP (tmp1);	/* A */
+	    tmp1 -= tmp2;		/* A - B */
+	    RL78_STACK_PUSH (tmp1);
 	  }
 	  break;
 
@@ -1018,15 +1021,34 @@ static bfd_boolean
 rl78_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 {
   flagword new_flags;
+  flagword old_flags;
   bfd_boolean error = FALSE;
 
   new_flags = elf_elfheader (ibfd)->e_flags;
+  old_flags = elf_elfheader (obfd)->e_flags;
 
   if (!elf_flags_init (obfd))
     {
       /* First call, no flags set.  */
       elf_flags_init (obfd) = TRUE;
       elf_elfheader (obfd)->e_flags = new_flags;
+    }
+  else if (old_flags != new_flags)
+    {
+      flagword changed_flags = old_flags ^ new_flags;
+
+      if (changed_flags & E_FLAG_RL78_G10)
+	{
+	  (*_bfd_error_handler)
+	    (_("RL78/G10 ABI conflict: cannot link G10 and non-G10 objects together"));
+
+	  if (old_flags & E_FLAG_RL78_G10)
+	    (*_bfd_error_handler) (_("- %s is G10, %s is not"),
+				   bfd_get_filename (obfd), bfd_get_filename (ibfd));
+	  else
+	    (*_bfd_error_handler) (_("- %s is G10, %s is not"),
+				   bfd_get_filename (ibfd), bfd_get_filename (obfd));
+	}
     }
 
   return !error;
@@ -1045,6 +1067,9 @@ rl78_elf_print_private_bfd_data (bfd * abfd, void * ptr)
 
   flags = elf_elfheader (abfd)->e_flags;
   fprintf (file, _("private flags = 0x%lx:"), (long) flags);
+
+  if (flags & E_FLAG_RL78_G10)
+    fprintf (file, _(" [G10]"));
 
   fputc ('\n', file);
   return TRUE;
@@ -1068,90 +1093,6 @@ rl78_elf_object_p (bfd * abfd)
 			     elf32_rl78_machine (abfd));
   return TRUE;
 }
- 
-#ifdef DEBUG
-void
-rl78_dump_symtab (bfd * abfd, void * internal_syms, void * external_syms)
-{
-  size_t locsymcount;
-  Elf_Internal_Sym * isymbuf;
-  Elf_Internal_Sym * isymend;
-  Elf_Internal_Sym * isym;
-  Elf_Internal_Shdr * symtab_hdr;
-  bfd_boolean free_internal = FALSE, free_external = FALSE;
-  char * st_info_str;
-  char * st_info_stb_str;
-  char * st_other_str;
-  char * st_shndx_str;
-
-  if (! internal_syms)
-    {
-      internal_syms = bfd_malloc (1000);
-      free_internal = 1;
-    }
-  if (! external_syms)
-    {
-      external_syms = bfd_malloc (1000);
-      free_external = 1;
-    }
-
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  locsymcount = symtab_hdr->sh_size / get_elf_backend_data (abfd)->s->sizeof_sym;
-  if (free_internal)
-    isymbuf = bfd_elf_get_elf_syms (abfd, symtab_hdr,
-				    symtab_hdr->sh_info, 0,
-				    internal_syms, external_syms, NULL);
-  else
-    isymbuf = internal_syms;
-  isymend = isymbuf + locsymcount;
-
-  for (isym = isymbuf ; isym < isymend ; isym++)
-    {
-      switch (ELF_ST_TYPE (isym->st_info))
-	{
-	case STT_FUNC: st_info_str = "STT_FUNC";
-	case STT_SECTION: st_info_str = "STT_SECTION";
-	case STT_FILE: st_info_str = "STT_FILE";
-	case STT_OBJECT: st_info_str = "STT_OBJECT";
-	case STT_TLS: st_info_str = "STT_TLS";
-	default: st_info_str = "";
-	}
-      switch (ELF_ST_BIND (isym->st_info))
-	{
-	case STB_LOCAL: st_info_stb_str = "STB_LOCAL";
-	case STB_GLOBAL: st_info_stb_str = "STB_GLOBAL";
-	default: st_info_stb_str = "";
-	}
-      switch (ELF_ST_VISIBILITY (isym->st_other))
-	{
-	case STV_DEFAULT: st_other_str = "STV_DEFAULT";
-	case STV_INTERNAL: st_other_str = "STV_INTERNAL";
-	case STV_PROTECTED: st_other_str = "STV_PROTECTED";
-	default: st_other_str = "";
-	}
-      switch (isym->st_shndx)
-	{
-	case SHN_ABS: st_shndx_str = "SHN_ABS";
-	case SHN_COMMON: st_shndx_str = "SHN_COMMON";
-	case SHN_UNDEF: st_shndx_str = "SHN_UNDEF";
-	default: st_shndx_str = "";
-	}
-    }
-  if (free_internal)
-    free (internal_syms);
-  if (free_external)
-    free (external_syms);
-}
-
-char *
-rl78_get_reloc (long reloc)
-{
-  if (0 <= reloc && reloc < R_RL78_max)
-    return rl78_elf_howto_table[reloc].name;
-  return "";
-}
-#endif /* DEBUG */
-
 
 /* support PLT for 16-bit references to 24-bit functions.  */
 
@@ -1198,6 +1139,10 @@ rl78_elf_check_relocs
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       switch (ELF32_R_TYPE (rel->r_info))
@@ -1266,24 +1211,28 @@ rl78_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
   bfd *dynobj;
   asection *splt;
 
+  if (!elf_hash_table (info)->dynamic_sections_created)
+    return TRUE;
+
   /* As an extra sanity check, verify that all plt entries have been
      filled in.  However, relaxing might have changed the relocs so
      that some plt entries don't get filled in, so we have to skip
      this check if we're relaxing.  Unfortunately, check_relocs is
      called before relaxation.  */
 
-  if (info->relax_trip > 0)
+  if (info->relax_trip > 0) 
+    return TRUE;
+
+  if ((dynobj = elf_hash_table (info)->dynobj) != NULL
+      && (splt = bfd_get_linker_section (dynobj, ".plt")) != NULL)
     {
-      if ((dynobj = elf_hash_table (info)->dynobj) != NULL
-	  && (splt = bfd_get_linker_section (dynobj, ".plt")) != NULL)
+      bfd_byte *contents = splt->contents;
+      unsigned int i, size = splt->size;
+
+      for (i = 0; i < size; i += 4)
 	{
-	  bfd_byte *contents = splt->contents;
-	  unsigned int i, size = splt->size;
-	  for (i = 0; i < size; i += 4)
-	    {
-	      unsigned int x = bfd_get_32 (dynobj, contents + i);
-	      BFD_ASSERT (x != 0);
-	    }
+	  unsigned int x = bfd_get_32 (dynobj, contents + i);
+	  BFD_ASSERT (x != 0);
 	}
     }
 
@@ -1532,6 +1481,12 @@ elf32_rl78_relax_delete_bytes (bfd *abfd, asection *sec, bfd_vma addr, int count
     toaddr = alignment_rel->r_offset;
 
   irel = elf_section_data (sec)->relocs;
+  if (irel == NULL)
+    {
+      _bfd_elf_link_read_relocs (sec->owner, sec, NULL, NULL, TRUE);
+      irel = elf_section_data (sec)->relocs;
+    }
+
   irelend = irel + sec->reloc_count;
 
   /* Actually delete the bytes.  */
@@ -1547,7 +1502,7 @@ elf32_rl78_relax_delete_bytes (bfd *abfd, asection *sec, bfd_vma addr, int count
     memset (contents + toaddr - count, 0x03, count);
 
   /* Adjust all the relocs.  */
-  for (irel = elf_section_data (sec)->relocs; irel < irelend; irel++)
+  for (; irel && irel < irelend; irel++)
     {
       /* Get the new reloc address.  */
       if (irel->r_offset > addr
@@ -2189,6 +2144,7 @@ rl78_elf_relax_section
 	+ srel->r_offset;
 
 #define GET_RELOC \
+      BFD_ASSERT (nrelocs > 0);			       \
       symval = OFFSET_FOR_RELOC (srel, &srel, &scale); \
       pcrel = symval - pc + srel->r_addend; \
       nrelocs --;
@@ -2229,7 +2185,13 @@ rl78_elf_relax_section
 
       if (irel->r_addend & RL78_RELAXA_BRA)
 	{
-	  GET_RELOC;
+	  /* SKIP opcodes that skip non-branches will have a relax tag
+	     but no corresponding symbol to relax against; we just
+	     skip those.  */
+	  if (irel->r_addend & RL78_RELAXA_RNUM)
+	    {
+	      GET_RELOC;
+	    }
 
 	  switch (insn[0])
 	    {
@@ -2298,6 +2260,9 @@ rl78_elf_relax_section
 	      /* For SKIP/BR, we change the BR opcode and delete the
 		 SKIP.  That way, we don't have to find and change the
 		 relocation for the BR.  */
+	      /* Note that, for the case where we're skipping some
+		 other insn, we have no "other" reloc but that's safe
+		 here anyway. */
 	      switch (insn[1])
 		{
 		case 0xc8: /* SKC */

@@ -1,4 +1,4 @@
-/*	$NetBSD: byteorder.h,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: byteorder.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,5 +47,12 @@
 #define	be16_to_cpu	be16toh
 #define	be32_to_cpu	be32toh
 #define	be64_to_cpu	be64toh
+
+#define	be16_to_cpup	be16dec
+#define	be32_to_cpup	be32dec
+#define	be64_to_cpup	be64dec
+#define	le16_to_cpup	le16dec
+#define	le32_to_cpup	le32dec
+#define	le64_to_cpup	le64dec
 
 #endif	/* _ASM_BYTEORDER_H_ */

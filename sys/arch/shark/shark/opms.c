@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.25 2014/03/16 05:20:25 dholland Exp $        */
+/*      $NetBSD: opms.c,v 1.25.2.1 2014/08/10 06:54:08 tls Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.25 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.25.2.1 2014/08/10 06:54:08 tls Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -213,6 +213,7 @@ const struct cdevsw opms_cdevsw = {
 	.d_poll = opmspoll,
 	.d_mmap = nommap,
 	.d_kqfilter = opmskqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

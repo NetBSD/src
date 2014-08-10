@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2014/03/24 20:06:32 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.2.1 2014/08/10 06:53:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2014/03/24 20:06:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.2.1 2014/08/10 06:53:56 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -121,6 +121,13 @@ mach_init(void)
 	tmp2 = sysctl_read(RA_SYSCTL_ID1);
 	memcpy(id2, &tmp2, sizeof(tmp2));
 	id2[4] = id1[4] = '\0';
+	if (id2[2] == ' ') {
+		id2[2] = '\0';
+	} else if (id2[3] == ' ') {
+		id2[3] = '\0';
+	} else {
+		id2[4] = '\0';
+	}
 	cpu_setmodel("%s%s", id1, id2);
 
 	/*
@@ -155,6 +162,9 @@ mach_init(void)
 	/*
 	 * Determine the memory size.
 	 */
+#if defined(MT7620)
+	memsize = 128 << 20;
+#else
 	memsize = *(volatile uint32_t *)
 	    MIPS_PHYS_TO_KSEG1(RA_SYSCTL_BASE + RA_SYSCTL_CFG0);
 	memsize = __SHIFTOUT(memsize, SYSCTL_CFG0_DRAM_SIZE);
@@ -163,6 +173,7 @@ mach_init(void)
 	} else {
 		memsize = 4 << (20 + memsize);
 	}
+#endif
 
 	physmem = btoc(memsize);
 
@@ -321,7 +332,9 @@ ra_check_memo_reg(int key)
 
 	case SERIAL_CONSOLE:
 		magic = sysctl_read(RA_SYSCTL_MEMO1);
-		if (((SERIAL_MAGIC & magic) != 0) || ((keyvalue & 2) != 0)) {
+		if (magic == 0
+		    || (SERIAL_MAGIC & magic) != 0
+		    || (keyvalue & 2) != 0) {
 			keyvalue |= 2;
 			return 1;
 		}

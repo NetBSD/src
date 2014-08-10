@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ if {[build_executable ${testfile}.exp ${executable} "${testfile}.c ${testfile}.S
 
 # We need those symbols global to access them from the .S file.
 set test "strip stub symbols"
-set objcopy_program [transform objcopy]
+set objcopy_program [gdb_find_objcopy]
 set result [catch "exec $objcopy_program							\
 			-N func0 -N func1 -N func2 -N func3         -N func_start -N func_end	\
 			-N fund0 -N fund1 -N fund2 -N fund3 -N fund -N fund_start		\

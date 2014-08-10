@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.31 2013/04/09 13:29:07 njoly Exp $
+.\"     $NetBSD: namei.9,v 1.31.4.1 2014/08/10 06:53:26 tls Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,7 +121,7 @@ struct nameidata {
                  */
                 const char *cn_nameptr; /* pointer to looked up name */
                 size_t cn_namelen;      /* length of looked up component */
-                size_t cn_consume;      /* chars to consume in lookup() */
+                size_t cn_consume;      /* chars to be consumed this time */
         } ni_cnd;
 };
 .Ed

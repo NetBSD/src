@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.6 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.6.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -1413,7 +1413,7 @@ dns_cache_dumpstats(dns_cache_t *cache, FILE *fp) {
 }
 
 #ifdef HAVE_LIBXML2
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
 static int
 renderstat(const char *name, isc_uint64_t value, xmlTextWriterPtr writer) {
 	int xmlrc;
@@ -1474,7 +1474,7 @@ error:
 		result = ISC_R_NOMEMORY;\
 		goto error;\
 	} \
-} while(0)
+} while(/*CONSTCOND*/0)
 
 isc_result_t
 dns_cache_renderjson(dns_cache_t *cache, json_object *cstats) {

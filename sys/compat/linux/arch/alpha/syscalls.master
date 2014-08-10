@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.83 2014/01/13 10:33:03 njoly Exp $
+	$NetBSD: syscalls.master,v 1.83.2.1 2014/08/10 06:54:32 tls Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -84,8 +84,9 @@
 0	NOARGS		{ int|linux_sys||nosys(void); } syscall
 1	STD		{ int|linux_sys||exit(int rval); }
 2	NOARGS		{ int|sys||fork(void); }
-3	NOARGS		{ int|sys||read(int fd, void *buf, size_t nbyte); }
-4	NOARGS		{ int|sys||write(int fd, const void *buf, size_t nbyte); }
+3	NOARGS		{ ssize_t|sys||read(int fd, void *buf, size_t nbyte); }
+4	NOARGS		{ ssize_t|sys||write(int fd, const void *buf, \
+			    size_t nbyte); }
 5	UNIMPL
 6	NOARGS		{ int|sys||close(int fd); }
 7	NODEF		{ int|osf1_sys||wait4(int pid, int *status, \
@@ -98,7 +99,7 @@
 12	NOARGS		{ int|sys||chdir(const char *path); }
 13	NOARGS		{ int|sys||fchdir(int fd); }
 14	STD		{ int|linux_sys||mknod(const char *path, linux_umode_t mode, \
-			    int dev); }
+			    unsigned dev); }
 15	NOARGS		{ int|sys||chmod(const char *path, int mode); }
 16	NOARGS		{ int|sys||__posix_chown(const char *path, int uid, int gid); }
 ;17	ALIAS		osf1_sys_brk
@@ -553,9 +554,9 @@
 347	UNIMPL		query_module
 348	UNIMPL		prctl
 349	STD		{ int|linux_sys||pread(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
+			    size_t nbyte, off_t offset); }
 350	STD		{ int|linux_sys||pwrite(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
+			    size_t nbyte, off_t offset); }
 351	STD		{ int|linux_sys||rt_sigreturn( \
 				struct linux_rt_sigframe *sfp); }
 352	STD		{ int|linux_sys||rt_sigaction(int signum, \
@@ -589,8 +590,8 @@
 362	NOARGS		{ int|compat_50_sys||setitimer(int which, \
 			    const struct itimerval50 *itv, \
 			    struct itimerval50 *oitv); }
-363	STD		{ int|linux_sys||utimes(char *path, \
-			    struct linux_timeval *times); }
+363	NOARGS		{ int|compat_50_sys||utimes(const char *path, \
+			    const struct timeval50 *tptr); }
 364	NOARGS		{ int|compat_50_sys||getrusage(int who, \
 			    struct rusage50 *rusage); }
 365	STD		{ int|linux_sys||wait4(int pid, int *status, \
@@ -656,8 +657,8 @@
 410	UNIMPL		remap_file_pages
 411	STD		{ int|linux_sys||set_tid_address(int *tid); }
 412	UNIMPL		restart_syscall
-413	STD		{ int|linux_sys||fadvise64(int fd, \
-			    linux_off_t offset, size_t len, int advice); }
+413	STD		{ int|linux_sys||fadvise64(int fd, off_t offset, \
+			    size_t len, int advice); }
 414	UNIMPL		timer_create
 415	UNIMPL		timer_settime
 416	UNIMPL		timer_gettime

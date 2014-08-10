@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.18 2013/10/19 15:56:06 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.18.2.1 2014/08/10 06:58:32 tls Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -273,6 +273,8 @@ p_rtentry(struct rt_msghdr *rtm)
 		p_tag(rti_info[RTAX_TAG]);
 	printf(" %.16s", if_indextoname(rtm->rtm_index, ifbuf));
 	putchar('\n');
+	if (vflag)
+		pr_rtrmx(&rtm->rtm_rmx);
 }
 
 /*
@@ -703,6 +705,7 @@ char *
 mpls_ntoa(const struct sockaddr *sa)
 {
 	static char obuf[16];
+	size_t olen;
 	const union mpls_shim *pms;
 	union mpls_shim ms;
 	int psize = sizeof(struct sockaddr_mpls);
@@ -715,7 +718,8 @@ mpls_ntoa(const struct sockaddr *sa)
 	while(psize < sa->sa_len) {
 		pms++;
 		ms.s_addr = ntohl(pms->s_addr);
-		snprintf(obuf, sizeof(obuf), "%s,%u", obuf,
+		olen = strlen(obuf);
+		snprintf(obuf + olen, sizeof(obuf) - olen, ",%u",
 		    ms.shim.label);
 		psize+=sizeof(ms);
 	}

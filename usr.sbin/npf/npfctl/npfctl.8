@@ -1,6 +1,6 @@
-.\"	$NetBSD: npfctl.8,v 1.15 2013/09/20 21:30:49 wiz Exp $
+.\"	$NetBSD: npfctl.8,v 1.15.2.1 2014/08/10 07:00:01 tls Exp $
 .\"
-.\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 19, 2013
+.Dd August 2, 2014
 .Dt NPFCTL 8
 .Os
 .Sh NAME
@@ -53,26 +53,26 @@ Valid commands are:
 .It Ic start
 Enable packet inspection using the currently loaded configuration, if any.
 Note that this command does not load or reload the configuration,
-or affect existing sessions.
+or affect existing connections.
 .It Ic stop
 Disable packet inspection.
 This command does not change the currently loaded configuration,
-or affect existing sessions.
+or affect existing connections.
 .It Ic reload Op Ar path
 Load or reload configuration from file.
 The configuration file at
 .Pa /etc/npf.conf
 will be used unless a file is specified by
 .Ar path .
-All sessions will be preserved during the reload, except those which
+All connections will be preserved during the reload, except those which
 will lose NAT policy due to removal.
 NAT policy is determined by the translation type and address.
-Note that change of filter criteria will not expire associated sessions.
+Note that change of filter criteria will not expire associated connections.
 The reload operation (i.e., replacing the ruleset, NAT policies and tables)
 is atomic.
 .It Ic flush
 Flush configuration.
-That is, remove all rules, tables and expire all sessions.
+That is, remove all rules, tables and expire all connections.
 This command does not disable packet inspection.
 .It Ic show
 Show the current state and configuration.
@@ -137,20 +137,16 @@ List all entries in the currently loaded table specified by
 .Ar tid .
 This operation is expensive and should be used with caution.
 .\" ---
-.It Ic sess-save
-Save all active sessions.
+.It Ic save
+Save the active configuration and a spanshot of the current connections.
 The data will be stored in the
-.Pa /var/db/npf_sessions.db
+.Pa /var/db/npf.db
 file.
-Administrator may want to stop the packet inspection before the
-session saving.
-.It Ic sess-load
-Load saved sessions from the file.
-Note that original configuration should be loaded before the session loading.
-In a case of NAT policy changes, sessions which lose an associated policy
-will not be loaded.
-Any existing sessions during the load operation will be expired.
-Administrator may want to start packet inspection after the session loading.
+Administrator may want to stop the packet inspection before saving.
+.It Ic load
+Load the saved configuration file and the connections from the file.
+Note that any existing connections will be destroyed.
+Administrator may want to start packet inspection after the load.
 .It Ic stats
 Print various statistics.
 .It Ic debug
@@ -190,7 +186,8 @@ Addition and removal of entries in the table whose ID is 2:
 .\" -----
 .Sh SEE ALSO
 .Xr bpf 4 ,
-.Xr npf.conf 5
+.Xr npf.conf 5 ,
+.Xr npf 7
 .Sh HISTORY
 NPF first appeared in
 .Nx 6.0 .

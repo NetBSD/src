@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 2014/01/11 08:08:23 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.6.2.1 2014/08/10 06:54:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -123,9 +123,13 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 {
 	const char *cp;
 	struct devsw *dp;
-	int dev, unit = 0, part = 0;
+	int dev, unit, part;
 	int i;
 	char devname[MAXDEVNAME + 1];
+	bool haveunit;
+
+	unit = 0;
+	part = 0;
 
 	/*
 	 * parse path strings
@@ -147,11 +151,14 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 	}
 	dev = dp - devsw;
 	/* get mixed controller and unit number */
+	haveunit = false;
 	for (; *cp != ',' && *cp != ')'; cp++) {
 		if (*cp == '\0')
 			return -1;
-		if (*cp >= '0' && *cp <= '9')
+		if (*cp >= '0' && *cp <= '9') {
 			unit = unit * 10 + *cp - '0';
+			haveunit = true;
+		}
 	}
 	if (unit < 0 || CTLR(unit) >= 2 || TARGET(unit) > 7) {
 #ifdef DEBUG
@@ -159,6 +166,8 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 #endif
 		return (-1);
 	}
+	if (!haveunit && strcmp(devname, default_bootdev) == 0)
+		unit = default_unit;
 	/* get optional partition number */
 	if (*cp == ',')
 		cp++;

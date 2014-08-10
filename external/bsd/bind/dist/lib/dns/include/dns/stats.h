@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.5 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.5.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -74,9 +74,11 @@ enum {
 	dns_resstatscounter_sitin = 37,
 	dns_resstatscounter_sitok = 38,
 
-	dns_resstatscounter_max = 39,
+	dns_resstatscounter_badvers = 39,
+	dns_resstatscounter_max = 40,
 #else
-	dns_resstatscounter_max = 35,
+	dns_resstatscounter_badvers = 35,
+	dns_resstatscounter_max = 36,
 #endif
 
 	/*

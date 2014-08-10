@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapcompare.c,v 1.1.1.3 2010/12/12 15:18:11 adam Exp $	*/
+/*	$NetBSD: ldapcompare.c,v 1.1.1.3.24.1 2014/08/10 07:09:42 tls Exp $	*/
 
 /* ldapcompare.c -- LDAP compare tool */
-/* OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.43.2.9 2010/04/15 22:16:49 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * All rights reserved.
@@ -262,9 +262,7 @@ main( int argc, char **argv )
 
 	free( bvalue.bv_val );
 
-	tool_unbind( ld );
-	tool_destroy();
-	return rc;
+	tool_exit( ld, rc );
 }
 
 

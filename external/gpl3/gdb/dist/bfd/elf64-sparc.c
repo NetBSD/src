@@ -765,7 +765,9 @@ elf64_sparc_print_symbol_all (bfd *abfd ATTRIBUTE_UNUSED, void * filep,
 }
 
 static enum elf_reloc_type_class
-elf64_sparc_reloc_type_class (const Elf_Internal_Rela *rela)
+elf64_sparc_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			      const asection *rel_sec ATTRIBUTE_UNUSED,
+			      const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF64_R_TYPE (rela->r_info))
     {
@@ -919,8 +921,6 @@ const struct elf_size_info elf64_sparc_size_info =
 
 /* Section 5.2.4 of the ABI specifies a 256-byte boundary for the table.  */
 #define elf_backend_plt_alignment 8
-
-#define elf_backend_post_process_headers	_bfd_elf_set_osabi
 
 #include "elf64-target.h"
 

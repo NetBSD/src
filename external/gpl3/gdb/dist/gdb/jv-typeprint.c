@@ -1,5 +1,5 @@
 /* Support for printing Java types for GDB, the GNU debugger.
-   Copyright (C) 1997-2013 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,10 +24,11 @@
 #include "demangle.h"
 #include "gdb-demangle.h"
 #include "jv-lang.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "typeprint.h"
 #include "c-lang.h"
 #include "cp-abi.h"
+#include "cp-support.h"
 #include "gdb_assert.h"
 
 /* Local functions */
@@ -286,8 +287,8 @@ java_type_print_base (struct type *type, struct ui_file *stream, int show,
 		    mangled_name = physname;
 
 		  demangled_name =
-		    cplus_demangle (mangled_name,
-				    DMGL_ANSI | DMGL_PARAMS | DMGL_JAVA);
+		    gdb_demangle (mangled_name,
+				  DMGL_ANSI | DMGL_PARAMS | DMGL_JAVA);
 
 		  if (demangled_name == NULL)
 		    demangled_name = xstrdup (mangled_name);

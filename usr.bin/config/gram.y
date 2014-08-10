@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.38 2013/08/11 10:37:08 pooka Exp $	*/
+/*	$NetBSD: gram.y,v 1.38.2.1 2014/08/10 06:57:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -627,6 +627,7 @@ config_item:
 	| OPTIONS opt_list
 	| MAXUSERS NUMBER		{ setmaxusers($2.val); }
 	| IDENT stringvalue		{ setident($2); }
+	| NO IDENT			{ setident(NULL); }
 	| CONFIG conf root_spec sysparam_list
 					{ addconf(&conf); }
 	| NO CONFIG WORD		{ delconf($3); }

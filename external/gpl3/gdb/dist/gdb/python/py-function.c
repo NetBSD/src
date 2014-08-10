@@ -1,6 +1,6 @@
 /* Convenience functions implemented in Python.
 
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,8 @@
 #include "expression.h"
 #include "language.h"
 
-static PyTypeObject fnpy_object_type;
+static PyTypeObject fnpy_object_type
+    CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("PyObject");
 
 
 
@@ -38,7 +39,7 @@ convert_values_to_python (int argc, struct value **argv)
 {
   int i;
   PyObject *result = PyTuple_New (argc);
-  
+
   if (! result)
     return NULL;
 
@@ -174,14 +175,20 @@ fnpy_init (PyObject *self, PyObject *args, PyObject *kwds)
   if (PyObject_HasAttrString (self, "__doc__"))
     {
       PyObject *ds_obj = PyObject_GetAttrString (self, "__doc__");
-      if (ds_obj && gdbpy_is_string (ds_obj))
+      if (ds_obj != NULL)
 	{
-	  docstring = python_string_to_host_string (ds_obj);
-	  if (docstring == NULL)
+	  if (gdbpy_is_string (ds_obj))
 	    {
-	      Py_DECREF (self);
-	      return -1;
+	      docstring = python_string_to_host_string (ds_obj);
+	      if (docstring == NULL)
+		{
+		  Py_DECREF (self);
+		  Py_DECREF (ds_obj);
+		  return -1;
+		}
 	    }
+
+	  Py_DECREF (ds_obj);
 	}
     }
   if (! docstring)
@@ -193,15 +200,15 @@ fnpy_init (PyObject *self, PyObject *args, PyObject *kwds)
 
 /* Initialize internal function support.  */
 
-void
+int
 gdbpy_initialize_functions (void)
 {
   fnpy_object_type.tp_new = PyType_GenericNew;
   if (PyType_Ready (&fnpy_object_type) < 0)
-    return;
+    return -1;
 
-  Py_INCREF (&fnpy_object_type);
-  PyModule_AddObject (gdb_module, "Function", (PyObject *) &fnpy_object_type);
+  return gdb_pymodule_addobject (gdb_module, "Function",
+				 (PyObject *) &fnpy_object_type);
 }
 
 

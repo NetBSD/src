@@ -1,5 +1,5 @@
 /* Host file transfer support for gdbserver.
-   Copyright (C) 2007-2013 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -20,6 +20,7 @@
 
 #include "server.h"
 #include "gdb/fileio.h"
+#include "hostio.h"
 
 #include <fcntl.h>
 #include <limits.h>
@@ -50,6 +51,14 @@ safe_fromhex (char a, int *nibble)
   return 0;
 }
 
+/* Filenames are hex encoded, so the maximum we can handle is half the
+   packet buffer size.  Cap to PATH_MAX, if it is shorter.  */
+#if !defined (PATH_MAX) || (PATH_MAX > (PBUFSIZ / 2 + 1))
+#  define HOSTIO_PATH_MAX (PBUFSIZ / 2 + 1)
+#else
+#  define HOSTIO_PATH_MAX PATH_MAX
+#endif
+
 static int
 require_filename (char **pp, char *filename)
 {
@@ -64,7 +73,7 @@ require_filename (char **pp, char *filename)
       int nib1, nib2;
 
       /* Don't allow overflow.  */
-      if (count >= PATH_MAX - 1)
+      if (count >= HOSTIO_PATH_MAX - 1)
 	return -1;
 
       if (safe_fromhex (p[0], &nib1)
@@ -266,7 +275,7 @@ fileio_open_flags_to_host (int fileio_open_flags, int *open_flags_p)
 static void
 handle_open (char *own_buf)
 {
-  char filename[PATH_MAX];
+  char filename[HOSTIO_PATH_MAX];
   char *p;
   int fileio_flags, mode, flags, fd;
   struct fd_list *new_fd;
@@ -442,7 +451,7 @@ handle_close (char *own_buf)
 static void
 handle_unlink (char *own_buf)
 {
-  char filename[PATH_MAX];
+  char filename[HOSTIO_PATH_MAX];
   char *p;
   int ret;
 
@@ -470,7 +479,7 @@ static void
 handle_readlink (char *own_buf, int *new_packet_len)
 {
 #if defined (HAVE_READLINK)
-  char filename[PATH_MAX], linkname[PATH_MAX];
+  char filename[HOSTIO_PATH_MAX], linkname[HOSTIO_PATH_MAX];
   char *p;
   int ret, bytes_sent;
 

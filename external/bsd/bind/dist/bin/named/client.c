@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.9 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.9.2.1 2014/08/10 07:06:35 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -123,7 +123,7 @@
  */
 #endif
 
-#define SIT_SIZE 24 /* 8 + 4 + 4 + 8 */
+#define SIT_SIZE 24U /* 8 + 4 + 4 + 8 */
 
 /*% nameserver client manager structure */
 struct ns_clientmgr {
@@ -1674,7 +1674,7 @@ process_sit(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 			memset(client->cookie, 0, 8);
 		isc_buffer_forward(buf, (unsigned int)optlen);
 
-		if (optlen == 8)
+		if (optlen == 8U)
 			isc_stats_increment(ns_g_server->nsstats,
 					    dns_nsstatscounter_sitnew);
 		else

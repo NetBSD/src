@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.207 2014/02/23 12:56:40 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.207.2.1 2014/08/10 06:53:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2014/02/23 12:56:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207.2.1 2014/08/10 06:53:49 tls Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -563,6 +563,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (onstack)
 		sp = ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
+		/* AMD64 ABI 128-bytes "red zone". */
 		sp = (char *)tf->tf_rsp - 128;
 
 	sp -= sizeof(struct sigframe_siginfo);
@@ -1888,7 +1889,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
-	mcp->_mc_tlsbase = (uintptr_t)l->l_private;;
+	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
 	*flags |= _UC_TLSBASE;
 
 	process_read_fpregs_xmm(l, (struct fxsave *)&mcp->__fpregs);

@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -19,13 +19,11 @@ if { [skip_shlib_tests] || [is_remote target] } {
 # Library file.
 set libname "info-fun-solib"
 set srcfile_lib ${srcdir}/${subdir}/${libname}.c
-set binfile_lib ${objdir}/${subdir}/${libname}.so
+set binfile_lib [standard_output_file ${libname}.so]
 set lib_flags {}
 # Binary file.
-set testfile "info-fun"
-set srcfile ${srcdir}/${subdir}/${testfile}.c
+standard_testfile .c
 set executable ${testfile}
-set binfile ${objdir}/${subdir}/${executable}
 set bin_flags [list debug shlib=${binfile_lib}]
 
 if [get_compiler_info] {
@@ -40,7 +38,8 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
 	lappend sep_lib_flags {debug}
     }
     if { [gdb_compile_shlib ${srcfile_lib} ${binfile_lib} $sep_lib_flags] != ""
-	 || [gdb_compile ${srcfile} ${binfile} executable $bin_flags] != "" } {
+	 || [gdb_compile $srcdir/$subdir/${srcfile} ${binfile} \
+		 executable $bin_flags] != "" } {
       untested "Could not compile $binfile_lib or $binfile."
       return -1
     }

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.105 2013/06/30 21:38:55 rmind Exp $
+#	$NetBSD: GENERIC.in,v 1.105.4.1 2014/08/10 06:53:52 tls Exp $
 #
 # Generic atari
 #
@@ -17,6 +17,12 @@ include "arch/atari/conf/std.milan"
 
 #if !defined(SMALL030_KERNEL)
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#endif /* !SMALL030_KERNEL */
+
+#if !defined(SMALL030_KERNEL)
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
+#else
+makeoptions	COPTS="-Os"			# optimize for space
 #endif /* !SMALL030_KERNEL */
 
 #if defined(SMALL030_KERNEL) || \

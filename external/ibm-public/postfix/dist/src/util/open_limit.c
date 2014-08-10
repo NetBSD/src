@@ -1,4 +1,4 @@
-/*	$NetBSD: open_limit.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: open_limit.c,v 1.1.1.1.26.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -36,6 +36,11 @@
 #include <sys/resource.h>
 #include <errno.h>
 
+#ifdef USE_MAX_FILES_PER_PROC
+#include <sys/sysctl.h>
+#define MAX_FILES_PER_PROC      "kern.maxfilesperproc"
+#endif
+
 /* Application-specific. */
 
 #include "iostuff.h"
@@ -65,6 +70,21 @@ int     open_limit(int limit)
     if (getrlimit(RLIMIT_NOFILE, &rl) < 0)
 	return (-1);
     if (limit > 0) {
+
+	/*
+	 * MacOSX incorrectly reports rlim_max as RLIM_INFINITY. The true
+	 * hard limit is finite and equals the kern.maxfilesperproc value.
+	 */
+#ifdef USE_MAX_FILES_PER_PROC
+	int     max_files_per_proc;
+	size_t  len = sizeof(max_files_per_proc);
+
+	if (sysctlbyname(MAX_FILES_PER_PROC, &max_files_per_proc, &len,
+			 (void *) 0, (size_t) 0) < 0)
+	    return (-1);
+	if (limit > max_files_per_proc)
+	    limit = max_files_per_proc;
+#endif
 	if (limit > rl.rlim_max)
 	    rl.rlim_cur = rl.rlim_max;
 	else

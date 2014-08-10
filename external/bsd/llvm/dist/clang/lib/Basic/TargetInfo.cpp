@@ -69,7 +69,7 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   FloatFormat = &llvm::APFloat::IEEEsingle;
   DoubleFormat = &llvm::APFloat::IEEEdouble;
   LongDoubleFormat = &llvm::APFloat::IEEEdouble;
-  DescriptionString = 0;
+  DescriptionString = nullptr;
   UserLabelPrefix = "_";
   MCountName = "mcount";
   RegParmMax = 0;
@@ -83,7 +83,7 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   ComplexLongDoubleUsesFP2Ret = false;
 
   // Set the C++ ABI based on the triple.
-  TheCXXABI.set(Triple.getOS() == llvm::Triple::Win32
+  TheCXXABI.set(Triple.isKnownWindowsMSVCEnvironment()
                     ? TargetCXXABI::Microsoft
                     : TargetCXXABI::GenericItanium);
 

@@ -79,7 +79,7 @@ STRONG_ALIAS(armv7_tlb_flushD_SE, armv7_tlb_flushID_SE)
 STRONG_ALIAS(armv7_tlb_flushI_SE, armv7_tlb_flushID_SE)
 ENTRY(armv7_tlb_flushID_SE)
 	bfc	r0, #0, #12		@ clear ASID
-#ifdef ARM_MMU_EXTENDED_XXX
+#ifdef ARM_MMU_EXTENDED
 	bfi	r0, r1, #0, #8		@ insert ASID into MVA
 #endif
 #ifdef MULTIPROCESSOR
@@ -245,8 +245,8 @@ ENTRY(armv7_dcache_inv_range)
 	add	r1, r1, r3		@ add to length
 	bic	r0, r0, ip		@ clear offset from start.
 1:
-	mcr	p15, 0, r0, c7, c6, 1	@ invalidate the D-Cache line  
-	add	r0, r0, r2 
+	mcr	p15, 0, r0, c7, c6, 1	@ invalidate the D-Cache line
+	add	r0, r0, r2
 	subs	r1, r1, r2
 	bhi	1b
 
@@ -293,8 +293,8 @@ ENTRY_NP(armv7_idcache_wbinv_all)
 END(armv7_idcache_wbinv_all)
 
 /*
- * These work very hard to not push registers onto the stack and to limit themselves
- * to use r0-r3 and ip.
+ * These work very hard to not push registers onto the stack
+ * and to limit themselves to use r0-r3 and ip.
  */
 /* * LINTSTUB: void armv7_icache_inv_all(void); */
 ENTRY_NP(armv7_icache_inv_all)
@@ -306,7 +306,7 @@ ENTRY_NP(armv7_icache_inv_all)
 	ubfx	r3, r0, #3, #10		@ get numways - 1 from CCSIDR
 	clz	r1, r3			@ number of bits to MSB of way
 	lsl	r3, r3, r1		@ shift into position
-	mov	ip, #1			@ 
+	mov	ip, #1			@
 	lsl	ip, ip, r1		@ ip now contains the way decr
 
 	ubfx	r0, r0, #0, #3		@ get linesize from CCSIDR
@@ -322,7 +322,7 @@ ENTRY_NP(armv7_icache_inv_all)
 1:	mcr	p15, 0, r3, c7, c6, 2	@ invalidate line
 	movs	r0, r3			@ get current way/set
 	beq	2f			@ at 0 means we are done.
-	movs	r0, r0, lsl #10		@ clear way bits leaving only set bits
+	lsls	r0, r0, #10		@ clear way bits leaving only set bits
 	subne	r3, r3, r1		@ non-zero?, decrement set #
 	subeq	r3, r3, r2		@ zero?, decrement way # and restore set count
 	b	1b
@@ -337,17 +337,15 @@ END(armv7_icache_inv_all)
 /* * LINTSTUB: void armv7_dcache_inv_all(void); */
 ENTRY_NP(armv7_dcache_inv_all)
 	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
-	ands	r3, r0, #0x07000000
+	tst	r0, #0x07000000
 	beq	.Ldone_inv
-	lsr	r3, r3, #23		@ left align loc (low 4 bits)
+	mov	r3, #0			@ start with L1
 
-	mov	r1, #0
 .Lstart_inv:
 	add	r2, r3, r3, lsr #1	@ r2 = level * 3 / 2
 	mov	r1, r0, lsr r2		@ r1 = cache type
-	and	r1, r1, #7
-	cmp	r1, #2			@ is it data or i&d?
-	blt	.Lnext_level_inv	@ nope, skip level
+	tst	r1, #6			@ is it data or i&d?
+	beq	.Lnext_level_inv	@ nope, skip level
 
 	mcr	p15, 2, r3, c0, c0, 0	@ select cache level
 	isb
@@ -357,14 +355,14 @@ ENTRY_NP(armv7_dcache_inv_all)
 	add	ip, ip, #4		@ apply bias
 	ubfx	r2, r0, #13, #15	@ get numsets - 1 from CCSIDR
 	lsl	r2, r2, ip		@ shift to set position
-	orr	r3, r3, r2		@ merge set into way/set/level 
+	orr	r3, r3, r2		@ merge set into way/set/level
 	mov	r1, #1
 	lsl	r1, r1, ip		@ r1 = set decr
 
 	ubfx	ip, r0, #3, #10		@ get numways - 1 from [to be discarded] CCSIDR
 	clz	r2, ip			@ number of bits to MSB of way
 	lsl	ip, ip, r2		@ shift by that into way position
-	mov	r0, #1			@ 
+	mov	r0, #1			@
 	lsl	r2, r0, r2		@ r2 now contains the way decr
 	mov	r0, r3 			@ get sets/level (no way yet)
 	orr	r3, r3, ip		@ merge way into way/set/level
@@ -373,20 +371,19 @@ ENTRY_NP(armv7_dcache_inv_all)
 
 	/* r3 = ways/sets/level, r2 = way decr, r1 = set decr, r0 and ip are free */
 1:	mcr	p15, 0, r3, c7, c6, 2	@ invalidate line
-	cmp	r3, #15			@ are we done with this level (way/set == 0) 
+	cmp	r3, #15			@ are we done with this level (way/set == 0)
 	bls	.Lnext_level_inv	@ yes, go to next level
-	lsl	r0, r3, #10		@ clear way bits leaving only set/level bits
-	lsr	r0, r0, #4		@ clear level bits leaving only set bits
+	ubfx	r0, r3, #4, #18		@ extract set bits
+	cmp	r0, #0			@ compare
 	subne	r3, r3, r1		@ non-zero?, decrement set #
 	subeq	r3, r3, r2		@ zero?, decrement way # and restore set count
 	b	1b
 
 .Lnext_level_inv:
 	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
-	and	ip, r0, #0x07000000	@ narrow to LoC
-	lsr	ip, ip, #23		@ left align LoC (low 4 bits)
+	ubfx	ip, r0, #24, #3		@ narrow to LoC
 	add	r3, r3, #2		@ go to next level
-	cmp	r3, ip			@ compare
+	cmp	r3, ip, lsl #1		@ compare
 	blt	.Lstart_inv		@ not done, next level (r0 == CLIDR)
 
 .Ldone_inv:
@@ -400,17 +397,15 @@ END(armv7_dcache_inv_all)
 /* * LINTSTUB: void armv7_dcache_wbinv_all(void); */
 ENTRY_NP(armv7_dcache_wbinv_all)
 	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
-	ands	r3, r0, #0x07000000
-	beq	.Ldone_wbinv
-	lsr	r3, r3, #23		@ left align loc (low 4 bits)
+	tst	r0, #0x07000000
+	bxeq	lr
+	mov	r3, #0			@ start with L1
 
-	mov	r1, #0
 .Lstart_wbinv:
 	add	r2, r3, r3, lsr #1	@ r2 = level * 3 / 2
 	mov	r1, r0, lsr r2		@ r1 = cache type
-	bfc	r1, #3, #29
-	cmp	r1, #2			@ is it data or i&d?
-	blt	.Lnext_level_wbinv	@ nope, skip level
+	tst	r1, #6			@ is it unified or data?
+	beq	.Lnext_level_wbinv	@ nope, skip level
 
 	mcr	p15, 2, r3, c0, c0, 0	@ select cache level
 	isb
@@ -420,14 +415,14 @@ ENTRY_NP(armv7_dcache_wbinv_all)
 	add	ip, ip, #4		@ apply bias
 	ubfx	r2, r0, #13, #15	@ get numsets - 1 from CCSIDR
 	lsl	r2, r2, ip		@ shift to set position
-	orr	r3, r3, r2		@ merge set into way/set/level 
+	orr	r3, r3, r2		@ merge set into way/set/level
 	mov	r1, #1
 	lsl	r1, r1, ip		@ r1 = set decr
 
 	ubfx	ip, r0, #3, #10		@ get numways - 1 from [to be discarded] CCSIDR
 	clz	r2, ip			@ number of bits to MSB of way
 	lsl	ip, ip, r2		@ shift by that into way position
-	mov	r0, #1			@ 
+	mov	r0, #1			@
 	lsl	r2, r0, r2		@ r2 now contains the way decr
 	mov	r0, r3 			@ get sets/level (no way yet)
 	orr	r3, r3, ip		@ merge way into way/set/level
@@ -436,20 +431,19 @@ ENTRY_NP(armv7_dcache_wbinv_all)
 
 	/* r3 = ways/sets/level, r2 = way decr, r1 = set decr, r0 and ip are free */
 1:	mcr	p15, 0, r3, c7, c14, 2	@ writeback and invalidate line
-	cmp	r3, #15			@ are we done with this level (way/set == 0) 
+	cmp	r3, #15			@ are we done with this level (way/set == 0)
 	bls	.Lnext_level_wbinv	@ yes, go to next level
-	lsl	r0, r3, #10		@ clear way bits leaving only set/level bits
-	lsr	r0, r0, #4		@ clear level bits leaving only set bits
+	ubfx	r0, r3, #4, #18		@ extract set bits
+	cmp	r0, #0			@ compare
 	subne	r3, r3, r1		@ non-zero?, decrement set #
 	subeq	r3, r3, r2		@ zero?, decrement way # and restore set count
 	b	1b
 
 .Lnext_level_wbinv:
 	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
-	and	ip, r0, #0x07000000	@ narrow to LoC
-	lsr	ip, ip, #23		@ left align LoC (low 4 bits)
+	ubfx	ip, r0, #24, #3		@ narrow to LoC
 	add	r3, r3, #2		@ go to next level
-	cmp	r3, ip			@ compare
+	cmp	r3, ip, lsl #1		@ compare
 	blt	.Lstart_wbinv		@ not done, next level (r0 == CLIDR)
 
 .Ldone_wbinv:

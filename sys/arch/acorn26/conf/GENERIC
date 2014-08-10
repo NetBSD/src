@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.76 2013/07/12 14:28:39 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.76.4.1 2014/08/10 06:53:48 tls Exp $
 #
 # GENERIC machine description file
 # 

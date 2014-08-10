@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.2 2012/04/05 16:16:01 skrll Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.2.16.1 2014/08/10 06:53:59 tls Exp $	*/
 /*	$OpenBSD: ipi.c,v 1.4 2011/01/14 13:20:06 jsing Exp $	*/
 
 /*
@@ -24,6 +24,7 @@
 #include <sys/device.h>
 #include <sys/atomic.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -38,21 +39,22 @@
 
 #include <hppa/hppa/cpuvar.h>
 
-void hppa_ipi_nop(void);
-void hppa_ipi_halt(void);
-void hppa_ipi_xcall(void);
+static void hppa_ipi_nop(void);
+static void hppa_ipi_halt(void);
 
 void (*ipifunc[HPPA_NIPI])(void) =
 {
 	hppa_ipi_nop,
 	hppa_ipi_halt,
-	hppa_ipi_xcall
+	xc_ipi_handler,
+	ipi_cpu_handler,
 };
 
 const char *ipinames[HPPA_NIPI] = {
 	"nop ipi",
 	"halt ipi",
 	"xcall ipi"
+	"generic ipi"
 };
 
 void
@@ -130,16 +132,16 @@ hppa_ipi_broadcast(u_long ipi)
 	return count;	
 }
 
-void
+static void
 hppa_ipi_nop(void)
 {
 }
 
-void
+static void
 hppa_ipi_halt(void)
 {
 	struct cpu_info *ci = curcpu();
-	
+
 	/* Turn off interrupts and halt CPU. */
 // 	hppa_intr_disable();
 	ci->ci_flags &= ~CPUF_RUNNING;
@@ -149,16 +151,8 @@ hppa_ipi_halt(void)
 }
 
 void
-hppa_ipi_xcall(void)
-{
-	
-	xc_ipi_handler();
-}
-
-void
 xc_send_ipi(struct cpu_info *ci)
 {
-	
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
 
@@ -168,5 +162,20 @@ xc_send_ipi(struct cpu_info *ci)
 	} else {
 		/* Broadcast: all, but local CPU (caller will handle it). */
 		hppa_ipi_broadcast(HPPA_IPI_XCALL);
+	}
+}
+
+void
+cpu_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	if (ci) {
+		/* Unicast: remote CPU. */
+		hppa_ipi_send(ci, HPPA_IPI_GENERIC);
+	} else {
+		/* Broadcast: all, but local CPU (caller will handle it). */
+		hppa_ipi_broadcast(HPPA_IPI_GENERIC);
 	}
 }

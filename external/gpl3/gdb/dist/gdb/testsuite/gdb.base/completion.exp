@@ -1,4 +1,4 @@
-# Copyright 1998-2013 Free Software Foundation, Inc.
+# Copyright 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,35 +50,17 @@
 # test running programs
 #
 
-set testfile "break"
-set srcfile ${testfile}.c
-set srcfile1 ${testfile}1.c
-set binfile ${objdir}/${subdir}/${testfile}
-
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}0.o" object {debug nowarnings}] != "" } {
-     untested completion.exp
-     return -1
-}
-
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}1.o" object {debug nowarnings}] != "" } {
-     untested completion.exp
-     return -1
-}
-
-if  { [gdb_compile "${binfile}0.o ${binfile}1.o" "${binfile}" executable {debug nowarnings}] != "" } {
-     untested completion.exp
-     return -1
-}
+standard_testfile break.c break1.c
 
 if [get_compiler_info] {
-    return -1;
+    return -1
 }
 
-gdb_exit
-
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+if {[prepare_for_testing $testfile.exp $testfile \
+	 [list $srcfile $srcfile2] {debug nowarnings}]} {
+    untested $testfile.exp
+    return -1
+}
 
 if ![runto_main] then {
         perror "tests suppressed"
@@ -712,6 +694,40 @@ gdb_test "complete set gnutarget aut" "set gnutarget auto"
 
 
 gdb_test "complete set cp-abi aut" "set cp-abi auto"
+
+# Test that completion of commands 'target FOO' works well.
+set targets [list "core" "tfile" "exec"]
+
+# Test that completion of command 'target ctf' if GDB supports ctf
+# target.
+gdb_test_multiple "target ctf" "" {
+    -re "Undefined target command: \"ctf\"\.  Try \"help target\"\.\r\n$gdb_prompt $" {
+    }
+    -re "No CTF directory specified.*\r\n$gdb_prompt $" {
+	lappend targets "ctf"
+    }
+}
+
+foreach target_name ${targets} {
+    gdb_test "complete target ${target_name} ./gdb.base/completion" \
+	"target ${target_name} ./gdb.base/completion\\.exp.*"
+}
+
+#
+# "set foo unlimited" completion.
+#
+
+# A var_uinteger command.
+gdb_test "complete set height " "set height unlimited"
+gdb_test "complete set height u" "set height unlimited"
+
+# A var_integer command.
+gdb_test "complete set listsize " "set listsize unlimited"
+gdb_test "complete set listsize unl" "set listsize unlimited"
+
+# A var_zuinteger_unlimited command.
+gdb_test "complete set trace-buffer-size " "set trace-buffer-size unlimited"
+gdb_test "complete set trace-buffer-size unl" "set trace-buffer-size unlimited"
 
 # Restore globals modified in this test...
 set timeout $oldtimeout1

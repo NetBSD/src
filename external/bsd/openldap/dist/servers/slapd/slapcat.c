@@ -1,9 +1,9 @@
-/*	$NetBSD: slapcat.c,v 1.1.1.3 2010/12/12 15:22:48 adam Exp $	*/
+/*	$NetBSD: slapcat.c,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/slapcat.c,v 1.7.2.10 2010/04/14 22:59:10 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -111,8 +111,22 @@ slapcat( int argc, char **argv )
 		if ( e == NULL ) {
 			printf("# no data for entry id=%08lx\n\n", (long) id );
 			rc = EXIT_FAILURE;
-			if( continuemode ) continue;
-			break;
+			if ( continuemode == 0 ) {
+				break;
+
+			} else if ( continuemode == 1 ) {
+				continue;
+			}
+
+			/* this is a last resort: linearly scan all ids
+			 * trying to recover as much as possible (ITS#6482) */
+			while ( ++id != NOID ) {
+				e = be->be_entry_get( be, id );
+				if ( e != NULL ) break;
+				printf("# no data for entry id=%08lx\n\n", (long) id );
+			}
+
+			if ( e == NULL ) break;
 		}
 
 		if ( doBSF ) {
@@ -136,7 +150,7 @@ slapcat( int argc, char **argv )
 			printf( "# id=%08lx\n", (long) id );
 		}
 
-		data = entry2str( e, &len );
+		data = entry2str_wrap( e, &len, ldif_wrap );
 		be_entry_release_r( &op, e );
 
 		if ( data == NULL ) {

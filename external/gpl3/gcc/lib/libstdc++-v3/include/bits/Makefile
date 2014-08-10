@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.14 2014/03/13 16:14:27 gdt Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2014/08/10 07:10:55 tls Exp $
 
-.include <bsd.own.mk>
 .include <bsd.init.mk>
 
 .include "${.CURDIR}/../../arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 .cc: # disable .cc->NULL transform
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
 GNUHOSTDIST=	${DIST}
 
 BUILDINCS=	basic_file.h c++allocator.h c++io.h c++locale.h
@@ -21,7 +19,7 @@ INCS+=		${BUILDINCS}
 INCS+=		nested_exception.h hash_bytes.h atomic_lockfree_defines.h
 INCS+=		cxxabi_forced.h	exception_defines.h exception_ptr.h
 
-.if ${MKCOMPAT} != no
+.if ${MKCOMPAT} != no && !empty(MACHINE_ARCH:M*64*)
 SUBDIR+=	arch
 .else
 INCS+=		c++config.h
@@ -55,12 +53,13 @@ ${_h}: ${_s}
 	cp -pf ${.ALLSRC} ${.TARGET}
 .endfor
 
+# Get default targets including <bsd.inc.mk>.
+.include <bsd.prog.mk>
+
 .PATH: ${.CURDIR}/../../arch/${GCC_MACHINE_ARCH} \
 	${DIST}/libstdc++-v3/include \
 	${DIST}/libstdc++-v3/config \
 	${DIST}/libstdc++-v3/ \
 	${DIST}/libstdc++-v3/libsupc++
 
-# Get default targets including <bsd.inc.mk>.
-.include <bsd.prog.mk>
 .include <bsd.subdir.mk>

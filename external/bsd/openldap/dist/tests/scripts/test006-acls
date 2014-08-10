@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test006-acls,v 1.59.2.9 2010/04/19 19:14:33 quanah Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,7 @@ echo "# Try to read an entry inside the Alumni Association container.
 # FIXME: temporarily remove the "No such object" message to make
 # the test succeed even if SLAP_ACL_HONOR_DISCLOSE is not #define'd
 $LDAPSEARCH -b "$JAJDN" -h $LOCALHOST -p $PORT1 "(objectclass=*)" \
-	2>&1 | grep -v "^No such object" >> $SEARCHOUT
+	2>&1 | grep -v "No such object" >> $SEARCHOUT
 
 echo "# ... and should return all attributes if we're bound as anyone
 # under Example." \

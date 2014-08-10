@@ -1,4 +1,4 @@
-# $NetBSD: t_sysctl.sh,v 1.1 2012/04/10 02:39:33 jruoho Exp $
+# $NetBSD: t_sysctl.sh,v 1.1.10.1 2014/08/10 06:57:35 tls Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,6 +36,7 @@ basic_head() {
 basic_body() {
 
 	atf_check -s exit:0 -o ignore -e empty -x "sysctl -a"
+	atf_check -s exit:0 -o ignore -e empty -x "sysctl -d"
 }
 
 atf_init_test_cases() {

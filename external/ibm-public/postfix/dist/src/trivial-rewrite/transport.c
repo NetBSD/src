@@ -1,4 +1,4 @@
-/*	$NetBSD: transport.c,v 1.1.1.2 2013/01/02 18:59:11 tron Exp $	*/
+/*	$NetBSD: transport.c,v 1.1.1.2.6.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -288,7 +288,7 @@ int     transport_lookup(TRANSPORT_INFO *tp, const char *addr,
      * partial lookup keys with regular expressions.
      */
     if ((stripped_addr = strip_addr(addr, DISCARD_EXTENSION,
-				    *var_rcpt_delim)) != 0) {
+				    var_rcpt_delim)) != 0) {
 	found = find_transport_entry(tp, stripped_addr, rcpt_domain, PARTIAL,
 				     channel, nexthop);
 

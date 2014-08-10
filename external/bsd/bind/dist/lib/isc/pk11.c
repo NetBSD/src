@@ -1,4 +1,4 @@
-/*	$NetBSD: pk11.c,v 1.1.1.1 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: pk11.c,v 1.1.1.1.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -118,6 +118,7 @@
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/once.h>
+#include <isc/platform.h>
 #include <isc/stdio.h>
 #include <isc/thread.h>
 #include <isc/util.h>
@@ -126,12 +127,10 @@
 
 #include <pk11/pk11.h>
 #include <pk11/internal.h>
+#include <pk11/result.h>
 
 #include <pkcs11/cryptoki.h>
 #include <pkcs11/pkcs11.h>
-
-void dst__pkcs11_init(isc_mem_t *mctx, const char *engine);
-isc_result_t dst__pkcs11_destroy(void);
 
 #define PINLEN	32
 
@@ -177,6 +176,7 @@ static pk11_token_t *best_dh_token;
 static pk11_token_t *digest_token;
 static pk11_token_t *best_ec_token;
 static pk11_token_t *best_gost_token;
+static pk11_token_t *aes_token;
 
 static isc_result_t free_all_sessions(void);
 static isc_result_t free_session_list(pk11_sessionlist_t *slist);
@@ -272,8 +272,9 @@ pk11_mem_put(void *ptr, size_t size) {
 	UNLOCK(&alloclock);
 }
 
-void
-dst__pkcs11_init(isc_mem_t *mctx, const char *engine) {
+isc_result_t
+pk11_initialize(isc_mem_t *mctx, const char *engine) {
+	isc_result_t result;
 	CK_RV rv;
 
 	RUNTIME_CHECK(isc_once_do(&once, initialize) == ISC_R_SUCCESS);
@@ -283,12 +284,15 @@ dst__pkcs11_init(isc_mem_t *mctx, const char *engine) {
 		isc_mem_attach(mctx, &pk11_mctx);
 	if (initialized) {
 		UNLOCK(&alloclock);
-		return;
+		return (ISC_R_SUCCESS);
 	} else {
 		LOCK(&sessionlock);
 		initialized = ISC_TRUE;
 		UNLOCK(&alloclock);
 	}
+
+	ISC_LIST_INIT(tokens);
+	ISC_LIST_INIT(actives);
 
 	if (engine != NULL)
 		lib_name = engine;
@@ -296,31 +300,40 @@ dst__pkcs11_init(isc_mem_t *mctx, const char *engine) {
 	/* Initialize the CRYPTOKI library */
 	rv = pkcs_C_Initialize((CK_VOID_PTR) &pk11_init_args);
 
-	if (rv != CKR_OK) {
-		if (rv == 0xfe)
-			FATAL_ERROR(__FILE__, __LINE__,
-				    "Can't load or link module \"%s\"",
-				    lib_name);
-		else
-			FATAL_ERROR(__FILE__, __LINE__,
-				    "pkcs_C_Initialize: Error = 0x%.8lX", rv);
+	if (rv == 0xfe) {
+		result = PK11_R_NOPROVIDER;
+		goto unlock;
 	}
-
-	ISC_LIST_INIT(tokens);
-	ISC_LIST_INIT(actives);
+	if (rv != CKR_OK) {
+		result = PK11_R_INITFAILED;
+		goto unlock;
+	}
 
 	choose_slots();
 #ifdef PKCS11CRYPTO
-	if (rand_token == NULL)
-		FATAL_ERROR(__FILE__, __LINE__, "Can't find random service");
-	if (digest_token == NULL)
-		FATAL_ERROR(__FILE__, __LINE__, "Can't find digest service");
+	if (rand_token == NULL) {
+		result = PK11_R_NORANDOMSERVICE;
+		goto unlock;
+	}
+	if (digest_token == NULL) {
+		result = PK11_R_NODIGESTSERVICE;
+		goto unlock;
+	}
+#if defined(ISC_PLATFORM_USESIT) && defined(AES_SIT)
+	if (aes_token == NULL) {
+		result = PK11_R_NOAESSERVICE;
+		goto unlock;
+	}
+#endif
 #endif /* PKCS11CRYPTO */
+	result = ISC_R_SUCCESS;
+ unlock:
 	UNLOCK(&sessionlock);
+	return (result);
 }
 
 isc_result_t
-dst__pkcs11_destroy(void) {
+pk11_finalize(void) {
 	pk11_token_t *token, *next;
 	isc_result_t ret;
 
@@ -344,6 +357,8 @@ dst__pkcs11_destroy(void) {
 			best_ec_token = NULL;
 		if (token == best_gost_token)
 			best_gost_token = NULL;
+		if (token == aes_token)
+			aes_token = NULL;
 		pk11_mem_put(token, sizeof(*token));
 		token = next;
 	}
@@ -353,19 +368,17 @@ dst__pkcs11_destroy(void) {
 	return (ret);
 }
 
-void
-pk11_shutdown(void) {
-	(void) dst__pkcs11_destroy();
-}
-
 isc_result_t
 pk11_rand_bytes(unsigned char *buf, int num) {
 	isc_result_t ret;
 	CK_RV rv;
 	pk11_context_t ctx;
 
-	ret = pk11_get_session(&ctx, OP_RAND, ISC_FALSE, ISC_FALSE, NULL, 0);
-	if (ret != ISC_R_SUCCESS)
+	ret = pk11_get_session(&ctx, OP_RAND, ISC_FALSE, ISC_FALSE,
+			       ISC_FALSE, NULL, 0);
+	if ((ret != ISC_R_SUCCESS) &&
+	    (ret != PK11_R_NODIGESTSERVICE) &&
+	    (ret != PK11_R_NOAESSERVICE))
 		return (ret);
 	RUNTIME_CHECK(ctx.session != CK_INVALID_HANDLE);
 	rv = pkcs_C_GenerateRandom(ctx.session,
@@ -388,8 +401,11 @@ pk11_rand_seed_fromfile(const char *randomfile) {
 	size_t cc = 0;
 	isc_result_t ret;
 
-	ret = pk11_get_session(&ctx, OP_RAND, ISC_FALSE, ISC_FALSE, NULL, 0);
-	if (ret != ISC_R_SUCCESS)
+	ret = pk11_get_session(&ctx, OP_RAND, ISC_FALSE, ISC_FALSE,
+			       ISC_FALSE, NULL, 0);
+	if ((ret != ISC_R_SUCCESS) &&
+	    (ret != PK11_R_NODIGESTSERVICE) &&
+	    (ret != PK11_R_NOAESSERVICE))
 		return;
 	RUNTIME_CHECK(ctx.session != CK_INVALID_HANDLE);
 	ret = isc_stdio_open(randomfile, "r", &stream);
@@ -412,22 +428,41 @@ pk11_rand_seed_fromfile(const char *randomfile) {
 
 isc_result_t
 pk11_get_session(pk11_context_t *ctx, pk11_optype_t optype,
-		 isc_boolean_t rw, isc_boolean_t logon,
-		 const char *pin, CK_SLOT_ID slot)
+		 isc_boolean_t need_services, isc_boolean_t rw,
+		 isc_boolean_t logon, const char *pin, CK_SLOT_ID slot)
 {
 	pk11_token_t *token = NULL;
 	pk11_sessionlist_t *freelist;
 	pk11_session_t *sp;
-	isc_result_t ret = ISC_R_SUCCESS;
-
-	dst__pkcs11_init(NULL, NULL);
-	LOCK(&sessionlock);
-	/* wait for initialization to finish */
-	UNLOCK(&sessionlock);
+	isc_result_t ret;
+#ifdef PKCS11CRYPTO
+	isc_result_t service_ret = ISC_R_SUCCESS;
+#else
+	UNUSED(need_services);
+#endif
 
 	memset(ctx, 0, sizeof(pk11_context_t));
 	ctx->handle = NULL;
 	ctx->session = CK_INVALID_HANDLE;
+
+	ret = pk11_initialize(NULL, NULL);
+#ifdef PKCS11CRYPTO
+	if (ret == PK11_R_NORANDOMSERVICE ||
+	    ret == PK11_R_NODIGESTSERVICE ||
+	    ret == PK11_R_NOAESSERVICE) {
+		if (need_services)
+			return (ret);
+		service_ret = ret;
+	}
+	else
+#endif /* PKCS11CRYPTO */
+	if (ret != ISC_R_SUCCESS)
+		return (ret);
+
+	LOCK(&sessionlock);
+	/* wait for initialization to finish */
+	UNLOCK(&sessionlock);
+
 	switch(optype) {
 #ifdef PKCS11CRYPTO
 	case OP_RAND:
@@ -435,6 +470,9 @@ pk11_get_session(pk11_context_t *ctx, pk11_optype_t optype,
 		break;
 	case OP_DIGEST:
 		token = digest_token;
+		break;
+	case OP_AES:
+		token = aes_token;
 		break;
 	case OP_ANY:
 		for (token = ISC_LIST_HEAD(tokens);
@@ -497,6 +535,10 @@ pk11_get_session(pk11_context_t *ctx, pk11_optype_t optype,
 	UNLOCK(&sessionlock);
 	ctx->handle = sp;
 	ctx->session = sp->session;
+#ifdef PKCS11CRYPTO
+	if (ret == ISC_R_SUCCESS)
+		ret = service_ret;
+#endif
 	return (ret);
 }
 
@@ -788,22 +830,30 @@ choose_slots(void) {
 		/* does GOST require digest too? */
 		rv = pkcs_C_GetMechanismInfo(slot, CKM_GOSTR3411, &mechInfo);
 		if ((rv != CKR_OK) || ((mechInfo.flags & CKF_DIGEST) == 0))
-			continue;
+			goto try_aes;
 		rv = pkcs_C_GetMechanismInfo(slot, CKM_GOSTR3410_KEY_PAIR_GEN,
 					     &mechInfo);
 		if ((rv != CKR_OK) ||
 		    ((mechInfo.flags & CKF_GENERATE_KEY_PAIR) == 0))
-			continue;
+			goto try_aes;
 		rv = pkcs_C_GetMechanismInfo(slot,
 					     CKM_GOSTR3410_WITH_GOSTR3411,
 					     &mechInfo);
 		if ((rv != CKR_OK) ||
 		    ((mechInfo.flags & CKF_SIGN) == 0) ||
 		    ((mechInfo.flags & CKF_VERIFY) == 0))
-			continue;
+			goto try_aes;
 		token->operations |= 1 << OP_GOST;
 		if (best_gost_token == NULL)
 			best_gost_token = token;
+
+	try_aes:
+		rv = pkcs_C_GetMechanismInfo(slot, CKM_AES_ECB, &mechInfo);
+		if ((rv != CKR_OK) || ((mechInfo.flags & CKF_ENCRYPT) == 0))
+			continue;
+		token->operations |= 1 << OP_AES;
+		if (aes_token == NULL)
+			aes_token = token;
 	}
 
 	if (slotList != NULL)
@@ -835,6 +885,9 @@ pk11_get_best_token(pk11_optype_t optype) {
 		break;
 	case OP_GOST:
 		token = best_gost_token;
+		break;
+	case OP_AES:
+		token = aes_token;
 		break;
 	default:
 		break;
@@ -1062,10 +1115,10 @@ pk11_parse_uri(pk11_object_t *obj, const char *label,
 	/* get the URI scheme */
 	p = strchr(uri, ':');
 	if (p == NULL)
-		DST_RET(DST_R_NOENGINE);
+		DST_RET(PK11_R_NOPROVIDER);
 	*p++ = '\0';
 	if (strcmp(uri, "pkcs11") != 0)
-		DST_RET(DST_R_NOENGINE);
+		DST_RET(PK11_R_NOPROVIDER);
 
 	/* get attributes */
 	for (na = p; na != NULL;) {
@@ -1087,12 +1140,12 @@ pk11_parse_uri(pk11_object_t *obj, const char *label,
 		l = 0;
 		v = percent_decode(v, &l);
 		if (v == NULL)
-			DST_RET(DST_R_NOENGINE);
+			DST_RET(PK11_R_NOPROVIDER);
 		if ((a == v) || (strcmp(a, "object") == 0)) {
 			/* object: CKA_LABEL */
 			attr = pk11_attribute_bytype(obj, CKA_LABEL);
 			if (attr != NULL)
-				DST_RET(DST_R_NOENGINE);
+				DST_RET(PK11_R_NOPROVIDER);
 			attr = push_attribute(obj, mctx, l);
 			if (attr == NULL)
 				DST_RET(ISC_R_NOMEMORY);
@@ -1140,12 +1193,12 @@ pk11_parse_uri(pk11_object_t *obj, const char *label,
 			/* object-type: CKA_CLASS */
 			/* only private makes sense */
 			if (strcmp(v, "private") != 0)
-				DST_RET(DST_R_NOENGINE);
+				DST_RET(PK11_R_NOPROVIDER);
 		} else if (strcmp(a, "id") == 0) {
 			/* id: CKA_ID */
 			attr = pk11_attribute_bytype(obj, CKA_ID);
 			if (attr != NULL)
-				DST_RET(DST_R_NOENGINE);
+				DST_RET(PK11_R_NOPROVIDER);
 			attr = push_attribute(obj, mctx, l);
 			if (attr == NULL)
 				DST_RET(ISC_R_NOMEMORY);
@@ -1166,7 +1219,7 @@ pk11_parse_uri(pk11_object_t *obj, const char *label,
 				goto err;
 			gotpin = ISC_TRUE;
 		} else
-			DST_RET(DST_R_NOENGINE);
+			DST_RET(PK11_R_NOPROVIDER);
 	}
 
 	if ((pk11_attribute_bytype(obj, CKA_LABEL) == NULL) &&
@@ -1220,6 +1273,8 @@ pk11_dump_tokens(void)
 	printf("\tbest_dh_token=%p\n", best_dh_token);
 	printf("\tdigest_token=%p\n", digest_token);
 	printf("\tbest_ec_token=%p\n", best_ec_token);
+	printf("\tbest_gost_token=%p\n", best_gost_token);
+	printf("\taes_token=%p\n", aes_token);
 
 	for (token = ISC_LIST_HEAD(tokens);
 	     token != NULL;

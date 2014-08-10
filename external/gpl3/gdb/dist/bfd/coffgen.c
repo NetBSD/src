@@ -221,8 +221,12 @@ make_a_section_from_file (bfd *abfd,
 
 /* Read in a COFF object and make it into a BFD.  This is used by
    ECOFF as well.  */
-
-static const bfd_target *
+const bfd_target *
+coff_real_object_p (bfd *,
+                    unsigned,
+                    struct internal_filehdr *,
+                    struct internal_aouthdr *);
+const bfd_target *
 coff_real_object_p (bfd *abfd,
 		    unsigned nscns,
 		    struct internal_filehdr *internal_f,

@@ -1,3 +1,17 @@
+2013-10-09  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	PR sim/16018:
+	* float.c (set_fsr): Add missing "break" statements.  Reindent
+	code.
+
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
 2013-03-14  Joel Sherrill <joel.sherrill@oarcorp.com>
 
 	* Makefile.in: Include build directory in search path to find

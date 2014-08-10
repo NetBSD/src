@@ -1,5 +1,5 @@
 /* Helper routines for C++ support in GDB.
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    Contributed by David Carlton and by Kealia, Inc.
 
@@ -473,7 +473,8 @@ cp_lookup_symbol_imports_or_template (const char *scope,
 	  char *name_copy = xstrdup (SYMBOL_NATURAL_NAME (function));
 	  struct cleanup *cleanups = make_cleanup (xfree, name_copy);
 	  const struct language_defn *lang = language_def (language_cplus);
-	  struct gdbarch *arch = SYMBOL_SYMTAB (function)->objfile->gdbarch;
+	  struct gdbarch *arch
+	    = get_objfile_arch (SYMBOL_SYMTAB (function)->objfile);
 	  const struct block *parent = BLOCK_SUPERBLOCK (block);
 
 	  while (1)
@@ -499,7 +500,10 @@ cp_lookup_symbol_imports_or_template (const char *scope,
 				      TYPE_N_TEMPLATE_ARGUMENTS (context),
 				      TYPE_TEMPLATE_ARGUMENTS (context));
 	      if (result != NULL)
-		return result;
+		{
+		  do_cleanups (cleanups);
+		  return result;
+		}
 	    }
 
 	  do_cleanups (cleanups);
@@ -699,6 +703,34 @@ lookup_symbol_file (const char *name,
   return sym;
 }
 
+/* Search through the base classes of PARENT_TYPE for a base class
+   named NAME and return its type.  If not found, return NULL.  */
+
+struct type *
+find_type_baseclass_by_name (struct type *parent_type, const char *name)
+{
+  int i;
+
+  CHECK_TYPEDEF (parent_type);
+  for (i = 0; i < TYPE_N_BASECLASSES (parent_type); ++i)
+    {
+      struct type *type = check_typedef (TYPE_BASECLASS (parent_type, i));
+      const char *base_name = TYPE_BASECLASS_NAME (parent_type, i);
+
+      if (base_name == NULL)
+	continue;
+
+      if (streq (base_name, name))
+	return type;
+
+      type = find_type_baseclass_by_name (type, name);
+      if (type != NULL)
+	return type;
+    }
+
+  return NULL;
+}
+
 /* Search through the base classes of PARENT_TYPE for a symbol named
    NAME in block BLOCK.  */
 
@@ -780,6 +812,10 @@ cp_lookup_nested_symbol (struct type *parent_type,
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_NAMESPACE:
     case TYPE_CODE_UNION:
+    /* NOTE: Handle modules here as well, because Fortran is re-using the C++
+       specific code to lookup nested symbols in modules, by calling the
+       function pointer la_lookup_symbol_nonlocal, which ends up here.  */
+    case TYPE_CODE_MODULE:
       {
 	/* NOTE: carlton/2003-11-10: We don't treat C++ class members
 	   of classes like, say, data or function members.  Instead,

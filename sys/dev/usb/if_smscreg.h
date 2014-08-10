@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscreg.h,v 1.3 2013/04/03 15:57:44 skrll Exp $	*/
+/*	$NetBSD: if_smscreg.h,v 1.3.8.1 2014/08/10 06:54:58 tls Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -161,6 +161,7 @@
 
 #define SMSC_HW_CFG_BIR			(0x1UL << 12)
 #define SMSC_HW_CFG_LEDB		(0x1UL << 11)
+#define SMSC_HW_CFG_RXDOFF_SHIFT	(9)
 #define SMSC_HW_CFG_RXDOFF		(0x3UL << 9)    /* RX pkt alignment */
 #define SMSC_HW_CFG_DRP			(0x1UL << 6)
 #define SMSC_HW_CFG_MEF			(0x1UL << 5)
@@ -200,6 +201,8 @@
 #define SMSC_MAC_CSR_PASSBAD		(0x1UL << 16)  /* Pass on bad frames */
 #define SMSC_MAC_CSR_HPFILT		(0x1UL << 13)  /* Hash filtering */
 #define SMSC_MAC_CSR_BCAST		(0x1UL << 11)  /* Broadcast */
+#define SMSC_MAC_CSR_DISRTY		(0x1UL << 10)  /* Disable Retry */
+#define SMSC_MAC_CSR_PADSTR		(0x1UL << 8)   /* PAD stripping */
 #define SMSC_MAC_CSR_TXEN		(0x1UL << 3)   /* TX enable */
 #define SMSC_MAC_CSR_RXEN		(0x1UL << 2)   /* RX enable */
 

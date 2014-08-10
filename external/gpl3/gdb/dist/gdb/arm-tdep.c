@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on ARM systems.
 
-   Copyright (C) 1988-2013 Free Software Foundation, Inc.
+   Copyright (C) 1988-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include "inferior.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "dis-asm.h"		/* For register styles.  */
 #include "regcache.h"
 #include "reggroups.h"
@@ -381,7 +381,7 @@ arm_find_mapping_symbol (CORE_ADDR memaddr, CORE_ADDR *start)
 int
 arm_pc_is_thumb (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 {
-  struct minimal_symbol *sym;
+  struct bound_minimal_symbol sym;
   char type;
   struct displaced_step_closure* dsc
     = get_displaced_step_closure_by_addr(memaddr);
@@ -423,8 +423,8 @@ arm_pc_is_thumb (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 
   /* Thumb functions have a "special" bit set in minimal symbols.  */
   sym = lookup_minimal_symbol_by_pc (memaddr);
-  if (sym)
-    return (MSYMBOL_IS_SPECIAL (sym));
+  if (sym.minsym)
+    return (MSYMBOL_IS_SPECIAL (sym.minsym));
 
   /* If the user wants to override the fallback mode, let them.  */
   if (strcmp (arm_fallback_mode_string, "arm") == 0)
@@ -468,14 +468,14 @@ static int
 skip_prologue_function (struct gdbarch *gdbarch, CORE_ADDR pc, int is_thumb)
 {
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
-  struct minimal_symbol *msym;
+  struct bound_minimal_symbol msym;
 
   msym = lookup_minimal_symbol_by_pc (pc);
-  if (msym != NULL
-      && SYMBOL_VALUE_ADDRESS (msym) == pc
-      && SYMBOL_LINKAGE_NAME (msym) != NULL)
+  if (msym.minsym != NULL
+      && SYMBOL_VALUE_ADDRESS (msym.minsym) == pc
+      && SYMBOL_LINKAGE_NAME (msym.minsym) != NULL)
     {
-      const char *name = SYMBOL_LINKAGE_NAME (msym);
+      const char *name = SYMBOL_LINKAGE_NAME (msym.minsym);
 
       /* The GNU linker's Thumb call stub to foo is named
 	 __foo_from_thumb.  */
@@ -1284,7 +1284,7 @@ arm_skip_stack_protector(CORE_ADDR pc, struct gdbarch *gdbarch)
 {
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
   unsigned int basereg;
-  struct minimal_symbol *stack_chk_guard;
+  struct bound_minimal_symbol stack_chk_guard;
   int offset;
   int is_thumb = arm_pc_is_thumb (gdbarch, pc);
   CORE_ADDR addr;
@@ -1299,8 +1299,9 @@ arm_skip_stack_protector(CORE_ADDR pc, struct gdbarch *gdbarch)
   /* If name of symbol doesn't start with '__stack_chk_guard', this
      instruction sequence is not for stack protector.  If symbol is
      removed, we conservatively think this sequence is for stack protector.  */
-  if (stack_chk_guard
-      && strncmp (SYMBOL_LINKAGE_NAME (stack_chk_guard), "__stack_chk_guard",
+  if (stack_chk_guard.minsym
+      && strncmp (SYMBOL_LINKAGE_NAME (stack_chk_guard.minsym),
+		  "__stack_chk_guard",
 		  strlen ("__stack_chk_guard")) != 0)
    return pc;
 
@@ -2903,10 +2904,10 @@ arm_stub_unwind_sniffer (const struct frame_unwind *self,
 			 void **this_prologue_cache)
 {
   CORE_ADDR addr_in_block;
-  char dummy[4];
+  gdb_byte dummy[4];
 
   addr_in_block = get_frame_address_in_block (this_frame);
-  if (in_plt_section (addr_in_block, NULL)
+  if (in_plt_section (addr_in_block)
       /* We also use the stub winder if the target memory is unreadable
 	 to avoid having the prologue unwinder trying to read it.  */
       || target_read_memory (get_frame_pc (this_frame), dummy, 4) != 0)
@@ -3888,19 +3889,19 @@ arm_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
 }
 
 static void
-print_fpu_flags (int flags)
+print_fpu_flags (struct ui_file *file, int flags)
 {
   if (flags & (1 << 0))
-    fputs ("IVO ", stdout);
+    fputs_filtered ("IVO ", file);
   if (flags & (1 << 1))
-    fputs ("DVZ ", stdout);
+    fputs_filtered ("DVZ ", file);
   if (flags & (1 << 2))
-    fputs ("OFL ", stdout);
+    fputs_filtered ("OFL ", file);
   if (flags & (1 << 3))
-    fputs ("UFL ", stdout);
+    fputs_filtered ("UFL ", file);
   if (flags & (1 << 4))
-    fputs ("INX ", stdout);
-  putchar ('\n');
+    fputs_filtered ("INX ", file);
+  fputc_filtered ('\n', file);
 }
 
 /* Print interesting information about the floating point processor
@@ -3914,15 +3915,15 @@ arm_print_float_info (struct gdbarch *gdbarch, struct ui_file *file,
 
   type = (status >> 24) & 127;
   if (status & (1 << 31))
-    printf (_("Hardware FPU type %d\n"), type);
+    fprintf_filtered (file, _("Hardware FPU type %d\n"), type);
   else
-    printf (_("Software FPU type %d\n"), type);
+    fprintf_filtered (file, _("Software FPU type %d\n"), type);
   /* i18n: [floating point unit] mask */
-  fputs (_("mask: "), stdout);
-  print_fpu_flags (status >> 16);
+  fputs_filtered (_("mask: "), file);
+  print_fpu_flags (file, status >> 16);
   /* i18n: [floating point unit] flags */
-  fputs (_("flags: "), stdout);
-  print_fpu_flags (status);
+  fputs_filtered (_("flags: "), file);
+  print_fpu_flags (file, status);
 }
 
 /* Construct the ARM extended floating point type.  */
@@ -4969,17 +4970,9 @@ arm_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
   CORE_ADDR nextpc;
 
   if (arm_frame_is_thumb (frame))
-    {
-      nextpc = thumb_get_next_pc_raw (frame, pc);
-      if (nextpc == MAKE_THUMB_ADDR (pc))
-	error (_("Infinite loop detected"));
-    }
+    nextpc = thumb_get_next_pc_raw (frame, pc);
   else
-    {
-      nextpc = arm_get_next_pc_raw (frame, pc);
-      if (nextpc == pc)
-	error (_("Infinite loop detected"));
-    }
+    nextpc = arm_get_next_pc_raw (frame, pc);
 
   return nextpc;
 }
@@ -8615,7 +8608,7 @@ arm_displaced_init_closure (struct gdbarch *gdbarch, CORE_ADDR from,
   unsigned int i, len, offset;
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
   int size = dsc->is_thumb? 2 : 4;
-  const unsigned char *bkp_insn;
+  const gdb_byte *bkp_insn;
 
   offset = 0;
   /* Poke modified instruction(s).  */
@@ -8774,10 +8767,10 @@ gdb_print_insn_arm (bfd_vma memaddr, disassemble_info *info)
 #define THUMB_LE_BREAKPOINT {0xbe,0xbe}
 #define THUMB_BE_BREAKPOINT {0xbe,0xbe}
 
-static const char arm_default_arm_le_breakpoint[] = ARM_LE_BREAKPOINT;
-static const char arm_default_arm_be_breakpoint[] = ARM_BE_BREAKPOINT;
-static const char arm_default_thumb_le_breakpoint[] = THUMB_LE_BREAKPOINT;
-static const char arm_default_thumb_be_breakpoint[] = THUMB_BE_BREAKPOINT;
+static const gdb_byte arm_default_arm_le_breakpoint[] = ARM_LE_BREAKPOINT;
+static const gdb_byte arm_default_arm_be_breakpoint[] = ARM_BE_BREAKPOINT;
+static const gdb_byte arm_default_thumb_le_breakpoint[] = THUMB_LE_BREAKPOINT;
+static const gdb_byte arm_default_thumb_be_breakpoint[] = THUMB_BE_BREAKPOINT;
 
 /* Determine the type and size of breakpoint to insert at PCPTR.  Uses
    the program counter value to determine whether a 16-bit or 32-bit

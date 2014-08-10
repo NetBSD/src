@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2006/04/14 13:19:03 blymn Exp $
+#	$NetBSD: Makefile,v 1.20.60.1 2014/08/10 06:52:44 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SRCS =	drvstats.c rstatd.c rstat_proc.c
 MAN =	rpc.rstatd.8
 MLINKS=	rpc.rstatd.8 rstatd.8
 
-DPADD=	${LIBRPCSVC} ${LIBKVM}
-LDADD=	-lrpcsvc -lkvm
+DPADD=	${LIBRPCSVC}
+LDADD=	-lrpcsvc
 
 .include <bsd.prog.mk>

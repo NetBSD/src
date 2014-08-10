@@ -1,4 +1,4 @@
-#   Copyright 1998-2013 Free Software Foundation, Inc.
+#   Copyright 1998-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # This file was written by Michael Snyder (msnyder@cygnus.com)
 
-load_lib "trace-support.exp";
+load_lib "trace-support.exp"
 
 
 gdb_exit
@@ -64,7 +64,7 @@ gdb_reinitialize_dir $srcdir/$subdir
 
 if { ![gdb_target_supports_trace] } then {
     unsupported "Current target does not support trace"
-    return 1;
+    return 1
 
 }
 
@@ -73,10 +73,10 @@ if { ![gdb_target_supports_trace] } then {
 
 # define relative source line numbers:
 # all subsequent line numbers are relative to this first one (baseline)
-set baseline  [gdb_find_recursion_test_baseline $srcfile];
+set baseline  [gdb_find_recursion_test_baseline $srcfile]
 if { $baseline == -1 } then {
     fail "Could not find gdb_recursion_test function"
-    return;
+    return
 }
 
 set testline1 [expr $baseline + 1]
@@ -98,7 +98,7 @@ set tdp5 [gdb_gettpnum $testline5]
 if { $tdp1 <= 0 || $tdp2 <= 0 || $tdp3 <= 0 || \
      $tdp4 <= 0 || $tdp5 <= 0 } then {
     fail "setting tracepoints"
-    return;
+    return
 }
 
 # 6.1 test tstart command
@@ -121,7 +121,7 @@ gdb_test_multiple "tstart" "6.1: tstart" {
 }
 
 if { $return_me == 1 } then {
-    return -1;
+    return -1
 }
 
 # test tstatus (when trace on)
@@ -152,7 +152,7 @@ gdb_test_multiple "tstop" "7.1: tstop" {
 }
 
 if { $return_me == 1 } then {
-    return -1;
+    return -1
 }
 
 # test tstatus (when trace off)
@@ -160,15 +160,15 @@ gdb_test "tstatus" "Trace stopped by a tstop command.*" \
     "test tstatus off after tstop"
 
 ## record starting PC
-set save_pc [gdb_readexpr "(unsigned long) \$pc"];
+set save_pc [gdb_readexpr "(unsigned long) \$pc"]
 if { $save_pc == -1 } then {
     fail "could not read PC"
-    return;
+    return
 }
 
 # 8.7  tfind start
 ## check $trace_frame == 0
-gdb_tfind_test "8.7: tfind start command" "start" "0";
+gdb_tfind_test "8.7: tfind start command" "start" "0"
 ## check $pc != startPC
 gdb_test "printf \"x \%d x\\n\", \$pc != $save_pc" \
 	"x 1 x" \
@@ -176,7 +176,7 @@ gdb_test "printf \"x \%d x\\n\", \$pc != $save_pc" \
 
 # 8.8  tfind none
 ## check $trace_frame == -1
-gdb_tfind_test "8.8: tfind none" "none" "-1";
+gdb_tfind_test "8.8: tfind none" "none" "-1"
 ## check $pc == startPC
 gdb_test "printf \"x \%d x\\n\", \$pc == $save_pc" \
 	"x 1 x" \
@@ -184,7 +184,7 @@ gdb_test "printf \"x \%d x\\n\", \$pc == $save_pc" \
 
 # 8.9  tfind end
 ## check $trace_frame == -1
-gdb_tfind_test "8.9: tfind end, selects no frame" "end" "-1";
+gdb_tfind_test "8.9: tfind end, selects no frame" "end" "-1"
 ## check $pc == startPC
 gdb_test "printf \"x \%d x\\n\", \$pc == $save_pc" \
 	"x 1 x" \
@@ -217,39 +217,39 @@ gdb_test "printf \"x \%d x\\n\", \$trace_frame == -3" "x 0 x" \
 # 8.10 tfind <no arg>
 ## check $trace_frame += 1
 
-gdb_tfind_test "8.10: tfind start" "start" "0";
+gdb_tfind_test "8.10: tfind start" "start" "0"
 gdb_test "print \$trace_line" "$baseline"  \
 	"8.10: tfind 0 (correct line $baseline)"
-gdb_tfind_test "8.10: tfind noargument 1" "" "1";
+gdb_tfind_test "8.10: tfind noargument 1" "" "1"
 gdb_test "print \$trace_line" "$testline2" \
 	"8.10: tfind 1 (correct line $testline2)"
-gdb_tfind_test "8.10: tfind noargument 2" "" "2";
+gdb_tfind_test "8.10: tfind noargument 2" "" "2"
 gdb_test "print \$trace_line" "$testline3" \
 	"8.10: tfind 2 (correct line $testline3)"
-gdb_tfind_test "8.10: tfind noargument 3" "" "3";
+gdb_tfind_test "8.10: tfind noargument 3" "" "3"
 gdb_test "print \$trace_line" "$testline4" \
 	"8.10: tfind 3 (correct line $testline4)"
 
-gdb_tfind_test "8.11: tfind 3" "3" "3";
+gdb_tfind_test "8.11: tfind 3" "3" "3"
 gdb_test "print \$trace_line" "$testline4" \
 	"8.11: tfind 3 (correct line $testline4)"
-gdb_tfind_test "8.11: tfind backward 2" "-" "2";
+gdb_tfind_test "8.11: tfind backward 2" "-" "2"
 gdb_test "print \$trace_line" "$testline3" \
 	"8.11: tfind 2 (correct line $testline3)"
-gdb_tfind_test "8.11: tfind backward 1" "-" "1";
+gdb_tfind_test "8.11: tfind backward 1" "-" "1"
 gdb_test "print \$trace_line" "$testline2" \
 	"8.11: tfind 1 (correct line $testline2)"
-gdb_tfind_test "8.11: tfind backward 0" "-" "0";
+gdb_tfind_test "8.11: tfind backward 0" "-" "0"
 gdb_test "print \$trace_line" "$baseline"  \
 	"8.11: tfind 0 (correct line $baseline)"
 
-gdb_tfind_test "8.12: tfind none" "none" "-1";
+gdb_tfind_test "8.12: tfind none" "none" "-1"
 gdb_tfind_test "8.12: tfind tracepoint <n>" "tracepoint $tdp2" \
-	"\$tracepoint" "$tdp2";
+	"\$tracepoint" "$tdp2"
 gdb_test "print \$trace_line" "$testline2" \
 	"8.12: tfind tracepoint <n> (line $testline2)"
 
-gdb_tfind_test "8.25: tfind none" "none" "-1";
+gdb_tfind_test "8.25: tfind none" "none" "-1"
 gdb_test "tfind tracepoint 0" "failed to find.*" \
 	"8.25: tfind tracepoint rejects zero"
 gdb_test "tfind tracepoint 32767" "failed to find.*" \
@@ -259,24 +259,24 @@ gdb_test "tfind tracepoint -1" "failed to find.*" \
 
 # 8.37 tfind tracepoint n where n no longer exists (but used to)
 gdb_test_no_output "delete trace $tdp2" ""
-gdb_tfind_test "8.37: tfind none" "none" "-1";
+gdb_tfind_test "8.37: tfind none" "none" "-1"
 gdb_tfind_test "8.37: tfind deleted tracepoint" \
 	"tracepoint $tdp2" \
-	"\$tracepoint" "$tdp2";
+	"\$tracepoint" "$tdp2"
 gdb_test "print \$trace_line" "$testline2" \
 	"8.37: tfind deleted tracepoint (line $testline2)"
 
 # 8.13 tfind tracepoint <no arg>
 ## check $tracepoint same before and after, $trace_frame changed
 
-gdb_tfind_test "8.13: tfind none" "none" "-1";
+gdb_tfind_test "8.13: tfind none" "none" "-1"
 gdb_tfind_test "8.13: tracepoint $tdp1" "tracepoint $tdp1" \
-	"\$tracepoint" "$tdp1";
+	"\$tracepoint" "$tdp1"
 gdb_test "print \$trace_line" "$baseline" \
 	"8.13: tfind tracepoint $tdp1 (line $baseline)"
 gdb_test_no_output "set \$save_frame = \$trace_frame" ""
 gdb_tfind_test "8.13: tracepoint <no arg>" "tracepoint" \
-	"\$tracepoint" "$tdp1";
+	"\$tracepoint" "$tdp1"
 gdb_test "printf \"x \%d x\\n\", \$trace_frame == \$save_frame" \
 	"x 0 x" \
 	"8.13: tracepoint <no arg>, tracepoint number unchanged"
@@ -299,7 +299,7 @@ gdb_test "print \$trace_line" "$testline4" \
 
 gdb_test_no_output "set \$test_pc = \$pc" ""
 gdb_tfind_test "8.14: tfind none" "none" "-1"
-gdb_tfind_test "8.14: tfind pc" "pc \$test_pc" "\$trace_frame != -1" "1";
+gdb_tfind_test "8.14: tfind pc" "pc \$test_pc" "\$trace_frame != -1" "1"
 gdb_test "print \$trace_line" "$testline4" \
 	"8.14: tfind pc x (line $testline4)"
 gdb_test "printf \"x \%d x\\n\", \$pc == \$test_pc" \
@@ -347,13 +347,13 @@ gdb_test "disassemble gdb_c_test" \
 
 gdb_test "tfind line 0" \
 	"out of range.*|failed to find.*|No line 0 in .*" \
-	"8.18: tfind line 0";
+	"8.18: tfind line 0"
 gdb_test "tfind line 32767" \
 	"out of range.*|failed to find.*|No line 32767 in .*" \
-	"8.27: tfind line 32767";
+	"8.27: tfind line 32767"
 gdb_test "tfind line NoSuChFiLe.c:$baseline" \
 	"No source file named.*" \
-	"8.27: tfind line in bad source file";
+	"8.27: tfind line in bad source file"
 
 # 8.32 tfind invalid subcommand (tfind foo) 
 ## check error

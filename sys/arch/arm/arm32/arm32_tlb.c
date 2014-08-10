@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.1 2014/03/28 21:51:21 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.1.2.1 2014/08/10 06:53:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,8 +58,17 @@ tlb_set_asid(tlb_asid_t asid)
 void
 tlb_invalidate_all(void)
 {
+	const bool vivt_icache_p = arm_pcache.icache_type == CACHE_TYPE_VIVT;
 	arm_dsb();
 	armreg_tlbiall_write(0);
+	arm_isb();
+	if (__predict_false(vivt_icache_p)) {
+		if (arm_has_tlbiasid_p) {
+			armreg_icialluis_write(0);
+		} else {
+			armreg_iciallu_write(0);
+		}
+	}
 	arm_isb();
 }
 
@@ -72,12 +81,21 @@ tlb_invalidate_globals(void)
 void
 tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 {
+	const bool vivt_icache_p = arm_pcache.icache_type == CACHE_TYPE_VIVT;
 	arm_dsb();
 	if (arm_has_tlbiasid_p) {
-		armreg_tlbiall_write(0);
-	} else {
 		for (; lo <= hi; lo++) {
 			armreg_tlbiasid_write(lo);
+		}
+		arm_isb();
+		if (__predict_false(vivt_icache_p)) {
+			armreg_icialluis_write(0);
+		}
+	} else {
+		armreg_tlbiall_write(0);
+		arm_isb();
+		if (__predict_false(vivt_icache_p)) {
+			armreg_iciallu_write(0);
 		}
 	}
 	arm_isb();

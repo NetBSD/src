@@ -1,9 +1,10 @@
-.TH SLAPD-SOCK 5 "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 2007-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH SLAPD-SOCK 5 "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 2007-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-sock.5,v 1.3.2.5 2010/04/13 20:22:42 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
-slapd\-sock \- Socket backend to slapd
+slapd\-sock \- Socket backend/overlay to slapd
 .SH SYNOPSIS
 /etc/openldap/slapd.conf
 .SH DESCRIPTION
@@ -17,6 +18,10 @@ requests. This allows multithreaded operation and a higher level of
 efficiency. The external program must have been started independently;
 .BR slapd (8)
 itself will not start it.
+
+This module may also be used as an overlay on top of some other database.
+Use as an overlay allows external actions to be triggered in response to
+operations on the main database.
 .SH CONFIGURATION
 These
 .B slapd.conf
@@ -26,18 +31,35 @@ subsequent "backend" or "database" lines.
 Other database options are described in the
 .BR slapd.conf (5)
 manual page.
+
+Alternatively, to use this module as an overlay, these directives must
+follow an "overlay sock" line within an existing database definition.
 .TP
-.B extensions      [ binddn | peername | ssf ]*
+.B extensions      [ binddn | peername | ssf | connid ]*
 Enables the sending of additional meta-attributes with each request.
 .nf
 binddn: <bound DN>
 peername: IP=<address>:<port>
 ssf: <SSF value>
+connid: <connection ID>
 .fi
 .TP
 .B socketpath      <pathname>
 Gives the path to a Unix domain socket to which the commands will
 be sent and from which replies are received.
+
+When used as an overlay, these additional directives are defined:
+.TP
+.B sockops	[ bind | unbind | search | compare | modify | modrdn | add | delete ]*
+Specify which request types to send to the external program. The default is
+empty (no requests are sent).
+.TP
+.B sockresps       [ result | search ]*
+Specify which response types to send to the external program. "result"
+sends just the results of an operation. "search" sends all entries that
+the database returned for a search request. The default is empty
+(no responses are sent).
+
 .SH PROTOCOL
 The protocol is essentially the same as
 .BR slapd\-shell (5)
@@ -154,6 +176,39 @@ where only RESULT is mandatory, and then close the socket.
 The \fBsearch\fP RESULT should be preceded by the entries in LDIF
 format, each entry followed by a blank line.
 Lines starting with `#' or `DEBUG:' are ignored.
+
+When used as an overlay, the external program should return a
+CONTINUE response if request processing should continue normally, or
+a regular RESULT response if the external program wishes to bypass the
+underlying database.
+
+If the overlay is configured to send response messages to the external
+program, they will appear as an extended RESULT message or as an
+ENTRY message, defined below. The RESULT message is similar to
+the one above, but also includes the msgid and any configured
+extensions:
+.RS
+.nf
+RESULT
+msgid: <message id>
+code: <integer>
+matched: <matched DN>
+info: <text>
+<blank line>
+.fi
+.RE
+
+Typically both the msgid and the connid will be needed to match
+a result message to a request. The ENTRY message has the form
+.RS
+.nf
+ENTRY
+msgid: <message id>
+<entry in LDIF format>
+<blank line>
+.fi
+.RE
+
 .SH ACCESS CONTROL
 The
 .B sock
@@ -246,4 +301,4 @@ default slapd configuration file
 .BR slapd\-config (5),
 .BR slapd (8).
 .SH AUTHOR
-Brian Candler
+Brian Candler, with enhancements by Howard Chu

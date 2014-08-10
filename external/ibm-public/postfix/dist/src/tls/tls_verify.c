@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_verify.c,v 1.1.1.3 2013/08/21 20:09:55 tron Exp $	*/
+/*	$NetBSD: tls_verify.c,v 1.1.1.3.2.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -8,6 +8,13 @@
 /* SYNOPSIS
 /*	#define TLS_INTERNAL
 /*	#include <tls.h>
+/*
+/*	int	tls_verify_certificate_callback(ok, ctx)
+/*	int	ok;
+/*	X509_STORE_CTX *ctx;
+/*
+/*	int     tls_log_verify_error(TLScontext)
+/*	TLS_SESS_STATE *TLScontext;
 /*
 /*	char *tls_peer_CN(peercert, TLScontext)
 /*	X509   *peercert;
@@ -20,19 +27,19 @@
 /*	const char *tls_dns_name(gn, TLScontext)
 /*	const GENERAL_NAME *gn;
 /*	TLS_SESS_STATE *TLScontext;
-/*
-/*	char *tls_fingerprint(peercert, dgst)
-/*	X509   *peercert;
-/*	const char *dgst;
-/*
-/*	char *tls_pkey_fprint(peercert, dgst)
-/*	X509   *peercert;
-/*	const char *dgst;
-/*
-/*	int	tls_verify_certificate_callback(ok, ctx)
-/*	int	ok;
-/*	X509_STORE_CTX *ctx;
 /* DESCRIPTION
+/*	tls_verify_certificate_callback() is called several times (directly
+/*	or indirectly) from crypto/x509/x509_vfy.c. It collects errors
+/*	and trust information at each element of the trust chain.
+/*	The last call at depth 0 sets the verification status based
+/*	on the cumulative winner (lowest depth) of errors vs. trust.
+/*	We always return 1 (continue the handshake) and handle trust
+/*	and peer-name verification problems at the application level.
+/*
+/*	tls_log_verify_error() (called only when we care about the
+/*	peer certificate, that is not when opportunistic) logs the
+/*	reason why the certificate failed to be verified.
+/*
 /*	tls_peer_CN() returns the text CommonName for the peer
 /*	certificate subject, or an empty string if no CommonName was
 /*	found. The result is allocated with mymalloc() and must be
@@ -50,43 +57,6 @@
 /*	are found, a null string is returned instead. Further sanity
 /*	checks may be added if the need arises.
 /*
-/* 	tls_fingerprint() returns a fingerprint of the the given
-/*	certificate using the requested message digest. Panics if the
-/*	(previously verified) digest algorithm is not found. The return
-/*	value is dynamically allocated with mymalloc(), and the caller
-/*	must eventually free it with myfree().
-/*
-/*	tls_pkey_fprint() returns a public-key fingerprint; in all
-/*	other respects the function behaves as tls_fingerprint().
-/*	The var_tls_bc_pkey_fprint variable enables an incorrect
-/*	algorithm that was used in Postfix versions 2.9.[0-5].
-/*	
-/*	tls_verify_callback() is called several times (directly or
-/*	indirectly) from crypto/x509/x509_vfy.c. It is called as
-/*	a final check, and if it returns "0", the handshake is
-/*	immediately shut down and the connection fails.
-/*
-/*	Postfix/TLS has two modes, the "opportunistic" mode and
-/*	the "enforce" mode:
-/*
-/*	In the "opportunistic" mode we never want the connection
-/*	to fail just because there is something wrong with the
-/*	peer's certificate. After all, we would have sent or received
-/*	the mail even if TLS weren't available.  Therefore the
-/*	return value is always "1".
-/*
-/*	The SMTP client or server may require TLS (e.g. to protect
-/*	passwords), while peer certificates are optional.  In this
-/*	case we must return "1" even when we are unhappy with the
-/*	peer certificate.  Only when peer certificates are required,
-/*      certificate verification failure will result in immediate
-/*	termination (return 0).
-/*
-/*	The only error condition not handled inside the OpenSSL
-/*	library is the case of a too-long certificate chain. We
-/*	test for this condition only if "ok = 1", that is, if
-/*	verification didn't fail because of some earlier problem.
-/*
 /*	Arguments:
 /* .IP ok
 /*	Result of prior verification: non-zero means success.  In
@@ -101,10 +71,6 @@
 /*	to be decoded and checked for validity.
 /* .IP peercert
 /*	Server or client X.509 certificate.
-/* .IP dgst
-/*	Name of a message digest algorithm suitable for computing secure
-/*	(1st pre-image resistant) message digests of certificates. For now,
-/*	md5, sha1, or member of SHA-2 family if supported by OpenSSL.
 /* .IP TLScontext
 /*	Server or client context for warning messages.
 /* DIAGNOSTICS
@@ -151,18 +117,34 @@
 #include <mymalloc.h>
 #include <stringops.h>
 
-/* Global library. */
-
-#include <mail_params.h>
-
 /* TLS library. */
 
 #define TLS_INTERNAL
 #include <tls.h>
 
-/* Application-specific. */
+/* update_error_state - safely stash away error state */
 
-static const char hexcodes[] = "0123456789ABCDEF";
+static void update_error_state(TLS_SESS_STATE *TLScontext, int depth,
+			               X509 *errorcert, int errorcode)
+{
+    /* No news is good news */
+    if (TLScontext->errordepth >= 0 && TLScontext->errordepth <= depth)
+	return;
+
+    /*
+     * The certificate pointer is stable during the verification callback,
+     * but may be freed after the callback returns.  Since we delay error
+     * reporting till later, we bump the refcount so we can rely on it still
+     * being there until later.
+     */
+    if (TLScontext->errorcert != 0)
+	X509_free(TLScontext->errorcert);
+    if (errorcert != 0)
+	CRYPTO_add(&errorcert->references, 1, CRYPTO_LOCK_X509);
+    TLScontext->errorcert = errorcert;
+    TLScontext->errorcode = errorcode;
+    TLScontext->errordepth = depth;
+}
 
 /* tls_verify_certificate_callback - verify peer certificate info */
 
@@ -172,31 +154,24 @@ int     tls_verify_certificate_callback(int ok, X509_STORE_CTX *ctx)
     X509   *cert;
     int     err;
     int     depth;
+    int     max_depth;
     SSL    *con;
     TLS_SESS_STATE *TLScontext;
 
-    depth = X509_STORE_CTX_get_error_depth(ctx);
+    /* May be NULL as of OpenSSL 1.0, thanks for the API change! */
     cert = X509_STORE_CTX_get_current_cert(ctx);
+    err = X509_STORE_CTX_get_error(ctx);
     con = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
     TLScontext = SSL_get_ex_data(con, TLScontext_index);
+    depth = X509_STORE_CTX_get_error_depth(ctx);
+
+    /* Don't log the internal root CA unless there's an unexpected error. */
+    if (ok && TLScontext->tadepth > 0 && depth > TLScontext->tadepth)
+	return (1);
 
     /*
-     * The callback function is called repeatedly, first with the root
-     * certificate, and then with each intermediate certificate ending with
-     * the peer certificate.
-     * 
-     * With each call, the validity of the current certificate (usage bits,
-     * attributes, expiration, ... checked by the OpenSSL library) is
-     * available in the "ok" argument. Error details are available via
-     * X509_STORE_CTX API.
-     * 
-     * We never terminate the SSL handshake in the verification callback, rather
-     * we allow the TLS handshake to continue, but mark the session as
-     * unverified. The application is responsible for closing any sessions
-     * with unverified credentials.
-     * 
-     * Certificate chain depth limit violations are mis-reported by the OpenSSL
-     * library, from SSL_CTX_set_verify(3):
+     * Certificate chain depth limit violations are mis-reported by the
+     * OpenSSL library, from SSL_CTX_set_verify(3):
      * 
      * The certificate verification depth set with SSL[_CTX]_verify_depth()
      * stops the verification at a certain depth. The error message produced
@@ -208,33 +183,59 @@ int     tls_verify_certificate_callback(int ok, X509_STORE_CTX *ctx)
      * present at this depth. This disambiguates trust chain truncation from
      * an incomplete trust chain.
      */
-    if (depth >= SSL_get_verify_depth(con)) {
+    max_depth = SSL_get_verify_depth(con) - 1;
+
+    /*
+     * We never terminate the SSL handshake in the verification callback,
+     * rather we allow the TLS handshake to continue, but mark the session as
+     * unverified. The application is responsible for closing any sessions
+     * with unverified credentials.
+     */
+    if (max_depth >= 0 && depth > max_depth) {
+	X509_STORE_CTX_set_error(ctx, err = X509_V_ERR_CERT_CHAIN_TOO_LONG);
 	ok = 0;
-	X509_STORE_CTX_set_error(ctx, X509_V_ERR_CERT_CHAIN_TOO_LONG);
     }
+    if (ok == 0)
+	update_error_state(TLScontext, depth, cert, err);
+
     if (TLScontext->log_mask & TLS_LOG_VERBOSE) {
-	X509_NAME_oneline(X509_get_subject_name(cert), buf, sizeof(buf));
-	msg_info("%s: certificate verification depth=%d verify=%d subject=%s",
+	if (cert)
+	    X509_NAME_oneline(X509_get_subject_name(cert), buf, sizeof(buf));
+	else
+	    strcpy(buf, "<unknown>");
+	msg_info("%s: depth=%d verify=%d subject=%s",
 		 TLScontext->namaddr, depth, ok, printable(buf, '?'));
     }
+    return (1);
+}
 
-    /*
-     * If no errors, or we are not logging verification errors, we are done.
-     */
-    if (ok || (TLScontext->log_mask & TLS_LOG_UNTRUSTED) == 0)
-	return (1);
+/* tls_log_verify_error - Report final verification error status */
 
-    /*
-     * One counter-example is enough.
-     */
-    TLScontext->log_mask &= ~TLS_LOG_UNTRUSTED;
+void    tls_log_verify_error(TLS_SESS_STATE *TLScontext)
+{
+    char    buf[CCERT_BUFSIZ];
+    int     err = TLScontext->errorcode;
+    X509   *cert = TLScontext->errorcert;
+    int     depth = TLScontext->errordepth;
 
 #define PURPOSE ((depth>0) ? "CA": TLScontext->am_server ? "client": "server")
+
+    if (err == X509_V_OK)
+	return;
 
     /*
      * Specific causes for verification failure.
      */
-    switch (err = X509_STORE_CTX_get_error(ctx)) {
+    switch (err) {
+    case X509_V_ERR_CERT_UNTRUSTED:
+
+	/*
+	 * We expect the error cert to be the leaf, but it is likely
+	 * sufficient to omit it from the log, even less user confusion.
+	 */
+	msg_info("certificate verification failed for %s: "
+		 "not trusted by local or TLSA policy", TLScontext->namaddr);
+	break;
     case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
 	msg_info("certificate verification failed for %s: "
 		 "self-signed certificate", TLScontext->namaddr);
@@ -247,8 +248,10 @@ int     tls_verify_certificate_callback(int ok, X509_STORE_CTX *ctx)
 	 * provided, but not found in CAfile/CApath. Either way, we don't
 	 * trust it.
 	 */
-	X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert),
-			  buf, sizeof(buf));
+	if (cert)
+	    X509_NAME_oneline(X509_get_issuer_name(cert), buf, sizeof(buf));
+	else
+	    strcpy(buf, "<unknown>");
 	msg_info("certificate verification failed for %s: untrusted issuer %s",
 		 TLScontext->namaddr, printable(buf, '?'));
 	break;
@@ -269,7 +272,7 @@ int     tls_verify_certificate_callback(int ok, X509_STORE_CTX *ctx)
     case X509_V_ERR_CERT_CHAIN_TOO_LONG:
 	msg_info("certificate verification failed for %s: "
 		 "certificate chain longer than limit(%d)",
-		 TLScontext->namaddr, SSL_get_verify_depth(con) - 1);
+		 TLScontext->namaddr, depth - 1);
 	break;
     default:
 	msg_info("%s certificate verification failed for %s: num=%d:%s",
@@ -277,8 +280,6 @@ int     tls_verify_certificate_callback(int ok, X509_STORE_CTX *ctx)
 		 X509_verify_cert_error_string(err));
 	break;
     }
-
-    return (1);
 }
 
 #ifndef DONT_GRIPE
@@ -481,7 +482,7 @@ char   *tls_peer_CN(X509 *peercert, const TLS_SESS_STATE *TLScontext)
     char   *cn;
 
     cn = tls_text_name(X509_get_subject_name(peercert), NID_commonName,
-		       "subject CN", TLScontext, DO_GRIPE);
+		       "subject CN", TLScontext, DONT_GRIPE);
     return (cn ? cn : mystrdup(""));
 }
 
@@ -501,100 +502,8 @@ char   *tls_issuer_CN(X509 *peer, const TLS_SESS_STATE *TLScontext)
     if ((cn = tls_text_name(name, NID_commonName,
 			    "issuer CN", TLScontext, DONT_GRIPE)) == 0)
 	cn = tls_text_name(name, NID_organizationName,
-			   "issuer Organization", TLScontext, DO_GRIPE);
+			   "issuer Organization", TLScontext, DONT_GRIPE);
     return (cn ? cn : mystrdup(""));
-}
-
-/* tls_fprint - compute and encode digest of DER-encoded object */
-
-static char *tls_fprint(const char *buf, int len, const char *dgst)
-{
-    const char *myname = "tls_fprint";
-    EVP_MD_CTX *mdctx;
-    const EVP_MD *md_alg;
-    unsigned char md_buf[EVP_MAX_MD_SIZE];
-    unsigned int md_len;
-    int     i;
-    char   *result = 0;
-
-    /* Previously available in "init" routine. */
-    if ((md_alg = EVP_get_digestbyname(dgst)) == 0)
-	msg_panic("%s: digest algorithm \"%s\" not found", myname, dgst);
-
-    mdctx = EVP_MD_CTX_create();
-    if (EVP_DigestInit_ex(mdctx, md_alg, NULL) == 0
-        || EVP_DigestUpdate(mdctx, buf, len) == 0
-        || EVP_DigestFinal_ex(mdctx, md_buf, &md_len) == 0)
-        msg_fatal("%s: error computing %s message digest", myname, dgst);
-    EVP_MD_CTX_destroy(mdctx);
-
-    /* Check for OpenSSL contract violation */
-    if (md_len > EVP_MAX_MD_SIZE || md_len >= INT_MAX / 3)
-	msg_panic("%s: unexpectedly large %s digest size: %u",
-		  myname, dgst, md_len);
-
-    result = mymalloc(md_len * 3);
-    for (i = 0; i < md_len; i++) {
-	result[i * 3] = hexcodes[(md_buf[i] & 0xf0) >> 4U];
-	result[(i * 3) + 1] = hexcodes[(md_buf[i] & 0x0f)];
-	result[(i * 3) + 2] = (i + 1 != md_len) ? ':' : '\0';
-    }
-    return (result);
-}
-
-/* tls_fingerprint - extract certificate fingerprint */
-
-char   *tls_fingerprint(X509 *peercert, const char *dgst)
-{
-    int     len;
-    char   *buf;
-    char   *buf2;
-    char   *result;
-
-    len = i2d_X509(peercert, NULL);
-    buf2 = buf = mymalloc(len);
-    i2d_X509(peercert, (unsigned char **)&buf2);
-    if (buf2 - buf != len)
-        msg_panic("i2d_X509 invalid result length");
-
-    result = tls_fprint(buf, len, dgst);
-    myfree(buf);
-
-    return (result);
-}
-
-/* tls_pkey_fprint - extract public key fingerprint from certificate */
-
-char   *tls_pkey_fprint(X509 *peercert, const char *dgst)
-{
-    if (var_tls_bc_pkey_fprint) {
-	const char *myname = "tls_pkey_fprint";
-	ASN1_BIT_STRING *key;
-	char   *result;
-
-	key = X509_get0_pubkey_bitstr(peercert);
-	if (key == 0)
-	    msg_fatal("%s: error extracting legacy public-key fingerprint: %m",
-		      myname);
-
-	result = tls_fprint((char *) key->data, key->length, dgst);
-	return (result);
-    } else {
-	int     len;
-	char   *buf;
-	char   *buf2;
-	char   *result;
-
-	len = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(peercert), NULL);
-	buf2 = buf = mymalloc(len);
-	i2d_X509_PUBKEY(X509_get_X509_PUBKEY(peercert), (unsigned char **) &buf2);
-	if (buf2 - buf != len)
-	    msg_panic("i2d_X509_PUBKEY invalid result length");
-
-	result = tls_fprint(buf, len, dgst);
-	myfree(buf);
-	return (result);
-    }
 }
 
 #endif

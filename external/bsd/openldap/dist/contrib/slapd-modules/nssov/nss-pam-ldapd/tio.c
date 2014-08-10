@@ -1,10 +1,10 @@
-/*	$NetBSD: tio.c,v 1.1.1.1 2010/12/12 15:19:12 adam Exp $	*/
+/*	$NetBSD: tio.c,v 1.1.1.1.24.1 2014/08/10 07:09:44 tls Exp $	*/
 
 /*
    tio.c - timed io functions
    This file is part of the nss-pam-ldapd library.
 
-   Copyright (C) 2007, 2008 Arthur de Jong
+   Copyright (C) 2007, 2008, 2010, 2011, 2012 Arthur de Jong
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,8 @@
 #include <string.h>
 #include <signal.h>
 #include <stdio.h>
+#include <limits.h>
+#include <poll.h>
 
 #include "tio.h"
 
@@ -65,8 +67,8 @@ struct tio_fileinfo {
   int fd;
   struct tio_buffer readbuffer;
   struct tio_buffer writebuffer;
-  struct timeval readtimeout;
-  struct timeval writetimeout;
+  int readtimeout;
+  int writetimeout;
   int read_resettable; /* whether the tio_reset() function can be called */
 #ifdef DEBUG_TIO_STATS
   /* this is used to collect statistics on the use of the streams
@@ -76,21 +78,8 @@ struct tio_fileinfo {
 #endif /* DEBUG_TIO_STATS */
 };
 
-/* add the second timeval to the first modifing the first */
-static inline void tio_tv_add(struct timeval *tv1, const struct timeval *tv2)
-{
-  /* BUG: we hope that this does not overflow */
-  tv1->tv_usec+=tv2->tv_usec;
-  if (tv1->tv_usec>1000000)
-  {
-    tv1->tv_usec-=1000000;
-    tv1->tv_sec+=1;
-  }
-  tv1->tv_sec+=tv2->tv_sec;
-}
-
 /* build a timeval for comparison to when the operation should be finished */
-static inline void tio_tv_prepare(struct timeval *deadline, const struct timeval *timeout)
+static inline void tio_get_deadline(struct timeval *deadline,int timeout)
 {
   if (gettimeofday(deadline,NULL))
   {
@@ -99,39 +88,27 @@ static inline void tio_tv_prepare(struct timeval *deadline, const struct timeval
     deadline->tv_usec=0;
     return;
   }
-  tio_tv_add(deadline,timeout);
+  deadline->tv_sec+=timeout/1000;
+  deadline->tv_sec+=(timeout%1000)*1000;
 }
 
-/* update the timeval to the value that is remaining before deadline
+/* update the timeout to the value that is remaining before deadline
    returns non-zero if there is no more time before the deadline */
-static inline int tio_tv_remaining(struct timeval *tv, const struct timeval *deadline)
+static inline int tio_time_remaining(const struct timeval *deadline)
 {
+  struct timeval tv;
   /* get the current time */
-  if (gettimeofday(tv,NULL))
+  if (gettimeofday(&tv,NULL))
   {
     /* 1 second default if gettimeofday() is broken */
-    tv->tv_sec=1;
-    tv->tv_usec=0;
-    return 0;
+    return 1000;
   }
-  /* check if we're too late */
-  if ( (tv->tv_sec>deadline->tv_sec) ||
-       ( (tv->tv_sec==deadline->tv_sec) && (tv->tv_usec>deadline->tv_usec) ) )
-    return -1;
-  /* update tv */
-  tv->tv_sec=deadline->tv_sec-tv->tv_sec;
-  if (tv->tv_usec<deadline->tv_usec)
-    tv->tv_usec=deadline->tv_usec-tv->tv_usec;
-  else
-  {
-    tv->tv_sec--;
-    tv->tv_usec=1000000+deadline->tv_usec-tv->tv_usec;
-  }
-  return 0;
+  /* calculate time remaining in miliseconds */
+  return (deadline->tv_sec-tv.tv_sec)*1000 + (deadline->tv_usec-tv.tv_usec)/1000;
 }
 
 /* open a new TFILE based on the file descriptor */
-TFILE *tio_fdopen(int fd,struct timeval *readtimeout,struct timeval *writetimeout,
+TFILE *tio_fdopen(int fd,int readtimeout,int writetimeout,
                   size_t initreadsize,size_t maxreadsize,
                   size_t initwritesize,size_t maxwritesize)
 {
@@ -164,10 +141,8 @@ TFILE *tio_fdopen(int fd,struct timeval *readtimeout,struct timeval *writetimeou
   fp->writebuffer.start=0;
   fp->writebuffer.len=0;
   /* initialize other attributes */
-  fp->readtimeout.tv_sec=readtimeout->tv_sec;
-  fp->readtimeout.tv_usec=readtimeout->tv_usec;
-  fp->writetimeout.tv_sec=writetimeout->tv_sec;
-  fp->writetimeout.tv_usec=writetimeout->tv_usec;
+  fp->readtimeout=readtimeout;
+  fp->writetimeout=writetimeout;
   fp->read_resettable=0;
 #ifdef DEBUG_TIO_STATS
   fp->byteswritten=0;
@@ -178,18 +153,15 @@ TFILE *tio_fdopen(int fd,struct timeval *readtimeout,struct timeval *writetimeou
 
 /* wait for any activity on the specified file descriptor using
    the specified deadline */
-static int tio_select(TFILE *fp, int readfd, const struct timeval *deadline)
+static int tio_wait(TFILE *fp,int readfd,const struct timeval *deadline)
 {
-  struct timeval tv;
-  fd_set fdset;
+  int timeout;
+  struct pollfd fds[1];
   int rv;
   while (1)
   {
-    /* prepare our filedescriptorset */
-    FD_ZERO(&fdset);
-    FD_SET(fp->fd,&fdset);
     /* figure out the time we need to wait */
-    if (tio_tv_remaining(&tv,deadline))
+    if ((timeout=tio_time_remaining(deadline))<0)
     {
       errno=ETIME;
       return -1;
@@ -197,18 +169,21 @@ static int tio_select(TFILE *fp, int readfd, const struct timeval *deadline)
     /* wait for activity */
     if (readfd)
     {
+      fds[0].fd=fp->fd;
+      fds[0].events=POLLIN;
       /* santiy check for moving clock */
-      if (tv.tv_sec>fp->readtimeout.tv_sec)
-        tv.tv_sec=fp->readtimeout.tv_sec;
-      rv=select(FD_SETSIZE,&fdset,NULL,NULL,&tv);
+      if (timeout>fp->readtimeout)
+        timeout=fp->readtimeout;
     }
     else
     {
+      fds[0].fd=fp->fd;
+      fds[0].events=POLLOUT;
       /* santiy check for moving clock */
-      if (tv.tv_sec>fp->writetimeout.tv_sec)
-        tv.tv_sec=fp->writetimeout.tv_sec;
-      rv=select(FD_SETSIZE,NULL,&fdset,NULL,&tv);
+      if (timeout>fp->writetimeout)
+        timeout=fp->writetimeout;
     }
+    rv=poll(fds,1,timeout);
     if (rv>0)
       return 0; /* we have activity */
     else if (rv==0)
@@ -232,11 +207,11 @@ int tio_read(TFILE *fp, void *buf, size_t count)
   int rv;
   uint8_t *tmp;
   size_t newsz;
+  size_t len;
   /* have a more convenient storage type for the buffer */
   uint8_t *ptr=(uint8_t *)buf;
   /* build a time by which we should be finished */
-  /* TODO: probably only set up deadline if we have to do select() */
-  tio_tv_prepare(&deadline,&(fp->readtimeout));
+  tio_get_deadline(&deadline,fp->readtimeout);
   /* loop until we have returned all the needed data */
   while (1)
   {
@@ -294,12 +269,22 @@ int tio_read(TFILE *fp, void *buf, size_t count)
       }
     }
     /* wait until we have input */
-    if (tio_select(fp,1,&deadline))
+    if (tio_wait(fp,1,&deadline))
       return -1;
     /* read the input in the buffer */
-    rv=read(fp->fd,fp->readbuffer.buffer+fp->readbuffer.start,fp->readbuffer.size-fp->readbuffer.start);
+    len=fp->readbuffer.size-fp->readbuffer.start;
+#ifdef SSIZE_MAX
+    if (len>SSIZE_MAX)
+      len=SSIZE_MAX;
+#endif /* SSIZE_MAX */
+    rv=read(fp->fd,fp->readbuffer.buffer+fp->readbuffer.start,len);
     /* check for errors */
-    if ((rv==0)||((rv<0)&&(errno!=EINTR)&&(errno!=EAGAIN)))
+    if (rv==0)
+    {
+      errno=ECONNRESET;
+      return -1;
+    }
+    else if ((rv<0)&&(errno!=EINTR)&&(errno!=EAGAIN))
       return -1; /* something went wrong with the read */
     /* skip the read part in the buffer */
     fp->readbuffer.len=rv;
@@ -313,6 +298,46 @@ int tio_read(TFILE *fp, void *buf, size_t count)
 int tio_skip(TFILE *fp, size_t count)
 {
   return tio_read(fp,NULL,count);
+}
+
+/* Read all available data from the stream and empty the read buffer. */
+int tio_skipall(TFILE *fp)
+{
+  struct pollfd fds[1];
+  int rv;
+  size_t len;
+  /* clear the read buffer */
+  fp->readbuffer.start=0;
+  fp->readbuffer.len=0;
+  fp->read_resettable=0;
+  /* read until we can't read no more */
+  len=fp->readbuffer.size;
+#ifdef SSIZE_MAX
+  if (len>SSIZE_MAX)
+    len=SSIZE_MAX;
+#endif /* SSIZE_MAX */
+  while (1)
+  {
+    /* see if any data is available */
+    fds[0].fd=fp->fd;
+    fds[0].events=POLLIN;
+    rv=poll(fds,1,0);
+    /* check the poll() result */
+    if (rv==0)
+      return 0; /* no file descriptor ready */
+    if ((rv<0)&&((errno==EINTR)||(errno==EAGAIN)))
+      continue; /* interrupted, try again */
+    if (rv<0)
+      return -1; /* something went wrong */
+    /* read data from the stream */
+    rv=read(fp->fd,fp->readbuffer.buffer,len);
+    if (rv==0)
+      return 0; /* end-of-file */
+    if ((rv<0)&&(errno==EWOULDBLOCK))
+      return 0; /* we've ready everything we can without blocking */
+    if ((rv<0)&&(errno!=EINTR)&&(errno!=EAGAIN))
+      return -1; /* something went wrong with the read */
+  }
 }
 
 /* the caller has assured us that we can write to the file descriptor
@@ -372,12 +397,12 @@ int tio_flush(TFILE *fp)
 {
   struct timeval deadline;
   /* build a time by which we should be finished */
-  tio_tv_prepare(&deadline,&(fp->writetimeout));
+  tio_get_deadline(&deadline,fp->writetimeout);
   /* loop until we have written our buffer */
   while (fp->writebuffer.len > 0)
   {
     /* wait until we can write */
-    if (tio_select(fp,0,&deadline))
+    if (tio_wait(fp,0,&deadline))
       return -1;
     /* write one block */
     if (tio_writebuf(fp))
@@ -390,17 +415,12 @@ int tio_flush(TFILE *fp)
    will accept data */
 static int tio_flush_nonblock(TFILE *fp)
 {
-  struct timeval tv;
-  fd_set fdset;
+  struct pollfd fds[1];
   int rv;
-  /* prepare our filedescriptorset */
-  FD_ZERO(&fdset);
-  FD_SET(fp->fd,&fdset);
-  /* set the timeout to 0 to poll */
-  tv.tv_sec=0;
-  tv.tv_usec=0;
   /* wait for activity */
-  rv=select(FD_SETSIZE,NULL,&fdset,NULL,&tv);
+  fds[0].fd=fp->fd;
+  fds[0].events=POLLOUT;
+  rv=poll(fds,1,0);
   /* check if any file descriptors were ready (timeout) or we were
      interrupted */
   if ((rv==0)||((rv<0)&&(errno==EINTR)))

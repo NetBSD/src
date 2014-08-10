@@ -20,19 +20,13 @@
 /* #undef ECOFFABI */
 
 /* Using ELF ABI */
-#define ELFABI 
-
-/* Enable STABS debugging output */
-#define STABS 1
+#define ELFABI 1
 
 /* Define to 1 if you have the `basename' function. */
 #define HAVE_BASENAME 1
 
 /* Define to 1 if printf supports C99 size specifiers */
 #define HAVE_C99_FORMAT 1
-
-/* Define to 1 if your compiler supports C99 variadic macros */
-#define HAVE_CPP_VARARG_MACRO_GCC 1
 
 /* Define to 1 if you have the `ffs' function. */
 #define HAVE_FFS 1
@@ -101,10 +95,7 @@
 /* #undef HOST_BIG_ENDIAN */
 
 /* Define if host is LITTLE endian */
-/* #define HOST_LITTLE_ENDIAN  */
-
-/* lex is flex */
-#define ISFLEX 1
+/* #define HOST_LITTLE_ENDIAN 1 */
 
 /* Define alternate standard lib directory */
 /* #undef LIBDIR */
@@ -145,6 +136,9 @@
 /* Define path to alternate preprocessor */
 #define PREPROCESSOR "pcpp"
 
+/* Enable STABS debugging output */
+#define STABS 1
+
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
@@ -161,7 +155,7 @@
 #define TLS 1
 
 /* Version string */
-/* #define VERSSTR "pcc 1.1.0.DEVEL 20120325 for i386-unknown-netbsdelf6.99.3" */
+/* #define VERSSTR "pcc 1.1.0.DEVEL 20140706 for i386-unknown-netbsdelf6.99.40" */
 
 /* Size of wide-character type in chars */
 #define WCHAR_SIZE 4

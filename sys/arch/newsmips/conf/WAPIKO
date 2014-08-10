@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.44 2013/04/27 18:19:47 christos Exp $
+# 	$NetBSD: WAPIKO,v 1.44.8.1 2014/08/10 06:54:04 tls Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -55,6 +55,10 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 config	netbsd root on ? type ?
 

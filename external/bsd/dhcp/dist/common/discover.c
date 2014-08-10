@@ -1,10 +1,10 @@
-/*	$NetBSD: discover.c,v 1.3 2013/12/19 22:05:58 christos Exp $	*/
-
+/*	$NetBSD: discover.c,v 1.3.2.1 2014/08/10 07:06:55 tls Exp $	*/
 /* discover.c
 
    Find and identify the network interfaces. */
 
 /*
+ * Copyright (c) 2013-2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2009,2011 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
@@ -26,16 +26,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: discover.c,v 1.3 2013/12/19 22:05:58 christos Exp $");
+__RCSID("$NetBSD: discover.c,v 1.3.2.1 2014/08/10 07:06:55 tls Exp $");
 
 #include "dhcpd.h"
 
@@ -61,10 +55,6 @@ struct in_addr limited_broadcast;
 
 int local_family = AF_INET;
 struct in_addr local_address;
-
-#ifdef DHCPv6
-struct in6_addr local_address6;
-#endif /* DHCPv6 */
 
 void (*bootp_packet_handler) (struct interface_info *,
 			      struct dhcp_packet *, unsigned,
@@ -246,7 +236,7 @@ struct iface_info {
  *
  * The iface_conf_list structure maintains state for this process.
  */
-int 
+static int 
 begin_iface_scan(struct iface_conf_list *ifaces) {
 #ifdef ISC_PLATFORM_HAVELIFNUM
 	struct lifnum lifnum;
@@ -310,7 +300,7 @@ begin_iface_scan(struct iface_conf_list *ifaces) {
  * Returns information in the info structure. 
  * Sets err to 1 if there is an error, otherwise 0.
  */
-int
+static int
 next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 	struct LIFREQ *p;
 	struct LIFREQ tmp;
@@ -377,7 +367,7 @@ next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 /*
  * End scan of interfaces.
  */
-void
+static void
 end_iface_scan(struct iface_conf_list *ifaces) {
 	dfree(ifaces->conf.lifc_buf, MDL);
 	close(ifaces->sock);
@@ -420,7 +410,7 @@ struct iface_info {
  *
  * The iface_conf_list structure maintains state for this process.
  */
-int 
+static int 
 begin_iface_scan(struct iface_conf_list *ifaces) {
 	char buf[256];
 	int len;
@@ -732,7 +722,7 @@ next_iface6(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
  * Returns information in the info structure. 
  * Sets err to 1 if there is an error, otherwise 0.
  */
-int
+static int
 next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 	if (next_iface4(info, err, ifaces)) {
 		return 1;
@@ -749,7 +739,7 @@ next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 /*
  * End scan of interfaces.
  */
-void
+static void
 end_iface_scan(struct iface_conf_list *ifaces) {
 	fclose(ifaces->fp);
 	ifaces->fp = NULL;
@@ -1246,7 +1236,7 @@ discover_interfaces(int state) {
 			    (state == DISCOVER_RELAY)) {
 				if_register6(tmp, 1);
 			} else {
-				if_register6(tmp, 0);
+				if_register_linklocal6(tmp);
 			}
 #endif /* DHCPv6 */
 		}
@@ -1302,13 +1292,14 @@ discover_interfaces(int state) {
 				   tmp -> name, isc_result_totext (status));
 
 #if defined(DHCPv6)
-		/* Only register the first interface for V6, since they all
-		 * use the same socket.  XXX: This has some messy side
-		 * effects if we start dynamically adding and removing
-		 * interfaces, but we're well beyond that point in terms of
-		 * mess.
+		/* Only register the first interface for V6, since
+		 * servers and relays all use the same socket.
+		 * XXX: This has some messy side effects if we start
+		 * dynamically adding and removing interfaces, but
+		 * we're well beyond that point in terms of mess.
 		 */
-		if (local_family == AF_INET6)
+		if (((state == DISCOVER_SERVER) || (state == DISCOVER_RELAY)) &&
+		    (local_family == AF_INET6))
 			break;
 #endif
 	} /* for (tmp = interfaces; ... */

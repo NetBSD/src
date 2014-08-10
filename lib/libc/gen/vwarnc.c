@@ -1,4 +1,4 @@
-/*	$NetBSD: vwarnc.c,v 1.1 2014/01/16 17:21:38 christos Exp $	*/
+/*	$NetBSD: vwarnc.c,v 1.1.2.1 2014/08/10 06:51:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vwarnc.c,v 1.1 2014/01/16 17:21:38 christos Exp $");
+__RCSID("$NetBSD: vwarnc.c,v 1.1.2.1 2014/08/10 06:51:50 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: vwarnc.c,v 1.1 2014/01/16 17:21:38 christos Exp $");
 __weak_alias(vwarnc, _vwarnc)
 #endif
 
-#if !HAVE_ERR_H
+#if !HAVE_ERR_H || !HAVE_DECL_VWARNC
 void
 vwarnc(int code, const char *fmt, va_list ap)
 {

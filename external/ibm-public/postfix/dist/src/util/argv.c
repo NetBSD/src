@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.c,v 1.1.1.3 2013/09/25 19:06:36 tron Exp $	*/
+/*	$NetBSD: argv.c,v 1.1.1.3.2.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -10,6 +10,9 @@
 /*
 /*	ARGV	*argv_alloc(len)
 /*	ssize_t	len;
+/*
+/*	ARGV    *argv_sort(argvp)
+/*	ARGV    *argvp;
 /*
 /*	ARGV	*argv_free(argvp)
 /*	ARGV	*argvp;
@@ -40,6 +43,11 @@
 /*	ssize_t	pos;
 /*	const char *arg;
 /*
+/*	void	argv_delete(argvp, pos, how_many)
+/*	ARGV	*argvp;
+/*	ssize_t	pos;
+/*	ssize_t	how_many;
+/*
 /*	void	ARGV_FAKE_BEGIN(argv, arg)
 /*	const char *arg;
 /*
@@ -57,6 +65,9 @@
 /*	argv_alloc() returns an empty string array of the requested
 /*	length. The result is ready for use by argv_add(). The array
 /*	is null terminated.
+/*
+/*	argv_sort() sorts the elements of argvp in place returning
+/*	the original array.
 /*
 /*	argv_add() copies zero or more strings and adds them to the
 /*	specified string array. The array is null terminated.
@@ -80,6 +91,10 @@
 /*
 /*	argv_replace_one() replaces one string at the specified
 /*	position.
+/*
+/*	argv_delete() deletes the specified number of elements
+/*	starting at the specified array position. The result is
+/*	null-terminated.
 /*
 /*	ARGV_FAKE_BEGIN/END are an optimization for the case where
 /*	a single string needs to be passed into an ARGV-based
@@ -147,6 +162,22 @@ ARGV   *argv_alloc(ssize_t len)
     argvp->len = sane_len;
     argvp->argc = 0;
     argvp->argv[0] = 0;
+    return (argvp);
+}
+
+static int argv_cmp(const void *e1, const void *e2)
+{
+    const char *s1 = *(const char **) e1;
+    const char *s2 = *(const char **) e2;
+
+    return strcmp(s1, s2);
+}
+
+/* argv_sort - sort array in place */
+
+ARGV   *argv_sort(ARGV *argvp)
+{
+    qsort(argvp->argv, argvp->argc, sizeof(argvp->argv[0]), argv_cmp);
     return (argvp);
 }
 
@@ -271,4 +302,24 @@ void    argv_replace_one(ARGV *argvp, ssize_t where, const char *arg)
 
     myfree(argvp->argv[where]);
     argvp->argv[where] = mystrdup(arg);
+}
+
+/* argv_delete - remove string(s) from array */
+
+void    argv_delete(ARGV *argvp, ssize_t first, ssize_t how_many)
+{
+    ssize_t pos;
+
+    /*
+     * Sanity check.
+     */
+    if (first < 0 || how_many < 0 || first + how_many > argvp->argc)
+	msg_panic("argv_delete bad range: (start=%ld count=%ld)",
+		  (long) first, (long) how_many);
+
+    for (pos = first; pos < first + how_many; pos++)
+	myfree(argvp->argv[pos]);
+    for (pos = first; pos <= argvp->argc - how_many; pos++)
+	argvp->argv[pos] = argvp->argv[pos + how_many];
+    argvp->argc -= how_many;
 }

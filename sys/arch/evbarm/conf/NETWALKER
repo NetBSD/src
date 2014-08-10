@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.25 2014/03/29 12:00:27 hkenken Exp $
+#	$NetBSD: NETWALKER,v 1.25.2.1 2014/08/10 06:53:54 tls Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -73,6 +73,7 @@ options 	INET6		# IPV6
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_50	# NetBSD 5.0 compatibility.
@@ -128,7 +129,7 @@ options 	NO_POWERSAVE	# uncomment this to run under ICE
 
 # Development and Debugging options
 #options 	PERFCTRS	# performance counters
-#options 	DIAGNOSTIC	# internally consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
@@ -148,6 +149,17 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 #options	SCSIPI_DEBUG_TYPE=SCSIPI_BUSTYPE_SCSI
 #options	SCSIPI_DEBUG_TARGET=0
 #options	SCSIPI_DEBUG_LUN=0
+
+# Valid options for BOOT_ARGS:
+#  single		Boot to single user only
+#  kdb			Give control to kernel debugger
+#  ask			Ask for file name to reboot from
+#  pmapdebug=<n>	If PMAP_DEBUG, set pmap_debug_level to <n>
+#  memorydisk=<n>	Set memorydisk size to <n> KB
+#  quiet		Show aprint_naive output
+#  verbose		Show aprint_normal and aprint_verbose output
+#options		BOOT_ARGS="\"verbose\""
+#options		BOOT_ARGS="\"pmapdebug=1\""
 
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?
@@ -214,13 +226,18 @@ options		IMXSPINSLAVES=3
 #options	IMXSPI_DEBUG=10
 
 # Optical Joystick
-mousebtn0	at gpio1 offset 22 mask 0x03 # intr 182, 183
-#options	MOUSEBTN_POLLING
 oj6sh0		at spi0 slave 2
 #options	OJ6SH_DEBUG=4
 options		OJ6SH_UP_X_LEFT_Y
 wsmouse*	at oj6sh? mux 0
+
+mousebtn0	at gpio1 offset 22 mask 0x03 # intr 182, 183
+#options	MOUSEBTN_POLLING
 wsmouse*	at mousebtn? mux 0
+
+pwrbtn0		at gpio1 offset 21 mask 0x01 # intr 181
+lidsw0		at gpio3 offset 12 mask 0x01 # intr 236
+imxpwm0		at axi? addr 0x73FB4000 irq 61
 
 # SPI NOR-Flash
 #spiflash0	at spiflashbus?

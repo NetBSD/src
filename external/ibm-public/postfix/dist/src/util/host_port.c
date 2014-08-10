@@ -1,4 +1,4 @@
-/*	$NetBSD: host_port.c,v 1.1.1.2 2011/03/23 19:08:04 tron Exp $	*/
+/*	$NetBSD: host_port.c,v 1.1.1.2.20.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -117,7 +117,7 @@ const char *host_port(char *buf, char **host, char *def_host,
     char   *cp = buf;
     int     ipv6 = 0;
 
-    /*
+    /*-
      * [host]:port, [host]:, [host].
      * [ipv6:ipv6addr]:port, [ipv6:ipv6addr]:, [ipv6:ipv6addr].
      */

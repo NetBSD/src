@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.37 2014/03/28 21:39:09 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.37.2.1 2014/08/10 06:53:52 tls Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -131,8 +131,8 @@ static int neon_handler(u_int, u_int, trapframe_t *, int);
 #endif
 
 static void vfp_state_load(lwp_t *, u_int);
-static void vfp_state_save(lwp_t *, u_int);
-static void vfp_state_release(lwp_t *, u_int);
+static void vfp_state_save(lwp_t *);
+static void vfp_state_release(lwp_t *);
 
 const pcu_ops_t arm_vfp_ops = {
 	.pcu_id = PCU_FPU,
@@ -242,7 +242,8 @@ vfp_attach(struct cpu_info *ci)
 		const uint32_t nsacr = armreg_nsacr_read();
 		const uint32_t nsacr_vfp = __BITS(VFP_COPROC,VFP_COPROC2);
 		if ((nsacr & nsacr_vfp) != nsacr_vfp) {
-			aprint_normal_dev(ci->ci_dev, "VFP access denied\n");
+			aprint_normal_dev(ci->ci_dev,
+			    "VFP access denied (NSACR=%#x)\n", nsacr);
 			install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 			ci->ci_vfp_id = 0;
 			evcnt_attach_dynamic(&ci->ci_vfp_evs[0],
@@ -266,10 +267,11 @@ vfp_attach(struct cpu_info *ci)
 		 * If we could enable them, then they exist.
 		 */
 		cpacr = armreg_cpacr_read();
-		bool vfp_p = __SHIFTOUT(cpacr, cpacr_vfp2) != CPACR_NOACCESS
-		    || __SHIFTOUT(cpacr, cpacr_vfp) != CPACR_NOACCESS;
+		bool vfp_p = __SHIFTOUT(cpacr, cpacr_vfp2) == CPACR_ALL
+		    && __SHIFTOUT(cpacr, cpacr_vfp) == CPACR_ALL;
 		if (!vfp_p) {
-			aprint_normal_dev(ci->ci_dev, "No VFP detected\n");
+			aprint_normal_dev(ci->ci_dev,
+			    "VFP access denied (CPACR=%#x)\n", cpacr);
 			install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 			ci->ci_vfp_id = 0;
 			evcnt_attach_dynamic(&ci->ci_vfp_evs[0],
@@ -332,14 +334,14 @@ vfp_attach(struct cpu_info *ci)
 	cpu_media_and_vfp_features[1] = armreg_mvfr1_read();
 	if (fpsid != 0) {
 		uint32_t f0 = armreg_mvfr0_read();
-		uint32_t f1 = armreg_mvfr0_read();
+		uint32_t f1 = armreg_mvfr1_read();
 		aprint_normal("vfp%d at %s: %s%s%s%s%s\n",
 		    device_unit(ci->ci_dev),
 		    device_xname(ci->ci_dev),
 		    model,
 		    ((f0 & ARM_MVFR0_ROUNDING_MASK) ? ", rounding" : ""),
 		    ((f0 & ARM_MVFR0_EXCEPT_MASK) ? ", exceptions" : ""),
-		    ((f1 & ARM_MVFR1_D_NAN_MASK) ? ", NaN propogation" : ""),
+		    ((f1 & ARM_MVFR1_D_NAN_MASK) ? ", NaN propagation" : ""),
 		    ((f1 & ARM_MVFR1_FTZ_MASK) ? ", denormals" : ""));
 		aprint_verbose("vfp%d: mvfr: [0]=%#x [1]=%#x\n",
 		    device_unit(ci->ci_dev), f0, f1);
@@ -350,7 +352,7 @@ vfp_attach(struct cpu_info *ci)
 			if (f1 & ARM_MVFR0_EXCEPT_MASK) {
 				vfp_fpscr_changable |= VFP_FPSCR_ESUM;
 			}
-			// If hardware supports propogation of NaNs, select it.
+			// If hardware supports propagation of NaNs, select it.
 			if (f1 & ARM_MVFR1_D_NAN_MASK) {
 				vfp_fpscr_default &= ~VFP_FPSCR_DN;
 				vfp_fpscr_changable |= VFP_FPSCR_DN;
@@ -475,24 +477,6 @@ static void
 vfp_state_load(lwp_t *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
-
-	KASSERT(flags & PCU_ENABLE);
-
-	if (flags & PCU_KERNEL) {
-		if ((flags & PCU_LOADED) == 0) {
-			pcb->pcb_kernel_vfp.vfp_fpexc = pcb->pcb_vfp.vfp_fpexc;
-		}
-		pcb->pcb_vfp.vfp_fpexc = VFP_FPEXC_EN;
-		armreg_fpexc_write(pcb->pcb_vfp.vfp_fpexc);
-		/*
-		 * Load the kernel registers (just the first 16) if they've
-		 * been used..
-		 */
-		if (flags & PCU_LOADED) {
-			load_vfpregs_lo(pcb->pcb_kernel_vfp.vfp_regs);
-		}
-		return;
-	}
 	struct vfpreg * const fregs = &pcb->pcb_vfp;
 
 	/*
@@ -503,55 +487,53 @@ vfp_state_load(lwp_t *l, u_int flags)
 	 * If a process has used the VFP, count a "used VFP, and took
 	 * a trap to use it again" event.
 	 */
-	if (__predict_false((flags & PCU_LOADED) == 0)) {
-		KASSERT(flags & PCU_RELOAD);
+	if (__predict_false((flags & PCU_VALID) == 0)) {
 		curcpu()->ci_vfp_evs[0].ev_count++;
 		pcb->pcb_vfp.vfp_fpscr = vfp_fpscr_default;
 	} else {
 		curcpu()->ci_vfp_evs[1].ev_count++;
 	}
 
-	uint32_t fpexc = armreg_fpexc_read();
-	if (flags & PCU_RELOAD) {
-		bool enabled = fregs->vfp_fpexc & VFP_FPEXC_EN;
-
-		/*
-		 * Load and Enable the VFP (so that we can write the
-		 * registers).
-		 */
-		fregs->vfp_fpexc |= VFP_FPEXC_EN;
-		armreg_fpexc_write(fregs->vfp_fpexc);
-		if (enabled) {
-			/*
-			 * If we think the VFP is enabled, it must have be
-			 * disabled by vfp_state_release for another LWP so
-			 * we can now just return.
-			 */
-			return;
-		}
-
-		load_vfpregs(fregs);
-		armreg_fpscr_write(fregs->vfp_fpscr);
-
-		if (fregs->vfp_fpexc & VFP_FPEXC_EX) {
-			/* Need to restore the exception handling state.  */
-			armreg_fpinst2_write(fregs->vfp_fpinst2);
-			if (fregs->vfp_fpexc & VFP_FPEXC_FP2V)
-				armreg_fpinst_write(fregs->vfp_fpinst);
-		}
-	} else {
-		/*
-		 * If the VFP is already enabled we must be bouncing an
-		 * instruction.
-		 */
+	/*
+	 * If the VFP is already enabled we must be bouncing an instruction.
+	 */
+	if (flags & PCU_REENABLE) {
+		uint32_t fpexc = armreg_fpexc_read();
 		armreg_fpexc_write(fpexc | VFP_FPEXC_EN);
+		return;
+	}
+
+	/*
+	 * Load and Enable the VFP (so that we can write the registers).
+	 */
+	bool enabled = fregs->vfp_fpexc & VFP_FPEXC_EN;
+	fregs->vfp_fpexc |= VFP_FPEXC_EN;
+	armreg_fpexc_write(fregs->vfp_fpexc);
+	if (enabled) {
+		/*
+		 * If we think the VFP is enabled, it must have be
+		 * disabled by vfp_state_release for another LWP so
+		 * we can now just return.
+		 */
+		return;
+	}
+
+	load_vfpregs(fregs);
+	armreg_fpscr_write(fregs->vfp_fpscr);
+
+	if (fregs->vfp_fpexc & VFP_FPEXC_EX) {
+		/* Need to restore the exception handling state.  */
+		armreg_fpinst2_write(fregs->vfp_fpinst2);
+		if (fregs->vfp_fpexc & VFP_FPEXC_FP2V)
+			armreg_fpinst_write(fregs->vfp_fpinst);
 	}
 }
 
 void
-vfp_state_save(lwp_t *l, u_int flags)
+vfp_state_save(lwp_t *l)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
+	struct vfpreg * const fregs = &pcb->pcb_vfp;
 	uint32_t fpexc = armreg_fpexc_read();
 
 	/*
@@ -560,17 +542,6 @@ vfp_state_save(lwp_t *l, u_int flags)
 	 * safely dump the registers.
 	 */
 	armreg_fpexc_write((fpexc | VFP_FPEXC_EN) & ~VFP_FPEXC_EX);
-
-	if (flags & PCU_KERNEL) {
-		/*
-		 * Save the kernel set of VFP registers.
-		 * (just the first 16).
-		 */
-		save_vfpregs_lo(pcb->pcb_kernel_vfp.vfp_regs);
-		return;
-	}
-
-	struct vfpreg * const fregs = &pcb->pcb_vfp;
 
 	fregs->vfp_fpexc = fpexc;
 	if (fpexc & VFP_FPEXC_EX) {
@@ -587,22 +558,15 @@ vfp_state_save(lwp_t *l, u_int flags)
 }
 
 void
-vfp_state_release(lwp_t *l, u_int flags)
+vfp_state_release(lwp_t *l)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	if (flags & PCU_KERNEL) {
-		/*
-		 * Restore the FPEXC since we borrowed that field.
-		 */
-		pcb->pcb_vfp.vfp_fpexc = pcb->pcb_kernel_vfp.vfp_fpexc;
-	} else {
-		/*
-		 * Now mark the VFP as disabled (and our state
-		 * has been already saved or is being discarded).
-		 */
-		pcb->pcb_vfp.vfp_fpexc &= ~VFP_FPEXC_EN;
-	}
+	/*
+	 * Now mark the VFP as disabled (and our state
+	 * has been already saved or is being discarded).
+	 */
+	pcb->pcb_vfp.vfp_fpexc &= ~VFP_FPEXC_EN;
 
 	/*
 	 * Turn off the FPU so the next time a VFP instruction is issued
@@ -630,43 +594,7 @@ vfp_discardcontext(bool used_p)
 bool
 vfp_used_p(void)
 {
-	return pcu_used_p(&arm_vfp_ops);
-}
-
-void
-vfp_kernel_acquire(void)
-{
-	if (__predict_false(cpu_intr_p())) {
-		armreg_fpexc_write(VFP_FPEXC_EN);
-		if (curcpu()->ci_data.cpu_pcu_curlwp[PCU_FPU] != NULL) {
-			lwp_t * const l = curlwp;
-			struct pcb * const pcb = lwp_getpcb(l);
-			KASSERT((l->l_md.md_flags & MDLWP_VFPINTR) == 0);
-			l->l_md.md_flags |= MDLWP_VFPINTR;
-			save_vfpregs_lo(&pcb->pcb_kernel_vfp.vfp_regs[16]);
-		}
-	} else {
-		pcu_kernel_acquire(&arm_vfp_ops);
-	}
-}
-
-void
-vfp_kernel_release(void)
-{
-	if (__predict_false(cpu_intr_p())) {
-		uint32_t fpexc = 0;
-		if (curcpu()->ci_data.cpu_pcu_curlwp[PCU_FPU] != NULL) {
-			lwp_t * const l = curlwp;
-			struct pcb * const pcb = lwp_getpcb(l);
-			KASSERT(l->l_md.md_flags & MDLWP_VFPINTR);
-			load_vfpregs_lo(&pcb->pcb_kernel_vfp.vfp_regs[16]);
-			l->l_md.md_flags &= ~MDLWP_VFPINTR;
-			fpexc = pcb->pcb_vfp.vfp_fpexc;
-		}
-		armreg_fpexc_write(fpexc);
-	} else {
-		pcu_kernel_release(&arm_vfp_ops);
-	}
+	return pcu_valid_p(&arm_vfp_ops);
 }
 
 void

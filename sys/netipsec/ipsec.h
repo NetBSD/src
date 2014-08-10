@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.34 2013/06/08 13:50:22 rmind Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.34.6.1 2014/08/10 06:56:34 tls Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -354,6 +354,7 @@ int ipsec_clear_socket_cache(struct mbuf *m)
 
 void nat_t_ports_get(struct mbuf *, u_int16_t *, u_int16_t *);
 
+extern int ipsec_used __read_mostly, ipsec_enabled __read_mostly;
 
 #endif /* _KERNEL */
 

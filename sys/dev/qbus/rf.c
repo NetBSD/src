@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.26 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: rf.c,v 1.26.2.1 2014/08/10 06:54:57 tls Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -32,11 +32,11 @@
 TODO:
 - Better LBN bound checking, block padding for SD disks.
 - Formatting / "Set Density"
-- Better error handling / detailed error reason reportnig.
+- Better error handling / detailed error reason reporting.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.26 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.26.2.1 2014/08/10 06:54:57 tls Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -123,6 +123,7 @@ const struct bdevsw rf_bdevsw = {
 	.d_ioctl = rfioctl,
 	.d_dump = rfdump,
 	.d_psize = rfsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -137,6 +138,7 @@ const struct cdevsw rf_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

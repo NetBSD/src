@@ -17,3 +17,9 @@ GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
 NOP=0x01000000
 NO_SMALL_DATA=yes
+
+case "$target" in
+  sparc64-*-netbsd*)
+    LIB_PATH='=/usr/lib/sparc'
+    ;;
+esac

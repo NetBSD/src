@@ -1,6 +1,6 @@
 /* Cache and manage the values of registers for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,11 +25,11 @@
 #include "regcache.h"
 #include "reggroups.h"
 #include "gdb_assert.h"
-#include "gdb_string.h"
-#include "gdbcmd.h"		/* For maintenanceprintlist.  */
+#include <string.h>
 #include "observer.h"
 #include "exceptions.h"
 #include "remote.h"
+#include "valprint.h"
 
 /*
  * DATA STRUCTURE
@@ -1090,27 +1090,6 @@ reg_flush_command (char *command, int from_tty)
     printf_filtered (_("Register cache flushed.\n"));
 }
 
-static void
-dump_endian_bytes (struct ui_file *file, enum bfd_endian endian,
-		   const gdb_byte *buf, long len)
-{
-  int i;
-
-  switch (endian)
-    {
-    case BFD_ENDIAN_BIG:
-      for (i = 0; i < len; i++)
-	fprintf_unfiltered (file, "%02x", buf[i]);
-      break;
-    case BFD_ENDIAN_LITTLE:
-      for (i = len - 1; i >= 0; i--)
-	fprintf_unfiltered (file, "%02x", buf[i]);
-      break;
-    default:
-      internal_error (__FILE__, __LINE__, _("Bad switch"));
-    }
-}
-
 enum regcache_dump_what
 {
   regcache_dump_none, regcache_dump_raw,
@@ -1258,10 +1237,9 @@ regcache_dump (struct regcache *regcache, struct ui_file *file,
 	  else
 	    {
 	      regcache_raw_read (regcache, regnum, buf);
-	      fprintf_unfiltered (file, "0x");
-	      dump_endian_bytes (file,
-				 gdbarch_byte_order (gdbarch), buf,
-				 regcache->descr->sizeof_register[regnum]);
+	      print_hex_chars (file, buf,
+			       regcache->descr->sizeof_register[regnum],
+			       gdbarch_byte_order (gdbarch));
 	    }
 	}
 
@@ -1280,12 +1258,9 @@ regcache_dump (struct regcache *regcache, struct ui_file *file,
 	      else if (status == REG_UNAVAILABLE)
 		fprintf_unfiltered (file, "<unavailable>");
 	      else
-		{
-		  fprintf_unfiltered (file, "0x");
-		  dump_endian_bytes (file,
-				     gdbarch_byte_order (gdbarch), buf,
-				     regcache->descr->sizeof_register[regnum]);
-		}
+		print_hex_chars (file, buf,
+				 regcache->descr->sizeof_register[regnum],
+				 gdbarch_byte_order (gdbarch));
 	    }
 	}
 

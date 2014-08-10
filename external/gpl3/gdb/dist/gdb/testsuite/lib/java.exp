@@ -1,6 +1,6 @@
 # This test code is part of GDB, the GNU debugger.
 
-# Copyright 1998-2013 Free Software Foundation, Inc.
+# Copyright 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,8 +31,8 @@ set java_initialized 0
 # Build the status wrapper library as needed.
 #
 proc java_init { args } {
-    global wrapper_file;
-    global wrap_compile_flags;
+    global wrapper_file
+    global wrap_compile_flags
     global java_initialized
     global GCJ_UNDER_TEST
     global TOOL_EXECUTABLE
@@ -42,7 +42,7 @@ proc java_init { args } {
 
     if ![info exists GCJ_UNDER_TEST] {
 	if [info exists TOOL_EXECUTABLE] {
-	    set GCJ_UNDER_TEST $TOOL_EXECUTABLE;
+	    set GCJ_UNDER_TEST $TOOL_EXECUTABLE
 	} else {
 	    if { [info exists env(GCJ)] && $env(GCJ) != "" } {
 		set GCJ_UNDER_TEST $env(GCJ)
@@ -51,14 +51,14 @@ proc java_init { args } {
 		global target_alias
 		
 		if ![is_remote host] {
-		    set file [lookfor_file $tool_root_dir gcj];
+		    set file [lookfor_file $tool_root_dir gcj]
 		    if { $file == "" } {
-			set file [lookfor_file $tool_root_dir gcc/gcj];
+			set file [lookfor_file $tool_root_dir gcc/gcj]
 		    }
 		    if { $file != "" } {
-			set CC "$file -B[file dirname $file]/ --specs=$tool_root_dir/$target_alias/libjava/libgcj-test.spec";
+			set CC "$file -B[file dirname $file]/ --specs=$tool_root_dir/$target_alias/libjava/libgcj-test.spec"
 		    } else {
-			set CC [transform gcj];
+			set CC [transform gcj]
 		    }
 		} else {
 		    set CC [transform gcj]
@@ -68,13 +68,13 @@ proc java_init { args } {
 	}
     }
 
-    set wrapper_file "";
-    set wrap_compile_flags "";
+    set wrapper_file ""
+    set wrap_compile_flags ""
     if [target_info exists needs_status_wrapper] {
-	set result [build_wrapper "testglue.o"];
+	set result [build_wrapper "testglue.o"]
 	if { $result != "" } {
-	    set wrapper_file [lindex $result 0];
-	    set wrap_compile_flags [lindex $result 1];
+	    set wrapper_file [lindex $result 0]
+	    set wrap_compile_flags [lindex $result 1]
 	} else {
 	    warning "Status wrapper failed to build."
 	}
@@ -115,7 +115,7 @@ proc set_lang_java {} {
 	   "set language to \"java\""] {
 	return 0
     }
-    return 1;
+    return 1
 }
 
 # Local Variables:

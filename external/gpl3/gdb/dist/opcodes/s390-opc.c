@@ -217,20 +217,23 @@ const struct s390_operand s390_operands[] =
 
 /* PC-relative address operands.  */
 
-#define J12_12 69                 /* PC relative offset at 12 */
+#define J12_12 69                 /* 12 bit PC relative offset at 12 */
   { 12, 12, S390_OPERAND_PCREL },
-#define J16_16 70                 /* PC relative offset at 16 */
+#define J16_16 70                 /* 16 bit PC relative offset at 16 */
   { 16, 16, S390_OPERAND_PCREL },
-#define J16_32 71                 /* PC relative offset at 16 */
+#define J16_32 71                 /* 16 bit PC relative offset at 32 */
   { 16, 32, S390_OPERAND_PCREL },
-#define J32_16 72                 /* PC relative offset at 16 */
+#define J24_24 72                 /* 24 bit PC relative offset at 24 */
+  { 24, 24, S390_OPERAND_PCREL },
+#define J32_16 73                 /* 32 bit PC relative offset at 16 */
   { 32, 16, S390_OPERAND_PCREL },
+
 
 /* Conditional mask operands.  */
 
-#define M_16OPT   73              /* 4 bit optional mask starting at 16 */
+#define M_16OPT   74              /* 4 bit optional mask starting at 16 */
   { 4, 16, S390_OPERAND_OPTIONAL },
-#define M_20OPT   74              /* 4 bit optional mask starting at 20 */
+#define M_20OPT   75              /* 4 bit optional mask starting at 20 */
   { 4, 20, S390_OPERAND_OPTIONAL },
 
 };
@@ -284,7 +287,7 @@ const struct s390_operand s390_operands[] =
 
 #define INSTR_E          2, { 0,0,0,0,0,0 }                    /* e.g. pr    */
 #define INSTR_IE_UU      4, { U4_24,U4_28,0,0,0,0 }            /* e.g. niai  */
-#define INSTR_MII_UPI    6, { U4_8,J12_12,I24_24 }             /* e.g. bprp  */
+#define INSTR_MII_UPP    6, { U4_8,J12_12,J24_24 }             /* e.g. bprp  */
 #define INSTR_RIE_RRP    6, { R_8,R_12,J16_16,0,0,0 }          /* e.g. brxhg */
 #define INSTR_RIE_RRPU   6, { R_8,R_12,U4_32,J16_16,0,0 }      /* e.g. crj   */
 #define INSTR_RIE_RRP0   6, { R_8,R_12,J16_16,0,0,0 }          /* e.g. crjne */
@@ -388,8 +391,8 @@ const struct s390_operand s390_operands[] =
 #define INSTR_RSE_CCRD   6, { C_8,C_12,D_20,B_16,0,0 }         /* e.g. lmh   */
 #define INSTR_RSE_RURD   6, { R_8,U4_12,D_20,B_16,0,0 }        /* e.g. icmh  */
 #define INSTR_RSL_R0RD   6, { D_20,L4_8,B_16,0,0,0 }           /* e.g. tp    */
-#define INSTR_RSL_LRDFU  6, { F_32,D_20,L4_8,B_16,U4_36,0 }    /* e.g. cdzt  */
-#define INSTR_RSL_LRDFEU 6, { FE_32,D_20,L4_8,B_16,U4_36,0 }   /* e.g. cxzt  */
+#define INSTR_RSL_LRDFU  6, { F_32,D_20,L8_8,B_16,U4_36,0 }    /* e.g. cdzt  */
+#define INSTR_RSL_LRDFEU 6, { FE_32,D_20,L8_8,B_16,U4_36,0 }   /* e.g. cxzt  */
 #define INSTR_RSI_RRP    4, { R_8,R_12,J16_16,0,0,0 }          /* e.g. brxh  */
 #define INSTR_RSY_RRRD   6, { R_8,R_12,D20_20,B_16,0,0 }       /* e.g. stmy  */
 #define INSTR_RSY_RERERD 6, { RE_8,RE_12,D20_20,B_16,0,0 }     /* e.g. cdsy  */
@@ -446,7 +449,7 @@ const struct s390_operand s390_operands[] =
 
 #define MASK_E           { 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 }
 #define MASK_IE_UU       { 0xff, 0xff, 0xff, 0x00, 0x00, 0x00 }
-#define MASK_MII_UPI     { 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 }
+#define MASK_MII_UPP     { 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 }
 #define MASK_RIE_RRP     { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
 #define MASK_RIE_RRPU    { 0xff, 0x00, 0x00, 0x00, 0x00, 0xff }
 #define MASK_RIE_RRP0    { 0xff, 0x00, 0x00, 0x00, 0xf0, 0xff }

@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -444,7 +444,7 @@ resync_thread_list (struct target_ops *ops)
 /* The "to_detach" method of the dec_thread_ops.  */
 
 static void
-dec_thread_detach (struct target_ops *ops, char *args, int from_tty)
+dec_thread_detach (struct target_ops *ops, const char *args, int from_tty)
 {   
   struct target_ops *beneath = find_target_beneath (ops);
 
@@ -727,7 +727,7 @@ void
 _initialize_dec_thread (void)
 {
   init_dec_thread_ops ();
-  add_target (&dec_thread_ops);
+  complete_target_initialization (&dec_thread_ops);
 
   observer_attach_new_objfile (dec_thread_new_objfile_observer);
 

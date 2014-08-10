@@ -1,5 +1,5 @@
 #!/bin/sh
-#   Copyright 2011, 2013 Free Software Foundation, Inc.
+#   Copyright 2011-2014 Free Software Foundation, Inc.
 #
 #   This is free software: you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License as published by
@@ -17,12 +17,42 @@
 
 # You must set PYTHON_PLUGIN in the environment.
 # It should be the directory holding the "python.so" file.
+# Usage: gcc-with-excheck [-Xx|-Xc] [--] ARGS
+# -Xx means to invoke the exception checker.
+# -Xc means to invoke the cleanup checker.
+# -- means stop processing -X options.
+# ARGS are passed to gcc.
 
+GCC=${GCC:-gcc}
 exdir=`dirname $0`
+
+pargs=
+while true; do
+    case "$1" in
+	-Xc)
+	    pargs="$pargs -fplugin-arg-python-script=$exdir/cleanup_check.py"
+	    ;;
+	-Xx)
+	    pargs="$pargs -fplugin-arg-python-script=$exdir/excheck.py"
+	    ;;
+	-X*)
+	    echo "unrecognized argument $1" 1>&2
+	    exit 1
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+    shift
+done
 
 # Recent versions of the Python plugin build two .so files in
 # different directories, so we have to set this.  This will be fixed
 # upstream at some point.
 export LD_LIBRARY_PATH=$PYTHON_PLUGIN:$PYTHON_PLUGIN/gcc-c-api
 
-gcc -fplugin=$PYTHON_PLUGIN/python.so -fplugin-arg-python-script=$exdir/excheck.py "$@"
+gcc -fplugin=$PYTHON_PLUGIN/python.so $pargs "$@"

@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,10 +28,10 @@
 #include "getopt.h"
 
 #include <sys/types.h>
-#include "gdb_stat.h"
+#include <sys/stat.h>
 #include <ctype.h>
 
-#include "gdb_string.h"
+#include <string.h>
 #include "event-loop.h"
 #include "ui-out.h"
 
@@ -42,8 +42,10 @@
 #include "python/python.h"
 #include "objfiles.h"
 #include "auto-load.h"
+#include "maint.h"
 
 #include "filenames.h"
+#include "filestuff.h"
 
 /* The selected interpreter.  This will be used as a set command
    variable, so it should always be malloc'ed - since
@@ -95,6 +97,13 @@ int return_child_result_value = -1;
 
 /* GDB as it has been invoked from the command line (i.e. argv[0]).  */
 static char *gdb_program_name;
+
+/* Return read only pointer to GDB_PROGRAM_NAME.  */
+const char *
+get_gdb_program_name (void)
+{
+  return gdb_program_name;
+}
 
 static void print_gdb_help (struct ui_file *);
 
@@ -158,13 +167,13 @@ relocate_gdb_directory (const char *initial, int flag)
    to be loaded, then SYSTEM_GDBINIT (resp. HOME_GDBINIT and
    LOCAL_GDBINIT) is set to NULL.  */
 static void
-get_init_files (char **system_gdbinit,
-		char **home_gdbinit,
-		char **local_gdbinit)
+get_init_files (const char **system_gdbinit,
+		const char **home_gdbinit,
+		const char **local_gdbinit)
 {
-  static char *sysgdbinit = NULL;
+  static const char *sysgdbinit = NULL;
   static char *homeinit = NULL;
-  static char *localinit = NULL;
+  static const char *localinit = NULL;
   static int initialized = 0;
 
   if (!initialized)
@@ -251,7 +260,7 @@ get_init_files (char **system_gdbinit,
 static int
 captured_command_loop (void *data)
 {
-  /* Top-level execution commands can be run on the background from
+  /* Top-level execution commands can be run in the background from
      here on.  */
   interpreter_async = 1;
 
@@ -320,6 +329,7 @@ captured_main (void *data)
      initializer.  */
   static int print_help;
   static int print_version;
+  static int print_configuration;
 
   /* Pointers to all arguments of --command option.  */
   VEC (cmdarg_s) *cmdarg_vec = NULL;
@@ -333,9 +343,9 @@ captured_main (void *data)
   int ndir;
 
   /* gdb init files.  */
-  char *system_gdbinit;
-  char *home_gdbinit;
-  char *local_gdbinit;
+  const char *system_gdbinit;
+  const char *home_gdbinit;
+  const char *local_gdbinit;
 
   int i;
   int save_auto_load;
@@ -360,6 +370,7 @@ captured_main (void *data)
   textdomain (PACKAGE);
 
   bfd_init ();
+  notice_open_fds ();
 
   make_cleanup (VEC_cleanup (cmdarg_s), &cmdarg_vec);
   dirsize = 1;
@@ -371,8 +382,15 @@ captured_main (void *data)
   saved_command_line[0] = '\0';
   instream = stdin;
 
+#ifdef __MINGW32__
+  /* Ensure stderr is unbuffered.  A Cygwin pty or pipe is implemented
+     as a Windows pipe, and Windows buffers on pipes.  */
+  setvbuf (stderr, NULL, _IONBF, BUFSIZ);
+#endif
+
   gdb_stdout = stdio_fileopen (stdout);
-  gdb_stderr = stdio_fileopen (stderr);
+  gdb_stderr = stderr_fileopen ();
+
   gdb_stdlog = gdb_stderr;	/* for moment */
   gdb_stdtarg = gdb_stderr;	/* for moment */
   gdb_stdin = stdio_fileopen (stdin);
@@ -482,6 +500,7 @@ captured_main (void *data)
       {"command", required_argument, 0, 'x'},
       {"eval-command", required_argument, 0, 'X'},
       {"version", no_argument, &print_version, 1},
+      {"configuration", no_argument, &print_configuration, 1},
       {"x", required_argument, 0, 'x'},
       {"ex", required_argument, 0, 'X'},
       {"init-command", required_argument, 0, OPT_IX},
@@ -546,8 +565,8 @@ captured_main (void *data)
 	    break;
 	  case OPT_STATISTICS:
 	    /* Enable the display of both time and space usage.  */
-	    set_display_time (1);
-	    set_display_space (1);
+	    set_per_command_time (1);
+	    set_per_command_space (1);
 	    break;
 	  case OPT_TUI:
 	    /* --tui is equivalent to -i=tui.  */
@@ -725,8 +744,9 @@ captured_main (void *data)
 	  }
       }
 
-    /* If --help or --version, disable window interface.  */
-    if (print_help || print_version)
+    /* If --help or --version or --configuration, disable window
+       interface.  */
+    if (print_help || print_version || print_configuration)
       {
 	use_windows = 0;
       }
@@ -817,6 +837,14 @@ captured_main (void *data)
       exit (0);
     }
 
+  if (print_configuration)
+    {
+      print_gdb_configuration (gdb_stdout);
+      wrap_here ("");
+      printf_filtered ("\n");
+      exit (0);
+    }
+
   /* FIXME: cagney/2003-02-03: The big hack (part 1 of 2) that lets
      GDB retain the old MI1 interpreter startup behavior.  Output the
      copyright message before the interpreter is installed.  That way
@@ -871,8 +899,6 @@ captured_main (void *data)
     }
 
   /* Set off error and warning messages with a blank line.  */
-  error_pre_print = "\n";
-  quit_pre_print = error_pre_print;
   warning_pre_print = _("\nwarning: ");
 
   /* Read and execute the system-wide gdbinit file, if it exists.
@@ -880,7 +906,8 @@ captured_main (void *data)
      processed; it sets global parameters, which are independent of
      what file you are debugging or what directory you are in.  */
   if (system_gdbinit && !inhibit_gdbinit)
-    catch_command_errors (source_script, system_gdbinit, 0, RETURN_MASK_ALL);
+    catch_command_errors_const (source_script, system_gdbinit,
+				0, RETURN_MASK_ALL);
 
   /* Read and execute $HOME/.gdbinit file, if it exists.  This is done
      *before* all the command line arguments are processed; it sets
@@ -888,15 +915,16 @@ captured_main (void *data)
      debugging or what directory you are in.  */
 
   if (home_gdbinit && !inhibit_gdbinit && !inhibit_home_gdbinit)
-    catch_command_errors (source_script, home_gdbinit, 0, RETURN_MASK_ALL);
+    catch_command_errors_const (source_script,
+				home_gdbinit, 0, RETURN_MASK_ALL);
 
   /* Process '-ix' and '-iex' options early.  */
   for (i = 0; VEC_iterate (cmdarg_s, cmdarg_vec, i, cmdarg_p); i++)
     switch (cmdarg_p->type)
     {
       case CMDARG_INIT_FILE:
-        catch_command_errors (source_script, cmdarg_p->string,
-			      !batch_flag, RETURN_MASK_ALL);
+        catch_command_errors_const (source_script, cmdarg_p->string,
+				    !batch_flag, RETURN_MASK_ALL);
 	break;
       case CMDARG_INIT_COMMAND:
         catch_command_errors (execute_command, cmdarg_p->string,
@@ -929,8 +957,8 @@ captured_main (void *data)
          catch_command_errors returns non-zero on success!  */
       if (catch_command_errors (exec_file_attach, execarg,
 				!batch_flag, RETURN_MASK_ALL))
-	catch_command_errors (symbol_file_add_main, symarg,
-			      !batch_flag, RETURN_MASK_ALL);
+	catch_command_errors_const (symbol_file_add_main, symarg,
+				    !batch_flag, RETURN_MASK_ALL);
     }
   else
     {
@@ -938,8 +966,8 @@ captured_main (void *data)
 	catch_command_errors (exec_file_attach, execarg,
 			      !batch_flag, RETURN_MASK_ALL);
       if (symarg != NULL)
-	catch_command_errors (symbol_file_add_main, symarg,
-			      !batch_flag, RETURN_MASK_ALL);
+	catch_command_errors_const (symbol_file_add_main, symarg,
+				    !batch_flag, RETURN_MASK_ALL);
     }
 
   if (corearg && pidarg)
@@ -974,8 +1002,6 @@ captured_main (void *data)
     set_inferior_io_terminal (ttyarg);
 
   /* Error messages should no longer be distinguished with extra output.  */
-  error_pre_print = NULL;
-  quit_pre_print = NULL;
   warning_pre_print = _("warning: ");
 
   /* Read the .gdbinit file in the current directory, *if* it isn't
@@ -992,8 +1018,8 @@ captured_main (void *data)
 	{
 	  auto_load_local_gdbinit_loaded = 1;
 
-	  catch_command_errors (source_script, local_gdbinit, 0,
-				RETURN_MASK_ALL);
+	  catch_command_errors_const (source_script, local_gdbinit, 0,
+				      RETURN_MASK_ALL);
 	}
     }
 
@@ -1010,8 +1036,8 @@ captured_main (void *data)
     switch (cmdarg_p->type)
     {
       case CMDARG_FILE:
-        catch_command_errors (source_script, cmdarg_p->string,
-			      !batch_flag, RETURN_MASK_ALL);
+        catch_command_errors_const (source_script, cmdarg_p->string,
+				    !batch_flag, RETURN_MASK_ALL);
 	break;
       case CMDARG_COMMAND:
         catch_command_errors (execute_command, cmdarg_p->string,
@@ -1061,65 +1087,54 @@ gdb_main (struct captured_main_args *args)
 static void
 print_gdb_help (struct ui_file *stream)
 {
-  char *system_gdbinit;
-  char *home_gdbinit;
-  char *local_gdbinit;
+  const char *system_gdbinit;
+  const char *home_gdbinit;
+  const char *local_gdbinit;
 
   get_init_files (&system_gdbinit, &home_gdbinit, &local_gdbinit);
 
+  /* Note: The options in the list below are only approximately sorted
+     in the alphabetical order, so as to group closely related options
+     together.  */
   fputs_unfiltered (_("\
 This is the GNU debugger.  Usage:\n\n\
     gdb [options] [executable-file [core-file or process-id]]\n\
     gdb [options] --args executable-file [inferior-arguments ...]\n\n\
-Options:\n\n\
 "), stream);
   fputs_unfiltered (_("\
+Selection of debuggee and its files:\n\n\
   --args             Arguments after executable-file are passed to inferior\n\
+  --core=COREFILE    Analyze the core dump COREFILE.\n\
+  --exec=EXECFILE    Use EXECFILE as the executable.\n\
+  --pid=PID          Attach to running process PID.\n\
+  --directory=DIR    Search for source files in DIR.\n\
+  --se=FILE          Use FILE as symbol file and executable file.\n\
+  --symbols=SYMFILE  Read symbols from SYMFILE.\n\
+  --readnow          Fully read symbol files on first access.\n\
+  --write            Set writing into executable and core files.\n\n\
 "), stream);
   fputs_unfiltered (_("\
-  -b BAUDRATE        Set serial port baud rate used for remote debugging.\n\
-  --batch            Exit after processing options.\n\
-  --batch-silent     As for --batch, but suppress all gdb stdout output.\n\
-  --return-child-result\n\
-                     GDB exit code will be the child's exit code.\n\
-  --cd=DIR           Change current directory to DIR.\n\
+Initial commands and command files:\n\n\
   --command=FILE, -x Execute GDB commands from FILE.\n\
+  --init-command=FILE, -ix\n\
+                     Like -x but execute commands before loading inferior.\n\
   --eval-command=COMMAND, -ex\n\
                      Execute a single GDB command.\n\
                      May be used multiple times and in conjunction\n\
                      with --command.\n\
-  --init-command=FILE, -ix Like -x but execute it before loading inferior.\n\
-  --init-eval-command=COMMAND, -iex Like -ex but before loading inferior.\n\
-  --core=COREFILE    Analyze the core dump COREFILE.\n\
-  --pid=PID          Attach to running process PID.\n\
+  --init-eval-command=COMMAND, -iex\n\
+                     Like -ex but before loading inferior.\n\
+  --nh               Do not read ~/.gdbinit.\n\
+  --nx               Do not read any .gdbinit files in any directory.\n\n\
 "), stream);
   fputs_unfiltered (_("\
-  --dbx              DBX compatibility mode.\n\
-  --directory=DIR    Search for source files in DIR.\n\
-  --exec=EXECFILE    Use EXECFILE as the executable.\n\
+Output and user interface control:\n\n\
   --fullname         Output information used by emacs-GDB interface.\n\
-  --help             Print this message.\n\
-"), stream);
-  fputs_unfiltered (_("\
   --interpreter=INTERP\n\
                      Select a specific interpreter / user interface\n\
-"), stream);
-  fputs_unfiltered (_("\
-  -l TIMEOUT         Set timeout in seconds for remote debugging.\n\
-  --nw		     Do not use a window interface.\n\
-  --nx               Do not read any "), stream);
-  fputs_unfiltered (gdbinit, stream);
-  fputs_unfiltered (_(" files.\n\
-  --nh               Do not read "), stream);
-  fputs_unfiltered (gdbinit, stream);
-  fputs_unfiltered (_(" file from home directory.\n\
-  --quiet            Do not print version number on startup.\n\
-  --readnow          Fully read symbol files on first access.\n\
-"), stream);
-  fputs_unfiltered (_("\
-  --se=FILE          Use FILE as symbol file and executable file.\n\
-  --symbols=SYMFILE  Read symbols from SYMFILE.\n\
   --tty=TTY          Use TTY for input/output by the program being debugged.\n\
+  -w                 Use the GUI interface.\n\
+  --nw               Do not use the GUI interface.\n\
 "), stream);
 #if defined(TUI)
   fputs_unfiltered (_("\
@@ -1127,10 +1142,24 @@ Options:\n\n\
 "), stream);
 #endif
   fputs_unfiltered (_("\
-  --version          Print version information and then exit.\n\
-  -w                 Use a window interface.\n\
-  --write            Set writing into executable and core files.\n\
+  --dbx              DBX compatibility mode.\n\
   --xdb              XDB compatibility mode.\n\
+  --quiet            Do not print version number on startup.\n\n\
+"), stream);
+  fputs_unfiltered (_("\
+Operating modes:\n\n\
+  --batch            Exit after processing options.\n\
+  --batch-silent     Like --batch, but suppress all gdb stdout output.\n\
+  --return-child-result\n\
+                     GDB exit code will be the child's exit code.\n\
+  --configuration    Print details about GDB configuration and then exit.\n\
+  --help             Print this message and then exit.\n\
+  --version          Print version information and then exit.\n\n\
+Remote debugging options:\n\n\
+  -b BAUDRATE        Set serial port baud rate used for remote debugging.\n\
+  -l TIMEOUT         Set timeout in seconds for remote debugging.\n\n\
+Other options:\n\n\
+  --cd=DIR           Change current directory to DIR.\n\
 "), stream);
   fputs_unfiltered (_("\n\
 At startup, GDB reads the following init files and executes their commands:\n\

@@ -1,51 +1,64 @@
-Copyright (C) 2009, 2010  Advanced Micro Devices, Inc. All rights reserved.
+Copyright (C) 2010-2013 Advanced Micro Devices, Inc., All rights reserved.
 
-REDISTRIBUTION: Permission is hereby granted, free of any license fees,
-to any person obtaining a copy of this microcode (the "Software"), to
-install, reproduce, copy and distribute copies, in binary form only, of
-the Software and to permit persons to whom the Software is provided to
-do the same, provided that the following conditions are met:
+Permission is hereby granted by Advanced Micro Devices, Inc. ("AMD"),
+free of any license fees, to any person obtaining a copy of this
+microcode in binary form (the "Software") ("You"), to install,
+reproduce, copy and distribute copies of the Software and to permit
+persons to whom the Software is provided to do the same, subject to
+the following terms and conditions.  Your use of any portion of the
+Software shall constitute Your acceptance of the following terms and
+conditions. If You do not agree to the following terms and conditions,
+do not use, retain or redistribute any portion of the Software.
 
-No reverse engineering, decompilation, or disassembly of this Software
-is permitted.
+If You redistribute this Software, You must reproduce the above
+copyright notice and this license with the Software.
+Without specific, prior, written permission from AMD, You may not
+reference AMD or AMD products in the promotion of any product derived
+from or incorporating this Software in any manner that implies that
+AMD endorses or has certified such product derived from or
+incorporating this Software.
 
-Redistributions must reproduce the above copyright notice, this
-permission notice, and the following disclaimers and notices in the
-Software documentation and/or other materials provided with the
-Software.
+You may not reverse engineer, decompile, or disassemble this Software
+or any portion thereof.
 
-DISCLAIMER: THE USE OF THE SOFTWARE IS AT YOUR SOLE RISK.  THE SOFTWARE
-IS PROVIDED "AS IS" AND WITHOUT WARRANTY OF ANY KIND AND COPYRIGHT
-HOLDER AND ITS LICENSORS EXPRESSLY DISCLAIM ALL WARRANTIES, EXPRESS AND
-IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
-COPYRIGHT HOLDER AND ITS LICENSORS DO NOT WARRANT THAT THE SOFTWARE WILL
-MEET YOUR REQUIREMENTS, OR THAT THE OPERATION OF THE SOFTWARE WILL BE
-UNINTERRUPTED OR ERROR-FREE.  THE ENTIRE RISK ASSOCIATED WITH THE USE OF
-THE SOFTWARE IS ASSUMED BY YOU.  FURTHERMORE, COPYRIGHT HOLDER AND ITS
-LICENSORS DO NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE
-OR THE RESULTS OF THE USE OF THE SOFTWARE IN TERMS OF ITS CORRECTNESS,
-ACCURACY, RELIABILITY, CURRENTNESS, OR OTHERWISE.
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTY OF ANY KIND, INCLUDING BUT NOT LIMITED TO WARRANTIES OF
+MERCHANTABILITY, NONINFRINGEMENT, TITLE, FITNESS FOR ANY PARTICULAR
+PURPOSE, OR WARRANTIES ARISING FROM CONDUCT, COURSE OF DEALING, OR
+USAGE OF TRADE. IN NO EVENT SHALL AMD OR ITS LICENSORS BE LIABLE FOR
+ANY DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR
+LOSS OF PROFITS, BUSINESS INTERRUPTION, OR LOSS OF DATA OR
+INFORMATION) ARISING OUT OF AMD'S NEGLIGENCE, GROSS NEGLIGENCE, THE
+USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF AMD HAS BEEN ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGES. BECAUSE SOME JURISDICTIONS
+PROHIBIT THE EXCLUSION OR LIMITATION OF LIABILITY FOR CONSEQUENTIAL OR
+INCIDENTAL DAMAGES OR THE EXCLUSION OF IMPLIED WARRANTIES, THE ABOVE
+LIMITATION MAY NOT APPLY TO YOU.
 
-DISCLAIMER: UNDER NO CIRCUMSTANCES INCLUDING NEGLIGENCE, SHALL COPYRIGHT
-HOLDER AND ITS LICENSORS OR ITS DIRECTORS, OFFICERS, EMPLOYEES OR AGENTS
-("AUTHORIZED REPRESENTATIVES") BE LIABLE FOR ANY INCIDENTAL, INDIRECT,
-SPECIAL OR CONSEQUENTIAL DAMAGES (INCLUDING DAMAGES FOR LOSS OF BUSINESS
-PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION, AND THE
-LIKE) ARISING OUT OF THE USE, MISUSE OR INABILITY TO USE THE SOFTWARE,
-BREACH OR DEFAULT, INCLUDING THOSE ARISING FROM INFRINGEMENT OR ALLEGED
-INFRINGEMENT OF ANY PATENT, TRADEMARK, COPYRIGHT OR OTHER INTELLECTUAL
-PROPERTY RIGHT EVEN IF COPYRIGHT HOLDER AND ITS AUTHORIZED
-REPRESENTATIVES HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.  IN
-NO EVENT SHALL COPYRIGHT HOLDER OR ITS AUTHORIZED REPRESENTATIVES TOTAL
-LIABILITY FOR ALL DAMAGES, LOSSES, AND CAUSES OF ACTION (WHETHER IN
-CONTRACT, TORT (INCLUDING NEGLIGENCE) OR OTHERWISE) EXCEED THE AMOUNT OF
-US$10.
+Without limiting the foregoing, the Software may implement third party
+technologies for which You must obtain licenses from parties other
+than AMD. You agree that AMD has not obtained or conveyed to You, and
+that You shall be responsible for obtaining the rights to use and/or
+distribute the applicable underlying intellectual property rights
+related to the third party technologies. These third party
+technologies are not licensed hereunder.
 
-Notice:  The Software is subject to United States export laws and
-regulations.  You agree to comply with all domestic and international
-export laws and regulations that apply to the Software, including but
-not limited to the Export Administration Regulations administered by the
-U.S. Department of Commerce and International Traffic in Arm Regulations
-administered by the U.S. Department of State.  These laws include
-restrictions on destinations, end users and end use.
+If You use the Software (in whole or in part), You shall adhere to all
+applicable U.S., European, and other export laws, including but not
+limited to the U.S. Export Administration Regulations ("EAR"), (15
+C.F.R. Sections 730 through 774), and E.U. Council Regulation (EC) No
+1334/2000 of 22 June 2000. Further, pursuant to Section 740.6  of the
+EAR, You hereby certify that, except pursuant to a license granted by
+the United States Department of Commerce Bureau of Industry and
+Security or as otherwise permitted pursuant to a License Exception
+under the U.S. Export Administration Regulations ("EAR"), You will not
+(1) export, re-export or release to a national of a country in Country
+Groups D:1, E:1 or E:2 any restricted technology, software, or source
+code You receive hereunder, or (2) export to Country Groups D:1, E:1
+or E:2 the direct product of such technology or software, if such
+foreign produced direct product is subject to national security
+controls as identified on the Commerce Control List (currently found
+in Supplement 1 to Part 774 of EAR). For the most current Country
+Group listings, or for additional information about the EAR or Your
+obligations under those regulations, please refer to the U.S. Bureau
+of Industry and Security?s website at ttp://www.bis.doc.gov/.

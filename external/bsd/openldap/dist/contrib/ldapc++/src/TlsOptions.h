@@ -1,8 +1,8 @@
-/*	$NetBSD: TlsOptions.h,v 1.1.1.1 2010/12/12 15:18:50 adam Exp $	*/
+/*	$NetBSD: TlsOptions.h,v 1.1.1.1.24.1 2014/08/10 07:09:43 tls Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/TlsOptions.h,v 1.6.2.2 2010/04/14 23:50:44 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2010, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2010-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 #ifndef TLS_OPTIONS_H

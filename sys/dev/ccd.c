@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.147 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: ccd.c,v 1.147.2.1 2014/08/10 06:54:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.147 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.147.2.1 2014/08/10 06:54:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.147 2014/02/25 18:30:09 pooka Exp $");
 
 #include <dev/ccdvar.h>
 #include <dev/dkvar.h>
+
+#include <miscfs/specfs/specdev.h> /* for v_rdev */
 
 #if defined(CCDDEBUG) && !defined(DEBUG)
 #define DEBUG
@@ -185,6 +187,7 @@ const struct bdevsw ccd_bdevsw = {
 	.d_ioctl = ccdioctl,
 	.d_dump = nodump,
 	.d_psize = ccdsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -199,6 +202,7 @@ const struct cdevsw ccd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -231,6 +235,7 @@ ccdcreate(int unit) {
 static void
 ccddestroy(struct ccd_softc *sc) {
 	mutex_obj_free(sc->sc_iolock);
+	mutex_exit(&sc->sc_dvlock);
 	mutex_destroy(&sc->sc_dvlock);
 	cv_destroy(&sc->sc_stop);
 	cv_destroy(&sc->sc_push);
@@ -291,7 +296,6 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 {
 	struct ccdcinfo *ci = NULL;
 	int ix;
-	struct vattr va;
 	struct ccdgeom *ccg = &cs->sc_geom;
 	char *tmppath;
 	int error, path_alloced;
@@ -343,19 +347,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		/*
 		 * XXX: Cache the component's dev_t.
 		 */
-		vn_lock(vpp[ix], LK_SHARED | LK_RETRY);
-		error = VOP_GETATTR(vpp[ix], &va, l->l_cred);
-		VOP_UNLOCK(vpp[ix]);
-		if (error != 0) {
-#ifdef DEBUG
-			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
-				printf("%s: %s: getattr failed %s = %d\n",
-				    cs->sc_xname, ci->ci_path,
-				    "error", error);
-#endif
-			goto out;
-		}
-		ci->ci_dev = va.va_rdev;
+		ci->ci_dev = vpp[ix]->v_rdev;
 
 		/*
 		 * Get partition information for the component.
@@ -1271,7 +1263,8 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		disk_detach(&cs->sc_dkdev);
 		bufq_free(cs->sc_bufq);
 		ccdput(cs);
-		break;
+		/* Don't break, otherwise cs is read again. */
+		return 0;
 
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *(cs->sc_dkdev.dk_label);

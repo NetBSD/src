@@ -1,5 +1,5 @@
 /* Main code for remote server for GDB.
-   Copyright (C) 1989-2013 Free Software Foundation, Inc.
+   Copyright (C) 1989-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,15 +20,18 @@
 #include "gdbthread.h"
 #include "agent.h"
 #include "notif.h"
+#include "tdesc.h"
 
-#if HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #if HAVE_SIGNAL_H
 #include <signal.h>
 #endif
 #include "gdb_wait.h"
 #include "btrace-common.h"
+#include "filestuff.h"
+#include "tracepoint.h"
+#include "dll.h"
+#include "hostio.h"
 
 /* The thread set with an `Hc' packet.  `Hc' is deprecated in favor of
    `vCont'.  Note the multi-process extensions made `vCont' a
@@ -75,8 +78,6 @@ int program_signals[GDB_SIGNAL_LAST];
 int program_signals_p;
 
 jmp_buf toplevel;
-
-const char *gdbserver_xmltarget;
 
 /* The PID of the originally created or attached inferior.  Used to
    send signals to the process when GDB sends us an asynchronous interrupt
@@ -255,6 +256,7 @@ start_inferior (char **argv)
     {
       struct thread_resume resume_info;
 
+      memset (&resume_info, 0, sizeof (resume_info));
       resume_info.thread = pid_to_ptid (signal_pid);
       resume_info.kind = resume_continue;
       resume_info.sig = 0;
@@ -646,21 +648,22 @@ handle_general_set (char *own_buf)
 static const char *
 get_features_xml (const char *annex)
 {
-  /* gdbserver_xmltarget defines what to return when looking
-     for the "target.xml" file.  Its contents can either be
-     verbatim XML code (prefixed with a '@') or else the name
-     of the actual XML file to be used in place of "target.xml".
+  const struct target_desc *desc = current_target_desc ();
+
+  /* `desc->xmltarget' defines what to return when looking for the
+     "target.xml" file.  Its contents can either be verbatim XML code
+     (prefixed with a '@') or else the name of the actual XML file to
+     be used in place of "target.xml".
 
      This variable is set up from the auto-generated
      init_registers_... routine for the current target.  */
 
-  if (gdbserver_xmltarget
-      && strcmp (annex, "target.xml") == 0)
+  if (desc->xmltarget != NULL && strcmp (annex, "target.xml") == 0)
     {
-      if (*gdbserver_xmltarget == '@')
-	return gdbserver_xmltarget + 1;
+      if (*desc->xmltarget == '@')
+	return desc->xmltarget + 1;
       else
-	annex = gdbserver_xmltarget;
+	annex = desc->xmltarget;
     }
 
 #ifdef USE_XML
@@ -717,7 +720,7 @@ gdb_read_memory (CORE_ADDR memaddr, unsigned char *myaddr, int len)
 
       if (traceframe_read_mem (current_traceframe,
 			       memaddr, myaddr, len, &nbytes))
-	return EIO;
+	return -1;
       /* Data read from trace buffer, we're done.  */
       if (nbytes > 0)
 	return nbytes;
@@ -1115,8 +1118,7 @@ handle_qxfer_libraries_svr4 (const char *annex,
   if (writebuf != NULL)
     return -2;
 
-  if (annex[0] != '\0' || !target_running ()
-      || the_target->qxfer_libraries_svr4 == NULL)
+  if (!target_running () || the_target->qxfer_libraries_svr4 == NULL)
     return -1;
 
   return the_target->qxfer_libraries_svr4 (annex, readbuf, writebuf, offset, len);
@@ -1743,7 +1745,8 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 	       PBUFSIZ - 1);
 
       if (the_target->qxfer_libraries_svr4 != NULL)
-	strcat (own_buf, ";qXfer:libraries-svr4:read+");
+	strcat (own_buf, ";qXfer:libraries-svr4:read+"
+		";augmented-libraries-svr4-read+");
       else
 	{
 	  /* We do not have any hook to indicate whether the non-SVR4 target
@@ -2042,7 +2045,11 @@ handle_v_cont (char *own_buf)
     {
       p++;
 
+      memset (&resume_info[i], 0, sizeof resume_info[i]);
+
       if (p[0] == 's' || p[0] == 'S')
+	resume_info[i].kind = resume_step;
+      else if (p[0] == 'r')
 	resume_info[i].kind = resume_step;
       else if (p[0] == 'c' || p[0] == 'C')
 	resume_info[i].kind = resume_continue;
@@ -2063,9 +2070,21 @@ handle_v_cont (char *own_buf)
 	    goto err;
 	  resume_info[i].sig = gdb_signal_to_host (sig);
 	}
+      else if (p[0] == 'r')
+	{
+	  ULONGEST addr;
+
+	  p = unpack_varlen_hex (p + 1, &addr);
+	  resume_info[i].step_range_start = addr;
+
+	  if (*p != ',')
+	    goto err;
+
+	  p = unpack_varlen_hex (p + 1, &addr);
+	  resume_info[i].step_range_end = addr;
+	}
       else
 	{
-	  resume_info[i].sig = 0;
 	  p = p + 1;
 	}
 
@@ -2311,6 +2330,11 @@ handle_v_requests (char *own_buf, int packet_len, int *new_packet_len)
       if (strncmp (own_buf, "vCont?", 6) == 0)
 	{
 	  strcpy (own_buf, "vCont;c;C;s;S;t");
+	  if (target_supports_range_stepping ())
+	    {
+	      own_buf = own_buf + strlen (own_buf);
+	      strcpy (own_buf, ";r");
+	    }
 	  return;
 	}
     }
@@ -2451,10 +2475,17 @@ queue_stop_reply_callback (struct inferior_list_entry *entry, void *arg)
       if (thread_stopped (thread))
 	{
 	  if (debug_threads)
-	    fprintf (stderr,
-		     "Reporting thread %s as already stopped with %s\n",
-		     target_pid_to_str (entry->id),
-		     target_waitstatus_to_string (&thread->last_status));
+	    {
+	      char *status_string
+		= target_waitstatus_to_string (&thread->last_status);
+
+	      fprintf (stderr,
+		       "Reporting thread %s as already stopped with %s\n",
+		       target_pid_to_str (entry->id),
+		       status_string);
+
+	      xfree (status_string);
+	    }
 
 	  gdb_assert (thread->last_status.kind != TARGET_WAITKIND_IGNORE);
 
@@ -2551,7 +2582,7 @@ static void
 gdbserver_version (void)
 {
   printf ("GNU gdbserver %s%s\n"
-	  "Copyright (C) 2013 Free Software Foundation, Inc.\n"
+	  "Copyright (C) 2014 Free Software Foundation, Inc.\n"
 	  "gdbserver is free software, covered by the "
 	  "GNU General Public License.\n"
 	  "This gdbserver was configured as \"%s\"\n",
@@ -2823,6 +2854,10 @@ main (int argc, char *argv[])
       gdbserver_usage (stderr);
       exit (1);
     }
+
+  /* Remember stdio descriptors.  LISTEN_DESC must not be listed, it will be
+     opened by remote_prepare.  */
+  notice_open_fds ();
 
   /* We need to know whether the remote connection is stdio before
      starting the inferior.  Inferiors created in this scenario have
@@ -3273,7 +3308,8 @@ process_serial_event (void)
       require_running (own_buf);
       if (current_traceframe >= 0)
 	{
-	  struct regcache *regcache = new_register_cache ();
+	  struct regcache *regcache
+	    = new_register_cache (current_target_desc ());
 
 	  if (fetch_traceframe_registers (current_traceframe,
 					  regcache, -1) == 0)
@@ -3514,7 +3550,10 @@ process_serial_event (void)
 	 the whole vStopped list (until it gets an OK).  */
       if (QUEUE_is_empty (notif_event_p, notif_stop.queue))
 	{
-	  fprintf (stderr, "GDBserver exiting\n");
+	  /* Be transparent when GDB is connected through stdio -- no
+	     need to spam GDB's console.  */
+	  if (!remote_connection_is_stdio ())
+	    fprintf (stderr, "GDBserver exiting\n");
 	  remote_close ();
 	  exit (0);
 	}

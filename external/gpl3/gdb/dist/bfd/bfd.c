@@ -1,7 +1,5 @@
 /* Generic BFD library interface and support routines.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 1990-2013 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,6 +20,9 @@
    MA 02110-1301, USA.  */
 
 /*
+INODE
+typedef bfd, Error reporting, BFD front end, BFD front end
+
 SECTION
 	<<typedef bfd>>
 
@@ -310,6 +311,14 @@ CODE_FRAGMENT
 .  unsigned int selective_search : 1;
 .};
 .
+.{* See note beside bfd_set_section_userdata.  *}
+.static inline bfd_boolean
+.bfd_set_cacheable (bfd * abfd, bfd_boolean val)
+.{
+.  abfd->cacheable = val;
+.  return TRUE;
+.}
+.
 */
 
 #include "sysdep.h"
@@ -340,6 +349,9 @@ CODE_FRAGMENT
    where it is needed.  The typedef's used are defined in bfd.h */
 
 /*
+INODE
+Error reporting, Miscellaneous, typedef bfd, BFD front end
+
 SECTION
 	Error reporting
 
@@ -374,6 +386,7 @@ CODE_FRAGMENT
 .  bfd_error_no_armap,
 .  bfd_error_no_more_archived_files,
 .  bfd_error_malformed_archive,
+.  bfd_error_missing_dso,
 .  bfd_error_file_not_recognized,
 .  bfd_error_file_ambiguously_recognized,
 .  bfd_error_no_contents,
@@ -406,6 +419,7 @@ const char *const bfd_errmsgs[] =
   N_("Archive has no index; run ranlib to add one"),
   N_("No more archived files"),
   N_("Malformed archive"),
+  N_("DSO missing from command line"),
   N_("File format not recognized"),
   N_("File format is ambiguous"),
   N_("Section has no contents"),
@@ -727,7 +741,9 @@ _bfd_default_error_handler (const char *fmt, ...)
   vfprintf (stderr, new_fmt, ap);
   va_end (ap);
 
-  putc ('\n', stderr);
+  /* On AIX, putc is implemented as a macro that triggers a -Wunused-value
+     warning, so use the fputc function to avoid it.  */
+  fputc ('\n', stderr);
   fflush (stderr);
 }
 
@@ -881,6 +897,9 @@ bfd_get_assert_handler (void)
 }
 
 /*
+INODE
+Miscellaneous, Memory Usage, Error reporting, BFD front end
+
 SECTION
 	Miscellaneous
 

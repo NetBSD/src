@@ -1,5 +1,5 @@
 /* GDB-specific functions for operating on agent expressions
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #define AX_GDB_H
 
 struct expression;
+union exp_element;
 
 /* Types and enums */
 
@@ -100,13 +101,15 @@ struct axs_value
    record the value of all memory touched by the expression, and leave
    no values on the stack.  The caller can then use the ax_reqs
    function to discover which registers the expression uses.  */
-extern struct agent_expr *gen_trace_for_expr (CORE_ADDR, struct expression *);
+extern struct agent_expr *gen_trace_for_expr (CORE_ADDR, struct expression *,
+					      int);
 
 extern struct agent_expr *gen_trace_for_var (CORE_ADDR, struct gdbarch *,
-					     struct symbol *);
+					     struct symbol *, int);
 
 extern struct agent_expr *gen_trace_for_return_address (CORE_ADDR,
-							struct gdbarch *);
+							struct gdbarch *,
+							int);
 
 extern struct agent_expr *gen_eval_for_expr (CORE_ADDR, struct expression *);
 
@@ -120,8 +123,5 @@ extern struct agent_expr *gen_printf (CORE_ADDR, struct gdbarch *,
 				      CORE_ADDR, LONGEST, const char *, int,
 				      struct format_piece *,
 				      int, struct expression **);
-
-extern int trace_kludge;
-extern int trace_string_kludge;
 
 #endif /* AX_GDB_H */

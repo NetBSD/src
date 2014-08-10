@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.72 2010/09/25 01:42:39 matt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.72.32.1 2014/08/10 06:56:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,6 @@
 
 #include <sys/condvar.h>
 #include <sys/mutex.h>
-#include <sys/rbtree.h>
 
 #ifndef _NFS_NFS_H_
 #include <nfs/nfs.h>
@@ -153,7 +152,6 @@ struct nfsnode {
 #define n_sillyrename	n_un2.nf_silly
 #define n_dirgens	n_un2.ndir_dirgens
 
-	struct rb_node		n_rbnode;	/* red/black node */
 	nfsfh_t			*n_fhp;		/* NFS File Handle */
 	struct vattr		*n_vattr;	/* Vnode attribute cache */
 	struct vnode		*n_vnode;	/* associated vnode */

@@ -9,8 +9,8 @@ cn: config
 #
 # Define global ACLs to disable default read access.
 #
-olcArgsFile:	%LOCALSTATEDIR%/run/slapd.args
-olcPidFile:		%LOCALSTATEDIR%/run/slapd.pid
+olcArgsFile: %LOCALSTATEDIR%/run/slapd.args
+olcPidFile: %LOCALSTATEDIR%/run/slapd.pid
 #
 # Do not enable referrals until AFTER you have a working directory
 # service AND an understanding of referrals.
@@ -41,7 +41,7 @@ dn: cn=schema,cn=config
 objectClass: olcSchemaConfig
 cn: schema
 
-include:		file:///%SYSCONFDIR%/schema/core.ldif
+include: file://%SYSCONFDIR%/schema/core.ldif
 
 # Frontend settings
 #
@@ -80,15 +80,15 @@ dn: olcDatabase=bdb,cn=config
 objectClass: olcDatabaseConfig
 objectClass: olcBdbConfig
 olcDatabase: bdb
-olcSuffix:		dc=my-domain,dc=com
-olcRootDN:		cn=Manager,dc=my-domain,dc=com
+olcSuffix: dc=my-domain,dc=com
+olcRootDN: cn=Manager,dc=my-domain,dc=com
 # Cleartext passwords, especially for the rootdn, should
 # be avoided.  See slappasswd(8) and slapd-config(5) for details.
 # Use of strong authentication encouraged.
-olcRootPW:		secret
+olcRootPW: secret
 # The database directory MUST exist prior to running slapd AND 
 # should only be accessible by the slapd and slap tools.
 # Mode 700 recommended.
 olcDbDirectory:	%LOCALSTATEDIR%/openldap-data
 # Indices to maintain
-olcDbIndex:	objectClass	eq
+olcDbIndex: objectClass eq

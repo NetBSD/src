@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.7 2008/11/01 08:29:37 mickey Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.3 2010/06/03 18:57:21 plunky Exp $	*/
+/*	Id: local2.c,v 1.11 2014/06/03 20:19:50 ragge Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.3.24.1 2014/08/10 07:10:06 tls Exp $	*/
 /*
  * Copyright (c) 2006 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -41,57 +41,30 @@ deflab(int label)
 	printf(LABFMT ":\n", label);
 }
 
-static int prolnum;
-static struct ldq {
-	struct ldq *next;
-	int val;
-	int lab;
-	char *name;
-} *ldq;
-
-
 void
 prologue(struct interpass_prolog *ipp)
 {
-	int i, j;
+	int totstk;
 
-	for (j = i = 0; i < MAXREGS; i++)
-		if (TESTBIT(ipp->ipp_regs, i))
-			j++;
+	totstk = p2maxautooff/(SZINT/SZCHAR);
 
-	printf(".LP%d:	.word 0%o\n", prolnum, j);
+	if (totstk)
+		printf("	.word 0%o\n", totstk);
+	printf("%s:\n", ipp->ipp_name);
 	if (ipp->ipp_vis)
 		printf("	.globl %s\n", ipp->ipp_name);
-	printf("%s:\n", ipp->ipp_name);
-	printf("	sta 3,@40\n");	/* save ret pc on stack */
-	printf("	lda 2,.LP%d-.,1\n", prolnum);
-	printf("	jsr @45\n");
-	prolnum++;
+	printf("	mov 3,0\n");	/* put ret pc in ac0 */
+	printf("	jsr @16\n");	/* jump to prolog */
 }
 
 void
 eoftn(struct interpass_prolog *ipp)
 {
-	int i, j;
 
 	if (ipp->ipp_ip.ip_lbl == 0)
 		return; /* no code needs to be generated */
 
-	/* return from function code */
-	for (j = i = 0; i < MAXREGS; i++)
-		if (TESTBIT(ipp->ipp_regs, i))
-			j++;
-	printf("	lda 2,.LP%d-.,1\n", prolnum);
-	printf("	jmp @46\n");
-	printf(".LP%d:	.word 0%o\n", prolnum, j);
-	prolnum++;
-	while (ldq) {
-		printf(".LP%d:	.word 0%o", ldq->lab, ldq->val);
-		if (ldq->name && *ldq->name)
-			printf("+%s", ldq->name);
-		printf("\n");
-		ldq = ldq->next;
-	}
+	printf("	jmp @17\n");
 }
 
 /*
@@ -193,37 +166,37 @@ bfasg(NODE *p)
 	}
 
 	/* put src into a temporary reg */
-	fprintf(stdout, "	mov%c ", tch);
+	printf("	mov%c ", tch);
 	adrput(stdout, getlr(p, 'R'));
-	fprintf(stdout, ",");
+	printf(",");
 	adrput(stdout, getlr(p, '1'));
-	fprintf(stdout, "\n");
+	printf("\n");
 
 	/* AND away the bits from dest */
 	andval = ~(((1 << fsz) - 1) << shift);
-	fprintf(stdout, "	and%c $%d,", tch, andval);
+	printf("	and%c $%d,", tch, andval);
 	adrput(stdout, fn->n_left);
-	fprintf(stdout, "\n");
+	printf("\n");
 
 	/* AND away unwanted bits from src */
 	andval = ((1 << fsz) - 1);
-	fprintf(stdout, "	and%c $%d,", tch, andval);
+	printf("	and%c $%d,", tch, andval);
 	adrput(stdout, getlr(p, '1'));
-	fprintf(stdout, "\n");
+	printf("\n");
 
 	/* SHIFT left src number of bits */
 	if (shift) {
-		fprintf(stdout, "	sal%c $%d,", tch, shift);
+		printf("	sal%c $%d,", tch, shift);
 		adrput(stdout, getlr(p, '1'));
-		fprintf(stdout, "\n");
+		printf("\n");
 	}
 
 	/* OR in src to dest */
-	fprintf(stdout, "	or%c ", tch);
+	printf("	or%c ", tch);
 	adrput(stdout, getlr(p, '1'));
-	fprintf(stdout, ",");
+	printf(",");
 	adrput(stdout, fn->n_left);
-	fprintf(stdout, "\n");
+	printf("\n");
 }
 #endif
 
@@ -235,24 +208,47 @@ bfasg(NODE *p)
 static void
 starg(NODE *p)
 {
-	FILE *fp = stdout;
-
-	fprintf(fp, "	subl $%d,%%esp\n", p->n_stsize);
-	fprintf(fp, "	pushl $%d\n", p->n_stsize);
+	printf("	subl $%d,%%esp\n", p->n_stsize);
+	printf("	pushl $%d\n", p->n_stsize);
 	expand(p, 0, "	pushl AL\n");
 	expand(p, 0, "	leal 8(%esp),A1\n");
 	expand(p, 0, "	pushl A1\n");
-	fprintf(fp, "	call memcpy\n");
-	fprintf(fp, "	addl $12,%%esp\n");
+	printf("	call memcpy\n");
+	printf("	addl $12,%%esp\n");
 }
 #endif
 
 void
 zzzcode(NODE *p, int c)
 {
-	struct ldq *ld;
+	int pr;
 
 	switch (c) {
+
+	case 'C':  /* remove from stack after subroutine call */
+		pr = p->n_qual;
+		switch (pr) {
+		case 1:
+			printf("\tisz sp\n");
+			break;
+		case 2:
+			printf("\tisz sp\n\tisz sp\n");
+			break;
+		case 3:
+			printf("\tisz sp\n\tisz sp\n\tisz sp\n");
+			break;
+		case 4:
+			printf("\tisz sp\n\tisz sp\n\tisz sp\n\tisz sp\n");
+			break;
+		default:
+			printf("	lda 2,[0%o]\n", pr);
+			printf("	lda 3,sp\n");
+			printf("	add 2,3\n");
+			printf("	sta 3,sp\n");
+			break;
+		}
+		break;
+#if 0
 	case 'A': /* print out a skip ending if any numbers in queue */
 		if (ldq == NULL)
 			return;
@@ -280,6 +276,7 @@ zzzcode(NODE *p, int c)
 	case 'D': /* fix reference to external variable via indirection */
 		zzzcode(p, 'B');
 		break;
+#endif
 
 	default:
 		comperr("zzzcode %c", c);
@@ -360,11 +357,11 @@ shtemp(NODE *p)
 void
 adrcon(CONSZ val)
 {
-	printf("$" CONFMT, val);
+	printf("[" CONFMT "]", val);
 }
 
 /*
- * Conput should only be used by e2print on Nova.
+ * Conput prints out a constant.
  */
 void
 conput(FILE *fp, NODE *p)
@@ -376,9 +373,9 @@ conput(FILE *fp, NODE *p)
 		if (p->n_name[0] != '\0') {
 			fprintf(fp, "%s", p->n_name);
 			if (val)
-				fprintf(fp, "+%d", val);
+				fprintf(fp, "+0%o", val);
 		} else
-			fprintf(fp, "%d", val);
+			fprintf(fp, "0%o", val);
 		return;
 
 	default:
@@ -405,7 +402,7 @@ comperr("upput");
 	size /= SZCHAR;
 	switch (p->n_op) {
 	case REG:
-		fprintf(stdout, "%%%s", &rnames[p->n_rval][3]);
+		printf("%%%s", &rnames[p->n_rval][3]);
 		break;
 
 	case NAME:
@@ -415,7 +412,7 @@ comperr("upput");
 		p->n_lval -= size;
 		break;
 	case ICON:
-		fprintf(stdout, "$" CONFMT, p->n_lval >> 32);
+		printf("$" CONFMT, p->n_lval >> 32);
 		break;
 	default:
 		comperr("upput bad op %d size %d", p->n_op, size);
@@ -426,50 +423,56 @@ comperr("upput");
 void
 adrput(FILE *io, NODE *p)
 {
+	int i;
 	/* output an address, with offsets, from p */
 
+static int looping = 7;
+if (looping == 0) {
+	looping = 1;
+	printf("adrput %p\n", p);
+	fwalk(p, e2print, 0);
+	looping = 0;
+}
 	if (p->n_op == FLD)
 		p = p->n_left;
 
 	switch (p->n_op) {
-
-	case NAME:
-		if (p->n_name[0] != '\0')
-			fputs(p->n_name, io);
-		if (p->n_lval != 0)
-			fprintf(io, "+" CONFMT, p->n_lval);
-		return;
-
-	case OREG:
-		printf("%d,%s", (int)p->n_lval, rnames[p->n_rval]);
-		return;
-
 	case ICON:
 		/* addressable value of the constant */
-		fputc('$', io);
+		fputc('[', io);
+		if (p->n_type == INCREF(CHAR) || p->n_type == INCREF(UCHAR))
+			printf(".byteptr ");
 		conput(io, p);
-		return;
+		fputc(']', io);
+		break;
 
-	case MOVE:
-	case REG:
-		switch (p->n_type) {
-		case LONGLONG:
-		case ULONGLONG:
-			fprintf(io, "%%%c%c%c", rnames[p->n_rval][0],
-			    rnames[p->n_rval][1], rnames[p->n_rval][2]);
-			break;
-		case SHORT:
-		case USHORT:
-			fprintf(io, "%%%s", &rnames[p->n_rval][2]);
-			break;
-		default:
-			fprintf(io, "%s", rnames[p->n_rval]);
+	case NAME:
+		if (p->n_name[0] != '\0') {
+			fputs(p->n_name, io);
+			if (p->n_lval != 0)
+				fprintf(io, "+" CONFMT, p->n_lval);
+		} else
+			fprintf(io, CONFMT, p->n_lval);
+		break;;
+
+	case OREG:
+		if (p->n_name[0])
+			comperr("name in OREG");
+		i = (int)p->n_lval;
+		if (i < 0) {
+			putchar('-');
+			i = -i;
 		}
-		return;
+		printf("0%o,%s", i, rnames[regno(p)]);
+		break;
+
+	case REG:
+		fprintf(io, "%s", rnames[p->n_rval]);
+		break;
 
 	default:
 		comperr("illegal address, op %d, node %p", p->n_op, p);
-		return;
+		break;
 
 	}
 }
@@ -512,29 +515,30 @@ rmove(int s, int d, TWORD t)
 int
 COLORMAP(int c, int *r)
 {
-	int num;
+	int num = 0;
 
 	switch (c) {
 	case CLASSA:
-		num = r[CLASSB] + r[CLASSA];
-		return num < 4;
+		num = (r[CLASSA]+r[CLASSB]) < AREGCNT;
+		break;
 	case CLASSB:
-		num = r[CLASSB] + r[CLASSA];
-		return num < 2;
+		num = (r[CLASSB]+r[CLASSA]) < BREGCNT;
+		break;
 	case CLASSC:
-		return r[CLASSC] < CREGCNT;
+		num = r[CLASSC] < CREGCNT;
+		break;
 	case CLASSD:
-		return r[CLASSD] < DREGCNT;
+		num = r[CLASSD] < DREGCNT;
+		break;
+	case CLASSE:
+		num = r[CLASSE] < EREGCNT;
+		break;
 	}
-	return 0; /* XXX gcc */
+	return num;
 }
 
 char *rnames[] = {
-	"0", "1", "2", "3",
-	"050", "051", "052", "053", "054", "055", "056", "057",
-	"060", "061", "062", "063", "064", "065", "066", "067",
-	"070", "071", "072", "073", "074", "075", "076", "077",
-	"041", "040"
+	"0", "1", "2", "3", "2", "3", "fp", "sp"
 };
 
 /*
@@ -543,7 +547,7 @@ char *rnames[] = {
 int
 gclass(TWORD t)
 {
-	return CLASSA;
+	return ISPTR(t) ? CLASSB : CLASSA;
 }
 
 /*
@@ -552,6 +556,20 @@ gclass(TWORD t)
 void
 lastcall(NODE *p)
 {
+	NODE *op = p;
+	int size = 0;
+
+	p->n_qual = 0;
+	if (p->n_op != CALL && p->n_op != FORTCALL && p->n_op != STCALL)
+		return;
+	for (p = p->n_right; p->n_op == CM; p = p->n_left) { 
+		if (p->n_right->n_op != ASSIGN)
+			size += szty(p->n_right->n_type);
+	}
+	if (p->n_op != ASSIGN)
+		size += szty(p->n_type);
+
+        op->n_qual = size; /* XXX */
 }
 
 /*
@@ -560,6 +578,10 @@ lastcall(NODE *p)
 int
 special(NODE *p, int shape)
 {
+	switch (shape) {
+	case SLDFPSP:
+		return regno(p) == FPREG || regno(p) == STKREG;
+	}
 	return SRNOPE;
 }
 
@@ -578,4 +600,23 @@ int
 myxasm(struct interpass *ip, NODE *p)
 {
 	return 0;
+}
+
+void
+storemod(NODE *q, int off)
+{
+	NODE *l, *r, *p;
+
+	if (off < MAXZP*2) {
+		q->n_op = NAME;
+		q->n_name = "";
+		q->n_lval = -off/2 + ZPOFF;
+	} else {
+		l = mklnode(REG, 0, FPREG, INCREF(q->n_type));
+		r = mklnode(ICON, off, 0, INT);
+		p = mkbinode(PLUS, l, r, INCREF(q->n_type));
+		q->n_op = UMUL;
+		q->n_left = p;
+	}
+	q->n_rval = q->n_su = 0;
 }

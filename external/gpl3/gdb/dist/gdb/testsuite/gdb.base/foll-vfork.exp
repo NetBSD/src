@@ -1,4 +1,4 @@
-#   Copyright 1997-2013 Free Software Foundation, Inc.
+#   Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,11 @@ if [istarget "hppa*-hp-hpux10.20"] then {
 
 standard_testfile
 
-if {[build_executable $testfile.exp $testfile $srcfile {debug}] == -1} {
+set compile_options debug
+set dirname [relative_filename [pwd] [file dirname $binfile]]
+lappend compile_options "additional_flags=-DBASEDIR=\"$dirname\""
+
+if {[build_executable $testfile.exp $testfile $srcfile $compile_options] == -1} {
     untested "failed to compile $testfile"
     return -1
 }
@@ -55,7 +59,7 @@ if {[build_executable $testfile.exp $testfile $srcfile {debug}] == -1} {
 set testfile2 "vforked-prog"
 set srcfile2 ${testfile2}.c
 
-if {[build_executable $testfile.exp $testfile2 $srcfile2 {debug}] == -1} {
+if {[build_executable $testfile.exp $testfile2 $srcfile2 $compile_options] == -1} {
     untested "failed to compile $testfile2"
     return -1
 }

@@ -4459,7 +4459,7 @@ for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
   for ac_t in install-sh install.sh shtool; do
     if test -f "$ac_dir/$ac_t"; then
       ac_aux_dir=$ac_dir
-      ac_install_sh="$ac_aux_dir/$ac_t -c"
+      ac_install_sh="$SHELL $ac_aux_dir/$ac_t -c"
       break 2
     fi
   done

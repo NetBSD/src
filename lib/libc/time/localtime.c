@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.81 2013/12/26 18:34:28 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.81.2.1 2014/08/10 06:51:51 tls Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.81 2013/12/26 18:34:28 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.81.2.1 2014/08/10 06:51:51 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -388,7 +388,7 @@ tzload(timezone_t sp, const char *name, const int doextend)
 	} u_t;
 	u_t *			up;
 
-	up = calloc(1, sizeof *up);
+	up = malloc(sizeof *up);
 	if (up == NULL)
 		return -1;
 
@@ -1062,6 +1062,7 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 			sp->ttis[1].tt_gmtoff = -stdoffset;
 			sp->ttis[1].tt_isdst = 0;
 			sp->ttis[1].tt_abbrind = 0;
+			sp->defaulttype = 0;
 			timecnt = 0;
 			janfirst = 0;
 			sp->timecnt = 0;
@@ -1189,6 +1190,7 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 			sp->ttis[1].tt_isdst = TRUE;
 			sp->ttis[1].tt_abbrind = (int)(stdlen + 1);
 			sp->typecnt = 2;
+			sp->defaulttype = 0;
 		}
 	} else {
 		dstlen = 0;
@@ -1198,6 +1200,7 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 		sp->ttis[0].tt_gmtoff = -stdoffset;
 		sp->ttis[0].tt_isdst = 0;
 		sp->ttis[0].tt_abbrind = 0;
+		sp->defaulttype = 0;
 	}
 	sp->charcnt = (int)(stdlen + 1);
 	if (dstlen != 0)
@@ -1225,7 +1228,7 @@ gmtload(timezone_t sp)
 timezone_t
 tzalloc(const char *name)
 {
-	timezone_t sp = calloc(1, sizeof *sp);
+	timezone_t sp = malloc(sizeof *sp);
 	if (sp == NULL)
 		return NULL;
 	if (tzload(sp, name, TRUE) != 0) {
@@ -1251,7 +1254,7 @@ tzsetwall_unlocked(void)
 
 	if (lclptr == NULL) {
 		int saveerrno = errno;
-		lclptr = calloc(1, sizeof *lclptr);
+		lclptr = malloc(sizeof *lclptr);
 		errno = saveerrno;
 		if (lclptr == NULL) {
 			settzname();	/* all we can do */
@@ -1304,7 +1307,7 @@ tzset_unlocked(void)
 
 	if (lclptr == NULL) {
 		int saveerrno = errno;
-		lclptr = calloc(1, sizeof *lclptr);
+		lclptr = malloc(sizeof *lclptr);
 		errno = saveerrno;
 		if (lclptr == NULL) {
 			settzname();	/* all we can do */
@@ -1469,7 +1472,7 @@ gmtsub(const timezone_t sp, const time_t *const timep,
 		int saveerrno;
 		gmt_is_set = TRUE;
 		saveerrno = errno;
-		gmtptr = calloc(1, sizeof *gmtptr);
+		gmtptr = malloc(sizeof *gmtptr);
 		errno = saveerrno;
 		if (gmtptr != NULL)
 			gmtload(gmtptr);
@@ -1482,13 +1485,8 @@ gmtsub(const timezone_t sp, const time_t *const timep,
 	** "UT+xxxx" or "UT-xxxx" if offset is non-zero,
 	** but this is no time for a treasure hunt.
 	*/
-	if (offset != 0)
-		tmp->TM_ZONE = (__aconst char *)__UNCONST(wildabbr);
-	else {
-		if (gmtptr == NULL)
-			tmp->TM_ZONE = (__aconst char *)__UNCONST(gmt);
-		else	tmp->TM_ZONE = gmtptr->chars;
-	}
+	tmp->TM_ZONE = offset ? __UNCONST(wildabbr) : gmtptr ? gmtptr->chars :
+	    __UNCONST(gmt);
 #endif /* defined TM_ZONE */
 	return result;
 }
@@ -2075,17 +2073,15 @@ time1(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 	if (tmp->tm_isdst > 1)
 		tmp->tm_isdst = 1;
 	t = time2(sp, tmp, funcp, offset, &okay);
-#ifdef PCTS
-	/*
-	** PCTS code courtesy Grant Sullivan.
-	*/
 	if (okay)
 		return t;
 	if (tmp->tm_isdst < 0)
+#ifdef PCTS
+		/*
+		** POSIX Conformance Test Suite code courtesy Grant Sullivan.
+		*/
 		tmp->tm_isdst = 0;	/* reset to std and try again */
-#endif /* defined PCTS */
-#ifndef PCTS
-	if (okay || tmp->tm_isdst < 0)
+#else
 		return t;
 #endif /* !defined PCTS */
 	/*

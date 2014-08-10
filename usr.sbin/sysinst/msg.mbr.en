@@ -1,0 +1,193 @@
+/*	$NetBSD: msg.mbr.en,v 1.2.2.2 2014/08/10 07:00:24 tls Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* MBR Message catalog -- English, i386 version */
+
+/* NB: Lines ending in spaces force line breaks */
+
+message fullpart
+{We are now going to install NetBSD on the disk %s.
+
+NetBSD requires a single partition in the disk's MBR partition table,
+this is split further by the NetBSD disklabel.
+NetBSD can also access file systems in other MBR partitions.
+
+If you select 'Use the entire disk' then the previous contents of the
+disk will be overwritten and a single MBR partition used to cover the
+entire disk. 
+If you want to install more than one operating system then edit the
+MBR partition table and create a partition for NetBSD.
+
+A few hundred MB is enough for a basic installation, but you should allow
+extra for additional software and user files. 
+Allow at least 5GB if you want to build NetBSD itself.
+}
+
+message Select_your_choice
+{Which would you like to do?}
+message Use_only_part_of_the_disk
+{Edit the MBR partition table}
+message Use_the_entire_disk
+{Use the entire disk}
+
+/* the %s's will expand into three character strings */
+message part_header
+{   Total disk size %lu %s.
+
+.if BOOTSEL
+   Start(%3s)  Size(%3s) Flg Kind                    Bootmenu
+   ---------- ---------- --- ----------------------- --------
+.else
+   Start(%3s)  Size(%3s) Flg Kind
+   ---------- ---------- --- ----------------
+.endif
+}
+
+message part_row_used
+{%10d %10d %c%c%c}
+
+message noactivepart
+{You have not marked a partition active. This may cause your system to not
+start up properly. Should the NetBSD partition of the disk be marked active?}
+
+message setbiosgeom
+{
+You will be prompted for the geometry.
+Please enter the number of sectors per track (maximum 63)
+and number of heads (maximum 256) that the BIOS uses to access the disk. 
+The number of cylinders will be calculated from the disk size.
+
+}
+
+message nobiosgeom
+{Sysinst could not automatically determine the BIOS geometry of the disk. 
+The physical geometry is %d cylinders %d sectors %d heads\n}
+
+message biosguess
+{Using the information already on the disk, my best guess for the BIOS
+geometry is %d cylinders %d sectors %d heads\n}
+
+message realgeom
+{real geom: %d cyl, %d heads, %d sec  (NB: for comparison only)\n}
+
+message biosgeom
+{BIOS geom: %d cyl, %d heads, %d sec\n}
+
+message ovrwrite
+{Your disk currently has a non-NetBSD partition.  Do you really want to
+overwrite that partition with NetBSD?
+}
+
+message Partition_OK
+{Partition OK}
+
+message ptn_type
+{      type: %s}
+message ptn_start
+{     start: %d %s}
+message ptn_size
+{      size: %d %s}
+message ptn_end
+{       end: %d %s}
+message ptn_active
+{    active: %s}
+message ptn_install
+{   install: %s}
+.if BOOTSEL
+message bootmenu
+{  bootmenu: %s}
+message boot_dflt
+{   default: %s}
+.endif
+
+message get_ptn_size {%ssize (maximum %d %s)}
+message Invalid_numeric {Invalid numeric: }
+message Too_large {Too large: }
+message Space_allocated {Space allocated: }
+message ptn_starts {Space at %d..%d %s (size %d %s)\n}
+message get_ptn_start {%s%sStart (in %s)}
+message get_ptn_id {Partition kind (0..255)}
+message No_free_space {No free space}
+message Only_one_extended_ptn {There can only be one extended partition}
+
+message editparttable
+{The Current MBR partition table is shown below. 
+Flgs: a => Active partition,
+.if BOOTSEL
+d => bootselect default,
+.endif
+I => Install here. 
+Select the partition you wish to change:
+
+}
+
+message Partition_table_ok
+{Partition table OK}
+
+message Dont_change
+{Don't change}
+message Other_kind
+{Other, input number}
+
+message reeditpart
+{
+
+Do you want to re-edit the MBR table (or abandon the installation)?
+}
+
+message nobsdpart
+{There is no NetBSD partition in the MBR partition table.}
+
+message multbsdpart
+{There are multiple NetBSD partitions in the MBR partition table.
+You should set the 'install' flag on the one you want to use.}
+
+message dofdisk
+{Setting up the DOS partition table ...
+}
+
+message wmbrfail
+{Rewrite of MBR failed. I can't continue.}
+
+.if 0
+.if BOOTSEL
+message Set_timeout_value
+{Set timeout value}
+
+message bootseltimeout
+{Boot menu timeout: %d\n}
+
+.endif
+.endif
+

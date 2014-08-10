@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.h,v 1.7 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.7.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -97,10 +97,11 @@ typedef struct dns_fetchevent {
 #define DNS_FETCHOPT_NOVALIDATE		0x020	     /*%< Disable validation. */
 #define DNS_FETCHOPT_EDNS512		0x040	     /*%< Advertise a 512 byte
 							  UDP buffer. */
-#define DNS_FETCHOPT_WANTNSID		0x080         /*%< Request NSID */
-#define DNS_FETCHOPT_PREFETCH		0x100         /*%< Request NSID */
+#define DNS_FETCHOPT_WANTNSID		0x080	     /*%< Request NSID */
+#define DNS_FETCHOPT_PREFETCH		0x100	     /*%< Do prefetch */
 #define DNS_FETCHOPT_NOCDFLAG		0x200	     /*%< Don't set CD flag. */
 
+/* Reserved in use by adb.c		0x00400000 */
 #define	DNS_FETCHOPT_EDNSVERSIONSET	0x00800000
 #define	DNS_FETCHOPT_EDNSVERSIONMASK	0xff000000
 #define	DNS_FETCHOPT_EDNSVERSIONSHIFT	24

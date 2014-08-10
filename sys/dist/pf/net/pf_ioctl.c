@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.49 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.49.2.1 2014/08/10 06:55:09 tls Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.49 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.49.2.1 2014/08/10 06:55:09 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -179,6 +179,7 @@ const struct cdevsw pf_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

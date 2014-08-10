@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.123 2014/03/24 13:42:41 hannken Exp $	*/
+/*	$NetBSD: pstat.c,v 1.123.2.1 2014/08/10 07:00:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.123 2014/03/24 13:42:41 hannken Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.123.2.1 2014/08/10 07:00:07 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -330,6 +330,9 @@ vnodemode(void)
 			maddr = vp->v_mount;
 			mount_print(mp);
 			vnode_header();
+			/*
+			 * XXX do this in a more fs-independent way
+			 */
 			if (FSTYPE_IS(mp, MOUNT_FFS) ||
 			    FSTYPE_IS(mp, MOUNT_MFS)) {
 				ufs_header();
@@ -455,8 +458,6 @@ const struct flagbit_desc ufs_flags[] = {
 	{ IN_ACCESSED,	'a' },
 	{ IN_SHLOCK,	'S' },
 	{ IN_EXLOCK,	'E' },
-	{ IN_CLEANING,	'c' },
-	{ IN_ADIROP,	'D' },
 	{ IN_SPACECOUNTED, 's' },
 	{ 0,		'\0' },
 };

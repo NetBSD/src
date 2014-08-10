@@ -1,4 +1,4 @@
-/*	$NetBSD: test-milter.c,v 1.1.1.3 2011/03/02 19:32:22 tron Exp $	*/
+/*	$NetBSD: test-milter.c,v 1.1.1.3.20.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -22,8 +22,8 @@
 /*	Specifies a non-default reply for the MTA command specified
 /*	with \fB-c\fR. The default is \fBtempfail\fR.
 /* .IP "\fB-A address\fR"
-/*	Add the specified recipient address. Multiple -A options
-/*	are supported.
+/*	Add the specified recipient address (specify ESMTP parameters
+/*	separated by space). Multiple -A options are supported.
 /* .IP "\fB-b pathname
 /*	Replace the message body by the content of the specified file.
 /* .IP "\fB-c connect|helo|mail|rcpt|data|header|eoh|body|eom|unknown|close|abort\fR"
@@ -33,6 +33,9 @@
 /*	Terminate after \fIcount\fR connections.
 /* .IP "\fB-d\fI level\fR"
 /*	Enable libmilter debugging at the specified level.
+/* .IP "\fB-D\fI address\fR"
+/*	Delete the specified recipient address. Multiple -D options
+/*	are supported.
 /* .IP "\fB-f \fIsender\fR
 /*	Replace the sender by the specified address.
 /* .IP "\fB-h \fI'index header-label header-value'\fR"
@@ -161,8 +164,10 @@ static char *body_file;
 #endif
 
 #define MAX_RCPT	10
-int     rcpt_count = 0;
-char   *rcpt_addr[MAX_RCPT];
+int     add_rcpt_count = 0;
+char   *add_rcpt[MAX_RCPT];
+int     del_rcpt_count = 0;
+char   *del_rcpt[MAX_RCPT];
 
 static const char *macro_names[] = {
     "_",
@@ -355,10 +360,24 @@ static sfsistat test_eom(SMFICTX *ctx)
 #endif
     {
 	int     count;
+	char   *args;
 
-	for (count = 0; count < rcpt_count; count++)
-	    if (smfi_addrcpt(ctx, rcpt_addr[count]) == MI_FAILURE)
-		fprintf(stderr, "smfi_addrcpt `%s' failed\n", rcpt_addr[count]);
+	for (count = 0; count < add_rcpt_count; count++) {
+	    if ((args = strchr(add_rcpt[count], ' ')) != 0) {
+		*args++ = 0;
+		if (smfi_addrcpt_par(ctx, add_rcpt[count], args) == MI_FAILURE)
+		    fprintf(stderr, "smfi_addrcpt_par `%s' `%s' failed\n",
+			    add_rcpt[count], args);
+	    } else {
+		if (smfi_addrcpt(ctx, add_rcpt[count]) == MI_FAILURE)
+		    fprintf(stderr, "smfi_addrcpt `%s' failed\n",
+			    add_rcpt[count]);
+	    }
+	}
+
+	for (count = 0; count < del_rcpt_count; count++)
+	    if (smfi_delrcpt(ctx, del_rcpt[count]) == MI_FAILURE)
+		fprintf(stderr, "smfi_delrcpt `%s' failed\n", del_rcpt[count]);
     }
     return (test_reply(ctx, test_eom_reply));
 }
@@ -542,17 +561,17 @@ int     main(int argc, char **argv)
     char   *noreply = 0;
     const struct noproto_map *np;
 
-    while ((ch = getopt(argc, argv, "a:A:b:c:C:d:f:h:i:lm:M:n:N:p:rv")) > 0) {
+    while ((ch = getopt(argc, argv, "a:A:b:c:C:d:D:f:h:i:lm:M:n:N:p:rv")) > 0) {
 	switch (ch) {
 	case 'a':
 	    action = optarg;
 	    break;
 	case 'A':
-	    if (rcpt_count >= MAX_RCPT) {
+	    if (add_rcpt_count >= MAX_RCPT) {
 		fprintf(stderr, "too many -A options\n");
 		exit(1);
 	    }
-	    rcpt_addr[rcpt_count++] = optarg;
+	    add_rcpt[add_rcpt_count++] = optarg;
 	    break;
 	case 'b':
 #ifdef SMFIR_REPLBODY
@@ -573,6 +592,13 @@ int     main(int argc, char **argv)
 		fprintf(stderr, "smfi_setdbg failed\n");
 		exit(1);
 	    }
+	    break;
+	case 'D':
+	    if (del_rcpt_count >= MAX_RCPT) {
+		fprintf(stderr, "too many -D options\n");
+		exit(1);
+	    }
+	    del_rcpt[del_rcpt_count++] = optarg;
 	    break;
 	case 'f':
 #ifdef SMFIR_CHGFROM
@@ -690,7 +716,7 @@ int     main(int argc, char **argv)
 	    fprintf(stderr,
 		    "usage: %s [-dv] \n"
 		    "\t[-a action]              non-default action\n"
-		    "\t[-b body_text]           replace body\n",
+		    "\t[-b body_text]           replace body\n"
 		    "\t[-c command]             non-default action trigger\n"
 		    "\t[-h 'index label value'] replace header\n"
 		    "\t[-i 'index label value'] insert header\n"

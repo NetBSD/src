@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.9 2014/03/16 05:20:24 dholland Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.9.2.1 2014/08/10 06:53:58 tls Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.9 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.9.2.1 2014/08/10 06:53:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -94,6 +94,7 @@ const struct cdevsw flash_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

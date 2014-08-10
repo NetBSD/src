@@ -1,4 +1,4 @@
-# Copyright 2010-2013 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,18 +29,11 @@ proc gdb_compile_opencl_hostapp {clsource executable options} {
 
 # Run a test on the target to check if it supports OpenCL. Return 0 if so, 1 if
 # it does not.
-proc skip_opencl_tests {} {
-    global skip_opencl_tests_saved srcdir objdir subdir gdb_prompt
+gdb_caching_proc skip_opencl_tests {
+    global srcdir objdir subdir gdb_prompt
     global inferior_exited_re
 
-    # Use the cached value, if it exists.  Cache value per "board" to handle
-    # runs with multiple options (e.g. unix/{-m32,-64}) correctly.
     set me "skip_opencl_tests"
-    set board [target_info name]
-    if [info exists skip_opencl_tests_saved($board)] {
-        verbose "$me:  returning saved $skip_opencl_tests_saved($board)" 2
-        return $skip_opencl_tests_saved($board)
-    }
 
     # Set up, compile, and execute an OpenCL program.  Include the current
     # process ID in the file name of the executable to prevent conflicts with
@@ -52,8 +45,9 @@ proc skip_opencl_tests {} {
     set compile_flags {debug nowarnings quiet}
 
     if { [gdb_compile_opencl_hostapp "${clprogram}" "${executable}" "${compile_flags}" ] != "" } {
+	remote_file target delete ${clprogram}
         verbose "$me:  compiling OpenCL binary failed, returning 1" 2
-	return [set skip_opencl_tests_saved($board) 1]
+	return 1
     }
 
     # Compilation succeeded so now run it via gdb.
@@ -62,15 +56,15 @@ proc skip_opencl_tests {} {
     gdb_expect 30 {
         -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
             verbose -log "\n$me: OpenCL support detected"
-            set skip_opencl_tests_saved($board) 0
+            set result 0
         }
         -re ".*$inferior_exited_re code.*${gdb_prompt} $" {
             verbose -log "\n$me: OpenCL support not detected"
-            set skip_opencl_tests_saved($board) 1
+            set result 1
         }
         default {
             verbose -log "\n$me OpenCL support not detected (default case)"
-            set skip_opencl_tests_saved($board) 1
+            set result 1
         }
     }
     gdb_exit
@@ -79,6 +73,6 @@ proc skip_opencl_tests {} {
     # Delete the OpenCL program source file.
     remote_file target delete ${clprogram}
 
-    verbose "$me:  returning $skip_opencl_tests_saved($board)" 2
-    return $skip_opencl_tests_saved($board)
+    verbose "$me:  returning $result" 2
+    return $result
 }

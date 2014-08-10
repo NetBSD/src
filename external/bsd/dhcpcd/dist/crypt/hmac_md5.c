@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: hmac_md5.c,v 1.1.1.1 2014/02/25 13:14:31 roy Exp $");
+ __RCSID("$NetBSD: hmac_md5.c,v 1.1.1.1.2.1 2014/08/10 07:06:59 tls Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -33,10 +33,13 @@
 
 #include "crypt.h"
 
+#include "../config.h"
 #ifdef HAVE_MD5_H
-#include <md5.h>
+#  ifndef DEPGEN
+#    include <md5.h>
+#  endif
 #else
-#include "md5.h"
+#  include "md5.h"
 #endif
 
 #define HMAC_PAD_LEN	64
@@ -45,8 +48,8 @@
 
 /* hmac_md5 as per RFC3118 */
 void
-hmac_md5(const uint8_t *text, int text_len,
-    const uint8_t *key, int key_len,
+hmac_md5(const uint8_t *text, size_t text_len,
+    const uint8_t *key, size_t key_len,
     uint8_t *digest)
 {
 	uint8_t k_ipad[HMAC_PAD_LEN], k_opad[HMAC_PAD_LEN];

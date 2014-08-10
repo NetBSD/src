@@ -1,4 +1,4 @@
-/*	$NetBSD: name_mask.c,v 1.1.1.3 2013/01/02 18:59:13 tron Exp $	*/
+/*	$NetBSD: name_mask.c,v 1.1.1.3.6.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -450,8 +450,7 @@ static int hex_to_ulong(char *value, unsigned long mask, unsigned long *ulp)
     if (*cp != '\0' || errno == ERANGE)
 	return (0);
 
-    if (ulp)
-	*ulp = (result & mask);
+    *ulp = (result & mask);
     return (*ulp == result);
 }
 

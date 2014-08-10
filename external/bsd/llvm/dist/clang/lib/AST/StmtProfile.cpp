@@ -79,9 +79,8 @@ void StmtProfiler::VisitStmt(const Stmt *S) {
 
 void StmtProfiler::VisitDeclStmt(const DeclStmt *S) {
   VisitStmt(S);
-  for (DeclStmt::const_decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
-       D != DEnd; ++D)
-    VisitDecl(*D);
+  for (const auto *D : S->decls())
+    VisitDecl(D);
 }
 
 void StmtProfiler::VisitNullStmt(const NullStmt *S) {
@@ -270,14 +269,29 @@ void OMPClauseProfiler::VisitOMPIfClause(const OMPIfClause *C) {
     Profiler->VisitStmt(C->getCondition());
 }
 
+void OMPClauseProfiler::VisitOMPNumThreadsClause(const OMPNumThreadsClause *C) {
+  if (C->getNumThreads())
+    Profiler->VisitStmt(C->getNumThreads());
+}
+
+void OMPClauseProfiler::VisitOMPSafelenClause(const OMPSafelenClause *C) {
+  if (C->getSafelen())
+    Profiler->VisitStmt(C->getSafelen());
+}
+
+void OMPClauseProfiler::VisitOMPCollapseClause(const OMPCollapseClause *C) {
+  if (C->getNumForLoops())
+    Profiler->VisitStmt(C->getNumForLoops());
+}
+
 void OMPClauseProfiler::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
+
+void OMPClauseProfiler::VisitOMPProcBindClause(const OMPProcBindClause *C) { }
 
 template<typename T>
 void OMPClauseProfiler::VisitOMPClauseList(T *Node) {
-  for (typename T::varlist_const_iterator I = Node->varlist_begin(),
-                                          E = Node->varlist_end();
-         I != E; ++I)
-    Profiler->VisitStmt(*I);
+  for (auto *I : Node->varlists())
+    Profiler->VisitStmt(I);
 }
 
 void OMPClauseProfiler::VisitOMPPrivateClause(const OMPPrivateClause *C) {
@@ -288,6 +302,17 @@ void OMPClauseProfiler::VisitOMPFirstprivateClause(
   VisitOMPClauseList(C);
 }
 void OMPClauseProfiler::VisitOMPSharedClause(const OMPSharedClause *C) {
+  VisitOMPClauseList(C);
+}
+void OMPClauseProfiler::VisitOMPLinearClause(const OMPLinearClause *C) {
+  VisitOMPClauseList(C);
+  Profiler->VisitStmt(C->getStep());
+}
+void OMPClauseProfiler::VisitOMPAlignedClause(const OMPAlignedClause *C) {
+  VisitOMPClauseList(C);
+  Profiler->VisitStmt(C->getAlignment());
+}
+void OMPClauseProfiler::VisitOMPCopyinClause(const OMPCopyinClause *C) {
   VisitOMPClauseList(C);
 }
 }
@@ -542,7 +567,7 @@ void StmtProfiler::VisitGenericSelectionExpr(const GenericSelectionExpr *S) {
   for (unsigned i = 0; i != S->getNumAssocs(); ++i) {
     QualType T = S->getAssocType(i);
     if (T.isNull())
-      ID.AddPointer(0);
+      ID.AddPointer(nullptr);
     else
       VisitType(T);
     VisitExpr(S->getAssocExpr(i));
@@ -936,10 +961,10 @@ StmtProfiler::VisitCXXPseudoDestructorExpr(const CXXPseudoDestructorExpr *S) {
   VisitExpr(S);
   ID.AddBoolean(S->isArrow());
   VisitNestedNameSpecifier(S->getQualifier());
-  ID.AddBoolean(S->getScopeTypeInfo() != 0);
+  ID.AddBoolean(S->getScopeTypeInfo() != nullptr);
   if (S->getScopeTypeInfo())
     VisitType(S->getScopeTypeInfo()->getType());
-  ID.AddBoolean(S->getDestroyedTypeInfo() != 0);
+  ID.AddBoolean(S->getDestroyedTypeInfo() != nullptr);
   if (S->getDestroyedTypeInfo())
     VisitType(S->getDestroyedType());
   else
@@ -1200,7 +1225,7 @@ void StmtProfiler::VisitDecl(const Decl *D) {
     }
   }
 
-  ID.AddPointer(D? D->getCanonicalDecl() : 0);
+  ID.AddPointer(D? D->getCanonicalDecl() : nullptr);
 }
 
 void StmtProfiler::VisitType(QualType T) {

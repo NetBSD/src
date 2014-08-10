@@ -12,10 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "misched"
-
 #include "llvm/CodeGen/MachineScheduler.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/PriorityQueue.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -35,6 +32,8 @@
 #include <queue>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "misched"
 
 namespace llvm {
 cl::opt<bool> ForceTopDown("misched-topdown", cl::Hidden,
@@ -86,7 +85,7 @@ void ScheduleDAGMutation::anchor() {}
 //===----------------------------------------------------------------------===//
 
 MachineSchedContext::MachineSchedContext():
-    MF(0), MLI(0), MDT(0), PassConfig(0), AA(0), LIS(0) {
+    MF(nullptr), MLI(nullptr), MDT(nullptr), PassConfig(nullptr), AA(nullptr), LIS(nullptr) {
   RegClassInfo = new RegisterClassInfo();
 }
 
@@ -101,7 +100,7 @@ class MachineSchedulerBase : public MachineSchedContext,
 public:
   MachineSchedulerBase(char &ID): MachineFunctionPass(ID) {}
 
-  virtual void print(raw_ostream &O, const Module* = 0) const;
+  void print(raw_ostream &O, const Module* = nullptr) const override;
 
 protected:
   void scheduleRegions(ScheduleDAGInstrs &Scheduler);
@@ -112,9 +111,9 @@ class MachineScheduler : public MachineSchedulerBase {
 public:
   MachineScheduler();
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  virtual bool runOnMachineFunction(MachineFunction&);
+  bool runOnMachineFunction(MachineFunction&) override;
 
   static char ID; // Class identification, replacement for typeinfo
 
@@ -127,9 +126,9 @@ class PostMachineScheduler : public MachineSchedulerBase {
 public:
   PostMachineScheduler();
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  virtual bool runOnMachineFunction(MachineFunction&);
+  bool runOnMachineFunction(MachineFunction&) override;
 
   static char ID; // Class identification, replacement for typeinfo
 
@@ -193,7 +192,7 @@ MachinePassRegistry MachineSchedRegistry::Registry;
 /// A dummy default scheduler factory indicates whether the scheduler
 /// is overridden on the command line.
 static ScheduleDAGInstrs *useDefaultMachineSched(MachineSchedContext *C) {
-  return 0;
+  return nullptr;
 }
 
 /// MachineSchedOpt allows command line selection of the scheduler.
@@ -321,7 +320,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
 
   // Instantiate the selected scheduler for this target, function, and
   // optimization level.
-  OwningPtr<ScheduleDAGInstrs> Scheduler(createMachineScheduler());
+  std::unique_ptr<ScheduleDAGInstrs> Scheduler(createMachineScheduler());
   scheduleRegions(*Scheduler);
 
   DEBUG(LIS->dump());
@@ -331,6 +330,9 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
 }
 
 bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
+  if (skipOptnoneFunction(*mf.getFunction()))
+    return false;
+
   DEBUG(dbgs() << "Before post-MI-sched:\n"; mf.print(dbgs()));
 
   // Initialize the context of the pass.
@@ -342,7 +344,7 @@ bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
 
   // Instantiate the selected scheduler for this target, function, and
   // optimization level.
-  OwningPtr<ScheduleDAGInstrs> Scheduler(createPostMachineScheduler());
+  std::unique_ptr<ScheduleDAGInstrs> Scheduler(createPostMachineScheduler());
   scheduleRegions(*Scheduler);
 
   if (VerifyScheduling)
@@ -408,8 +410,8 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler) {
         RegionEnd != MBB->begin(); RegionEnd = Scheduler.begin()) {
 
       // Avoid decrementing RegionEnd for blocks with no terminator.
-      if (RegionEnd != MBB->end()
-          || isSchedBoundary(llvm::prior(RegionEnd), MBB, MF, TII, IsPostRA)) {
+      if (RegionEnd != MBB->end() ||
+          isSchedBoundary(std::prev(RegionEnd), MBB, MF, TII, IsPostRA)) {
         --RegionEnd;
         // Count the boundary instruction.
         --RemainingInstrs;
@@ -420,7 +422,7 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler) {
       unsigned NumRegionInstrs = 0;
       MachineBasicBlock::iterator I = RegionEnd;
       for(;I != MBB->begin(); --I, --RemainingInstrs, ++NumRegionInstrs) {
-        if (isSchedBoundary(llvm::prior(I), MBB, MF, TII, IsPostRA))
+        if (isSchedBoundary(std::prev(I), MBB, MF, TII, IsPostRA))
           break;
       }
       // Notify the scheduler of the region, even if we may skip scheduling
@@ -428,7 +430,7 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler) {
       Scheduler.enterRegion(MBB, I, RegionEnd, NumRegionInstrs);
 
       // Skip empty scheduling regions (0 or 1 schedulable instructions).
-      if (I == RegionEnd || I == llvm::prior(RegionEnd)) {
+      if (I == RegionEnd || I == std::prev(RegionEnd)) {
         // Close the current region. Bundle the terminator if needed.
         // This invalidates 'RegionEnd' and 'I'.
         Scheduler.exitRegion();
@@ -485,9 +487,8 @@ void ReadyQueue::dump() {
 // virtual registers.
 // ===----------------------------------------------------------------------===/
 
+// Provide a vtable anchor.
 ScheduleDAGMI::~ScheduleDAGMI() {
-  DeleteContainerPointers(Mutations);
-  delete SchedImpl;
 }
 
 bool ScheduleDAGMI::canAddEdge(SUnit *SuccSU, SUnit *PredSU) {
@@ -525,7 +526,7 @@ void ScheduleDAGMI::releaseSucc(SUnit *SU, SDep *SuccEdge) {
     dbgs() << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
     dbgs() << " has been released too many times!\n";
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
   }
 #endif
   --SuccSU->NumPredsLeft;
@@ -559,7 +560,7 @@ void ScheduleDAGMI::releasePred(SUnit *SU, SDep *PredEdge) {
     dbgs() << "*** Scheduling failed! ***\n";
     PredSU->dump(this);
     dbgs() << " has been released too many times!\n";
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
   }
 #endif
   --PredSU->NumSuccsLeft;
@@ -721,8 +722,8 @@ findRootsAndBiasEdges(SmallVectorImpl<SUnit*> &TopRoots,
 /// Identify DAG roots and setup scheduler queues.
 void ScheduleDAGMI::initQueues(ArrayRef<SUnit*> TopRoots,
                                ArrayRef<SUnit*> BotRoots) {
-  NextClusterSucc = NULL;
-  NextClusterPred = NULL;
+  NextClusterSucc = nullptr;
+  NextClusterPred = nullptr;
 
   // Release all DAG roots for scheduling, not including EntrySU/ExitSU.
   //
@@ -770,17 +771,17 @@ void ScheduleDAGMI::placeDebugValues() {
 
   for (std::vector<std::pair<MachineInstr *, MachineInstr *> >::iterator
          DI = DbgValues.end(), DE = DbgValues.begin(); DI != DE; --DI) {
-    std::pair<MachineInstr *, MachineInstr *> P = *prior(DI);
+    std::pair<MachineInstr *, MachineInstr *> P = *std::prev(DI);
     MachineInstr *DbgValue = P.first;
     MachineBasicBlock::iterator OrigPrevMI = P.second;
     if (&*RegionBegin == DbgValue)
       ++RegionBegin;
     BB->splice(++OrigPrevMI, BB, DbgValue);
-    if (OrigPrevMI == llvm::prior(RegionEnd))
+    if (OrigPrevMI == std::prev(RegionEnd))
       RegionEnd = DbgValue;
   }
   DbgValues.clear();
-  FirstDbgValue = NULL;
+  FirstDbgValue = nullptr;
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
@@ -816,8 +817,7 @@ void ScheduleDAGMILive::enterRegion(MachineBasicBlock *bb,
   ScheduleDAGMI::enterRegion(bb, begin, end, regioninstrs);
 
   // For convenience remember the end of the liveness region.
-  LiveRegionEnd =
-    (RegionEnd == bb->end()) ? RegionEnd : llvm::next(RegionEnd);
+  LiveRegionEnd = (RegionEnd == bb->end()) ? RegionEnd : std::next(RegionEnd);
 
   SUPressureDiffs.clear();
 
@@ -1207,9 +1207,11 @@ class LoadClusterMutation : public ScheduleDAGMutation {
     unsigned Offset;
     LoadInfo(SUnit *su, unsigned reg, unsigned ofs)
       : SU(su), BaseReg(reg), Offset(ofs) {}
+
+    bool operator<(const LoadInfo &RHS) const {
+      return std::tie(BaseReg, Offset) < std::tie(RHS.BaseReg, RHS.Offset);
+    }
   };
-  static bool LoadInfoLess(const LoadClusterMutation::LoadInfo &LHS,
-                           const LoadClusterMutation::LoadInfo &RHS);
 
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
@@ -1218,19 +1220,11 @@ public:
                       const TargetRegisterInfo *tri)
     : TII(tii), TRI(tri) {}
 
-  virtual void apply(ScheduleDAGMI *DAG);
+  void apply(ScheduleDAGMI *DAG) override;
 protected:
   void clusterNeighboringLoads(ArrayRef<SUnit*> Loads, ScheduleDAGMI *DAG);
 };
 } // anonymous
-
-bool LoadClusterMutation::LoadInfoLess(
-  const LoadClusterMutation::LoadInfo &LHS,
-  const LoadClusterMutation::LoadInfo &RHS) {
-  if (LHS.BaseReg != RHS.BaseReg)
-    return LHS.BaseReg < RHS.BaseReg;
-  return LHS.Offset < RHS.Offset;
-}
 
 void LoadClusterMutation::clusterNeighboringLoads(ArrayRef<SUnit*> Loads,
                                                   ScheduleDAGMI *DAG) {
@@ -1244,7 +1238,7 @@ void LoadClusterMutation::clusterNeighboringLoads(ArrayRef<SUnit*> Loads,
   }
   if (LoadRecords.size() < 2)
     return;
-  std::sort(LoadRecords.begin(), LoadRecords.end(), LoadInfoLess);
+  std::sort(LoadRecords.begin(), LoadRecords.end());
   unsigned ClusterLength = 1;
   for (unsigned Idx = 0, End = LoadRecords.size(); Idx < (End - 1); ++Idx) {
     if (LoadRecords[Idx].BaseReg != LoadRecords[Idx+1].BaseReg) {
@@ -1321,7 +1315,7 @@ class MacroFusion : public ScheduleDAGMutation {
 public:
   MacroFusion(const TargetInstrInfo *tii): TII(tii) {}
 
-  virtual void apply(ScheduleDAGMI *DAG);
+  void apply(ScheduleDAGMI *DAG) override;
 };
 } // anonymous
 
@@ -1370,7 +1364,7 @@ class CopyConstrain : public ScheduleDAGMutation {
 public:
   CopyConstrain(const TargetInstrInfo *, const TargetRegisterInfo *) {}
 
-  virtual void apply(ScheduleDAGMI *DAG);
+  void apply(ScheduleDAGMI *DAG) override;
 
 protected:
   void constrainLocalCopy(SUnit *CopySU, ScheduleDAGMILive *DAG);
@@ -1446,19 +1440,19 @@ void CopyConstrain::constrainLocalCopy(SUnit *CopySU, ScheduleDAGMILive *DAG) {
   // Check if GlobalLI contains a hole in the vicinity of LocalLI.
   if (GlobalSegment != GlobalLI->begin()) {
     // Two address defs have no hole.
-    if (SlotIndex::isSameInstr(llvm::prior(GlobalSegment)->end,
+    if (SlotIndex::isSameInstr(std::prev(GlobalSegment)->end,
                                GlobalSegment->start)) {
       return;
     }
     // If the prior global segment may be defined by the same two-address
     // instruction that also defines LocalLI, then can't make a hole here.
-    if (SlotIndex::isSameInstr(llvm::prior(GlobalSegment)->start,
+    if (SlotIndex::isSameInstr(std::prev(GlobalSegment)->start,
                                LocalLI->beginIndex())) {
       return;
     }
     // If GlobalLI has a prior segment, it must be live into the EBB. Otherwise
     // it would be a disconnected component in the live range.
-    assert(llvm::prior(GlobalSegment)->start < LocalLI->beginIndex() &&
+    assert(std::prev(GlobalSegment)->start < LocalLI->beginIndex() &&
            "Disconnected LRG within the scheduling region.");
   }
   MachineInstr *GlobalDef = LIS->getInstructionFromIndex(GlobalSegment->start);
@@ -1554,7 +1548,7 @@ void SchedBoundary::reset() {
   // invalid, placeholder HazardRecs.
   if (HazardRec && HazardRec->isEnabled()) {
     delete HazardRec;
-    HazardRec = 0;
+    HazardRec = nullptr;
   }
   Available.clear();
   Pending.clear();
@@ -1684,7 +1678,7 @@ bool SchedBoundary::checkHazard(SUnit *SU) {
 // Find the unscheduled node in ReadySUs with the highest latency.
 unsigned SchedBoundary::
 findMaxLatency(ArrayRef<SUnit*> ReadySUs) {
-  SUnit *LateSU = 0;
+  SUnit *LateSU = nullptr;
   unsigned RemLatency = 0;
   for (ArrayRef<SUnit*>::iterator I = ReadySUs.begin(), E = ReadySUs.end();
        I != E; ++I) {
@@ -2062,7 +2056,7 @@ SUnit *SchedBoundary::pickOnlyChoice() {
   }
   if (Available.size() == 1)
     return *Available.begin();
-  return NULL;
+  return nullptr;
 }
 
 #ifndef NDEBUG
@@ -2162,7 +2156,7 @@ public:
     SchedResourceDelta ResDelta;
 
     SchedCandidate(const CandPolicy &policy)
-      : Policy(policy), SU(NULL), Reason(NoCand), RepeatReasonSet(0) {}
+      : Policy(policy), SU(nullptr), Reason(NoCand), RepeatReasonSet(0) {}
 
     bool isValid() const { return SU; }
 
@@ -2190,7 +2184,7 @@ protected:
   SchedRemainder Rem;
 protected:
   GenericSchedulerBase(const MachineSchedContext *C):
-    Context(C), SchedModel(0), TRI(0) {}
+    Context(C), SchedModel(nullptr), TRI(nullptr) {}
 
   void setPolicy(CandPolicy &Policy, bool IsPostRA, SchedBoundary &CurrZone,
                  SchedBoundary *OtherZone);
@@ -2449,32 +2443,32 @@ class GenericScheduler : public GenericSchedulerBase {
   MachineSchedPolicy RegionPolicy;
 public:
   GenericScheduler(const MachineSchedContext *C):
-    GenericSchedulerBase(C), DAG(0), Top(SchedBoundary::TopQID, "TopQ"),
+    GenericSchedulerBase(C), DAG(nullptr), Top(SchedBoundary::TopQID, "TopQ"),
     Bot(SchedBoundary::BotQID, "BotQ") {}
 
-  virtual void initPolicy(MachineBasicBlock::iterator Begin,
-                          MachineBasicBlock::iterator End,
-                          unsigned NumRegionInstrs) LLVM_OVERRIDE;
+  void initPolicy(MachineBasicBlock::iterator Begin,
+                  MachineBasicBlock::iterator End,
+                  unsigned NumRegionInstrs) override;
 
-  virtual bool shouldTrackPressure() const LLVM_OVERRIDE {
+  bool shouldTrackPressure() const override {
     return RegionPolicy.ShouldTrackPressure;
   }
 
-  virtual void initialize(ScheduleDAGMI *dag) LLVM_OVERRIDE;
+  void initialize(ScheduleDAGMI *dag) override;
 
-  virtual SUnit *pickNode(bool &IsTopNode) LLVM_OVERRIDE;
+  SUnit *pickNode(bool &IsTopNode) override;
 
-  virtual void schedNode(SUnit *SU, bool IsTopNode) LLVM_OVERRIDE;
+  void schedNode(SUnit *SU, bool IsTopNode) override;
 
-  virtual void releaseTopNode(SUnit *SU) LLVM_OVERRIDE {
+  void releaseTopNode(SUnit *SU) override {
     Top.releaseTopNode(SU);
   }
 
-  virtual void releaseBottomNode(SUnit *SU) LLVM_OVERRIDE {
+  void releaseBottomNode(SUnit *SU) override {
     Bot.releaseBottomNode(SU);
   }
 
-  virtual void registerRoots() LLVM_OVERRIDE;
+  void registerRoots() override;
 
 protected:
   void checkAcyclicLatency();
@@ -2915,7 +2909,7 @@ SUnit *GenericScheduler::pickNode(bool &IsTopNode) {
   if (DAG->top() == DAG->bottom()) {
     assert(Top.Available.empty() && Top.Pending.empty() &&
            Bot.Available.empty() && Bot.Pending.empty() && "ReadyQ garbage");
-    return NULL;
+    return nullptr;
   }
   SUnit *SU;
   do {
@@ -3007,17 +3001,17 @@ void GenericScheduler::schedNode(SUnit *SU, bool IsTopNode) {
 /// Create the standard converging machine scheduler. This will be used as the
 /// default scheduler if the target does not set a default.
 static ScheduleDAGInstrs *createGenericSchedLive(MachineSchedContext *C) {
-  ScheduleDAGMILive *DAG = new ScheduleDAGMILive(C, new GenericScheduler(C));
+  ScheduleDAGMILive *DAG = new ScheduleDAGMILive(C, make_unique<GenericScheduler>(C));
   // Register DAG post-processors.
   //
   // FIXME: extend the mutation API to allow earlier mutations to instantiate
   // data and pass it to later mutations. Have a single mutation that gathers
   // the interesting nodes in one pass.
-  DAG->addMutation(new CopyConstrain(DAG->TII, DAG->TRI));
+  DAG->addMutation(make_unique<CopyConstrain>(DAG->TII, DAG->TRI));
   if (EnableLoadCluster && DAG->TII->enableClusterLoads())
-    DAG->addMutation(new LoadClusterMutation(DAG->TII, DAG->TRI));
+    DAG->addMutation(make_unique<LoadClusterMutation>(DAG->TII, DAG->TRI));
   if (EnableMacroFusion)
-    DAG->addMutation(new MacroFusion(DAG->TII));
+    DAG->addMutation(make_unique<MacroFusion>(DAG->TII));
   return DAG;
 }
 
@@ -3045,16 +3039,16 @@ public:
 
   virtual ~PostGenericScheduler() {}
 
-  virtual void initPolicy(MachineBasicBlock::iterator Begin,
-                          MachineBasicBlock::iterator End,
-                          unsigned NumRegionInstrs) LLVM_OVERRIDE {
+  void initPolicy(MachineBasicBlock::iterator Begin,
+                  MachineBasicBlock::iterator End,
+                  unsigned NumRegionInstrs) override {
     /* no configurable policy */
   };
 
   /// PostRA scheduling does not track pressure.
-  virtual bool shouldTrackPressure() const LLVM_OVERRIDE { return false; }
+  bool shouldTrackPressure() const override { return false; }
 
-  virtual void initialize(ScheduleDAGMI *Dag) LLVM_OVERRIDE {
+  void initialize(ScheduleDAGMI *Dag) override {
     DAG = Dag;
     SchedModel = DAG->getSchedModel();
     TRI = DAG->TRI;
@@ -3073,22 +3067,22 @@ public:
     }
   }
 
-  virtual void registerRoots() LLVM_OVERRIDE;
+  void registerRoots() override;
 
-  virtual SUnit *pickNode(bool &IsTopNode) LLVM_OVERRIDE;
+  SUnit *pickNode(bool &IsTopNode) override;
 
-  virtual void scheduleTree(unsigned SubtreeID) LLVM_OVERRIDE {
+  void scheduleTree(unsigned SubtreeID) override {
     llvm_unreachable("PostRA scheduler does not support subtree analysis.");
   }
 
-  virtual void schedNode(SUnit *SU, bool IsTopNode) LLVM_OVERRIDE;
+  void schedNode(SUnit *SU, bool IsTopNode) override;
 
-  virtual void releaseTopNode(SUnit *SU) LLVM_OVERRIDE {
+  void releaseTopNode(SUnit *SU) override {
     Top.releaseTopNode(SU);
   }
 
   // Only called for roots.
-  virtual void releaseBottomNode(SUnit *SU) LLVM_OVERRIDE {
+  void releaseBottomNode(SUnit *SU) override {
     BotRoots.push_back(SU);
   }
 
@@ -3169,7 +3163,7 @@ void PostGenericScheduler::pickNodeFromQueue(SchedCandidate &Cand) {
 SUnit *PostGenericScheduler::pickNode(bool &IsTopNode) {
   if (DAG->top() == DAG->bottom()) {
     assert(Top.Available.empty() && Top.Pending.empty() && "ReadyQ garbage");
-    return NULL;
+    return nullptr;
   }
   SUnit *SU;
   do {
@@ -3179,7 +3173,7 @@ SUnit *PostGenericScheduler::pickNode(bool &IsTopNode) {
       SchedCandidate TopCand(NoPolicy);
       // Set the top-down policy based on the state of the current top zone and
       // the instructions outside the zone, including the bottom zone.
-      setPolicy(TopCand.Policy, /*IsPostRA=*/true, Top, NULL);
+      setPolicy(TopCand.Policy, /*IsPostRA=*/true, Top, nullptr);
       pickNodeFromQueue(TopCand);
       assert(TopCand.Reason != NoCand && "failed to find a candidate");
       tracePick(TopCand, true);
@@ -3203,7 +3197,7 @@ void PostGenericScheduler::schedNode(SUnit *SU, bool IsTopNode) {
 
 /// Create a generic scheduler with no vreg liveness or DAG mutation passes.
 static ScheduleDAGInstrs *createGenericSchedPostRA(MachineSchedContext *C) {
-  return new ScheduleDAGMI(C, new PostGenericScheduler(C), /*IsPostRA=*/true);
+  return new ScheduleDAGMI(C, make_unique<PostGenericScheduler>(C), /*IsPostRA=*/true);
 }
 
 //===----------------------------------------------------------------------===//
@@ -3217,7 +3211,8 @@ struct ILPOrder {
   const BitVector *ScheduledTrees;
   bool MaximizeILP;
 
-  ILPOrder(bool MaxILP): DFSResult(0), ScheduledTrees(0), MaximizeILP(MaxILP) {}
+  ILPOrder(bool MaxILP)
+    : DFSResult(nullptr), ScheduledTrees(nullptr), MaximizeILP(MaxILP) {}
 
   /// \brief Apply a less-than relation on node priority.
   ///
@@ -3251,9 +3246,9 @@ class ILPScheduler : public MachineSchedStrategy {
 
   std::vector<SUnit*> ReadyQ;
 public:
-  ILPScheduler(bool MaximizeILP): DAG(0), Cmp(MaximizeILP) {}
+  ILPScheduler(bool MaximizeILP): DAG(nullptr), Cmp(MaximizeILP) {}
 
-  virtual void initialize(ScheduleDAGMI *dag) {
+  void initialize(ScheduleDAGMI *dag) override {
     assert(dag->hasVRegLiveness() && "ILPScheduler needs vreg liveness");
     DAG = static_cast<ScheduleDAGMILive*>(dag);
     DAG->computeDFSResult();
@@ -3262,7 +3257,7 @@ public:
     ReadyQ.clear();
   }
 
-  virtual void registerRoots() {
+  void registerRoots() override {
     // Restore the heap in ReadyQ with the updated DFS results.
     std::make_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
   }
@@ -3271,8 +3266,8 @@ public:
   /// -----------------------------------------
 
   /// Callback to select the highest priority node from the ready Q.
-  virtual SUnit *pickNode(bool &IsTopNode) {
-    if (ReadyQ.empty()) return NULL;
+  SUnit *pickNode(bool &IsTopNode) override {
+    if (ReadyQ.empty()) return nullptr;
     std::pop_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
     SUnit *SU = ReadyQ.back();
     ReadyQ.pop_back();
@@ -3287,19 +3282,19 @@ public:
   }
 
   /// \brief Scheduler callback to notify that a new subtree is scheduled.
-  virtual void scheduleTree(unsigned SubtreeID) {
+  void scheduleTree(unsigned SubtreeID) override {
     std::make_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
   }
 
   /// Callback after a node is scheduled. Mark a newly scheduled tree, notify
   /// DFSResults, and resort the priority Q.
-  virtual void schedNode(SUnit *SU, bool IsTopNode) {
+  void schedNode(SUnit *SU, bool IsTopNode) override {
     assert(!IsTopNode && "SchedDFSResult needs bottom-up");
   }
 
-  virtual void releaseTopNode(SUnit *) { /*only called for top roots*/ }
+  void releaseTopNode(SUnit *) override { /*only called for top roots*/ }
 
-  virtual void releaseBottomNode(SUnit *SU) {
+  void releaseBottomNode(SUnit *SU) override {
     ReadyQ.push_back(SU);
     std::push_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
   }
@@ -3307,10 +3302,10 @@ public:
 } // namespace
 
 static ScheduleDAGInstrs *createILPMaxScheduler(MachineSchedContext *C) {
-  return new ScheduleDAGMILive(C, new ILPScheduler(true));
+  return new ScheduleDAGMILive(C, make_unique<ILPScheduler>(true));
 }
 static ScheduleDAGInstrs *createILPMinScheduler(MachineSchedContext *C) {
-  return new ScheduleDAGMILive(C, new ILPScheduler(false));
+  return new ScheduleDAGMILive(C, make_unique<ILPScheduler>(false));
 }
 static MachineSchedRegistry ILPMaxRegistry(
   "ilpmax", "Schedule bottom-up for max ILP", createILPMaxScheduler);
@@ -3352,7 +3347,7 @@ public:
   InstructionShuffler(bool alternate, bool topdown)
     : IsAlternating(alternate), IsTopDown(topdown) {}
 
-  virtual void initialize(ScheduleDAGMI*) {
+  void initialize(ScheduleDAGMI*) override {
     TopQ.clear();
     BottomQ.clear();
   }
@@ -3360,11 +3355,11 @@ public:
   /// Implement MachineSchedStrategy interface.
   /// -----------------------------------------
 
-  virtual SUnit *pickNode(bool &IsTopNode) {
+  SUnit *pickNode(bool &IsTopNode) override {
     SUnit *SU;
     if (IsTopDown) {
       do {
-        if (TopQ.empty()) return NULL;
+        if (TopQ.empty()) return nullptr;
         SU = TopQ.top();
         TopQ.pop();
       } while (SU->isScheduled);
@@ -3372,7 +3367,7 @@ public:
     }
     else {
       do {
-        if (BottomQ.empty()) return NULL;
+        if (BottomQ.empty()) return nullptr;
         SU = BottomQ.top();
         BottomQ.pop();
       } while (SU->isScheduled);
@@ -3383,12 +3378,12 @@ public:
     return SU;
   }
 
-  virtual void schedNode(SUnit *SU, bool IsTopNode) {}
+  void schedNode(SUnit *SU, bool IsTopNode) override {}
 
-  virtual void releaseTopNode(SUnit *SU) {
+  void releaseTopNode(SUnit *SU) override {
     TopQ.push(SU);
   }
-  virtual void releaseBottomNode(SUnit *SU) {
+  void releaseBottomNode(SUnit *SU) override {
     BottomQ.push(SU);
   }
 };
@@ -3399,7 +3394,7 @@ static ScheduleDAGInstrs *createInstructionShuffler(MachineSchedContext *C) {
   bool TopDown = !ForceBottomUp;
   assert((TopDown || !ForceTopDown) &&
          "-misched-topdown incompatible with -misched-bottomup");
-  return new ScheduleDAGMILive(C, new InstructionShuffler(Alternate, TopDown));
+  return new ScheduleDAGMILive(C, make_unique<InstructionShuffler>(Alternate, TopDown));
 }
 static MachineSchedRegistry ShufflerRegistry(
   "shuffle", "Shuffle machine instructions alternating directions",
@@ -3455,7 +3450,7 @@ struct DOTGraphTraits<ScheduleDAGMI*> : public DefaultDOTGraphTraits {
     raw_string_ostream SS(Str);
     const ScheduleDAGMI *DAG = static_cast<const ScheduleDAGMI*>(G);
     const SchedDFSResult *DFS = DAG->hasVRegLiveness() ?
-      static_cast<const ScheduleDAGMILive*>(G)->getDFSResult() : 0;
+      static_cast<const ScheduleDAGMILive*>(G)->getDFSResult() : nullptr;
     SS << "SU:" << SU->NodeNum;
     if (DFS)
       SS << " I:" << DFS->getNumInstrs(SU);
@@ -3469,7 +3464,7 @@ struct DOTGraphTraits<ScheduleDAGMI*> : public DefaultDOTGraphTraits {
     std::string Str("shape=Mrecord");
     const ScheduleDAGMI *DAG = static_cast<const ScheduleDAGMI*>(G);
     const SchedDFSResult *DFS = DAG->hasVRegLiveness() ?
-      static_cast<const ScheduleDAGMILive*>(G)->getDFSResult() : 0;
+      static_cast<const ScheduleDAGMILive*>(G)->getDFSResult() : nullptr;
     if (DFS) {
       Str += ",style=filled,fillcolor=\"#";
       Str += DOT::getColorString(DFS->getSubtreeID(N));

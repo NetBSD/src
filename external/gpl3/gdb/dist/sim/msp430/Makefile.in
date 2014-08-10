@@ -1,0 +1,66 @@
+#    Makefile template for Configure for the MSP430 sim library.
+#    Copyright 2012-2014 Free Software Foundation, Inc.
+#    Written by Red Hat Inc.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+## COMMON_PRE_CONFIG_FRAG
+
+# These variables are given default values in COMMON_PRE_CONFIG_FRAG.
+# We override the ones we need to here.
+# Not all of these need to be mentioned, only the necessary ones.
+# In fact it is better to *not* mention ones if the value is the default.
+
+# List of object files, less common parts.
+SIM_OBJS = \
+        $(SIM_NEW_COMMON_OBJS) \
+        msp430-sim.o \
+	trace.o \
+        sim-cpu.o \
+        sim-engine.o \
+        sim-hload.o \
+        sim-hrw.o \
+        sim-reason.o \
+        sim-reg.o \
+        sim-resume.o \
+        sim-stop.o \
+        $(SIM_EXTRA_OBJS)
+
+# List of extra dependencies.
+# Generally this consists of simulator specific files included by sim-main.h.
+SIM_EXTRA_DEPS =
+# List of flags to always pass to $(CC).
+SIM_EXTRA_CFLAGS =
+# List of extra libraries to link with.
+SIM_EXTRA_LIBS =
+# List of extra program dependencies.
+SIM_EXTRA_LIBDEPS =
+# List of main object files for `run'.
+SIM_RUN_OBJS = nrun.o
+# Dependency of `all' to build any extra files.
+SIM_EXTRA_ALL =
+# Dependency of `install' to install any extra files.
+SIM_EXTRA_INSTALL =
+# Dependency of `clean' to clean any extra files.
+SIM_EXTRA_CLEAN =
+
+# This selects the MSP430 newlib/libgloss syscall definitions.
+NL_TARGET = -DNL_TARGET_msp430
+
+## COMMON_POST_CONFIG_FRAG
+
+# Rules need to build $(SIM_OBJS), plus whatever else the target wants.
+
+# ... target specific rules ...

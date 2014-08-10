@@ -1,4 +1,4 @@
-/*	$NetBSD: dsn_buf.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dsn_buf.c,v 1.1.1.1.26.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -256,22 +256,31 @@ DSN_BUF *dsb_update(DSN_BUF *dsb, const char *status, const char *action,
     return (dsb);
 }
 
-/* dsb_simple - update status and informal text */
+/* vdsb_simple - update status and informal text, va_list form */
 
-DSN_BUF *dsb_simple(DSN_BUF *dsb, const char *status, const char *format,...)
+DSN_BUF *vdsb_simple(DSN_BUF *dsb, const char *status, const char *format,
+		             va_list ap)
 {
-    va_list ap;
-
     vstring_strcpy(dsb->status, status);
     DSB_TRUNCATE(dsb->action);
     DSB_TRUNCATE(dsb->mtype);
     DSB_TRUNCATE(dsb->mname);
     DSB_TRUNCATE(dsb->dtype);
     DSB_TRUNCATE(dsb->dtext);
-    va_start(ap, format);
     vstring_vsprintf(dsb->reason, format, ap);
-    va_end(ap);
 
+    return (dsb);
+}
+
+/* dsb_simple - update status and informal text */
+
+DSN_BUF *dsb_simple(DSN_BUF *dsb, const char *status, const char *format,...)
+{
+    va_list ap;
+
+    va_start(ap, format);
+    (void) vdsb_simple(dsb, status, format, ap);
+    va_end(ap);
     return (dsb);
 }
 

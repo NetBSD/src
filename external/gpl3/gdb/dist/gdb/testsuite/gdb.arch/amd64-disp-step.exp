@@ -1,4 +1,4 @@
-# Copyright 2009-2013 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,9 +25,7 @@ if { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
 
 set newline "\[\r\n\]*"
 
-set testfile "amd64-disp-step"
-set srcfile ${testfile}.S
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .S
 
 set additional_flags "-Wa,-g"
 

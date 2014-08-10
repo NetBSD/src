@@ -42,6 +42,7 @@ enum sparc_opcode_arch_val
   SPARC_OPCODE_ARCH_V6 = 0,
   SPARC_OPCODE_ARCH_V7,
   SPARC_OPCODE_ARCH_V8,
+  SPARC_OPCODE_ARCH_LEON,
   SPARC_OPCODE_ARCH_SPARCLET,
   SPARC_OPCODE_ARCH_SPARCLITE,
   /* V9 variants must appear last.  */
@@ -111,6 +112,9 @@ typedef struct sparc_opcode
 #define	F_JSR		0x00000010 /* Subroutine call.  */
 #define F_FLOAT		0x00000020 /* Floating point instruction (not a branch).  */
 #define F_FBR		0x00000040 /* Floating point branch.  */
+#define F_PREFERRED	0x00000080 /* A preferred alias.  */
+
+#define F_PREF_ALIAS	(F_ALIAS|F_PREFERRED)
 
 /* These must match the HWCAP_* values precisely.  */
 #define HWCAP_MUL32	0x00000001 /* umul/umulcc/smul/smulcc insns */

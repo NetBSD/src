@@ -1,4 +1,4 @@
-/*	$NetBSD: safe_ultostr.c,v 1.1.1.1 2013/01/02 18:59:00 tron Exp $	*/
+/*	$NetBSD: safe_ultostr.c,v 1.1.1.1.10.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -99,7 +99,7 @@ static unsigned char safe_chars[] =
 /* safe_ultostr - convert unsigned long to safe alphanumerical string */
 
 char   *safe_ultostr(VSTRING *buf, unsigned long ulval, int base,
-		               int padlen, int padchar)
+		             int padlen, int padchar)
 {
     const char *myname = "safe_ultostr";
     char   *start;
@@ -173,6 +173,8 @@ unsigned long safe_strtoul(const char *start, char **end, int base)
     /*
      * Skip leading whitespace. We don't implement sign/base prefixes.
      */
+    if (end)
+	*end = (char *) start;
     while (ISSPACE(*start))
 	++start;
 
@@ -180,13 +182,7 @@ unsigned long safe_strtoul(const char *start, char **end, int base)
      * Start the conversion.
      */
     errno = 0;
-    for (cp = (unsigned char *) start; *cp; cp++) {
-	/* Return (0, EINVAL) if no conversion was made. */
-	if ((char_val = char_map[*cp]) >= base) {
-	    if (cp == (unsigned char *) start)
-		errno = EINVAL;
-	    break;
-	}
+    for (cp = (unsigned char *) start; (char_val = char_map[*cp]) < base; cp++) {
 	/* Return (ULONG_MAX, ERANGE) if the result is too large. */
 	if (sum > div_limit
 	    || (sum == div_limit && char_val > mod_limit)) {
@@ -199,7 +195,10 @@ unsigned long safe_strtoul(const char *start, char **end, int base)
 	}
 	sum = sum * base + char_val;
     }
-    if (end)
+    /* Return (0, EINVAL) after no conversion. Test moved here 20131209. */
+    if (cp == (unsigned char *) start)
+	errno = EINVAL;
+    else if (end)
 	*end = (char *) cp;
     return (sum);
 }
@@ -227,6 +226,16 @@ int     main(int unused_argc, char **unused_argv)
 #define strtoul strtol
 #endif
 
+    /*
+     * Hard-coded string-to-number test.
+     */
+    ulval2 = safe_strtoul("  ", &junk, 10);
+    if (*junk == 0 || errno != EINVAL)
+	msg_warn("input=' ' result=%lu errno=%m", ulval2);
+
+    /*
+     * Configurable number-to-string-to-number test.
+     */
     while (vstring_get_nonl(buf, VSTREAM_IN) != VSTREAM_EOF) {
 	ch = 0;
 	if (sscanf(STR(buf), "%lu %d%c", &ulval, &base, &ch) != 2 || ch) {

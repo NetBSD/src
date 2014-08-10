@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.27 2014/01/04 00:10:03 dsl Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.27.2.1 2014/08/10 06:54:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.27 2014/01/04 00:10:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.27.2.1 2014/08/10 06:54:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -321,8 +321,6 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 
 			led = lt->l_emuldata;
 			*retval = led->led_debugreg[off];
-		} else if (addr == LUSR_OFF(__signal)) {
-			error = ENOTSUP;
 		} else if (addr == LUSR_OFF(__signal)) {
 			error = ENOTSUP;
 		} else if (addr == LUSR_OFF(u_fpstate)) {

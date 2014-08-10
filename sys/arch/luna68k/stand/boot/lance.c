@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.2 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: lance.c,v 1.2.2.1 2014/08/10 06:54:00 tls Exp $	*/
 
 /*
  * Copyright (c) 2013 Izumi Tsutsui.  All rights reserved.
@@ -145,7 +145,7 @@ lance_get(void *cookie, void *data, size_t maxlen)
 	struct lereg *lereg = sc->sc_reg;
 	struct lemem *lemem = sc->sc_mem;
 	struct lermd_v *rmd;
-	uint16_t csr;
+	uint16_t csr __unused;
 	int len = -1;
 
 	lereg->ler_rap = LE_CSR0;

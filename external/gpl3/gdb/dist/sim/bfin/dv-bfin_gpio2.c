@@ -1,7 +1,7 @@
 /* Blackfin General Purpose Ports (GPIO) model
    For "new style" GPIOs on BF54x parts.
 
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc. and Mike Frysinger.
 
    This file is part of simulators.

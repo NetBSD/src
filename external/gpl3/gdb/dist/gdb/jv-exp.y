@@ -1,5 +1,5 @@
 /* YACC parser for Java expressions, for GDB.
-   Copyright (C) 1997-2013 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,7 +36,7 @@
 %{
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include <ctype.h>
 #include "expression.h"
 #include "value.h"
@@ -47,6 +47,7 @@
 #include "symfile.h" /* Required by objfiles.h.  */
 #include "objfiles.h" /* For have_full_symbols and have_partial_symbols */
 #include "block.h"
+#include "completer.h"
 
 #define parse_type builtin_type (parse_gdbarch)
 #define parse_java_type builtin_java_type (parse_gdbarch)
@@ -154,7 +155,7 @@ static void insert_exp (int, struct expression *);
 
 %{
 /* YYSTYPE gets defined by %union */
-static int parse_number (char *, int, int, YYSTYPE *);
+static int parse_number (const char *, int, int, YYSTYPE *);
 %}
 
 %type <lval> rcurly Dims Dims_opt
@@ -345,10 +346,13 @@ QualifiedName:
 		    $$.ptr = $1.ptr;  /* Optimization.  */
 		  else
 		    {
-		      $$.ptr = (char *) malloc ($$.length + 1);
-		      make_cleanup (free, $$.ptr);
-		      sprintf ($$.ptr, "%.*s.%.*s",
+		      char *buf;
+
+		      buf = malloc ($$.length + 1);
+		      make_cleanup (free, buf);
+		      sprintf (buf, "%.*s.%.*s",
 			       $1.length, $1.ptr, $3.length, $3.ptr);
+		      $$.ptr = buf;
 		} }
 ;
 
@@ -696,7 +700,7 @@ Expression:
 /*** Needs some error checking for the float case ***/
 
 static int
-parse_number (char *p, int len, int parsed_float, YYSTYPE *putithere)
+parse_number (const char *p, int len, int parsed_float, YYSTYPE *putithere)
 {
   ULONGEST n = 0;
   ULONGEST limit, limit_div_base;
@@ -858,8 +862,8 @@ yylex (void)
   int c;
   int namelen;
   unsigned int i;
-  char *tokstart;
-  char *tokptr;
+  const char *tokstart;
+  const char *tokptr;
   int tempbufindex;
   static char *tempbuf;
   static int tempbufsize;
@@ -966,7 +970,7 @@ yylex (void)
       {
 	/* It's a number.  */
 	int got_dot = 0, got_e = 0, toktype;
-	char *p = tokstart;
+	const char *p = tokstart;
 	int hex = input_radix > 10;
 
 	if (c == '0' && (p[1] == 'x' || p[1] == 'X'))
@@ -1391,10 +1395,10 @@ push_expression_name (struct stoken name)
     }
   else
     {
-      struct minimal_symbol *msymbol;
+      struct bound_minimal_symbol msymbol;
 
-      msymbol = lookup_minimal_symbol (tmp, NULL, NULL);
-      if (msymbol != NULL)
+      msymbol = lookup_bound_minimal_symbol (tmp);
+      if (msymbol.minsym != NULL)
 	write_exp_msymbol (msymbol);
       else if (!have_full_symbols () && !have_partial_symbols ())
 	error (_("No symbol table is loaded.  Use the \"file\" command"));

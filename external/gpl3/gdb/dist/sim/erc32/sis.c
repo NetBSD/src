@@ -41,10 +41,10 @@ typedef struct {
   char *data;
 } HIST_ENTRY;
 
-extern char *	readline PARAMS ((char *prompt));
-extern void	using_history PARAMS ((void));
-extern void	add_history PARAMS ((char *string));
-extern HIST_ENTRY *remove_history PARAMS ((int which));
+extern char *	readline (char *prompt);
+extern void	using_history (void);
+extern void	add_history (char *string);
+extern HIST_ENTRY *remove_history (int which);
 
 
 

@@ -1,4 +1,4 @@
-#	$NetBSD: BCM5301X_INSTALL,v 1.1 2012/09/01 00:21:39 matt Exp $
+#	$NetBSD: BCM5301X_INSTALL,v 1.1.18.1 2014/08/10 06:53:54 tls Exp $
 #
 #	BCM5301X_INSTALL -- BCM5301X kernel with installation-sized
 #	ramdisk
@@ -8,3 +8,4 @@ include "arch/evbarm/conf/BCM5301X"
 include "arch/evbarm/conf/INSTALL"
 
 options BOOTHOWTO=RB_SINGLE
+no makeoptions	DEBUG

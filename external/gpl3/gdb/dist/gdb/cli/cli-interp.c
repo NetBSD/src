@@ -1,6 +1,6 @@
 /* CLI Definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,7 @@
 #include "ui-out.h"
 #include "cli-out.h"
 #include "top.h"		/* for "execute_command" */
-#include "gdb_string.h"
+#include <string.h>
 #include "exceptions.h"
 
 struct ui_out *cli_uiout;
@@ -151,7 +151,9 @@ _initialize_cli_interp (void)
     cli_interpreter_suspend,	/* suspend_proc */
     cli_interpreter_exec,	/* exec_proc */
     cli_interpreter_display_prompt_p,	/* prompt_proc_p */
-    cli_ui_out			/* ui_out_proc */
+    cli_ui_out,			/* ui_out_proc */
+    NULL,                       /* set_logging_proc */
+    cli_command_loop            /* command_loop_proc */
   };
   struct interp *cli_interp;
 

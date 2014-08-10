@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.12 2014/04/03 06:34:58 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.12.2.1 2014/08/10 06:55:40 tls Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.12 2014/04/03 06:34:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.12.2.1 2014/08/10 06:55:40 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -1845,7 +1845,7 @@ void dwc2_hcd_dump_state(struct dwc2_hsotg *hsotg)
 		dev_dbg(hsotg->dev, "    qh: %p\n", chan->qh);
 
 		if (chan->xfer_started) {
-			dev_dbg(hsotg->dev, "    hfnum: 0x%08x\n", 
+			dev_dbg(hsotg->dev, "    hfnum: 0x%08x\n",
 			    DWC2_READ_4(hsotg, HFNUM));
 			dev_dbg(hsotg->dev, "    hcchar: 0x%08x\n",
 			    DWC2_READ_4(hsotg, HCCHAR(i)));

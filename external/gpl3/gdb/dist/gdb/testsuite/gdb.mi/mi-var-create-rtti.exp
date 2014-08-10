@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,8 +45,10 @@ if ![mi_run_to_main] {
 # Enable "print object"
 mi_gdb_test "-gdb-set print object on" ".*"
 
-# Test creating a variable for $sp
-mi_gdb_test "-var-create sp1 * \$sp" \
+# Test creating a variable for $sp.
+# We use a explicit cast to (void *) as that is the
+# type that caused the bug this testcase is testing for.
+mi_gdb_test "-var-create sp1 * ((void*)\$sp)" \
 	    "\\^done,name=\"sp1\",numchild=\"0\",value=\"$hex\",type=\"void \\*\",has_more=\"0\"" \
 	    "-var-create sp1 * \$sp"
 gdb_exit

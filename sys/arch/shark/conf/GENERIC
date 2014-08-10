@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.113 2013/12/27 22:13:32 matt Exp $
+#	$NetBSD: GENERIC,v 1.113.2.1 2014/08/10 06:54:08 tls Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.113 $"
+#ident		"GENERIC-$Revision: 1.113.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -99,6 +99,7 @@ options 	NFS_BOOT_DHCP	# use NetBSD standard DHCP/NFS boot code
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
@@ -153,7 +154,7 @@ options 	MODULAR		# new style module(7) framework
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	DDB		# in-kernel debugger
-options 	SYMTAB_SPACE=690000 	# reserve symbol space for DDB
+options 	SYMTAB_SPACE=750000 	# reserve symbol space for DDB
 				# (needed because we boot netbsd.aout)
 #options 	DDB_ONPANIC=0	# don't run DDB at panictime
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

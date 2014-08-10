@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.412 2014/01/27 21:37:17 apb Exp $
+#	$NetBSD: Makefile,v 1.412.2.1 2014/08/10 07:03:06 tls Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -46,6 +46,8 @@ LOCALTIME?=	UTC
 CKSUM?=		${TOOL_CKSUM}
 MAKESUMS=	MAKE=${MAKE:Q} CKSUM=${CKSUM:Q} ${HOST_SH} ${NETBSDSRCDIR}/distrib/sets/makesums
 DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+
+GZIP_FLAGS= -9 ${GZIP_N_FLAG}
 
 # Flags for creating ISO CDROM image
 # mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrtools
@@ -193,9 +195,20 @@ etc-release: .EXEC .MAKE
 		echo ; \
 		cat ${NETBSDSRCDIR}/sys/conf/copyright; \
 		echo ; \
-		echo "Build settings:"; \
+		echo "Build information:"; \
 		printf "%20s   %s\n" "Build date" "$$(date -u)"; \
 		printf "%20s   %s\n"  "Built by" "$${USER-root}@$$(hostname)"; \
+		if [ -n "${BUILDID}" ]; then \
+		    printf "%20s   %s\n"  "Build ID" "${BUILDID}" ; \
+		fi ; \
+		if [ -n "${BUILDINFO}" ]; then \
+		    echo ; \
+		    info="$$(printf "%b" ${BUILDINFO:Q})" ; \
+		    printf "%s\n" "$${info}" \
+		    | ${TOOL_SED} -e 's/^/        /' ; \
+		fi ; \
+		echo ; \
+		echo "Build settings:"; \
 		echo ; \
 		${PRINT_PARAMS} ; \
 	) >${.OBJDIR}/${.TARGET}
@@ -402,7 +415,7 @@ release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR snap_md_post
 #	Note: At least mkisofs 2.0 should be used.
 #
 CDROM_NAME_ADD?=
-CDROM_IMAGE?=${RELEASEDIR}/iso/NetBSD-${DISTRIBVER}-${MACHINE}.iso
+CDROM_IMAGE?=${RELEASEDIR}/images/NetBSD-${DISTRIBVER}-${MACHINE}.iso
 CDROM.dir=	${.OBJDIR}/cdrom.dir
 CDROM.pathlist=	${.OBJDIR}/cdrom.pathlist
 
@@ -410,7 +423,7 @@ iso-image:
 
 .if ${MKISOFS} != true
 do-iso-image: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-post
-	${MAKESUMS} -t ${RELEASEDIR}/iso/ '*.iso'
+	${MAKESUMS} -t ${RELEASEDIR}/images/ '*.iso'
 	@echo "iso-image created as: ${CDROM_IMAGE}"
 .else
 do-iso-image:
@@ -426,12 +439,14 @@ iso-image-setup: .PHONY check_RELEASEDIR
 .endfor
 	echo "${MACHINE}/=${RELEASEDIR}/${RELEASEMACHINEDIR}/" >> ${CDROM.pathlist}
 	mkdir -p ${CDROM.dir}
-	mkdir -p ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom
+
+check_imagedir:
+	mkdir -p ${RELEASEDIR}/images
 
 # iso-image-mi --
 #	Create the image after the MD operations have completed.
 #
-iso-image-mi: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-pre
+iso-image-mi: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-pre check_imagedir
 	@if ! ${MKISOFS} --version; then \
 		echo "install pkgsrc/sysutils/cdrtools and run 'make iso-image'." ; \
 		false; \
@@ -558,7 +573,7 @@ build_kernels: .PHONY
 build_kernels: kern-${configfile}
 kern-${configfile}: .PHONY .MAKE
 	cd ${KERNCONFDIR} && ${TOOL_CONFIG} -s ${KERNSRCDIR} \
-	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
+	    -U DEBUG -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
 .if ${MKUPDATE} == "no"
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean
 .endif
@@ -580,7 +595,7 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
 	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.tgz; \
-	pax_cmd="COMPRESS_PROGRAM=${TOOL_GZIP:Q} GZIP=-9n ${TOOL_PAX} -O -zw -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
+	pax_cmd="GZIP=${GZIP_FLAGS:Q} ${TOOL_PAX} --use-compress-program ${TOOL_GZIP:Q} -O -w -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
 	cd $${kerndir} && { \
 		kernels=; newest=; \
 		for kernel in $${kernlist}; do \
@@ -625,8 +640,8 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 				knl_gz="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/$${kernel}-${configfile:C/.*\///}$${s}.gz"; \
 				[ $${knl_gz} -nt $${ks} ] && continue; \
 				rm -f $${knl_gz}; \
-				echo "${TOOL_GZIP} -nc -9 < $${kerndir}/$${ks} > $${knl_gz}"; \
-				${TOOL_GZIP} -nc -9 < $${ks} > $${knl_gz}; \
+				echo "${TOOL_GZIP} ${GZIP_FLAGS} -c < $${kerndir}/$${ks} > $${knl_gz}"; \
+				${TOOL_GZIP} ${GZIP_FLAGS} -c < $${ks} > $${knl_gz}; \
 			done; \
 		done; \
 	}

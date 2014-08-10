@@ -1,4 +1,4 @@
-/*	$NetBSD: gost_test.c,v 1.1.1.1 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: gost_test.c,v 1.1.1.1.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -339,8 +339,9 @@ ATF_TC_BODY(isc_gost_private, tc) {
 
 	/* create the private key */
 	memset(&pk11_ctx, 0, sizeof(pk11_ctx));
-	ATF_REQUIRE(pk11_get_session(&pk11_ctx, OP_GOST, ISC_FALSE, ISC_FALSE,
-				     NULL, pk11_get_best_token(OP_GOST)) ==
+	ATF_REQUIRE(pk11_get_session(&pk11_ctx, OP_GOST, ISC_TRUE,
+				     ISC_FALSE, ISC_FALSE, NULL,
+				     pk11_get_best_token(OP_GOST)) ==
 		    ISC_R_SUCCESS);
 	pk11_ctx.object = CK_INVALID_HANDLE;
 	pk11_ctx.ontoken = ISC_FALSE;

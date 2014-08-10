@@ -1,10 +1,10 @@
-#	$NetBSD: INSTALL,v 1.1 2009/04/30 12:47:40 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.1.40.1 2014/08/10 06:54:06 tls Exp $
 
 include "arch/rs6000/conf/GENERIC"
 
 no options 	INCLUDE_CONFIG_FILE
 
-makeoptions	COPTS="-Os -mmultiple"
+makeoptions	COPTS="-Os" # Reduce size.
 
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk

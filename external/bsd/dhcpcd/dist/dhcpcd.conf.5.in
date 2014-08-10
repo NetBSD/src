@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.7 2014/02/25 13:20:23 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.7.2.1 2014/08/10 07:06:59 tls Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 30, 2014
+.Dd July 14, 2014
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -106,6 +106,13 @@ such as FireWire and InfiniBand.
 In most cases,
 .Nm dhcpcd
 will set this automatically.
+.It Ic controlgroup Ar group
+Sets the group ownership of
+.Pa @RUNDIR@/dhcpcd.sock
+so that users other than root can connect to
+.Nm dhcpcd .
+.It Ic debug
+Echo debug messages to the stderr and syslog.
 .It Ic dev Ar value
 Load the
 .Ar value
@@ -172,6 +179,14 @@ Each instance of this should be unique within the scope of the client and
 warns if a conflict is detected.
 If there is a conflict, it is only a problem if the conflicted IAIDs are
 used on the same network.
+.It Ic dhcp
+Enable DHCP on the interface, on by default.
+.It Ic dhcp6
+Enable DHCPv6 on the interface, on by default.
+.It Ic ipv4
+Enable IPv4 on the interface, on by default.
+.It Ic ipv6
+Enable IPv6 on the interface, on by default.
 .It Ic persistent
 .Nm dhcpcd
 normally de-configures the interface and configuration when it exits.
@@ -200,7 +215,7 @@ DNS if the domain part does not match theirs.
 Also, see the
 .Ic env
 option above to control how the hostname is set on the host.
-.It Ic ia_na Op Ar iaid
+.It Ic ia_na Op Ar iaid Op / address
 Request a DHCPv6 Normal Address for
 .Ar iaid .
 .Ar iaid
@@ -216,31 +231,46 @@ Request a DHCPv6 Temporary Address for
 You can request more than one ia_ta by specifying a unique
 .Ar iaid
 for each one.
-.It Ic ia_pd Op Ar iaid Op Ar interface Op / Ar sla_id Op / Ar prefix_len
+.It Ic ia_pd Op Ar iaid Oo / Ar prefix / Ar prefix_len Oc Op Ar interface Op / Ar sla_id Op / Ar prefix_len
 Request a DHCPv6 Delegated Prefix for
 .Ar iaid .
 This option must be used in an
 .Ic interface
 block.
+Unless a
+.Ar sla_id
+of 0 is assigned, a reject route is installed for the Delegated Prefix to
+stop unallocated addresses being resolved upstream.
 If no
 .Ar interface
-is given then we will assign a prefix to every other interface with a unique
+is given then we will assign a prefix to every other interface with a
 .Ar sla_id
-for each, starting from 0.
+equivalent to the interface index assigned by the OS.
 Otherwise addresses are only assigned for each
 .Ar interface
 and
 .Ar sla_id .
-You cannot assign a prefix to the requesting interface.
+Each assigned address will have a suffix of 1.
+You cannot assign a prefix to the requesting interface unless the
+DHCPv6 server supports
+.Li RFC6603
+Prefix Exclude Option.
 .Nm dhcpcd
 has to be running for all the interfaces it is delegating to.
 A default
 .Ar prefix_len
-of 64 is assumed.
+of 64 is assumed, unless the maximum
+.Ar sla_id
+does not fit.
+In this case
+.Ar prefix_len
+is increased to the highest multiple of 8 that can accommodate the
+.Ar sla_id .
 .Ar sla_id
 is an integer and is added to the prefix which must fit inside
 .Ar prefix_len
 less the length of the delegated prefix.
+.Ar sla_id can be 0 only if the Delegated Prefix is assigned to one interface.
 You can specify multiple
 .Ar interface /
 .Ar sla_id /
@@ -250,18 +280,32 @@ per
 space separated.
 IPv6RS should be disabled globally when requesting a Prefix Delegation like so:
 .Pp
+.D1 # Global settings, disable IPv4 and IPv6RS
+.D1 noipv4
 .D1 noipv6rs
 .D1 # Don't touch eth3 at all
 .D1 denyinterfaces eth3 
 .Pp
 .D1 interface eth0
-.D1 ia_pd 1 eth1/0 eth2/1
+.D1 ia_pd 1 eth1/1 eth2/2
 .Pp
-.D1 # Disable automatic address configuration for eth1
+.D1 # Enable automatic address configuration for eth1
 .D1 # eth1 still gets a delegated prefix
 .D1 interface eth1
-.D1 noipv4
-.D1 noipv6
+.D1 ipv4
+.D1 ipv6rs
+.It Ic ia_pd_mix
+To be RFC compliant,
+.Nm dhcpcd
+cannot mix Prefix Delegation with other DHCPv6 address types in the same
+session.
+This has a number of issues: additional DHCP traffic and potential collisions
+between options.
+.Ic ia_pd_mix
+enables
+.Li draft-ietf-dhc-dhcpv6-stateful-issues-06
+support so that Prefix Delegation can be mixed with other address types in
+the same session.
 .It Ic ipv4only
 Only configure IPv4.
 .It Ic ipv6only
@@ -285,7 +329,7 @@ By default, when
 receives an IPv6 RA,
 .Nm dhcpcd
 will only fork to the background if the RA contains at least one unexpired
-RDNSS option.
+RDNSS option and a valid prefix or no DHCPv6 instruction.
 Set this option so to make
 .Nm dhcpcd
 always fork on an RA.
@@ -332,6 +376,8 @@ Don't start DHCPv6 or listen to DHCPv6 messages.
 Normally DHCPv6 is started by a RA instruction or configuration.
 .It Ic nogateway
 Don't install any default routes.
+.It Ic gateway
+Install a default route if available (default).
 .It Ic nohook Ar script
 Don't run this hook script.
 Matches full name, or prefixed with 2 numbers optionally ending with
@@ -425,6 +471,11 @@ instead of the default
 .It Ic ssid Ar ssid
 Subsequent options are only parsed for this wireless
 .Ar ssid .
+.It Ic slaac Op Ar hwaddr | Ar private
+Selects the interface identifier used for SLAAC generated IPv6 addresses.
+If
+.Ar private
+is used, a RFC7217 address is generated.
 .It Ic static Ar value
 Configures a static
 .Ar value .
@@ -602,7 +653,7 @@ This option cannot be requested, regardless of user configuration
 .It Ic index
 The option can appear more than once and will be indexed.
 .It Ic array
-The option data is split into a space seperated array, each element being
+The option data is split into a space separated array, each element being
 the same type.
 .El
 .Ss Types to define
@@ -707,11 +758,5 @@ Same as
 .Sh AUTHORS
 .An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
-When configuring DHCPv6 you can only select one IA type.
-I can't think of a use case where you would want different types,
-so if you have one then please bring it up for discussion on the
-.Aq Mt  dhcpcd-discuss@marples.name
-mailing list.
-.Pp
 Please report them to
 .Lk http://roy.marples.name/projects/dhcpcd

@@ -736,7 +736,7 @@ c007 xilf RIL_RU "exclusive or immediate low" z9-109 zarch
 c008 iihf RIL_RU "insert immediate high" z9-109 zarch
 c009 iilf RIL_RU "insert immediate low" z9-109 zarch
 # z9-109 misc instruction
-b983 flogr RRE_RR "find leftmost one" z9-109 zarch
+b983 flogr RRE_RER "find leftmost one" z9-109 zarch
 e30000000012 lt RXY_RRRD "load and test 32" z9-109 zarch
 e30000000002 ltg RXY_RRRD "load and test 64" z9-109 zarch
 b926 lbr RRE_RR "load byte 32" z9-109 zarch
@@ -995,7 +995,7 @@ cc0d cih RIL_RI "compare immediate high" z196 zarch
 b9cf clhhr RRE_RR "compare logical high high" z196 zarch
 b9df clhlr RRE_RR "compare logical high low" z196 zarch
 e300000000cf clhf RXY_RRRD "compare logical high" z196 zarch
-cc0f clih RIL_RI "compare logical immediate" z196 zarch
+cc0f clih RIL_RU "compare logical immediate" z196 zarch
 e300000000c0 lbh RXY_RRRD "load byte high" z196 zarch
 e300000000c4 lhh RXY_RRRD "load halfword high" z196 zarch
 e300000000ca lfh RXY_RRRD "load high" z196 zarch
@@ -1082,9 +1082,9 @@ b39e clfxbr RRF_UURFE "convert to 32 bit fixed logical from extended bfp with ro
 b3ac clgebr RRF_UURF "convert to 64 bit fixed logical from short bfp with rounding mode" z196 zarch
 b3ad clgdbr RRF_UURF "convert to 64 bit fixed logical from long bfp with rounding mode" z196 zarch
 b3ae clgxbr RRF_UURFE "convert to 64 bit fixed logical from extended bfp with rounding mode" z196 zarch
-b357 fiebra RRF_UUFF "load fp integer short bfp with rounding mode" z196 zarch
-b35f fidbra RRF_UUFF "load fp integer long bfp with rounding mode" z196 zarch
-b347 fixbra RRF_UUFEFE "load fp integer extended bfp with rounding mode" z196 zarch
+b357 fiebra RRF_UUFF "load fp integer short bfp with inexact suppression" z196 zarch
+b35f fidbra RRF_UUFF "load fp integer long bfp with inexact suppression" z196 zarch
+b347 fixbra RRF_UUFEFE "load fp integer extended bfp with inexact suppression" z196 zarch
 b344 ledbra RRF_UUFF "load rounded short/long bfp to short/long bfp with rounding mode" z196 zarch
 b345 ldxbra RRF_UUFEFE "load rounded long/extended bfp to long/extended bfp with rounding mode" z196 zarch
 b346 lexbra RRF_UUFEFE "load rounded short/extended bfp to short/extended bfp with rounding mode" z196 zarch
@@ -1126,7 +1126,7 @@ e560 tbegin SIL_RDU "transaction begin" zEC12 zarch
 e561 tbeginc SIL_RDU "constrained transaction begin" zEC12 zarch
 b2f8 tend S_00 "transaction end" zEC12 zarch
 c7 bpp SMI_U0RDP "branch prediction preload" zEC12 zarch
-c5 bprp MII_UPI "branch prediction relative preload" zEC12 zarch
+c5 bprp MII_UPP "branch prediction relative preload" zEC12 zarch
 b2e8 ppa RRF_U0RR "perform processor assist" zEC12 zarch
 b2fa niai IE_UU "next instruction access intent" zEC12 zarch
 b98f crdte RRF_RMRR "compare and replace DAT table entry" zEC12 zarch

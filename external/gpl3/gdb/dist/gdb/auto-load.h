@@ -1,6 +1,6 @@
 /* GDB routines for supporting auto-loaded scripts.
 
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,8 +24,18 @@ struct program_space;
 
 struct script_language
 {
+  /* The name of the language, lowercase.  */
+  const char *name;
+
+  /* The suffix added to objfiles to get their auto-load script.
+     E.g., "-gdb.py".  */
   const char *suffix;
 
+  /* Returns non-zero if auto-loading scripts in this language is enabled.  */
+  int (*auto_load_enabled) (void);
+
+  /* Worker routine to load the script.  It has already been opened and
+     deemed safe to load.  */
   void (*source_script_for_objfile) (struct objfile *objfile, FILE *file,
 				     const char *filename);
 };
@@ -42,8 +52,6 @@ extern int maybe_add_script (struct auto_load_pspace_info *pspace_info,
 			     int loaded, const char *name,
 			     const char *full_path,
 			     const struct script_language *language);
-extern void auto_load_objfile_script (struct objfile *objfile,
-				      const struct script_language *language);
 extern void load_auto_scripts_for_objfile (struct objfile *objfile);
 extern int
   script_not_found_warning_print (struct auto_load_pspace_info *pspace_info);

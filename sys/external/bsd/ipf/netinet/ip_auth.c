@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.4 2013/10/20 17:14:05 christos Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.4.2.1 2014/08/10 06:55:40 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -10,6 +10,9 @@
 # undef _KERNEL
 # define        KERNEL	1
 # define        _KERNEL	1
+#endif
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
 #endif
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -128,8 +131,7 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 
 #if !defined(lint)
 #if defined(__NetBSD__)
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.4 2013/10/20 17:14:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.4.2.1 2014/08/10 06:55:40 tls Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 1.1.1.2 2012/07/22 13:45:08 darrenr Exp";
 #endif

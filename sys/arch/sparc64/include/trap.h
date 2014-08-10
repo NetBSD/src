@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.9 2011/03/27 18:47:09 martin Exp $ */
+/*	$NetBSD: trap.h,v 1.9.28.1 2014/08/10 06:54:08 tls Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -143,6 +143,14 @@
 #define	SYSCALL_G2RFLAG	0x400	/* on success, return to %g2 rather than npc */
 #define	SYSCALL_G7RFLAG	0x800	/* use %g7 as above (deprecated) */
 #define	SYSCALL_G5RFLAG	0xc00	/* use %g5 as above (only ABI compatible way) */
+
+/* Software traps */
+#ifdef SUN4V
+#define ST_FAST_TRAP            0x80
+#define ST_MMU_MAP_ADDR         0x83
+#define ST_MMU_UNMAP_ADDR	0x84
+#define ST_CORE_TRAP	        0xff
+#endif
 
 /*
  * `software trap' macros to keep people happy (sparc v8 manual says not

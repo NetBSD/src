@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.7 2014/03/15 10:54:40 kiyohara Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.7.2.1 2014/08/10 06:53:52 tls Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.7 2014/03/15 10:54:40 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.7.2.1 2014/08/10 06:53:52 tls Exp $");
 
 #define _INTR_PRIVATE
 
@@ -369,6 +369,8 @@ armadaxp_getclks(void)
 
 	mvPclk *= 1000000;
 	mvSysclk *= 1000000;
+
+	curcpu()->ci_data.cpu_cc_freq = mvPclk;
 }
 
 void

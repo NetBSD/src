@@ -1,5 +1,5 @@
 /* FLEX lexer for Ada expressions, for GDB.
-   Copyright (C) 1994-2013 Free Software Foundation, Inc.
+   Copyright (C) 1994-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -288,7 +288,7 @@ false		{ return FALSEKEYWORD; }
 %%
 
 #include <ctype.h>
-#include "gdb_string.h"
+#include <string.h>
 
 /* Initialize the lexer for processing new expression. */
 
@@ -329,8 +329,7 @@ processInt (const char *base0, const char *num0, const char *exp0)
   ULONGEST result;
   long exp;
   int base;
-
-  char *trailer;
+  const char *trailer;
 
   if (base0 == NULL)
     base = 10;
@@ -347,7 +346,7 @@ processInt (const char *base0, const char *num0, const char *exp0)
     exp = strtol(exp0, (char **) NULL, 10);
 
   errno = 0;
-  result = strtoulst (num0, (const char **) &trailer, base);
+  result = strtoulst (num0, &trailer, base);
   if (errno == ERANGE)
     error (_("Integer literal out of range"));
   if (isxdigit(*trailer))
@@ -498,7 +497,8 @@ processString (const char *text, int len)
   const char *lim = text + len;
   struct stoken result;
 
-  q = result.ptr = obstack_alloc (&temp_parse_space, len);
+  q = obstack_alloc (&temp_parse_space, len);
+  result.ptr = q;
   p = text;
   while (p < lim)
     {
@@ -537,19 +537,20 @@ static int
 find_dot_all (const char *str)
 {
   int i;
-  for (i = 0; str[i] != '\000'; i += 1)
-    {
-      if (str[i] == '.')
-	{
-	  int i0 = i;
-	  do
-	    i += 1;
-	  while (isspace (str[i]));
-	  if (strncmp (str+i, "all", 3) == 0
-	      && ! isalnum (str[i+3]) && str[i+3] != '_')
-	    return i0;
-	}
-    }
+
+  for (i = 0; str[i] != '\000'; i++)
+    if (str[i] == '.')
+      {
+	int i0 = i;
+
+	do
+	  i += 1;
+	while (isspace (str[i]));
+
+	if (strncasecmp (str + i, "all", 3) == 0
+	    && !isalnum (str[i + 3]) && str[i + 3] != '_')
+	  return i0;
+      }
   return -1;
 }
 

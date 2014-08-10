@@ -1,4 +1,4 @@
-# Copyright 2013 Free Software Foundation, Inc.
+# Copyright 2013-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ Dwarf::assemble $asm_file {
     declare_labels int_label float_label struct_label
     declare_labels ptr_label subr_label memptr_label
 
-    cu 0 2 8 {
+    cu {} {
 	compile_unit {{language @DW_LANG_C_plus_plus}} {
 	    int_label: base_type {
 		{name int}

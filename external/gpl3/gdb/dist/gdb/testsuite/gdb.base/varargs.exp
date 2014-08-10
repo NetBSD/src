@@ -1,4 +1,4 @@
-# Copyright 1997-2013 Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,9 +30,8 @@
 
 
 set prototypes 0
-set testfile "varargs"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+
+standard_testfile .c
 
 if [get_compiler_info] {
     return -1
@@ -56,10 +55,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 
 # Start with a fresh gdb.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set print address off"
 gdb_test_no_output "set width 0"
@@ -67,7 +63,7 @@ gdb_test_no_output "set width 0"
 
 if [gdb_skip_stdio_test "varargs.exp"] {
     # Nothing in this module is testable without printf.
-    return;
+    return
 }
 
 if ![runto_main] then {

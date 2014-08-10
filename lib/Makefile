@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.212 2014/03/09 17:09:20 christos Exp $
+#	$NetBSD: Makefile,v 1.212.2.1 2014/08/10 07:03:56 tls Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -6,17 +6,7 @@
 SUBDIR=		csu .WAIT
 
 .if (${MKGCC} != "no")
-. if ${HAVE_GCC} == 4
-.  if (${USE_COMPILERCRTSTUFF} == "yes")
-SUBDIR+=	../gnu/lib/crtstuff4 .WAIT
-.  endif
-SUBDIR+=	../gnu/lib/libgcc4 .WAIT
-. else
-.  if (${USE_COMPILERCRTSTUFF} == "yes")
-SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/crtstuff .WAIT
-.  endif
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgcc .WAIT
-. endif
 .endif
 
 SUBDIR+=	libc
@@ -68,6 +58,11 @@ SUBDIR+=	../external/bsd/elftoolchain/lib/libelf
 SUBDIR+=	../external/bsd/liblzf/lib
 SUBDIR+=	../external/bsd/libpcap/lib
 
+.if ${MKSLJIT} != "no"
+SUBDIR+=	../external/bsd/sljit/lib
+SUBDIR+=	libbpfjit
+.endif
+
 SUBDIR+=	../external/mit/expat/lib
 
 SUBDIR+=	../external/public-domain/sqlite/lib
@@ -76,15 +71,12 @@ SUBDIR+=	../external/public-domain/xz/lib
 SUBDIR+=	../gnu/lib/libmalloc
 
 .if (${MKGCC} != "no")
-. if ${HAVE_GCC} == 4
-SUBDIR+=	../gnu/lib/libobjc4
-. else
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libobjc
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgomp
-. endif
-. if ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
 # Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
 # specific build area, but we get better parallelism this way.
+# We don't build compat versions of these.
+. if !defined(MLIBDIR)
 SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
 SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
@@ -148,13 +140,8 @@ SUBDIR+=	../external/bsd/libc++
 .endif
 
 .if (${MKGCC} != "no" && ${MKCXX} != "no" && ${MKLIBSTDCXX} != "no")
-. if ${HAVE_GCC} == 4
-SUBDIR+=	../gnu/lib/libstdc++-v3_4	# depends on libm
-SUBDIR+=	../gnu/lib/libsupc++4
-. else
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
-. endif
 .endif
 
 #==================== 2nd library dependency barrier ====================
@@ -213,12 +200,6 @@ SUBDIR+=	libpam		# depends on heimdal
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
-.endif
-
-.if ${MKSLJIT} != "no"
-SUBDIR+=	../external/bsd/sljit/lib
-SUBDIR+=	.WAIT
-SUBDIR+=	libbpfjit
 .endif
 
 SUBDIR+=	../external/bsd/mdocml/lib

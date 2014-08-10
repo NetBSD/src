@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.119 2014/03/20 18:04:05 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.119.2.1 2014/08/10 06:56:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.119 2014/03/20 18:04:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.119.2.1 2014/08/10 06:56:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,20 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.119 2014/03/20 18:04:05 christos E
 
 #define cttyvp(p) ((p)->p_lflag & PL_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
-static kmutex_t fdcache_lock;
-
 dev_t devctty;
 
 #if (FD_STDIN != FD_STDOUT-1) || (FD_STDOUT != FD_STDERR-1)
 FD_STDIN, FD_STDOUT, FD_STDERR must be a sequence n, n+1, n+2
 #endif
-
-#define	NFDCACHE 4
-
-#define FD_NHASH(ix) \
-	(&fdhashtbl[(ix) & fdhash])
-LIST_HEAD(fdhashhead, fdescnode) *fdhashtbl;
-u_long fdhash;
 
 int	fdesc_lookup(void *);
 #define	fdesc_create	genfs_eopnotsupp
@@ -139,6 +130,8 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_setattr_desc, fdesc_setattr },		/* setattr */
 	{ &vop_read_desc, fdesc_read },			/* read */
 	{ &vop_write_desc, fdesc_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_ioctl_desc, fdesc_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, fdesc_fcntl },		/* fcntl */
 	{ &vop_poll_desc, fdesc_poll },			/* poll */
@@ -185,76 +178,11 @@ fdesc_init(void)
 	/* locate the major number */
 	cttymajor = devsw_name2chr("ctty", NULL, 0);
 	devctty = makedev(cttymajor, 0);
-	mutex_init(&fdcache_lock, MUTEX_DEFAULT, IPL_NONE);
-	fdhashtbl = hashinit(NFDCACHE, HASH_LIST, true, &fdhash);
 }
 
-/*
- * Free hash table.
- */
 void
 fdesc_done(void)
 {
-	hashdone(fdhashtbl, HASH_LIST, fdhash);
-	mutex_destroy(&fdcache_lock);
-}
-
-/*
- * Return a locked vnode of the correct type.
- */
-int
-fdesc_allocvp(fdntype ftype, int ix, struct mount *mp, struct vnode **vpp)
-{
-	struct fdhashhead *fc;
-	struct fdescnode *fd;
-	int error = 0;
-
-	fc = FD_NHASH(ix);
-loop:
-	mutex_enter(&fdcache_lock);
-	LIST_FOREACH(fd, fc, fd_hash) {
-		if (fd->fd_ix == ix && fd->fd_vnode->v_mount == mp) {
-			mutex_enter(fd->fd_vnode->v_interlock);
-			mutex_exit(&fdcache_lock);
-			if (vget(fd->fd_vnode, LK_EXCLUSIVE))
-				goto loop;
-			*vpp = fd->fd_vnode;
-			return 0;
-		}
-	}
-	mutex_exit(&fdcache_lock);
-
-	error = getnewvnode(VT_FDESC, mp, fdesc_vnodeop_p, NULL, vpp);
-	if (error)
-		return error;
-
-	mutex_enter(&fdcache_lock);
-	LIST_FOREACH(fd, fc, fd_hash) {
-		if (fd->fd_ix == ix && fd->fd_vnode->v_mount == mp) {
-			/*
-			 * Another thread beat us, push back freshly
-			 * allocated vnode and retry.
-			 */
-			mutex_exit(&fdcache_lock);
-			ungetnewvnode(*vpp);
-			goto loop;
-		}
-	}
-
-	fd = malloc(sizeof(struct fdescnode), M_TEMP, M_WAITOK);
-	(*vpp)->v_data = fd;
-	fd->fd_vnode = *vpp;
-	fd->fd_type = ftype;
-	fd->fd_fd = -1;
-	fd->fd_link = 0;
-	fd->fd_ix = ix;
-	uvm_vnp_setsize(*vpp, 0);
-	error = VOP_LOCK(*vpp, LK_EXCLUSIVE);
-	KASSERT(error == 0);
-	LIST_INSERT_HEAD(fc, fd, fd_hash);
-	mutex_exit(&fdcache_lock);
-
-	return 0;
 }
 
 /*
@@ -276,9 +204,7 @@ fdesc_lookup(void *v)
 	const char *pname = cnp->cn_nameptr;
 	struct proc *p = l->l_proc;
 	unsigned fd = 0;
-	int error;
-	struct vnode *fvp;
-	const char *ln;
+	int error, ix = -1;
 	fdtab_t *dt;
 
 	dt = curlwp->l_fd->fd_dt;
@@ -299,11 +225,7 @@ fdesc_lookup(void *v)
 
 	case Froot:
 		if (cnp->cn_namelen == 2 && memcmp(pname, "fd", 2) == 0) {
-			error = fdesc_allocvp(Fdevfd, FD_DEVFD, dvp->v_mount, &fvp);
-			if (error)
-				goto bad;
-			*vpp = fvp;
-			fvp->v_type = VDIR;
+			ix = FD_DEVFD;
 			goto good;
 		}
 
@@ -313,58 +235,35 @@ fdesc_lookup(void *v)
 				error = ENXIO;
 				goto bad;
 			}
-			error = fdesc_allocvp(Fctty, FD_CTTY, dvp->v_mount, &fvp);
-			if (error)
-				goto bad;
-			*vpp = fvp;
-			fvp->v_type = VCHR;
+			ix = FD_CTTY;
 			goto good;
 		}
 
-		ln = 0;
 		switch (cnp->cn_namelen) {
 		case 5:
 			if (memcmp(pname, "stdin", 5) == 0) {
-				ln = "fd/0";
-				fd = FD_STDIN;
+				ix = FD_STDIN;
+				goto good;
 			}
 			break;
 		case 6:
 			if (memcmp(pname, "stdout", 6) == 0) {
-				ln = "fd/1";
-				fd = FD_STDOUT;
-			} else
-			if (memcmp(pname, "stderr", 6) == 0) {
-				ln = "fd/2";
-				fd = FD_STDERR;
+				ix = FD_STDOUT;
+				goto good;
+			} else if (memcmp(pname, "stderr", 6) == 0) {
+				ix = FD_STDERR;
+				goto good;
 			}
 			break;
 		}
 
-		if (ln) {
-			error = fdesc_allocvp(Flink, fd, dvp->v_mount, &fvp);
-			if (error)
-				goto bad;
-			/* XXXUNCONST */
-			VTOFDESC(fvp)->fd_link = __UNCONST(ln);
-			*vpp = fvp;
-			fvp->v_type = VLNK;
-			goto good;
-		} else {
-			error = ENOENT;
-			goto bad;
-		}
-
-		/* FALL THROUGH */
+		error = ENOENT;
+		goto bad;
 
 	case Fdevfd:
 		if (cnp->cn_namelen == 2 && memcmp(pname, "..", 2) == 0) {
-			VOP_UNLOCK(dvp);
-			error = fdesc_root(dvp->v_mount, vpp);
-			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-			if (error)
-				goto bad;
-			return (error);
+			ix = FD_ROOT;
+			goto good;
 		}
 
 		fd = 0;
@@ -385,21 +284,18 @@ fdesc_lookup(void *v)
 			goto bad;
 		}
 
-		error = fdesc_allocvp(Fdesc, FD_DESC+fd, dvp->v_mount, &fvp);
-		if (error)
-			goto bad;
-		VTOFDESC(fvp)->fd_fd = fd;
-		*vpp = fvp;
+		ix = FD_DESC + fd;
 		goto good;
 	}
 
 bad:
 	*vpp = NULL;
-	return (error);
+	return error;
 
 good:
-	VOP_UNLOCK(*vpp);
-	return (0);
+	KASSERT(ix != -1);
+	error = vcache_get(dvp->v_mount, &ix, sizeof(ix), vpp);
+	return error;
 }
 
 int
@@ -793,8 +689,8 @@ fdesc_readlink(void *v)
 		return (EPERM);
 
 	if (VTOFDESC(vp)->fd_type == Flink) {
-		char *ln = VTOFDESC(vp)->fd_link;
-		error = uiomove(ln, strlen(ln), ap->a_uio);
+		const char *ln = VTOFDESC(vp)->fd_link;
+		error = uiomove(__UNCONST(ln), strlen(ln), ap->a_uio);
 	} else {
 		error = EOPNOTSUPP;
 	}
@@ -942,13 +838,15 @@ fdesc_inactive(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct fdescnode *fd = VTOFDESC(vp);
 
 	/*
 	 * Clear out the v_type field to avoid
-	 * nasty things happening in vgone().
+	 * nasty things happening on reclaim.
 	 */
+	if (fd->fd_type == Fctty || fd->fd_type == Fdesc)
+		vp->v_type = VNON;
 	VOP_UNLOCK(vp);
-	vp->v_type = VNON;
 	return (0);
 }
 
@@ -961,11 +859,9 @@ fdesc_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct fdescnode *fd = VTOFDESC(vp);
 
-	mutex_enter(&fdcache_lock);
-	LIST_REMOVE(fd, fd_hash);
-	free(vp->v_data, M_TEMP);
-	vp->v_data = 0;
-	mutex_exit(&fdcache_lock);
+	vp->v_data = NULL;
+	vcache_remove(vp->v_mount, &fd->fd_ix, sizeof(fd->fd_ix));
+	kmem_free(fd, sizeof(struct fdescnode));
 
 	return (0);
 }

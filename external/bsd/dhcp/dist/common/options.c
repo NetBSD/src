@@ -1,11 +1,10 @@
-/*	$NetBSD: options.c,v 1.1.1.2 2013/03/24 22:50:32 christos Exp $	*/
-
+/*	$NetBSD: options.c,v 1.1.1.2.8.1 2014/08/10 07:06:55 tls Exp $	*/
 /* options.c
 
    DHCP options parsing and reassembly. */
 
 /*
- * Copyright (c) 2004-2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2012,2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,16 +25,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: options.c,v 1.1.1.2 2013/03/24 22:50:32 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.1.1.2.8.1 2014/08/10 07:06:55 tls Exp $");
 
 #define DHCP_OPTION_DATA
 #include "dhcpd.h"
@@ -649,8 +642,8 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	/*
 	 * Preload the option priority list with protocol-mandatory options.
 	 * This effectively gives these options the highest priority.
- 	 * This provides the order for any available options, the option
- 	 * must be in the option cache in order to actually be included.
+	 * This provides the order for any available options, the option
+	 * must be in the option cache in order to actually be included.
 	 */
 	priority_len = 0;
 	priority_list[priority_len++] = DHO_DHCP_MESSAGE_TYPE;

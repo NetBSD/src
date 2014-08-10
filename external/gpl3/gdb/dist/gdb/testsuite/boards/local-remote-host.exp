@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,15 +17,6 @@
 # against local host, in remote host mode.
 #
 # To use this file:
-# bash$ touch ${my_dejagnu_dir}/my-dejagnu.exp
-# bash$ export DEJAGNU=${my_dejagnu_dir}/my-dejagnu.exp
-# bash$ mkdir ${my_dejagnu_dir}/boards
-# bash$ cp ${src_dir}/gdb/testsuite/boards/local-remote-host.exp \
-#   ${my_dejagnu_dir}/boards
-
-# Modify the location of GDB and the username to access your box
-# below.
-
 # bash$ cd ${build_dir}/gdb
 # bash$ make check RUNTESTFLAGS="--host_board=local-remote-host"
 

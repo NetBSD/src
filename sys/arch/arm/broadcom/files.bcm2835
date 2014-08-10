@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.20 2013/11/01 12:23:12 skrll Exp $
+#	$NetBSD: files.bcm2835,v 1.20.2.1 2014/08/10 06:53:51 tls Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -83,3 +83,8 @@ include "external/bsd/vchiq/conf/files.vchiq"
 device	vcaudio: audiobus, auconv, mulaw, aurateconv
 attach	vcaudio at vchiqbus
 file	arch/arm/broadcom/bcm2835_vcaudio.c	vcaudio
+
+# GPIO
+device	bcmgpio: gpiobus
+attach	bcmgpio at obio
+file	arch/arm/broadcom/bcm2835_gpio.c

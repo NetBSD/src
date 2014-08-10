@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.6 2013/10/17 21:07:37 christos Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.6.2.1 2014/08/10 06:54:58 tls Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.6 2013/10/17 21:07:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.6.2.1 2014/08/10 06:54:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ static void urndis_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static int urndis_rx_list_init(struct urndis_softc *);
 static int urndis_tx_list_init(struct urndis_softc *);
 
-static void urndis_init(struct ifnet *);
+static int urndis_init(struct ifnet *);
 static void urndis_stop(struct ifnet *);
 
 static usbd_status urndis_ctrl_msg(struct urndis_softc *, uint8_t, uint8_t,
@@ -513,7 +513,7 @@ urndis_ctrl_query(struct urndis_softc *sc, uint32_t oid,
 	    le32toh(msg->rm_devicevchdl)));
 
 	rval = urndis_ctrl_send(sc, msg, sizeof(*msg));
-	kmem_free(msg, sizeof(*msg));
+	kmem_free(msg, sizeof(*msg) + qlen);
 
 	if (rval != RNDIS_STATUS_SUCCESS) {
 		printf("%s: query failed\n", DEVNAME(sc));
@@ -566,7 +566,7 @@ urndis_ctrl_set(struct urndis_softc *sc, uint32_t oid, void *buf, size_t len)
 	    le32toh(msg->rm_devicevchdl)));
 
 	rval = urndis_ctrl_send(sc, msg, sizeof(*msg));
-	kmem_free(msg, sizeof(*msg));
+	kmem_free(msg, sizeof(*msg) + len);
 
 	if (rval != RNDIS_STATUS_SUCCESS) {
 		printf("%s: set failed\n", DEVNAME(sc));
@@ -1022,53 +1022,57 @@ urndis_watchdog(struct ifnet *ifp)
 }
 #endif
 
-static void
+static int
 urndis_init(struct ifnet *ifp)
 {
 	struct urndis_softc	*sc;
 	int			 i, s;
-	usbd_status		 err;
+	int 			 err;
+	usbd_status		 usberr;
 
 	sc = ifp->if_softc;
 
 	if (ifp->if_flags & IFF_RUNNING)
-		return;
+		return 0;
 
-	if (urndis_ctrl_init(sc) != RNDIS_STATUS_SUCCESS)
-		return;
+	err = urndis_ctrl_init(sc);
+	if (err != RNDIS_STATUS_SUCCESS)
+		return EIO;
 
 	s = splnet();
 
-	if (urndis_tx_list_init(sc) == ENOBUFS) {
+	err = urndis_tx_list_init(sc);
+	if (err) {
 		printf("%s: tx list init failed\n",
 		    DEVNAME(sc));
 		splx(s);
-		return;
+		return err;
 	}
 
-	if (urndis_rx_list_init(sc) == ENOBUFS) {
+	err = urndis_rx_list_init(sc);
+	if (err) {
 		printf("%s: rx list init failed\n",
 		    DEVNAME(sc));
 		splx(s);
-		return;
+		return err;
 	}
 
-	err = usbd_open_pipe(sc->sc_iface_data, sc->sc_bulkin_no,
+	usberr = usbd_open_pipe(sc->sc_iface_data, sc->sc_bulkin_no,
 	    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
-	if (err) {
+	if (usberr) {
 		printf("%s: open rx pipe failed: %s\n", DEVNAME(sc),
 		    usbd_errstr(err));
 		splx(s);
-		return;
+		return EIO;
 	}
 
-	err = usbd_open_pipe(sc->sc_iface_data, sc->sc_bulkout_no,
+	usberr = usbd_open_pipe(sc->sc_iface_data, sc->sc_bulkout_no,
 	    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
-	if (err) {
+	if (usberr) {
 		printf("%s: open tx pipe failed: %s\n", DEVNAME(sc),
 		    usbd_errstr(err));
 		splx(s);
-		return;
+		return EIO;
 	}
 
 	for (i = 0; i < RNDIS_RX_LIST_CNT; i++) {
@@ -1086,6 +1090,7 @@ urndis_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	splx(s);
+	return 0;
 }
 
 static void
@@ -1440,6 +1445,7 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = urndis_start;
 	ifp->if_ioctl = urndis_ioctl;
+	ifp->if_init = urndis_init;
 #if 0
 	ifp->if_watchdog = urndis_watchdog;
 #endif

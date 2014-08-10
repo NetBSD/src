@@ -13,31 +13,27 @@ ALIASES(5)                                                          ALIASES(5)
        <b>newaliases</b>
 
 <b>DESCRIPTION</b>
-       The  <a href="aliases.5.html"><b>aliases</b>(5)</a>  table provides a system-wide mechanism to
-       redirect mail for local recipients. The  redirections  are
-       processed by the Postfix <a href="local.8.html"><b>local</b>(8)</a> delivery agent.
+       The  <a href="aliases.5.html"><b>aliases</b>(5)</a> table provides a system-wide mechanism to redirect mail
+       for local recipients. The redirections are  processed  by  the  Postfix
+       <a href="local.8.html"><b>local</b>(8)</a> delivery agent.
 
-       Normally, the <a href="aliases.5.html"><b>aliases</b>(5)</a> table is specified as a text file
-       that serves as input  to  the  <a href="postalias.1.html"><b>postalias</b>(1)</a>  command.  The
-       result,  an  indexed file in <b>dbm</b> or <b>db</b> format, is used for
-       fast lookup  by  the  mail  system.  Execute  the  command
-       <b>newaliases</b>  in  order  to  rebuild  the indexed file after
+       Normally,  the <a href="aliases.5.html"><b>aliases</b>(5)</a> table is specified as a text file that serves
+       as input to the <a href="postalias.1.html"><b>postalias</b>(1)</a> command. The result, an  indexed  file  in
+       <b>dbm</b>  or  <b>db</b> format, is used for fast lookup by the mail system. Execute
+       the command <b>newaliases</b> in order  to  rebuild  the  indexed  file  after
        changing the Postfix alias database.
 
-       When the table is provided via other means  such  as  NIS,
-       LDAP  or  SQL,  the  same lookups are done as for ordinary
-       indexed files.
+       When  the  table  is provided via other means such as NIS, LDAP or SQL,
+       the same lookups are done as for ordinary indexed files.
 
-       Alternatively, the table can be  provided  as  a  regular-
-       expression map where patterns are given as regular expres-
-       sions. In this case, the lookups are done  in  a  slightly
-       different way as described below under "REGULAR EXPRESSION
-       TABLES".
+       Alternatively, the table can be provided as  a  regular-expression  map
+       where  patterns  are  given  as  regular expressions. In this case, the
+       lookups are done in a slightly different way as described  below  under
+       "REGULAR EXPRESSION TABLES".
 
-       Users can control delivery of their own mail by setting up
-       <b>.forward</b> files in their home directory.  Lines in per-user
-       <b>.forward</b> files have the same syntax as the right-hand side
-       of <a href="aliases.5.html"><b>aliases</b>(5)</a> entries.
+       Users  can  control  delivery  of their own mail by setting up <b>.forward</b>
+       files in their home directory.  Lines in per-user <b>.forward</b>  files  have
+       the same syntax as the right-hand side of <a href="aliases.5.html"><b>aliases</b>(5)</a> entries.
 
        The format of the alias database input file is as follows:
 
@@ -45,158 +41,137 @@ ALIASES(5)                                                          ALIASES(5)
 
                    <i>name</i>: <i>value1</i>, <i>value2</i>, <i>...</i>
 
-       <b>o</b>      Empty lines and whitespace-only lines are  ignored,
-              as  are  lines whose first non-whitespace character
-              is a `#'.
+       <b>o</b>      Empty  lines and whitespace-only lines are ignored, as are lines
+              whose first non-whitespace character is a `#'.
 
-       <b>o</b>      A logical line starts with non-whitespace  text.  A
-              line  that starts with whitespace continues a logi-
-              cal line.
+       <b>o</b>      A logical line starts with  non-whitespace  text.  A  line  that
+              starts with whitespace continues a logical line.
 
-       The <i>name</i> is a local address (no domain part).  Use  double
-       quotes  when the name contains any special characters such
-       as whitespace, `#', `:', or `@'. The  <i>name</i>  is  folded  to
-       lowercase, in order to make database lookups case insensi-
-       tive.
+       The  <i>name</i>  is a local address (no domain part).  Use double quotes when
+       the name contains any special characters such as whitespace, `#',  `:',
+       or  `@'.  The  <i>name</i>  is  folded to lowercase, in order to make database
+       lookups case insensitive.
 
-       In addition, when an alias exists for <b>owner-</b><i>name</i>, delivery
-       diagnostics  are  directed  to that address, instead of to
-       the originator of the message.  This is typically used  to
-       direct  delivery  errors  to  the  maintainer of a mailing
-       list, who is in a better position  to  deal  with  mailing
-       list delivery problems than the originator of the undeliv-
-       ered mail.
+       In addition, when an alias exists for <b>owner-</b><i>name</i>, delivery  diagnostics
+       are  directed to that address, instead of to the originator of the mes-
+       sage.  This is typically used to direct delivery errors  to  the  main-
+       tainer  of  a  mailing  list,  who is in a better position to deal with
+       mailing list delivery problems than the originator of  the  undelivered
+       mail.
 
        The <i>value</i> contains one or more of the following:
 
        <i>address</i>
-              Mail is forwarded to <i>address</i>, which  is  compatible
-              with the <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> standard.
+              Mail  is  forwarded to <i>address</i>, which is compatible with the <a href="http://tools.ietf.org/html/rfc822">RFC</a>
+              <a href="http://tools.ietf.org/html/rfc822">822</a> standard.
 
        <i>/file/name</i>
-              Mail  is  appended  to <i>/file/name</i>. See <a href="local.8.html"><b>local</b>(8)</a> for
-              details of delivery to file.  Delivery is not  lim-
-              ited  to regular files.  For example, to dispose of
-              unwanted mail, deflect it to <b>/dev/null</b>.
+              Mail is appended to <i>/file/name</i>.  See  <a href="local.8.html"><b>local</b>(8)</a>  for  details  of
+              delivery  to  file.   Delivery  is not limited to regular files.
+              For  example,  to  dispose  of  unwanted  mail,  deflect  it  to
+              <b>/dev/null</b>.
 
        |<i>command</i>
-              Mail is piped into <i>command</i>. Commands  that  contain
-              special  characters,  such as whitespace, should be
-              enclosed between double quotes.  See  <a href="local.8.html"><b>local</b>(8)</a>  for
-              details of delivery to command.
+              Mail  is piped into <i>command</i>. Commands that contain special char-
+              acters, such as whitespace, should be  enclosed  between  double
+              quotes. See <a href="local.8.html"><b>local</b>(8)</a> for details of delivery to command.
 
-              When the command fails, a limited amount of command
-              output is mailed back  to  the  sender.   The  file
-              <b>/usr/include/sysexits.h</b>  defines  the expected exit
-              status codes. For example, use <b>"|exit 67"</b> to  simu-
-              late  a  "user  unknown"  error,  and  <b>"|exit 0"</b> to
-              implement an expensive black hole.
+              When  the  command  fails, a limited amount of command output is
+              mailed back to the  sender.   The  file  <b>/usr/include/sysexits.h</b>
+              defines  the expected exit status codes. For example, use <b>"|exit</b>
+              <b>67"</b> to simulate a "user unknown" error, and <b>"|exit 0"</b> to  imple-
+              ment an expensive black hole.
 
        <b>:include:</b><i>/file/name</i>
-              Mail is sent to  the  destinations  listed  in  the
-              named file.  Lines in <b>:include:</b> files have the same
-              syntax as the right-hand side of alias entries.
+              Mail  is  sent  to  the  destinations  listed in the named file.
+              Lines in <b>:include:</b> files have the same syntax as the  right-hand
+              side of alias entries.
 
-              A  destination  can  be  any  destination  that  is
-              described in this manual page. However, delivery to
-              "|<i>command</i>" and <i>/file/name</i> is disallowed by default.
-              To  enable,  edit  the  <b><a href="postconf.5.html#allow_mail_to_commands">allow_mail_to_commands</a></b>  and
-              <b><a href="postconf.5.html#allow_mail_to_files">allow_mail_to_files</a></b> configuration parameters.
+              A  destination  can be any destination that is described in this
+              manual page. However, delivery to "|<i>command</i>" and  <i>/file/name</i>  is
+              disallowed  by  default.  To enable, edit the <b><a href="postconf.5.html#allow_mail_to_commands">allow_mail_to_com</a>-</b>
+              <b><a href="postconf.5.html#allow_mail_to_commands">mands</a></b> and <b><a href="postconf.5.html#allow_mail_to_files">allow_mail_to_files</a></b> configuration parameters.
 
 <b>ADDRESS EXTENSION</b>
-       When alias database search fails, and the recipient local-
-       part  contains  the  optional  recipient  delimiter (e.g.,
-       <i>user+foo</i>), the  search  is  repeated  for  the  unextended
-       address (e.g., <i>user</i>).
+       When alias database search fails, and the recipient localpart  contains
+       the  optional  recipient  delimiter  (e.g.,  <i>user+foo</i>),  the  search is
+       repeated for the unextended address (e.g., <i>user</i>).
 
-       The   <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>   parameter  controls
-       whether an unmatched address extension  (<i>+foo</i>)  is  propa-
-       gated to the result of table lookup.
+       The  <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>  parameter  controls   whether   an
+       unmatched address extension (<i>+foo</i>) is propagated to the result of table
+       lookup.
 
 <b>CASE FOLDING</b>
-       The <a href="local.8.html">local(8)</a> delivery agent always folds the search string
-       to lowercase before database lookup.
+       The <a href="local.8.html">local(8)</a> delivery agent always folds the search string to lowercase
+       before database lookup.
 
 <b>REGULAR EXPRESSION TABLES</b>
-       This section describes how the table lookups  change  when
-       the table is given in the form of regular expressions. For
-       a description of regular expression lookup  table  syntax,
-       see  <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>. NOTE: these formats
-       do not use ":" at the end of a pattern.
+       This  section  describes how the table lookups change when the table is
+       given in the form of regular expressions. For a description of  regular
+       expression  lookup  table syntax, see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
+       NOTE: these formats do not use ":" at the end of a pattern.
 
-       Each regular expression is applied to  the  entire  search
-       string.  Thus,  a  search string <i>user+foo</i> is not broken up
-       into <i>user</i> and <i>foo</i>.
+       Each regular expression is applied to the entire search string. Thus, a
+       search string <i>user+foo</i> is not broken up into <i>user</i> and <i>foo</i>.
 
-       Regular expressions are applied in the order as  specified
-       in  the  table,  until  a regular expression is found that
-       matches the search string.
+       Regular expressions are applied in the order as specified in the table,
+       until a regular expression is found that matches the search string.
 
-       Lookup results are the same as with indexed file  lookups.
-       For  security  reasons there is no support for <b>$1</b>, <b>$2</b> etc.
-       substring interpolation.
+       Lookup results are the same as with indexed file lookups.  For security
+       reasons there is no support for <b>$1</b>, <b>$2</b> etc. substring interpolation.
 
 <b>SECURITY</b>
-       The <a href="local.8.html"><b>local</b>(8)</a> delivery agent disallows  regular  expression
-       substitution  of $1 etc. in <b><a href="postconf.5.html#alias_maps">alias_maps</a></b>, because that would
-       open a security hole.
+       The  <a href="local.8.html"><b>local</b>(8)</a>  delivery agent disallows regular expression substitution
+       of $1 etc. in <b><a href="postconf.5.html#alias_maps">alias_maps</a></b>, because that would open a security hole.
 
-       The <a href="local.8.html"><b>local</b>(8)</a> delivery agent will silently ignore  requests
-       to  use  the <a href="proxymap.8.html"><b>proxymap</b>(8)</a> server within <b><a href="postconf.5.html#alias_maps">alias_maps</a></b>. Instead
-       it will open the table directly.  Before  Postfix  version
-       2.2,  the  <a href="local.8.html"><b>local</b>(8)</a>  delivery  agent will terminate with a
-       fatal error.
+       The <a href="local.8.html"><b>local</b>(8)</a> delivery agent will silently ignore requests  to  use  the
+       <a href="proxymap.8.html"><b>proxymap</b>(8)</a>  server  within  <b><a href="postconf.5.html#alias_maps">alias_maps</a></b>. Instead it will open the table
+       directly.  Before Postfix version 2.2, the <a href="local.8.html"><b>local</b>(8)</a> delivery agent will
+       terminate with a fatal error.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially  relevant.
-       The  text  below  provides  only  a parameter summary. See
-       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a>  parameters  are especially relevant.  The text
+       below provides only a  parameter  summary.  See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for  more
+       details including examples.
 
        <b><a href="postconf.5.html#alias_database">alias_database</a></b>
-              List of alias databases that  are  updated  by  the
-              <a href="newaliases.1.html"><b>newaliases</b>(1)</a> command.
-
-       <b><a href="postconf.5.html#alias_maps">alias_maps</a></b>
-              List  of  alias  databases  queried by the <a href="local.8.html"><b>local</b>(8)</a>
-              delivery agent.
-
-       <b><a href="postconf.5.html#allow_mail_to_commands">allow_mail_to_commands</a></b>
-              Restrict the usage of  mail  delivery  to  external
+              List  of  alias  databases that are updated by the <a href="newaliases.1.html"><b>newaliases</b>(1)</a>
               command.
 
+       <b><a href="postconf.5.html#alias_maps">alias_maps</a></b>
+              List of alias databases queried by the <a href="local.8.html"><b>local</b>(8)</a> delivery  agent.
+
+       <b><a href="postconf.5.html#allow_mail_to_commands">allow_mail_to_commands</a></b>
+              Restrict the usage of mail delivery to external command.
+
        <b><a href="postconf.5.html#allow_mail_to_files">allow_mail_to_files</a></b>
-              Restrict  the  usage  of  mail delivery to external
-              file.
+              Restrict the usage of mail delivery to external file.
 
        <b><a href="postconf.5.html#expand_owner_alias">expand_owner_alias</a></b>
-              When delivering to an alias that has an <b>owner-</b> com-
-              panion  alias,  set  the envelope sender address to
-              the right-hand side of  the  owner  alias,  instead
-              using of the left-hand side address.
+              When  delivering to an alias that has an <b>owner-</b> companion alias,
+              set the envelope sender address to the right-hand  side  of  the
+              owner alias, instead using of the left-hand side address.
 
        <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>
-              A  list  of  address rewriting or forwarding mecha-
-              nisms that propagate an address extension from  the
-              original  address  to  the  result. Specify zero or
-              more  of  <b>canonical</b>,   <b>virtual</b>,   <b>alias</b>,   <b>forward</b>,
-              <b>include</b>, or <b>generic</b>.
+              A list of address rewriting or forwarding mechanisms that propa-
+              gate an address extension  from  the  original  address  to  the
+              result.  Specify zero or more of <b>canonical</b>, <b>virtual</b>, <b>alias</b>, <b>for-</b>
+              <b>ward</b>, <b>include</b>, or <b>generic</b>.
 
        <b><a href="postconf.5.html#owner_request_special">owner_request_special</a></b>
-              Give  special treatment to <b>owner-</b><i>listname</i> and <i>list-</i>
-              <i>name</i><b>-request</b> addresses.
+              Give special treatment to  <b>owner-</b><i>listname</i>  and  <i>listname</i><b>-request</b>
+              addresses.
 
        <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a></b>
-              Delimiter that separates  recipients  from  address
-              extensions.
+              Delimiter that separates recipients from address extensions.
 
        Available in Postfix version 2.3 and later:
 
        <b><a href="postconf.5.html#frozen_delivered_to">frozen_delivered_to</a></b>
-              Update  the <a href="local.8.html">local(8)</a> delivery agent's Delivered-To:
-              address (see <a href="postconf.5.html#prepend_delivered_header">prepend_delivered_header</a>)  only  once,
-              at  the  start  of  a  delivery;  do not update the
-              Delivered-To: address while  expanding  aliases  or
-              .forward files.
+              Update  the <a href="local.8.html">local(8)</a> delivery agent's Delivered-To: address (see
+              <a href="postconf.5.html#prepend_delivered_header">prepend_delivered_header</a>) only once, at the start of a delivery;
+              do  not update the Delivered-To: address while expanding aliases
+              or .forward files.
 
 <b>STANDARDS</b>
        <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
@@ -211,8 +186,7 @@ ALIASES(5)                                                          ALIASES(5)
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

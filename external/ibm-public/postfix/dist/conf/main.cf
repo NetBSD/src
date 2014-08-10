@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.4 2013/01/06 13:58:24 tron Exp $
+#	$NetBSD: main.cf,v 1.4.6.1 2014/08/10 07:12:46 tls Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -7,7 +7,7 @@
 # For common configuration examples, see BASIC_CONFIGURATION_README
 # and STANDARD_CONFIGURATION_README. To find these documents, use
 # the command "postconf html_directory readme_directory", or go to
-# http://www.postfix.org/.
+# http://www.postfix.org/BASIC_CONFIGURATION_README.html etc.
 #
 # For best results, change no more than 2-3 parameters at a time,
 # and test if Postfix still works after every change.

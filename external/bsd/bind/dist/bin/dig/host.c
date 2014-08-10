@@ -1,7 +1,7 @@
-/*	$NetBSD: host.c,v 1.8 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.8.2.1 2014/08/10 07:06:35 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: host.c,v 1.127 2011/03/11 06:11:20 marka Exp  */
 
 /*! \file */
 
@@ -169,7 +167,8 @@ show_usage(void) {
 "       -W specifies how long to wait for a reply\n"
 "       -4 use IPv4 query transport only\n"
 "       -6 use IPv6 query transport only\n"
-"       -m set memory debugging flag (trace|record|usage)\n", stderr);
+"       -m set memory debugging flag (trace|record|usage)\n"
+"       -v print version number and exit\n", stderr);
 	exit(1);
 }
 
@@ -606,7 +605,13 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	return (result);
 }
 
-static const char * optstring = "46ac:dilnm:rst:vwCDN:R:TW:";
+static const char * optstring = "46ac:dilnm:rst:vVwCDN:R:TW:";
+
+/*% version */
+static void
+version(void) {
+	fputs("host " VERSION "\n", stderr);
+}
 
 static void
 pre_parse_args(int argc, char **argv) {
@@ -638,6 +643,10 @@ pre_parse_args(int argc, char **argv) {
 		case 's': break;
 		case 't': break;
 		case 'v': break;
+		case 'V':
+			  version();
+			  exit(0);
+			  break;
 		case 'w': break;
 		case 'C': break;
 		case 'D':

@@ -26,6 +26,11 @@
     <None Include="libisc.def" />
   </ItemGroup>
   <ItemGroup>
+@IF AES
+    <ClInclude Include="..\include\isc\aes.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
+@END AES
     <ClInclude Include="..\include\isc\app.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -267,6 +272,9 @@
     <ClInclude Include="..\include\pk11\pk11.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\pk11\result.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\pkcs11\pkcs11.h">
       <Filter>Pkcs11 Header Files</Filter>
     </ClInclude>
@@ -452,6 +460,11 @@
       <Filter>Win32 Source Files</Filter>
     </ClCompile>
 @END PKCS11
+@IF AES
+    <ClCompile Include="..\aes.c">
+      <Filter>Win32 Source Files</Filter>
+    </ClCompile>
+@END AES
     <ClCompile Include="..\assertions.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
@@ -625,6 +638,9 @@
     </ClCompile>
 @IF PKCS11
     <ClCompile Include="..\pk11.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pk11_result.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
 @END PKCS11

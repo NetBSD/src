@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2011/06/07 13:30:35 plunky Exp $
+#	$NetBSD: Makefile,v 1.9.20.1 2014/08/10 07:10:08 tls Exp $
 
 .include <bsd.init.mk>
 
-.PATH:	${PCC_DIST}/cc/cpp \
-	${PCC_DIST}/mip
+.PATH:	${PCC_DIST}/cc/cpp
 
 #
 # We build cpp(1) as pcpp(1) to avoid confusion with GCC
@@ -28,12 +27,6 @@ CPPFLAGS+=	-I${PCC_DIST}/cc/cpp
 # generate cpy.h
 YHEADER=
 
-# some files include y.tab.h instead
-DPSRCS=		y.tab.h
-
-y.tab.h:	cpy.h
-	${HOST_LN} -f ${.ALLSRC} ${.TARGET}
-
-CLEANFILES+=	pcpp.1 y.tab.h
+CLEANFILES+=	pcpp.1
 
 .include <bsd.prog.mk>

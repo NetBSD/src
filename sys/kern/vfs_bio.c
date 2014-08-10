@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.249 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.249.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.249 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.249.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include "opt_bufcache.h"
 
@@ -441,6 +441,9 @@ bufinit(void)
 	struct bqueue *dp;
 	int use_std;
 	u_int i;
+	extern void (*biodone_vfs)(buf_t *);
+
+	biodone_vfs = biodone;
 
 	mutex_init(&bufcache_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&buffer_lock, MUTEX_DEFAULT, IPL_NONE);

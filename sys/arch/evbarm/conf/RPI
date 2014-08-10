@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.42 2014/01/31 08:18:03 skrll Exp $
+#	$NetBSD: RPI,v 1.42.2.1 2014/08/10 06:53:55 tls Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -83,6 +83,7 @@ options		NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_50	# NetBSD 5.0 compatibility.
@@ -129,7 +130,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 #options 	IPKDB		# remote kernel debugging
@@ -202,6 +203,10 @@ bcmpm0		at obio?
 # Random number generator
 bcmrng0 	at obio?
 
+# GPIO
+bcmgpio0	at obio?	# pins  0 ... 31
+bcmgpio1	at obio?	# pins 32 ... 53
+
 # Arasan SD/MMC Interface
 sdhc* at obio?
 sdmmc*  at sdhc?
@@ -224,6 +229,15 @@ iic* at i2cbus?
 # SPI controller
 bcmspi* at obio?
 spi* at spibus?
+
+# PIFace or other boards using that chip (needs gpio)
+#mcp23s17gpio0 at spi? slave 0 flags 0
+#mcp23s17gpio1 at spi? slave 0 flags 1 
+#mcp23s17gpio2 at spi? slave 0 flags 2
+#mcp23s17gpio3 at spi? slave 0 flags 3
+
+# gpio support (e. g. mcp23s17gpio, bcmgpio)
+gpio*		at gpiobus?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.95 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: xy.c,v 1.95.2.1 2014/08/10 06:54:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.95 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.95.2.1 2014/08/10 06:54:59 tls Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -214,6 +214,7 @@ const struct bdevsw xy_bdevsw = {
 	.d_ioctl = xyioctl,
 	.d_dump = xydump,
 	.d_psize = xysize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -228,6 +229,7 @@ const struct cdevsw xy_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.7 2013/10/06 16:34:48 jakllsch Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.7.2.1 2014/08/10 06:54:11 tls Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.7 2013/10/06 16:34:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.7.2.1 2014/08/10 06:54:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,7 @@ struct acpi_md_override {
 	int flags;
 };
 
+#if NIOAPIC > 0
 static ACPI_STATUS
 acpi_md_findoverride(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
@@ -117,6 +118,7 @@ acpi_md_findoverride(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 	}
 	return AE_OK;
 }
+#endif
 
 ACPI_STATUS
 acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,

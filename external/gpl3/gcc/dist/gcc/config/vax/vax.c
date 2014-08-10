@@ -572,6 +572,11 @@ print_operand (FILE *file, rtx x, int code)
 		       sizeof (dstr), 0, 1);
       fprintf (file, "$0%c%s", ASM_DOUBLE_CHAR, dstr);
     }
+  else if (GET_CODE (x) == SUBREG)
+    {
+      debug_rtx (x);
+      output_operand_lossage ("SUBREG operand");
+    }
   else
     {
       if (flag_pic > 1 && symbolic_operand (x, SImode))
@@ -1287,7 +1292,7 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 
       if (operands[1] == const0_rtx)
 	{
-	  if (push_operand (operands[1], SImode))
+	  if (push_operand (operands[0], SImode))
 	    return "pushl %1";
 	  return "clrl %0";
 	}
@@ -1775,6 +1780,19 @@ legitimate_constant_address_p (rtx x)
 #endif
    gcc_assert (! REG_P (x));
    return true;
+}
+
+bool
+legitimate_pic_operand_p (rtx x)
+{
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+  if (GET_CODE (x) != CONST)
+    return true;
+  if (GET_CODE (XEXP (XEXP (x, 0), 0)) == SYMBOL_REF
+      && !SYMBOL_REF_LOCAL_P (XEXP (XEXP (x, 0), 0)))
+    return false;
+#endif
+  return true;
 }
 
 /* The other macros defined here are used only in legitimate_address_p ().  */
@@ -2306,4 +2324,55 @@ vax_function_arg_advance (cumulative_args_t cum_v, enum machine_mode mode,
   *cum += (mode != BLKmode
 	   ? (GET_MODE_SIZE (mode) + 3) & ~3
 	   : (int_size_in_bytes (type) + 3) & ~3);
+}
+
+bool
+vax_decomposed_dimode_operand_p (rtx lo, rtx hi)
+{
+  HOST_WIDE_INT lo_offset = 0;
+  HOST_WIDE_INT hi_offset = 0;
+
+  /* If the codes aren't the same, can't be a DImode operand.  */
+  if (GET_CODE (lo) != GET_CODE (hi))
+    return false;
+
+  /* If a register, hi regno must be one more than the lo regno.  */
+  if (REG_P (lo))
+    return REGNO (lo) + 1 == REGNO (hi);
+
+  /* If not memory, can't be a DImode operand.  */
+  if (!MEM_P (lo))
+    return false;
+
+  /* Get addresses of memory operands.  */
+  lo = XEXP(lo, 0);
+  hi = XEXP(hi, 0);
+
+  /* If POST_INC, regno must match.  */
+  if (GET_CODE (lo) == POST_INC && GET_CODE (hi) == POST_INC)
+    return REGNO (XEXP (lo, 0)) == REGNO (XEXP (hi, 0));
+
+  if (GET_CODE (lo) == PLUS)
+    {
+      /* If PLUS or MULT, this must an indexed address so fail.  */
+      if (GET_CODE (XEXP (lo, 0)) == PLUS
+	  || GET_CODE (XEXP (lo, 0)) == MULT
+	  || !CONST_INT_P (XEXP (lo, 1)))
+	return false;
+      lo_offset = INTVAL (XEXP (lo, 1));
+      lo = XEXP(lo, 0);
+    }
+
+  if (GET_CODE (hi) == PLUS)
+    {
+      /* If PLUS or MULT, this must an indexed address so fail.  */
+      if (GET_CODE (XEXP (hi, 0)) == PLUS
+	  || GET_CODE (XEXP (hi, 0)) == MULT
+	  || !CONST_INT_P (XEXP (hi, 1)))
+	return false;
+      hi_offset = INTVAL (XEXP (hi, 1));
+      hi = XEXP(hi, 0);
+    }
+
+  return rtx_equal_p(lo, hi) && lo_offset + 4 == hi_offset;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.27 2014/04/04 21:33:19 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.27.2.1 2014/08/10 06:53:52 tls Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -882,8 +882,11 @@
 
 #ifdef TI_AM335X
 #define	TI_AM335X_CTLMOD_BASE		0x44e10000
-#define	CTLMOD_CONTROL_STATUS		0x40
+#define	CTLMOD_CONTROL_STATUS		0x0040
 #define	CTLMOD_CONTROL_STATUS_SYSBOOT1	__BITS(23,22)
+
+#define TI_AM335X_CTLMOD_DEVID		0x0600
+#define TI_AM335X_CTLMOD_DEVID_REV(x)	(((x) >> 28) & 0xf)
 #endif
 #if defined(OMAP4) || defined(TI_AM335X)
 #define	EMIF_SDRAM_CONFIG		8

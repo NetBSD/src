@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/tuning.sdf,v 1.9.2.9 2010/04/13 20:22:35 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Tuning
@@ -27,13 +27,20 @@ H3: Memory
 
 Scale your cache to use available memory and increase system memory if you can.
 
-See {{SECT:Caching}}
+See {{SECT:Caching}} for BDB cache tuning hints.
+Note that LMDB uses no cache of its own and has no tuning options, so the Caching
+section can be ignored when using LMDB.
 
 
 H3: Disks
 
-Use fast subsystems. Put each database and logs on separate disks configurable
-via {{DB_CONFIG}}:
+Use fast filesystems, and conduct your own testing to see which filesystem
+types perform best with your workload. (On our own Linux testing, EXT2 and JFS
+tend to provide better write performance than everything else, including
+newer filesystems like EXT4, BTRFS, etc.)
+
+Use fast subsystems. Put each database and logs on separate disks
+(for BDB this is configurable via {{DB_CONFIG}}):
 
 >       # Data Directory
 >       set_data_dir /data/db
@@ -234,10 +241,10 @@ will tell you how many internal pages are present in a database. You should
 check this number for both dn2id and id2entry.
 
 Also note that {{id2entry}} always uses 16KB per "page", while {{dn2id}} uses whatever 
-the underlying filesystem uses, typically 4 or 8KB. To avoid thrashing the, 
+the underlying filesystem uses, typically 4 or 8KB. To avoid thrashing,
 your cache must be at least as large as the number of internal pages in both 
-the {{dn2id}} and {{id2entry}} databases, plus some extra space to accommodate the actual 
-leaf data pages.
+the {{dn2id}} and {{id2entry}} databases, plus some extra space to accommodate
+the actual leaf data pages.
 
 For example, in my OpenLDAP 2.4 test database, I have an input LDIF file that's 
 about 360MB. With the back-hdb backend this creates a {{dn2id.bdb}} that's 68MB, 
@@ -252,23 +259,17 @@ This doesn't take into account other library overhead, so this is even lower
 than the barest minimum. The default cache size, when nothing is configured, 
 is only 256KB. 
 
-This 2.5MB number also doesn't take indexing into account. Each indexed attribute 
-uses another database file of its own, using a Hash structure. 
+This 2.5MB number also doesn't take indexing into account. Each indexed
+attribute results in another database file.  Earlier versions of OpenLDAP
+kept these index databases in Hash format, but from OpenLDAP 2.2 onward
+the index databases are in B-tree format so the same procedure can
+be used to calculate the necessary amount of cache for each index database.
 
-Unlike the B-trees, where you only need to touch one data page to find an entry 
-of interest, doing an index lookup generally touches multiple keys, and the 
-point of a hash structure is that the keys are evenly distributed across the 
-data space. That means there's no convenient compact subset of the database that 
-you can keep in the cache to insure quick operation, you can pretty much expect 
-references to be scattered across the whole thing. My strategy here would be to 
-provide enough cache for at least 50% of all of the hash data. 
+For example, if your only index is for the objectClass attribute and db_stat
+reveals that {{objectClass.bdb}} has 339 internal pages and uses 4096 byte
+pages, the additional cache needed for just this attribute index is
 
->   (Number of hash buckets + number of overflow pages + number of duplicate pages) * page size / 2.
-
-The objectClass index for my example database is 5.9MB and uses 3 hash buckets 
-and 656 duplicate pages. So:
-
->   ( 3 + 656 ) * 4KB / 2 =~ 1.3MB.
+>       (339+1) * 4KB =~ 1.3MB.
 
 With only this index enabled, I'd figure at least a 4MB cache for this backend. 
 (Of course you're using a single cache shared among all of the database files, 
@@ -321,9 +322,9 @@ it is generally recommended to be 3x"cachesize".
 {NOTE: The idlcachesize setting directly affects search performance}
 
 
-H3: {{slapd}}(8) Threads
+H2: {{slapd}}(8) Threads
 
-{{slapd}}(8) can process requests via a configurable number of thread, which 
+{{slapd}}(8) can process requests via a configurable number of threads, which
 in turn affects the in/out rate of connections.
 
 This value should generally be a function of the number of "real" cores on 

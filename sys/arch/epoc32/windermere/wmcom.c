@@ -1,4 +1,4 @@
-/*      $NetBSD: wmcom.c,v 1.2.2.1 2014/04/07 03:37:30 tls Exp $      */
+/*      $NetBSD: wmcom.c,v 1.2.2.2 2014/08/10 06:53:54 tls Exp $      */
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.2.2.1 2014/04/07 03:37:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.2.2.2 2014/08/10 06:53:54 tls Exp $");
 
 #include "rnd.h"
 
@@ -143,6 +143,7 @@ const struct cdevsw wmcom_cdevsw = {
 	.d_poll = wmcompoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

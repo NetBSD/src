@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.22 2014/01/03 20:52:47 dsl Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.22.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.22 2014/01/03 20:52:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.22.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -154,6 +154,12 @@ coredump(struct lwp *l, const char *pattern)
 	}
 	error = coredump_buildname(p, name, pattern, MAXPATHLEN);
 	mutex_exit(&lim->pl_lock);
+
+	if (error) {
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
+		goto done;
+	}
 
 	/*
 	 * On a simple filename, see if the filesystem allow us to write

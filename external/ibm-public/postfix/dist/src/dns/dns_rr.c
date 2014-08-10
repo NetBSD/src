@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rr.c,v 1.1.1.2 2011/03/02 19:32:10 tron Exp $	*/
+/*	$NetBSD: dns_rr.c,v 1.1.1.2.20.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -125,6 +125,7 @@ DNS_RR *dns_rr_create(const char *qname, const char *rname,
     rr->type = type;
     rr->class = class;
     rr->ttl = ttl;
+    rr->dnssec_valid = 0;
     rr->pref = pref;
     if (data && data_len > 0)
 	memcpy(rr->data, data, data_len);
@@ -304,10 +305,12 @@ DNS_RR *dns_rr_shuffle(DNS_RR *list)
 	rr_array[len] = rr;
 
     /*
-     * Shuffle resource records.
+     * Shuffle resource records. Every element has an equal chance of landing
+     * in slot 0.  After that every remaining element has an equal chance of
+     * landing in slot 1, ...  This is exactly n! states for n! permutations.
      */
-    for (i = 0; i < len; i++) {
-	r = myrand() % len;
+    for (i = 0; i < len - 1; i++) {
+	r = i + (myrand() % (len - i));		/* Victor&Son */
 	rr = rr_array[i];
 	rr_array[i] = rr_array[r];
 	rr_array[r] = rr;

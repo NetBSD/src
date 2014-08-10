@@ -48,7 +48,10 @@
 #	are known to support it.
 # .IP \fB-DNO_NIS\fR
 #	Do not build with NIS or NISPLUS support. Support for NIS
-#	is unavailable on some recent Linux and Solaris distributions.
+#	is unavailable on some recent Linux distributions.
+# .IP \fB-DNO_NISPLUS\fR
+#	Do not build with NISPLUS support. Support for NISPLUS
+#	is unavailable on some recent Solaris distributions.
 # .IP \fB-DNO_PCRE\fR
 #	Do not build with PCRE support.
 #	By default, PCRE support is compiled in when the \fBpcre-config\fR
@@ -155,6 +158,8 @@ case "$SYSTEM.$RELEASE" in
 		;;
   FreeBSD.9*)	SYSTYPE=FREEBSD9
 		;;
+ DragonFly.*)	SYSTYPE=DRAGONFLY
+		;;
   OpenBSD.2*)	SYSTYPE=OPENBSD2
 		;;
   OpenBSD.3*)	SYSTYPE=OPENBSD3
@@ -175,6 +180,8 @@ case "$SYSTEM.$RELEASE" in
 		;;
    NetBSD.5*)	SYSTYPE=NETBSD5
 		;;
+   NetBSD.6*)	SYSTYPE=NETBSD6
+		;;
    BSD/OS.2*)	SYSTYPE=BSDI2
 		;;
    BSD/OS.3*)	SYSTYPE=BSDI3
@@ -194,7 +201,7 @@ case "$SYSTEM.$RELEASE" in
 		;;
     SunOS.5*)	SYSTYPE=SUNOS5
 		RANLIB=echo
-		SYSLIBS="-lresolv -lsocket -lnsl"
+		SYSLIBS="-lresolv -lsocket -lnsl -ldl"
 		# Stock awk breaks with >10 files.
 		test -x /usr/xpg4/bin/awk && AWK=/usr/xpg4/bin/awk
 		# Solaris 2.5 added usleep(), POSIX regexp, POSIX getpwnam/uid_r
@@ -209,6 +216,10 @@ case "$SYSTEM.$RELEASE" in
 		# and appears to have solid UNIX-domain sockets.
 		case $RELEASE in
 		    5.[0-8]|5.[0-8].*) CCARGS="$CCARGS -DNO_CLOSEFROM -DNO_DEV_URANDOM -DNO_FUTIMESAT -DSTREAM_CONNECTIONS";;
+		esac
+		# Somewhere NISPLUS went away.
+		case $RELEASE in
+		    5.[0-9][0-9]*) CCARGS="$CCARGS -DNO_NISPLUS";;
 		esac
 		# Work around broken str*casecmp(). Do it all here instead
 		# of having half the solution in the sys_defs.h file.
@@ -274,12 +285,14 @@ case "$SYSTEM.$RELEASE" in
     Linux.1*)	SYSTYPE=LINUX1
 		case "$CCARGS" in
 		 *-DNO_DB*) ;;
+		 *-DHAS_DB*) ;;
 		 *) SYSLIBS="-ldb";;
 		esac
 		;;
     Linux.2*)	SYSTYPE=LINUX2
 		case "$CCARGS" in
 		 *-DNO_DB*) ;;
+		 *-DHAS_DB*) ;;
 		 *) if [ -f /usr/include/db.h ]
 		    then
 			: we are all set
@@ -317,12 +330,12 @@ case "$SYSTEM.$RELEASE" in
 		    # Workaround for retarded libc 
 		    2.6.*)
 		       if [ `expr "X$CCARGS" : "X.*-DNO_EPOLL"` -gt 0 ]
-                       then
-                           :
-                       elif [ ! -e /usr/include/sys/epoll.h ]
-                       then
-                           echo CCARGS="$CCARGS -DNO_EPOLL"
-                       else
+		       then
+			   :
+		       elif [ ! -e /usr/include/sys/epoll.h ]
+		       then
+			   echo CCARGS="$CCARGS -DNO_EPOLL"
+		       else
 			   trap 'rm -f makedefs.test makedefs.test.[co]' 1 2 3 15
 			   cat >makedefs.test.c <<'EOF'
 #include <sys/types.h>
@@ -352,6 +365,7 @@ EOF
     Linux.3*)	SYSTYPE=LINUX3
 		case "$CCARGS" in
 		 *-DNO_DB*) ;;
+		 *-DHAS_DB*) ;;
 		 *) if [ -f /usr/include/db.h ]
 		    then
 			: we are all set
@@ -380,7 +394,7 @@ EOF
 		done
 		;;
      GNU.0*|GNU/kFreeBSD.[567]*)
-     		SYSTYPE=GNU0
+		SYSTYPE=GNU0
 		case "$CCARGS" in
 		 *-DNO_DB*) ;;
 		 *) if [ -f /usr/include/db.h ]
@@ -461,7 +475,7 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
 		case $RELEASE in
 		 1.[0-3]) AWK=gawk;;
 		       *) AWK=awk
-			  SYSLIBS=-flat_namespace;;
+			  SYSLIBS="$SYSLIBS -flat_namespace";;
 		esac
 		# Darwin 7 adds IPv6 support, BIND_8_COMPAT, NO_NETINFO
 		case $RELEASE in
@@ -477,64 +491,16 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
 		     ?.*) CCARGS="$CCARGS -DRESOLVE_H_NEEDS_NAMESER8_COMPAT_H";;
 		       *) CCARGS="$CCARGS -DRESOLVE_H_NEEDS_ARPA_NAMESER_COMPAT_H";;
 		esac
-		# kqueue and/or poll are broken up to and including MacOS X 10.5
-		CCARGS="$CCARGS -DNO_KQUEUE"
-#		# Darwin 8.11.1 has kqueue support, but let's play safe
-#		case $RELEASE in
-#		 [1-8].*) CCARGS="$CCARGS -DNO_KQUEUE";;
-#		       *) trap 'rm -f makedefs.test makedefs.test.[co]' 1 2 3 15
-#			  cat >makedefs.test.c <<'EOF'
-#/* Adapted from libevent. */
-#
-##include <sys/types.h>
-##include <sys/event.h>
-##include <sys/time.h>
-##include <string.h>
-##include <stdlib.h>
-##include <stdio.h>
-#
-##ifndef EV_SET
-##define EV_SET(kp, id, fi, fl, ffl, da, ud) do { \
-#	struct kevent *__kp = (kp); \
-#	__kp->ident = (id); \
-#	__kp->filter = (fi); \
-#	__kp->flags = (fl); \
-#	__kp->fflags = (ffl); \
-#	__kp->data = (da); \
-#	__kp->udata = (ud); \
-#    } while(0)
-##endif
-#
-#int     main(int argc, char **argv)
-#{
-#    int     kq;
-#    struct kevent test_change;
-#    struct kevent test_result;
-#
-#    if ((kq = kqueue()) < 0) {
-#	perror("kqueue");
-#	exit(1);
-#    }
-##define TEST_FD (-1)
-#
-#    EV_SET(&test_change, TEST_FD, EVFILT_READ, EV_ADD, 0, 0, 0);
-#    if (kevent(kq,
-#	       &test_change, sizeof(test_change) / sizeof(struct kevent),
-#	       &test_result, sizeof(test_result) / sizeof(struct kevent),
-#	       (struct timespec *) 0) != 1 ||
-#	test_result.ident != TEST_FD ||
-#	test_result.flags != EV_ERROR) {
-#	fprintf(stderr, "Error: kevent reports errors incorrectly\n");
-#	exit(1);
-#    }
-#    exit(0);
-#}
-#EOF
-#			  $CC -o makedefs.test makedefs.test.c || exit 1
-#			  ./makedefs.test 2>/dev/null || 
-#				CCARGS="$CCARGS -DNO_KQUEUE"
-#			  rm -f makedefs.test makedefs.test.[co];;
-#		esac
+		# Darwin 12.x (MacOS X 10.8.x), maybe earlier, needs libresolv.
+		case $RELEASE in
+	    ?.*|1[0-1].*) ;;
+		       *) SYSLIBS="$SYSLIBS -lresolv";;
+		esac
+		# kqueue and/or poll are broken in MacOS X 10.5 (Darwin 9).
+		# kqueue works in Mac OS X 10.8 (Darwin 12).
+		case $RELEASE in
+	    ?.*|1[0-1].*) CCARGS="$CCARGS -DNO_KQUEUE";;
+		esac
 		;;
     dcosx.1*)	SYSTYPE=DCOSX1
 		RANLIB=echo
@@ -564,7 +530,7 @@ esac
 #
 case "$CCARGS" in
  *-DNO_SIGSETJMP*) ;;
-                *) trap 'rm -f makedefs.test makedefs.test.[co]' 1 2 3 15
+		*) trap 'rm -f makedefs.test makedefs.test.[co]' 1 2 3 15
 		   cat >makedefs.test.c <<'EOF'
 #include <setjmp.h>
 #include <stdlib.h>
@@ -630,7 +596,7 @@ esac
 case "$CCARGS" in
 *-DHAS_PCRE*)	;;
  *-DNO_PCRE*)	;;
-           *)	pcre_cflags=`(pcre-config --cflags) 2>/dev/null` &&
+	   *)	pcre_cflags=`(pcre-config --cflags) 2>/dev/null` &&
 		    pcre_libs=`(pcre-config --libs) 2>/dev/null` && {
 			CCARGS="$CCARGS -DHAS_PCRE $pcre_cflags"
 			AUXLIBS="$AUXLIBS $pcre_libs"
@@ -649,7 +615,7 @@ case "$CC" in
 	   "gcc version 2.8"*) : ${OPT=};;
 	   esac;;
       *CC) error "Don't use CC. That's the C++ compiler";;
-        *) : ${OPT='-O'};;
+	*) : ${OPT='-O'};;
 esac
 #
 # "gcc -W" 3.4.2 no longer reports functions that fail to return a
@@ -671,6 +637,9 @@ export SYSTYPE AR ARFL RANLIB SYSLIBS CC OPT DEBUG AWK OPTS
 # Non-production: needs thorough testing, or major changes are still
 # needed before the code stabilizes.
 #CCARGS="$CCARGS -DNONPROD"
+
+# Workaround: prepend Postfix include files before other include files.
+CCARGS="-I. -I../../include $CCARGS"
 
 sed 's/  / /g' <<EOF
 SYSTYPE	= $SYSTYPE

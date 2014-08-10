@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.100 2014/01/02 18:29:01 pooka Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.100.2.1 2014/08/10 06:56:30 tls Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.100 2014/01/02 18:29:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.100.2.1 2014/08/10 06:56:30 tls Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -135,14 +135,6 @@ DOMAIN_DEFINE(inet6domain);	/* forward declare and add to link set */
 
 /* Wrappers to acquire kernel_lock. */
 
-PR_WRAP_USRREQ(rip6_usrreq)
-PR_WRAP_USRREQ(udp6_usrreq)
-PR_WRAP_USRREQ(tcp_usrreq)
-
-#define	rip6_usrreq 	rip6_usrreq_wrapper
-#define	udp6_usrreq 	udp6_usrreq_wrapper
-#define	tcp_usrreq 	tcp_usrreq_wrapper
-
 PR_WRAP_CTLINPUT(rip6_ctlinput)
 PR_WRAP_CTLINPUT(encap6_ctlinput)
 PR_WRAP_CTLINPUT(udp6_ctlinput)
@@ -199,7 +191,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = udp6_input,
 	.pr_ctlinput = udp6_ctlinput,
 	.pr_ctloutput = udp6_ctloutput,
-	.pr_usrreq = udp6_usrreq,
+	.pr_usrreqs = &udp6_usrreqs,
 	.pr_init = udp6_init,
 },
 {	.pr_type = SOCK_STREAM,
@@ -209,7 +201,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = tcp6_input,
 	.pr_ctlinput = tcp6_ctlinput,
 	.pr_ctloutput = tcp_ctloutput,
-	.pr_usrreq = tcp_usrreq,
+	.pr_usrreqs = &tcp_usrreqs,
 	.pr_init = tcp6_init,
 	.pr_fasttimo = tcp_fasttimo,
 	.pr_drain = tcp_drainstub,
@@ -222,7 +214,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctlinput = rip6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 },
 #ifdef GATEWAY
 {	.pr_domain = &inet6domain,
@@ -239,7 +231,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctlinput = rip6_ctlinput,
 	.pr_ctloutput = icmp6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = icmp6_init,
 },
 {	.pr_type = SOCK_RAW,
@@ -291,7 +283,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctlinput = encap6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = encap_init,
 },
 #endif
@@ -303,7 +295,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctlinput = encap6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = encap_init,
 },
 #if NETHERIP > 0
@@ -315,7 +307,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctlinput = rip6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 },
 #endif
 #if NCARP > 0
@@ -326,7 +318,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = carp6_proto_input,
 	.pr_output = rip6_output,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 },
 #endif /* NCARP */
 {	.pr_type = SOCK_RAW,
@@ -336,7 +328,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = pim6_input,
 	.pr_output = rip6_output,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = pim6_init,
 },
 /* raw wildcard */
@@ -346,7 +338,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = rip6_input,
 	.pr_output = rip6_output,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = rip6_init,
 },
 };
@@ -377,7 +369,7 @@ struct domain inet6domain = {
 	.dom_rtoffset = offsetof(struct sockaddr_in6, sin6_addr) << 3,
 	.dom_maxrtkey = sizeof(struct ip_pack6),
 	.dom_ifattach = in6_domifattach, .dom_ifdetach = in6_domifdetach,
-	.dom_ifqueues = { &ip6intrq, NULL },
+	.dom_ifqueues = { NULL, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_in6, sin6_addr),
@@ -476,8 +468,3 @@ int	icmp6_rediraccept = 1;		/* accept and process redirects */
 int	icmp6_redirtimeout = 10 * 60;	/* 10 minutes */
 int	icmp6errppslim = 100;		/* 100pps */
 int	icmp6_nodeinfo = 1;		/* enable/disable NI response */
-
-/* UDP on IP6 parameters */
-int	udp6_sendspace = 9216;		/* really max datagram size */
-int	udp6_recvspace = 40 * (1024 + sizeof(struct sockaddr_in6));
-					/* 40 1K datagrams */

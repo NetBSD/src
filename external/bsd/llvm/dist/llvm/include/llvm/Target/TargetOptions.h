@@ -15,6 +15,7 @@
 #ifndef LLVM_TARGET_TARGETOPTIONS_H
 #define LLVM_TARGET_TARGETOPTIONS_H
 
+#include "llvm/MC/MCTargetOptions.h"
 #include <string>
 
 namespace llvm {
@@ -49,8 +50,9 @@ namespace llvm {
           JITEmitDebugInfoToDisk(false), GuaranteedTailCallOpt(false),
           DisableTailCalls(false), StackAlignmentOverride(0),
           EnableFastISel(false), PositionIndependentExecutable(false),
-          EnableSegmentedStacks(false), UseInitArray(false),
-          DisableIntegratedAS(false), TrapFuncName(""),
+          UseInitArray(false), DisableIntegratedAS(false),
+          CompressDebugSections(false), FunctionSections(false),
+          DataSections(false), TrapUnreachable(false), TrapFuncName(""),
           FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard) {}
 
@@ -152,14 +154,24 @@ namespace llvm {
     /// if the relocation model is anything other than PIC.
     unsigned PositionIndependentExecutable : 1;
 
-    unsigned EnableSegmentedStacks : 1;
-
     /// UseInitArray - Use .init_array instead of .ctors for static
     /// constructors.
     unsigned UseInitArray : 1;
 
     /// Disable the integrated assembler.
     unsigned DisableIntegratedAS : 1;
+
+    /// Compress DWARF debug sections.
+    unsigned CompressDebugSections : 1;
+
+    /// Emit functions into separate sections.
+    unsigned FunctionSections : 1;
+
+    /// Emit data into separate sections.
+    unsigned DataSections : 1;
+
+    /// Emit target-specific trap instruction for 'unreachable' IR instructions.
+    unsigned TrapUnreachable : 1;
 
     /// getTrapFunctionName - If this returns a non-empty string, this means
     /// isel should lower Intrinsic::trap to a call to the specified function
@@ -192,6 +204,9 @@ namespace llvm {
     /// via the llvm.fma.* intrinsic) will always be honored, regardless of
     /// the value of this option.
     FPOpFusion::FPOpFusionMode AllowFPOpFusion;
+
+    /// Machine level options.
+    MCTargetOptions MCOptions;
   };
 
 // Comparison operators:
@@ -214,11 +229,12 @@ inline bool operator==(const TargetOptions &LHS,
     ARE_EQUAL(StackAlignmentOverride) &&
     ARE_EQUAL(EnableFastISel) &&
     ARE_EQUAL(PositionIndependentExecutable) &&
-    ARE_EQUAL(EnableSegmentedStacks) &&
     ARE_EQUAL(UseInitArray) &&
+    ARE_EQUAL(TrapUnreachable) &&
     ARE_EQUAL(TrapFuncName) &&
     ARE_EQUAL(FloatABIType) &&
-    ARE_EQUAL(AllowFPOpFusion);
+    ARE_EQUAL(AllowFPOpFusion) &&
+    ARE_EQUAL(MCOptions);
 #undef ARE_EQUAL
 }
 

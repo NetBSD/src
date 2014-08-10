@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.5 2013/06/18 08:01:00 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.5.8.1 2014/08/10 06:56:58 tls Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
@@ -207,12 +207,12 @@ struct inode {
 #define	IN_MODIFY	0x2000		/* Modification time update request. */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
-/* #define	IN_UNUSED	0x0020 */	/* unused, was IN_RENAME */
+/* 	   unused	0x0020 */	/* was IN_RENAME */
 #define	IN_SHLOCK	0x0040		/* File has shared lock. */
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
 #define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
 #define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
-#define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
+/* 	   unused	0x0400 */	/* was FFS-only IN_SPACECOUNTED */
 #define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
 #define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
 

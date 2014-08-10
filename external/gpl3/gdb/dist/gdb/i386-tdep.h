@@ -1,6 +1,6 @@
 /* Target-dependent code for the i386.
 
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,20 +52,6 @@ enum struct_return
   reg_struct_return		/* Return "short" structures in registers.  */
 };
 
-/* Register classes as defined in the AMD x86-64 psABI.  */
-
-enum amd64_reg_class
-{
-  AMD64_INTEGER,
-  AMD64_SSE,
-  AMD64_SSEUP,
-  AMD64_X87,
-  AMD64_X87UP,
-  AMD64_COMPLEX_X87,
-  AMD64_NO_CLASS,
-  AMD64_MEMORY
-};
-
 /* i386 architecture specific information.  */
 struct gdbarch_tdep
 {
@@ -74,35 +60,6 @@ struct gdbarch_tdep
   int *gregset_reg_offset;
   int gregset_num_regs;
   size_t sizeof_gregset;
-
-  /* The general-purpose registers used to pass integers when making
-     function calls.  This only applies to amd64, as all parameters
-     are passed through the stack on x86.  */
-  int call_dummy_num_integer_regs;
-  int *call_dummy_integer_regs;
-
-  /* Used on amd64 only.  Classify TYPE according to calling conventions,
-     and store the result in CLASS.  */
-  void (*classify) (struct type *type, enum amd64_reg_class class[2]);
-
-  /* Used on amd64 only.  Non-zero if the first few MEMORY arguments
-     should be passed by pointer.
-
-     More precisely, MEMORY arguments are passed through the stack.
-     But certain architectures require that their address be passed
-     by register as well, if there are still some integer registers
-     available for argument passing.  */
-  int memory_args_by_pointer;
-
-  /* Used on amd64 only.
-
-     If non-zero, then the callers of a function are expected to reserve
-     some space in the stack just before the area where the PC is saved
-     so that the callee may save the integer-parameter registers there.
-     The amount of space is dependent on the list of registers used for
-     integer parameter passing (see component call_dummy_num_integer_regs
-     above).  */
-  int integer_param_regs_saved_in_caller_frame;
 
   /* Floating-point registers.  */
   struct regset *fpregset;
@@ -173,6 +130,21 @@ struct gdbarch_tdep
   /* Upper YMM register names.  Only used for tdesc_numbered_register.  */
   const char **ymmh_register_names;
 
+  /* Register number for %bnd0r.  Set this to -1 to indicate the absence
+     bound registers.  */
+  int bnd0r_regnum;
+
+  /* Register number for pseudo register %bnd0.  Set this to -1 to indicate the absence
+     bound registers.  */
+  int bnd0_regnum;
+
+  /* Register number for %bndcfgu. Set this to -1 to indicate the absence
+     bound control registers.  */
+  int bndcfgu_regnum;
+
+  /* MPX register names.  Only used for tdesc_numbered_register.  */
+  const char **mpx_register_names;
+
   /* Target description.  */
   const struct target_desc *tdesc;
 
@@ -208,6 +180,7 @@ struct gdbarch_tdep
   struct type *i386_mmx_type;
   struct type *i386_ymm_type;
   struct type *i387_ext_type;
+  struct type *i386_bnd_type;
 
   /* Process record/replay target.  */
   /* The map for registers because the AMD64's registers order
@@ -255,7 +228,11 @@ enum i386_regnum
   I386_ST0_REGNUM,		/* %st(0) */
   I386_MXCSR_REGNUM = 40,	/* %mxcsr */ 
   I386_YMM0H_REGNUM,		/* %ymm0h */
-  I386_YMM7H_REGNUM = I386_YMM0H_REGNUM + 7
+  I386_YMM7H_REGNUM = I386_YMM0H_REGNUM + 7,
+  I386_BND0R_REGNUM,
+  I386_BND3R_REGNUM = I386_BND0R_REGNUM + 3,
+  I386_BNDCFGU_REGNUM,
+  I386_BNDSTATUS_REGNUM
 };
 
 /* Register numbers of RECORD_REGMAP.  */
@@ -293,6 +270,7 @@ enum record_i386_regnum
 
 #define I386_SSE_NUM_REGS	(I386_MXCSR_REGNUM + 1)
 #define I386_AVX_NUM_REGS	(I386_YMM7H_REGNUM + 1)
+#define I386_MPX_NUM_REGS	(I386_BNDSTATUS_REGNUM + 1)
 
 /* Size of the largest register.  */
 #define I386_MAX_REGISTER_SIZE	16
@@ -306,6 +284,7 @@ extern int i386_word_regnum_p (struct gdbarch *gdbarch, int regnum);
 extern int i386_dword_regnum_p (struct gdbarch *gdbarch, int regnum);
 extern int i386_xmm_regnum_p (struct gdbarch *gdbarch, int regnum);
 extern int i386_ymm_regnum_p (struct gdbarch *gdbarch, int regnum);
+extern int i386_bnd_regnum_p (struct gdbarch *gdbarch, int regnum);
 
 extern const char *i386_pseudo_register_name (struct gdbarch *gdbarch,
 					      int regnum);

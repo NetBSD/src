@@ -651,7 +651,7 @@ enum {
 };
 
 // ARM Specific e_flags
-enum LLVM_ENUM_INT_TYPE(unsigned) {
+enum : unsigned {
   EF_ARM_SOFT_FLOAT =     0x00000200U,
   EF_ARM_VFP_FLOAT =      0x00000400U,
   EF_ARM_EABI_UNKNOWN =   0x00000000U,
@@ -801,12 +801,13 @@ enum {
 };
 
 // Mips Specific e_flags
-enum LLVM_ENUM_INT_TYPE(unsigned) {
+enum : unsigned {
   EF_MIPS_NOREORDER = 0x00000001, // Don't reorder instructions
   EF_MIPS_PIC       = 0x00000002, // Position independent code
   EF_MIPS_CPIC      = 0x00000004, // Call object with Position independent code
   EF_MIPS_ABI2      = 0x00000020,
   EF_MIPS_32BITMODE = 0x00000100,
+  EF_MIPS_NAN2008   = 0x00000400, // Uses IEE 754-2008 NaN encoding
   EF_MIPS_ABI_O32   = 0x00001000, // This file follows the first MIPS 32 bit ABI
 
   //ARCH_ASE
@@ -823,11 +824,12 @@ enum LLVM_ENUM_INT_TYPE(unsigned) {
   EF_MIPS_ARCH_64   = 0x60000000, // MIPS64 instruction set per linux not elf.h
   EF_MIPS_ARCH_32R2 = 0x70000000, // mips32r2
   EF_MIPS_ARCH_64R2 = 0x80000000, // mips64r2
+  EF_MIPS_ARCH_32R6 = 0x90000000, // mips32r6
+  EF_MIPS_ARCH_64R6 = 0xa0000000, // mips64r6
   EF_MIPS_ARCH      = 0xf0000000  // Mask for applying EF_MIPS_ARCH_ variant
 };
 
 // ELF Relocation types for Mips
-// .
 enum {
   R_MIPS_NONE              =  0,
   R_MIPS_16                =  1,
@@ -839,7 +841,6 @@ enum {
   R_MIPS_GPREL16           =  7,
   R_MIPS_LITERAL           =  8,
   R_MIPS_GOT16             =  9,
-  R_MIPS_GOT               =  9,
   R_MIPS_PC16              = 10,
   R_MIPS_CALL16            = 11,
   R_MIPS_GPREL32           = 12,
@@ -881,6 +882,15 @@ enum {
   R_MIPS_TLS_TPREL_HI16    = 49,
   R_MIPS_TLS_TPREL_LO16    = 50,
   R_MIPS_GLOB_DAT          = 51,
+  R_MIPS_PC21_S2           = 60,
+  R_MIPS_PC26_S2           = 61,
+  R_MIPS_PC18_S3           = 62,
+  R_MIPS_PC19_S2           = 63,
+  R_MIPS_PCHI16            = 64,
+  R_MIPS_PCLO16            = 65,
+  R_MIPS16_GOT16           = 102,
+  R_MIPS16_HI16            = 104,
+  R_MIPS16_LO16            = 105,
   R_MIPS_COPY              = 126,
   R_MIPS_JUMP_SLOT         = 127,
   R_MICROMIPS_26_S1        = 133,
@@ -898,12 +908,17 @@ enum {
   R_MICROMIPS_TLS_DTPREL_LO16 = 165,
   R_MICROMIPS_TLS_TPREL_HI16  = 169,
   R_MICROMIPS_TLS_TPREL_LO16  = 170,
-  R_MIPS_NUM               = 218
+  R_MIPS_NUM               = 218,
+  R_MIPS_PC32              = 248
 };
 
 // Special values for the st_other field in the symbol table entry for MIPS.
 enum {
-  STO_MIPS_MICROMIPS       = 0x80 // MIPS Specific ISA for MicroMips
+  STO_MIPS_OPTIONAL        = 0x04,  // Symbol whose definition is optional
+  STO_MIPS_PLT             = 0x08,  // PLT entry related dynamic table record
+  STO_MIPS_PIC             = 0x20,  // PIC func in an object mixes PIC/non-PIC
+  STO_MIPS_MICROMIPS       = 0x80,  // MIPS Specific ISA for MicroMips
+  STO_MIPS_MIPS16          = 0xf0   // MIPS Specific ISA for Mips16
 };
 
 // Hexagon Specific e_flags
@@ -1222,7 +1237,7 @@ enum {
 };
 
 // Section types.
-enum LLVM_ENUM_INT_TYPE(unsigned) {
+enum : unsigned {
   SHT_NULL          = 0,  // No associated section (inactive entry).
   SHT_PROGBITS      = 1,  // Program-defined contents.
   SHT_SYMTAB        = 2,  // Symbol table.
@@ -1270,7 +1285,7 @@ enum LLVM_ENUM_INT_TYPE(unsigned) {
 };
 
 // Section flags.
-enum LLVM_ENUM_INT_TYPE(unsigned) {
+enum : unsigned {
   // Section data should be writable during execution.
   SHF_WRITE = 0x1,
 
@@ -1362,7 +1377,7 @@ enum LLVM_ENUM_INT_TYPE(unsigned) {
 };
 
 // Section Group Flags
-enum LLVM_ENUM_INT_TYPE(unsigned) {
+enum : unsigned {
   GRP_COMDAT = 0x1,
   GRP_MASKOS = 0x0ff00000,
   GRP_MASKPROC = 0xf0000000
@@ -1584,7 +1599,7 @@ enum {
 };
 
 // Segment flag bits.
-enum LLVM_ENUM_INT_TYPE(unsigned) {
+enum : unsigned {
   PF_X        = 1,         // Execute
   PF_W        = 2,         // Write
   PF_R        = 4,         // Read
@@ -1658,6 +1673,7 @@ enum {
   DT_LOPROC       = 0x70000000, // Start of processor specific tags.
   DT_HIPROC       = 0x7FFFFFFF, // End of processor specific tags.
 
+  DT_GNU_HASH     = 0x6FFFFEF5, // Reference to the GNU hash table.
   DT_RELACOUNT    = 0x6FFFFFF9, // ELF32_Rela count.
   DT_RELCOUNT     = 0x6FFFFFFA, // ELF32_Rel count.
 

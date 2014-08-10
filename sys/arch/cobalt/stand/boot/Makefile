@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2014/01/27 21:37:17 apb Exp $
+#	$NetBSD: Makefile,v 1.28.2.1 2014/08/10 06:53:54 tls Exp $
 
 NOMAN= # defined
 
@@ -108,7 +108,7 @@ vers.c: ${.CURDIR}/version
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} ${LINKFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
 	    -T ${LDSCRIPT} -e start -o ${PROG} ${OBJS} ${LIBS}
-	${TOOL_GZIP} -nc9 ${PROG} > ${PROG}.gz
+	${TOOL_GZIP_N} -c9 ${PROG} > ${PROG}.gz
 	@${SIZE} ${PROG}
 
 CLEANFILES+=	${PROG}.map ${PROG}.elf ${PROG}.gz

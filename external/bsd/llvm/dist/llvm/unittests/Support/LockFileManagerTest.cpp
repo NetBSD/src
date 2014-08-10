@@ -44,4 +44,84 @@ TEST(LockFileManagerTest, Basic) {
   ASSERT_FALSE(EC);
 }
 
+TEST(LockFileManagerTest, LinkLockExists) {
+  SmallString<64> TmpDir;
+  error_code EC;
+  EC = sys::fs::createUniqueDirectory("LockFileManagerTestDir", TmpDir);
+  ASSERT_FALSE(EC);
+
+  SmallString<64> LockedFile(TmpDir);
+  sys::path::append(LockedFile, "file");
+
+  SmallString<64> FileLocK(TmpDir);
+  sys::path::append(FileLocK, "file.lock");
+
+  SmallString<64> TmpFileLock(TmpDir);
+  sys::path::append(TmpFileLock, "file.lock-000");
+
+  int FD;
+  EC = sys::fs::openFileForWrite(StringRef(TmpFileLock), FD, sys::fs::F_None);
+  ASSERT_FALSE(EC);
+
+  int Ret = close(FD);
+  ASSERT_EQ(Ret, 0);
+
+  EC = sys::fs::create_link(TmpFileLock.str(), FileLocK.str());
+  ASSERT_FALSE(EC);
+
+  EC = sys::fs::remove(StringRef(TmpFileLock));
+  ASSERT_FALSE(EC);
+
+  {
+    // The lock file doesn't point to a real file, so we should successfully
+    // acquire it.
+    LockFileManager Locked(LockedFile);
+    EXPECT_EQ(LockFileManager::LFS_Owned, Locked.getState());
+  }
+
+  // Now that the lock is out of scope, the file should be gone.
+  EXPECT_FALSE(sys::fs::exists(StringRef(LockedFile)));
+
+  EC = sys::fs::remove(StringRef(TmpDir));
+  ASSERT_FALSE(EC);
+}
+
+
+TEST(LockFileManagerTest, RelativePath) {
+  SmallString<64> TmpDir;
+  error_code EC;
+  EC = sys::fs::createUniqueDirectory("LockFileManagerTestDir", TmpDir);
+  ASSERT_FALSE(EC);
+
+  char PathBuf[1024];
+  const char *OrigPath = getcwd(PathBuf, 1024);
+  chdir(TmpDir.c_str());
+
+  sys::fs::create_directory("inner");
+  SmallString<64> LockedFile("inner");
+  sys::path::append(LockedFile, "file");
+
+  SmallString<64> FileLock(LockedFile);
+  FileLock += ".lock";
+
+  {
+    // The lock file should not exist, so we should successfully acquire it.
+    LockFileManager Locked(LockedFile);
+    EXPECT_EQ(LockFileManager::LFS_Owned, Locked.getState());
+    EXPECT_TRUE(sys::fs::exists(FileLock.str()));
+  }
+
+  // Now that the lock is out of scope, the file should be gone.
+  EXPECT_FALSE(sys::fs::exists(LockedFile.str()));
+  EXPECT_FALSE(sys::fs::exists(FileLock.str()));
+
+  EC = sys::fs::remove("inner");
+  ASSERT_FALSE(EC);
+
+  chdir(OrigPath);
+
+  EC = sys::fs::remove(StringRef(TmpDir));
+  ASSERT_FALSE(EC);
+}
+
 } // end anonymous namespace

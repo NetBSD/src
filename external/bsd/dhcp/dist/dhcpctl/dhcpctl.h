@@ -1,11 +1,10 @@
-/*	$NetBSD: dhcpctl.h,v 1.1.1.3 2013/03/27 00:31:38 christos Exp $	*/
-
-/* Id: dhcpctl.h,v 1.17.24.1 2009/11/20 01:49:01 sar Exp 
+/*	$NetBSD: dhcpctl.h,v 1.1.1.3.8.1 2014/08/10 07:06:55 tls Exp $	*/
+/* Id: dhcpctl.h,v 1.18 2009/11/24 02:06:56 sar Exp 
 
    Subroutines providing general support for objects. */
 
 /*
- * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,12 +25,6 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #ifndef _DHCPCTL_H_

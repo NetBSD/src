@@ -1,6 +1,6 @@
 #!@PYTHON@
 ############################################################################
-# Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,15 +15,41 @@
 # PERFORMANCE OF THIS SOFTWARE.
 ############################################################################
 
-# Id
-
 import argparse
 import pprint
 import os
 
+prog='dnssec-checkds'
+
+# These routines permit platform-independent location of BIND 9 tools
+if os.name == 'nt':
+    import win32con
+    import win32api
+
+def prefix(bindir = ''):
+    if os.name != 'nt':
+        return os.path.join('@prefix@', bindir)
+
+    bind_subkey = "Software\\ISC\\BIND"
+    hKey = None
+    keyFound = True
+    try:
+        hKey = win32api.RegOpenKeyEx(win32con.HKEY_LOCAL_MACHINE, bind_subkey)
+    except:
+        keyFound = False
+    if keyFound:
+        try:
+            (namedBase, _) = win32api.RegQueryValueEx(hKey, "InstallDir")
+        except:
+            keyFound = False
+        win32api.RegCloseKey(hKey)
+    if keyFound:
+        return os.path.join(namedBase, bindir)
+    return os.path.join(win32api.GetSystemDirectory(), bindir)
+
 def shellquote(s):
     if os.name == 'nt':
-        return s
+        return '"' + s.replace('"', '"\\"') + '"'
     return "'" + s.replace("'", "'\\''") + "'"
 
 ############################################################################
@@ -31,7 +57,7 @@ def shellquote(s):
 # Delegation Signer (DS) resource record
 ############################################################################
 class DSRR:
-    hashalgs = {1: 'SHA-1', 2: 'SHA-256', 3: 'GOST'}
+    hashalgs = {1: 'SHA-1', 2: 'SHA-256', 3: 'GOST', 4: 'SHA-384' }
     rrname=''
     rrclass='IN'
     rrtype='DS'
@@ -81,7 +107,7 @@ class DSRR:
 # DNSSEC Lookaside Validation (DLV) resource record
 ############################################################################
 class DLVRR:
-    hashalgs = {1: 'SHA-1', 2: 'SHA-256', 3: 'GOST'}
+    hashalgs = {1: 'SHA-1', 2: 'SHA-256', 3: 'GOST', 4: 'SHA-384' }
     parent=''
     dlvname=''
     rrname='IN'
@@ -257,12 +283,13 @@ def checkdlv(zone, lookaside, masterfile = None):
 ############################################################################
 def parse_args():
     global args
+    parser = argparse.ArgumentParser(description=prog + ': checks DS coverage')
+
     bindir = 'bin'
-    if os.name != 'nt':
-        sbindir = 'sbin'
-    else:
+    if os.name == 'nt':
         sbindir = 'bin'
-    parser = argparse.ArgumentParser(description='checkds: checks DS coverage')
+    else:
+        sbindir = 'sbin'
 
     parser.add_argument('zone', type=str, help='zone to check')
     parser.add_argument('-f', '--file', dest='masterfile', type=str,
@@ -270,10 +297,10 @@ def parse_args():
     parser.add_argument('-l', '--lookaside', dest='lookaside', type=str,
                         help='DLV lookaside zone')
     parser.add_argument('-d', '--dig', dest='dig',
-                        default=os.path.join('@prefix@', bindir, 'dig'),
+                        default=os.path.join(prefix(bindir), 'dig'),
                         type=str, help='path to \'dig\'')
     parser.add_argument('-D', '--dsfromkey', dest='dsfromkey',
-                        default=os.path.join('@prefix@', sbindir,
+                        default=os.path.join(prefix(sbindir),
                                              'dnssec-dsfromkey'),
                         type=str, help='path to \'dig\'')
     parser.add_argument('-v', '--version', action='version', version='9.9.1')

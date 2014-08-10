@@ -1,4 +1,4 @@
-/*	$NetBSD: data_redirect.c,v 1.1.1.2 2013/01/02 18:58:56 tron Exp $	*/
+/*	$NetBSD: data_redirect.c,v 1.1.1.2.6.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -74,6 +74,7 @@
 #include <dict_db.h>
 #include <dict_dbm.h>
 #include <dict_cdb.h>
+#include <dict_lmdb.h>
 #include <warn_stat.h>
 
 /* Global directory. */
@@ -101,6 +102,7 @@ static const NAME_CODE data_redirect_map_types[] = {
     DICT_TYPE_HASH, 1,
     DICT_TYPE_BTREE, 1,
     DICT_TYPE_DBM, 1,
+    DICT_TYPE_LMDB, 1,
     DICT_TYPE_CDB, 1,			/* not a read-write map type */
     "sdbm", 1,				/* legacy 3rd-party TLS */
     "dbz", 1,				/* just in case */

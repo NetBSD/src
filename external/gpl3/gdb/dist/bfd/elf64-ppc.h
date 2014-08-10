@@ -19,7 +19,7 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-void ppc64_elf_init_stub_bfd
+bfd_boolean ppc64_elf_init_stub_bfd
   (bfd *, struct bfd_link_info *);
 bfd_boolean ppc64_elf_edit_opd
   (struct bfd_link_info *, bfd_boolean);
@@ -31,8 +31,8 @@ bfd_boolean ppc64_elf_edit_toc
   (struct bfd_link_info *);
 bfd_boolean ppc64_elf_has_small_toc_reloc
   (asection *);
-bfd_vma ppc64_elf_toc
-  (bfd *);
+bfd_vma ppc64_elf_set_toc
+  (struct bfd_link_info *, bfd *);
 int ppc64_elf_setup_section_lists
   (struct bfd_link_info *, asection *(*) (const char *, asection *),
    void (*) (void));

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2013 Free Software Foundation, Inc.
+   Copyright 2013-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -239,13 +239,8 @@ main:
 	.byte	0xd6
 	.byte	0x5
 	.4byte	.Ldebug_ranges0	# DW_AT_GNU_ranges_base
-	.ascii "/tmp\0"	# DW_AT_comp_dir
-	# Normally dwo_name would be "fission-loclists.dwo".
-	# Simplification: Leave the DWO contents in the executable.
-	# "gdb.dwarf2/" is included so that gdb can load the file without
-	# having to set "debug-file-directory".  This is useful when
-	# testing with cc-with-tweaks.sh -i.
-	.ascii "gdb.dwarf2/fission-loclists\0"	# DW_AT_GNU_dwo_name
+	.ascii "/tmp/src/gdb/testsuite\0"	# DW_AT_comp_dir
+	.ascii "fission-loclists.dwo\0"	# DW_AT_GNU_dwo_name
 	.4byte	.Ldebug_pubnames0	# DW_AT_GNU_pubnames
 	.4byte	.Ldebug_pubtypes0	# DW_AT_GNU_pubtypes
 	.4byte	.Ldebug_addr0	# DW_AT_GNU_addr_base
@@ -487,10 +482,47 @@ main:
 	.byte	0	# Location list terminator (*.LLST1)
 	.section	.debug_gnu_pubnames,"",@progbits
 .Ldebug_pubnames0:
-	.4byte	0
+	.long	0x28	# Pub Info Length
+	.value	0x2	# DWARF Version
+	.long	.Lskeleton_debug_info0	# Offset of Compilation Unit Info
+	.long	0xa6	# Compilation Unit Length
+	.long	0x18	# DIE offset
+	.byte	0x30	# GDB-index flags
+	.ascii "foo\0"	# external name
+	.long	0x47	# DIE offset
+	.byte	0x30	# GDB-index flags
+	.ascii "main\0"	# external name
+	.long	0x94	# DIE offset
+	.byte	0x20	# GDB-index flags
+	.ascii "v\0"	# external name
+	.long	0
 	.section	.debug_gnu_pubtypes,"",@progbits
 .Ldebug_pubtypes0:
-	.4byte	0
+	.long	0x21	# Pub Info Length
+	.value	0x2	# DWARF Version
+	.long	.Lskeleton_debug_info0	# Offset of Compilation Unit Info
+	.long	0xa6	# Compilation Unit Length
+	.long	0x40	# DIE offset
+	.byte	0x90	# GDB-index flags
+	.ascii "int\0"	# external name
+	.long	0x90	# DIE offset
+	.byte	0x90	# GDB-index flags
+	.ascii "char\0"	# external name
+	.long	0
+	.section	.debug_aranges,"",@progbits
+	.long	0x3c	# Length of Address Ranges Info
+	.value	0x2	# DWARF Version
+	.long	.Lskeleton_debug_info0	# Offset of Compilation Unit Info
+	.byte	0x8	# Size of Address
+	.byte	0	# Size of Segment Descriptor
+	.value	0	# Pad to 16 byte boundary
+	.value	0
+	.quad	.Ltext0	# Address
+	.quad	.Letext0-.Ltext0	# Length
+	.quad	.LFB1	# Address
+	.quad	.LFE1-.LFB1	# Length
+	.quad	0
+	.quad	0
 	.section	.debug_aranges,"",@progbits
 	.4byte	0x3c	# Length of Address Ranges Info
 	.value	0x2	# DWARF Version

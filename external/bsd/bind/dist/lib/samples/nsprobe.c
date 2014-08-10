@@ -1,4 +1,4 @@
-/*	$NetBSD: nsprobe.c,v 1.1.1.1 2014/02/28 17:40:16 christos Exp $	*/
+/*	$NetBSD: nsprobe.c,v 1.1.1.1.2.1 2014/08/10 07:06:44 tls Exp $	*/
 
 /*
  * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -20,17 +20,21 @@
 
 #include <config.h>
 
+#ifndef WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#include <unistd.h>
+#include <netdb.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <netdb.h>
 
 #include <isc/app.h>
 #include <isc/buffer.h>
+#include <isc/commandline.h>
 #include <isc/lib.h>
 #include <isc/mem.h>
 #include <isc/socket.h>
@@ -466,7 +470,7 @@ update_stat(struct probe_trans *trans) {
 static isc_result_t
 set_nextqname(struct probe_trans *trans) {
 	isc_result_t result;
-	size_t domainlen;
+	unsigned int domainlen;
 	isc_buffer_t b;
 	char buf[4096];	/* XXX ad-hoc constant, but should be enough */
 
@@ -967,7 +971,7 @@ resolve_ns(isc_task_t *task, isc_event_t *event) {
 static isc_result_t
 probe_domain(struct probe_trans *trans) {
 	isc_result_t result;
-	size_t domainlen;
+	unsigned int domainlen;
 	isc_buffer_t b;
 	char buf[4096];	/* XXX ad hoc constant, but should be enough */
 	char *cp;
@@ -1039,10 +1043,10 @@ main(int argc, char *argv[]) {
 	isc_socketmgr_t *socketmgr = NULL;
 	isc_timermgr_t *timermgr = NULL;
 
-	while ((ch = getopt(argc, argv, "c:dhv")) != -1) {
+	while ((ch = isc_commandline_parse(argc, argv, "c:dhv")) != -1) {
 		switch (ch) {
 		case 'c':
-			cacheserver = optarg;
+			cacheserver = isc_commandline_argument;
 			break;
 		case 'd':
 			debug_mode = ISC_TRUE;
@@ -1059,8 +1063,8 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
+	argc -= isc_commandline_index;
+	argv += isc_commandline_index;
 
 	/* Common set up */
 	isc_lib_register();
@@ -1104,7 +1108,7 @@ main(int argc, char *argv[]) {
 		exit(1);
 	}
 	memmove(&sa.type.sa, res->ai_addr, res->ai_addrlen);
-	sa.length = res->ai_addrlen;
+	sa.length = (unsigned int)res->ai_addrlen;
 	freeaddrinfo(res);
 	ISC_LINK_INIT(&sa, link);
 	ISC_LIST_INIT(servers);

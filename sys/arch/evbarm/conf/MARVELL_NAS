@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.18 2013/10/05 03:59:49 kiyohara Exp $
+#	$NetBSD: MARVELL_NAS,v 1.18.2.1 2014/08/10 06:53:54 tls Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -89,6 +89,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
@@ -142,7 +143,7 @@ mainbus0 at root
 # The boot cpu
 cpu0	at mainbus?
 
-# Mervell MV88Fxx81 Orion System-on-Chip
+# Marvell MV88Fxx81 Orion System-on-Chip
 mvsoc0	at mainbus?
 
 # On-chip PCI Express Interface

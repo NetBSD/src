@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ proc test_insert_delete_modify { } {
 	}
     }
 
-    # Verify that '=breakpoint-created' notification is correctly emittd when
+    # Verify that '=breakpoint-created' notification is correctly emitted when
     # creating any type of breakpoint.
 
     set test "watch watch"
@@ -138,98 +138,100 @@ test_insert_delete_modify
 # Test 'breakpoint-modified' notification is emited when pending breakpoints are
 # resolved.
 
-proc test_pending_resolved { } { with_test_prefix "pending resolved" {
-    global decimal hex
-    global srcdir
-    global subdir
-    global binfile
-    global lib_sl1 lib_sl2
-    global mi_gdb_prompt
+proc test_pending_resolved { } {
+    with_test_prefix "pending resolved" {
+	global decimal hex
+	global srcdir
+	global subdir
+	global binfile
+	global lib_sl1 lib_sl2
+	global mi_gdb_prompt
 
-    gdb_exit
-    if [mi_gdb_start] {
-	continue
+	gdb_exit
+	if [mi_gdb_start] {
+	    continue
+	}
+	mi_gdb_reinitialize_dir $srcdir/$subdir
+	mi_gdb_load ${binfile}
+	mi_load_shlibs $lib_sl1 $lib_sl2
+
+	# Create a pending breakpoint on pendfunc1
+	mi_gdb_test "-break-insert -f pendfunc1" \
+	    {.*\^done,bkpt=.*addr=\"<PENDING>\".*} \
+	    "insert breakpoint on pendfunc1"
+	mi_run_cmd
+
+	set test "breakpoint on pendfunc1 resolved"
+	gdb_expect {
+	    -re ".*=breakpoint-modified,bkpt=\{number=\"1\".*addr=\"${hex}\".*,times=\"0\"" {
+		pass $test
+		exp_continue
+	    }
+	    -re ".*=breakpoint-modified,bkpt=\{number=\"1\".*addr=\"${hex}\".*,times=\"1\"" {
+		pass "$test: hit_count is updated"
+	    }
+	    -re ".*${mi_gdb_prompt}$" {
+		fail $test
+	    }
+	    timeout {
+		fail "$test (timeout)"
+	    }
+	}
+	mi_expect_stop "breakpoint-hit" "pendfunc1" ""\
+	    ".*" ".*" {"" "disp=\"keep\""} \
+	    "continue to pendfunc1 breakpoint"
+
+	# Delete breakpoint on pendfunc1
+	mi_gdb_test "-break-delete 1" {\^done} \
+	    "delete breakpoint on pendfunc1"
+	# Insert breakpoint on marker
+	mi_gdb_test "-break-insert marker" {.*\^done,bkpt=.*} \
+	    "insert breakpoint on marker"
+	# Create a pending breakpoint on pendfunc3
+	mi_gdb_test "-break-insert -f pendfunc3" \
+	    {.*\^done,bkpt=.*addr=\"<PENDING>\".*} \
+	    "insert breakpoint on pendfunc3"
+
+	mi_execute_to "exec-continue" "breakpoint-hit" "marker" ".*" ".*" ".*" \
+	    {"" "disp=\"keep\""} "continue to marker 1"
+
+	mi_send_resuming_command "exec-continue" "continuing execution to marker"
+
+	set test "breakpoint on pendfunc3 resolved"
+	gdb_expect {
+	    -re ".*=breakpoint-modified,bkpt=\{number=\"2\".*addr=\"${hex}\",.*func=\"marker\",.*times=\"1\"" {
+		pass "$test: hit_count is updated"
+		exp_continue
+	    }
+	    -re ".*=breakpoint-modified,bkpt=\{number=\"3\".*addr=\"${hex}\",.*func=\"pendfunc3\",.*times=\"0\"" {
+		pass $test
+	    }
+	    -re ".*${mi_gdb_prompt}$" {
+		fail $test
+	    }
+	    timeout {
+		fail "$test (timeout)"
+	    }
+	}
+	mi_expect_stop "breakpoint-hit" "marker" ".*" ".*" ".*" \
+	    {"" "disp=\"keep\""} "continue to marker 2"
+
+	mi_send_resuming_command "exec-continue" "continuing to exit"
+	set test "breakpoint on pendfunc3 pending again"
+	gdb_expect {
+	    -re ".*=breakpoint-modified,bkpt=\{number=\"3\".*addr=\"<PENDING>\"" {
+		pass $test
+	    }
+	    -re ".*${mi_gdb_prompt}$" {
+		fail $test
+	    }
+	    timeout {
+		fail "$test (timeout)"
+	    }
+	}
+
+	mi_expect_stop "exited-normally" "" "" "" "" "" ""
     }
-    mi_gdb_reinitialize_dir $srcdir/$subdir
-    mi_gdb_load ${binfile}
-    mi_load_shlibs $lib_sl1 $lib_sl2
-
-    # Create a pending breakpoint on pendfunc1
-    mi_gdb_test "-break-insert -f pendfunc1" \
-	{.*\^done,bkpt=.*addr=\"<PENDING>\".*} \
-	"insert breakpoint on pendfunc1"
-    mi_run_cmd
-
-    set test "breakpoint on pendfunc1 resolved"
-    gdb_expect {
-	-re ".*=breakpoint-modified,bkpt=\{number=\"1\".*addr=\"${hex}\".*,times=\"0\"" {
-	    pass $test
-	    exp_continue
-	}
-	-re ".*=breakpoint-modified,bkpt=\{number=\"1\".*addr=\"${hex}\".*,times=\"1\"" {
-	    pass "$test: hit_count is updated"
-	}
-	-re ".*${mi_gdb_prompt}$" {
-	    fail $test
-	}
-	timeout {
-	    fail "$test (timeout)"
-	}
-    }
-    mi_expect_stop "breakpoint-hit" "pendfunc1" ""\
-	".*" ".*" {"" "disp=\"keep\""} \
-	"continue to pendfunc1 breakpoint"
-
-    # Delete breakpoint on pendfunc1
-    mi_gdb_test "-break-delete 1" {\^done} \
-	"delete breakpoint on pendfunc1"
-    # Insert breakpoint on marker
-    mi_gdb_test "-break-insert marker" {.*\^done,bkpt=.*} \
-	"insert breakpoint on marker"
-    # Create a pending breakpoint on pendfunc3
-    mi_gdb_test "-break-insert -f pendfunc3" \
-	{.*\^done,bkpt=.*addr=\"<PENDING>\".*} \
-	"insert breakpoint on pendfunc3"
-
-    mi_execute_to "exec-continue" "breakpoint-hit" "marker" ".*" ".*" ".*" \
-	{"" "disp=\"keep\""} "continue to marker 1"
-
-    mi_send_resuming_command "exec-continue" "continuing execution to marker"
-
-    set test "breakpoint on pendfunc3 resolved"
-    gdb_expect {
-	-re ".*=breakpoint-modified,bkpt=\{number=\"2\".*addr=\"${hex}\",.*func=\"marker\",.*times=\"1\"" {
-	    pass "$test: hit_count is updated"
-	    exp_continue
-	}
-	-re ".*=breakpoint-modified,bkpt=\{number=\"3\".*addr=\"${hex}\",.*func=\"pendfunc3\",.*times=\"0\"" {
-	    pass $test
-	}
-	-re ".*${mi_gdb_prompt}$" {
-	    fail $test
-	}
-	timeout {
-	    fail "$test (timeout)"
-	}
-    }
-    mi_expect_stop "breakpoint-hit" "marker" ".*" ".*" ".*" \
-	{"" "disp=\"keep\""} "continue to marker 2"
-
-    mi_send_resuming_command "exec-continue" "continuing to exit"
-    set test "breakpoint on pendfunc3 pending again"
-    gdb_expect {
-	-re ".*=breakpoint-modified,bkpt=\{number=\"3\".*addr=\"<PENDING>\"" {
-	    pass $test
-	}
-	-re ".*${mi_gdb_prompt}$" {
-	    fail $test
-	}
-	timeout {
-	    fail "$test (timeout)"
-	}
-    }
-
-    mi_expect_stop "exited-normally" "" "" "" "" "" ""
-}}
+}
 
 test_pending_resolved

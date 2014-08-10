@@ -424,8 +424,8 @@
 #ifndef elf_backend_check_directives
 #define elf_backend_check_directives	0
 #endif
-#ifndef elf_backend_as_needed_cleanup
-#define elf_backend_as_needed_cleanup	0
+#ifndef elf_backend_notice_as_needed
+#define elf_backend_notice_as_needed	_bfd_elf_notice_as_needed
 #endif
 #ifndef elf_backend_adjust_dynamic_symbol
 #define elf_backend_adjust_dynamic_symbol 0
@@ -498,7 +498,7 @@
 #define elf_backend_static_tls_alignment	1
 #endif
 #ifndef elf_backend_post_process_headers
-#define elf_backend_post_process_headers	NULL
+#define elf_backend_post_process_headers	_bfd_elf_post_process_headers
 #endif
 #ifndef elf_backend_print_symbol_all
 #define elf_backend_print_symbol_all		NULL
@@ -705,7 +705,7 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_relocs_compatible,
   elf_backend_check_relocs,
   elf_backend_check_directives,
-  elf_backend_as_needed_cleanup,
+  elf_backend_notice_as_needed,
   elf_backend_adjust_dynamic_symbol,
   elf_backend_always_size_sections,
   elf_backend_size_dynamic_sections,

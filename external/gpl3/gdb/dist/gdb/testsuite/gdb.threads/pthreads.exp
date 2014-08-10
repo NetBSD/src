@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2013 Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ proc all_threads_running {} {
     }
 
     if { $return_me == 1 } then {
-	return 0;
+	return 0
     }
 
     # Check that we stopped when we actually expected to stop, by
@@ -139,7 +139,7 @@ proc test_startup {} {
     }
 
     if { $return_me == 1 } then {
-	return 0;
+	return 0
     }
 
     # Extract the thread id number of main thread from "info threads" output.
@@ -209,7 +209,7 @@ proc check_control_c {} {
 	}
 	timeout {
 	    fail "$description (timeout)"
-	    return 1;
+	    return 1
 	}
     }
     gdb_test "bt" ".*"
@@ -218,7 +218,7 @@ proc check_control_c {} {
     if [all_threads_running] then {
 	pass "All threads running after continuing from ^C stop"
     }
-    return 0;
+    return 0
 }
 
 proc check_backtraces {} {
@@ -272,7 +272,7 @@ if [runto_main] then {
     if [test_startup] then {
 	if [check_control_c] then {
 	    warning "Could not stop child with ^C; skipping rest of tests.\n"
-	    return;
+	    return
 	}
 	check_backtraces
     }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gcc-tool,v 1.1 2014/03/01 10:00:49 mrg Exp $
+#	$NetBSD: Makefile.gcc-tool,v 1.1.2.1 2014/08/10 07:10:56 tls Exp $
 
 PROG=	gcc-${GCC_TOOL}
 SRCS=	gcc-ar.c file-find.c
@@ -15,6 +15,8 @@ CPPFLAGS= \
 # Skip these because we don't have them in paths.
 #	-DDEFAULT_TARGET_VERSION=\"${G_version}\"
 #	-DDEFAULT_TARGET_MACHINE=\"{GNU_MACHINE_ARCH}\"
+#
+# ${SRCS}: ${GCCARCH}/defs.mk
 
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 

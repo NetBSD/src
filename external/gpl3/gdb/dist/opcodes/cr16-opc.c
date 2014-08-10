@@ -1,5 +1,5 @@
 /* cr16-opc.c -- Table of opcodes for the CR16 processor.
-   Copyright 2007, 2008, 2010  Free Software Foundation, Inc.
+   Copyright 2007, 2008, 2010, 2013  Free Software Foundation, Inc.
    Contributed by M R Swami Reddy (MR.Swami.Reddy@nsc.com)
 
    This file is part of the GNU opcodes library.
@@ -459,8 +459,11 @@ const unsigned int cr16_num_opcodes = ARRAY_SIZE (cr16_instruction);
    For example :
       REG(u4, 0x84, CR16_U_REGTYPE)
    is interpreted as :
-      {"u4",  u4, 0x84, CR16_U_REGTYPE}  */
-#define REG(NAME, N, TYPE)    {STRINGX(NAME), {NAME}, N, TYPE}
+      {"u4",  u4, 0x84, CR16_U_REGTYPE}
+   The union initializer (second member) always refers to the first
+   member of the union, so cast NAME to that type to avoid possible
+   compiler warnings when used for CR16_P_REGTYPE cases.  */
+#define REG(NAME, N, TYPE)    {STRINGX(NAME), {(reg) NAME}, N, TYPE}
 
 #define REGP(NAME, BNAME, N, TYPE)    {STRINGX(NAME), {BNAME}, N, TYPE}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.23 2014/03/30 15:50:51 matt Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.23.2.1 2014/08/10 06:53:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -80,10 +80,7 @@
 			 defined(CPU_SA1110) +				\
 			 defined(CPU_FA526) +				\
 			 defined(CPU_IXP12X0) +				\
-			 defined(CPU_XSCALE_80200) +			\
-			 defined(CPU_XSCALE_80321) +			\
-			 defined(__CPU_XSCALE_PXA2XX) +			\
-			 defined(CPU_XSCALE_IXP425)) +			\
+			 defined(CPU_XSCALE) +				\
 			 defined(CPU_SHEEVA))
 #else
 #define	CPU_NTYPES	2
@@ -118,9 +115,7 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM9E) || defined(CPU_ARM10) ||			\
-     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)) ||	\
-     defined(CPU_SHEEVA)
+     defined(CPU_XSCALE) || defined(CPU_SHEEVA))
 #define	ARM_ARCH_5	1
 #else
 #define	ARM_ARCH_5	0
@@ -205,8 +200,7 @@
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425))
+    defined(CPU_XSCALE)
 #define	ARM_MMU_XSCALE		1
 #else
 #define	ARM_MMU_XSCALE		0

@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.126 2014/03/30 15:50:51 matt Exp $
+#	$NetBSD: files.arm,v 1.126.2.1 2014/08/10 06:53:51 tls Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -64,7 +64,8 @@ defflag  opt_cpuoptions.h	ARM11_CACHE_WRITE_THROUGH
 defflag	 opt_cpuoptions.h	ARM11_COMPAT_MMU
 defflag	 opt_cpuoptions.h	ARM_HAS_VBAR
 # use extended small page in compatible MMU mode for ARMv6
-defflag  opt_cpuoptions.h	ARMV6_EXTENDED_SMALL_PAGE
+defflag  opt_cpuoptions.h	SHEEVA_L2_CACHE
+defflag  opt_cpuoptions.h	SHEEVA_L2_CACHE_WT: SHEEVA_L2_CACHE
 
 # Interrupt implementation header definition.
 defparam opt_arm_intr_impl.h	ARM_INTR_IMPL

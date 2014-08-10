@@ -1,6 +1,6 @@
 /* Ravenscar SPARC target support.
 
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -64,9 +64,9 @@ supply_register_at_address (struct regcache *regcache, int regnum,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   int buf_size = register_size (gdbarch, regnum);
-  char *buf;
+  gdb_byte *buf;
 
-  buf = (char *) alloca (buf_size);
+  buf = alloca (buf_size);
   read_memory (register_addr, buf, buf_size);
   regcache_raw_supply (regcache, regnum, buf);
 }
@@ -157,7 +157,7 @@ sparc_ravenscar_store_registers (struct regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   int buf_size = register_size (gdbarch, regnum);
-  char buf [buf_size];
+  gdb_byte buf[buf_size];
   ULONGEST register_address;
 
   if (register_in_thread_descriptor_p (regnum))

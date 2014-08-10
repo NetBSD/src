@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.39 2010/04/05 07:22:23 joerg Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.39.32.1 2014/08/10 06:56:15 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.39 2010/04/05 07:22:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.39.32.1 2014/08/10 06:56:15 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -234,11 +234,10 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 static void
 hippi_input(struct ifnet *ifp, struct mbuf *m)
 {
-	struct ifqueue *inq;
+	pktqueue_t *pktq;
 	struct llc *l;
 	uint16_t htype;
 	struct hippi_header *hh;
-	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -273,14 +272,12 @@ hippi_input(struct ifnet *ifp, struct mbuf *m)
 	switch (htype) {
 #ifdef INET
 	case ETHERTYPE_IP:
-		schednetisr(NETISR_IP);
-		inq = &ipintrq;
+		pktq = ip_pktq;
 		break;
 #endif
 #ifdef INET6
 	case ETHERTYPE_IPV6:
-		schednetisr(NETISR_IPV6);
-		inq = &ip6intrq;
+		pktq = ip6_pktq;
 		break;
 #endif
 	default:
@@ -288,13 +285,9 @@ hippi_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	s = splnet();
-	if (IF_QFULL(inq)) {
-		IF_DROP(inq);
+	if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
 		m_freem(m);
-	} else
-		IF_ENQUEUE(inq, m);
-	splx(s);
+	}
 }
 
 /*
@@ -305,18 +298,12 @@ hippi_input(struct ifnet *ifp, struct mbuf *m)
 void
 hippi_ip_input(struct ifnet *ifp, struct mbuf *m)
 {
-	struct ifqueue *inq;
 	int s;
 
-	schednetisr(NETISR_IP);
-	inq = &ipintrq;
-
 	s = splnet();
-	if (IF_QFULL(inq)) {
-		IF_DROP(inq);
+	if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 		m_freem(m);
-	} else
-		IF_ENQUEUE(inq, m);
+	}
 	splx(s);
 }
 #endif

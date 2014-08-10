@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.46 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.46.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.46 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.46.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ kmstartup(void)
 	else if (p->tolimit > MAXARCS)
 		p->tolimit = MAXARCS;
 	p->tossize = p->tolimit * sizeof(struct tostruct);
-	cp = (char *)malloc(p->kcountsize + p->fromssize + p->tossize,
+	cp = malloc(p->kcountsize + p->fromssize + p->tossize,
 	    M_GPROF, M_NOWAIT | M_ZERO);
 	if (cp == 0) {
 		printf("No memory for profiling.\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4.h,v 1.1.1.4 2014/02/25 13:14:30 roy Exp $ */
+/* $NetBSD: ipv4.h,v 1.1.1.4.2.1 2014/08/10 07:06:59 tls Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -38,7 +38,7 @@ struct rt {
 	struct in_addr net;
 	struct in_addr gate;
 	const struct interface *iface;
-	int metric;
+	unsigned int metric;
 	struct in_addr src;
 };
 TAILQ_HEAD(rt_head, rt);
@@ -62,7 +62,8 @@ struct ipv4_state {
 
 #ifdef INET
 int ipv4_init(struct dhcpcd_ctx *);
-int inet_ntocidr(struct in_addr);
+void ipv4_sortinterfaces(struct dhcpcd_ctx *);
+uint8_t inet_ntocidr(struct in_addr);
 int inet_cidrtoaddr(int, struct in_addr *);
 uint32_t ipv4_getnetmask(uint32_t);
 int ipv4_addrexists(struct dhcpcd_ctx *, const struct in_addr *);
@@ -76,31 +77,13 @@ struct ipv4_addr *ipv4_findaddr(struct interface *,
 void ipv4_handleifa(struct dhcpcd_ctx *, int, struct if_head *, const char *,
     const struct in_addr *, const struct in_addr *, const struct in_addr *);
 
-int if_address(const struct interface *,
-    const struct in_addr *, const struct in_addr *,
-    const struct in_addr *, int);
-#define ipv4_addaddress(iface, addr, net, brd)				      \
-	if_address(iface, addr, net, brd, 1)
-#define ipv4_setaddress(iface, addr, net, brd)				      \
-	if_address(iface, addr, net, brd, 2)
-#define ipv4_deleteaddress(iface, addr, net)				      \
-	if_address(iface, addr, net, NULL, -1)
-
-int if_route(const struct rt *rt, int);
-#define ipv4_addroute(rt) if_route(rt, 1)
-#define ipv4_changeroute(rt) if_route(rt, 0)
-#define ipv4_deleteroute(rt) if_route(rt, -1)
-#define del_src_route(rt) i_route(rt, -2);
 void ipv4_freeroutes(struct rt_head *);
 
-int ipv4_opensocket(struct interface *, int);
-ssize_t ipv4_sendrawpacket(const struct interface *,
-    int, const void *, ssize_t);
-ssize_t ipv4_getrawpacket(struct interface *, int, void *, ssize_t, int *);
 void ipv4_free(struct interface *);
 void ipv4_ctxfree(struct dhcpcd_ctx *);
 #else
 #define ipv4_init(a) (-1)
+#define ipv4_sortinterfaces(a) {}
 #define ipv4_applyaddr(a) {}
 #define ipv4_freeroutes(a) {}
 #define ipv4_free(a) {}

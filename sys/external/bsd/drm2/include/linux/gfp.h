@@ -1,4 +1,4 @@
-/*	$NetBSD: gfp.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: gfp.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,12 +39,15 @@
 
 typedef int gfp_t;
 
-#define	GFP_KERNEL	(__GFP_FS | __GFP_IO | __GFP_WAIT)
 #define	GFP_ATOMIC	(__GFP_HIGH)
 #define	GFP_DMA32	(__GFP_DMA32)
 #define	GFP_HIGHUSER	(__GFP_FS | __GFP_HARDWALL | __GFP_HIGHMEM | \
 			    __GFP_IO | __GFP_WAIT)
+#define	GFP_KERNEL	(__GFP_FS | __GFP_IO | __GFP_WAIT)
+#define	GFP_TEMPORARY	(__GFP_FS | __GFP_IO | __GFP_RECLAIMABLE | __GFP_WAIT)
 #define	GFP_USER	(__GFP_FS | __GFP_HARDWALL | __GFP_IO | __GFP_WAIT)
+
+#define	GFP_NOWAIT	(GFP_ATOMIC & ~__GFP_HIGH)
 
 #define	__GFP_COMP		__BIT(0)
 #define	__GFP_DMA32		__BIT(1)
@@ -60,12 +63,6 @@ typedef int gfp_t;
 #define	__GFP_WAIT		__BIT(11)
 #define	__GFP_ZERO		__BIT(12)
 
-/* XXX Make the nm output a little more greppable...  */
-#define	alloc_page	linux_alloc_page
-#define	__free_page	linux___free_page
-
 struct page;
-struct page *	alloc_page(gfp_t);
-void		__free_page(struct page *);
 
 #endif	/* _LINUX_GFP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.31 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.31.2.1 2014/08/10 06:54:57 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.31 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.31.2.1 2014/08/10 06:54:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,93 @@ static int synaptics_max_speed_x_nodenum;
 static int synaptics_max_speed_y_nodenum;
 static int synaptics_movement_threshold_nodenum;
 
+static void
+pms_synaptics_probe_extended(struct pms_softc *psc)
+{
+	struct synaptics_softc *sc = &psc->u.synaptics;
+	u_char cmd[1], resp[3];
+	int res;
+
+	aprint_debug_dev(psc->sc_dev,
+	    "synaptics_probe: Capabilities 0x%04x.\n", sc->caps);
+	if (sc->caps & SYNAPTICS_CAP_PASSTHROUGH)
+		sc->flags |= SYN_FLAG_HAS_PASSTHROUGH;
+
+	if (sc->caps & SYNAPTICS_CAP_PALMDETECT)
+		sc->flags |= SYN_FLAG_HAS_PALM_DETECT;
+
+	if (sc->caps & SYNAPTICS_CAP_MULTIDETECT)
+		sc->flags |= SYN_FLAG_HAS_MULTI_FINGER;
+
+	if (sc->caps & SYNAPTICS_CAP_MULTIFINGERREPORT)
+		sc->flags |= SYN_FLAG_HAS_MULTI_FINGER_REPORT;
+
+	/* Ask about extra buttons to detect up/down. */
+	if (((sc->caps & SYNAPTICS_CAP_EXTNUM) + 0x08)
+	    >= SYNAPTICS_EXTENDED_QUERY)
+	{
+		res = pms_sliced_command(psc->sc_kbctag,
+		    psc->sc_kbcslot, SYNAPTICS_EXTENDED_QUERY);
+		cmd[0] = PMS_SEND_DEV_STATUS;
+		res |= pckbport_poll_cmd(psc->sc_kbctag,
+		    psc->sc_kbcslot, cmd, 1, 3, resp, 0);
+		if (res == 0) {
+			int buttons = (resp[1] >> 4);
+			aprint_debug_dev(psc->sc_dev,
+			    "%s: Extended Buttons: %d.\n", __func__, buttons);
+
+			aprint_debug_dev(psc->sc_dev, "%s: Extended "
+			    "Capabilities: 0x%02x 0x%02x 0x%02x.\n", __func__,
+			    resp[0], resp[1], resp[2]);
+			if (buttons >= 2) {
+				/* Yes. */
+				sc->flags |= SYN_FLAG_HAS_UP_DOWN_BUTTONS;
+			}
+			if (resp[0] & 0x1) {
+				/* Vertical scroll area */
+				sc->flags |= SYN_FLAG_HAS_VERTICAL_SCROLL;
+			}
+			if (resp[0] & 0x2) {
+				/* Horizontal scroll area */
+				sc->flags |= SYN_FLAG_HAS_HORIZONTAL_SCROLL;
+			}
+			if (resp[0] & 0x4) {
+				/* Extended W-Mode */
+				sc->flags |= SYN_FLAG_HAS_EXTENDED_WMODE;
+			}
+		}
+	}
+
+	/* Ask about click pad */
+	if (((sc->caps & SYNAPTICS_CAP_EXTNUM) + 0x08) >=
+	    SYNAPTICS_CONTINUED_CAPABILITIES)
+	{
+		res = pms_sliced_command(psc->sc_kbctag,
+		    psc->sc_kbcslot, SYNAPTICS_CONTINUED_CAPABILITIES);
+		cmd[0] = PMS_SEND_DEV_STATUS;
+		res |= pckbport_poll_cmd(psc->sc_kbctag,
+		    psc->sc_kbcslot, cmd, 1, 3, resp, 0);
+		if (res == 0) {
+			u_char clickpad_type = (resp[1] & 0x1);
+			clickpad_type |= ((resp[0] >> 4) & 0x1);
+
+			aprint_debug_dev(psc->sc_dev, "%s: Continued "
+			    "Capabilities 0x%02x 0x%02x 0x%02x.\n", __func__,
+			    resp[0], resp[1], resp[2]);
+			switch (clickpad_type) {
+			case 1:
+				sc->flags |= SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD;
+				break;
+			case 2:
+				sc->flags |= SYN_FLAG_HAS_TWO_BUTTON_CLICKPAD;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+}
+
 int
 pms_synaptics_probe_init(void *vsc)
 {
@@ -200,39 +287,17 @@ pms_synaptics_probe_init(void *vsc)
 		sc->flags |= SYN_FLAG_HAS_BUTTONS_4_5;
 
 	if (sc->caps & SYNAPTICS_CAP_EXTENDED) {
-		aprint_debug_dev(psc->sc_dev,
-		    "synaptics_probe: Capabilities 0x%04x.\n", sc->caps);
-		if (sc->caps & SYNAPTICS_CAP_PASSTHROUGH)
-			sc->flags |= SYN_FLAG_HAS_PASSTHROUGH;
-
-		if (sc->caps & SYNAPTICS_CAP_PALMDETECT)
-			sc->flags |= SYN_FLAG_HAS_PALM_DETECT;
-
-		if (sc->caps & SYNAPTICS_CAP_MULTIDETECT)
-			sc->flags |= SYN_FLAG_HAS_MULTI_FINGER;
-
-		/* Ask about extra buttons to detect up/down. */
-		if (sc->caps & SYNAPTICS_CAP_EXTNUM) {
-			res = pms_sliced_command(psc->sc_kbctag,
-			    psc->sc_kbcslot, SYNAPTICS_EXTENDED_QUERY);
-			cmd[0] = PMS_SEND_DEV_STATUS;
-			res |= pckbport_poll_cmd(psc->sc_kbctag,
-			    psc->sc_kbcslot, cmd, 1, 3, resp, 0);
-			if (res == 0)
-				aprint_debug_dev(psc->sc_dev,
-				    "synaptics_probe: Extended "
-				    "Capabilities 0x%02x.\n", resp[1]);
-			if (!res && (resp[1] >> 4) >= 2) {
-				/* Yes. */
-				sc->flags |= SYN_FLAG_HAS_UP_DOWN_BUTTONS;
-			}
-		}
+		pms_synaptics_probe_extended(psc);
 	}
 
 	if (sc->flags) {
 		const char comma[] = ", ";
 		const char *sep = "";
 		aprint_normal_dev(psc->sc_dev, "");
+		if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE) {
+			aprint_normal("%sExtended W mode", sep);
+			sep = comma;
+		}
 		if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
 			aprint_normal("%sPassthrough", sep);
 			sep = comma;
@@ -251,6 +316,26 @@ pms_synaptics_probe_init(void *vsc)
 		}
 		if (sc->flags & SYN_FLAG_HAS_PALM_DETECT) {
 			aprint_normal("%sPalm detect", sep);
+			sep = comma;
+		}
+		if (sc->flags & SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD) {
+			aprint_normal("%sOne button click pad", sep);
+			sep = comma;
+		}
+		if (sc->flags & SYN_FLAG_HAS_TWO_BUTTON_CLICKPAD) {
+			aprint_normal("%sTwo button click pad", sep);
+			sep = comma;
+		}
+		if (sc->flags & SYN_FLAG_HAS_VERTICAL_SCROLL) {
+			aprint_normal("%sVertical scroll", sep);
+			sep = comma;
+		}
+		if (sc->flags & SYN_FLAG_HAS_HORIZONTAL_SCROLL) {
+			aprint_normal("%sHorizontal scroll", sep);
+			sep = comma;
+		}
+		if (sc->flags & SYN_FLAG_HAS_MULTI_FINGER_REPORT) {
+			aprint_normal("%sMulti-finger Report", sep);
 			sep = comma;
 		}
 		if (sc->flags & SYN_FLAG_HAS_MULTI_FINGER)
@@ -276,7 +361,7 @@ pms_synaptics_enable(void *vsc)
 	int res;
 
 	if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
-		/* 
+		/*
 		 * Extended capability probes can confuse the passthrough device;
 		 * reset the touchpad now to cure that.
 		 */
@@ -621,6 +706,8 @@ pms_synaptics_parse(struct pms_softc *psc)
 	struct synaptics_softc *sc = &psc->u.synaptics;
 	struct synaptics_packet sp;
 
+	memset(&sp, 0, sizeof(sp));
+
 	/* Absolute X/Y coordinates of finger */
 	sp.sp_x = psc->packet[4] + ((psc->packet[1] & 0x0f) << 8) +
 	   ((psc->packet[3] & 0x10) << 8);
@@ -658,6 +745,12 @@ pms_synaptics_parse(struct pms_softc *psc)
 		sp.sp_down = 0;
 	}
 
+	if(sc->flags & SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD) {
+		/* This is not correctly specified. Read this button press
+		 * from L/U bit.
+		 */
+		sp.sp_left = ((psc->packet[0] ^ psc->packet[3]) & 0x01) ? 1 : 0;
+	} else
 	/* Middle button. */
 	if (sc->flags & SYN_FLAG_HAS_MIDDLE_BUTTON) {
 		/* Old style Middle Button. */
@@ -861,12 +954,17 @@ static inline void
 synaptics_gesture_detect(struct synaptics_softc *sc,
     struct synaptics_packet *sp, int fingers)
 {
-	int gesture_len, gesture_move_x, gesture_move_y, gesture_buttons;
+	int gesture_len, gesture_buttons;
 	int set_buttons;
 
 	gesture_len = SYN_TIME(sc, sc->gesture_start_packet);
 	gesture_buttons = sc->gesture_buttons;
 
+	if (fingers > 0 && (fingers == sc->prev_fingers)) {
+		/* Finger is still present */
+		sc->gesture_move_x = abs(sc->gesture_start_x - sp->sp_x);
+		sc->gesture_move_y = abs(sc->gesture_start_y - sp->sp_y);
+	} else
 	if (fingers && sc->prev_fingers == 0) {
 		/*
 		 * Finger was just applied.
@@ -880,9 +978,16 @@ synaptics_gesture_detect(struct synaptics_softc *sc,
 		if (SYN_IS_SINGLE_TAP(sc->gesture_type))
 			sc->gesture_type |= SYN_GESTURE_DRAG;
 
-		sc->gesture_start_x = sp->sp_x;
-		sc->gesture_start_y = sp->sp_y;
+		sc->gesture_start_x = abs(sp->sp_x);
+		sc->gesture_start_y = abs(sp->sp_y);
+		sc->gesture_move_x = 0;
+		sc->gesture_move_y = 0;
 		sc->gesture_start_packet = sc->total_packets;
+
+#ifdef DIAGNOSTIC
+		aprint_debug("Finger applied: gesture_start_x: %d gesture_start_y: %d\n",
+			sc->gesture_start_x, sc->gesture_start_y);
+#endif
 	} else
 	if (fingers == 0 && sc->prev_fingers != 0) {
 		/*
@@ -893,13 +998,19 @@ synaptics_gesture_detect(struct synaptics_softc *sc,
 		 * detected (the pad may report coordinates for any
 		 * of the fingers).
 		 */
-		gesture_move_x = abs(sc->gesture_start_x - sp->sp_x);
-		gesture_move_y = abs(sc->gesture_start_y - sp->sp_y);
+
+#ifdef DIAGNOSTIC
+		aprint_debug("Finger removed: gesture_len: %d (%d)\n",
+			gesture_len, synaptics_gesture_length);
+		aprint_debug("gesture_move_x: %d (%d) sp_x: %d\n",
+			sc->gesture_move_x, synaptics_gesture_move, abs(sp->sp_x));
+		aprint_debug("gesture_move_y: %d (%d) sp_y: %d\n",
+			sc->gesture_move_y, synaptics_gesture_move, abs(sp->sp_y));
+#endif
 
 		if (gesture_len < synaptics_gesture_length &&
-		    (sc->prev_fingers > 1 ||
-		    (gesture_move_x < synaptics_gesture_move &&
-		     gesture_move_y < synaptics_gesture_move))) {
+		    ((sc->gesture_move_x < synaptics_gesture_move &&
+		     sc->gesture_move_y < synaptics_gesture_move))) {
 			/*
 			 * Looking good so far.
 			 */

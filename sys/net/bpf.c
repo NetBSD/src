@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.182 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: bpf.c,v 1.182.2.1 2014/08/10 06:56:15 tls Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.182 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.182.2.1 2014/08/10 06:56:15 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -191,12 +191,14 @@ const struct cdevsw bpf_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 
 bpfjit_func_t
 bpf_jit_generate(bpf_ctx_t *bc, void *code, size_t size)
 {
+
 	membar_consumer();
 	if (bpfjit_module_ops.bj_generate_code != NULL) {
 		return bpfjit_module_ops.bj_generate_code(bc, code, size);
@@ -298,7 +300,7 @@ bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 		return (EIO);
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	m->m_pkthdr.rcvif = 0;
+	m->m_pkthdr.rcvif = NULL;
 	m->m_pkthdr.len = (int)(len - hlen);
 	if (len + align > MHLEN) {
 		m_clget(m, M_WAIT);
@@ -385,16 +387,16 @@ bpf_detachd(struct bpf_d *d)
 	p = &bp->bif_dlist;
 	while (*p != d) {
 		p = &(*p)->bd_next;
-		if (*p == 0)
+		if (*p == NULL)
 			panic("%s: descriptor not in list", __func__);
 	}
 	*p = (*p)->bd_next;
-	if (bp->bif_dlist == 0)
+	if (bp->bif_dlist == NULL)
 		/*
 		 * Let the driver know that there are no more listeners.
 		 */
-		*d->bd_bif->bif_driverp = 0;
-	d->bd_bif = 0;
+		*d->bd_bif->bif_driverp = NULL;
+	d->bd_bif = NULL;
 }
 
 static int
@@ -512,7 +514,7 @@ bpf_close(struct file *fp)
 	(d)->bd_hlen = (d)->bd_slen; \
 	(d)->bd_sbuf = (d)->bd_fbuf; \
 	(d)->bd_slen = 0; \
-	(d)->bd_fbuf = 0;
+	(d)->bd_fbuf = NULL;
 /*
  *  bpfread - read next chunk of packets from buffers
  */
@@ -544,7 +546,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 	 * ends when the timeout expires or when enough packets
 	 * have arrived to fill the store buffer.
 	 */
-	while (d->bd_hbuf == 0) {
+	while (d->bd_hbuf == NULL) {
 		if (fp->f_flag & FNONBLOCK) {
 			if (d->bd_slen == 0) {
 				splx(s);
@@ -610,7 +612,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 
 	s = splnet();
 	d->bd_fbuf = d->bd_hbuf;
-	d->bd_hbuf = 0;
+	d->bd_hbuf = NULL;
 	d->bd_hlen = 0;
 done:
 	splx(s);
@@ -671,7 +673,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 
 	KERNEL_LOCK(1, NULL);
 
-	if (d->bd_bif == 0) {
+	if (d->bd_bif == NULL) {
 		KERNEL_UNLOCK_ONE(NULL);
 		return (ENXIO);
 	}
@@ -736,7 +738,7 @@ reset_d(struct bpf_d *d)
 	if (d->bd_hbuf) {
 		/* Free the hold buffer. */
 		d->bd_fbuf = d->bd_hbuf;
-		d->bd_hbuf = 0;
+		d->bd_hbuf = NULL;
 	}
 	d->bd_slen = 0;
 	d->bd_hlen = 0;
@@ -825,7 +827,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Set buffer length.
 	 */
 	case BIOCSBLEN:
-		if (d->bd_bif != 0)
+		if (d->bd_bif != NULL)
 			error = EINVAL;
 		else {
 			u_int size = *(u_int *)addr;
@@ -858,7 +860,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Put interface into promiscuous mode.
 	 */
 	case BIOCPROMISC:
-		if (d->bd_bif == 0) {
+		if (d->bd_bif == NULL) {
 			/*
 			 * No interface attached yet.
 			 */
@@ -878,7 +880,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Get device parameters.
 	 */
 	case BIOCGDLT:
-		if (d->bd_bif == 0)
+		if (d->bd_bif == NULL)
 			error = EINVAL;
 		else
 			*(u_int *)addr = d->bd_bif->bif_dlt;
@@ -888,7 +890,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Get a list of supported device parameters.
 	 */
 	case BIOCGDLTLIST:
-		if (d->bd_bif == 0)
+		if (d->bd_bif == NULL)
 			error = EINVAL;
 		else
 			error = bpf_getdltlist(d, addr);
@@ -898,7 +900,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Set device parameters.
 	 */
 	case BIOCSDLT:
-		if (d->bd_bif == 0)
+		if (d->bd_bif == NULL)
 			error = EINVAL;
 		else
 			error = bpf_setdlt(d, *(u_int *)addr);
@@ -911,7 +913,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	case OBIOCGETIF:
 #endif
 	case BIOCGETIF:
-		if (d->bd_bif == 0)
+		if (d->bd_bif == NULL)
 			error = EINVAL;
 		else
 			bpf_ifname(d->bd_bif->bif_ifp, addr);
@@ -1114,10 +1116,8 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 			return EINVAL;
 		}
 		membar_consumer();
-		if (bpf_jit) {
-			bpf_ctx_t *bc = bpf_default_ctx();
-			jcode = bpf_jit_generate(bc, fcode, flen);
-		}
+		if (bpf_jit)
+			jcode = bpf_jit_generate(NULL, fcode, flen);
 	} else {
 		fcode = NULL;
 	}
@@ -1178,10 +1178,10 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 	/*
 	 * Look through attached interfaces for the named one.
 	 */
-	for (bp = bpf_iflist; bp != 0; bp = bp->bif_next) {
+	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
 		struct ifnet *ifp = bp->bif_ifp;
 
-		if (ifp == 0 ||
+		if (ifp == NULL ||
 		    strcmp(ifp->if_xname, ifr->ifr_name) != 0)
 			continue;
 		/* skip additional entry */
@@ -1193,7 +1193,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 		 * If we're already attached to requested interface,
 		 * just flush the buffer.
 		 */
-		if (d->bd_sbuf == 0) {
+		if (d->bd_sbuf == NULL) {
 			error = bpf_allocbufs(d);
 			if (error != 0)
 				return (error);
@@ -1388,15 +1388,17 @@ static inline void
 bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
     void *pkt, u_int pktlen, u_int buflen, const bool rcv)
 {
-	bpf_ctx_t *bc = bpf_default_ctx();
+	struct timespec ts;
 	bpf_args_t args = {
-		.pkt = pkt,
+		.pkt = (const uint8_t *)pkt,
 		.wirelen = pktlen,
 		.buflen = buflen,
+		.mem = NULL,
 		.arg = NULL
 	};
 	struct bpf_d *d;
-	struct timespec ts;
+
+	const bpf_ctx_t *bc = NULL;
 	bool gottime = false;
 
 	/*
@@ -1414,7 +1416,7 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 		bpf_gstats.bs_recv++;
 
 		if (d->bd_jitcode)
-			slen = d->bd_jitcode(pkt, pktlen, buflen);
+			slen = d->bd_jitcode(bc, &args);
 		else
 			slen = bpf_filter_ext(bc, d->bd_filter, &args);
 
@@ -1648,7 +1650,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 		 * Rotate the buffers if we can, then wakeup any
 		 * pending reads.
 		 */
-		if (d->bd_fbuf == 0) {
+		if (d->bd_fbuf == NULL) {
 			/*
 			 * We haven't completed the previous read yet,
 			 * so drop the packet.
@@ -1767,10 +1769,10 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 {
 	struct bpf_if *bp;
 	bp = malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
-	if (bp == 0)
+	if (bp == NULL)
 		panic("bpfattach");
 
-	bp->bif_dlist = 0;
+	bp->bif_dlist = NULL;
 	bp->bif_driverp = driverp;
 	bp->bif_ifp = ifp;
 	bp->bif_dlt = dlt;
@@ -1778,7 +1780,7 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 	bp->bif_next = bpf_iflist;
 	bpf_iflist = bp;
 
-	*bp->bif_driverp = 0;
+	*bp->bif_driverp = NULL;
 
 	bp->bif_hdrlen = hdrlen;
 #if 0
@@ -1926,6 +1928,7 @@ sysctl_net_bpf_maxbufsize(SYSCTLFN_ARGS)
 	return (0);
 }
 
+#if defined(MODULAR) || defined(BPFJIT)
 static int
 sysctl_net_bpf_jit(SYSCTLFN_ARGS)
 {
@@ -1949,12 +1952,13 @@ sysctl_net_bpf_jit(SYSCTLFN_ARGS)
 	membar_sync();
 
 	if (newval && bpfjit_module_ops.bj_generate_code == NULL) {
-		printf("WARNING jit activation is postponed "
+		printf("JIT compilation is postponed "
 		    "until after bpfjit module is loaded\n");
 	}
 
 	return 0;
 }
+#endif
 
 static int
 sysctl_net_bpf_peers(SYSCTLFN_ARGS)
@@ -2040,12 +2044,14 @@ sysctl_net_bpf_setup(void)
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_CREATE, CTL_EOL);
 	if (node != NULL) {
+#if defined(MODULAR) || defined(BPFJIT)
 		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_BOOL, "jit",
 			SYSCTL_DESCR("Toggle Just-In-Time compilation"),
 			sysctl_net_bpf_jit, 0, &bpf_jit, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+#endif
 		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_INT, "maxbufsize",

@@ -1,4 +1,14 @@
-# $NetBSD: Makefile,v 1.2 2012/06/11 18:32:59 njoly Exp $
+# $NetBSD: Makefile,v 1.2.8.1 2014/08/10 06:57:02 tls Exp $
+#
+
+.include <bsd.own.mk>
+
+TESTSDIR = ${TESTSBASE}/bin/sh
+
+TESTS_SUBDIRS += dotcmd
+
+.include <bsd.test.mk>
+# $NetBSD: Makefile,v 1.2.8.1 2014/08/10 06:57:02 tls Exp $
 
 .include <bsd.own.mk>
 

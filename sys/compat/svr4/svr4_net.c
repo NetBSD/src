@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.59 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.59.2.1 2014/08/10 06:54:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.59 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.59.2.1 2014/08/10 06:54:34 tls Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -86,6 +86,7 @@ const struct cdevsw svr4_net_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,8 +34,13 @@
 
 #include <sys/mutex.h>
 
+#include <lib/libkern/libkern.h> /* KASSERT */
+
 struct mutex {
 	kmutex_t mtx_lock;
+};
+
+struct lock_class_key {
 };
 
 /* Name collision.  Pooh.  */
@@ -43,6 +48,14 @@ static inline void
 linux_mutex_init(struct mutex *mutex)
 {
 	mutex_init(&mutex->mtx_lock, MUTEX_DEFAULT, IPL_NONE);
+}
+
+/* Lockdep stuff.  */
+static inline void
+__mutex_init(struct mutex *mutex, const char *name __unused,
+    struct lock_class_key *key __unused)
+{
+	linux_mutex_init(mutex);
 }
 
 /* Another name collision.  */
@@ -81,6 +94,24 @@ static inline bool
 mutex_is_locked(struct mutex *mutex)
 {
 	return mutex_owned(&mutex->mtx_lock);
+}
+
+static inline void
+mutex_lock_nest_lock(struct mutex *mutex, struct mutex *already)
+{
+
+	KASSERT(mutex_is_locked(already));
+	mutex_lock(mutex);
+}
+
+#define	lockdep_assert_held(m)	do {} while (0)
+
+#define	SINGLE_DEPTH_NESTING	0
+
+static inline void
+mutex_lock_nested(struct mutex *mutex, unsigned subclass __unused)
+{
+	mutex_lock(mutex);
 }
 
 #endif  /* _LINUX_MUTEX_H_ */

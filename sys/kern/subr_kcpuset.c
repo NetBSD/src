@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.10 2013/10/25 11:35:55 martin Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.10.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.10 2013/10/25 11:35:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.10.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -480,7 +480,7 @@ kcpuset_remove(kcpuset_t *kcp1, const kcpuset_t *kcp2)
 }
 
 int
-kcpuset_countset(kcpuset_t *kcp)
+kcpuset_countset(const kcpuset_t *kcp)
 {
 	int count = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.55 2011/11/19 22:51:29 tls Exp $	*/
+/*	$NetBSD: mld6.c,v 1.55.22.1 2014/08/10 06:56:30 tls Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.55 2011/11/19 22:51:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.55.22.1 2014/08/10 06:56:30 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -137,7 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.55 2011/11/19 22:51:29 tls Exp $");
  * This structure is used to keep track of in6_multi chains which belong to
  * deleted interface addresses.
  */
-static LIST_HEAD(, multi6_kludge) in6_mk; /* XXX BSS initialization */
+static LIST_HEAD(, multi6_kludge) in6_mk = LIST_HEAD_INITIALIZER(in6_mk);
 
 struct multi6_kludge {
 	LIST_ENTRY(multi6_kludge) mk_entry;
@@ -896,4 +896,153 @@ in6_purgemkludge(struct ifnet *ifp)
 	}
 	LIST_REMOVE(mk, mk_entry);
 	free(mk, M_IPMADDR);
+}
+
+static int
+in6_mkludge_sysctl(SYSCTLFN_ARGS)
+{
+	struct multi6_kludge *mk;
+	struct in6_multi *in6m;
+	int error;
+	uint32_t tmp;
+	size_t written;
+
+	if (namelen != 1)
+		return EINVAL;
+
+	if (oldp == NULL) {
+		*oldlenp = 0;
+		LIST_FOREACH(mk, &in6_mk, mk_entry) {
+			if (mk->mk_ifp->if_index == name[0])
+				continue;
+			LIST_FOREACH(in6m, &mk->mk_head, in6m_entry) {
+				*oldlenp += sizeof(struct in6_addr) +
+				    sizeof(uint32_t);
+			}
+		}
+		return 0;
+	}
+
+	error = 0;
+	written = 0;
+	LIST_FOREACH(mk, &in6_mk, mk_entry) {
+		if (mk->mk_ifp->if_index == name[0])
+			continue;
+		LIST_FOREACH(in6m, &mk->mk_head, in6m_entry) {
+			if (written + sizeof(struct in6_addr) +
+			    sizeof(uint32_t) > *oldlenp)
+				goto done;
+			error = sysctl_copyout(l, &in6m->in6m_addr,
+			    oldp, sizeof(struct in6_addr));
+			if (error)
+				goto done;
+			oldp = (char *)oldp + sizeof(struct in6_addr);
+			written += sizeof(struct in6_addr);
+			tmp = in6m->in6m_refcount;
+			error = sysctl_copyout(l, &tmp, oldp, sizeof(tmp));
+			if (error)
+				goto done;
+			oldp = (char *)oldp + sizeof(tmp);
+			written += sizeof(tmp);
+		}
+	}
+
+done:
+	*oldlenp = written;
+	return error;
+}
+
+static int
+in6_multicast_sysctl(SYSCTLFN_ARGS)
+{
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
+	struct in6_ifaddr *ifa6;
+	struct in6_multi *in6m;
+	uint32_t tmp;
+	int error;
+	size_t written;
+
+	if (namelen != 1)
+		return EINVAL;
+
+	ifp = if_byindex(name[0]);
+	if (ifp == NULL)
+		return ENODEV;
+
+	if (oldp == NULL) {
+		*oldlenp = 0;
+		IFADDR_FOREACH(ifa, ifp) {
+			if (ifa->ifa_addr == NULL)
+				continue;
+			if (ifa->ifa_addr->sa_family != AF_INET6)
+				continue;
+			ifa6 = (struct in6_ifaddr *)ifa;
+			LIST_FOREACH(in6m, &ifa6->ia6_multiaddrs, in6m_entry) {
+				*oldlenp += 2 * sizeof(struct in6_addr) +
+				    sizeof(uint32_t);
+			}
+		}
+		return 0;
+	}
+
+	error = 0;
+	written = 0;
+	IFADDR_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr == NULL)
+			continue;
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		ifa6 = (struct in6_ifaddr *)ifa;
+		LIST_FOREACH(in6m, &ifa6->ia6_multiaddrs, in6m_entry) {
+			if (written + 2 * sizeof(struct in6_addr) +
+			    sizeof(uint32_t) > *oldlenp)
+				goto done;
+			error = sysctl_copyout(l, &ifa6->ia_addr.sin6_addr,
+			    oldp, sizeof(struct in6_addr));
+			if (error)
+				goto done;
+			oldp = (char *)oldp + sizeof(struct in6_addr);
+			written += sizeof(struct in6_addr);
+			error = sysctl_copyout(l, &in6m->in6m_addr,
+			    oldp, sizeof(struct in6_addr));
+			if (error)
+				goto done;
+			oldp = (char *)oldp + sizeof(struct in6_addr);
+			written += sizeof(struct in6_addr);
+			tmp = in6m->in6m_refcount;
+			error = sysctl_copyout(l, &tmp, oldp, sizeof(tmp));
+			if (error)
+				goto done;
+			oldp = (char *)oldp + sizeof(tmp);
+			written += sizeof(tmp);
+		}
+	}
+done:
+	*oldlenp = written;
+	return error;
+}
+
+SYSCTL_SETUP(sysctl_in6_mklude_setup, "sysctl net.inet6.multicast_kludge subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "multicast",
+		       SYSCTL_DESCR("Multicast information"),
+		       in6_multicast_sysctl, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "multicast_kludge",
+		       SYSCTL_DESCR("multicast kludge information"),
+		       in6_mkludge_sysctl, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_CREATE, CTL_EOL);
 }

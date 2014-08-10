@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.7 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.7.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -798,14 +798,19 @@ deref_portentry(dns_dispatch_t *disp, dispportentry_t **portentryp) {
 				portentry, link);
 		isc_mempool_put(disp->portpool, portentry);
 	}
-	UNLOCK(&qid->lock);
 
+	/*
+	 * Set '*portentryp' to NULL inside the lock so that
+	 * dispsock->portentry does not change in socket_search.
+	 */
 	*portentryp = NULL;
+
+	UNLOCK(&qid->lock);
 }
 
 /*%
  * Find a dispsocket for socket address 'dest', and port number 'port'.
- * Return NULL if no such entry exists.
+ * Return NULL if no such entry exists.  Requires qid->lock to be held.
  */
 static dispsocket_t *
 socket_search(dns_qid_t *qid, isc_sockaddr_t *dest, in_port_t port,

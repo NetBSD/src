@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2013 Free Software Foundation, Inc.
+# Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,19 @@
 
 load_lib gdb-python.exp
 
-# Start with a fresh gdb.
+standard_testfile
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
+    return -1
+}
 
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
+
+if ![runto_main] then {
+    fail "Cannot run to main."
+    return 0
+}
 
 # Test a simple command.
 
@@ -155,3 +160,32 @@ gdb_test "test_help ugh" "test_cmd output, arg = ugh" "call simple user-defined 
 
 # Make sure the command shows up in `help user-defined`.
 gdb_test "help user-defined" "User-defined commands.\[\r\n\]+The commands in this class are those defined by the user.\[\r\n\]+Use the \"define\" command to define a command.\[\r\n\]+\[\r\n\]+List of commands:\[\r\n\]+\[\r\n\]+test_help -- Docstring\[\r\n\]+\[\r\n\]+Type \"help\" followed by command name for full documentation.\[\r\n\]+Type \"apropos word\" to search for commands related to \"word\".\[\r\n\]+Command name abbreviations are allowed if unambiguous.\[\r\n\]+" "see user-defined command in `help user-defined`"
+
+# Test expression completion on fields
+gdb_py_test_multiple "expression completion command" \
+  "python" "" \
+  "class expr_test (gdb.Command):" "" \
+  "  def __init__ (self):" "" \
+  "    super (expr_test, self).__init__ (\"expr_test\", gdb.COMMAND_USER, gdb.COMPLETE_EXPRESSION)" "" \
+  "  def invoke (self, arg, from_tty):" "" \
+  "    print (\"invoked on = %s\" % arg)" "" \
+  "expr_test ()" "" \
+  "end" ""
+
+
+gdb_test "complete expr_test bar\." \
+    "expr_test bar\.bc.*expr_test bar\.ij.*" \
+    "Test completion through complete command"
+
+set test "complete 'expr_test bar.i'"
+send_gdb "expr_test bar\.i\t\t"
+gdb_test_multiple "" "$test" {
+    -re "expr_test bar\.ij \\\x07$" {
+	send_gdb "\n"
+	gdb_test_multiple "" $test {
+	    -re "invoked on = bar.ij.*$gdb_prompt $" {
+		pass "$test"
+	    }
+	}
+    }
+}

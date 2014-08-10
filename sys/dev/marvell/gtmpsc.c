@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.44 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.44.2.1 2014/08/10 06:54:52 tls Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.44 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.44.2.1 2014/08/10 06:54:52 tls Exp $");
 
 #include "opt_kgdb.h"
 
@@ -168,6 +168,7 @@ const struct cdevsw gtmpsc_cdevsw = {
 	.d_poll = gtmpscpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

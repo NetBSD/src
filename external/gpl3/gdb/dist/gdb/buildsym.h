@@ -1,5 +1,5 @@
 /* Build symbol tables in GDB's internal format.
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -173,36 +173,11 @@ EXTERN int within_function;
 
 
 
-struct subfile_stack
-  {
-    struct subfile_stack *next;
-    char *name;
-  };
-
-EXTERN struct subfile_stack *subfile_stack;
-
 #define next_symbol_text(objfile) (*next_symbol_text_func)(objfile)
 
 /* Function to invoke get the next symbol.  Return the symbol name.  */
 
 EXTERN char *(*next_symbol_text_func) (struct objfile *);
-
-/* Vector of types defined so far, indexed by their type numbers.
-   Used for both stabs and coff.  (In newer sun systems, dbx uses a
-   pair of numbers in parens, as in "(SUBFILENUM,NUMWITHINSUBFILE)".
-   Then these numbers must be translated through the type_translations
-   hash table to get the index into the type vector.)  */
-
-EXTERN struct type **type_vector;
-
-/* Number of elements allocated for type_vector currently.  */
-
-EXTERN int type_vector_length;
-
-/* Initial size of type vector.  Is realloc'd larger if needed, and
-   realloc'd down to the size actually used, when completed.  */
-
-#define	INITIAL_TYPE_VECTOR_LENGTH	160
 
 extern void add_symbol_to_list (struct symbol *symbol,
 				struct pending **listhead);
@@ -296,10 +271,10 @@ extern void set_last_source_file (const char *name);
 
 extern const char *get_last_source_file (void);
 
-/* The macro table for the compilation unit whose symbols we're
-   currently reading.  All the symtabs for this CU will point to
-   this.  */
-EXTERN struct macro_table *pending_macros;
+/* Return the macro table.  */
+
+extern struct macro_table *get_macro_table (struct objfile *objfile,
+					    const char *comp_dir);
 
 #undef EXTERN
 

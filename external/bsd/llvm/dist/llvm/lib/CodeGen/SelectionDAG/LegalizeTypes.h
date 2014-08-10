@@ -16,7 +16,6 @@
 #ifndef SELECTIONDAG_LEGALIZETYPES_H
 #define SELECTIONDAG_LEGALIZETYPES_H
 
-#define DEBUG_TYPE "legalize-types"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -540,6 +539,7 @@ private:
   SDValue ScalarizeVecOp_UnaryOp(SDNode *N);
   SDValue ScalarizeVecOp_CONCAT_VECTORS(SDNode *N);
   SDValue ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
+  SDValue ScalarizeVecOp_VSELECT(SDNode *N);
   SDValue ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo);
   SDValue ScalarizeVecOp_FP_ROUND(SDNode *N, unsigned OpNo);
 

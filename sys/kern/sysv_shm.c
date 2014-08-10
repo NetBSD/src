@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.124 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.124.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.124 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.124.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #define SYSVSHM
 
@@ -908,9 +908,11 @@ shmrealloc(int newshmni)
 	    ALIGN(newshmni * sizeof(struct shmid_ds)));
 
 	/* Copy all memory to the new area */
-	for (i = 0; i < shm_nused; i++)
+	for (i = 0; i < shm_nused; i++) {
+		cv_init(&newshm_cv[i], "shmwait");
 		(void)memcpy(&newshmsegs[i], &shmsegs[i],
 		    sizeof(newshmsegs[0]));
+	}
 
 	/* Mark as free all new segments, if there is any */
 	for (; i < newshmni; i++) {

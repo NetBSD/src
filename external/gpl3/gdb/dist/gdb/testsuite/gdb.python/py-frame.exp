@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2013 Free Software Foundation, Inc.
+# Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ gdb_py_test_silent_cmd "python bf1 = gdb.selected_frame ()" "get frame" 0
 
 # Test Frame.architecture() method.
 gdb_py_test_silent_cmd "python show_arch_str = gdb.execute(\"show architecture\", to_string=True)" "show arch" 0
-gdb_test "python print bf1.architecture().name() in show_arch_str" "True" "test Frame.architecture()"
+gdb_test "python print (bf1.architecture().name() in show_arch_str)" "True" "test Frame.architecture()"
 
 # First test that read_var is unaffected by PR 11036 changes.
 gdb_test "python print (bf1.read_var(\"i\"))" "\"stuff\"" "test i"

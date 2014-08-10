@@ -63,6 +63,7 @@ void initializeCodeGen(PassRegistry&);
 void initializeTarget(PassRegistry&);
 
 void initializeAAEvalPass(PassRegistry&);
+void initializeAddDiscriminatorsPass(PassRegistry&);
 void initializeADCEPass(PassRegistry&);
 void initializeAliasAnalysisAnalysisGroup(PassRegistry&);
 void initializeAliasAnalysisCounterPass(PassRegistry&);
@@ -70,6 +71,7 @@ void initializeAliasDebuggerPass(PassRegistry&);
 void initializeAliasSetPrinterPass(PassRegistry&);
 void initializeAlwaysInlinerPass(PassRegistry&);
 void initializeArgPromotionPass(PassRegistry&);
+void initializeAtomicExpandLoadLinkedPass(PassRegistry&);
 void initializeSampleProfileLoaderPass(PassRegistry&);
 void initializeBarrierNoopPass(PassRegistry&);
 void initializeBasicAliasAnalysisPass(PassRegistry&);
@@ -102,6 +104,7 @@ void initializeDAHPass(PassRegistry&);
 void initializeDCEPass(PassRegistry&);
 void initializeDSEPass(PassRegistry&);
 void initializeDebugIRPass(PassRegistry&);
+void initializeDebugInfoVerifierLegacyPassPass(PassRegistry &);
 void initializeDeadInstEliminationPass(PassRegistry&);
 void initializeDeadMachineInstructionElimPass(PassRegistry&);
 void initializeDelinearizationPass(PassRegistry &);
@@ -235,6 +238,7 @@ void initializeSimpleInlinerPass(PassRegistry&);
 void initializeRegisterCoalescerPass(PassRegistry&);
 void initializeSingleLoopExtractorPass(PassRegistry&);
 void initializeSinkingPass(PassRegistry&);
+void initializeSeparateConstOffsetFromGEPPass(PassRegistry &);
 void initializeSlotIndexesPass(PassRegistry&);
 void initializeSpillPlacementPass(PassRegistry&);
 void initializeStackProtectorPass(PassRegistry&);
@@ -268,6 +272,7 @@ void initializeSLPVectorizerPass(PassRegistry&);
 void initializeBBVectorizePass(PassRegistry&);
 void initializeMachineFunctionPrinterPassPass(PassRegistry&);
 void initializeStackMapLivenessPass(PassRegistry&);
+void initializeLoadCombinePass(PassRegistry&);
 }
 
 #endif

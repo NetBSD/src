@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.53 2014/02/20 18:19:10 dsl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.53.2.1 2014/08/10 06:53:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -102,7 +102,9 @@ struct pcb {
 	/* **** DO NOT ADD ANYTHING HERE **** */
 
 };
+#ifndef __lint__
 /* This doesn't really matter, but there is a lot of implied padding */
 __CTASSERT(sizeof(struct pcb) - sizeof (union savefpu) == 128);
+#endif
 
 #endif /* _I386_PCB_H_ */

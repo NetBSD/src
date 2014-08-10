@@ -1,5 +1,5 @@
 /* GDB routines for manipulating the minimal symbol tables.
-   Copyright (C) 1992-2013 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
    This file is part of GDB.
@@ -38,7 +38,7 @@
 
 #include "defs.h"
 #include <ctype.h>
-#include "gdb_string.h"
+#include <string.h>
 #include "symtab.h"
 #include "bfd.h"
 #include "filenames.h"
@@ -139,27 +139,6 @@ add_minsym_to_demangled_hash_table (struct minimal_symbol *sym,
     }
 }
 
-/* See minsyms.h.  */
-
-struct objfile *
-msymbol_objfile (struct minimal_symbol *sym)
-{
-  struct objfile *objf;
-  struct minimal_symbol *tsym;
-
-  unsigned int hash
-    = msymbol_hash (SYMBOL_LINKAGE_NAME (sym)) % MINIMAL_SYMBOL_HASH_SIZE;
-
-  for (objf = object_files; objf; objf = objf->next)
-    for (tsym = objf->msymbol_hash[hash]; tsym; tsym = tsym->hash_next)
-      if (tsym == sym)
-	return objf;
-
-  /* We should always be able to find the objfile ...  */
-  internal_error (__FILE__, __LINE__, _("failed internal consistency check"));
-}
-
-
 /* Look through all the current minimal symbol tables and find the
    first minimal symbol that matches NAME.  If OBJF is non-NULL, limit
    the search to that objfile.  If SFILE is non-NULL, the only file-scope
@@ -180,15 +159,14 @@ msymbol_objfile (struct minimal_symbol *sym)
    Obviously, there must be distinct mangled names for each of these,
    but the demangled names are all the same: S::S or S::~S.  */
 
-struct minimal_symbol *
-lookup_minimal_symbol (const char *name, const char *sfile,
-		       struct objfile *objf)
+static struct bound_minimal_symbol
+lookup_minimal_symbol_internal (const char *name, const char *sfile,
+				struct objfile *objf)
 {
   struct objfile *objfile;
-  struct minimal_symbol *msymbol;
-  struct minimal_symbol *found_symbol = NULL;
-  struct minimal_symbol *found_file_symbol = NULL;
-  struct minimal_symbol *trampoline_symbol = NULL;
+  struct bound_minimal_symbol found_symbol = { NULL, NULL };
+  struct bound_minimal_symbol found_file_symbol = { NULL, NULL };
+  struct bound_minimal_symbol trampoline_symbol = { NULL, NULL };
 
   unsigned int hash = msymbol_hash (name) % MINIMAL_SYMBOL_HASH_SIZE;
   unsigned int dem_hash = msymbol_hash_iw (name) % MINIMAL_SYMBOL_HASH_SIZE;
@@ -213,9 +191,11 @@ lookup_minimal_symbol (const char *name, const char *sfile,
     }
 
   for (objfile = object_files;
-       objfile != NULL && found_symbol == NULL;
+       objfile != NULL && found_symbol.minsym == NULL;
        objfile = objfile->next)
     {
+      struct minimal_symbol *msymbol;
+
       if (objf == NULL || objf == objfile
 	  || objf == objfile->separate_debug_objfile_backlink)
 	{
@@ -223,7 +203,7 @@ lookup_minimal_symbol (const char *name, const char *sfile,
 	     and the second over the demangled hash table.  */
         int pass;
 
-        for (pass = 1; pass <= 2 && found_symbol == NULL; pass++)
+        for (pass = 1; pass <= 2 && found_symbol.minsym == NULL; pass++)
 	    {
             /* Select hash list according to pass.  */
             if (pass == 1)
@@ -231,7 +211,7 @@ lookup_minimal_symbol (const char *name, const char *sfile,
             else
               msymbol = objfile->msymbol_demangled_hash[dem_hash];
 
-            while (msymbol != NULL && found_symbol == NULL)
+            while (msymbol != NULL && found_symbol.minsym == NULL)
 		{
 		  int match;
 
@@ -260,7 +240,10 @@ lookup_minimal_symbol (const char *name, const char *sfile,
                       case mst_file_bss:
                         if (sfile == NULL
 			    || filename_cmp (msymbol->filename, sfile) == 0)
-                          found_file_symbol = msymbol;
+			  {
+			    found_file_symbol.minsym = msymbol;
+			    found_file_symbol.objfile = objfile;
+			  }
                         break;
 
                       case mst_solib_trampoline:
@@ -269,13 +252,17 @@ lookup_minimal_symbol (const char *name, const char *sfile,
                            keep looking for the *real* symbol.  If the
                            actual symbol is not found, then we'll use the
                            trampoline entry.  */
-                        if (trampoline_symbol == NULL)
-                          trampoline_symbol = msymbol;
+                        if (trampoline_symbol.minsym == NULL)
+			  {
+			    trampoline_symbol.minsym = msymbol;
+			    trampoline_symbol.objfile = objfile;
+			  }
                         break;
 
                       case mst_unknown:
                       default:
-                        found_symbol = msymbol;
+                        found_symbol.minsym = msymbol;
+			found_symbol.objfile = objfile;
                         break;
                       }
 		    }
@@ -294,18 +281,36 @@ lookup_minimal_symbol (const char *name, const char *sfile,
     xfree ((void *) modified_name);
 
   /* External symbols are best.  */
-  if (found_symbol)
+  if (found_symbol.minsym != NULL)
     return found_symbol;
 
   /* File-local symbols are next best.  */
-  if (found_file_symbol)
+  if (found_file_symbol.minsym != NULL)
     return found_file_symbol;
 
   /* Symbols for shared library trampolines are next best.  */
-  if (trampoline_symbol)
-    return trampoline_symbol;
+  return trampoline_symbol;
+}
 
-  return NULL;
+/* See minsyms.h.  */
+
+struct minimal_symbol *
+lookup_minimal_symbol (const char *name, const char *sfile,
+		       struct objfile *objf)
+{
+  struct bound_minimal_symbol bms = lookup_minimal_symbol_internal (name,
+								    sfile,
+								    objf);
+
+  return bms.minsym;
+}
+
+/* See minsyms.h.  */
+
+struct bound_minimal_symbol
+lookup_bound_minimal_symbol (const char *name)
+{
+  return lookup_minimal_symbol_internal (name, NULL, NULL);
 }
 
 /* See minsyms.h.  */
@@ -474,7 +479,7 @@ lookup_minimal_symbol_solib_trampoline (const char *name,
    there are text and trampoline symbols at the same address.
    Otherwise prefer mst_text symbols.  */
 
-static struct minimal_symbol *
+static struct bound_minimal_symbol
 lookup_minimal_symbol_by_pc_section_1 (CORE_ADDR pc,
 				       struct obj_section *section,
 				       int want_trampoline)
@@ -485,6 +490,8 @@ lookup_minimal_symbol_by_pc_section_1 (CORE_ADDR pc,
   struct objfile *objfile;
   struct minimal_symbol *msymbol;
   struct minimal_symbol *best_symbol = NULL;
+  struct objfile *best_objfile = NULL;
+  struct bound_minimal_symbol result;
   enum minimal_symbol_type want_type, other_type;
 
   want_type = want_trampoline ? mst_solib_trampoline : mst_text;
@@ -591,9 +598,10 @@ lookup_minimal_symbol_by_pc_section_1 (CORE_ADDR pc,
 		      /* Some types of debug info, such as COFF,
 			 don't fill the bfd_section member, so don't
 			 throw away symbols on those platforms.  */
-		      && SYMBOL_OBJ_SECTION (&msymbol[hi]) != NULL
+		      && SYMBOL_OBJ_SECTION (objfile, &msymbol[hi]) != NULL
 		      && (!matching_obj_sections
-			  (SYMBOL_OBJ_SECTION (&msymbol[hi]), section)))
+			  (SYMBOL_OBJ_SECTION (objfile, &msymbol[hi]),
+			   section)))
 		    {
 		      hi--;
 		      continue;
@@ -610,8 +618,8 @@ lookup_minimal_symbol_by_pc_section_1 (CORE_ADDR pc,
 			  == MSYMBOL_SIZE (&msymbol[hi - 1]))
 		      && (SYMBOL_VALUE_ADDRESS (&msymbol[hi])
 			  == SYMBOL_VALUE_ADDRESS (&msymbol[hi - 1]))
-		      && (SYMBOL_OBJ_SECTION (&msymbol[hi])
-			  == SYMBOL_OBJ_SECTION (&msymbol[hi - 1])))
+		      && (SYMBOL_OBJ_SECTION (objfile, &msymbol[hi])
+			  == SYMBOL_OBJ_SECTION (objfile, &msymbol[hi - 1])))
 		    {
 		      hi--;
 		      continue;
@@ -690,14 +698,18 @@ lookup_minimal_symbol_by_pc_section_1 (CORE_ADDR pc,
 		       SYMBOL_VALUE_ADDRESS (&msymbol[hi]))))
 		{
 		  best_symbol = &msymbol[hi];
+		  best_objfile = objfile;
 		}
 	    }
 	}
     }
-  return (best_symbol);
+
+  result.minsym = best_symbol;
+  result.objfile = best_objfile;
+  return result;
 }
 
-struct minimal_symbol *
+struct bound_minimal_symbol
 lookup_minimal_symbol_by_pc_section (CORE_ADDR pc, struct obj_section *section)
 {
   if (section == NULL)
@@ -707,17 +719,31 @@ lookup_minimal_symbol_by_pc_section (CORE_ADDR pc, struct obj_section *section)
 	 debugging) always returns NULL making the call somewhat useless.  */
       section = find_pc_section (pc);
       if (section == NULL)
-	return NULL;
+	{
+	  struct bound_minimal_symbol result;
+
+	  memset (&result, 0, sizeof (result));
+	  return result;
+	}
     }
   return lookup_minimal_symbol_by_pc_section_1 (pc, section, 0);
 }
 
 /* See minsyms.h.  */
 
-struct minimal_symbol *
+struct bound_minimal_symbol
 lookup_minimal_symbol_by_pc (CORE_ADDR pc)
 {
-  return lookup_minimal_symbol_by_pc_section (pc, NULL);
+  struct obj_section *section = find_pc_section (pc);
+
+  if (section == NULL)
+    {
+      struct bound_minimal_symbol result;
+
+      memset (&result, 0, sizeof (result));
+      return result;
+    }
+  return lookup_minimal_symbol_by_pc_section_1 (pc, section, 0);
 }
 
 /* Return non-zero iff PC is in an STT_GNU_IFUNC function resolver.  */
@@ -725,9 +751,9 @@ lookup_minimal_symbol_by_pc (CORE_ADDR pc)
 int
 in_gnu_ifunc_stub (CORE_ADDR pc)
 {
-  struct minimal_symbol *msymbol = lookup_minimal_symbol_by_pc (pc);
+  struct bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (pc);
 
-  return msymbol && MSYMBOL_TYPE (msymbol) == mst_text_gnu_ifunc;
+  return msymbol.minsym && MSYMBOL_TYPE (msymbol.minsym) == mst_text_gnu_ifunc;
 }
 
 /* See elf_gnu_ifunc_resolve_addr for its real implementation.  */
@@ -785,10 +811,10 @@ const struct gnu_ifunc_fns *gnu_ifunc_fns_p = &stub_gnu_ifunc_fns;
 
 /* See minsyms.h.  */
 
-struct minimal_symbol *
-lookup_minimal_symbol_and_objfile (const char *name,
-				   struct objfile **objfile_p)
+struct bound_minimal_symbol
+lookup_minimal_symbol_and_objfile (const char *name)
 {
+  struct bound_minimal_symbol result;
   struct objfile *objfile;
   unsigned int hash = msymbol_hash (name) % MINIMAL_SYMBOL_HASH_SIZE;
 
@@ -802,20 +828,20 @@ lookup_minimal_symbol_and_objfile (const char *name,
 	{
 	  if (strcmp (SYMBOL_LINKAGE_NAME (msym), name) == 0)
 	    {
-	      *objfile_p = objfile;
-	      return msym;
+	      result.minsym = msym;
+	      result.objfile = objfile;
+	      return result;
 	    }
 	}
     }
 
-  return 0;
+  memset (&result, 0, sizeof (result));
+  return result;
 }
 
 
 /* Return leading symbol character for a BFD.  If BFD is NULL,
    return the leading symbol character from the main objfile.  */
-
-static int get_symbol_leading_char (bfd *);
 
 static int
 get_symbol_leading_char (bfd *abfd)
@@ -870,7 +896,7 @@ prim_record_minimal_symbol (const char *name, CORE_ADDR address,
     }
 
   prim_record_minimal_symbol_and_info (name, address, ms_type,
-				       section, NULL, objfile);
+				       section, objfile);
 }
 
 /* See minsyms.h.  */
@@ -880,7 +906,6 @@ prim_record_minimal_symbol_full (const char *name, int name_len, int copy_name,
 				 CORE_ADDR address,
 				 enum minimal_symbol_type ms_type,
 				 int section,
-				 asection *bfd_section,
 				 struct objfile *objfile)
 {
   struct obj_section *obj_section;
@@ -916,23 +941,11 @@ prim_record_minimal_symbol_full (const char *name, int name_len, int copy_name,
       msym_bunch = new;
     }
   msymbol = &msym_bunch->contents[msym_bunch_index];
-  SYMBOL_SET_LANGUAGE (msymbol, language_auto);
+  SYMBOL_SET_LANGUAGE (msymbol, language_auto, &objfile->objfile_obstack);
   SYMBOL_SET_NAMES (msymbol, name, name_len, copy_name, objfile);
 
   SYMBOL_VALUE_ADDRESS (msymbol) = address;
   SYMBOL_SECTION (msymbol) = section;
-  SYMBOL_OBJ_SECTION (msymbol) = NULL;
-
-  /* Find obj_section corresponding to bfd_section.  */
-  if (bfd_section)
-    ALL_OBJFILE_OSECTIONS (objfile, obj_section)
-      {
-	if (obj_section->the_bfd_section == bfd_section)
-	  {
-	    SYMBOL_OBJ_SECTION (msymbol) = obj_section;
-	    break;
-	  }
-      }
 
   MSYMBOL_TYPE (msymbol) = ms_type;
   MSYMBOL_TARGET_FLAG_1 (msymbol) = 0;
@@ -958,12 +971,11 @@ struct minimal_symbol *
 prim_record_minimal_symbol_and_info (const char *name, CORE_ADDR address,
 				     enum minimal_symbol_type ms_type,
 				     int section,
-				     asection *bfd_section,
 				     struct objfile *objfile)
 {
   return prim_record_minimal_symbol_full (name, strlen (name), 1,
-					  address, ms_type, section,
-					  bfd_section, objfile);
+					  address, ms_type,
+					  section, objfile);
 }
 
 /* Compare two minimal symbols by address and return a signed result based
@@ -1173,7 +1185,7 @@ install_minimal_symbols (struct objfile *objfile)
 	{
 	  fprintf_unfiltered (gdb_stdlog,
 			      "Installing %d minimal symbols of objfile %s.\n",
-			      msym_count, objfile->name);
+			      msym_count, objfile_name (objfile));
 	}
 
       /* Allocate enough space in the obstack, into which we will gather the
@@ -1265,7 +1277,7 @@ terminate_minimal_symbol_table (struct objfile *objfile)
     memset (m, 0, sizeof (*m));
     /* Don't rely on these enumeration values being 0's.  */
     MSYMBOL_TYPE (m) = mst_unknown;
-    SYMBOL_SET_LANGUAGE (m, language_unknown);
+    SYMBOL_SET_LANGUAGE (m, language_unknown, &objfile->objfile_obstack);
   }
 }
 
@@ -1287,14 +1299,15 @@ static struct minimal_symbol *
 lookup_solib_trampoline_symbol_by_pc (CORE_ADDR pc)
 {
   struct obj_section *section = find_pc_section (pc);
-  struct minimal_symbol *msymbol;
+  struct bound_minimal_symbol msymbol;
 
   if (section == NULL)
     return NULL;
   msymbol = lookup_minimal_symbol_by_pc_section_1 (pc, section, 1);
 
-  if (msymbol != NULL && MSYMBOL_TYPE (msymbol) == mst_solib_trampoline)
-    return msymbol;
+  if (msymbol.minsym != NULL
+      && MSYMBOL_TYPE (msymbol.minsym) == mst_solib_trampoline)
+    return msymbol.minsym;
   return NULL;
 }
 

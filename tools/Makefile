@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.173 2014/04/03 18:23:38 riastradh Exp $
+#	$NetBSD: Makefile,v 1.173.2.1 2014/08/10 07:04:04 tls Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -25,17 +25,12 @@
 TOOLS_BUILDRUMP?=no
 
 .if ${TOOLCHAIN_MISSING} == "no"
-.if defined(HAVE_GCC)
+. if defined(HAVE_GCC)
 TOOLCHAIN_BITS= gmake .WAIT
-.endif
-
-.if defined(HAVE_GCC)
-.if ${HAVE_GCC} >= 45
 TOOLCHAIN_BITS+= gmp .WAIT
 TOOLCHAIN_BITS+= mpfr .WAIT
 TOOLCHAIN_BITS+= mpc .WAIT
-.endif
-.endif
+. endif
 .endif
 
 .if ${TOOLCHAIN_MISSING} == "no"
@@ -43,19 +38,19 @@ TOOLCHAIN_BITS+= binutils .WAIT
 .endif
 
 .if defined(HAVE_GCC)
-.if ${TOOLCHAIN_MISSING} == "no"
+. if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS+= gcc
 .  if ${MKCROSSGDB:Uno} != "no" || make(obj)
 TOOLCHAIN_BITS+= gdb
 .  endif
 TOOLCHAIN_BITS+= .WAIT
-.endif
+. endif
 .endif
 
 .if defined(HAVE_PCC)
-.if ${TOOLCHAIN_MISSING} == "no"
+. if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS+= pcc
-.endif
+. endif
 .endif
 
 .if ${TOOLCHAIN_MISSING} == "no"
@@ -104,10 +99,10 @@ SUBDIR=	host-mkdep compat binstall \
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR+= cap_mkdb crunchgen ctags genassym gencat hexdump \
 		${LINT_BITS} \
-		makewhatis mtree nbperf .WAIT rpcgen uudecode
+		makewhatis mtree nbperf .WAIT uudecode
 .endif
 
-SUBDIR+= join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
+SUBDIR+= cat rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
 
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR += .WAIT texinfo \
@@ -115,16 +110,16 @@ SUBDIR += .WAIT texinfo \
 	.WAIT pax \
 	.WAIT ${TOOLCHAIN_BITS} \
 	${DTRACE_BITS} \
-		asn1_compile cat cksum compile_et db \
+		asn1_compile cksum compile_et db \
 		file lint1 slc \
 		makefs .WAIT menuc mkcsmapper mkesdb mklocale mknod msgc \
 		.WAIT disklabel \
 		.WAIT paxctl \
 		.WAIT fdisk \
 		.WAIT installboot \
-		pwd_mkdb stat strfile sunlabel zic
+		pwd_mkdb strfile sunlabel vgrind zic
 .endif
-SUBDIR+= .WAIT config
+SUBDIR+= stat .WAIT config
 
 .if ${MKLLVM} != "no"
 SUBDIR+= \
@@ -134,18 +129,18 @@ SUBDIR+= \
 	llvm-include .WAIT \
 	llvm-lib .WAIT \
 	llvm-clang
-.if ${MKLLD} != "no"
+. if ${MKLLD} != "no"
 SUBDIR+=	llvm-lld
-.endif
-.if ${MKMCLINKER} != "no"
+. endif
+. if ${MKMCLINKER} != "no"
 SUBDIR+=	llvm-mcld
-.endif
+. endif
 .endif
 
 .if ${MKMAN} != "no" || ${MKDOC} != "no" || ${MKHTML} != "no"
-.  if ${MKGROFF} != "no"
+. if ${MKGROFF} != "no"
 SUBDIR+=	groff
-.  endif
+. endif
 SUBDIR+=	mandoc
 .endif
 

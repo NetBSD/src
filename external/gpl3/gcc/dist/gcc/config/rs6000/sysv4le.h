@@ -22,9 +22,6 @@
 #undef  TARGET_DEFAULT
 #define TARGET_DEFAULT MASK_LITTLE_ENDIAN
 
-#undef	CC1_ENDIAN_DEFAULT_SPEC
-#define	CC1_ENDIAN_DEFAULT_SPEC "%(cc1_endian_little)"
-
 #undef	DEFAULT_ASM_ENDIAN
 #define	DEFAULT_ASM_ENDIAN " -mlittle"
 
@@ -34,3 +31,7 @@
 
 #undef	MULTILIB_DEFAULTS
 #define	MULTILIB_DEFAULTS { "mlittle", "mcall-sysv" }
+
+/* Little-endian PowerPC64 Linux uses the ELF v2 ABI by default.  */
+#define LINUX64_DEFAULT_ABI_ELFv2
+

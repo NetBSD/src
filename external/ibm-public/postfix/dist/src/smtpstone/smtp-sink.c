@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp-sink.c,v 1.1.1.4 2013/09/25 19:06:36 tron Exp $	*/
+/*	$NetBSD: smtp-sink.c,v 1.1.1.4.2.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -608,7 +608,10 @@ static void mail_cmd_reset(SINK_STATE *state)
 
 static void ehlo_response(SINK_STATE *state, const char *args)
 {
-#define SKIP(cp, cond) for (/* void */; *cp && (cond); cp++)
+#define SKIP(cp, cond) do { \
+	for (/* void */; *cp && (cond); cp++) \
+	    /* void */; \
+    } while (0)
 
     /* EHLO aborts a mail transaction in progress. */
     mail_cmd_reset(state);

@@ -1,4 +1,4 @@
-# Copyright 1998-2013 Free Software Foundation, Inc.
+# Copyright 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -262,7 +262,7 @@ gdb_test "ptype N::Derived::value_type" "type = int"
 
 # Now run to N::Derived::doit and get the type of "value_type"
 if {![runto "N::Derived::doit"]} {
-    perrro "couldn't run to N::Derived::doit"
+    perror "couldn't run to N::Derived::doit"
     continue
 }
 

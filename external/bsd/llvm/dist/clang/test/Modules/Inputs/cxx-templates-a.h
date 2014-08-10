@@ -48,3 +48,18 @@ template<typename T> struct MergeSpecializations<T*> {
 template<> struct MergeSpecializations<char> {
   typedef int explicitly_specialized_in_a;
 };
+
+void InstantiateWithFriend(Std::WithFriend<int> wfi) {}
+
+template<typename T> struct WithPartialSpecialization<T*> {
+  typedef int type;
+  T &f() { static T t; return t; }
+};
+typedef WithPartialSpecializationUse::type WithPartialSpecializationInstantiate;
+
+template<> struct WithExplicitSpecialization<int> {
+  int n;
+  template<typename T> T &inner_template() {
+    return n;
+  }
+};

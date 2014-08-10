@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.111 2014/03/24 13:42:40 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.111.2.1 2014/08/10 06:56:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.111 2014/03/24 13:42:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.111.2.1 2014/08/10 06:56:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,19 +181,18 @@ ext2fs_mknod(void *v)
 		ip->i_din.e2fs_din->e2di_rdev = h2fs32(vap->va_rdev);
 	}
 	/*
-	 * Remove inode so that it will be reloaded by VFS_VGET and
+	 * Remove inode so that it will be reloaded by vcache_get and
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
 	(*vpp)->v_type = VNON;
 	VOP_UNLOCK(*vpp);
 	vgone(*vpp);
-	error = VFS_VGET(mp, ino, vpp);
+	error = vcache_get(mp, &ino, sizeof(ino), vpp);
 	if (error != 0) {
 		*vpp = NULL;
 		return (error);
 	}
-	VOP_UNLOCK(*vpp);
 	return (0);
 }
 
@@ -1144,6 +1143,8 @@ const struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, ext2fs_setattr },		/* setattr */
 	{ &vop_read_desc, ext2fs_read },		/* read */
 	{ &vop_write_desc, ext2fs_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
@@ -1192,6 +1193,8 @@ const struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_setattr_desc, ext2fs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsspec_read },		/* read */
 	{ &vop_write_desc, ufsspec_write },		/* write */
+	{ &vop_fallocate_desc, spec_fallocate },	/* fallocate */
+	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
@@ -1240,6 +1243,8 @@ const struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_setattr_desc, ext2fs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsfifo_read },		/* read */
 	{ &vop_write_desc, ufsfifo_write },		/* write */
+	{ &vop_fallocate_desc, vn_fifo_bypass },	/* fallocate */
+	{ &vop_fdiscard_desc, vn_fifo_bypass },		/* fdiscard */
 	{ &vop_ioctl_desc, vn_fifo_bypass },		/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, vn_fifo_bypass },		/* poll */

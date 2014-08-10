@@ -1,9 +1,9 @@
-/*	$NetBSD: threads.c,v 1.1.1.3 2010/12/12 15:21:43 adam Exp $	*/
+/*	$NetBSD: threads.c,v 1.1.1.3.24.1 2014/08/10 07:09:47 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap_r/threads.c,v 1.18.2.6 2010/04/13 20:23:03 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

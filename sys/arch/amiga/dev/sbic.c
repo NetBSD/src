@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.72 2014/01/22 00:25:16 christos Exp $ */
+/*	$NetBSD: sbic.c,v 1.72.2.1 2014/08/10 06:53:49 tls Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.72 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.72.2.1 2014/08/10 06:53:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2060,17 +2060,17 @@ sbicmsgin(struct sbic_softc *dev)
 			SET_SBIC_syn(regs,
 				     SBIC_SYN(dev->sc_sync[dev->target].offset,
 					      dev->sc_sync[dev->target].period));
-		} else if ((dev->sc_msg[0] == MSG_REJECT)) {
+		} else if (dev->sc_msg[0] == MSG_REJECT) {
 			QPRINTF(("REJECT"));
 			/*
 			 * we'll never REJECt a REJECT message..
 			 */
-		} else if ((dev->sc_msg[0] == MSG_SAVE_DATA_PTR)) {
+		} else if (dev->sc_msg[0] == MSG_SAVE_DATA_PTR) {
 			QPRINTF(("MSG_SAVE_DATA_PTR"));
 			/*
 			 * don't reject this either.
 			 */
-		} else if ((dev->sc_msg[0] == MSG_DISCONNECT)) {
+		} else if (dev->sc_msg[0] == MSG_DISCONNECT) {
 			QPRINTF(("DISCONNECT"));
 #ifdef DEBUG
 			if( reselect_debug>1 && dev->sc_msg[0] == MSG_DISCONNECT )

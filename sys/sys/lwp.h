@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.168 2013/03/29 01:09:45 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.168.8.1 2014/08/10 06:56:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -129,7 +129,7 @@ struct lwp {
 
 #if PCU_UNIT_COUNT > 0
 	struct cpu_info	* volatile l_pcu_cpu[PCU_UNIT_COUNT];
-	uint16_t	l_pcu_used[2];
+	uint32_t	l_pcu_valid;
 #endif
 
 	/* Process level and global state, misc. */

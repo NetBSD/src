@@ -195,7 +195,7 @@ patterns like this: </p>
     endif
     /^Message-ID:.* &lt;!&amp;!/ DUNNO
     /^Message-ID:.*@(porcupine\.org)/
-	reject forged domain name in Message-ID: header: $1
+        reject forged domain name in Message-ID: header: $1
 
 /etc/postfix/body_checks:
     # Do not indent the patterns between "if" and "endif".
@@ -209,7 +209,7 @@ patterns like this: </p>
     endif
     /^[&gt; ]*Message-ID:.* &lt;!&amp;!/ DUNNO
     /^[&gt; ]*Message-ID:.*@(porcupine\.org)/
-	reject forged domain name in Message-ID: header: $1
+        reject forged domain name in Message-ID: header: $1
 </pre>
 </blockquote>
 
@@ -266,7 +266,7 @@ mapping translates this temporary address into user@porcupine.org.
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#canonical_maps">canonical_maps</a> = hash:/etc/postfix/canonical
+    <a href="postconf.5.html#canonical_maps">canonical_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/canonical
 
 /etc/postfix/canonical:
     @hostname.porcupine.org @porcupine.org

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tlsproxy.8,v 1.1.1.3 2013/09/25 19:06:26 tron Exp $
+.\"	$NetBSD: tlsproxy.8,v 1.1.1.3.2.1 2014/08/10 07:12:47 tls Exp $
 .\"
 .TH TLSPROXY 8 
 .ad
@@ -102,10 +102,10 @@ File with the Postfix \fBtlsproxy\fR(8) server DSA certificate in PEM
 format.
 .IP "\fBtlsproxy_tls_dh1024_param_file ($smtpd_tls_dh1024_param_file)\fR"
 File with DH parameters that the Postfix \fBtlsproxy\fR(8) server
-should use with EDH ciphers.
+should use with non-export EDH ciphers.
 .IP "\fBtlsproxy_tls_dh512_param_file ($smtpd_tls_dh512_param_file)\fR"
 File with DH parameters that the Postfix \fBtlsproxy\fR(8) server
-should use with EDH ciphers.
+should use with export-grade EDH ciphers.
 .IP "\fBtlsproxy_tls_dkey_file ($smtpd_tls_dkey_file)\fR"
 File with the Postfix \fBtlsproxy\fR(8) server DSA private key in PEM
 format.
@@ -150,9 +150,10 @@ client certificate in order to allow TLS connections to proceed.
 The SMTP TLS security level for the Postfix \fBtlsproxy\fR(8) server;
 when a non-empty value is specified, this overrides the obsolete
 parameters smtpd_use_tls and smtpd_enforce_tls.
-.IP "\fBtlsproxy_tls_session_cache_timeout ($smtpd_tls_session_cache_timeout)\fR"
-The expiration time of Postfix \fBtlsproxy\fR(8) server TLS session
-cache information.
+.PP
+Available in Postfix version 2.11 and later:
+.IP "\fBtlsmgr_service_name (tlsmgr)\fR"
+The name of the \fBtlsmgr\fR(8) service entry in master.cf.
 .SH "OBSOLETE STARTTLS SUPPORT CONTROLS"
 .na
 .nf

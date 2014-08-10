@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.32 2014/04/04 18:11:58 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.32.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.32 2014/04/04 18:11:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.32.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ptm.h"
@@ -76,6 +76,7 @@ const struct cdevsw ptm_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 #else
@@ -449,6 +450,7 @@ const struct cdevsw ptm_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 #endif

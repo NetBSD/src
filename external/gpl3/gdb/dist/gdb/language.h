@@ -1,6 +1,6 @@
 /* Source-language-related definitions for GDB.
 
-   Copyright (C) 1991-2013 Free Software Foundation, Inc.
+   Copyright (C) 1991-2014 Free Software Foundation, Inc.
 
    Contributed by the Department of Computer Science at the State University
    of New York at Buffalo.
@@ -23,6 +23,8 @@
 #if !defined (LANGUAGE_H)
 #define LANGUAGE_H 1
 
+#include "symtab.h"
+
 /* Forward decls for prototypes.  */
 struct value;
 struct objfile;
@@ -31,6 +33,7 @@ struct expression;
 struct ui_file;
 struct value_print_options;
 struct type_print_options;
+struct lang_varobj_ops;
 
 #define MAX_FORTRAN_DIMS  7	/* Maximum number of F77 array dims.  */
 
@@ -131,7 +134,11 @@ struct language_defn
   {
     /* Name of the language.  */
 
-    char *la_name;
+    const char *la_name;
+
+    /* Natural or official name of the language.  */
+
+    const char *la_natural_name;
 
     /* its symtab language-enum (defs.h).  */
 
@@ -286,7 +293,8 @@ struct language_defn
        completion is being made.  If CODE is TYPE_CODE_UNDEF, then all
        symbols should be examined; otherwise, only STRUCT_DOMAIN
        symbols whose type has a code of CODE should be matched.  */
-    VEC (char_ptr) *(*la_make_symbol_completion_list) (char *text, char *word,
+    VEC (char_ptr) *(*la_make_symbol_completion_list) (const char *text,
+						       const char *word,
 						       enum type_code code);
 
     /* The per-architecture (OS/ABI) language information.  */
@@ -342,6 +350,9 @@ struct language_defn
 				     domain_enum domain,
 				     symbol_found_callback_ftype *callback,
 				     void *data);
+
+    /* Various operations on varobj.  */
+    const struct lang_varobj_ops *la_varobj_ops;
 
     /* Add fields above this point, so the magic number is always last.  */
     /* Magic number for compat checking.  */
@@ -483,7 +494,7 @@ extern enum language language_enum (char *str);
 
 extern const struct language_defn *language_def (enum language);
 
-extern char *language_str (enum language);
+extern const char *language_str (enum language);
 
 /* Add a language to the set known by GDB (at initialization time).  */
 

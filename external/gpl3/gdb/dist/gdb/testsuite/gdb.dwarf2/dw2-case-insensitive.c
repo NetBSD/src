@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2013 Free Software Foundation, Inc.
+   Copyright 2011-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,11 +16,20 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Use DW_LANG_Fortran90 for case insensitive DWARF.  */
+asm (".globl cu_text_start");
+asm ("cu_text_start:");
+
+asm (".globl FUNC_lang_start");
+asm (".p2align 4");
+asm ("FUNC_lang_start:");
 
 void
 FUNC_lang (void)
 {
 }
+
+asm (".globl FUNC_lang_end");
+asm ("FUNC_lang_end:");
 
 /* Symbol is present only in ELF .symtab.  */
 
@@ -36,3 +45,6 @@ main (void)
   FUNC_symtab ();
   return 0;
 }
+
+asm (".globl cu_text_end");
+asm ("cu_text_end:");

@@ -1,6 +1,6 @@
 /* Generic static probe support for GDB.
 
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,7 +41,7 @@ struct symtabs_and_lines
 parse_probes (char **argptr, struct linespec_result *canonical)
 {
   char *arg_start, *arg_end, *arg;
-  char *objfile_name = NULL, *provider = NULL, *name, *p;
+  char *objfile_namestr = NULL, *provider = NULL, *name, *p;
   struct cleanup *cleanup;
   struct symtabs_and_lines result;
   struct objfile *objfile;
@@ -92,7 +92,7 @@ parse_probes (char **argptr, struct linespec_result *canonical)
 	{
 	  /* This is `-p objfile:provider:name'.  */
 	  *p = '\0';
-	  objfile_name = arg;
+	  objfile_namestr = arg;
 	  provider = hold;
 	  name = p + 1;
 	}
@@ -102,7 +102,7 @@ parse_probes (char **argptr, struct linespec_result *canonical)
     error (_("no probe name specified"));
   if (provider && *provider == '\0')
     error (_("invalid provider name"));
-  if (objfile_name && *objfile_name == '\0')
+  if (objfile_namestr && *objfile_namestr == '\0')
     error (_("invalid objfile name"));
 
   ALL_PSPACES (pspace)
@@ -115,9 +115,10 @@ parse_probes (char **argptr, struct linespec_result *canonical)
 	if (!objfile->sf || !objfile->sf->sym_probe_fns)
 	  continue;
 
-	if (objfile_name
-	    && FILENAME_CMP (objfile->name, objfile_name) != 0
-	    && FILENAME_CMP (lbasename (objfile->name), objfile_name) != 0)
+	if (objfile_namestr
+	    && FILENAME_CMP (objfile_name (objfile), objfile_namestr) != 0
+	    && FILENAME_CMP (lbasename (objfile_name (objfile)),
+			     objfile_namestr) != 0)
 	  continue;
 
 	probes = objfile->sf->sym_probe_fns->sym_get_probes (objfile);
@@ -155,7 +156,7 @@ parse_probes (char **argptr, struct linespec_result *canonical)
     {
       throw_error (NOT_FOUND_ERROR,
 		   _("No probe matching objfile=`%s', provider=`%s', name=`%s'"),
-		   objfile_name ? objfile_name : _("<any>"),
+		   objfile_namestr ? objfile_namestr : _("<any>"),
 		   provider ? provider : _("<any>"),
 		   name);
     }
@@ -229,30 +230,6 @@ find_probe_by_pc (CORE_ADDR pc)
 
 
 
-/* A helper function for collect_probes that compiles a regexp and
-   throws an exception on error.  This installs a cleanup to free the
-   resulting pattern on success.  If RX is NULL, this does nothing.  */
-
-static void
-compile_rx_or_error (regex_t *pattern, const char *rx, const char *message)
-{
-  int code;
-
-  if (!rx)
-    return;
-
-  code = regcomp (pattern, rx, REG_NOSUB);
-  if (code == 0)
-    make_regfree_cleanup (pattern);
-  else
-    {
-      char *err = get_regcomp_error (code, pattern);
-
-      make_cleanup (xfree, err);
-      error (("%s: %s"), message, err);
-    }
-}
-
 /* Make a vector of probes matching OBJNAME, PROVIDER, and PROBE_NAME.
    If POPS is not NULL, only probes of this certain probe_ops will match.
    Each argument is a regexp, or NULL, which matches anything.  */
@@ -269,9 +246,12 @@ collect_probes (char *objname, char *provider, char *probe_name,
   cleanup = make_cleanup (VEC_cleanup (probe_p), &result);
 
   cleanup_temps = make_cleanup (null_cleanup, NULL);
-  compile_rx_or_error (&prov_pat, provider, _("Invalid provider regexp"));
-  compile_rx_or_error (&probe_pat, probe_name, _("Invalid probe regexp"));
-  compile_rx_or_error (&obj_pat, objname, _("Invalid object file regexp"));
+  if (provider != NULL)
+    compile_rx_or_error (&prov_pat, provider, _("Invalid provider regexp"));
+  if (probe_name != NULL)
+    compile_rx_or_error (&probe_pat, probe_name, _("Invalid probe regexp"));
+  if (objname != NULL)
+    compile_rx_or_error (&obj_pat, objname, _("Invalid object file regexp"));
 
   ALL_OBJFILES (objfile)
     {
@@ -284,7 +264,7 @@ collect_probes (char *objname, char *provider, char *probe_name,
 
       if (objname)
 	{
-	  if (regexec (&obj_pat, objfile->name, 0, NULL, 0) != 0)
+	  if (regexec (&obj_pat, objfile_name (objfile), 0, NULL, 0) != 0)
 	    continue;
 	}
 
@@ -334,7 +314,7 @@ compare_probes (const void *a, const void *b)
   if (pa->address > pb->address)
     return 1;
 
-  return strcmp (pa->objfile->name, pb->objfile->name);
+  return strcmp (objfile_name (pa->objfile), objfile_name (pb->objfile));
 }
 
 /* Helper function that generate entries in the ui_out table being
@@ -559,7 +539,7 @@ info_probes_for_ops (char *arg, int from_tty, const struct probe_ops *pops)
     {
       size_name = max (strlen (probe->name), size_name);
       size_provider = max (strlen (probe->provider), size_provider);
-      size_objname = max (strlen (probe->objfile->name), size_objname);
+      size_objname = max (strlen (objfile_name (probe->objfile)), size_objname);
     }
 
   ui_out_table_header (current_uiout, size_provider, ui_left, "provider",
@@ -609,7 +589,8 @@ info_probes_for_ops (char *arg, int from_tty, const struct probe_ops *pops)
       else
 	print_ui_out_info (probe);
 
-      ui_out_field_string (current_uiout, "object", probe->objfile->name);
+      ui_out_field_string (current_uiout, "object",
+			   objfile_name (probe->objfile));
       ui_out_text (current_uiout, "\n");
 
       do_cleanups (inner);
@@ -632,28 +613,46 @@ info_probes_command (char *arg, int from_tty)
 
 /* See comments in probe.h.  */
 
+unsigned
+get_probe_argument_count (struct probe *probe, struct frame_info *frame)
+{
+  return probe->pops->get_probe_argument_count (probe, frame);
+}
+
+/* See comments in probe.h.  */
+
+int
+can_evaluate_probe_arguments (struct probe *probe)
+{
+  return probe->pops->can_evaluate_probe_arguments (probe);
+}
+
+/* See comments in probe.h.  */
+
+struct value *
+evaluate_probe_argument (struct probe *probe, unsigned n,
+			 struct frame_info *frame)
+{
+  return probe->pops->evaluate_probe_argument (probe, n, frame);
+}
+
+/* See comments in probe.h.  */
+
 struct value *
 probe_safe_evaluate_at_pc (struct frame_info *frame, unsigned n)
 {
   struct probe *probe;
-  const struct sym_probe_fns *probe_fns;
   unsigned n_args;
 
   probe = find_probe_by_pc (get_frame_pc (frame));
   if (!probe)
     return NULL;
 
-  gdb_assert (probe->objfile != NULL);
-  gdb_assert (probe->objfile->sf != NULL);
-  gdb_assert (probe->objfile->sf->sym_probe_fns != NULL);
-
-  probe_fns = probe->objfile->sf->sym_probe_fns;
-  n_args = probe_fns->sym_get_probe_argument_count (probe);
-
+  n_args = get_probe_argument_count (probe, frame);
   if (n >= n_args)
     return NULL;
 
-  return probe_fns->sym_evaluate_probe_argument (probe, n);
+  return evaluate_probe_argument (probe, n, frame);
 }
 
 /* See comment in probe.h.  */

@@ -1,10 +1,10 @@
-/*	$NetBSD: oc.c,v 1.1.1.3 2010/12/12 15:22:34 adam Exp $	*/
+/*	$NetBSD: oc.c,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* oc.c - object class routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.77.2.12 2010/04/13 20:23:17 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -402,6 +402,8 @@ oc_delete_names( ObjectClass *oc )
 {
 	char			**names = oc->soc_names;
 
+	if (!names) return;
+
 	while (*names) {
 		struct oindexrec	tmpoir, *oir;
 
@@ -639,6 +641,8 @@ oc_insert(
 		assert( oc_bvfind( &oir->oir_name ) != NULL );
 	}
 
+	assert( soc != NULL );
+
 	if ( (names = soc->soc_names) ) {
 		while ( *names ) {
 			oir = (struct oindexrec *)
@@ -646,9 +650,6 @@ oc_insert(
 			oir->oir_name.bv_val = *names;
 			oir->oir_name.bv_len = strlen( *names );
 			oir->oir_oc = soc;
-
-			assert( oir->oir_name.bv_val != NULL );
-			assert( oir->oir_oc != NULL );
 
 			if ( avl_insert( &oc_index, (caddr_t) oir,
 				oc_index_cmp, avl_dup_error ) )

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_perf_test.c,v 1.3 2013/09/24 22:52:14 joerg Exp $	*/
+/*	$NetBSD: npf_perf_test.c,v 1.3.2.1 2014/08/10 07:00:01 tls Exp $	*/
 
 /*
  * NPF benchmarking.
@@ -99,5 +99,5 @@ npf_test_conc(bool st, unsigned nthreads)
 	kmem_free(npackets, sizeof(uint64_t) * nthreads);
 	kmem_free(l, sizeof(lwp_t *) * nthreads);
 
-	printf("%u\t%" PRIu64 "\n", nthreads, total);
+	printf("%u\t%" PRIu64 "\n", nthreads, total / NSECS);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.52 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.52.2.1 2014/08/10 06:54:29 tls Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.52 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.52.2.1 2014/08/10 06:54:29 tls Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -121,6 +121,7 @@ const struct cdevsw vcoda_cdevsw = {
 	.d_poll = vc_nb_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = vc_nb_kqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
 

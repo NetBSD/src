@@ -1,5 +1,5 @@
 /* Replay a remote debug session logfile for GDB.
-   Copyright (C) 1996-2013 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    Written by Fred Fish (fnf@cygnus.com) from pieces of gdbserver.
 
    This file is part of GDB.
@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "build-gnulib-gdbserver/config.h"
+#include "version.h"
 
 #include <stdio.h>
 #if HAVE_SYS_FILE_H
@@ -34,15 +35,9 @@
 #if HAVE_ERRNO_H
 #include <errno.h>
 #endif
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -71,10 +66,6 @@ typedef int socklen_t;
 
 /* Sort of a hack... */
 #define EOL (EOF - 1)
-
-/* Version information, from version.c.  */
-extern const char version[];
-extern const char host_name[];
 
 static int remote_desc;
 
@@ -421,7 +412,7 @@ static void
 gdbreplay_version (void)
 {
   printf ("GNU gdbreplay %s%s\n"
-	  "Copyright (C) 2013 Free Software Foundation, Inc.\n"
+	  "Copyright (C) 2014 Free Software Foundation, Inc.\n"
 	  "gdbreplay is free software, covered by "
 	  "the GNU General Public License.\n"
 	  "This gdbreplay was configured as \"%s\"\n",

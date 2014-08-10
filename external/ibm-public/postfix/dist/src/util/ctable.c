@@ -1,4 +1,4 @@
-/*	$NetBSD: ctable.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: ctable.c,v 1.1.1.1.26.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -18,6 +18,14 @@
 /*	CTABLE	*cache;
 /*	const char *key;
 /*
+/*	const void *ctable_refresh(cache, key)
+/*	CTABLE	*cache;
+/*	const char *key;
+/*
+/*	const void *ctable_newcontext(cache, context)
+/*	CTABLE	*cache;
+/*	void	*context;
+/*
 /*	void	ctable_free(cache)
 /*	CTABLE	*cache;
 /*
@@ -35,9 +43,16 @@
 /*	specify pointers to call-back functions that create a value, given
 /*	a key, and delete a given value, respectively. The context argument
 /*	is passed on to the call-back routines.
+/*	The create() and delete() functions must not modify the cache.
 /*
 /*	ctable_locate() looks up or generates the value that corresponds to
 /*	the specified key, and returns that value.
+/*
+/*	ctable_refresh() flushes the value (if any) associated with
+/*	the specified key, and returns the same result as ctable_locate().
+/*
+/*	ctable_newcontext() updates the context that is passed on
+/*	to call-back routines.
 /*
 /*	ctable_free() destroys the specified cache, including its contents.
 /*
@@ -45,6 +60,7 @@
 /*	the action function for each cache element with the corresponding
 /*	key and value as arguments. This function is useful mainly for
 /*	cache performance debugging.
+/*	Note: the action() function must not modify the cache.
 /* DIAGNOSTICS
 /*	Fatal errors: out of memory. Panic: interface violation.
 /* LICENSE
@@ -161,6 +177,38 @@ const void *ctable_locate(CTABLE *cache, const char *key)
 	    msg_info("%s: move existing entry key %s", myname, entry->key);
     }
     return (entry->value);
+}
+
+/* ctable_refresh - page-in fresh data for given key */
+
+const void *ctable_refresh(CTABLE *cache, const char *key)
+{
+    const char *myname = "ctable_refresh";
+    CTABLE_ENTRY *entry;
+
+    /* Materialize entry if missing. */
+    if ((entry = (CTABLE_ENTRY *) htable_find(cache->table, key)) == 0)
+	return ctable_locate(cache, key);
+
+    /* Otherwise, refresh its content. */
+    cache->delete(entry->value, cache->context);
+    entry->value = cache->create(key, cache->context);
+
+    /* Update its MRU linkage. */
+    if (entry != RING_TO_CTABLE_ENTRY(ring_succ(RING_PTR_OF(cache)))) {
+	ring_detach(RING_PTR_OF(entry));
+	ring_append(RING_PTR_OF(cache), RING_PTR_OF(entry));
+    }
+    if (msg_verbose)
+	msg_info("%s: refresh entry key %s", myname, entry->key);
+    return (entry->value);
+}
+
+/* ctable_newcontext - update call-back context */
+
+void    ctable_newcontext(CTABLE *cache, void *context)
+{
+    cache->context = context;
 }
 
 static CTABLE *ctable_free_cache;

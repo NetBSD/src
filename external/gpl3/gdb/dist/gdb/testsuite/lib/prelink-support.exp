@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2013 Free Software Foundation, Inc.
+# Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,9 @@
 # for sections ".interp" or ".gnu_debuglink".
 
 proc section_get {exec section} {
-    global objdir
     global subdir
-    set tmp "${objdir}/${subdir}/section_get.tmp"
-    set objcopy_program [transform objcopy]
+    set tmp [standard_output_file section_get.tmp]
+    set objcopy_program [gdb_find_objcopy]
 
     set command "exec $objcopy_program -O binary --set-section-flags $section=A --change-section-address $section=0 -j $section $exec $tmp"
     verbose -log "command is $command"
@@ -95,8 +94,9 @@ proc file_copy {src dest} {
 # Wrap function build_executable so that the resulting executable is fully
 # self-sufficient (without dependencies on system libraries).  Parameter
 # INTERP may be used to specify a loader (ld.so) to be used that is
-# different from the default system one.  Libraries on which the executable
-# depends are copied into directory DIR.  Default DIR value to
+# different from the default system one.  INTERP can be set to "no" if no ld.so
+# copy should be made.  Libraries on which the executable depends are copied
+# into directory DIR.  Default DIR value to
 # `${objdir}/${subdir}/${EXECUTABLE}.d'.
 #
 # In case of success, return a string containing the arguments to be used
@@ -116,14 +116,15 @@ proc file_copy {src dest} {
 # with -Wl,-soname,NAME.so are not copied.
 
 proc build_executable_own_libs {testname executable sources options {interp ""} {dir ""}} {
-    global objdir subdir
+    global subdir
 
     if {[build_executable $testname $executable $sources $options] == -1} {
 	return ""
     }
-    set binfile ${objdir}/${subdir}/${executable}
+    set binfile [standard_output_file ${executable}]
 
-    set command "ldd $binfile"
+    set ldd [gdb_find_ldd]
+    set command "$ldd $binfile"
     set test "ldd $executable"
     set result [catch "exec $command" output]
     verbose -log "result of $command is $result"
@@ -151,8 +152,15 @@ proc build_executable_own_libs {testname executable sources options {interp ""} 
 
     if {$interp == ""} {
 	set interp_system [section_get $binfile .interp]
-	set interp ${dir}/[file tail $interp_system]
-	file_copy $interp_system $interp
+	if {$interp_system == ""} {
+	    fail "$test could not find .interp"
+	} else {
+	    set interp ${dir}/[file tail $interp_system]
+	    file_copy $interp_system $interp
+	}
+    }
+    if {$interp == "no"} {
+	set interp ""
     }
 
     set dests {}
@@ -164,13 +172,19 @@ proc build_executable_own_libs {testname executable sources options {interp ""} 
 
     # Do not lappend it so that "-rpath $dir" overrides any possible "-rpath"s
     # specified by the caller to be able to link it for ldd" above.
-    set options [linsert $options 0 "ldflags=-Wl,--dynamic-linker,$interp,-rpath,$dir"]
+    set options [linsert $options 0 "ldflags=-Wl,-rpath,$dir"]
+    if {$interp != ""} {
+	set options [linsert $options 0 "ldflags=-Wl,--dynamic-linker,$interp"]
+    }
 
     if {[build_executable $testname $executable $sources $options] == -1} {
 	return ""
     }
 
-    set prelink_args "--dynamic-linker=$interp --ld-library-path=$dir $binfile $interp [concat $dests]"
+    set prelink_args "--ld-library-path=$dir $binfile [concat $dests]"
+    if {$interp != ""} {
+	set prelink_args "--dynamic-linker=$interp $prelink_args $interp"
+    }
     return $prelink_args
 }
 
@@ -197,7 +211,7 @@ proc prelink_no {arg {name {}}} {
 		# Skip prelink options.
 		continue
 	    }
-	    set readelf_program [transform readelf]
+	    set readelf_program [gdb_find_readelf]
 	    set command "exec $readelf_program -WS $bin"
 	    verbose -log "command is $command"
 	    set result [catch $command output]
@@ -221,7 +235,7 @@ proc prelink_no {arg {name {}}} {
     }
     # Last line does miss the trailing \n.  There can be multiple such messages
     # as ARG may list multiple files.
-    if {$result == 1 && [regexp {^(/usr/sbin/prelink[^\r\n]*: [^ ]* does not have .gnu.prelink_undo section\n?)*$} $output]} {
+    if {$result == 1 && [regexp {^([^\r\n]*prelink[^\r\n]*: [^ ]* does not have .gnu.prelink_undo section\n?)*$} $output]} {
 	pass $test
 	return 1
     } else {
@@ -276,6 +290,11 @@ proc prelink_yes {arg {name ""}} {
 	# Therefore, we just skip the test.
 
 	xfail $test
+	return 0
+    }
+    if {$result == 1 && [regexp {DWARF [^\r\n]* unhandled} $output]} {
+	# Prelink didn't understand the version of dwarf present.
+	unsupported "$test (dwarf version unhandled)"
 	return 0
     }
     if {$result == 0 && $output == ""} {

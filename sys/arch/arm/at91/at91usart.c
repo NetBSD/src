@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.9.2.1 2014/04/07 03:37:30 tls Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.9.2.1 2014/04/07 03:37:30 tls Exp $ */
+/*	$Id: at91usart.c,v 1.9.2.2 2014/08/10 06:53:50 tls Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.9.2.2 2014/08/10 06:53:50 tls Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.9.2.1 2014/04/07 03:37:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.9.2.2 2014/08/10 06:53:50 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -195,6 +195,7 @@ const struct cdevsw at91usart_cdevsw = {
 	.d_poll = at91usart_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

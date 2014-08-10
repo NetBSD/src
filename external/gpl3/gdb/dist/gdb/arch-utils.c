@@ -1,6 +1,6 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,7 @@
 #include "buildsym.h"
 #include "gdbcmd.h"
 #include "inferior.h"		/* enum CALL_DUMMY_LOCATION et al.  */
-#include "gdb_string.h"
+#include <string.h>
 #include "regcache.h"
 #include "gdb_assert.h"
 #include "sim-regno.h"
@@ -477,7 +477,7 @@ set_architecture (char *ignore_args, int from_tty, struct cmd_list_element *c)
 }
 
 /* Try to select a global architecture that matches "info".  Return
-   non-zero if the attempt succeds.  */
+   non-zero if the attempt succeeds.  */
 int
 gdbarch_update_p (struct gdbarch_info info)
 {

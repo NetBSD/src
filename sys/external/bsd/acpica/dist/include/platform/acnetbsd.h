@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.9 $
+ *       $Revision: 1.9.2.1 $
  *
  *****************************************************************************/
 
@@ -116,12 +116,6 @@
 #define ACPI_DEBUGGER
 #endif /* DDB */
 #endif /* ACPI_DEBUG */
-
-static __inline int
-isprint(int ch)
-{
-        return(isspace(ch) || isascii(ch));
-}
 
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.15 2011/04/14 11:17:47 he Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.15.28.1 2014/08/10 06:54:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.15 2011/04/14 11:17:47 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.15.28.1 2014/08/10 06:54:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,28 +80,16 @@ linux_sys_pipe2(struct lwp *l, const struct linux_sys_pipe2_args *uap,
 		syscallarg(int *) pfds;
 		syscallarg(int) flags;
 	} */
-	int error;
-	int flag = 0;
+	int error, flags;
 
-	switch (SCARG(uap, flags)) {
-	case LINUX_O_CLOEXEC:
-		break;
-	case LINUX_O_NONBLOCK:
-	case LINUX_O_NONBLOCK|LINUX_O_CLOEXEC:
-		flag = O_NONBLOCK;
-		break;
-	default:
+	flags = linux_to_bsd_ioflags(SCARG(uap, flags));
+	if ((flags & ~(O_CLOEXEC|O_NONBLOCK)) != 0)
 		return EINVAL;
-	}
 
-	if ((error = pipe1(l, retval, flag)))
+	if ((error = pipe1(l, retval, flags)))
 		return error;
 
 	(l->l_md.md_tf)->tf_regs[FRAME_A4] = retval[1];
 
-	if (SCARG(uap, flags) & LINUX_O_CLOEXEC) {
-		fd_set_exclose(l, retval[0], true);
-		fd_set_exclose(l, retval[1], true);
-	}       
 	return 0;
 }

@@ -1,6 +1,6 @@
 /* Everything about signal catchpoints, for GDB.
 
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -199,13 +199,13 @@ signal_catchpoint_breakpoint_hit (const struct bp_location *bl,
            VEC_iterate (gdb_signal_type, c->signals_to_be_caught, i, iter);
            i++)
 	if (signal_number == iter)
-	  break;
+	  return 1;
       /* Not the same.  */
-      if (!iter)
-	return 0;
+      gdb_assert (!iter);
+      return 0;
     }
-
-  return c->catch_all || !INTERNAL_SIGNAL (signal_number);
+  else
+    return c->catch_all || !INTERNAL_SIGNAL (signal_number);
 }
 
 /* Implement the "print_it" breakpoint_ops method for signal
@@ -350,10 +350,10 @@ signal_catchpoint_print_recreate (struct breakpoint *b, struct ui_file *fp)
 /* Implement the "explains_signal" breakpoint_ops method for signal
    catchpoints.  */
 
-static enum bpstat_signal_value
+static int
 signal_catchpoint_explains_signal (struct breakpoint *b, enum gdb_signal sig)
 {
-  return BPSTAT_SIGNAL_PASS;
+  return 1;
 }
 
 /* Create a new signal catchpoint.  TEMPFLAG is true if this should be

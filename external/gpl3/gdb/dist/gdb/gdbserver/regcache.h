@@ -1,5 +1,5 @@
 /* Register support routines for the remote server for GDB.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 
 struct inferior_list_entry;
 struct thread_info;
+struct target_desc;
 
 /* The register exists, it has a value, but we don't know what it is.
    Used when inspecting traceframes.  */
@@ -35,6 +36,9 @@ struct thread_info;
 
 struct regcache
 {
+  /* The regcache's target description.  */
+  const struct target_desc *tdesc;
+
   /* Whether the REGISTERS buffer's contents are valid.  If false, we
      haven't fetched the registers from the target yet.  Not that this
      register cache is _not_ pass-through, unlike GDB's.  Note that
@@ -50,13 +54,14 @@ struct regcache
 };
 
 struct regcache *init_register_cache (struct regcache *regcache,
+				      const struct target_desc *tdesc,
 				      unsigned char *regbuf);
 
 void regcache_cpy (struct regcache *dst, struct regcache *src);
 
 /* Create a new register cache for INFERIOR.  */
 
-struct regcache *new_register_cache (void);
+struct regcache *new_register_cache (const struct target_desc *tdesc);
 
 struct regcache *get_thread_regcache (struct thread_info *thread, int fetch);
 
@@ -64,10 +69,19 @@ struct regcache *get_thread_regcache (struct thread_info *thread, int fetch);
 
 void free_register_cache (struct regcache *regcache);
 
-/* Invalidate cached registers for one or all threads.  */
+/* Invalidate cached registers for one thread.  */
 
-void regcache_invalidate_one (struct inferior_list_entry *);
+void regcache_invalidate_thread (struct thread_info *);
+
+/* Invalidate cached registers for all threads of the current
+   process.  */
+
 void regcache_invalidate (void);
+
+/* Invalidate and release the register cache of all threads of the
+   current process.  */
+
+void regcache_release (void);
 
 /* Convert all registers to a string in the currently specified remote
    format.  */
@@ -84,18 +98,13 @@ void regcache_write_pc (struct regcache *regcache, CORE_ADDR pc);
 
 /* Return a pointer to the description of register ``n''.  */
 
-struct reg *find_register_by_number (int n);
+struct reg *find_register_by_number (const struct target_desc *tdesc, int n);
 
-int register_size (int n);
+int register_cache_size (const struct target_desc *tdesc);
 
-int register_cache_size (void);
+int register_size (const struct target_desc *tdesc, int n);
 
-int find_regno (const char *name);
-
-/* The following two variables are set by auto-generated
-   code in the init_registers_... routines.  */
-extern const char **gdbserver_expedite_regs;
-extern const char *gdbserver_xmltarget;
+int find_regno (const struct target_desc *tdesc, const char *name);
 
 void supply_register (struct regcache *regcache, int n, const void *buf);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: imxwdog.c,v 1.1 2014/03/22 04:55:00 hkenken Exp $	*/
+/*	$NetBSD: imxwdog.c,v 1.1.2.1 2014/08/10 06:53:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxwdog.c,v 1.1 2014/03/22 04:55:00 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxwdog.c,v 1.1.2.1 2014/08/10 06:53:51 tls Exp $");
 
 #include "opt_imx.h"
 
@@ -131,7 +131,7 @@ wdog_setmode(struct sysmon_wdog *smw)
 }
 
 void
-wdog_attach_common(struct device *parent, struct device *self,
+wdog_attach_common(device_t parent, device_t self,
     bus_space_tag_t iot, paddr_t addr, size_t size, int irq)
 {
 	struct wdog_softc *sc = device_private(self);

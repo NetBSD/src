@@ -1,10 +1,12 @@
-/*	$NetBSD: cdefs.h,v 1.14 2014/03/24 04:45:08 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.14.2.1 2014/08/10 06:53:51 tls Exp $	*/
 
 #ifndef	_ARM_CDEFS_H_
 #define	_ARM_CDEFS_H_
 
+#ifndef __lint__
 #if (__GNUC__ == 4 && __GNUC_MINOR__ < 1) || __GNUC__ < 4
 #error GCC 4.1 or compatible required.
+#endif
 #endif
 
 #if defined (__ARM_ARCH_8A__)

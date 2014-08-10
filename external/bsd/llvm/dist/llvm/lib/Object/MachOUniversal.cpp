@@ -14,6 +14,7 @@
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/Archive.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -57,7 +58,7 @@ static T getUniversalBinaryStruct(const char *Ptr) {
 MachOUniversalBinary::ObjectForArch::ObjectForArch(
     const MachOUniversalBinary *Parent, uint32_t Index)
     : Parent(Parent), Index(Index) {
-  if (Parent == 0 || Index > Parent->getNumberOfObjects()) {
+  if (!Parent || Index > Parent->getNumberOfObjects()) {
     clear();
   } else {
     // Parse object header.
@@ -72,7 +73,7 @@ MachOUniversalBinary::ObjectForArch::ObjectForArch(
 }
 
 error_code MachOUniversalBinary::ObjectForArch::getAsObjectFile(
-    OwningPtr<ObjectFile> &Result) const {
+    std::unique_ptr<ObjectFile> &Result) const {
   if (Parent) {
     StringRef ParentData = Parent->getData();
     StringRef ObjectData = ParentData.substr(Header.offset, Header.size);
@@ -90,15 +91,35 @@ error_code MachOUniversalBinary::ObjectForArch::getAsObjectFile(
   return object_error::parse_failed;
 }
 
+error_code MachOUniversalBinary::ObjectForArch::getAsArchive(
+    std::unique_ptr<Archive> &Result) const {
+  if (Parent) {
+    StringRef ParentData = Parent->getData();
+    StringRef ObjectData = ParentData.substr(Header.offset, Header.size);
+    std::string ObjectName =
+        Parent->getFileName().str() + ":" +
+        Triple::getArchTypeName(MachOObjectFile::getArch(Header.cputype));
+    MemoryBuffer *ObjBuffer = MemoryBuffer::getMemBuffer(
+        ObjectData, ObjectName, false);
+    ErrorOr<Archive *> Obj = Archive::create(ObjBuffer);
+    if (error_code EC = Obj.getError())
+      return EC;
+    Result.reset(Obj.get());
+    return object_error::success;
+  }
+  return object_error::parse_failed;
+}
+
 void MachOUniversalBinary::anchor() { }
 
 ErrorOr<MachOUniversalBinary *>
 MachOUniversalBinary::create(MemoryBuffer *Source) {
   error_code EC;
-  OwningPtr<MachOUniversalBinary> Ret(new MachOUniversalBinary(Source, EC));
+  std::unique_ptr<MachOUniversalBinary> Ret(
+      new MachOUniversalBinary(Source, EC));
   if (EC)
     return EC;
-  return Ret.take();
+  return Ret.release();
 }
 
 MachOUniversalBinary::MachOUniversalBinary(MemoryBuffer *Source,
@@ -134,9 +155,8 @@ static bool getCTMForArch(Triple::ArchType Arch, MachO::CPUType &CTM) {
   }
 }
 
-error_code
-MachOUniversalBinary::getObjectForArch(Triple::ArchType Arch,
-                                       OwningPtr<ObjectFile> &Result) const {
+error_code MachOUniversalBinary::getObjectForArch(
+    Triple::ArchType Arch, std::unique_ptr<ObjectFile> &Result) const {
   MachO::CPUType CTM;
   if (!getCTMForArch(Arch, CTM))
     return object_error::arch_not_found;

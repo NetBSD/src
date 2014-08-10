@@ -1,9 +1,9 @@
-/*	$NetBSD: slapd-tester.c,v 1.1.1.3 2010/12/12 15:24:17 adam Exp $	*/
+/*	$NetBSD: slapd-tester.c,v 1.1.1.3.24.1 2014/08/10 07:09:52 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/tests/progs/slapd-tester.c,v 1.46.2.10 2010/04/13 20:23:59 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -141,6 +141,8 @@ main( int argc, char **argv )
 	int		sanum;
 	int		sextra_args = 0;
 	char		scmd[MAXPATHLEN];
+	int		swamp = 0;
+	char		swampopt[sizeof("-SSS")];
 	/* static so that its address can be used in initializer below. */
 	static char	sloops[LDAP_PVT_INTTYPE_CHARS(unsigned long)];
 	/* read */
@@ -211,7 +213,7 @@ main( int argc, char **argv )
 	mloops[0] = '\0';
 	bloops[0] = '\0';
 
-	while ( ( i = getopt( argc, argv, "AB:CD:d:FH:h:Ii:j:L:l:NP:p:r:t:Ww:y:" ) ) != EOF )
+	while ( ( i = getopt( argc, argv, "AB:CD:d:FH:h:Ii:j:L:l:NP:p:r:St:Ww:y:" ) ) != EOF )
 	{
 		switch ( i ) {
 		case 'A':
@@ -336,6 +338,10 @@ main( int argc, char **argv )
 
 		case 'r':		/* the number of retries in case of error */
 			retries = strdup( optarg );
+			break;
+
+		case 'S':
+			swamp++;
 			break;
 
 		case 't':		/* the delay in seconds between each retry */
@@ -478,7 +484,6 @@ main( int argc, char **argv )
 	}
 
 	/* setup friendly option */
-
 	switch ( friendly ) {
 	case 0:
 		break;
@@ -494,6 +499,15 @@ main( int argc, char **argv )
 		break;
 	}
 
+	/* setup swamp option */
+	if ( swamp ) {
+		swampopt[0] = '-';
+		if ( swamp > 3 ) swamp = 3;
+		swampopt[swamp + 1] = '\0';
+		for ( ; swamp-- > 0; ) swampopt[swamp + 1] = 'S';
+	}
+
+	/* setup loop options */
 	if ( sloops[0] == '\0' ) snprintf( sloops, sizeof( sloops ), "%d", 10 * loops );
 	if ( rloops[0] == '\0' ) snprintf( rloops, sizeof( rloops ), "%d", 20 * loops );
 	if ( aloops[0] == '\0' ) snprintf( aloops, sizeof( aloops ), "%d", loops );
@@ -545,6 +559,9 @@ main( int argc, char **argv )
 	if ( ignore ) {
 		sargs[sanum++] = "-i";
 		sargs[sanum++] = ignore;
+	}
+	if ( swamp ) {
+		sargs[sanum++] = swampopt;
 	}
 	sargs[sanum++] = "-b";
 	sargs[sanum++] = NULL;		/* will hold the search base */
@@ -600,6 +617,9 @@ main( int argc, char **argv )
 	if ( ignore ) {
 		rargs[ranum++] = "-i";
 		rargs[ranum++] = ignore;
+	}
+	if ( swamp ) {
+		rargs[ranum++] = swampopt;
 	}
 	rargs[ranum++] = "-e";
 	rargs[ranum++] = NULL;		/* will hold the read entry */
@@ -972,7 +992,8 @@ get_search_filters( char *filename, char *filters[], char *attrs[], char *bases[
 			} else {
 				bases[filter] = ArgDup( line );
 			}
-			fgets( line, BUFSIZ, fp );
+			if ( fgets( line, BUFSIZ, fp ) == NULL )
+				*line = '\0';
 			if (( nl = strchr( line, '\r' )) || ( nl = strchr( line, '\n' )))
 				*nl = '\0';
 
@@ -1041,6 +1062,9 @@ get_read_entries( char *filename, char *entries[], char *filters[] )
 				ldap_free_urldesc( lud );
 
 			} else {
+				if ( filters != NULL )
+					filters[entry] = NULL;
+
 				entries[entry] = ArgDup( line );
 			}
 
@@ -1106,17 +1130,17 @@ wait4kids( int nkidval )
 	int		status;
 
 	while ( nkids >= nkidval ) {
-		wait( &status );
+		pid_t pid = wait( &status );
 
 		if ( WIFSTOPPED(status) ) {
 			fprintf( stderr,
-			    "stopping: child stopped with signal %d\n",
-			    (int) WSTOPSIG(status) );
+			    "stopping: child PID=%ld stopped with signal %d\n",
+			    (long) pid, (int) WSTOPSIG(status) );
 
 		} else if ( WIFSIGNALED(status) ) {
 			fprintf( stderr, 
-			    "stopping: child terminated with signal %d%s\n",
-			    (int) WTERMSIG(status),
+			    "stopping: child PID=%ld terminated with signal %d%s\n",
+			    (long) pid, (int) WTERMSIG(status),
 #ifdef WCOREDUMP
 				WCOREDUMP(status) ? ", core dumped" : ""
 #else
@@ -1127,8 +1151,8 @@ wait4kids( int nkidval )
 
 		} else if ( WEXITSTATUS(status) != 0 ) {
 			fprintf( stderr, 
-			    "stopping: child exited with status %d\n",
-			    (int) WEXITSTATUS(status) );
+			    "stopping: child PID=%ld exited with status %d\n",
+			    (long) pid, (int) WEXITSTATUS(status) );
 			exit( WEXITSTATUS(status) );
 
 		} else {

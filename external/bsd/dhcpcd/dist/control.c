@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: control.c,v 1.1.1.5 2014/02/25 13:14:27 roy Exp $");
+ __RCSID("$NetBSD: control.c,v 1.1.1.5.2.1 2014/08/10 07:06:59 tls Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -28,6 +28,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
 
@@ -54,8 +55,9 @@ static void
 control_handle_data(void *arg)
 {
 	struct fd_list *l = arg, *lp, *last;
-	char buffer[1024], *e, *p, *argvp[255], **ap;
+	char buffer[1024], *e, *p, *argvp[255], **ap, *a;
 	ssize_t bytes;
+	size_t len;
 	int argc;
 
 	bytes = read(l->fd, buffer, sizeof(buffer) - 1);
@@ -81,14 +83,28 @@ control_handle_data(void *arg)
 	buffer[bytes] = '\0';
 	p = buffer;
 	e = buffer + bytes;
-	argc = 0;
-	ap = argvp;
-	while (p < e && (size_t)argc < sizeof(argvp)) {
-		argc++;
-		*ap++ = p;
-		p += strlen(p) + 1;
+
+	/* Each command is \n terminated
+	 * Each argument is NULL separated */
+	while (p < e) {
+		argc = 0;
+		ap = argvp;
+		while (p < e) {
+			argc++;
+			if ((size_t)argc > sizeof(argvp)) {
+				errno = ENOBUFS;
+				return;
+			}
+			a = *ap++ = p;
+			len = strlen(p);
+			p += len + 1;
+			if (a[len - 1] == '\n') {
+				a[len - 1] = '\0';
+				break;
+			}
+		}
+		dhcpcd_handleargs(l->ctx, l, argc, argvp);
 	}
-	handle_args(l->ctx, l, argc, argvp);
 }
 
 static void
@@ -110,6 +126,12 @@ control_handle(void *arg)
 		close(fd);
 	        return;
 	}
+	if ((flags = fcntl(fd, F_GETFL, 0)) == -1 ||
+	    fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+	{
+		close(fd);
+	        return;
+	}
 	l = malloc(sizeof(*l));
 	if (l) {
 		l->ctx = ctx;
@@ -122,54 +144,57 @@ control_handle(void *arg)
 		close(fd);
 }
 
-static int
-make_sock(struct dhcpcd_ctx *ctx, struct sockaddr_un *sun, const char *ifname)
+static socklen_t
+make_sock(struct dhcpcd_ctx *ctx, struct sockaddr_un *sa, const char *ifname)
 {
 
 #ifdef SOCK_CLOEXEC
 	if ((ctx->control_fd = socket(AF_UNIX,
 	    SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1)
-		return -1;
+		return 0;
 #else
 	int flags;
 
 	if ((ctx->control_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-		return -1;
+		return 0;
 	if ((flags = fcntl(ctx->control_fd, F_GETFD, 0)) == -1 ||
 	    fcntl(ctx->control_fd, F_SETFD, flags | FD_CLOEXEC) == -1)
 	{
 		close(ctx->control_fd);
 		ctx->control_fd = -1;
-	        return -1;
+	        return 0;
 	}
 	if ((flags = fcntl(ctx->control_fd, F_GETFL, 0)) == -1 ||
 	    fcntl(ctx->control_fd, F_SETFL, flags | O_NONBLOCK) == -1)
 	{
 		close(ctx->control_fd);
 		ctx->control_fd = -1;
-	        return -1;
+	        return 0;
 	}
 #endif
-	memset(sun, 0, sizeof(*sun));
-	sun->sun_family = AF_UNIX;
-	snprintf(sun->sun_path, sizeof(sun->sun_path), CONTROLSOCKET,
+	memset(sa, 0, sizeof(*sa));
+	sa->sun_family = AF_UNIX;
+	snprintf(sa->sun_path, sizeof(sa->sun_path), CONTROLSOCKET,
 	    ifname ? "-" : "", ifname ? ifname : "");
-	strlcpy(ctx->control_sock, sun->sun_path, sizeof(ctx->control_sock));
-	return SUN_LEN(sun);
+	strlcpy(ctx->control_sock, sa->sun_path, sizeof(ctx->control_sock));
+	return (socklen_t)SUN_LEN(sa);
 }
 
 int
 control_start(struct dhcpcd_ctx *ctx, const char *ifname)
 {
-	struct sockaddr_un sun;
-	int len;
+	struct sockaddr_un sa;
+	socklen_t len;
 
-	if ((len = make_sock(ctx, &sun, ifname)) == -1)
+	if ((len = make_sock(ctx, &sa, ifname)) == 0)
 		return -1;
 	unlink(ctx->control_sock);
-	if (bind(ctx->control_fd, (struct sockaddr *)&sun, len) == -1 ||
+	if (bind(ctx->control_fd, (struct sockaddr *)&sa, len) == -1 ||
 	    chmod(ctx->control_sock,
 		S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == -1 ||
+	    (ctx->control_group &&
+	        chown(ctx->control_sock,
+		geteuid(), ctx->control_group) == -1) ||
 	    listen(ctx->control_fd, sizeof(ctx->control_fds)) == -1)
 	{
 		close(ctx->control_fd);
@@ -211,12 +236,12 @@ control_stop(struct dhcpcd_ctx *ctx)
 int
 control_open(struct dhcpcd_ctx *ctx, const char *ifname)
 {
-	struct sockaddr_un sun;
-	int len;
+	struct sockaddr_un sa;
+	socklen_t len;
 
-	if ((len = make_sock(ctx, &sun, ifname)) == -1)
+	if ((len = make_sock(ctx, &sa, ifname)) == 0)
 		return -1;
-	if (connect(ctx->control_fd, (struct sockaddr *)&sun, len) == -1) {
+	if (connect(ctx->control_fd, (struct sockaddr *)&sa, len) == -1) {
 		close(ctx->control_fd);
 		ctx->control_fd = -1;
 		return -1;
@@ -224,28 +249,28 @@ control_open(struct dhcpcd_ctx *ctx, const char *ifname)
 	return 0;
 }
 
-int
+ssize_t
 control_send(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 {
-	char buffer[1024], *p;
+	char buffer[1024];
 	int i;
-	size_t len;
+	size_t len, l;
 
 	if (argc > 255) {
 		errno = ENOBUFS;
 		return -1;
 	}
-	p = buffer;
+	len = 0;
 	for (i = 0; i < argc; i++) {
-		len = strlen(argv[i]) + 1;
-		if ((p - buffer) + len > sizeof(buffer)) {
+		l = strlen(argv[i]) + 1;
+		if (len + l > sizeof(buffer)) {
 			errno = ENOBUFS;
 			return -1;
 		}
-		memcpy(p, argv[i], len);
-		p += len;
+		memcpy(buffer + len, argv[i], l);
+		len += l;
 	}
-	return write(ctx->control_fd, buffer, p - buffer);
+	return write(ctx->control_fd, buffer, len);
 }
 
 void

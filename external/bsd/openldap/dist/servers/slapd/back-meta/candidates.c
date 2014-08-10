@@ -1,9 +1,9 @@
-/*	$NetBSD: candidates.c,v 1.1.1.3 2010/12/12 15:23:09 adam Exp $	*/
+/*	$NetBSD: candidates.c,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/candidates.c,v 1.28.2.7 2010/04/13 20:23:30 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -34,25 +34,58 @@
 /*
  * The meta-directory has one suffix, called <suffix>.
  * It handles a pool of target servers, each with a branch suffix
- * of the form <branch X>,<suffix>
+ * of the form <branch X>,<suffix>, where <branch X> may be empty.
  *
- * When the meta-directory receives a request with a dn that belongs
- * to a branch, the corresponding target is invoked. When the dn
+ * When the meta-directory receives a request with a request DN that belongs
+ * to a branch, the corresponding target is invoked. When the request DN
  * does not belong to a specific branch, all the targets that
- * are compatible with the dn are selected as candidates, and
+ * are compatible with the request DN are selected as candidates, and
  * the request is spawned to all the candidate targets
  *
- * A request is characterized by a dn. The following cases are handled:
- * 	- the dn is the suffix: <dn> == <suffix>,
+ * A request is characterized by a request DN. The following cases are
+ * handled:
+ * 	- the request DN is the suffix: <dn> == <suffix>,
  * 		all the targets are candidates (search ...)
- * 	- the dn is a branch suffix: <dn> == <branch X>,<suffix>, or
- * 	- the dn is a subtree of a branch suffix:
+ * 	- the request DN is a branch suffix: <dn> == <branch X>,<suffix>, or
+ * 	- the request DN is a subtree of a branch suffix:
  * 		<dn> == <rdn>,<branch X>,<suffix>,
  * 		the target is the only candidate.
  *
  * A possible extension will include the handling of multiple suffixes
  */
 
+static metasubtree_t *
+meta_subtree_match( metatarget_t *mt, struct berval *ndn, int scope )
+{
+	metasubtree_t *ms = mt->mt_subtree;
+
+	for ( ms = mt->mt_subtree; ms; ms = ms->ms_next ) {
+		switch ( ms->ms_type ) {
+		case META_ST_SUBTREE:
+			if ( dnIsSuffix( ndn, &ms->ms_dn ) ) {
+				return ms;
+			}
+			break;
+
+		case META_ST_SUBORDINATE:
+			if ( dnIsSuffix( ndn, &ms->ms_dn ) &&
+				( ndn->bv_len > ms->ms_dn.bv_len || scope != LDAP_SCOPE_BASE ) )
+			{
+				return ms;
+			}
+			break;
+
+		case META_ST_REGEX:
+			/* NOTE: cannot handle scope */
+			if ( regexec( &ms->ms_regex, ndn->bv_val, 0, NULL, 0 ) == 0 ) {
+				return ms;
+			}
+			break;
+		}
+	}
+
+	return NULL;
+}
 
 /*
  * returns 1 if suffix is candidate for dn, otherwise 0
@@ -65,14 +98,34 @@ meta_back_is_candidate(
 	struct berval	*ndn,
 	int		scope )
 {
-	if ( dnIsSuffix( ndn, &mt->mt_nsuffix ) ) {
-		if ( mt->mt_subtree_exclude ) {
-			int	i;
+	struct berval rdn;
+	int d = ndn->bv_len - mt->mt_nsuffix.bv_len;
 
-			for ( i = 0; !BER_BVISNULL( &mt->mt_subtree_exclude[ i ] ); i++ ) {
-				if ( dnIsSuffix( ndn, &mt->mt_subtree_exclude[ i ] ) ) {
-					return META_NOT_CANDIDATE;
-				}
+	if ( d >= 0 ) {
+		if ( !dnIsSuffix( ndn, &mt->mt_nsuffix ) ) {
+			return META_NOT_CANDIDATE;
+		}
+
+		/*
+		 * |  match  | exclude |
+		 * +---------+---------+-------------------+
+		 * |    T    |    T    | not candidate     |
+		 * |    F    |    T    | continue checking |
+		 * +---------+---------+-------------------+
+		 * |    T    |    F    | candidate         |
+		 * |    F    |    F    | not candidate     |
+		 * +---------+---------+-------------------+
+		 */
+			
+		if ( mt->mt_subtree ) {
+			int match = ( meta_subtree_match( mt, ndn, scope ) != NULL );
+
+			if ( !mt->mt_subtree_exclude ) {
+				return match ? META_CANDIDATE : META_NOT_CANDIDATE;
+			}
+
+			if ( match /* && mt->mt_subtree_exclude */ ) {
+				return META_NOT_CANDIDATE;
 			}
 		}
 
@@ -82,18 +135,16 @@ meta_back_is_candidate(
 			return META_CANDIDATE;
 
 		case LDAP_SCOPE_SUBORDINATE:
-			if ( ndn->bv_len > mt->mt_nsuffix.bv_len ) {
+			if ( d > 0 ) {
 				return META_CANDIDATE;
 			}
 			break;
 
 		/* nearly useless; not allowed by config */
 		case LDAP_SCOPE_ONELEVEL:
-			if ( ndn->bv_len > mt->mt_nsuffix.bv_len ) {
-				struct berval	rdn = *ndn;
-
-				rdn.bv_len -= mt->mt_nsuffix.bv_len
-					+ STRLENOF( "," );
+			if ( d > 0 ) {
+				rdn.bv_val = ndn->bv_val;
+				rdn.bv_len = (ber_len_t)d - STRLENOF( "," );
 				if ( dnIsOneLevelRDN( &rdn ) ) {
 					return META_CANDIDATE;
 				}
@@ -102,20 +153,33 @@ meta_back_is_candidate(
 
 		/* nearly useless; not allowed by config */
 		case LDAP_SCOPE_BASE:
-			if ( ndn->bv_len == mt->mt_nsuffix.bv_len ) {
+			if ( d == 0 ) {
 				return META_CANDIDATE;
 			}
 			break;
 		}
 
-		return META_NOT_CANDIDATE;
-	}
+	} else /* if ( d < 0 ) */ {
+		if ( !dnIsSuffix( &mt->mt_nsuffix, ndn ) ) {
+			return META_NOT_CANDIDATE;
+		}
 
-	if ( scope == LDAP_SCOPE_SUBTREE && dnIsSuffix( &mt->mt_nsuffix, ndn ) ) {
-		/*
-		 * suffix longer than dn, but common part matches
-		 */
-		return META_CANDIDATE;
+		switch ( scope ) {
+		case LDAP_SCOPE_SUBTREE:
+		case LDAP_SCOPE_SUBORDINATE:
+			/*
+			 * suffix longer than dn, but common part matches
+			 */
+			return META_CANDIDATE;
+
+		case LDAP_SCOPE_ONELEVEL:
+			rdn.bv_val = mt->mt_nsuffix.bv_val;
+			rdn.bv_len = (ber_len_t)(-d) - STRLENOF( "," );
+			if ( dnIsOneLevelRDN( &rdn ) ) {
+				return META_CANDIDATE;
+			}
+			break;
+		}
 	}
 
 	return META_NOT_CANDIDATE;

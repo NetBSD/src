@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.254 2014/02/01 13:29:45 skrll Exp $
+$NetBSD: UPDATING,v 1.254.2.1 2014/08/10 07:27:15 tls Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -11,10 +11,26 @@ Note that much of the advice in this UPDATING file was written before
 build.sh existed.  Nevertheless, the advice here may be useful for
 working around specific problems with build.sh.
 
+Sections are marked with "^^^^^".  After the section on "Recent changes"
+are several sections containing more general information.
+
 See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20140721:
+	The src/external/mit/lua/src directory was accidentally created
+	and then deleted in the CVS repository.  If you get errors like
+
+	cvs [update aborted]: cannot open directory
+	/cvsroot/src/external/mit/lua/src: No such file or directory
+
+	then delete your local copy of that directory tree and try again.
+
+20140530:
+	ARM eABI switched to DWARF based exception handling. This requires
+	rebuilding all C++ code. It is strongly advised to do a clean build.
 
 20140131:
 	The new compiler_rt/libc integration moved a few things. It is strongly
@@ -664,3 +680,13 @@ Fix:    May need to build & install libs with NOLINT=1 before rebuilding lint
 Symptom:Update build fails in src/tools/gcc complaining that a variable
 	(e.g. CPPFLAGS) has changed since the previous run.
 Fix:    Run "nbmake-${ARCH} clean" in src/tools/gcc or do a clean build.
+
+Symptom:cvs [update aborted]: cannot open directory /cvsroot/src/...:
+	No such file or directory.
+Cause:	If a directory is created by mistake, then it is sometimes
+	deleted from the CVS repository using administrative commands
+	that bypass the normal cvs access controls.  If your cvs working tree
+	contains references to a directory that has been deleted on the
+	server in this way, then "cvs update" reports this error.
+Fix:	Recursively delete the affected directory from your working tree
+	and try the update again.

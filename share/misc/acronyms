@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.223 2014/03/10 17:56:21 mbalmer Exp $
+$NetBSD: acronyms,v 1.223.2.1 2014/08/10 06:53:28 tls Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -480,6 +480,7 @@ TBOMK	the best of my knowledge
 TCB	taking care of business
 TCO	taken care of
 TCO	total cost of ownership
+TFOA	things falling off aircraft
 THNX	thanks
 THX	thanks
 TIA	thanks in advance

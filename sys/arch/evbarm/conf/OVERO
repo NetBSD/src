@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.33 2013/10/01 11:24:49 kiyohara Exp $
+#	$NetBSD: OVERO,v 1.33.2.1 2014/08/10 06:53:55 tls Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
@@ -16,7 +16,10 @@ maxusers	32
 
 options 	CPU_CORTEXA8
 options 	OMAP_3530
+options 	FPU_VFP
 options 	PMAPCOUNTERS
+options 	ARM_HAS_VBAR
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 makeoptions	CPUFLAGS="-mcpu=cortex-a8 -mfpu=neon"
 
 # Architecture options
@@ -89,6 +92,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
@@ -136,7 +140,7 @@ options 	IRQSTATS	# manage IRQ statistics
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
@@ -188,7 +192,7 @@ omapiic0	at obio0 addr 0x48070000 size 0x1000 intr 56	# I2C1
 omapiic1	at obio0 addr 0x48060000 size 0x1000 intr 61	# I2C3
 iic*		at omapiic?
 
-# Power Managent and System Companion Device
+# Power Management and System Companion Device
 tps65950pm0	at iic0 addr 0x48
 tps65950pm1	at iic0 addr 0x49
 tps65950pm2	at iic0 addr 0x4a

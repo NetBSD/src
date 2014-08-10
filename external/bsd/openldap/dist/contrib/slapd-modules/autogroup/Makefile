@@ -1,20 +1,46 @@
-LIBTOOL=../../../libtool
+# $OpenLDAP$
 
-CPPFLAGS+=-I../../../include -I../../../servers/slapd
+LDAP_SRC = ../../..
+LDAP_BUILD = ../../..
+LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd
+LDAP_LIB = $(LDAP_BUILD)/libraries/libldap_r/libldap_r.la \
+	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
-all: autogroup.la
+LIBTOOL = $(LDAP_BUILD)/libtool
+CC = gcc
+OPT = -g -O2 -Wall
+DEFS = 
+INCS = $(LDAP_INC)
+LIBS = $(LDAP_LIB)
 
-autogroup.lo:	autogroup.c
-	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -Wall -c $?
+PROGRAMS = autogroup.la
+LTVER = 0:0:0
 
-autogroup.la:	autogroup.lo
-	$(LIBTOOL) --mode=link $(CC) -version-info 0:0:0 \
-	-rpath $(PREFIX)/lib -module -o $@ $? 
+prefix=/usr/local
+exec_prefix=$(prefix)
+ldap_subdir=/openldap
+
+libdir=$(exec_prefix)/lib
+libexecdir=$(exec_prefix)/libexec
+moduledir = $(libexecdir)$(ldap_subdir)
+
+.SUFFIXES: .c .o .lo
+
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
+
+all: $(PROGRAMS)
+
+autogroup.la: autogroup.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
 clean:
-	rm -f autogroup.lo autogroup.la
+	rm -rf *.o *.lo *.la .libs
 
-install: autogroup.la
-	mkdir -p $(PREFIX)/lib/openldap
-	$(LIBTOOL) --mode=install cp autogroup.la $(PREFIX)/lib/openldap
-	$(LIBTOOL) --finish $(PREFIX)/lib
+install: $(PROGRAMS)
+	mkdir -p $(DESTDIR)$(moduledir)
+	for p in $(PROGRAMS) ; do \
+		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)$(moduledir) ; \
+	done
+

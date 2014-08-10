@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/security.sdf,v 1.16.2.11 2010/04/13 20:22:34 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # Portions Copyright 2008 Andrew Findlay.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -274,19 +274,6 @@ verification to another process. See below for more information.
 Note: This is not the same as using SASL to authenticate the LDAP
 session.
 
-H3: KERBEROS password storage scheme
-
-This is not really a password storage scheme at all. It uses the
-value of the {{userPassword}} attribute to delegate password
-verification to Kerberos. 
-
-Note: This is not the same as using Kerberos authentication of 
-the LDAP session.
-
-This scheme could be said to defeat the advantages of Kerberos by 
-causing the Kerberos password to be exposed to the {{slapd}} server 
-(and possibly on the network as well).
-
 H2: Pass-Through authentication
 
 Since OpenLDAP 2.0 {{slapd}} has had the ability to delegate password
@@ -315,9 +302,6 @@ The {{username}} and {{realm}} are passed to the SASL authentication
 mechanism and are used to identify the account whose password is to be
 verified. This allows arbitrary mapping between entries in OpenLDAP
 and accounts known to the backend authentication service.
-
-Note: There is no support for changing passwords in the backend
-via {{slapd}}.
 
 It would be wise to use access control to prevent users from changing 
 their passwords through LDAP where they have pass-through authentication 

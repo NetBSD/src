@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.21 2013/04/19 17:43:05 christos Exp $	*/
+/*	$NetBSD: main1.c,v 1.21.4.1 2014/08/10 06:59:20 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.21 2013/04/19 17:43:05 christos Exp $");
+__RCSID("$NetBSD: main1.c,v 1.21.4.1 2014/08/10 06:59:20 tls Exp $");
 #endif
 
 #include <sys/types.h>
@@ -128,7 +128,37 @@ sig_atomic_t fpe;
 
 static	void	usage(void);
 
-int main(int, char *[]);
+static const char builtins[] =
+    "int __builtin_isinf(long double);\n"
+    "int __builtin_isnan(long double);\n"
+    "int __builtin_copysign(long double, long double);\n"
+;
+static size_t builtinlen = sizeof(builtins) - 1;
+
+static FILE *
+bltin(void)
+{
+#if HAVE_NBTOOL_CONFIG_H
+	char template[] = "/tmp/lint.XXXXXX";
+	int fd;
+	FILE *fp;
+	if ((fd = mkstemp(template)) == -1)
+		return NULL;
+	(void)unlink(template);
+	if ((fp = fdopen(fd, "r+")) == NULL) {
+		close(fd);
+		return NULL;
+	}
+	if (fwrite(builtins, 1, builtinlen, fp) != builtinlen) {
+		fclose(fp);
+		return NULL;
+	}
+	rewind(fp);
+	return fp;
+#else
+	return fmemopen(__UNCONST(builtins), builtinlen, "r");
+#endif
+}
 
 /*ARGSUSED*/
 static void
@@ -203,9 +233,6 @@ main(int argc, char *argv[])
 	if (argc != 2)
 		usage();
 
-	/* open the input file */
-	if ((yyin = fopen(argv[0], "r")) == NULL)
-		err(1, "cannot open '%s'", argv[0]);
 
 	/* initialize output */
 	outopen(argv[1]);
@@ -219,7 +246,16 @@ main(int argc, char *argv[])
 	initscan();
 	initmtab();
 
+	if ((yyin = bltin()) == NULL)
+		err(1, "cannot open builtins");
 	yyparse();
+	fclose(yyin);
+
+	/* open the input file */
+	if ((yyin = fopen(argv[0], "r")) == NULL)
+		err(1, "cannot open '%s'", argv[0]);
+	yyparse();
+	fclose(yyin);
 
 	/* Following warnings cannot be suppressed by LINTED */
 	lwarn = LWARN_ALL;

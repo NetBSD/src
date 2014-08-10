@@ -1,6 +1,6 @@
 /* Target-vector operations for controlling windows child processes, for GDB.
 
-   Copyright (C) 1995-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions, A Red Hat Company.
 
@@ -43,7 +43,6 @@
 #include <sys/cygwin.h>
 #include <cygwin/version.h>
 #endif
-#include <signal.h>
 
 #include "buildsym.h"
 #include "filenames.h"
@@ -51,10 +50,9 @@
 #include "objfiles.h"
 #include "gdb_bfd.h"
 #include "gdb_obstack.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdbthread.h"
 #include "gdbcmd.h"
-#include <sys/param.h>
 #include <unistd.h>
 #include "exec.h"
 #include "solist.h"
@@ -311,11 +309,19 @@ thread_rec (DWORD id, int get_context)
 		if (SuspendThread (th->h) == (DWORD) -1)
 		  {
 		    DWORD err = GetLastError ();
-		    warning (_("SuspendThread failed. (winerr %u)"),
-			     (unsigned) err);
-		    return NULL;
+
+		    /* We get Access Denied (5) when trying to suspend
+		       threads that Windows started on behalf of the
+		       debuggee, usually when those threads are just
+		       about to exit.  */
+		    if (err != ERROR_ACCESS_DENIED)
+		      warning (_("SuspendThread (tid=0x%x) failed."
+				 " (winerr %u)"),
+			       (unsigned) id, (unsigned) err);
+		    th->suspended = -1;
 		  }
-		th->suspended = 1;
+		else
+		  th->suspended = 1;
 	      }
 	    else if (get_context < 0)
 	      th->suspended = -1;
@@ -386,7 +392,7 @@ windows_init_thread_list (void)
 
 /* Delete a thread from the list of threads.  */
 static void
-windows_delete_thread (ptid_t ptid)
+windows_delete_thread (ptid_t ptid, DWORD exit_code)
 {
   thread_info *th;
   DWORD id;
@@ -397,6 +403,9 @@ windows_delete_thread (ptid_t ptid)
 
   if (info_verbose)
     printf_unfiltered ("[Deleting %s]\n", target_pid_to_str (ptid));
+  else if (print_thread_events && id != main_thread_id)
+    printf_unfiltered (_("[%s exited with code %u]\n"),
+		       target_pid_to_str (ptid), (unsigned) exit_code);
   delete_thread (ptid);
 
   for (th = &thread_head;
@@ -442,7 +451,7 @@ do_windows_fetch_inferior_registers (struct regcache *regcache, int r)
 	{
 	  thread_info *th = current_thread;
 	  th->context.ContextFlags = CONTEXT_DEBUGGER_DR;
-	  GetThreadContext (th->h, &th->context);
+	  CHECK (GetThreadContext (th->h, &th->context));
 	  /* Copy dr values from that thread.
 	     But only if there were not modified since last stop.
 	     PR gdb/2388 */
@@ -843,11 +852,31 @@ handle_load_dll (void *dummy)
 
   dll_buf[0] = dll_buf[sizeof (dll_buf) - 1] = '\0';
 
+  /* Try getting the DLL name by searching the list of known modules
+     and matching their base address against this new DLL's base address.
+
+     FIXME: brobecker/2013-12-10:
+     It seems odd to be going through this search if the DLL name could
+     simply be extracted via "event->lpImageName".  Moreover, some
+     experimentation with various versions of Windows seem to indicate
+     that it might still be too early for this DLL to be listed when
+     querying the system about the current list of modules, thus making
+     this attempt pointless.
+
+     This code can therefore probably be removed.  But at the time of
+     this writing, we are too close to creating the GDB 7.7 branch
+     for us to make such a change.  We are therefore defering it.  */
+
   if (!get_module_name (event->lpBaseOfDll, dll_buf))
     dll_buf[0] = dll_buf[sizeof (dll_buf) - 1] = '\0';
 
   dll_name = dll_buf;
 
+  /* Try getting the DLL name via the lpImageName field of the event.
+     Note that Microsoft documents this fields as strictly optional,
+     in the sense that it might be NULL.  And the first DLL event in
+     particular is explicitly documented as "likely not pass[ed]"
+     (source: MSDN LOAD_DLL_DEBUG_INFO structure).  */
   if (*dll_name == '\0')
     dll_name = get_image_name (current_process_handle,
 			       event->lpImageName, event->fUnicode);
@@ -881,13 +910,13 @@ handle_unload_dll (void *dummy)
     if (so->next->lm_info->load_addr == lpBaseOfDll)
       {
 	struct so_list *sodel = so->next;
+
 	so->next = sodel->next;
 	if (!so->next)
 	  solib_end = so;
 	DEBUG_EVENTS (("gdb: Unloading dll \"%s\".\n", sodel->so_name));
 
 	windows_free_so (sodel);
-	solib_add (NULL, 0, NULL, auto_solib_add);
 	return 1;
       }
 
@@ -969,16 +998,18 @@ handle_output_debug_string (struct target_waitstatus *ourstatus)
       char *p;
       int sig = strtol (s + sizeof (_CYGWIN_SIGNAL_STRING) - 1, &p, 0);
       int gotasig = gdb_signal_from_host (sig);
+
       ourstatus->value.sig = gotasig;
       if (gotasig)
 	{
 	  LPCVOID x;
-	  DWORD n;
+	  SIZE_T n;
+
 	  ourstatus->kind = TARGET_WAITKIND_STOPPED;
 	  retval = strtoul (p, &p, 0);
 	  if (!retval)
 	    retval = main_thread_id;
-	  else if ((x = (LPCVOID) string_to_core_addr (p))
+	  else if ((x = (LPCVOID) (uintptr_t) strtoull (p, NULL, 0))
 		   && ReadProcessMemory (current_process_handle, x,
 					 &saved_context,
 					 __COPY_CONTEXT_SIZE, &n)
@@ -1241,16 +1272,18 @@ handle_exception (struct target_waitstatus *ourstatus)
   return 1;
 }
 
-/* Resume all artificially suspended threads if we are continuing
-   execution.  */
+/* Resume thread specified by ID, or all artificially suspended
+   threads, if we are continuing execution.  KILLED non-zero means we
+   have killed the inferior, so we should ignore weird errors due to
+   threads shutting down.  */
 static BOOL
-windows_continue (DWORD continue_status, int id)
+windows_continue (DWORD continue_status, int id, int killed)
 {
   int i;
   thread_info *th;
   BOOL res;
 
-  DEBUG_EVENTS (("ContinueDebugEvent (cpid=%d, ctid=%x, %s);\n",
+  DEBUG_EVENTS (("ContinueDebugEvent (cpid=%d, ctid=0x%x, %s);\n",
 		  (unsigned) current_event.dwProcessId,
 		  (unsigned) current_event.dwThreadId,
 		  continue_status == DBG_CONTINUE ?
@@ -1272,7 +1305,16 @@ windows_continue (DWORD continue_status, int id)
 	  }
 	if (th->context.ContextFlags)
 	  {
-	    CHECK (SetThreadContext (th->h, &th->context));
+	    DWORD ec = 0;
+
+	    if (GetExitCodeThread (th->h, &ec)
+		&& ec == STILL_ACTIVE)
+	      {
+		BOOL status = SetThreadContext (th->h, &th->context);
+
+		if (!killed)
+		  CHECK (status);
+	      }
 	    th->context.ContextFlags = 0;
 	  }
 	if (th->suspended > 0)
@@ -1400,9 +1442,9 @@ windows_resume (struct target_ops *ops,
      Otherwise complain.  */
 
   if (resume_all)
-    windows_continue (continue_status, -1);
+    windows_continue (continue_status, -1, 0);
   else
-    windows_continue (continue_status, ptid_get_tid (ptid));
+    windows_continue (continue_status, ptid_get_tid (ptid), 0);
 }
 
 /* Ctrl-C handler used when the inferior is not run in the same console.  The
@@ -1459,7 +1501,7 @@ get_windows_debug_event (struct target_ops *ops,
   switch (event_code)
     {
     case CREATE_THREAD_DEBUG_EVENT:
-      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=%x code=%s)\n",
+      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=0x%x code=%s)\n",
 		     (unsigned) current_event.dwProcessId,
 		     (unsigned) current_event.dwThreadId,
 		     "CREATE_THREAD_DEBUG_EVENT"));
@@ -1488,7 +1530,7 @@ get_windows_debug_event (struct target_ops *ops,
       break;
 
     case EXIT_THREAD_DEBUG_EVENT:
-      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=%x code=%s)\n",
+      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=0x%x code=%s)\n",
 		     (unsigned) current_event.dwProcessId,
 		     (unsigned) current_event.dwThreadId,
 		     "EXIT_THREAD_DEBUG_EVENT"));
@@ -1496,13 +1538,14 @@ get_windows_debug_event (struct target_ops *ops,
       if (current_event.dwThreadId != main_thread_id)
 	{
 	  windows_delete_thread (ptid_build (current_event.dwProcessId, 0,
-					   current_event.dwThreadId));
+					     current_event.dwThreadId),
+				 current_event.u.ExitThread.dwExitCode);
 	  th = &dummy_thread_info;
 	}
       break;
 
     case CREATE_PROCESS_DEBUG_EVENT:
-      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=%x code=%s)\n",
+      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=0x%x code=%s)\n",
 		     (unsigned) current_event.dwProcessId,
 		     (unsigned) current_event.dwThreadId,
 		     "CREATE_PROCESS_DEBUG_EVENT"));
@@ -1513,7 +1556,8 @@ get_windows_debug_event (struct target_ops *ops,
       current_process_handle = current_event.u.CreateProcessInfo.hProcess;
       if (main_thread_id)
 	windows_delete_thread (ptid_build (current_event.dwProcessId, 0,
-					   main_thread_id));
+					   main_thread_id),
+			       0);
       main_thread_id = current_event.dwThreadId;
       /* Add the main thread.  */
       th = windows_add_thread (ptid_build (current_event.dwProcessId, 0,
@@ -1524,7 +1568,7 @@ get_windows_debug_event (struct target_ops *ops,
       break;
 
     case EXIT_PROCESS_DEBUG_EVENT:
-      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=%x code=%s)\n",
+      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=0x%x code=%s)\n",
 		     (unsigned) current_event.dwProcessId,
 		     (unsigned) current_event.dwThreadId,
 		     "EXIT_PROCESS_DEBUG_EVENT"));
@@ -1544,7 +1588,7 @@ get_windows_debug_event (struct target_ops *ops,
       break;
 
     case LOAD_DLL_DEBUG_EVENT:
-      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=%x code=%s)\n",
+      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=0x%x code=%s)\n",
 		     (unsigned) current_event.dwProcessId,
 		     (unsigned) current_event.dwThreadId,
 		     "LOAD_DLL_DEBUG_EVENT"));
@@ -1558,7 +1602,7 @@ get_windows_debug_event (struct target_ops *ops,
       break;
 
     case UNLOAD_DLL_DEBUG_EVENT:
-      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=%x code=%s)\n",
+      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=0x%x code=%s)\n",
 		     (unsigned) current_event.dwProcessId,
 		     (unsigned) current_event.dwThreadId,
 		     "UNLOAD_DLL_DEBUG_EVENT"));
@@ -1571,7 +1615,7 @@ get_windows_debug_event (struct target_ops *ops,
       break;
 
     case EXCEPTION_DEBUG_EVENT:
-      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=%x code=%s)\n",
+      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=0x%x code=%s)\n",
 		     (unsigned) current_event.dwProcessId,
 		     (unsigned) current_event.dwThreadId,
 		     "EXCEPTION_DEBUG_EVENT"));
@@ -1593,7 +1637,7 @@ get_windows_debug_event (struct target_ops *ops,
       break;
 
     case OUTPUT_DEBUG_STRING_EVENT:	/* Message from the kernel.  */
-      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=%x code=%s)\n",
+      DEBUG_EVENTS (("gdb: kernel event for pid=%u tid=0x%x code=%s)\n",
 		     (unsigned) current_event.dwProcessId,
 		     (unsigned) current_event.dwThreadId,
 		     "OUTPUT_DEBUG_STRING_EVENT"));
@@ -1605,7 +1649,7 @@ get_windows_debug_event (struct target_ops *ops,
     default:
       if (saw_create != 1)
 	break;
-      printf_unfiltered ("gdb: kernel event for pid=%u tid=%x\n",
+      printf_unfiltered ("gdb: kernel event for pid=%u tid=0x%x\n",
 			 (unsigned) current_event.dwProcessId,
 			 (unsigned) current_event.dwThreadId);
       printf_unfiltered ("                 unknown event code %u\n",
@@ -1618,7 +1662,7 @@ get_windows_debug_event (struct target_ops *ops,
       if (continue_status == -1)
 	windows_resume (ops, minus_one_ptid, 0, 1);
       else
-	CHECK (windows_continue (continue_status, -1));
+	CHECK (windows_continue (continue_status, -1, 0));
     }
   else
     {
@@ -1695,6 +1739,74 @@ windows_wait (struct target_ops *ops,
     }
 }
 
+/* On certain versions of Windows, the information about ntdll.dll
+   is not available yet at the time we get the LOAD_DLL_DEBUG_EVENT,
+   thus preventing us from reporting this DLL as an SO. This has been
+   witnessed on Windows 8.1, for instance.  A possible explanation
+   is that ntdll.dll might be mapped before the SO info gets created
+   by the Windows system -- ntdll.dll is the first DLL to be reported
+   via LOAD_DLL_DEBUG_EVENT and other DLLs do not seem to suffer from
+   that problem.
+
+   If we indeed are missing ntdll.dll, this function tries to recover
+   from this issue, after the fact.  Do nothing if we encounter any
+   issue trying to locate that DLL.  */
+
+static void
+windows_ensure_ntdll_loaded (void)
+{
+  struct so_list *so;
+  HMODULE dummy_hmodule;
+  DWORD cb_needed;
+  HMODULE *hmodules;
+  int i;
+
+  for (so = solib_start.next; so != NULL; so = so->next)
+    if (FILENAME_CMP (lbasename (so->so_name), "ntdll.dll") == 0)
+      return;  /* ntdll.dll already loaded, nothing to do.  */
+
+  if (EnumProcessModules (current_process_handle, &dummy_hmodule,
+			  sizeof (HMODULE), &cb_needed) == 0)
+    return;
+
+  if (cb_needed < 1)
+    return;
+
+  hmodules = (HMODULE *) alloca (cb_needed);
+  if (EnumProcessModules (current_process_handle, hmodules,
+			  cb_needed, &cb_needed) == 0)
+    return;
+
+  for (i = 0; i < (int) (cb_needed / sizeof (HMODULE)); i++)
+    {
+      MODULEINFO mi;
+#ifdef __USEWIDE
+      wchar_t dll_name[__PMAX];
+      char name[__PMAX];
+#else
+      char dll_name[__PMAX];
+      char *name;
+#endif
+      if (GetModuleInformation (current_process_handle, hmodules[i],
+				&mi, sizeof (mi)) == 0)
+	continue;
+      if (GetModuleFileNameEx (current_process_handle, hmodules[i],
+			       dll_name, sizeof (dll_name)) == 0)
+	continue;
+#ifdef __USEWIDE
+      wcstombs (name, dll_name, __PMAX);
+#else
+      name = dll_name;
+#endif
+      if (FILENAME_CMP (lbasename (name), "ntdll.dll") == 0)
+	{
+	  solib_end->next = windows_make_so (name, mi.lpBaseOfDll);
+	  solib_end = solib_end->next;
+	  return;
+	}
+    }
+}
+
 static void
 do_initial_windows_stuff (struct target_ops *ops, DWORD pid, int attaching)
 {
@@ -1747,6 +1859,14 @@ do_initial_windows_stuff (struct target_ops *ops, DWORD pid, int attaching)
       else
 	break;
     }
+
+  /* FIXME: brobecker/2013-12-10: We should try another approach where
+     we first ignore all DLL load/unload events up until this point,
+     and then iterate over all modules to create the associated shared
+     objects.  This is a fairly significant change, however, and we are
+     close to creating a release branch, so we are delaying it a bit,
+     after the branch is created.  */
+  windows_ensure_ntdll_loaded ();
 
   windows_initialization_done = 1;
   inf->control.stop_soon = NO_STOP_QUIETLY;
@@ -1858,7 +1978,7 @@ windows_attach (struct target_ops *ops, char *args, int from_tty)
 }
 
 static void
-windows_detach (struct target_ops *ops, char *args, int from_tty)
+windows_detach (struct target_ops *ops, const char *args, int from_tty)
 {
   int detached = 1;
 
@@ -2279,13 +2399,13 @@ windows_create_inferior (struct target_ops *ops, char *exec_file,
 
   do_initial_windows_stuff (ops, pi.dwProcessId, 0);
 
-  /* windows_continue (DBG_CONTINUE, -1); */
+  /* windows_continue (DBG_CONTINUE, -1, 0); */
 }
 
 static void
 windows_mourn_inferior (struct target_ops *ops)
 {
-  (void) windows_continue (DBG_CONTINUE, -1);
+  (void) windows_continue (DBG_CONTINUE, -1, 0);
   i386_cleanup_dregs();
   if (open_process_used)
     {
@@ -2307,33 +2427,43 @@ windows_stop (ptid_t ptid)
   registers_changed ();		/* refresh register state */
 }
 
-static int
-windows_xfer_memory (CORE_ADDR memaddr, gdb_byte *our, int len,
-		   int write, struct mem_attrib *mem,
-		   struct target_ops *target)
+/* Helper for windows_xfer_partial that handles memory transfers.
+   Arguments are like target_xfer_partial.  */
+
+static LONGEST
+windows_xfer_memory (gdb_byte *readbuf, const gdb_byte *writebuf,
+		     ULONGEST memaddr, LONGEST len)
 {
   SIZE_T done = 0;
-  if (write)
+  BOOL success;
+  DWORD lasterror = 0;
+
+  if (writebuf != NULL)
     {
-      DEBUG_MEM (("gdb: write target memory, %d bytes at %s\n",
-		  len, core_addr_to_string (memaddr)));
-      if (!WriteProcessMemory (current_process_handle,
-			       (LPVOID) (uintptr_t) memaddr, our,
-			       len, &done))
-	done = 0;
+      DEBUG_MEM (("gdb: write target memory, %s bytes at %s\n",
+		  plongest (len), core_addr_to_string (memaddr)));
+      success = WriteProcessMemory (current_process_handle,
+				    (LPVOID) (uintptr_t) memaddr, writebuf,
+				    len, &done);
+      if (!success)
+	lasterror = GetLastError ();
       FlushInstructionCache (current_process_handle,
 			     (LPCVOID) (uintptr_t) memaddr, len);
     }
   else
     {
-      DEBUG_MEM (("gdb: read target memory, %d bytes at %s\n",
-		  len, core_addr_to_string (memaddr)));
-      if (!ReadProcessMemory (current_process_handle,
-			      (LPCVOID) (uintptr_t) memaddr, our,
-			      len, &done))
-	done = 0;
+      DEBUG_MEM (("gdb: read target memory, %s bytes at %s\n",
+		  plongest (len), core_addr_to_string (memaddr)));
+      success = ReadProcessMemory (current_process_handle,
+				   (LPCVOID) (uintptr_t) memaddr, readbuf,
+				   len, &done);
+      if (!success)
+	lasterror = GetLastError ();
     }
-  return done;
+  if (!success && lasterror == ERROR_PARTIAL_COPY && done > 0)
+    return done;
+  else
+    return success ? done : TARGET_XFER_E_IO;
 }
 
 static void
@@ -2343,7 +2473,7 @@ windows_kill_inferior (struct target_ops *ops)
 
   for (;;)
     {
-      if (!windows_continue (DBG_CONTINUE, -1))
+      if (!windows_continue (DBG_CONTINUE, -1, 1))
 	break;
       if (!WaitForDebugEvent (&current_event, INFINITE))
 	break;
@@ -2367,10 +2497,10 @@ windows_can_run (void)
 }
 
 static void
-windows_close (int x)
+windows_close (void)
 {
   DEBUG_EVENTS (("gdb: windows_close, inferior_ptid=%d\n",
-		PIDGET (inferior_ptid)));
+		ptid_get_pid (inferior_ptid)));
 }
 
 /* Convert pid to printable format.  */
@@ -2434,13 +2564,7 @@ windows_xfer_partial (struct target_ops *ops, enum target_object object,
   switch (object)
     {
     case TARGET_OBJECT_MEMORY:
-      if (readbuf)
-	return (*ops->deprecated_xfer_memory) (offset, readbuf,
-					       len, 0/*read*/, NULL, ops);
-      if (writebuf)
-	return (*ops->deprecated_xfer_memory) (offset, (gdb_byte *) writebuf,
-					       len, 1/*write*/, NULL, ops);
-      return -1;
+      return windows_xfer_memory (readbuf, writebuf, offset, len);
 
     case TARGET_OBJECT_LIBRARIES:
       return windows_xfer_shared_libraries (ops, object, annex, readbuf,
@@ -2494,7 +2618,6 @@ init_windows_ops (void)
   windows_ops.to_fetch_registers = windows_fetch_inferior_registers;
   windows_ops.to_store_registers = windows_store_inferior_registers;
   windows_ops.to_prepare_to_store = windows_prepare_to_store;
-  windows_ops.deprecated_xfer_memory = windows_xfer_memory;
   windows_ops.to_xfer_partial = windows_xfer_partial;
   windows_ops.to_files_info = windows_files_info;
   windows_ops.to_insert_breakpoint = memory_insert_breakpoint;

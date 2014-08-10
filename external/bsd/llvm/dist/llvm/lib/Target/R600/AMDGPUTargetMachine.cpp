@@ -42,7 +42,7 @@ extern "C" void LLVMInitializeR600Target() {
 }
 
 static ScheduleDAGInstrs *createR600MachineScheduler(MachineSchedContext *C) {
-  return new ScheduleDAGMILive(C, new R600SchedStrategy());
+  return new ScheduleDAGMILive(C, make_unique<R600SchedStrategy>());
 }
 
 static MachineSchedRegistry
@@ -54,7 +54,7 @@ static std::string computeDataLayout(const AMDGPUSubtarget &ST) {
 
   if (ST.is64bit()) {
     // 32-bit private, local, and region pointers. 64-bit global and constant.
-    Ret += "-p1:64:64-p2:64:64-p3:32:32-p4:32:32-p5:64:64";
+    Ret += "-p1:64:64-p2:64:64-p3:32:32-p4:64:64-p5:32:32-p24:64:64";
   }
 
   Ret += "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256"
@@ -103,20 +103,20 @@ public:
     return getTM<AMDGPUTargetMachine>();
   }
 
-  virtual ScheduleDAGInstrs *
-  createMachineScheduler(MachineSchedContext *C) const {
+  ScheduleDAGInstrs *
+  createMachineScheduler(MachineSchedContext *C) const override {
     const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
     if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
       return createR600MachineScheduler(C);
-    return 0;
+    return nullptr;
   }
 
-  virtual bool addPreISel();
-  virtual bool addInstSelector();
-  virtual bool addPreRegAlloc();
-  virtual bool addPostRegAlloc();
-  virtual bool addPreSched2();
-  virtual bool addPreEmitPass();
+  bool addPreISel() override;
+  bool addInstSelector() override;
+  bool addPreRegAlloc() override;
+  bool addPostRegAlloc() override;
+  bool addPreSched2() override;
+  bool addPreEmitPass() override;
 };
 } // End of anonymous namespace
 
@@ -154,6 +154,7 @@ AMDGPUPassConfig::addPreISel() {
 
 bool AMDGPUPassConfig::addInstSelector() {
   addPass(createAMDGPUISelDag(getAMDGPUTargetMachine()));
+  addPass(createSILowerI1CopiesPass());
   return false;
 }
 
@@ -165,6 +166,9 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
     addPass(createR600VectorRegMerger(*TM));
   } else {
     addPass(createSIFixSGPRCopiesPass(*TM));
+    // SIFixSGPRCopies can generate a lot of duplicate instructions,
+    // so we need to run MachineCSE afterwards.
+    addPass(&MachineCSEID);
   }
   return false;
 }

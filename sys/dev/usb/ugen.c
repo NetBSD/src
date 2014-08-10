@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.123 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: ugen.c,v 1.123.2.1 2014/08/10 06:54:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.123 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.123.2.1 2014/08/10 06:54:59 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -151,6 +151,7 @@ const struct cdevsw ugen_cdevsw = {
 	.d_poll = ugenpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ugenkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
 

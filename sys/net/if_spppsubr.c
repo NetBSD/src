@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.127 2013/06/29 21:06:58 rmind Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.127.4.1 2014/08/10 06:56:15 tls Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.127 2013/06/29 21:06:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.127.4.1 2014/08/10 06:56:15 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -466,11 +466,13 @@ void
 sppp_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ppp_header *h = NULL;
-	struct ifqueue *inq = 0;
+	pktqueue_t *pktq = NULL;
+	struct ifqueue *inq = NULL;
 	uint16_t protocol;
 	int s;
 	struct sppp *sp = (struct sppp *)ifp;
 	int debug = ifp->if_flags & IFF_DEBUG;
+	int isr = 0;
 
 	if (ifp->if_flags & IFF_UP) {
 		/* Count received bytes, add hardware framing */
@@ -538,19 +540,17 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 				return;
 #ifdef INET
 			case ETHERTYPE_IP:
-				schednetisr(NETISR_IP);
-				inq = &ipintrq;
+				pktq = ip_pktq;
 				break;
 #endif
 #ifdef INET6
 			case ETHERTYPE_IPV6:
-				schednetisr(NETISR_IPV6);
-				inq = &ip6intrq;
+				pktq = ip6_pktq;
 				break;
 #endif
 #ifdef IPX
 			case ETHERTYPE_IPX:
-				schednetisr(NETISR_IPX);
+				isr = NETISR_IPX;
 				inq = &ipxintrq;
 				break;
 #endif
@@ -605,9 +605,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	case PPP_IP:
 		if (sp->state[IDX_IPCP] == STATE_OPENED) {
-			schednetisr(NETISR_IP);
-			inq = &ipintrq;
 			sp->pp_last_activity = time_uptime;
+			pktq = ip_pktq;
 		}
 		break;
 #endif
@@ -620,9 +619,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 
 	case PPP_IPV6:
 		if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
-			schednetisr(NETISR_IPV6);
-			inq = &ip6intrq;
 			sp->pp_last_activity = time_uptime;
+			pktq = ip6_pktq;
 		}
 		break;
 #endif
@@ -630,7 +628,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	case PPP_IPX:
 		/* IPX IPXCP not implemented yet */
 		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
-			schednetisr(NETISR_IPX);
+			isr = NETISR_IPX;
 			inq = &ipxintrq;
 		}
 		break;
@@ -638,10 +636,18 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 queue_pkt:
-	if (! (ifp->if_flags & IFF_UP) || ! inq)
+	if ((ifp->if_flags & IFF_UP) == 0 || (!inq && !pktq)) {
 		goto drop;
+	}
 
 	/* Check queue. */
+	if (__predict_true(pktq)) {
+		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			goto drop;
+		}
+		return;
+	}
+
 	s = splnet();
 	if (IF_QFULL(inq)) {
 		/* Queue overflow. */
@@ -653,6 +659,7 @@ queue_pkt:
 		goto drop;
 	}
 	IF_ENQUEUE(inq, m);
+	schednetisr(isr);
 	splx(s);
 }
 

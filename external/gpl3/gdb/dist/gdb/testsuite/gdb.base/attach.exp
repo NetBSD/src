@@ -1,4 +1,4 @@
-# Copyright 1997-2013 Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,12 +30,9 @@ if [is_remote target] then {
     return 0
 }
 
-set testfile "attach"
-set srcfile  ${testfile}.c
-set srcfile2 ${testfile}2.c
-set binfile  ${objdir}/${subdir}/${testfile}
-set binfile2 ${objdir}/${subdir}/${testfile}2
-set escapedbinfile  [string_to_regexp ${objdir}/${subdir}/${testfile}]
+standard_testfile attach.c attach2.c
+set binfile2 ${binfile}2
+set escapedbinfile  [string_to_regexp $binfile]
 
 #execute_anywhere "rm -f ${binfile} ${binfile2}"
 remote_exec build "rm -f ${binfile} ${binfile2}"
@@ -67,7 +64,6 @@ proc do_attach_tests {} {
     global escapedbinfile
     global srcfile
     global testfile
-    global objdir
     global subdir
     global timeout
     
@@ -298,7 +294,7 @@ proc do_attach_tests {} {
     # when we're cd'd to some directory that doesn't contain the
     # a.out.  (We use the source path set by the "dir" command.)
     
-    gdb_test "dir ${objdir}/${subdir}" "Source directories searched: .*" \
+    gdb_test "dir [standard_output_file {}]" "Source directories searched: .*" \
 	"set source path"
 
     gdb_test "cd /tmp" "Working directory /tmp." \

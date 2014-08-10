@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2014/02/12 22:28:43 pooka Exp $
+# $NetBSD: Makefile.inc,v 1.2.2.1 2014/08/10 06:56:51 tls Exp $
 
 CPPFLAGS+=	-DARCH_ELFSIZE=32
 

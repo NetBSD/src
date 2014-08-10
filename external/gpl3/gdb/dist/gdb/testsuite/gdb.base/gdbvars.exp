@@ -1,4 +1,4 @@
-# Copyright (C) 1992-2013 Free Software Foundation, Inc.
+# Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,12 +16,10 @@
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
 
-set testfile "gdbvars"
-set srcfile  ${testfile}.c
-set binfile  ${objdir}/${subdir}/${testfile}
+standard_testfile
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-    untested gdbvars.exp
+if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
+    untested $testfile.exp
     return -1
 }
 
@@ -54,6 +52,34 @@ proc test_convenience_variables {} {
 
     gdb_test "print \$bar"		" = void" \
 	"Print contents of uninitialized convenience variable"
+}
+
+proc test_convenience_functions {} {
+    gdb_test "print \$_isvoid" " = <internal function _isvoid>" \
+	"Print internal function \$_isvoid"
+
+    gdb_test "print \$isvoid_foo" " = void" \
+	"Print void convenience variable"
+
+    gdb_test "print \$_isvoid (\$isvoid_foo)" " = 1" \
+	"Check whether void convenience variable is void"
+
+    gdb_test_no_output "set \$isvoid_foo = 1" \
+	"Set void convenience variable to 1"
+
+    gdb_test "print \$_isvoid (\$isvoid_foo)" " = 0" \
+	"Check whether non-void convenience variable is void"
+
+    # For the next test, we need the inferior to be running.
+    if { ![runto_main] } {
+	return -1
+    }
+
+    gdb_test "print \$_isvoid (foo_void ())" " = 1" \
+	"Check whether void function is void"
+
+    gdb_test "print \$_isvoid (foo_int ())" " = 0" \
+	"Check whether non-void function is void"
 }
 
 proc test_value_history {} {
@@ -112,15 +138,9 @@ proc test_with_program {} {
 	"Print contents of new convenience variable of program variable"
 }
 
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
-
 gdb_test_no_output "set print sevenbit-strings"
 
 test_value_history
 test_convenience_variables
+test_convenience_functions
 test_with_program

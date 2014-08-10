@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_space.c,v 1.1 2014/04/04 12:53:59 pooka Exp $	*/
+/*	$NetBSD: rumpdev_bus_space.c,v 1.1.2.1 2014/08/10 06:56:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,7 @@
  */
 
 #include <sys/cdefs.h>
+#include <sys/atomic.h>
 
 #include <sys/param.h>
 
@@ -174,4 +175,13 @@ bus_space_unmap(bus_space_tag_t bst, bus_space_handle_t bsh,
 {
 
 	panic("%s: unimplemented", __func__);
+}
+
+void
+bus_space_barrier(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, bus_size_t len, int flags)
+{
+
+	/* weelll ... */
+	membar_sync();
 }

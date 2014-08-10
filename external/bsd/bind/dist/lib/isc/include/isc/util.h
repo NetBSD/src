@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.8 2013/11/02 17:12:23 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.8.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -241,10 +241,11 @@
  * Prevent Linux spurious warnings
  */
 #if defined(__linux__) && defined(__GNUC__) && (__GNUC__ > 3)
-#define isc_util_fwrite(a, b, c, d)	\
+#define isc_util_fwrite(a, b, c, d)    \
 	__builtin_expect(fwrite((a), (b), (c), (d)), (c))
 #else
-#define isc_util_fwrite(a, b, c, d)	fwrite((a), (b), (c), (d))
+#define isc_util_fwrite(a, b, c, d)    fwrite((a), (b), (c), (d))
 #endif
+
 
 #endif /* ISC_UTIL_H */

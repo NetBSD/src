@@ -1,10 +1,10 @@
-/*	$NetBSD: back-sock.h,v 1.1.1.3 2010/12/12 15:23:22 adam Exp $	*/
+/*	$NetBSD: back-sock.h,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
 /* sock.h - socket backend header file */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sock/back-sock.h,v 1.4.2.3 2010/04/13 20:23:40 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2010 The OpenLDAP Foundation.
+ * Copyright 2007-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,14 @@ LDAP_BEGIN_DECL
 struct sockinfo {
 	const char	*si_sockpath;
 	slap_mask_t	si_extensions;
+	slap_mask_t	si_ops;		/* overlay: operations to act on */
+	slap_mask_t	si_resps;	/* overlay: responses to forward */
 };
 
 #define	SOCK_EXT_BINDDN	1
 #define	SOCK_EXT_PEERNAME	2
 #define	SOCK_EXT_SSF		4
+#define	SOCK_EXT_CONNID		8
 
 extern FILE *opensock LDAP_P((
 	const char *sockpath));

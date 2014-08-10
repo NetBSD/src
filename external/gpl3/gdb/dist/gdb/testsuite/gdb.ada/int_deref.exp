@@ -1,4 +1,4 @@
-# Copyright 2008-2013 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,11 @@ clean_restart ${testfile}
 
 set bp_location [gdb_get_line_number "Pck.Watch" ${testdir}/foo.adb]
 runto "foo.adb:$bp_location"
+
+# Hijack a bit this testcase, to verify that name decoding works
+# when doing symbolic address printing.
+gdb_test "print watch'address" \
+         " = \\(system\\.address\\) $hex <pck\\.watch>"
 
 gdb_test "print *long_integer(watch'address)" \
          " = 4874"

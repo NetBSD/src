@@ -2894,7 +2894,7 @@ merge_tlist (struct tlist **to, struct tlist *add, int copy)
 	  }
       if (!found)
 	{
-	  *end = copy ? add : new_tlist (NULL, add->expr, add->writer);
+	  *end = copy ? new_tlist (NULL, add->expr, add->writer) : add;
 	  end = &(*end)->next;
 	  *end = 0;
 	}
@@ -3052,7 +3052,7 @@ verify_tree (tree x, struct tlist **pbefore_sp, struct tlist **pno_sp,
       verify_tree (TREE_OPERAND (x, 0), &tmp_before, &tmp_list2, NULL_TREE);
       warn_for_collisions (tmp_list2);
       merge_tlist (pbefore_sp, tmp_before, 0);
-      merge_tlist (pbefore_sp, tmp_list2, 1);
+      merge_tlist (pbefore_sp, tmp_list2, 0);
 
       tmp_list3 = tmp_nosp = 0;
       verify_tree (TREE_OPERAND (x, 1), &tmp_list3, &tmp_nosp, NULL_TREE);
@@ -3156,12 +3156,7 @@ verify_tree (tree x, struct tlist **pbefore_sp, struct tlist **pno_sp,
 	    warn_for_collisions (tmp_nosp);
 
 	    tmp_list3 = 0;
-	    while (tmp_nosp)
-	      {
-		struct tlist *t = tmp_nosp;
-		tmp_nosp = t->next;
-		merge_tlist (&tmp_list3, t, 0);
-	      }
+	    merge_tlist (&tmp_list3, tmp_nosp, 0);
 	    t->cache_before_sp = tmp_before;
 	    t->cache_after_sp = tmp_list3;
 	  }
@@ -5511,13 +5506,13 @@ c_common_nodes_and_builtins (void)
     uint8_type_node =
       TREE_TYPE (identifier_global_value (c_get_ident (UINT8_TYPE)));
   if (UINT16_TYPE)
-    c_uint16_type_node =
+    c_uint16_type_node = uint16_type_node =
       TREE_TYPE (identifier_global_value (c_get_ident (UINT16_TYPE)));
   if (UINT32_TYPE)
-    c_uint32_type_node =
+    c_uint32_type_node = uint32_type_node =
       TREE_TYPE (identifier_global_value (c_get_ident (UINT32_TYPE)));
   if (UINT64_TYPE)
-    c_uint64_type_node =
+    c_uint64_type_node = uint64_type_node =
       TREE_TYPE (identifier_global_value (c_get_ident (UINT64_TYPE)));
   if (INT_LEAST8_TYPE)
     int_least8_type_node =
@@ -10207,6 +10202,7 @@ add_atomic_size_parameter (unsigned n, location_t loc, tree function,
 
       len = params->length ();
       vec_alloc (v, len + 1);
+      v->quick_push (build_int_cst (size_type_node, n));
       for (z = 0; z < len; z++)
 	v->quick_push ((*params)[z]);
       f = build_function_call_vec (loc, function, v, NULL);

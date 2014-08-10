@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.5 2009/04/15 01:20:57 christos Exp $	*/
+/*	$NetBSD: emit.c,v 1.5.22.1 2014/08/10 06:59:20 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit.c,v 1.5 2009/04/15 01:20:57 christos Exp $");
+__RCSID("$NetBSD: emit.c,v 1.5.22.1 2014/08/10 06:59:20 tls Exp $");
 #endif
 
 #include <ctype.h>
@@ -216,11 +216,11 @@ outint(int i)
  * the name is preceded by its length
  */
 void
-outname(const char *name)
+outname1(const char *file, size_t line, const char *name)
 {
 
 	if (name == NULL)
-		errx(1, "internal error: outname() 1");
+		errx(1, "%s, %zu: internal error: outname(NULL)", file, line);
 	outint((int)strlen(name));
 	outstrg(name);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.85 2014/03/24 19:42:58 christos Exp $	*/
+/*	$NetBSD: dcm.c,v 1.85.2.1 2014/08/10 06:53:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.85 2014/03/24 19:42:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.85.2.1 2014/08/10 06:53:57 tls Exp $");
 
 #include "opt_kgdb.h"
 
@@ -341,6 +341,7 @@ const struct cdevsw dcm_cdevsw = {
 	.d_poll = dcmpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 
@@ -1394,9 +1395,11 @@ dcmsetischeme(int brd, int flags)
 		for (i = 0; i < NDCMPORT; i++) {
 			tp = sc->sc_tty[i];
 
-			if ((c = tp->t_cc[VSTART]) != _POSIX_VDISABLE)
+			c = tty_getctrlchar(tp, VSTART);
+			if (c != _POSIX_VDISABLE)
 				dcm->dcm_bmap[c].data_data |= (1 << i);
-			if ((c = tp->t_cc[VSTOP]) != _POSIX_VDISABLE)
+			c = tty_getctrlchar(tp, VSTOP);
+			if (c != _POSIX_VDISABLE)
 				dcm->dcm_bmap[c].data_data |= (1 << i);
 		}
 	}

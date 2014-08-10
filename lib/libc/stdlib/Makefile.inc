@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.81 2014/01/08 02:15:42 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.81.2.1 2014/08/10 06:51:51 tls Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -66,6 +66,7 @@ MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
 MLINKS+=getenv.3 getenv_r.3
 MLINKS+=hcreate.3 hdestroy.3 hcreate.3 hsearch.3
 MLINKS+=hcreate.3 hcreate_r.3 hcreate.3 hdestroy_r.3 hcreate.3 hsearch_r.3
+MLINKS+=hcreate.3 hdestroy1.3 hcreate.3 hdestroy1_r.3
 MLINKS+=insque.3 remque.3
 MLINKS+=lsearch.3 lfind.3
 MLINKS+=malloc.3 calloc.3 malloc.3 realloc.3 malloc.3 free.3

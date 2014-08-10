@@ -4,7 +4,7 @@ SRCS	= alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	attr_scan_plain.c auto_clnt.c base64_code.c basename.c binhash.c \
 	chroot_uid.c cidr_match.c clean_env.c close_on_exec.c concatenate.c \
 	ctable.c dict.c dict_alloc.c dict_cdb.c dict_cidr.c dict_db.c \
-	dict_dbm.c dict_debug.c dict_env.c dict_ht.c dict_ni.c dict_nis.c \
+	dict_dbm.c dict_debug.c dict_env.c dict_ht.c dict_lmdb.c dict_ni.c dict_nis.c \
 	dict_nisplus.c dict_open.c dict_pcre.c dict_regexp.c dict_sdbm.c \
 	dict_static.c dict_tcp.c dict_unix.c dir_forest.c doze.c dummy_read.c \
 	dummy_write.c duplex_pipe.c environ.c events.c exec_command.c \
@@ -18,7 +18,7 @@ SRCS	= alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	mymalloc.c myrand.c mystrtok.c name_code.c name_mask.c netstring.c \
 	neuter.c non_blocking.c nvtable.c open_as.c open_limit.c open_lock.c \
 	peekfd.c percentm.c posix_signals.c printable.c rand_sleep.c \
-	read_wait.c readable.c readlline.c ring.c safe_getenv.c safe_open.c \
+	readlline.c ring.c safe_getenv.c safe_open.c \
 	sane_accept.c sane_connect.c sane_link.c sane_rename.c \
 	sane_socketpair.c sane_time.c scan_dir.c set_eugid.c set_ugid.c \
 	sigdelay.c skipblanks.c sock_addr.c spawn_command.c split_at.c \
@@ -28,20 +28,21 @@ SRCS	= alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	translit.c trimblanks.c unescape.c unix_connect.c unix_listen.c \
 	unix_recv_fd.c unix_send_fd.c unix_trigger.c unsafe.c uppercase.c \
 	username.c valid_hostname.c vbuf.c vbuf_print.c vstream.c \
-	vstream_popen.c vstring.c vstring_vstream.c watchdog.c writable.c \
-	write_buf.c write_wait.c sane_basename.c format_tv.c allspace.c \
+	vstream_popen.c vstring.c vstring_vstream.c watchdog.c \
+	write_buf.c sane_basename.c format_tv.c allspace.c \
 	allascii.c load_file.c killme_after.c vstream_tweak.c \
 	pass_trigger.c edit_file.c inet_windowsize.c \
 	unix_pass_fd_fix.c dict_cache.c valid_utf_8.c dict_thash.c \
 	ip_match.c nbbio.c base32_code.c dict_test.c \
 	dict_fail.c msg_rate_delay.c dict_surrogate.c warn_stat.c \
-	dict_sockmap.c line_number.c recv_pass_attr.c pass_accept.c
+	dict_sockmap.c line_number.c recv_pass_attr.c pass_accept.c \
+	poll_fd.c timecmp.c slmdb.c
 OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	attr_print64.o attr_print_plain.o attr_scan0.o attr_scan64.o \
 	attr_scan_plain.o auto_clnt.o base64_code.o basename.o binhash.o \
 	chroot_uid.o cidr_match.o clean_env.o close_on_exec.o concatenate.o \
 	ctable.o dict.o dict_alloc.o dict_cdb.o dict_cidr.o dict_db.o \
-	dict_dbm.o dict_debug.o dict_env.o dict_ht.o dict_ni.o dict_nis.o \
+	dict_dbm.o dict_debug.o dict_env.o dict_ht.o dict_lmdb.o dict_ni.o dict_nis.o \
 	dict_nisplus.o dict_open.o dict_pcre.o dict_regexp.o dict_sdbm.o \
 	dict_static.o dict_tcp.o dict_unix.o dir_forest.o doze.o dummy_read.o \
 	dummy_write.o duplex_pipe.o environ.o events.o exec_command.o \
@@ -55,7 +56,7 @@ OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	mymalloc.o myrand.o mystrtok.o name_code.o name_mask.o netstring.o \
 	neuter.o non_blocking.o nvtable.o open_as.o open_limit.o open_lock.o \
 	peekfd.o percentm.o posix_signals.o printable.o rand_sleep.o \
-	read_wait.o readable.o readlline.o ring.o safe_getenv.o safe_open.o \
+	readlline.o ring.o safe_getenv.o safe_open.o \
 	sane_accept.o sane_connect.o sane_link.o sane_rename.o \
 	sane_socketpair.o sane_time.o scan_dir.o set_eugid.o set_ugid.o \
 	sigdelay.o skipblanks.o sock_addr.o spawn_command.o split_at.o \
@@ -65,18 +66,19 @@ OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	translit.o trimblanks.o unescape.o unix_connect.o unix_listen.o \
 	unix_recv_fd.o unix_send_fd.o unix_trigger.o unsafe.o uppercase.o \
 	username.o valid_hostname.o vbuf.o vbuf_print.o vstream.o \
-	vstream_popen.o vstring.o vstring_vstream.o watchdog.o writable.o \
-	write_buf.o write_wait.o sane_basename.o format_tv.o allspace.o \
+	vstream_popen.o vstring.o vstring_vstream.o watchdog.o \
+	write_buf.o sane_basename.o format_tv.o allspace.o \
 	allascii.o load_file.o killme_after.o vstream_tweak.o \
 	pass_trigger.o edit_file.o inet_windowsize.o \
 	unix_pass_fd_fix.o dict_cache.o valid_utf_8.o dict_thash.o \
 	ip_match.o nbbio.o base32_code.o dict_test.o \
 	dict_fail.o msg_rate_delay.o dict_surrogate.o warn_stat.o \
-	dict_sockmap.o line_number.o recv_pass_attr.o pass_accept.o
+	dict_sockmap.o line_number.o recv_pass_attr.o pass_accept.o \
+	poll_fd.o timecmp.o slmdb.o
 HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	chroot_uid.h cidr_match.h clean_env.h connect.h ctable.h dict.h \
 	dict_cdb.h dict_cidr.h dict_db.h dict_dbm.h dict_env.h dict_ht.h \
-	dict_ni.h dict_nis.h dict_nisplus.h dict_pcre.h dict_regexp.h \
+	dict_lmdb.h dict_ni.h dict_nis.h dict_nisplus.h dict_pcre.h dict_regexp.h \
 	dict_sdbm.h dict_static.h dict_tcp.h dict_unix.h dir_forest.h \
 	events.h exec_command.h find_inet.h fsspace.h fullname.h \
 	get_domainname.h get_hostname.h hex_code.h hex_quote.h host_port.h \
@@ -93,7 +95,8 @@ HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	username.h valid_hostname.h vbuf.h vbuf_print.h vstream.h vstring.h \
 	vstring_vstream.h watchdog.h format_tv.h load_file.h killme_after.h \
 	edit_file.h dict_cache.h dict_thash.h ip_match.h nbbio.h base32_code.h \
-	dict_fail.h warn_stat.h dict_sockmap.h line_number.h
+	dict_fail.h warn_stat.h dict_sockmap.h line_number.h timecmp.h \
+	slmdb.h compat_va_copy.h
 TESTSRC	= fifo_open.c fifo_rdwr_bug.c fifo_rdonly_bug.c select_bug.c \
 	stream_test.c dup2_pass_on_exec.c
 DEFS	= -I. -D$(SYSTYPE)
@@ -112,7 +115,7 @@ TESTPROG= dict_open dup2_pass_on_exec events exec_command fifo_open \
 	unix_recv_fd unix_send_fd stream_recv_fd stream_send_fd hex_code \
 	myaddrinfo myaddrinfo4 inet_proto sane_basename format_tv \
 	valid_utf_8 ip_match base32_code msg_rate_delay netstring \
-	vstream
+	vstream timecmp dict_cache
 
 LIB_DIR	= ../../lib
 INC_DIR	= ../../include
@@ -452,12 +455,22 @@ vstream: $(LIB)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
+timecmp: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+dict_cache: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
 tests: valid_hostname_test mac_expand_test dict_test unescape_test \
 	hex_quote_test ctable_test inet_addr_list_test base64_code_test \
 	attr_scan64_test attr_scan0_test dict_pcre_test host_port_test \
 	dict_cidr_test attr_scan_plain_test htable_test hex_code_test \
 	myaddrinfo_test format_tv_test ip_match_test name_mask_tests \
-	base32_code_test dict_thash_test surrogate_test
+	base32_code_test dict_thash_test surrogate_test timecmp_test
 
 root_tests:
 
@@ -558,6 +571,9 @@ htable_test: htable /usr/share/dict/words
 
 hex_code_test: hex_code
 	./hex_code
+
+timecmp_test: timecmp
+	./timecmp
 
 myaddrinfo_test: myaddrinfo myaddrinfo.ref myaddrinfo.ref2
 	./myaddrinfo all belly.porcupine.org 168.100.189.2 >myaddrinfo.tmp 2>&1
@@ -709,6 +725,7 @@ attr_clnt.o: attr.h
 attr_clnt.o: attr_clnt.c
 attr_clnt.o: attr_clnt.h
 attr_clnt.o: auto_clnt.h
+attr_clnt.o: compat_va_copy.h
 attr_clnt.o: htable.h
 attr_clnt.o: iostuff.h
 attr_clnt.o: msg.h
@@ -836,6 +853,7 @@ close_on_exec.o: close_on_exec.c
 close_on_exec.o: iostuff.h
 close_on_exec.o: msg.h
 close_on_exec.o: sys_defs.h
+concatenate.o: compat_va_copy.h
 concatenate.o: concatenate.c
 concatenate.o: mymalloc.h
 concatenate.o: stringops.h
@@ -983,6 +1001,22 @@ dict_ht.o: sys_defs.h
 dict_ht.o: vbuf.h
 dict_ht.o: vstream.h
 dict_ht.o: vstring.h
+dict_lmdb.o: argv.h
+dict_lmdb.o: dict.h
+dict_lmdb.o: dict_lmdb.c
+dict_lmdb.o: dict_lmdb.h
+dict_lmdb.o: htable.h
+dict_lmdb.o: iostuff.h
+dict_lmdb.o: msg.h
+dict_lmdb.o: myflock.h
+dict_lmdb.o: mymalloc.h
+dict_lmdb.o: slmdb.h
+dict_lmdb.o: stringops.h
+dict_lmdb.o: sys_defs.h
+dict_lmdb.o: vbuf.h
+dict_lmdb.o: vstream.h
+dict_lmdb.o: vstring.h
+dict_lmdb.o: warn_stat.h
 dict_ni.o: dict_ni.c
 dict_ni.o: sys_defs.h
 dict_nis.o: argv.h
@@ -1018,6 +1052,7 @@ dict_open.o: dict_dbm.h
 dict_open.o: dict_env.h
 dict_open.o: dict_fail.h
 dict_open.o: dict_ht.h
+dict_open.o: dict_lmdb.h
 dict_open.o: dict_ni.h
 dict_open.o: dict_nis.h
 dict_open.o: dict_nisplus.h
@@ -1115,6 +1150,7 @@ dict_static.o: vbuf.h
 dict_static.o: vstream.h
 dict_static.o: vstring.h
 dict_surrogate.o: argv.h
+dict_surrogate.o: compat_va_copy.h
 dict_surrogate.o: dict.h
 dict_surrogate.o: dict_surrogate.c
 dict_surrogate.o: msg.h
@@ -1565,6 +1601,7 @@ nbbio.o: mymalloc.h
 nbbio.o: nbbio.c
 nbbio.o: nbbio.h
 nbbio.o: sys_defs.h
+netstring.o: compat_va_copy.h
 netstring.o: msg.h
 netstring.o: netstring.c
 netstring.o: netstring.h
@@ -1628,6 +1665,10 @@ percentm.o: percentm.h
 percentm.o: sys_defs.h
 percentm.o: vbuf.h
 percentm.o: vstring.h
+poll_fd.o: iostuff.h
+poll_fd.o: msg.h
+poll_fd.o: poll_fd.c
+poll_fd.o: sys_defs.h
 posix_signals.o: posix_signals.c
 posix_signals.o: posix_signals.h
 posix_signals.o: sys_defs.h
@@ -1641,14 +1682,6 @@ rand_sleep.o: msg.h
 rand_sleep.o: myrand.h
 rand_sleep.o: rand_sleep.c
 rand_sleep.o: sys_defs.h
-read_wait.o: iostuff.h
-read_wait.o: msg.h
-read_wait.o: read_wait.c
-read_wait.o: sys_defs.h
-readable.o: iostuff.h
-readable.o: msg.h
-readable.o: readable.c
-readable.o: sys_defs.h
 readlline.o: msg.h
 readlline.o: readlline.c
 readlline.o: readlline.h
@@ -1742,6 +1775,8 @@ skipblanks.o: stringops.h
 skipblanks.o: sys_defs.h
 skipblanks.o: vbuf.h
 skipblanks.o: vstring.h
+slmdb.o: slmdb.c
+slmdb.o: slmdb.h
 sock_addr.o: msg.h
 sock_addr.o: sock_addr.c
 sock_addr.o: sock_addr.h
@@ -1811,6 +1846,8 @@ stream_trigger.o: sys_defs.h
 stream_trigger.o: trigger.h
 sys_compat.o: sys_compat.c
 sys_compat.o: sys_defs.h
+timecmp.o: timecmp.c
+timecmp.o: timecmp.h
 timed_connect.o: iostuff.h
 timed_connect.o: msg.h
 timed_connect.o: sane_connect.h
@@ -1965,15 +2002,7 @@ watchdog.o: posix_signals.h
 watchdog.o: sys_defs.h
 watchdog.o: watchdog.c
 watchdog.o: watchdog.h
-writable.o: iostuff.h
-writable.o: msg.h
-writable.o: sys_defs.h
-writable.o: writable.c
 write_buf.o: iostuff.h
 write_buf.o: msg.h
 write_buf.o: sys_defs.h
 write_buf.o: write_buf.c
-write_wait.o: iostuff.h
-write_wait.o: msg.h
-write_wait.o: sys_defs.h
-write_wait.o: write_wait.c

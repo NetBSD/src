@@ -611,6 +611,8 @@ sim_debug
 sim_cflags
 sim_bswap
 MAINT
+MAINTAINER_MODE_FALSE
+MAINTAINER_MODE_TRUE
 lt_cv_dlopen_libs
 OTOOL64
 OTOOL
@@ -1391,7 +1393,8 @@ Optional Features:
   --enable-fast-install[=PKGS]
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --enable-maintainer-mode		Enable developer functionality.
+  --enable-maintainer-mode  enable make rules and dependencies not useful
+			  (and sometimes confusing) to the casual installer
   --enable-sim-bswap			Use Host specific BSWAP instruction.
   --enable-sim-cflags=opts		Extra CFLAGS for use in building simulator
   --enable-sim-debug=opts		Enable debugging flags
@@ -7384,7 +7387,7 @@ ia64-*-hpux*)
   rm -rf conftest*
   ;;
 
-x86_64-*kfreebsd*-gnu|x86_64-*linux*|ppc*-*linux*|powerpc*-*linux*| \
+x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*| \
 s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
@@ -7409,7 +7412,10 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 		;;
 	    esac
 	    ;;
-	  ppc64-*linux*|powerpc64-*linux*)
+	  powerpc64le-*linux*)
+	    LD="${LD-ld} -m elf32lppclinux"
+	    ;;
+	  powerpc64-*linux*)
 	    LD="${LD-ld} -m elf32ppclinux"
 	    ;;
 	  s390x-*linux*)
@@ -7428,7 +7434,10 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  ppc*-*linux*|powerpc*-*linux*)
+	  powerpcle-*linux*)
+	    LD="${LD-ld} -m elf64lppc"
+	    ;;
+	  powerpc-*linux*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -12254,7 +12263,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12257 "configure"
+#line 12266 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12360,7 +12369,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12363 "configure"
+#line 12372 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12603,20 +12612,28 @@ CC="$lt_save_CC"
 
 
 
-USE_MAINTAINER_MODE=no
-# Check whether --enable-maintainer-mode was given.
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
+$as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
+    # Check whether --enable-maintainer-mode was given.
 if test "${enable_maintainer_mode+set}" = set; then :
-  enableval=$enable_maintainer_mode; case "${enableval}" in
-  yes)	MAINT="" USE_MAINTAINER_MODE=yes ;;
-  no)	MAINT="#" ;;
-  *)	as_fn_error "\"--enable-maintainer-mode does not take a value\"" "$LINENO" 5; MAINT="#" ;;
-esac
-if test x"$silent" != x"yes" && test x"$MAINT" = x""; then
-  echo "Setting maintainer mode" 6>&1
-fi
+  enableval=$enable_maintainer_mode; USE_MAINTAINER_MODE=$enableval
 else
-  MAINT="#"
+  USE_MAINTAINER_MODE=no
 fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $USE_MAINTAINER_MODE" >&5
+$as_echo "$USE_MAINTAINER_MODE" >&6; }
+   if test $USE_MAINTAINER_MODE = yes; then
+  MAINTAINER_MODE_TRUE=
+  MAINTAINER_MODE_FALSE='#'
+else
+  MAINTAINER_MODE_TRUE='#'
+  MAINTAINER_MODE_FALSE=
+fi
+
+  MAINT=$MAINTAINER_MODE_TRUE
+
 
 
 
@@ -12993,6 +13010,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PLUGINS_TRUE}" && test -z "${PLUGINS_FALSE}"; then
   as_fn_error "conditional \"PLUGINS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
+  as_fn_error "conditional \"MAINTAINER_MODE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

@@ -71,7 +71,7 @@ waits for the TCP final handshake to complete.  </p>
 <li> <p> SMTP Connection caching introduces some overhead: the
 client needs to send an RSET command to find out if a connection
 is still usable, before it can send the next MAIL FROM command.
-</p>
+This introduces one additional round-trip delay. </p>
 
 </ul>
 
@@ -200,7 +200,7 @@ lookups is ignored.  </p>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_connection_cache_destinations">smtp_connection_cache_destinations</a> = $<a href="postconf.5.html#relayhost">relayhost</a>
     <a href="postconf.5.html#smtp_connection_cache_destinations">smtp_connection_cache_destinations</a> = hotmail.com, ...
-    <a href="postconf.5.html#smtp_connection_cache_destinations">smtp_connection_cache_destinations</a> = static:all (<i>not recommended</i>)
+    <a href="postconf.5.html#smtp_connection_cache_destinations">smtp_connection_cache_destinations</a> = <a href="DATABASE_README.html#types">static</a>:all (<i>not recommended</i>)
 </pre>
 
 </blockquote>
@@ -226,11 +226,15 @@ configuration parameters. This prevents anti-social behavior. </p>
 limited number of times. This avoids triggering bugs in implementations
 that do not correctly handle multiple deliveries per session. </p>
 
-<p> With Postfix 2.2 the use count is limited with the
-<a href="postconf.5.html#smtp_connection_cache_reuse_limit">smtp_connection_cache_reuse_limit</a> configuration parameter. With
-Postfix 2.3 this is replaced by a time limit which is specified
-with the <a href="postconf.5.html#smtp_connection_reuse_time_limit">smtp_connection_reuse_time_limit</a> parameter. In addition,
-Postfix 2.3 logs the use count of multiply-used connections,
+<p> As of Postfix 2.3 connection reuse is preferably limited with
+the <a href="postconf.5.html#smtp_connection_reuse_time_limit">smtp_connection_reuse_time_limit</a> parameter. In addition, Postfix
+2.11 provides <a href="postconf.5.html#smtp_connection_reuse_count_limit">smtp_connection_reuse_count_limit</a> to limit how many
+times a connection may be reused, but this feature is unsafe as it
+introduces a "fatal attractor" failure mode (when a destination has
+multiple inbound MTAs, the slowest inbound MTA will attract most
+connections from Postfix to that destination).  </p>.
+
+<p> Postfix 2.3 logs the use count of multiply-used connections,
 as shown in the following example: </p>
 
 <blockquote>

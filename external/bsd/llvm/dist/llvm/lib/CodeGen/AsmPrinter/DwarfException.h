@@ -48,9 +48,6 @@ protected:
   static unsigned SharedTypeIds(const LandingPadInfo *L,
                                 const LandingPadInfo *R);
 
-  /// PadLT - Order landing pads lexicographically by type id.
-  static bool PadLT(const LandingPadInfo *L, const LandingPadInfo *R);
-
   /// PadRange - Structure holding a try-range and the associated landing pad.
   struct PadRange {
     // The index of the landing pad.
@@ -133,19 +130,19 @@ public:
 
   /// endModule - Emit all exception information that should come after the
   /// content.
-  virtual void endModule();
+  void endModule() override;
 
   /// beginFunction - Gather pre-function exception information.  Assumes being
   /// emitted immediately after the function entry point.
-  virtual void beginFunction(const MachineFunction *MF);
+  void beginFunction(const MachineFunction *MF) override;
 
   /// endFunction - Gather and emit post-function exception information.
-  virtual void endFunction(const MachineFunction *);
+  void endFunction(const MachineFunction *) override;
 
   // We don't need these.
-  virtual void setSymbolSize(const MCSymbol *Sym, uint64_t Size) {}
-  virtual void beginInstruction(const MachineInstr *MI) {}
-  virtual void endInstruction() {}
+  void setSymbolSize(const MCSymbol *Sym, uint64_t Size) override {}
+  void beginInstruction(const MachineInstr *MI) override {}
+  void endInstruction() override {}
 };
 
 class DwarfCFIException : public DwarfException {
@@ -172,18 +169,18 @@ public:
 
   /// endModule - Emit all exception information that should come after the
   /// content.
-  virtual void endModule();
+  void endModule() override;
 
   /// beginFunction - Gather pre-function exception information.  Assumes being
   /// emitted immediately after the function entry point.
-  virtual void beginFunction(const MachineFunction *MF);
+  void beginFunction(const MachineFunction *MF) override;
 
   /// endFunction - Gather and emit post-function exception information.
-  virtual void endFunction(const MachineFunction *);
+  void endFunction(const MachineFunction *) override;
 };
 
 class ARMException : public DwarfException {
-  void EmitTypeInfos(unsigned TTypeEncoding);
+  void EmitTypeInfos(unsigned TTypeEncoding) override;
   ARMTargetStreamer &getTargetStreamer();
 
   /// shouldEmitCFI - Per-function flag to indicate if frame CFI info
@@ -199,14 +196,14 @@ public:
 
   /// endModule - Emit all exception information that should come after the
   /// content.
-  virtual void endModule();
+  void endModule() override;
 
   /// beginFunction - Gather pre-function exception information.  Assumes being
   /// emitted immediately after the function entry point.
-  virtual void beginFunction(const MachineFunction *MF);
+  void beginFunction(const MachineFunction *MF) override;
 
   /// endFunction - Gather and emit post-function exception information.
-  virtual void endFunction(const MachineFunction *);
+  void endFunction(const MachineFunction *) override;
 };
 
 class Win64Exception : public DwarfException {
@@ -231,14 +228,14 @@ public:
 
   /// endModule - Emit all exception information that should come after the
   /// content.
-  virtual void endModule();
+  void endModule() override;
 
   /// beginFunction - Gather pre-function exception information.  Assumes being
   /// emitted immediately after the function entry point.
-  virtual void beginFunction(const MachineFunction *MF);
+  void beginFunction(const MachineFunction *MF) override;
 
   /// endFunction - Gather and emit post-function exception information.
-  virtual void endFunction(const MachineFunction *);
+  void endFunction(const MachineFunction *) override;
 };
 
 } // End of namespace llvm

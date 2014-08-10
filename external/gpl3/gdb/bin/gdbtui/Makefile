@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/10/03 18:05:27 christos Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2014/08/10 07:11:35 tls Exp $
 
 .include "../Makefile.inc"
 
@@ -13,6 +13,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/common \
 		-I${DIST}/gdb/config \
+		-I${DIST}/gdb/gnulib/import \
 		-I${DIST}/include/opcode \
 		-I${DIST} \
 		-I${.CURDIR}/../../lib/libbfd/arch/${GDB_MACHINE_ARCH} \

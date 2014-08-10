@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.137 2014/03/16 05:20:29 dholland Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.137.2.1 2014/08/10 06:54:59 tls Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.137 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.137.2.1 2014/08/10 06:54:59 tls Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -199,6 +199,7 @@ const struct cdevsw wsdisplay_cdevsw = {
 	.d_poll = wsdisplaypoll,
 	.d_mmap = wsdisplaymmap,
 	.d_kqfilter = wsdisplaykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.68 2012/07/14 15:06:26 darrenr Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.68.8.1 2014/08/10 06:51:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.68 2012/07/14 15:06:26 darrenr Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.68.8.1 2014/08/10 06:51:50 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -698,7 +698,7 @@ iruserok_sa(const void *raddr, int rlen, int superuser, const char *ruser,
 		uid = geteuid();
 		gid = getegid();
 		(void)setegid(pwd->pw_gid);
-		initgroups(pwd->pw_name, pwd->pw_gid);
+		(void)initgroups(pwd->pw_name, pwd->pw_gid);
 		(void)seteuid(pwd->pw_uid);
 		hostf = fopen(pbuf, "r");
 

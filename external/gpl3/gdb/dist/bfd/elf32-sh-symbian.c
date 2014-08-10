@@ -470,51 +470,36 @@ sh_symbian_relocate_section (bfd *                  output_bfd,
 	      continue;
 	    }
 
-	  new_hash = elf_link_hash_lookup (hash_table, ptr->new_name, FALSE, FALSE, TRUE);
-
+	  new_hash = elf_link_hash_lookup (hash_table, ptr->new_name,
+					   FALSE, FALSE, TRUE);
 	  /* If we could not find the symbol then it is a new, undefined symbol.
 	     Symbian want this behaviour - ie they want to be able to rename the
 	     reference in a reloc from one undefined symbol to another, new and
 	     undefined symbol.  So we create that symbol here.  */
 	  if (new_hash == NULL)
 	    {
-	      asection *                     psec = bfd_und_section_ptr;
-	      Elf_Internal_Sym               new_sym;
-	      bfd_vma                        new_value = 0;
-	      bfd_boolean                    skip;
-	      bfd_boolean                    override;
-	      bfd_boolean                    type_change_ok;
-	      bfd_boolean                    size_change_ok;
-
-	      new_sym.st_value = 0;
-	      new_sym.st_size  = 0;
-	      new_sym.st_name  = -1;
-	      new_sym.st_info  = ELF_ST_INFO (STB_GLOBAL, STT_FUNC);
-	      new_sym.st_other = ELF_ST_VISIBILITY (STV_DEFAULT);
-	      new_sym.st_shndx = SHN_UNDEF;
-	      new_sym.st_target_internal = 0;
-
-	      if (! _bfd_elf_merge_symbol (input_bfd, info,
-					   ptr->new_name, & new_sym,
-					   & psec, & new_value, NULL,
-					   NULL, & new_hash, & skip,
-					   & override, & type_change_ok,
-					   & size_change_ok))
+	      struct bfd_link_hash_entry *bh = NULL;
+	      bfd_boolean collect = get_elf_backend_data (input_bfd)->collect;
+	      if (_bfd_generic_link_add_one_symbol (info, input_bfd,
+						    ptr->new_name, BSF_GLOBAL,
+						    bfd_und_section_ptr, 0,
+						    NULL, FALSE, collect,
+						    &bh))
 		{
-		  _bfd_error_handler (_("%B: Failed to add renamed symbol %s"),
-				      input_bfd, ptr->new_name);
-		  continue;
+		  new_hash = (struct elf_link_hash_entry *) bh;
+		  new_hash->type = STT_FUNC;
+		  new_hash->non_elf = 0;
+
+		  if (SYMBIAN_DEBUG)
+		    fprintf (stderr, "Created new symbol %s\n", ptr->new_name);
 		}
-	      /* XXX - should we check psec, skip, override etc ?  */
+	    }
 
-	      new_hash->root.type = bfd_link_hash_undefined;
-
-	      /* Allow the symbol to become local if necessary.  */
-	      if (new_hash->dynindx == -1)
-		new_hash->def_regular = 1;
-
-	      if (SYMBIAN_DEBUG)
-		fprintf (stderr, "Created new symbol %s\n", ptr->new_name);
+	  if (new_hash == NULL)
+	    {
+	      _bfd_error_handler (_("%B: Failed to add renamed symbol %s"),
+				  input_bfd, ptr->new_name);
+	      continue;
 	    }
 
 	  /* Convert the new_hash value into a index into the table of symbol hashes.  */

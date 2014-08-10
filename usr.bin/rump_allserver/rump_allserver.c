@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.36 2014/03/21 16:26:30 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.36.2.1 2014/08/10 06:58:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.36 2014/03/21 16:26:30 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.36.2.1 2014/08/10 06:58:53 tls Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -150,14 +150,6 @@ main(int argc, char *argv[])
 	char **modarray = NULL, **libarray = NULL;
 	unsigned nmods = 0, curmod = 0, nlibs = 0, curlib = 0, libidx;
 	unsigned liblast = -1; /* XXXgcc */
-
-#ifdef __GLIBC__
-	char *p_weak;
-
-	if ((p_weak = getenv("LD_DYNAMIC_WEAK")) == NULL || *p_weak != '1')
-		fprintf(stderr, "WARNING: LD_DYNAMIC_WEAK is not set to "
-		    "\"1\" in the environment\n");
-#endif
 
 #ifdef PLATFORM_HAS_SETGETPROGNAME
 	setprogname(argv[0]);

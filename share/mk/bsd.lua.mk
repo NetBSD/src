@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lua.mk,v 1.6 2013/09/12 15:36:16 joerg Exp $
+#	$NetBSD: bsd.lua.mk,v 1.6.2.1 2014/08/10 06:53:30 tls Exp $
 #
 # Build rules and definitions for Lua modules
 
@@ -64,7 +64,7 @@ CLEANFILES+= a.out [Ee]rrs mklog core *.core
 
 ##
 ##### Global variables
-LUA_VERSION?=	5.1
+LUA_VERSION?=	5.3
 LUA_LIBDIR?=	${LIBDIR}/lua/${LUA_VERSION}
 LUAC?=		/usr/bin/luac
 

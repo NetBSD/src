@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conf.c,v 1.5 2013/11/22 00:25:51 rmind Exp $	*/
+/*	$NetBSD: npf_conf.c,v 1.5.2.1 2014/08/10 06:56:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.5 2013/11/22 00:25:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.5.2.1 2014/08/10 06:56:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.5 2013/11/22 00:25:51 rmind Exp $");
 #include <sys/mutex.h>
 
 #include "npf_impl.h"
+#include "npf_conn.h"
 
 typedef struct {
 	npf_ruleset_t *		n_rules;
@@ -90,7 +91,7 @@ npf_config_init(void)
 	rpset = npf_rprocset_create();
 	rlset = npf_ruleset_create(0);
 	nset = npf_ruleset_create(0);
-	npf_config_reload(dict, rlset, tset, nset, rpset, true);
+	npf_config_load(dict, rlset, tset, nset, rpset, NULL, true);
 	KASSERT(npf_config != NULL);
 }
 
@@ -108,8 +109,11 @@ npf_config_destroy(npf_config_t *nc)
 void
 npf_config_fini(void)
 {
+	/* Flush the connections. */
 	mutex_enter(&npf_config_lock);
+	npf_conn_tracking(false);
 	pserialize_perform(npf_config_psz);
+	npf_conn_load(NULL, false);
 	npf_ifmap_flush();
 	mutex_exit(&npf_config_lock);
 
@@ -119,13 +123,13 @@ npf_config_fini(void)
 }
 
 /*
- * npf_config_reload: the main routine performing configuration reload.
+ * npf_config_load: the main routine performing configuration load.
  * Performs the necessary synchronisation and destroys the old config.
  */
 void
-npf_config_reload(prop_dictionary_t dict, npf_ruleset_t *rset,
+npf_config_load(prop_dictionary_t dict, npf_ruleset_t *rset,
     npf_tableset_t *tset, npf_ruleset_t *nset, npf_rprocset_t *rpset,
-    bool flush)
+    npf_conndb_t *conns, bool flush)
 {
 	npf_config_t *nc, *onc;
 
@@ -146,7 +150,7 @@ npf_config_reload(prop_dictionary_t dict, npf_ruleset_t *rset,
 	if ((onc = npf_config) != NULL) {
 		npf_ruleset_reload(rset, onc->n_rules);
 		npf_tableset_reload(tset, onc->n_tables);
-		npf_ruleset_natreload(nset, onc->n_nat_rules);
+		npf_ruleset_reload(nset, onc->n_nat_rules);
 	}
 
 	/*
@@ -157,8 +161,17 @@ npf_config_reload(prop_dictionary_t dict, npf_ruleset_t *rset,
 	if (onc == NULL) {
 		/* Initial load, done. */
 		npf_ifmap_flush();
+		npf_conn_load(conns, !flush);
 		mutex_exit(&npf_config_lock);
 		return;
+	}
+
+	/*
+	 * If we are going to flush the connections or load the new ones,
+	 * then disable the connection tracking for the grace period.
+	 */
+	if (flush || conns) {
+		npf_conn_tracking(false);
 	}
 
 	/* Synchronise: drain all references. */
@@ -166,6 +179,12 @@ npf_config_reload(prop_dictionary_t dict, npf_ruleset_t *rset,
 	if (flush) {
 		npf_ifmap_flush();
 	}
+
+	/*
+	 * G/C the existing connections and, if passed, load the new ones.
+	 * If not flushing - enable the connection tracking.
+	 */
+	npf_conn_load(conns, !flush);
 
 	/* Sync the config proplib data. */
 	npf_tableset_syncdict(tset, dict);

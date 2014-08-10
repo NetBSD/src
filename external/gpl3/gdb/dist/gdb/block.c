@@ -1,6 +1,6 @@
 /* Block-related functions for the GNU debugger, GDB.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -208,7 +208,7 @@ call_site_for_pc (struct gdbarch *gdbarch, CORE_ADDR pc)
 
   if (slot == NULL)
     {
-      struct minimal_symbol *msym = lookup_minimal_symbol_by_pc (pc);
+      struct bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (pc);
 
       /* DW_TAG_gnu_call_site will be missing just if GCC could not determine
 	 the call target.  */
@@ -216,7 +216,8 @@ call_site_for_pc (struct gdbarch *gdbarch, CORE_ADDR pc)
 		   _("DW_OP_GNU_entry_value resolving cannot find "
 		     "DW_TAG_GNU_call_site %s in %s"),
 		   paddress (gdbarch, pc),
-		   msym == NULL ? "???" : SYMBOL_PRINT_NAME (msym));
+		   (msym.minsym == NULL ? "???"
+		    : SYMBOL_PRINT_NAME (msym.minsym)));
     }
 
   return *slot;

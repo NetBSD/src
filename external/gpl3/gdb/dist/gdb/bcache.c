@@ -2,7 +2,7 @@
    Written by Fred Fish <fnf@cygnus.com>
    Rewritten by Jim Blandy <jimb@cygnus.com>
 
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 #include "defs.h"
 #include "gdb_obstack.h"
 #include "bcache.h"
-#include "gdb_string.h"		/* For memcpy declaration */
+#include <string.h>		/* For memcpy declaration */
 #include "gdb_assert.h"
 
 #include <stddef.h>

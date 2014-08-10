@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.11 2009/01/12 11:32:43 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.11.38.1 2014/08/10 06:53:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -531,7 +531,10 @@ le_put(struct iodesc *desc, void *pkt, size_t len)
 	int unit = /*nif->nif_unit*/0;
 	struct le_softc *sc = &le_softc[unit];
 	volatile struct mds *cdm;
-	int timo, i, stat;
+	int timo, stat;
+#if 0
+	int i;
+#endif
 
  le_put_loop:
 	timo = 100000;
@@ -545,8 +548,8 @@ le_put(struct iodesc *desc, void *pkt, size_t len)
 	if (stat & (LE_BABL | LE_CERR | LE_MISS | LE_MERR))
 		le_error(unit, "le_put(way before xmit)", stat);
 	cdm = &sc->sc_td[sc->sc_next_td];
-	i = 0;
 #if 0
+	i = 0;
 	while (cdm->flags & LE_OWN) {
 		if ((i % 100) == 0)
 			printf("le%d: output buffer busy - flags=%x\n",
@@ -631,10 +634,9 @@ le_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 	int cc;
 
 	t = getsecs();
-	cc = 0;
-	while (((getsecs() - t) < timeout) && !cc) {
+	do {
 		cc = le_poll(desc, pkt, len);
-	}
+	} while (cc == 0 && (getsecs() - t) < timeout);
 	return cc;
 }
 

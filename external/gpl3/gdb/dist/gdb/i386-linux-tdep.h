@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux x86.
 
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,19 +29,19 @@
 /* Register number for the "orig_eax" pseudo-register.  If this
    pseudo-register contains a value >= 0 it is interpreted as the
    system call number that the kernel is supposed to restart.  */
-#define I386_LINUX_ORIG_EAX_REGNUM I386_AVX_NUM_REGS
+#define I386_LINUX_ORIG_EAX_REGNUM I386_MPX_NUM_REGS
 
 /* Total number of registers for GNU/Linux.  */
 #define I386_LINUX_NUM_REGS (I386_LINUX_ORIG_EAX_REGNUM + 1)
 
 /* Get XSAVE extended state xcr0 from core dump.  */
-extern uint64_t i386_linux_core_read_xcr0
-  (struct gdbarch *gdbarch, struct target_ops *target, bfd *abfd);
+extern uint64_t i386_linux_core_read_xcr0 (bfd *abfd);
 
 /* Linux target description.  */
 extern struct target_desc *tdesc_i386_linux;
 extern struct target_desc *tdesc_i386_mmx_linux;
 extern struct target_desc *tdesc_i386_avx_linux;
+extern struct target_desc *tdesc_i386_mpx_linux;
 
 /* Format of XSAVE extended state is:
  	struct
@@ -50,6 +50,7 @@ extern struct target_desc *tdesc_i386_avx_linux;
 	  sw_usable_bytes[464..511]
 	  xstate_hdr_bytes[512..575]
 	  avx_bytes[576..831]
+	  mpx_bytes [960..1032]
 	  future_state etc
 	};
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.79 2012/11/24 15:14:32 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.79.10.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.79 2012/11/24 15:14:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.79.10.1 2014/08/10 06:55:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -827,7 +827,7 @@ kevent1(register_t *retval, int fd,
 	struct timespec	ts;
 	size_t i, n, ichange;
 	int nerrors, error;
-	struct kevent kevbuf[8];	/* approx 300 bytes on 64-bit */
+	struct kevent kevbuf[KQ_NEVENTS];	/* approx 300 bytes on 64-bit */
 	file_t *fp;
 
 	/* check that we're dealing with a kq */

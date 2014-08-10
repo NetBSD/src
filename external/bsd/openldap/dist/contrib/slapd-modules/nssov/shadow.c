@@ -1,10 +1,10 @@
-/*	$NetBSD: shadow.c,v 1.1.1.3 2010/12/12 15:19:11 adam Exp $	*/
+/*	$NetBSD: shadow.c,v 1.1.1.3.24.1 2014/08/10 07:09:44 tls Exp $	*/
 
 /* shadow.c - shadow account lookup routines */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/shadow.c,v 1.1.2.5 2010/04/15 21:32:57 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2014 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *

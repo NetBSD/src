@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.15 2012/08/23 12:06:32 drochner Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.15.12.1 2014/08/10 06:56:15 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -77,6 +77,8 @@
 
 #include <sys/callout.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 /*
  * Commands used in the SIOCSDRVSPEC ioctl.  Note the lookup of the
@@ -205,6 +207,8 @@ struct ifbrparam {
 #define	ifbrp_filter	ifbrp_ifbrpu.ifbrpu_int32	/* filtering flags */
 
 #ifdef _KERNEL
+#include <net/pktqueue.h>
+
 /*
  * Timekeeping structure used in spanning tree code.
  */
@@ -253,6 +257,8 @@ struct bridge_iflist {
 	uint8_t			bif_priority;
 	struct ifnet		*bif_ifp;	/* member if */
 	uint32_t		bif_flags;	/* member if flags */
+	uint32_t		bif_refs;	/* reference count */
+	bool			bif_waiting;	/* waiting for released  */
 };
 
 /*
@@ -297,11 +303,14 @@ struct bridge_softc {
 	callout_t		sc_brcallout;	/* bridge callout */
 	callout_t		sc_bstpcallout;	/* STP callout */
 	LIST_HEAD(, bridge_iflist) sc_iflist;	/* member interface list */
+	kmutex_t		*sc_iflist_lock;
+	kcondvar_t		sc_iflist_cv;
 	LIST_HEAD(, bridge_rtnode) *sc_rthash;	/* our forwarding table */
 	LIST_HEAD(, bridge_rtnode) sc_rtlist;	/* list version of above */
+	kmutex_t		*sc_rtlist_lock;
 	uint32_t		sc_rthash_key;	/* key for hash */
 	uint32_t		sc_filter_flags; /* ipf and flags */
-	void			*sc_softintr;
+	pktqueue_t *		sc_fwd_pktq;
 };
 
 extern const uint8_t bstp_etheraddr[];
@@ -310,14 +319,24 @@ void	bridge_ifdetach(struct ifnet *);
 
 int	bridge_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
 	    struct rtentry *);
-struct mbuf *bridge_input(struct ifnet *, struct mbuf *);
 
 void	bstp_initialization(struct bridge_softc *);
 void	bstp_stop(struct bridge_softc *);
-struct mbuf *bstp_input(struct bridge_softc *, struct bridge_iflist *, struct mbuf *);
+void	bstp_input(struct bridge_softc *, struct bridge_iflist *, struct mbuf *);
 
 void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
 	    int);
+
+#ifdef NET_MPSAFE
+#define BRIDGE_MPSAFE	1
+#endif
+
+#define BRIDGE_LOCK(_sc)	if ((_sc)->sc_iflist_lock) \
+					mutex_enter((_sc)->sc_iflist_lock)
+#define BRIDGE_UNLOCK(_sc)	if ((_sc)->sc_iflist_lock) \
+					mutex_exit((_sc)->sc_iflist_lock)
+#define BRIDGE_LOCKED(_sc)	(!(_sc)->sc_iflist_lock || \
+				 mutex_owned((_sc)->sc_iflist_lock))
 
 #endif /* _KERNEL */
 #endif /* !_NET_IF_BRIDGEVAR_H_ */

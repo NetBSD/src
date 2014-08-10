@@ -1,5 +1,5 @@
 /* Include file for stabs debugging format support functions.
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -172,7 +172,8 @@ extern struct partial_symtab *end_psymtab (struct objfile *objfile,
 					   int textlow_not_set);
 
 extern void process_one_symbol (int, int, CORE_ADDR, char *,
-				struct section_offsets *, struct objfile *);
+				const struct section_offsets *,
+				struct objfile *);
 
 extern void elfstab_build_psymtabs (struct objfile *objfile,
 				    asection *stabsect,

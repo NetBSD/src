@@ -1,6 +1,6 @@
 /* GDB parameters implemented in Python
 
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -89,7 +89,8 @@ struct parmpy_object
 
 typedef struct parmpy_object parmpy_object;
 
-static PyTypeObject parmpy_object_type;
+static PyTypeObject parmpy_object_type
+    CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("parmpy_object");
 
 /* Some handy string constants.  */
 static PyObject *set_doc_cst;
@@ -133,7 +134,7 @@ set_parameter_value (parmpy_object *self, PyObject *value)
 	  && (self->type == var_filename
 	      || value != Py_None))
 	{
-	  PyErr_SetString (PyExc_RuntimeError, 
+	  PyErr_SetString (PyExc_RuntimeError,
 			   _("String required for filename."));
 
 	  return -1;
@@ -166,7 +167,7 @@ set_parameter_value (parmpy_object *self, PyObject *value)
 
 	if (! gdbpy_is_string (value))
 	  {
-	    PyErr_SetString (PyExc_RuntimeError, 
+	    PyErr_SetString (PyExc_RuntimeError,
 			     _("ENUM arguments must be a string."));
 	    return -1;
 	  }
@@ -191,12 +192,12 @@ set_parameter_value (parmpy_object *self, PyObject *value)
     case var_boolean:
       if (! PyBool_Check (value))
 	{
-	  PyErr_SetString (PyExc_RuntimeError, 
+	  PyErr_SetString (PyExc_RuntimeError,
 			   _("A boolean argument is required."));
 	  return -1;
 	}
       cmp = PyObject_IsTrue (value);
-      if (cmp < 0) 
+      if (cmp < 0)
 	  return -1;
       self->value.intval = cmp;
       break;
@@ -215,10 +216,10 @@ set_parameter_value (parmpy_object *self, PyObject *value)
 	{
 	  cmp = PyObject_IsTrue (value);
 	  if (cmp < 0 )
-	    return -1;	  
+	    return -1;	
 	  if (cmp == 1)
 	    self->value.autoboolval = AUTO_BOOLEAN_TRUE;
-	  else 
+	  else
 	    self->value.autoboolval = AUTO_BOOLEAN_FALSE;
 	}
       break;
@@ -232,7 +233,7 @@ set_parameter_value (parmpy_object *self, PyObject *value)
 
 	if (! PyInt_Check (value))
 	  {
-	    PyErr_SetString (PyExc_RuntimeError, 
+	    PyErr_SetString (PyExc_RuntimeError,
 			     _("The value must be integer."));
 	    return -1;
 	  }
@@ -257,7 +258,7 @@ set_parameter_value (parmpy_object *self, PyObject *value)
 
 	if (! ok)
 	  {
-	    PyErr_SetString (PyExc_RuntimeError, 
+	    PyErr_SetString (PyExc_RuntimeError,
 			     _("Range exceeded."));
 	    return -1;
 	  }
@@ -267,7 +268,7 @@ set_parameter_value (parmpy_object *self, PyObject *value)
       }
 
     default:
-      PyErr_SetString (PyExc_RuntimeError, 
+      PyErr_SetString (PyExc_RuntimeError,
 		       _("Unhandled type in parameter value."));
       return -1;
     }
@@ -373,8 +374,6 @@ get_set_value (char *args, int from_tty,
   if (! set_doc_func)
     goto error;
 
-  make_cleanup_py_decref (set_doc_func);
-
   if (PyObject_HasAttr (obj, set_doc_func))
     {
       set_doc_string = call_doc_function (obj, set_doc_func, NULL);
@@ -392,10 +391,12 @@ get_set_value (char *args, int from_tty,
   make_cleanup (xfree, set_doc_string);
   fprintf_filtered (gdb_stdout, "%s\n", set_doc_string);
 
+  Py_XDECREF (set_doc_func);
   do_cleanups (cleanup);
   return;
 
  error:
+  Py_XDECREF (set_doc_func);
   gdbpy_print_stack ();
   do_cleanups (cleanup);
   return;
@@ -421,8 +422,6 @@ get_show_value (struct ui_file *file, int from_tty,
   if (! show_doc_func)
     goto error;
 
-  make_cleanup_py_decref (show_doc_func);
-
   if (PyObject_HasAttr (obj, show_doc_func))
     {
       PyObject *val_obj = PyString_FromString (value);
@@ -430,9 +429,8 @@ get_show_value (struct ui_file *file, int from_tty,
       if (! val_obj)
 	goto error;
 
-      make_cleanup_py_decref (val_obj);
-
       show_doc_string = call_doc_function (obj, show_doc_func, val_obj);
+      Py_DECREF (val_obj);
       if (! show_doc_string)
 	goto error;
 
@@ -450,10 +448,12 @@ get_show_value (struct ui_file *file, int from_tty,
       fprintf_filtered (file, "%s %s\n", show_doc_string, value);
     }
 
+  Py_XDECREF (show_doc_func);
   do_cleanups (cleanup);
   return;
 
  error:
+  Py_XDECREF (show_doc_func);
   gdbpy_print_stack ();
   do_cleanups (cleanup);
   return;
@@ -470,7 +470,7 @@ add_setshow_generic (int parmclass, enum command_class cmdclass,
 		     struct cmd_list_element **show_list)
 {
   struct cmd_list_element *param = NULL;
-  char *tmp_name = NULL;
+  const char *tmp_name = NULL;
 
   switch (parmclass)
     {
@@ -580,7 +580,7 @@ compute_enum_values (parmpy_object *self, PyObject *enum_values)
 
   if (! PySequence_Check (enum_values))
     {
-      PyErr_SetString (PyExc_RuntimeError, 
+      PyErr_SetString (PyExc_RuntimeError,
 		       _("The enumeration is not a sequence."));
       return 0;
     }
@@ -590,7 +590,7 @@ compute_enum_values (parmpy_object *self, PyObject *enum_values)
     return 0;
   if (size == 0)
     {
-      PyErr_SetString (PyExc_RuntimeError, 
+      PyErr_SetString (PyExc_RuntimeError,
 		       _("The enumeration is empty."));
       return 0;
     }
@@ -610,12 +610,14 @@ compute_enum_values (parmpy_object *self, PyObject *enum_values)
 	}
       if (! gdbpy_is_string (item))
 	{
+	  Py_DECREF (item);
 	  do_cleanups (back_to);
-	  PyErr_SetString (PyExc_RuntimeError, 
+	  PyErr_SetString (PyExc_RuntimeError,
 			   _("The enumeration item not a string."));
 	  return 0;
 	}
       self->enumeration[i] = python_string_to_host_string (item);
+      Py_DECREF (item);
       if (self->enumeration[i] == NULL)
 	{
 	  do_cleanups (back_to);
@@ -748,33 +750,32 @@ parmpy_init (PyObject *self, PyObject *args, PyObject *kwds)
 
 
 /* Initialize the 'parameters' module.  */
-void
+int
 gdbpy_initialize_parameters (void)
 {
   int i;
 
   parmpy_object_type.tp_new = PyType_GenericNew;
   if (PyType_Ready (&parmpy_object_type) < 0)
-    return;
+    return -1;
 
   set_doc_cst = PyString_FromString ("set_doc");
   if (! set_doc_cst)
-    return;
+    return -1;
   show_doc_cst = PyString_FromString ("show_doc");
   if (! show_doc_cst)
-    return;
+    return -1;
 
   for (i = 0; parm_constants[i].name; ++i)
     {
       if (PyModule_AddIntConstant (gdb_module,
 				   parm_constants[i].name,
 				   parm_constants[i].value) < 0)
-	return;
+	return -1;
     }
 
-  Py_INCREF (&parmpy_object_type);
-  PyModule_AddObject (gdb_module, "Parameter",
-		      (PyObject *) &parmpy_object_type);
+  return gdb_pymodule_addobject (gdb_module, "Parameter",
+				 (PyObject *) &parmpy_object_type);
 }
 
 

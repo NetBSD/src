@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.42 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.42.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.42 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.42.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.42 2014/02/25 18:30:11 pooka Exp $")
 #include <sys/evcnt.h>
 
 /*
- * Priority related defintions.
+ * Priority related definitions.
  */
 #define	PRI_TS_COUNT	(NPRI_USER)
 #define	PRI_RT_COUNT	(PRI_COUNT - PRI_TS_COUNT)

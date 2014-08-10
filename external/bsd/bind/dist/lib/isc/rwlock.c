@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.c,v 1.6 2012/06/05 00:42:31 christos Exp $	*/
+/*	$NetBSD: rwlock.c,v 1.6.10.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -41,7 +41,7 @@
 
 isc_result_t
 isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
-		unsigned int write_quota)
+               unsigned int write_quota)
 {
 	REQUIRE(rwl != NULL);
 
@@ -104,9 +104,9 @@ isc_rwlock_tryupgrade(isc_rwlock_t *rwl)
 	REQUIRE(rwl != NULL);
 
 	/*
-	 * XXX: we need to make sure we are holding a read lock here
-	 * but how to do it atomically?
-	 */
+	* XXX: we need to make sure we are holding a read lock here
+	* but how to do it atomically?
+	*/
 	return pthread_rwlock_trywrlock(rwl) == 0 ?
 	    ISC_R_SUCCESS : ISC_R_LOCKBUSY;
 }
@@ -117,9 +117,9 @@ isc_rwlock_downgrade(isc_rwlock_t *rwl)
 	REQUIRE(rwl != NULL);
 
 	/*
-	 * XXX: we need to make sure we are holding a write lock here
-	 * and then give it up and get a read lock but how to do it atomically?
-	 */
+	* XXX: we need to make sure we are holding a write lock here
+	* and then give it up and get a read lock but how to do it atomically?
+	*/
 	pthread_rwlock_unlock(rwl);
 	REQUIRE(pthread_rwlock_tryrdlock(rwl) == 0);
 }
@@ -142,6 +142,7 @@ isc_rwlock_destroy(isc_rwlock_t *rwl)
 }
 
 #else /* !ISC_PLATFORM_USE_NATIVE_RWLOCKS */
+
 
 #ifndef RWLOCK_DEFAULT_READ_QUOTA
 #define RWLOCK_DEFAULT_READ_QUOTA 4

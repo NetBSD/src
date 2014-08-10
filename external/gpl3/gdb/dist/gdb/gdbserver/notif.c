@@ -1,5 +1,5 @@
 /* Notification to GDB.
-   Copyright (C) 1989-2013 Free Software Foundation, Inc.
+   Copyright (C) 1989-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -78,19 +78,22 @@ notif_write_event (struct notif_server *notif, char *own_buf)
 int
 handle_notif_ack (char *own_buf, int packet_len)
 {
-  int i = 0;
-  struct notif_server *np = NULL;
+  size_t i;
+  struct notif_server *np;
 
   for (i = 0; i < ARRAY_SIZE (notifs); i++)
     {
-      np = notifs[i];
-      if (strncmp (own_buf, np->ack_name, strlen (np->ack_name)) == 0
-	  && packet_len == strlen (np->ack_name))
+      const char *ack_name = notifs[i]->ack_name;
+
+      if (strncmp (own_buf, ack_name, strlen (ack_name)) == 0
+	  && packet_len == strlen (ack_name))
 	break;
     }
 
-  if (np == NULL)
+  if (i == ARRAY_SIZE (notifs))
     return 0;
+
+  np = notifs[i];
 
   /* If we're waiting for GDB to acknowledge a pending event,
      consider that done.  */

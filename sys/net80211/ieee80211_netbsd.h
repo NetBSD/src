@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.18 2013/06/27 17:47:18 christos Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.18.6.1 2014/08/10 06:56:18 tls Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -239,6 +239,8 @@ void	get_random_bytes(void *, size_t);
 void	ieee80211_sysctl_attach(struct ieee80211com *);
 void	ieee80211_sysctl_detach(struct ieee80211com *);
 void	ieee80211_load_module(const char *);
+
+void	ieee80211_rssadapt_sysctl_setup(struct sysctllog **);
 
 void	ieee80211_init(void);
 #define	IEEE80211_CRYPTO_SETUP(name)				\

@@ -1,4 +1,4 @@
-/*	$NetBSD: split_addr.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: split_addr.c,v 1.1.1.1.26.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -8,12 +8,12 @@
 /* SYNOPSIS
 /*	#include <split_addr.h>
 /*
-/*	char	*split_addr(localpart, delimiter)
+/*	char	*split_addr(localpart, delimiter_set)
 /*	char	*localpart;
-/*	int	delimiter;
+/*	const char *delimiter_set;
 /* DESCRIPTION
 /*	split_addr() null-terminates \fIlocalpart\fR at the first
-/*	occurrence of the \fIdelimiter\fR character found, and
+/*	occurrence of the \fIdelimiter\fR character(s) found, and
 /*	returns a pointer to the remainder.
 /*
 /*	Reserved addresses are not split: postmaster, mailer-daemon,
@@ -52,7 +52,7 @@
 
 /* split_addr - split address with extreme prejudice */
 
-char   *split_addr(char *localpart, int delimiter)
+char   *split_addr(char *localpart, const char *delimiter_set)
 {
     int     len;
 
@@ -69,7 +69,7 @@ char   *split_addr(char *localpart, int delimiter)
     /*
      * Backwards compatibility: don't split owner-foo or foo-request.
      */
-    if (delimiter == '-' && var_ownreq_special != 0) {
+    if (strchr(delimiter_set, '-') != 0 && var_ownreq_special != 0) {
 	if (strncasecmp(localpart, "owner-", 6) == 0)
 	    return (0);
 	if ((len = strlen(localpart) - 8) > 0
@@ -81,5 +81,10 @@ char   *split_addr(char *localpart, int delimiter)
      * Safe to split this address. Do not split the address if the result
      * would have a null localpart.
      */
-    return (delimiter == *localpart ? 0 : split_at(localpart, delimiter));
+    if ((len = strcspn(localpart, delimiter_set)) == 0 || localpart[len] == 0) {
+	return (0);
+    } else {
+	localpart[len] = 0;
+	return (localpart + len + 1);
+    }
 }

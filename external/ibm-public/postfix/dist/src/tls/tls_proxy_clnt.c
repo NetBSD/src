@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_clnt.c,v 1.1.1.1 2011/03/02 19:32:27 tron Exp $	*/
+/*	$NetBSD: tls_proxy_clnt.c,v 1.1.1.1.22.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -235,8 +235,8 @@ void    tls_proxy_context_free(TLS_SESS_STATE *tls_context)
 	myfree(tls_context->peer_CN);
     if (tls_context->issuer_CN)
 	myfree(tls_context->issuer_CN);
-    if (tls_context->peer_fingerprint)
-	myfree(tls_context->peer_fingerprint);
+    if (tls_context->peer_cert_fprint)
+	myfree(tls_context->peer_cert_fprint);
     if (tls_context->protocol)
 	myfree((char *) tls_context->protocol);
     if (tls_context->cipher_name)

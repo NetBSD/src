@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-gai.c,v 1.1.1.1 2014/02/28 17:40:16 christos Exp $	*/
+/*	$NetBSD: sample-gai.c,v 1.1.1.1.2.1 2014/08/10 07:06:44 tls Exp $	*/
 
 /*
- * Copyright (C) 2009, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,8 +20,7 @@
 
 #include <config.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <isc/net.h>
 
 #include <irs/netdb.h>
 
@@ -47,11 +46,13 @@ do_gai(int family, char *hostname) {
 	}
 
 	for (res = res0; res; res = res->ai_next) {
-		error = getnameinfo(res->ai_addr, res->ai_addrlen,
+		error = getnameinfo(res->ai_addr,
+				    (socklen_t)res->ai_addrlen,
 				    addrbuf, sizeof(addrbuf),
 				    NULL, 0, NI_NUMERICHOST);
 		if (error == 0)
-			error = getnameinfo(res->ai_addr, res->ai_addrlen,
+			error = getnameinfo(res->ai_addr,
+					    (socklen_t)res->ai_addrlen,
 					    namebuf, sizeof(namebuf),
 					    servbuf, sizeof(servbuf), 0);
 		if (error != 0) {

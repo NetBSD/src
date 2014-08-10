@@ -1,6 +1,6 @@
 /* Common target-dependent code for ppc64 GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,20 +48,21 @@
    | (((spr) & 0x3e0) << 6)                     \
    | (((xo) & 0x3ff) << 1))
 
-/* If DESC is the address of a 64-bit PowerPC FreeBSD function
-   descriptor, return the descriptor's entry point.  */
+/* If PLT is the address of a 64-bit PowerPC PLT entry,
+   return the function's entry point.  */
 
 static CORE_ADDR
-ppc64_desc_entry_point (struct gdbarch *gdbarch, CORE_ADDR desc)
+ppc64_plt_entry_point (struct gdbarch *gdbarch, CORE_ADDR plt)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  /* The first word of the descriptor is the entry point.  */
-  return (CORE_ADDR) read_memory_unsigned_integer (desc, 8, byte_order);
+  /* The first word of the PLT entry is the function entry point.  */
+  return (CORE_ADDR) read_memory_unsigned_integer (plt, 8, byte_order);
 }
 
-/* Pattern for the standard linkage function.  These are built by
-   build_plt_stub in elf64-ppc.c, whose GLINK argument is always
-   zero.  */
+/* Patterns for the standard linkage functions.  These are built by
+   build_plt_stub in bfd/elf64-ppc.c.  */
+
+/* Old ELFv1 PLT call stub.  */
 
 static struct ppc_insn_pattern ppc64_standard_linkage1[] =
   {
@@ -95,15 +96,23 @@ static struct ppc_insn_pattern ppc64_standard_linkage1[] =
     { 0, 0, 0 }
   };
 
-#define PPC64_STANDARD_LINKAGE1_LEN ARRAY_SIZE (ppc64_standard_linkage1)
+/* ELFv1 PLT call stub to access PLT entries more than +/- 32k from r2.
+   Also supports older stub with different placement of std 2,40(1),
+   a stub that omits the std 2,40(1), and both versions of power7
+   thread safety read barriers.  Note that there are actually two more
+   instructions following "cmpldi r2, 0", "bnectr+" and "b <glink_i>",
+   but there isn't any need to match them.  */
 
 static struct ppc_insn_pattern ppc64_standard_linkage2[] =
   {
+    /* std r2, 40(r1) <optional> */
+    { -1, insn_ds (62, 2, 1, 40, 0), 1 },
+
     /* addis r12, r2, <any> */
     { insn_d (-1, -1, -1, 0), insn_d (15, 12, 2, 0), 0 },
 
-    /* std r2, 40(r1) */
-    { -1, insn_ds (62, 2, 1, 40, 0), 0 },
+    /* std r2, 40(r1) <optional> */
+    { -1, insn_ds (62, 2, 1, 40, 0), 1 },
 
     /* ld r11, <any>(r12) */
     { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 11, 12, 0, 0), 0 },
@@ -114,24 +123,33 @@ static struct ppc_insn_pattern ppc64_standard_linkage2[] =
     /* mtctr r11 */
     { insn_xfx (-1, -1, -1, -1), insn_xfx (31, 11, 9, 467), 0 },
 
+    /* xor r11, r11, r11 <optional> */
+    { -1, 0x7d6b5a78, 1 },
+
+    /* add r12, r12, r11 <optional> */
+    { -1, 0x7d8c5a14, 1 },
+
     /* ld r2, <any>(r12) */
     { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 2, 12, 0, 0), 0 },
 
     /* ld r11, <any>(r12) <optional> */
     { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 11, 12, 0, 0), 1 },
 
-    /* bctr */
-    { -1, 0x4e800420, 0 },
+    /* bctr <optional> */
+    { -1, 0x4e800420, 1 },
+
+    /* cmpldi r2, 0 <optional> */
+    { -1, 0x28220000, 1 },
 
     { 0, 0, 0 }
   };
 
-#define PPC64_STANDARD_LINKAGE2_LEN ARRAY_SIZE (ppc64_standard_linkage2)
+/* ELFv1 PLT call stub to access PLT entries within +/- 32k of r2.  */
 
 static struct ppc_insn_pattern ppc64_standard_linkage3[] =
   {
-    /* std r2, 40(r1) */
-    { -1, insn_ds (62, 2, 1, 40, 0), 0 },
+    /* std r2, 40(r1) <optional> */
+    { -1, insn_ds (62, 2, 1, 40, 0), 1 },
 
     /* ld r11, <any>(r2) */
     { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 11, 2, 0, 0), 0 },
@@ -142,11 +160,123 @@ static struct ppc_insn_pattern ppc64_standard_linkage3[] =
     /* mtctr r11 */
     { insn_xfx (-1, -1, -1, -1), insn_xfx (31, 11, 9, 467), 0 },
 
+    /* xor r11, r11, r11 <optional> */
+    { -1, 0x7d6b5a78, 1 },
+
+    /* add r2, r2, r11 <optional> */
+    { -1, 0x7c425a14, 1 },
+
     /* ld r11, <any>(r2) <optional> */
     { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 11, 2, 0, 0), 1 },
 
     /* ld r2, <any>(r2) */
     { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 2, 2, 0, 0), 0 },
+
+    /* bctr <optional> */
+    { -1, 0x4e800420, 1 },
+
+    /* cmpldi r2, 0 <optional> */
+    { -1, 0x28220000, 1 },
+
+    { 0, 0, 0 }
+  };
+
+/* ELFv1 PLT call stub to access PLT entries more than +/- 32k from r2.
+   A more modern variant of ppc64_standard_linkage2 differing in
+   register usage.  */
+
+static struct ppc_insn_pattern ppc64_standard_linkage4[] =
+  {
+    /* std r2, 40(r1) <optional> */
+    { -1, insn_ds (62, 2, 1, 40, 0), 1 },
+
+    /* addis r11, r2, <any> */
+    { insn_d (-1, -1, -1, 0), insn_d (15, 11, 2, 0), 0 },
+
+    /* ld r12, <any>(r11) */
+    { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 12, 11, 0, 0), 0 },
+
+    /* addi r11, r11, <any> <optional> */
+    { insn_d (-1, -1, -1, 0), insn_d (14, 11, 11, 0), 1 },
+
+    /* mtctr r12 */
+    { insn_xfx (-1, -1, -1, -1), insn_xfx (31, 12, 9, 467), 0 },
+
+    /* xor r2, r12, r12 <optional> */
+    { -1, 0x7d826278, 1 },
+
+    /* add r11, r11, r2 <optional> */
+    { -1, 0x7d6b1214, 1 },
+
+    /* ld r2, <any>(r11) */
+    { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 2, 11, 0, 0), 0 },
+
+    /* ld r11, <any>(r11) <optional> */
+    { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 11, 11, 0, 0), 1 },
+
+    /* bctr <optional> */
+    { -1, 0x4e800420, 1 },
+
+    /* cmpldi r2, 0 <optional> */
+    { -1, 0x28220000, 1 },
+
+    { 0, 0, 0 }
+  };
+
+/* ELFv1 PLT call stub to access PLT entries within +/- 32k of r2.
+   A more modern variant of ppc64_standard_linkage3 differing in
+   register usage.  */
+
+static struct ppc_insn_pattern ppc64_standard_linkage5[] =
+  {
+    /* std r2, 40(r1) <optional> */
+    { -1, insn_ds (62, 2, 1, 40, 0), 1 },
+
+    /* ld r12, <any>(r2) */
+    { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 12, 2, 0, 0), 0 },
+
+    /* addi r2, r2, <any> <optional> */
+    { insn_d (-1, -1, -1, 0), insn_d (14, 2, 2, 0), 1 },
+
+    /* mtctr r12 */
+    { insn_xfx (-1, -1, -1, -1), insn_xfx (31, 12, 9, 467), 0 },
+
+    /* xor r11, r12, r12 <optional> */
+    { -1, 0x7d8b6278, 1 },
+
+    /* add r2, r2, r11 <optional> */
+    { -1, 0x7c425a14, 1 },
+
+    /* ld r11, <any>(r2) <optional> */
+    { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 11, 2, 0, 0), 1 },
+
+    /* ld r2, <any>(r2) */
+    { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 2, 2, 0, 0), 0 },
+
+    /* bctr <optional> */
+    { -1, 0x4e800420, 1 },
+
+    /* cmpldi r2, 0 <optional> */
+    { -1, 0x28220000, 1 },
+
+    { 0, 0, 0 }
+  };
+
+/* ELFv2 PLT call stub to access PLT entries more than +/- 32k from r2.  */
+
+static struct ppc_insn_pattern ppc64_standard_linkage6[] =
+  {
+    /* std r2, 24(r1) <optional> */
+    { -1, insn_ds (62, 2, 1, 24, 0), 1 },
+
+    /* addis r11, r2, <any> */
+    { insn_d (-1, -1, -1, 0), insn_d (15, 11, 2, 0), 0 },
+
+    /* ld r12, <any>(r11) */
+    { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 12, 11, 0, 0), 0 },
+
+    /* mtctr r12 */
+    { insn_xfx (-1, -1, -1, -1), insn_xfx (31, 12, 9, 467), 0 },
 
     /* bctr */
     { -1, 0x4e800420, 0 },
@@ -154,44 +284,69 @@ static struct ppc_insn_pattern ppc64_standard_linkage3[] =
     { 0, 0, 0 }
   };
 
-#define PPC64_STANDARD_LINKAGE3_LEN ARRAY_SIZE (ppc64_standard_linkage3)
+/* ELFv2 PLT call stub to access PLT entries within +/- 32k of r2.  */
+
+static struct ppc_insn_pattern ppc64_standard_linkage7[] =
+  {
+    /* std r2, 24(r1) <optional> */
+    { -1, insn_ds (62, 2, 1, 24, 0), 1 },
+
+    /* ld r12, <any>(r2) */
+    { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 12, 2, 0, 0), 0 },
+
+    /* mtctr r12 */
+    { insn_xfx (-1, -1, -1, -1), insn_xfx (31, 12, 9, 467), 0 },
+
+    /* bctr */
+    { -1, 0x4e800420, 0 },
+
+    { 0, 0, 0 }
+  };
 
 /* When the dynamic linker is doing lazy symbol resolution, the first
    call to a function in another object will go like this:
 
    - The user's function calls the linkage function:
 
-	 100007c4:	4b ff fc d5		bl	10000498
-	 100007c8:	e8 41 00 28		ld	r2,40(r1)
+	100003d4:   4b ff ff ad     bl      10000380 <nnnn.plt_call.printf>
+	100003d8:   e8 41 00 28     ld      r2,40(r1)
 
-   - The linkage function loads the entry point (and other stuff) from
-	 the function descriptor in the PLT, and jumps to it:
+   - The linkage function loads the entry point and toc pointer from
+     the function descriptor in the PLT, and jumps to it:
 
-	 10000498:	3d 82 00 00		addis	r12,r2,0
-	 1000049c:	f8 41 00 28		std	r2,40(r1)
-	 100004a0:	e9 6c 80 98		ld	r11,-32616(r12)
-	 100004a4:	e8 4c 80 a0		ld	r2,-32608(r12)
-	 100004a8:	7d 69 03 a6		mtctr	r11
-	 100004ac:	e9 6c 80 a8		ld	r11,-32600(r12)
-	 100004b0:	4e 80 04 20		bctr
+     <nnnn.plt_call.printf>:
+	10000380:   f8 41 00 28     std     r2,40(r1)
+	10000384:   e9 62 80 78     ld      r11,-32648(r2)
+	10000388:   7d 69 03 a6     mtctr   r11
+	1000038c:   e8 42 80 80     ld      r2,-32640(r2)
+	10000390:   28 22 00 00     cmpldi  r2,0
+	10000394:   4c e2 04 20     bnectr+ 
+	10000398:   48 00 03 a0     b       10000738 <printf@plt>
 
    - But since this is the first time that PLT entry has been used, it
-	 sends control to its glink entry.  That loads the number of the
-	 PLT entry and jumps to the common glink0 code:
+     sends control to its glink entry.  That loads the number of the
+     PLT entry and jumps to the common glink0 code:
 
-	 10000c98:	38 00 00 00		li	r0,0
-	 10000c9c:	4b ff ff dc		b	10000c78
+     <printf@plt>:
+	10000738:   38 00 00 01     li      r0,1
+	1000073c:   4b ff ff bc     b       100006f8 <__glink_PLTresolve>
 
    - The common glink0 code then transfers control to the dynamic
-	 linker's fixup code:
+     linker's fixup code:
 
-	 10000c78:	e8 41 00 28		ld	r2,40(r1)
-	 10000c7c:	3d 82 00 00		addis	r12,r2,0
-	 10000c80:	e9 6c 80 80		ld	r11,-32640(r12)
-	 10000c84:	e8 4c 80 88		ld	r2,-32632(r12)
-	 10000c88:	7d 69 03 a6		mtctr	r11
-	 10000c8c:	e9 6c 80 90		ld	r11,-32624(r12)
-	 10000c90:	4e 80 04 20		bctr
+	100006f0:   0000000000010440 .quad plt0 - (. + 16)
+     <__glink_PLTresolve>:
+	100006f8:   7d 88 02 a6     mflr    r12
+	100006fc:   42 9f 00 05     bcl     20,4*cr7+so,10000700
+	10000700:   7d 68 02 a6     mflr    r11
+	10000704:   e8 4b ff f0     ld      r2,-16(r11)
+	10000708:   7d 88 03 a6     mtlr    r12
+	1000070c:   7d 82 5a 14     add     r12,r2,r11
+	10000710:   e9 6c 00 00     ld      r11,0(r12)
+	10000714:   e8 4c 00 08     ld      r2,8(r12)
+	10000718:   7d 69 03 a6     mtctr   r11
+	1000071c:   e9 6c 00 10     ld      r11,16(r12)
+	10000720:   4e 80 04 20     bctr
 
    Eventually, this code will figure out how to skip all of this,
    including the dynamic linker.  At the moment, we just get through
@@ -210,16 +365,14 @@ ppc64_standard_linkage1_target (struct frame_info *frame,
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  /* The address of the function descriptor this linkage function
-     references.  */
-  CORE_ADDR desc
+  /* The address of the PLT entry this linkage function references.  */
+  CORE_ADDR plt
     = ((CORE_ADDR) get_frame_register_unsigned (frame,
 						tdep->ppc_gp0_regnum + 2)
        + (ppc_insn_d_field (insn[0]) << 16)
        + ppc_insn_ds_field (insn[2]));
 
-  /* The first word of the descriptor is the entry point.  Return that.  */
-  return ppc64_desc_entry_point (gdbarch, desc);
+  return ppc64_plt_entry_point (gdbarch, plt);
 }
 
 static CORE_ADDR
@@ -229,16 +382,14 @@ ppc64_standard_linkage2_target (struct frame_info *frame,
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  /* The address of the function descriptor this linkage function
-     references.  */
-  CORE_ADDR desc
+  /* The address of the PLT entry this linkage function references.  */
+  CORE_ADDR plt
     = ((CORE_ADDR) get_frame_register_unsigned (frame,
 						tdep->ppc_gp0_regnum + 2)
-       + (ppc_insn_d_field (insn[0]) << 16)
-       + ppc_insn_ds_field (insn[2]));
+       + (ppc_insn_d_field (insn[1]) << 16)
+       + ppc_insn_ds_field (insn[3]));
 
-  /* The first word of the descriptor is the entry point.  Return that.  */
-  return ppc64_desc_entry_point (gdbarch, desc);
+  return ppc64_plt_entry_point (gdbarch, plt);
 }
 
 static CORE_ADDR
@@ -248,15 +399,28 @@ ppc64_standard_linkage3_target (struct frame_info *frame,
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  /* The address of the function descriptor this linkage function
-     references.  */
-  CORE_ADDR desc
+  /* The address of the PLT entry this linkage function references.  */
+  CORE_ADDR plt
     = ((CORE_ADDR) get_frame_register_unsigned (frame,
 						tdep->ppc_gp0_regnum + 2)
        + ppc_insn_ds_field (insn[1]));
 
-  /* The first word of the descriptor is the entry point.  Return that.  */
-  return ppc64_desc_entry_point (gdbarch, desc);
+  return ppc64_plt_entry_point (gdbarch, plt);
+}
+
+static CORE_ADDR
+ppc64_standard_linkage4_target (struct frame_info *frame,
+				CORE_ADDR pc, unsigned int *insn)
+{
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  CORE_ADDR plt
+    = ((CORE_ADDR) get_frame_register_unsigned (frame, tdep->ppc_gp0_regnum + 2)
+       + (ppc_insn_d_field (insn[1]) << 16)
+       + ppc_insn_ds_field (insn[2]));
+
+  return ppc64_plt_entry_point (gdbarch, plt);
 }
 
 
@@ -266,23 +430,34 @@ ppc64_standard_linkage3_target (struct frame_info *frame,
 CORE_ADDR
 ppc64_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 {
-  unsigned int ppc64_standard_linkage1_insn[PPC64_STANDARD_LINKAGE1_LEN];
-  unsigned int ppc64_standard_linkage2_insn[PPC64_STANDARD_LINKAGE2_LEN];
-  unsigned int ppc64_standard_linkage3_insn[PPC64_STANDARD_LINKAGE3_LEN];
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+  unsigned int insns[MAX (MAX (MAX (ARRAY_SIZE (ppc64_standard_linkage1),
+				    ARRAY_SIZE (ppc64_standard_linkage2)),
+			       MAX (ARRAY_SIZE (ppc64_standard_linkage3),
+				    ARRAY_SIZE (ppc64_standard_linkage4))),
+			  MAX (MAX (ARRAY_SIZE (ppc64_standard_linkage5),
+				    ARRAY_SIZE (ppc64_standard_linkage6)),
+			       ARRAY_SIZE (ppc64_standard_linkage7))) - 1];
   CORE_ADDR target;
 
-  if (ppc_insns_match_pattern (pc, ppc64_standard_linkage1,
-			       ppc64_standard_linkage1_insn))
-    pc = ppc64_standard_linkage1_target (frame, pc,
-					 ppc64_standard_linkage1_insn);
-  else if (ppc_insns_match_pattern (pc, ppc64_standard_linkage2,
-				    ppc64_standard_linkage2_insn))
-    pc = ppc64_standard_linkage2_target (frame, pc,
-					 ppc64_standard_linkage2_insn);
-  else if (ppc_insns_match_pattern (pc, ppc64_standard_linkage3,
-				    ppc64_standard_linkage3_insn))
-    pc = ppc64_standard_linkage3_target (frame, pc,
-					 ppc64_standard_linkage3_insn);
+  if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage7, insns))
+    pc = ppc64_standard_linkage3_target (frame, pc, insns);
+  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage6, insns))
+    pc = ppc64_standard_linkage4_target (frame, pc, insns);
+  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage5, insns)
+	   && (insns[8] != 0 || insns[9] != 0))
+    pc = ppc64_standard_linkage3_target (frame, pc, insns);
+  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage4, insns)
+	   && (insns[9] != 0 || insns[10] != 0))
+    pc = ppc64_standard_linkage4_target (frame, pc, insns);
+  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage3, insns)
+	   && (insns[8] != 0 || insns[9] != 0))
+    pc = ppc64_standard_linkage3_target (frame, pc, insns);
+  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage2, insns)
+	   && (insns[10] != 0 || insns[11] != 0))
+    pc = ppc64_standard_linkage2_target (frame, pc, insns);
+  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage1, insns))
+    pc = ppc64_standard_linkage1_target (frame, pc, insns);
   else
     return 0;
 
@@ -353,7 +528,8 @@ ppc64_convert_from_func_ptr_addr (struct gdbarch *gdbarch,
       gdb_byte buf[8];
       int res;
 
-      res = bfd_get_section_contents (s->bfd, s->the_bfd_section,
+      res = bfd_get_section_contents (s->the_bfd_section->owner,
+				      s->the_bfd_section,
 				      &buf, addr - s->addr, 8);
       if (res != 0)
 	return extract_unsigned_integer (buf, 8, byte_order)

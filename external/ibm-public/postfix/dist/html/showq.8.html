@@ -13,93 +13,82 @@ SHOWQ(8)                                                              SHOWQ(8)
        <b>showq</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The <a href="showq.8.html"><b>showq</b>(8)</a> daemon reports the Postfix mail queue status.
-       It is the program that emulates the sendmail `mailq'  com-
-       mand.
+       The  <a href="showq.8.html"><b>showq</b>(8)</a>  daemon reports the Postfix mail queue status.  It is the
+       program that emulates the sendmail `mailq' command.
 
-       The <a href="showq.8.html"><b>showq</b>(8)</a> daemon can also be run in stand-alone mode by
-       the superuser. This mode of operation is used  to  emulate
-       the `mailq' command while the Postfix mail system is down.
+       The <a href="showq.8.html"><b>showq</b>(8)</a> daemon can also be run in stand-alone mode  by  the  supe-
+       ruser.  This  mode  of operation is used to emulate the `mailq' command
+       while the Postfix mail system is down.
 
 <b>SECURITY</b>
-       The <a href="showq.8.html"><b>showq</b>(8)</a> daemon can run in a chroot jail at fixed  low
-       privilege, and takes no input from the client. Its service
-       port is accessible to local untrusted users, so  the  ser-
-       vice can be susceptible to denial of service attacks.
+       The <a href="showq.8.html"><b>showq</b>(8)</a> daemon can run in a chroot jail at  fixed  low  privilege,
+       and  takes  no input from the client. Its service port is accessible to
+       local untrusted users, so the service can be susceptible to  denial  of
+       service attacks.
 
 <b>STANDARDS</b>
-       None.  The <a href="showq.8.html"><b>showq</b>(8)</a> daemon does not interact with the out-
-       side world.
+       None. The <a href="showq.8.html"><b>showq</b>(8)</a> daemon does not interact with the outside world.
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically as <a href="showq.8.html"><b>showq</b>(8)</a>
-       processes  run  for only a limited amount of time. Use the
-       command "<b>postfix reload</b>" to speed up a change.
+       Changes  to  <a href="postconf.5.html"><b>main.cf</b></a>  are picked up automatically as <a href="showq.8.html"><b>showq</b>(8)</a> processes
+       run for only a limited amount of time. Use the command "<b>postfix reload</b>"
+       to speed up a change.
 
-       The text below provides  only  a  parameter  summary.  See
-       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
+       The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
+       more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
-              <a href="master.5.html">master.cf</a> configuration files.
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How much time a Postfix daemon process may take  to
-              handle  a  request  before  it  is  terminated by a
-              built-in watchdog timer.
+              How  much  time  a  Postfix  daemon process may take to handle a
+              request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#duplicate_filter_limit">duplicate_filter_limit</a> (1000)</b>
-              The maximal number of addresses remembered  by  the
-              address  duplicate  filter  for  <a href="aliases.5.html"><b>aliases</b>(5)</a> or <a href="virtual.5.html"><b>vir-</b></a>
-              <a href="virtual.5.html"><b>tual</b>(5)</a> alias expansion, or for <a href="showq.8.html"><b>showq</b>(8)</a> queue dis-
-              plays.
+              The maximal number of addresses remembered by the address dupli-
+              cate filter for <a href="aliases.5.html"><b>aliases</b>(5)</a> or <a href="virtual.5.html"><b>virtual</b>(5)</a> alias expansion, or for
+              <a href="showq.8.html"><b>showq</b>(8)</a> queue displays.
 
        <b><a href="postconf.5.html#empty_address_recipient">empty_address_recipient</a> (MAILER-DAEMON)</b>
-              The   recipient  of  mail  addressed  to  the  null
-              address.
+              The recipient of mail addressed to the null address.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The time limit for sending or receiving information
-              over an internal communication channel.
+              The time limit for sending  or  receiving  information  over  an
+              internal communication channel.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The  maximum  amount  of  time that an idle Postfix
-              daemon process waits  for  an  incoming  connection
-              before terminating voluntarily.
+              The  maximum  amount of time that an idle Postfix daemon process
+              waits for an incoming connection before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The  maximal  number of incoming connections that a
-              Postfix daemon process will service  before  termi-
-              nating voluntarily.
+              The maximal number of incoming connections that a Postfix daemon
+              process will service before terminating voluntarily.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process  ID  of  a  Postfix  command or daemon
-              process.
+              The process ID of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The process name of a  Postfix  command  or  daemon
-              process.
+              The process name of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The  location of the Postfix top-level queue direc-
-              tory.
+              The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
-              becomes, for example, "postfix/smtpd".
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              fix/smtpd".
 
        Available in Postfix version 2.9 and later:
 
        <b><a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a> (no)</b>
-              Enable long, non-repeating, queue IDs  (queue  file
-              names).
+              Enable long, non-repeating, queue IDs (queue file names).
 
 <b>FILES</b>
        /var/spool/postfix, queue directories
@@ -113,8 +102,7 @@ SHOWQ(8)                                                              SHOWQ(8)
        syslogd(8), system logging
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

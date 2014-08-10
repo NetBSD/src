@@ -1,4 +1,4 @@
-# Copyright 2007-2013 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,6 +35,9 @@ switch -glob -- [istarget] {
     }
     "mips*-*-*" {
 	set core-regs {mips-cpu.xml mips-cp0.xml mips-fpu.xml mips-dsp.xml}
+    }
+    "nios2-*-*" {
+	set core-regs {nios2-cpu.xml}
     }
     "powerpc*-*-*" {
 	set regdir "rs6000/"
@@ -91,7 +94,8 @@ gdb_test "set tdesc file $srcdir/$subdir/single-reg.xml" \
 # Copy the core registers into the objdir if necessary, so that they
 # will be found by <xi:include>.
 foreach src ${core-regs} {
-    set file [remote_download host "$srcdir/../features/$regdir$src" "$src"]
+    set remote_filename($src) \
+	[gdb_remote_download host "$srcdir/../features/$regdir$src"]
 }
 
 # Similarly, we need to copy files under test into the objdir.
@@ -101,10 +105,13 @@ proc load_description { file errmsg } {
     global gdb_prompt
     global core-regs
     global architecture
+    global remote_filename
 
-    file delete "$subdir/regs.xml"
+    set regs_file [standard_output_file regs.xml]
+
+    file delete $regs_file
     set ifd [open "$srcdir/$subdir/$file" r]
-    set ofd [open "$subdir/regs.xml" w]
+    set ofd [open $regs_file w]
     while {[gets $ifd line] >= 0} {
 	if {[regexp {<xi:include href="core-regs.xml"/>} $line]} {
 	    if {! [string equal ${architecture} ""]} {
@@ -119,11 +126,13 @@ proc load_description { file errmsg } {
     }
     close $ifd
     close $ofd
-    remote_download host "$subdir/regs.xml" "regs.xml"
-    file delete "$subdir/regs.xml"
+
+    if {[is_remote host]} {
+	set regs_file [remote_download host "$subdir/regs.xml" "regs.xml"]
+    }
 
     # Anchor the test output, so that error messages are detected.
-    set cmd "set tdesc filename regs.xml"
+    set cmd "set tdesc filename [file tail $regs_file]"
     set msg "set tdesc filename regs.xml - from $file"
     set cmd_regex [string_to_regexp $cmd]
     gdb_test_multiple $cmd $msg {
@@ -131,7 +140,15 @@ proc load_description { file errmsg } {
 	    pass $msg
 	}
     }
-    remote_file host delete "regs.xml"
+
+    if {[is_remote host]} {
+	remote_file host delete "regs.xml"
+    }
+}
+
+if {![is_remote host]} {
+    gdb_test "cd [standard_output_file {}]" "Working directory .*" \
+	"cd to directory holding xml"
 }
 
 load_description "extra-regs.xml" ""
@@ -152,5 +169,5 @@ load_description "core-only.xml" ""
 gdb_test "ptype \$extrareg" "type = void"
 
 foreach src ${core-regs} {
-    remote_file host delete "$src"
+    remote_file host delete $remote_filename($src)
 }

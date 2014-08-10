@@ -276,6 +276,11 @@ function(llvm_add_library name)
   endif()
 
   if(ARG_SHARED)
+    if(WIN32)
+      set_target_properties(${name} PROPERTIES
+        PREFIX ""
+        )
+    endif()
     if (MSVC)
       set_target_properties(${name}
         PROPERTIES
@@ -456,7 +461,7 @@ macro(add_llvm_target target_name)
   include_directories(BEFORE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR})
-  add_llvm_library(LLVM${target_name} ${ARGN} ${TABLEGEN_OUTPUT})
+  add_llvm_library(LLVM${target_name} ${ARGN})
   set( CURRENT_LLVM_TARGET LLVM${target_name} )
 endmacro(add_llvm_target)
 
@@ -627,11 +632,12 @@ function(add_lit_target target comment)
   if (NOT CMAKE_CFG_INTDIR STREQUAL ".")
     list(APPEND LIT_ARGS --param build_mode=${CMAKE_CFG_INTDIR})
   endif ()
-  set(LIT_COMMAND
-    ${PYTHON_EXECUTABLE}
-    ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py
-    ${LIT_ARGS}
-    )
+  if (LLVM_MAIN_SRC_DIR)
+    set (LIT_COMMAND ${PYTHON_EXECUTABLE} ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+  else()
+    find_program(LIT_COMMAND llvm-lit)
+  endif ()
+  list(APPEND LIT_COMMAND ${LIT_ARGS})
   foreach(param ${ARG_PARAMS})
     list(APPEND LIT_COMMAND --param ${param})
   endforeach()

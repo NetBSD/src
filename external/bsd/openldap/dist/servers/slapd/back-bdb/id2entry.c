@@ -1,10 +1,10 @@
-/*	$NetBSD: id2entry.c,v 1.1.1.3 2010/12/12 15:22:55 adam Exp $	*/
+/*	$NetBSD: id2entry.c,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
 /* id2entry.c - routines to deal with the id2entry database */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.72.2.14 2010/04/13 20:23:24 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -133,24 +133,26 @@ int bdb_id2entry(
 	rc = entry_header( &eh );
 	if ( rc ) goto finish;
 
-	/* Get the size */
-	data.flags ^= DB_DBT_PARTIAL;
-	data.ulen = 0;
-	rc = cursor->c_get( cursor, &key, &data, DB_CURRENT );
-	if ( rc != DB_BUFFER_SMALL ) goto finish;
+	if ( eh.nvals ) {
+		/* Get the size */
+		data.flags ^= DB_DBT_PARTIAL;
+		data.ulen = 0;
+		rc = cursor->c_get( cursor, &key, &data, DB_CURRENT );
+		if ( rc != DB_BUFFER_SMALL ) goto finish;
 
-	/* Allocate a block and retrieve the data */
-	off = eh.data - eh.bv.bv_val;
-	eh.bv.bv_len = eh.nvals * sizeof( struct berval ) + data.size;
-	eh.bv.bv_val = ch_malloc( eh.bv.bv_len );
-	eh.data = eh.bv.bv_val + eh.nvals * sizeof( struct berval );
-	data.data = eh.data;
-	data.ulen = data.size;
+		/* Allocate a block and retrieve the data */
+		off = eh.data - eh.bv.bv_val;
+		eh.bv.bv_len = eh.nvals * sizeof( struct berval ) + data.size;
+		eh.bv.bv_val = ch_malloc( eh.bv.bv_len );
+		eh.data = eh.bv.bv_val + eh.nvals * sizeof( struct berval );
+		data.data = eh.data;
+		data.ulen = data.size;
 
-	/* skip past already parsed nattr/nvals */
-	eh.data += off;
+		/* skip past already parsed nattr/nvals */
+		eh.data += off;
 
-	rc = cursor->c_get( cursor, &key, &data, DB_CURRENT );
+		rc = cursor->c_get( cursor, &key, &data, DB_CURRENT );
+	}
 
 finish:
 	cursor->c_close( cursor );
@@ -159,11 +161,15 @@ finish:
 		return rc;
 	}
 
+	if ( eh.nvals ) {
 #ifdef SLAP_ZONE_ALLOC
-	rc = entry_decode(&eh, e, bdb->bi_cache.c_zctx);
+		rc = entry_decode(&eh, e, bdb->bi_cache.c_zctx);
 #else
-	rc = entry_decode(&eh, e);
+		rc = entry_decode(&eh, e);
 #endif
+	} else {
+		*e = entry_alloc();
+	}
 
 	if( rc == 0 ) {
 		(*e)->e_id = id;
@@ -244,7 +250,7 @@ int bdb_entry_release(
 	/* slapMode : SLAP_SERVER_MODE, SLAP_TOOL_MODE,
 			SLAP_TRUNCATE_MODE, SLAP_UNDEFINED_MODE */
  
-	if ( slapMode == SLAP_SERVER_MODE ) {
+	if ( slapMode & SLAP_SERVER_MODE ) {
 		/* If not in our cache, just free it */
 		if ( !e->e_private ) {
 #ifdef SLAP_ZONE_ALLOC
@@ -406,7 +412,7 @@ return_results:
 		bdb_cache_return_entry_rw(bdb, e, rw, &lock);
 
 	} else {
-		if ( slapMode == SLAP_SERVER_MODE ) {
+		if ( slapMode & SLAP_SERVER_MODE ) {
 			*ent = e;
 			/* big drag. we need a place to store a read lock so we can
 			 * release it later?? If we're in a txn, nothing is needed

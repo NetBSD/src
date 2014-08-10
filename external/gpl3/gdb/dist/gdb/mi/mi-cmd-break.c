@@ -1,5 +1,5 @@
 /* MI Command Set - breakpoint and watchpoint commands.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -23,13 +23,15 @@
 #include "ui-out.h"
 #include "mi-out.h"
 #include "breakpoint.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "mi-getopt.h"
 #include "gdb.h"
 #include "exceptions.h"
 #include "observer.h"
 #include "mi-main.h"
 #include "mi-cmd-break.h"
+#include "gdb_obstack.h"
+#include <ctype.h>
 
 enum
   {
@@ -84,11 +86,87 @@ setup_breakpoint_reporting (void)
 }
 
 
-/* Implements the -break-insert command.
-   See the MI manual for the list of possible options.  */
+/* Convert arguments in ARGV to the string in "format",argv,argv...
+   and return it.  */
 
-void
-mi_cmd_break_insert (char *command, char **argv, int argc)
+static char *
+mi_argv_to_format (char **argv, int argc)
+{
+  int i;
+  struct obstack obstack;
+  char *ret;
+
+  obstack_init (&obstack);
+
+  /* Convert ARGV[OIND + 1] to format string and save to FORMAT.  */
+  obstack_1grow (&obstack, '\"');
+  for (i = 0; i < strlen (argv[0]); i++)
+    {
+      switch (argv[0][i])
+	{
+	case '\\':
+	  obstack_grow (&obstack, "\\\\", 2);
+	  break;
+	case '\a':
+	  obstack_grow (&obstack, "\\a", 2);
+	  break;
+	case '\b':
+	  obstack_grow (&obstack, "\\b", 2);
+	  break;
+	case '\f':
+	  obstack_grow (&obstack, "\\f", 2);
+	  break;
+	case '\n':
+	  obstack_grow (&obstack, "\\n", 2);
+	  break;
+	case '\r':
+	  obstack_grow (&obstack, "\\r", 2);
+	  break;
+	case '\t':
+	  obstack_grow (&obstack, "\\t", 2);
+	  break;
+	case '\v':
+	  obstack_grow (&obstack, "\\v", 2);
+	  break;
+	case '"':
+	  obstack_grow (&obstack, "\\\"", 2);
+	  break;
+	default:
+	  if (isprint (argv[0][i]))
+	    obstack_grow (&obstack, argv[0] + i, 1);
+	  else
+	    {
+	      char tmp[5];
+
+	      xsnprintf (tmp, sizeof (tmp), "\\%o",
+			 (unsigned char) argv[0][i]);
+	      obstack_grow (&obstack, tmp, strlen (tmp));
+	    }
+	  break;
+	}
+    }
+  obstack_1grow (&obstack, '\"');
+
+  /* Apply other argv to FORMAT.  */
+  for (i = 1; i < argc; i++)
+    {
+      obstack_1grow (&obstack, ',');
+      obstack_grow (&obstack, argv[i], strlen (argv[i]));
+    }
+  obstack_1grow (&obstack, '\0');
+
+  ret = xstrdup (obstack_finish (&obstack));
+  obstack_free (&obstack, NULL);
+
+  return ret;
+}
+
+/* Insert breakpoint.
+   If dprintf is true, it will insert dprintf.
+   If not, it will insert other type breakpoint.  */
+
+static void
+mi_cmd_break_insert_1 (int dprintf, char *command, char **argv, int argc)
 {
   char *address = NULL;
   int hardware = 0;
@@ -99,9 +177,10 @@ mi_cmd_break_insert (char *command, char **argv, int argc)
   int pending = 0;
   int enabled = 1;
   int tracepoint = 0;
-  struct cleanup *back_to;
+  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
   enum bptype type_wanted;
   struct breakpoint_ops *ops;
+  char *extra_string = NULL;
 
   enum opt
     {
@@ -163,35 +242,79 @@ mi_cmd_break_insert (char *command, char **argv, int argc)
     }
 
   if (oind >= argc)
-    error (_("-break-insert: Missing <location>"));
-  if (oind < argc - 1)
-    error (_("-break-insert: Garbage following <location>"));
+    error (_("-%s-insert: Missing <location>"),
+	   dprintf ? "dprintf" : "break");
   address = argv[oind];
+  if (dprintf)
+    {
+      int format_num = oind + 1;
+
+      if (hardware || tracepoint)
+	error (_("-dprintf-insert: does not support -h or -a"));
+      if (format_num >= argc)
+	error (_("-dprintf-insert: Missing <format>"));
+
+      extra_string = mi_argv_to_format (argv + format_num, argc - format_num);
+      make_cleanup (xfree, extra_string);
+    }
+  else
+    {
+      if (oind < argc - 1)
+	error (_("-break-insert: Garbage following <location>"));
+    }
 
   /* Now we have what we need, let's insert the breakpoint!  */
-  back_to = setup_breakpoint_reporting ();
+  setup_breakpoint_reporting ();
 
-  /* Note that to request a fast tracepoint, the client uses the
-     "hardware" flag, although there's nothing of hardware related to
-     fast tracepoints -- one can implement slow tracepoints with
-     hardware breakpoints, but fast tracepoints are always software.
-     "fast" is a misnomer, actually, "jump" would be more appropriate.
-     A simulator or an emulator could conceivably implement fast
-     regular non-jump based tracepoints.  */
-  type_wanted = (tracepoint
-		 ? (hardware ? bp_fast_tracepoint : bp_tracepoint)
-		 : (hardware ? bp_hardware_breakpoint : bp_breakpoint));
-  ops = tracepoint ? &tracepoint_breakpoint_ops : &bkpt_breakpoint_ops;
+  if (tracepoint)
+    {
+      /* Note that to request a fast tracepoint, the client uses the
+	 "hardware" flag, although there's nothing of hardware related to
+	 fast tracepoints -- one can implement slow tracepoints with
+	 hardware breakpoints, but fast tracepoints are always software.
+	 "fast" is a misnomer, actually, "jump" would be more appropriate.
+	 A simulator or an emulator could conceivably implement fast
+	 regular non-jump based tracepoints.  */
+      type_wanted = hardware ? bp_fast_tracepoint : bp_tracepoint;
+      ops = &tracepoint_breakpoint_ops;
+    }
+  else if (dprintf)
+    {
+      type_wanted = bp_dprintf;
+      ops = &dprintf_breakpoint_ops;
+    }
+  else
+    {
+      type_wanted = hardware ? bp_hardware_breakpoint : bp_breakpoint;
+      ops = &bkpt_breakpoint_ops;
+    }
 
   create_breakpoint (get_current_arch (), address, condition, thread,
-		     NULL,
+		     extra_string,
 		     0 /* condition and thread are valid.  */,
 		     temp_p, type_wanted,
 		     ignore_count,
 		     pending ? AUTO_BOOLEAN_TRUE : AUTO_BOOLEAN_FALSE,
 		     ops, 0, enabled, 0, 0);
   do_cleanups (back_to);
+}
 
+/* Implements the -break-insert command.
+   See the MI manual for the list of possible options.  */
+
+void
+mi_cmd_break_insert (char *command, char **argv, int argc)
+{
+  mi_cmd_break_insert_1 (0, command, argv, argc);
+}
+
+/* Implements the -dprintf-insert command.
+   See the MI manual for the list of possible options.  */
+
+void
+mi_cmd_dprintf_insert (char *command, char **argv, int argc)
+{
+  mi_cmd_break_insert_1 (1, command, argv, argc);
 }
 
 enum wp_type

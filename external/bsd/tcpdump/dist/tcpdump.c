@@ -34,7 +34,7 @@ The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/tcpdump.c,v 1.283 2008-09-25 21:45:50 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: tcpdump.c,v 1.7 2013/12/31 17:33:31 christos Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.7.2.1 2014/08/10 07:10:13 tls Exp $");
 #endif
 #endif
 
@@ -1482,8 +1482,12 @@ main(int argc, char **argv)
 #endif /* HAVE_CAP_NG_H */
 
 	if (getuid() == 0 || geteuid() == 0) {
-		if (username || chroot_dir)
+		if (username || chroot_dir) {
+#ifndef HAVE_CAP_NG_H
+			if (!WFileName)
+#endif
 			droproot(username, chroot_dir);
+		}
 
 	}
 #endif /* WIN32 */

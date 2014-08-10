@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.189 2014/02/27 16:51:38 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.189.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.189 2014/02/27 16:51:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.189.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include "veriexec.h"
 
@@ -171,8 +171,25 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 
 #if NVERIEXEC > 0
 	error = veriexec_openchk(l, ndp->ni_vp, pathstring, fmode);
-	if (error)
-		goto bad;
+	if (error) {
+		/* We have to release the locks ourselves */
+		if (fmode & O_CREAT) {
+			if (vp == NULL) {
+				vput(ndp->ni_dvp);
+			} else {
+				VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
+				if (ndp->ni_dvp == ndp->ni_vp)
+					vrele(ndp->ni_dvp);
+				else
+					vput(ndp->ni_dvp);
+				ndp->ni_dvp = NULL;
+				vput(vp);
+			}
+		} else {
+			vput(vp);
+		}
+		goto out;
+	}
 #endif /* NVERIEXEC > 0 */
 
 	if (fmode & O_CREAT) {

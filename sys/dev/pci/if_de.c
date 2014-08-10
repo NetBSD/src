@@ -1,5 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.142.2.1 2014/04/07 03:37:33 tls Exp $	*/
-	char intrbuf[PCI_INTRSTR_LEN];
+/*	$NetBSD: if_de.c,v 1.142.2.2 2014/08/10 06:54:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -38,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.142.2.1 2014/04/07 03:37:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.142.2.2 2014/08/10 06:54:54 tls Exp $");
 
 #define	TULIP_HDR_DATA
 

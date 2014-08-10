@@ -4,9 +4,9 @@
 # SUMMARY
 #	Postfix PostgreSQL client configuration
 # SYNOPSIS
-#	\fBpostmap -q "\fIstring\fB" pgsql:/etc/postfix/filename\fR
+#	\fBpostmap -q "\fIstring\fB" pgsql:/etc/postfix/\fIfilename\fR
 #
-#	\fBpostmap -q - pgsql:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+#	\fBpostmap -q - pgsql:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
 #	rewriting or mail routing. These tables are usually in

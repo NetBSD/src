@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.S,v 1.6 2002/01/13 21:45:43 thorpej Exp $	*/
+/*	$NetBSD: fpgetsticky.S,v 1.6.76.1 2014/08/10 06:51:49 tls Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 4, 1995
@@ -19,3 +19,8 @@ ENTRY(fpgetsticky)
 	andl $63,%eax
 	addl $4,%esp
 	ret
+#ifdef WEAK_ALIAS
+END(_fpgetsticky)
+#else
+END(fpgetsticky)
+#endif

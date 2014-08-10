@@ -1,4 +1,4 @@
-#   Copyright 2010-2013 Free Software Foundation, Inc.
+#   Copyright 2010-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,34 +20,52 @@
 # ability to generate synthetic trace files directly, and the tfile
 # target is available to all GDB configs.
 
-load_lib "trace-support.exp";
+load_lib "trace-support.exp"
+
+if {![is_remote host] && ![is_remote target]} {
+    set tfile_basic [standard_output_file tfile-basic.tf]
+    set tfile_error [standard_output_file tfile-error.tf]
+    set tfile_dir [file dirname $tfile_basic]/
+    set purely_local 1
+} else {
+    set tfile_basic tfile-basic.tf
+    set tfile_error tfile-error.tf
+    set tfile_dir ""
+    set purely_local 0
+}
 
 gdb_exit
 gdb_start
 standard_testfile
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
-	  executable {debug nowarnings}] != "" } {
+	  executable \
+	  [list debug nowarnings \
+	       "additional_flags=-DTFILE_DIR=\"$tfile_dir\""]] \
+	 != "" } {
     untested ${testfile}.exp
     return -1
 }
 gdb_reinitialize_dir $srcdir/$subdir
 
 # Make sure we are starting fresh.
-remote_file host delete basic.tf
-remote_file host delete error.tf
-remote_file target delete basic.tf
-remote_file target delete error.tf
+remote_file host delete $tfile_basic
+remote_file host delete $tfile_error
+remote_file target delete $tfile_basic
+remote_file target delete $tfile_error
 
 remote_exec target "$binfile"
-# Copy tracefile from target to host through build.
-remote_download host [remote_upload target basic.tf] basic.tf
-remote_download host [remote_upload target error.tf] error.tf
+if {!$purely_local} {
+    # Copy tracefile from target to host through build.
+    remote_download host [remote_upload target tfile-basic.tf] tfile-basic.tf
+    remote_download host [remote_upload target tfile-error.tf] tfile-error.tf
+}
 
 gdb_load $binfile
 
 # Program has presumably exited, now target a trace file it created.
 
-gdb_test "target tfile basic.tf" "Created tracepoint.*" "target tfile"
+gdb_test "target tfile $tfile_basic" "Created tracepoint.*" \
+    "target tfile [file tail $tfile_basic]"
 
 gdb_test "info trace" ".*tracepoint.*in write_basic_trace_file.*" \
     "info tracepoints on trace file"
@@ -64,7 +82,22 @@ gdb_test "print testglob" " = 31415" "print testglob on trace file"
 
 gdb_test "print testglob2" " = 271828" "print testglob2 on trace file"
 
+# This global is not covered by the trace frame, but since it's const,
+# we should be able to read it from the executable.
+
 gdb_test "print constglob" " = 10000" "print constglob on trace file"
+
+# Similarly, disassembly should find the read-only pieces in the executable.
+gdb_test "disassemble main" \
+    "Dump of assembler code for function main:.*   $hex <\\+0\\>:.*End of assembler dump\."
+
+# This global is also not covered by the trace frame, and since it's
+# non-const, we should _not_ read it from the executable, as that
+# would show the variable's initial value, not the current at time the
+# trace frame was created.
+
+gdb_test "print nonconstglob" \
+    " = <unavailable>" "print nonconstglob on trace file"
 
 gdb_test "tfind" "Target failed to find requested trace frame." \
     "tfind does not find a second frame in trace file"
@@ -92,7 +125,8 @@ gdb_start
 
 gdb_load $binfile
 
-gdb_test "target tfile error.tf" "Created tracepoint.*" "target tfile"
+gdb_test "target tfile $tfile_error" "Created tracepoint.*" \
+    "target tfile [file tail $tfile_error]"
 
 gdb_test "tstatus" \
     "Using a trace file.*
@@ -104,9 +138,16 @@ Not looking at any trace frame.*" \
 
 # Make sure we can reopen without error.
 gdb_test \
-    "interpreter-exec mi \"-target-select tfile basic.tf\"" \
-    "\\^connected.*"
+    "interpreter-exec mi \"-target-select tfile $tfile_basic\"" \
+    "\\^connected.*" \
+    "interpreter-exec mi \"-target-select tfile tfile-basic.tf\""
 
 gdb_test "interpreter-exec mi \"-trace-status\"" \
-    "\\^done,supported=\"file\",trace-file=\".*basic.tf\",running=\"0\",stop-reason=\"request\",frames=\"${decimal}\",frames-created=\"${decimal}\",buffer-size=\"${decimal}\",buffer-free=\"${decimal}\",disconnected=\".*\",circular=\".*\",user-name=\"\",notes=\"\",start-time=\".*\",stop-time=\".*\"" \
+    "\\^done,supported=\"file\",trace-file=\".*$tfile_basic\",running=\"0\",stop-reason=\"request\",frames=\"${decimal}\",frames-created=\"${decimal}\",buffer-size=\"${decimal}\",buffer-free=\"${decimal}\",disconnected=\".*\",circular=\".*\",user-name=\"\",notes=\"\",start-time=\".*\",stop-time=\".*\"" \
     "-trace-status"
+
+# Test completion works well.
+
+gdb_test "target tfile [file rootname $tfile_basic]\t" \
+    "Assuming tracepoint.*" \
+    "complete-command 'target tfile'"

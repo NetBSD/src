@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.23 2011/11/15 13:25:44 tsutsui Exp $
+#	$NetBSD: files.luna68k,v 1.23.24.1 2014/08/10 06:54:00 tls Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -42,9 +42,11 @@ file arch/luna68k/dev/sio.c 		sio
 device siotty: tty
 attach siotty at sio
 file arch/luna68k/dev/siotty.c		siotty needs-flag
+
 device ws: wskbddev,wsmousedev
 attach ws at sio
 file arch/luna68k/dev/lunaws.c		ws
+file arch/luna68k/dev/omkbdmap.c	ws
 
 device fb: wsemuldisplaydev
 attach fb at mainbus

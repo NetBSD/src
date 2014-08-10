@@ -1,10 +1,12 @@
-	$NetBSD: README.compileopts,v 1.3 2014/03/16 15:31:03 pooka Exp $
+	$NetBSD: README.compileopts,v 1.3.2.1 2014/08/10 06:56:49 tls Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
 for a desciption of NetBSD build options.
 
 Note: after changing an option, do a clean build.
+
+Global options:
 
 
     RUMP_DIAGNOSTIC
@@ -77,6 +79,41 @@ effect: Control how curlwp is obtained in a rump kernel.  This is
 
 ================================================================================
 
+Rumpuser options:
+
+    RUMPUSER_THREADS
+
+values: pthread/none/fiber or <undefined>
+defval: <undefined>
+effect: Define the way threading is implemented in the rumpuser hypercall
+	implmentation.
+	<undefined> - use default implementation (currently "pthread")
+	pthread     - use pthreads to implement threading
+	none        - do not support kernel threads at all
+	fiber       - user a fiber interface, cooperatively scheduled contexts
+
+
+================================================================================
+
+Per-component options:
+
+    RUMP_SYM_NORENAME
+
+values: regexp matching symbol names
+defval: <undefined>
+effect: Causes matching symbols from the component to not be renamed
+	into the rump kernel symbol namespace (rumpns_).  This option
+	can only be used in embedded environments where there is full
+	control over the platform's namespace.	Conversely, this option
+	cannot be used in kernel components which are not meant to be
+	tied to a specific platform.  Note: the value is processed by
+	make and must be appropriately escaped.  example:
+	RUMP_SYM_NORENAME=HYPERVISOR_|block$$
+	will not rename "^HYPERVISOR_" or "^block$"
+
+
+================================================================================
+
 
 The rest of the options described in this file are not intended to be
 set by users, but by the package building rump kernels.
@@ -94,10 +131,12 @@ effect: Iff defined, export normal system call symbols from libc.
 
     RUMP_LDSCRIPT
 
-values: no/GNU/sun
+values: no/GNU/sun/ctor
 defval: GNU
 effect: Select the linker script to be used for linking rump kernel shared
 	library components.
-	no  - do not use a linker script
-	GNU - use a linker script for GNU ld 2.18 and later
-	sun - use a linker script for the Solaris linker
+	no	- do not use a linker script
+	GNU	- use a linker script for GNU ld 2.18 and later
+	sun	- use a linker script for the Solaris linker
+	ctor	- do not use a linker script, make the code
+		  generate __attribute__((constructor))

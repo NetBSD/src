@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.23 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.23.2.1 2014/08/10 06:54:50 tls Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.23 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.23.2.1 2014/08/10 06:54:50 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -285,7 +285,7 @@ bcsp_attach(device_t parent __unused, device_t self, void *aux __unused)
 	MBUFQ_INIT(&sc->sc_scoq);
 
 	/* Attach Bluetooth unit */
-	sc->sc_unit = hci_attach(&bcsp_hci, self, 0);
+	sc->sc_unit = hci_attach_pcb(&bcsp_hci, self, 0);
 
 	if ((rc = sysctl_createv(&sc->sc_log, 0, NULL, &node,
 	    0, CTLTYPE_NODE, device_xname(self),
@@ -345,7 +345,7 @@ bcsp_detach(device_t self, int flags __unused)
 	struct bcsp_softc *sc = device_private(self);
 
 	if (sc->sc_unit != NULL) {
-		hci_detach(sc->sc_unit);
+		hci_detach_pcb(sc->sc_unit);
 		sc->sc_unit = NULL;
 	}
 

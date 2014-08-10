@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.8 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.8.2.1 2014/08/10 07:06:34 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -145,18 +145,6 @@ get_checknames(const cfg_obj_t **maps, const cfg_obj_t **obj) {
 }
 
 static isc_result_t
-config_get(const cfg_obj_t **maps, const char *name, const cfg_obj_t **obj) {
-	int i;
-
-	for (i = 0;; i++) {
-		if (maps[i] == NULL)
-			return (ISC_R_NOTFOUND);
-		if (cfg_map_get(maps[i], name, obj) == ISC_R_SUCCESS)
-			return (ISC_R_SUCCESS);
-	}
-}
-
-static isc_result_t
 configure_hint(const char *zfile, const char *zclass, isc_mem_t *mctx) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
@@ -192,10 +180,12 @@ configure_zone(const char *vclass, const char *view,
 	const char *zname;
 	const char *zfile = NULL;
 	const cfg_obj_t *maps[4];
+	const cfg_obj_t *mastersobj = NULL;
 	const cfg_obj_t *zoptions = NULL;
 	const cfg_obj_t *classobj = NULL;
 	const cfg_obj_t *typeobj = NULL;
 	const cfg_obj_t *fileobj = NULL;
+	const cfg_obj_t *dlzobj = NULL;
 	const cfg_obj_t *dbobj = NULL;
 	const cfg_obj_t *obj = NULL;
 	const cfg_obj_t *fmtobj = NULL;
@@ -226,6 +216,19 @@ configure_zone(const char *vclass, const char *view,
 	if (typeobj == NULL)
 		return (ISC_R_FAILURE);
 
+	/*
+	 * Skip checks when using an alternate data source.
+	 */
+	cfg_map_get(zoptions, "database", &dbobj);
+	if (dbobj != NULL &&
+	    strcmp("rbt", cfg_obj_asstring(dbobj)) != 0 &&
+	    strcmp("rbt64", cfg_obj_asstring(dbobj)) != 0)
+		return (ISC_R_SUCCESS);
+
+	cfg_map_get(zoptions, "dlz", &dlzobj);
+	if (dlzobj != NULL)
+		return (ISC_R_SUCCESS);
+
 	cfg_map_get(zoptions, "file", &fileobj);
 	if (fileobj != NULL)
 		zfile = cfg_obj_asstring(fileobj);
@@ -241,12 +244,17 @@ configure_zone(const char *vclass, const char *view,
 		  (strcasecmp(cfg_obj_asstring(typeobj), "redirect") != 0))
 		return (ISC_R_SUCCESS);
 
+	/*
+	 * Is the redirect zone configured as a slave?
+	 */
+	if (strcasecmp(cfg_obj_asstring(typeobj), "redirect") == 0) {
+		cfg_map_get(zoptions, "masters", &mastersobj);
+		if (mastersobj != NULL)
+			return (ISC_R_SUCCESS);
+	}
+
 	if (zfile == NULL)
 		return (ISC_R_FAILURE);
-
-	cfg_map_get(zoptions, "database", &dbobj);
-	if (dbobj != NULL)
-		return (ISC_R_SUCCESS);
 
 	obj = NULL;
 	if (get_maps(maps, "check-dup-records", &obj)) {
@@ -369,8 +377,7 @@ configure_zone(const char *vclass, const char *view,
 
 	masterformat = dns_masterformat_text;
 	fmtobj = NULL;
-	result = config_get(maps, "masterfile-format", &fmtobj);
-	if (result == ISC_R_SUCCESS) {
+	if (get_maps(maps, "masterfile-format", &fmtobj)) {
 		const char *masterformatstr = cfg_obj_asstring(fmtobj);
 		if (strcasecmp(masterformatstr, "text") == 0)
 			masterformat = dns_masterformat_text;

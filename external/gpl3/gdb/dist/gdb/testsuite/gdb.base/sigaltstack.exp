@@ -1,4 +1,4 @@
-# Copyright 2004-2013 Free Software Foundation, Inc.
+# Copyright 2004-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,19 +28,15 @@ if [target_info exists gdb,nosignals] {
 }
 
 
-set testfile sigaltstack
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
+
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
     untested "Couldn't compile ${srcfile}.c"
     return -1
 }
 
 # get things started
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 # Pass all the alarms straight through (but verbosely)
 gdb_test "handle SIGALRM print pass nostop"
@@ -49,7 +45,7 @@ gdb_test "handle SIGPROF print pass nostop"
 
 # Advance to main
 if { ![runto_main] } then {
-    gdb_suppress_tests;
+    gdb_suppress_tests
 }
 
 # Stop in handle, when at the inner most level

@@ -1,14 +1,13 @@
-/*	$NetBSD: cdefs.h,v 1.1.1.2 2013/03/24 22:50:34 christos Exp $	*/
-
+/*	$NetBSD: cdefs.h,v 1.1.1.2.8.1 2014/08/10 07:06:55 tls Exp $	*/
 /* cdefs.h
 
    Standard C definitions... */
 
 /*
- * Copyright (c) 2012 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2009,2011 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 1996-2003 by Internet Software Consortium
  * Copyright (c) 1995 RadioMail Corporation.  All rights reserved.
+ * Copyright (c) 2011,2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

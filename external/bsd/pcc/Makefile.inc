@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2012/03/26 14:31:12 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.17.10.1 2014/08/10 07:10:05 tls Exp $
 
 PCC_DIR:=${.PARSEDIR}
 PCC_DIST=${PCC_DIR}/dist/pcc
@@ -6,7 +6,7 @@ PCC_LIBS=${PCC_DIR}/dist/pcc-libs
 
 # (these strings will be updated by the prepare-import.sh script)
 PCC_VERSION=1.1.0.DEVEL
-PCC_DATESTAMP=20120325
+PCC_DATESTAMP=20140706
 
 TARGOS = netbsd
 

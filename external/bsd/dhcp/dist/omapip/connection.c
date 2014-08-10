@@ -1,11 +1,10 @@
-/*	$NetBSD: connection.c,v 1.1.1.2 2013/03/24 22:50:36 christos Exp $	*/
-
+/*	$NetBSD: connection.c,v 1.1.1.2.8.1 2014/08/10 07:06:56 tls Exp $	*/
 /* connection.c
 
    Subroutines for dealing with connections. */
 
 /*
- * Copyright (c) 2009-2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009-2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
@@ -27,16 +26,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: connection.c,v 1.1.1.2 2013/03/24 22:50:36 christos Exp $");
+__RCSID("$NetBSD: connection.c,v 1.1.1.2.8.1 2014/08/10 07:06:56 tls Exp $");
 
 #include "dhcpd.h"
 
@@ -104,7 +97,6 @@ isc_result_t omapi_connect (omapi_object_t *c,
 		addrs -> addresses [0].addrlen = sizeof foo;
 		memcpy (addrs -> addresses [0].address, &foo, sizeof foo);
 		addrs -> addresses [0].port = port;
-		hix = 1;
 	}
 	status = omapi_connect_list (c, addrs, (omapi_addr_t *)0);
 	omapi_addr_list_dereference (&addrs, MDL);
@@ -360,6 +352,7 @@ static void trace_connect_input (trace_type_t *ttype,
 	s += sizeof remote.sin_addr;
 	memcpy (&local.sin_addr, s, sizeof local.sin_addr);
 	s += sizeof local.sin_addr;
+	POST(s);
 
 	connect_index = ntohl (connect_index);
 	listener_index = ntohl (listener_index);

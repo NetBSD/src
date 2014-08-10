@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,16 +30,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $");
 
 #include <sys/types.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_vma_manager.h>
 
 static int	drm_gem_mmap_object_locked(struct drm_device *, off_t, size_t,
-		    int, struct uvm_object **);
+		    int, struct uvm_object **, voff_t *, struct file *);
 
 void
 drm_gem_pager_reference(struct uvm_object *uobj)
@@ -60,14 +61,32 @@ drm_gem_pager_detach(struct uvm_object *uobj)
 }
 
 int
+drm_gem_or_legacy_mmap_object(struct drm_device *dev, off_t byte_offset,
+    size_t nbytes, int prot, struct uvm_object **uobjp, voff_t *uoffsetp,
+    struct file *file)
+{
+	int ret;
+
+	ret = drm_gem_mmap_object(dev, byte_offset, nbytes, prot, uobjp,
+	    uoffsetp, file);
+	if (ret)
+		return ret;
+	if (*uobjp != NULL)
+		return 0;
+
+	return drm_mmap_object(dev, byte_offset, nbytes, prot, uobjp,
+	    uoffsetp, file);
+}
+
+int
 drm_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
-    int prot, struct uvm_object **uobjp)
+    int prot, struct uvm_object **uobjp, voff_t *uoffsetp, struct file *file)
 {
 	int ret;
 
 	mutex_lock(&dev->struct_mutex);
 	ret = drm_gem_mmap_object_locked(dev, byte_offset, nbytes, prot,
-	    uobjp);
+	    uobjp, uoffsetp, file);
 	mutex_unlock(&dev->struct_mutex);
 
 	return ret;
@@ -75,39 +94,37 @@ drm_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
 
 static int
 drm_gem_mmap_object_locked(struct drm_device *dev, off_t byte_offset,
-    size_t nbytes, int prot __unused, struct uvm_object **uobjp)
+    size_t nbytes, int prot __unused, struct uvm_object **uobjp,
+    voff_t *uoffsetp, struct file *file __unused)
 {
-	struct drm_gem_mm *const mm = dev->mm_private;
-	const off_t page_offset = (byte_offset >> PAGE_SHIFT);
-	struct drm_hash_item *hash;
+	const unsigned long startpage = (byte_offset >> PAGE_SHIFT);
+	const unsigned long npages = (nbytes >> PAGE_SHIFT);
 
 	KASSERT(mutex_is_locked(&dev->struct_mutex));
 	KASSERT(drm_core_check_feature(dev, DRIVER_GEM));
 	KASSERT(dev->driver->gem_uvm_ops != NULL);
 	KASSERT(prot == (prot & (PROT_READ | PROT_WRITE)));
+	KASSERT(0 <= byte_offset);
+	KASSERT(byte_offset == (byte_offset & ~(PAGE_SIZE-1)));
+	KASSERT(nbytes == (npages << PAGE_SHIFT));
 
-	if (byte_offset != (byte_offset & ~(PAGE_SIZE-1))) /* XXX kassert?  */
-		return -EINVAL;
-
-	if (drm_ht_find_item(&mm->offset_hash, page_offset, &hash) != 0) {
+	struct drm_vma_offset_node *const node =
+	    drm_vma_offset_exact_lookup(dev->vma_offset_manager, startpage,
+		npages);
+	if (node == NULL) {
 		/* Fall back to vanilla device mappings.  */
 		*uobjp = NULL;
+		*uoffsetp = (voff_t)-1;
 		return 0;
 	}
 
-	struct drm_local_map *const map = drm_hash_entry(hash,
-	    struct drm_map_list, hash)->map;
-
-	if (map == NULL)	/* XXX How can this happen?  */
-		return -EINVAL;
-	if (map->size < nbytes)
-		return -EOVERFLOW;
-
-	struct drm_gem_object *const obj = map->handle;
+	struct drm_gem_object *const obj = container_of(node,
+	    struct drm_gem_object, vma_node);
 	KASSERT(obj->dev == dev);
 
 	/* Success!  */
 	drm_gem_object_reference(obj);
 	*uobjp = &obj->gemo_uvmobj;
+	*uoffsetp = 0;
 	return 0;
 }

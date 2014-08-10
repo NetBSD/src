@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2014/08/10 07:09:10 tls Exp $
 
 LIB=	lldbCore
 
 .include <bsd.init.mk>
 
 .PATH: ${LLDB_SRCDIR}/source/Core
+
+CPPFLAGS.IOHandler.cpp+= -DLLDB_DISABLE_CURSES
 
 SRCS+=	Address.cpp \
 	AddressRange.cpp \
@@ -33,9 +35,7 @@ SRCS+=	Address.cpp \
 	FileLineResolver.cpp \
 	FileSpecList.cpp \
 	History.cpp \
-	InputReader.cpp \
-	InputReaderEZ.cpp \
-	InputReaderStack.cpp \
+	IOHandler.cpp \
 	Language.cpp \
 	Listener.cpp \
 	Log.cpp \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.72.2.1 2014/04/07 03:37:31 tls Exp $	*/
+/*	$NetBSD: ld.c,v 1.72.2.2 2014/08/10 06:54:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.72.2.1 2014/04/07 03:37:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.72.2.2 2014/08/10 06:54:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ const struct bdevsw ld_bdevsw = {
 	.d_ioctl = ldioctl,
 	.d_dump = lddump,
 	.d_psize = ldsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -102,6 +103,7 @@ const struct cdevsw ld_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

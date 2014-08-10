@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.30 2012/10/02 23:54:51 christos Exp $
+#	$NetBSD: files.algor,v 1.30.10.1 2014/08/10 06:53:49 tls Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -64,6 +64,11 @@ attach	cpu at mainbus
 file	arch/evbmips/evbmips/cpu.c		cpu
 
 device	mcclock: mc146818
+
+#
+# Stack-less Just-In-Time compiler
+#
+include	"external/bsd/sljit/conf/files.sljit"
 
 #
 # Machine-independent I2O drivers.

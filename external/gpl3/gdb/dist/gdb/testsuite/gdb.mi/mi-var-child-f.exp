@@ -1,4 +1,4 @@
-# Copyright 2006-2013 Free Software Foundation, Inc.
+# Copyright 2006-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ if [mi_gdb_start] {
 standard_testfile array.f
 
 if {[gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
-	 executable {debug f77}] != ""} {
+	 executable {debug f90}] != ""} {
     return -1
 }
 
@@ -37,14 +37,20 @@ mi_gdb_load ${binfile}
 
 mi_runto MAIN__
 
-mi_gdb_test "-var-create array * array" \
-    "\\^done,name=\"array\",numchild=\"3\",value=\".*\",type=\"integer \\(2,-1:1\\)\"" \
-    "create local variable array"
+mi_create_varobj "array" "array" "create local variable array"
 
-mi_gdb_test "-var-list-children --all-values array" \
-    "\\^done,numchild=\"3\",children=\\\[child=\{name=\"array.-1\",exp=\"-1\",numchild=\"2\",value=\"\\\[2\\\]\",type=\"integer \\(2\\)\"\},child=\{name=\"array.0\",exp=\"0\",numchild=\"2\",value=\"\\\[2\\\]\",type=\"integer \\(2\\)\"\},child=\{name=\"array.1\",exp=\"1\",numchild=\"2\",value=\"\\\[2\\\]\",type=\"integer \\(2\\)\"\}\\\]" \
-    "get children of array"
+
+# Depending on the compiler version being used, the name of the 4-byte integer
+# and real types can be printed differently.  For instance, gfortran-4.1 uses
+# "int4" whereas gfortran-4.3 uses "integer(kind=4)".
+set int4 "(int4|integer\\(kind=4\\))"
+
+set children [list [list "array.-1" "-1" 2 "$int4 \\(2\\)"] \
+		  [list "array.0" "0" 2 "$int4 \\(2\\)"] \
+		  [list "array.1" "1" 2 "$int4 \\(2\\)"]]
+
+mi_list_varobj_children "array" $children "get children of array"
 
 mi_gdb_test "-var-list-children --all-values array.-1" \
-    "\\^done,numchild=\"2\",children=\\\[child=\{name=\"array.-1.1\",exp=\"1\",numchild=\"0\",value=\"11\",type=\"integer\"\},child=\{name=\"array.-1.2\",exp=\"2\",numchild=\"0\",value=\"21\",type=\"integer\"\}\\\]" \
+    "\\^done,numchild=\"2\",children=\\\[child=\{name=\"array.-1.1\",exp=\"1\",numchild=\"0\",value=\"11\",type=\"$int4\"\},child=\{name=\"array.-1.2\",exp=\"2\",numchild=\"0\",value=\"21\",type=\"$int4\"\}\\\],has_more=\"0\"" \
     "get grandchildren of array (children of first element of second index)"

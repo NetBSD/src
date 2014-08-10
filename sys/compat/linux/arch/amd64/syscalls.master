@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.46 2013/12/08 15:55:10 njoly Exp $
+	$NetBSD: syscalls.master,v 1.46.2.1 2014/08/10 06:54:32 tls Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -64,8 +64,9 @@
 
 %%
 
-0	NOARGS		{ int|sys||read(int fd, char *buf, u_int nbyte); }
-1	NOARGS		{ int|sys||write(int fd, char *buf, u_int nbyte); }
+0	NOARGS		{ ssize_t|sys||read(int fd, void *buf, size_t nbyte); }
+1	NOARGS		{ ssize_t|sys||write(int fd, const void *buf, \
+			    int nbyte); }
 2	STD		{ int|linux_sys||open(const char *path, int flags, \
 			    linux_umode_t mode); }
 3	NOARGS		{ int|sys||close(int fd); }
@@ -84,7 +85,7 @@
 			    linux_off_t offset); }
 10	STD		{ int|linux_sys||mprotect(const void *start, \
 			    unsigned long len, int prot); }
-11	NOARGS		{ int|sys||munmap(void *addr, int len); }
+11	NOARGS		{ int|sys||munmap(void *addr, size_t len); }
 12	STD		{ int|linux_sys||brk(char *nsize); }
 13	STD		{ int|linux_sys||rt_sigaction(int signum, \
 			    const struct linux_sigaction *nsa, \
@@ -98,13 +99,13 @@
 16	STD		{ int|linux_sys||ioctl(int fd, u_long com, \
 			    void *data); }
 17	STD		{ int|linux_sys||pread(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
+			    size_t nbyte, off_t offset); }
 18	STD		{ int|linux_sys||pwrite(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
-19	NOARGS		{ int|sys||readv(int fd, struct iovec *iovp, \
-				u_int iovcnt); }
-20	NOARGS		{ int|sys||writev(int fd, struct iovec *iovp, \
-				u_int iovcnt); }
+			    size_t nbyte, off_t offset); }
+19	NOARGS		{ ssize_t|sys||readv(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
+20	NOARGS		{ ssize_t|sys||writev(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
 21	NOARGS		{ int|sys||access(const char *path, int flags); }
 22	STD		{ int|linux_sys||pipe(int *pfds); }
 23	STD		{ int|linux_sys||select(int nfds, fd_set *readfds, \
@@ -268,8 +269,8 @@
 112	NOARGS		{ int|sys||setsid(void); }
 113	NOARGS		{ int|sys||setreuid(uid_t ruid, uid_t euid); }
 114	NOARGS		{ int|sys||setregid(gid_t rgid, gid_t egid); }
-115	NOARGS		{ int|sys||getgroups(u_int gidsetsize, gid_t *gidset); }
-116	NOARGS		{ int|sys||setgroups(u_int gidsetsize, gid_t *gidset); }
+115	NOARGS		{ int|sys||getgroups(int gidsetsize, gid_t *gidset); }
+116	NOARGS		{ int|sys||setgroups(int gidsetsize, gid_t *gidset); }
 117	STD		{ int|linux_sys||setresuid(uid_t ruid, uid_t euid, \
 			    uid_t suid); }
 118	STD		{ int|linux_sys||getresuid(uid_t *ruid, uid_t *euid, \
@@ -420,8 +421,8 @@
 218	STD		{ int|linux_sys||set_tid_address(int *tid); }
 219	UNIMPL		restart_syscall
 220	UNIMPL		semtimedop
-221	STD		{ int|linux_sys||fadvise64(int fd, \
-			    linux_off_t offset, size_t len, int advice); }
+221	STD		{ int|linux_sys||fadvise64(int fd, off_t offset, \
+			    size_t len, int advice); }
 222	UNIMPL		timer_create
 223	UNIMPL		timer_settime
 224	UNIMPL		timer_gettime
@@ -440,7 +441,8 @@
 232	UNIMPL		epoll_wait
 233	UNIMPL		epoll_ctl
 234	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
-235	STD		{ int|linux_sys||utimes(const char *path, struct linux_timeval *times); }
+235	NOARGS		{ int|compat_50_sys||utimes(const char *path, \
+			    const struct timeval50 *tptr); }
 236	UNIMPL		vserver
 237	UNIMPL		mbind
 238	UNIMPL		set_mempolicy

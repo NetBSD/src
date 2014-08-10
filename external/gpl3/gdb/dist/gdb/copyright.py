@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-# Copyright (C) 2011-2013 Free Software Foundation, Inc.
+# Copyright (C) 2011-2014 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -171,8 +171,9 @@ def main ():
 #
 # Filenames are relative to the root directory.
 EXCLUDE_LIST = (
+    'gdb/common/glibc_thread_db.h',
     'gdb/CONTRIBUTE',
-    'gdb/gnulib'
+    'gdb/gnulib/import'
 )
 
 # Files which should not be modified, either because they are

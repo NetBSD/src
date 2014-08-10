@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2014/02/26 22:37:56 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.5.2.1 2014/08/10 06:52:02 tls Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -28,10 +28,6 @@ GENERIC_SRCS+= \
 SRCS+=	${src:R}.S
 .  else
 SRCS+=	${src}
-.    if ${HAVE_GCC:U} != "4"
 COPTS.${src}+=	-Wno-error=missing-prototypes
-.    else
-COPTS.${src}+=	-Wno-missing-prototypes
-.    endif
 .  endif
 .endfor

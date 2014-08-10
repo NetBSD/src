@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.60 2014/03/20 20:42:08 christos Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.60.2.1 2014/08/10 06:56:52 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.60 2014/03/20 20:42:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.60.2.1 2014/08/10 06:56:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -145,7 +145,7 @@ shmif_lockbus(struct shmif_mem *busmem)
 static void
 shmif_unlockbus(struct shmif_mem *busmem)
 {
-	unsigned int old;
+	unsigned int old __diagused;
 
 	membar_exit();
 	old = atomic_swap_32(&busmem->shm_lock, LOCK_UNLOCKED);
@@ -345,7 +345,7 @@ rump_shmif_create(const char *path, int *ifnum)
 static int
 shmif_clone(struct if_clone *ifc, int unit)
 {
-	int rc;
+	int rc __diagused;
 	vmem_addr_t unit2;
 
 	/*

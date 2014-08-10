@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.36 2011/08/18 02:56:21 macallan Exp $	*/
+/*	$NetBSD: crime.c,v 1.36.26.1 2014/08/10 06:54:07 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.36 2011/08/18 02:56:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.36.26.1 2014/08/10 06:54:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,7 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.36 2011/08/18 02:56:21 macallan Exp $");
 
 static int	crime_match(device_t, struct cfdata *, void *);
 static void	crime_attach(device_t, device_t, void *);
-void		crime_bus_reset(void);
+static void	crime_mem_reset(void);
+static void	crime_cpu_reset(void);
+static void	crime_bus_reset(void);
 void		crime_watchdog_reset(void);
 void		crime_watchdog_disable(void);
 void		crime_intr(vaddr_t, uint32_t, uint32_t);
@@ -142,7 +144,8 @@ crime_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(" (CRIME_ID: %" PRIu64 ")\n", crm_id);
 
 	/* reset CRIME CPU & memory error registers */
-	crime_bus_reset();
+	crime_mem_reset();
+	crime_cpu_reset();
 
 	crime_watchdog_disable();
 
@@ -237,17 +240,17 @@ crime_intr(vaddr_t pc, uint32_t status, uint32_t ipending)
 			    CRIME_MEM_ERROR_STAT);
 			printf("crime: memory error address %" PRIu64 
 			    " status %" PRIu64 "\n", address << 2, stat);
-			crime_bus_reset();
+			crime_mem_reset();
 		}
 
 		if (crime_ipending & CRIME_INT_CRMERR) {
 			stat = bus_space_read_8(crm_iot, crm_ioh,
 			    CRIME_CPU_ERROR_STAT);
-				printf("crime: cpu error %" PRIu64 " at"
-				    " address %" PRIu64 "\n", stat,
-				    bus_space_read_8(crm_iot, crm_ioh,
-				    CRIME_CPU_ERROR_ADDR));
-			crime_bus_reset();
+			address = bus_space_read_8(crm_iot, crm_ioh,
+			    CRIME_CPU_ERROR_ADDR) << 2;
+			printf("crime: cpu error %" PRIu64 " at address %"
+			       PRIu64 "\n", stat, address);
+			crime_cpu_reset();
 		}
 	}
 
@@ -283,11 +286,25 @@ crime_intr_unmask(unsigned int intr)
 }
 
 void
-crime_bus_reset(void)
+crime_mem_reset(void)
+{
+
+	bus_space_write_8(crm_iot, crm_ioh, CRIME_MEM_ERROR_STAT, 0);
+}
+
+void
+crime_cpu_reset(void)
 {
 
 	bus_space_write_8(crm_iot, crm_ioh, CRIME_CPU_ERROR_STAT, 0);
-	bus_space_write_8(crm_iot, crm_ioh, CRIME_MEM_ERROR_STAT, 0);
+}
+
+void
+crime_bus_reset(void)
+{
+
+	crime_mem_reset();
+	crime_cpu_reset();
 }
 
 void

@@ -1,5 +1,4 @@
-/*	$NetBSD: magic.c,v 1.7 2013/12/01 19:32:15 christos Exp $	*/
-
+/*	$NetBSD: magic.c,v 1.7.2.1 2014/08/10 07:07:11 tls Exp $	*/
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -36,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: magic.c,v 1.81 2013/11/29 15:42:51 christos Exp $")
+FILE_RCSID("@(#)$File: magic.c,v 1.84 2014/05/14 23:15:42 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.7 2013/12/01 19:32:15 christos Exp $");
+__RCSID("$NetBSD: magic.c,v 1.7.2.1 2014/08/10 07:07:11 tls Exp $");
 #endif
 #endif	/* lint */
 
@@ -132,8 +131,9 @@ out:
 	free(hmagicpath);
 	return MAGIC;
 #else
-	char *hmagicp = hmagicpath;
+	char *hmagicp;
 	char *tmppath = NULL;
+	hmagicpath = NULL;
 
 #define APPENDPATH() \
 	do { \
@@ -226,13 +226,15 @@ magic_open(int flags)
 private int
 unreadable_info(struct magic_set *ms, mode_t md, const char *file)
 {
-	/* We cannot open it, but we were able to stat it. */
-	if (access(file, W_OK) == 0)
-		if (file_printf(ms, "writable, ") == -1)
-			return -1;
-	if (access(file, X_OK) == 0)
-		if (file_printf(ms, "executable, ") == -1)
-			return -1;
+	if (file) {
+		/* We cannot open it, but we were able to stat it. */
+		if (access(file, W_OK) == 0)
+			if (file_printf(ms, "writable, ") == -1)
+				return -1;
+		if (access(file, X_OK) == 0)
+			if (file_printf(ms, "executable, ") == -1)
+				return -1;
+	}
 	if (S_ISREG(md))
 		if (file_printf(ms, "regular file, ") == -1)
 			return -1;
@@ -351,6 +353,9 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 	int	ispipe = 0;
 	off_t	pos = (off_t)-1;
 
+	if (file_reset(ms) == -1)
+		goto out;
+
 	/*
 	 * one extra for terminating '\0', and
 	 * some overlapping space for matches near EOF
@@ -358,9 +363,6 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 #define SLOP (1 + sizeof(union VALUETYPE))
 	if ((buf = CAST(unsigned char *, malloc(HOWMANY + SLOP))) == NULL)
 		return NULL;
-
-	if (file_reset(ms) == -1)
-		goto done;
 
 	switch (file_fsmagic(ms, inname, &sb)) {
 	case -1:		/* error */
@@ -371,6 +373,12 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 		rv = 0;
 		goto done;
 	}
+
+#ifdef WIN32
+	/* Place stdin in binary mode, so EOF (Ctrl+Z) doesn't stop early. */
+	if (fd == STDIN_FILENO)
+		_setmode(STDIN_FILENO, O_BINARY);
+#endif
 
 	if (inname == NULL) {
 		if (fstat(fd, &sb) == 0 && S_ISFIFO(sb.st_mode))
@@ -390,6 +398,18 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 
 		errno = 0;
 		if ((fd = open(inname, flags)) < 0) {
+#ifdef WIN32
+			/*
+			 * Can't stat, can't open.  It may have been opened in
+			 * fsmagic, so if the user doesn't have read permission,
+			 * allow it to say so; otherwise an error was probably
+			 * displayed in fsmagic.
+			 */
+			if (!okstat && errno == EACCES) {
+				sb.st_mode = S_IFBLK;
+				okstat = 1;
+			}
+#endif
 			if (okstat &&
 			    unreadable_info(ms, sb.st_mode, inname) == -1)
 				goto done;
@@ -425,8 +445,18 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 		}
 
 	} else {
-		if ((nbytes = read(fd, (char *)buf, HOWMANY)) == -1) {
-			file_error(ms, errno, "cannot read `%s'", inname);
+		/* Windows refuses to read from a big console buffer. */
+		size_t howmany =
+#if defined(WIN32) && HOWMANY > 8 * 1024
+				_isatty(fd) ? 8 * 1024 :
+#endif
+				HOWMANY;
+		if ((nbytes = read(fd, (char *)buf, howmany)) == -1) {
+			if (inname == NULL && fd != STDIN_FILENO)
+				file_error(ms, errno, "cannot read fd %d", fd);
+			else
+				file_error(ms, errno, "cannot read `%s'",
+				    inname == NULL ? "/dev/stdin" : inname);
 			goto done;
 		}
 	}
@@ -440,6 +470,7 @@ done:
 	if (pos != (off_t)-1)
 		(void)lseek(fd, pos, SEEK_SET);
 	close_and_restore(ms, inname, fd, &sb);
+out:
 	return rv == 0 ? file_getbuffer(ms) : NULL;
 }
 

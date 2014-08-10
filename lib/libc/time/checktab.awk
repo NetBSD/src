@@ -1,4 +1,4 @@
-#	$NetBSD: checktab.awk,v 1.6 2013/09/20 19:06:54 christos Exp $
+#	$NetBSD: checktab.awk,v 1.6.2.1 2014/08/10 06:51:51 tls Exp $
 
 # Check tz tables for consistency.
 
@@ -117,10 +117,14 @@ BEGIN {
 	FS = " "
 }
 
+$1 ~ /^#/ { next }
+
 {
-	tz = ""
-	if ($1 == "Zone") tz = $2
-	if ($1 == "Link") {
+	tz = rules = ""
+	if ($1 == "Zone") {
+		tz = $2
+		ruleUsed[$4] = 1
+	} else if ($1 == "Link") {
 		# Ignore Link commands if source and destination basenames
 		# are identical, e.g. Europe/Istanbul versus Asia/Istanbul.
 		src = $2
@@ -128,6 +132,10 @@ BEGIN {
 		while ((i = index(src, "/"))) src = substr(src, i+1)
 		while ((i = index(dst, "/"))) dst = substr(dst, i+1)
 		if (src != dst) tz = $3
+	} else if ($1 == "Rule") {
+		ruleDefined[$2] = 1
+	} else {
+		ruleUsed[$2] = 1
 	}
 	if (tz && tz ~ /\//) {
 		if (!tztab[tz]) {
@@ -140,6 +148,12 @@ BEGIN {
 }
 
 END {
+	for (tz in ruleDefined) {
+		if (!ruleUsed[tz]) {
+			printf "%s: Rule never used\n", tz
+			status = 1
+		}
+	}
 	for (tz in tz2cc) {
 		if (!zoneSeen[tz]) {
 			printf "%s:%d: no Zone table for `%s'\n", \

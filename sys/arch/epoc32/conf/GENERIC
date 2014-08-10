@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.2 2013/06/25 13:56:59 kiyohara Exp $
+#	$NetBSD: GENERIC,v 1.2.6.1 2014/08/10 06:53:54 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/epoc32/conf/std.epoc32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.2.6.1 $"
 
 maxusers	32			# estimated number of users
 
@@ -65,6 +65,7 @@ options 	INET6		# IPv6
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 # Compatibility options
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9,
 #options 	COMPAT_10	# NetBSD 1.0,
 #options 	COMPAT_11	# NetBSD 1.1,

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_rcpt.c,v 1.1.1.1 2009/06/23 10:08:54 tron Exp $	*/
+/*	$NetBSD: smtp_rcpt.c,v 1.1.1.1.26.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -134,6 +134,7 @@ void    smtp_rcpt_done(SMTP_STATE *state, SMTP_RESP *resp, RECIPIENT *rcpt)
 {
     DELIVER_REQUEST *request = state->request;
     SMTP_SESSION *session = state->session;
+    SMTP_ITERATOR *iter = state->iterator;
     DSN_BUF *why = state->why;
     const char *dsn_action = "relayed";
     int     status;
@@ -154,7 +155,7 @@ void    smtp_rcpt_done(SMTP_STATE *state, SMTP_RESP *resp, RECIPIENT *rcpt)
      * the sake of "performance".
      */
     if ((session->features & SMTP_FEATURE_DSN) == 0
-	&& (state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) != 0
+	&& !smtp_mode
 	&& var_lmtp_assume_final != 0)
 	dsn_action = "delivered";
 
@@ -164,7 +165,7 @@ void    smtp_rcpt_done(SMTP_STATE *state, SMTP_RESP *resp, RECIPIENT *rcpt)
      * 
      * Note: the DSN action is ignored in case of address probes.
      */
-    dsb_update(why, resp->dsn, dsn_action, DSB_MTYPE_DNS, session->host,
+    dsb_update(why, resp->dsn, dsn_action, DSB_MTYPE_DNS, STR(iter->host),
 	       DSB_DTYPE_SMTP, resp->str, "%s", resp->str);
 
     status = sent(DEL_REQ_TRACE_FLAGS(request->flags),

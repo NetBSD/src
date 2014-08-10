@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.20 2011/01/30 17:23:23 plunky Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.20.28.1 2014/08/10 06:56:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.20 2011/01/30 17:23:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.20.28.1 2014/08/10 06:56:23 tls Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.20 2011/01/30 17:23:23 plunky Exp $
 #include <sys/domain.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
@@ -352,7 +353,7 @@ hci_cmdwait_flush(struct socket *so)
  *     This came from userland, so check it out.
  */
 static int
-hci_send(struct hci_pcb *pcb, struct mbuf *m, bdaddr_t *addr)
+hci_send_pcb(struct hci_pcb *pcb, struct mbuf *m, bdaddr_t *addr)
 {
 	struct hci_unit *unit;
 	struct mbuf *m0;
@@ -425,77 +426,344 @@ bad:
 	return err;
 }
 
+static int
+hci_attach(struct socket *so, int proto)
+{
+	struct hci_pcb *pcb;
+	int error;
+
+	KASSERT(so->so_pcb == NULL);
+
+	if (so->so_lock == NULL) {
+		mutex_obj_hold(bt_lock);
+		so->so_lock = bt_lock;
+		solock(so);
+	}
+	KASSERT(solocked(so));
+
+	error = soreserve(so, hci_sendspace, hci_recvspace);
+	if (error) {
+		return error;
+	}
+
+	pcb = kmem_zalloc(sizeof(struct hci_pcb), KM_SLEEP);
+	pcb->hp_cred = kauth_cred_dup(curlwp->l_cred);
+	pcb->hp_socket = so;
+
+	/*
+	 * Set default user filter. By default, socket only passes
+	 * Command_Complete and Command_Status Events.
+	 */
+	hci_filter_set(HCI_EVENT_COMMAND_COMPL, &pcb->hp_efilter);
+	hci_filter_set(HCI_EVENT_COMMAND_STATUS, &pcb->hp_efilter);
+	hci_filter_set(HCI_EVENT_PKT, &pcb->hp_pfilter);
+
+	LIST_INSERT_HEAD(&hci_pcb, pcb, hp_next);
+	so->so_pcb = pcb;
+
+	return 0;
+}
+
+static void
+hci_detach(struct socket *so)
+{
+	struct hci_pcb *pcb;
+
+	pcb = (struct hci_pcb *)so->so_pcb;
+	KASSERT(pcb != NULL);
+
+	if (so->so_snd.sb_mb != NULL)
+		hci_cmdwait_flush(so);
+
+	if (pcb->hp_cred != NULL)
+		kauth_cred_free(pcb->hp_cred);
+
+	so->so_pcb = NULL;
+	LIST_REMOVE(pcb, hp_next);
+	kmem_free(pcb, sizeof(*pcb));
+}
+
+static int
+hci_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+hci_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+{
+	struct hci_pcb *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	if (sa->bt_len != sizeof(struct sockaddr_bt))
+		return EINVAL;
+
+	if (sa->bt_family != AF_BLUETOOTH)
+		return EAFNOSUPPORT;
+
+	bdaddr_copy(&pcb->hp_laddr, &sa->bt_bdaddr);
+
+	if (bdaddr_any(&sa->bt_bdaddr))
+		pcb->hp_flags |= HCI_PROMISCUOUS;
+	else
+		pcb->hp_flags &= ~HCI_PROMISCUOUS;
+
+	return 0;
+}
+
+static int
+hci_listen(struct socket *so, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+hci_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+{
+	struct hci_pcb *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	if (sa->bt_len != sizeof(struct sockaddr_bt))
+		return EINVAL;
+
+	if (sa->bt_family != AF_BLUETOOTH)
+		return EAFNOSUPPORT;
+
+	if (hci_unit_lookup(&sa->bt_bdaddr) == NULL)
+		return EADDRNOTAVAIL;
+
+	bdaddr_copy(&pcb->hp_raddr, &sa->bt_bdaddr);
+	soisconnected(so);
+	return 0;
+}
+
+static int
+hci_connect2(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+hci_disconnect(struct socket *so)
+{
+	struct hci_pcb *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+
+	bdaddr_copy(&pcb->hp_raddr, BDADDR_ANY);
+
+	/* XXX we cannot call soisdisconnected() here, as it sets
+	 * SS_CANTRCVMORE and SS_CANTSENDMORE. The problem being,
+	 * that soisconnected() does not clear these and if you
+	 * try to reconnect this socket (which is permitted) you
+	 * get a broken pipe when you try to write any data.
+	 */
+	so->so_state &= ~SS_ISCONNECTED;
+	return 0;
+}
+
+static int
+hci_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	socantsendmore(so);
+	return 0;
+}
+
+static int
+hci_abort(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	soisdisconnected(so);
+	hci_detach(so);
+	return 0;
+}
+
+static int
+hci_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
+{
+	int err;
+	mutex_enter(bt_lock);
+	err = hci_ioctl_pcb(cmd, nam);
+	mutex_exit(bt_lock);
+	return err;
+}
+
+static int
+hci_stat(struct socket *so, struct stat *ub)
+{
+	KASSERT(solocked(so));
+
+	return 0;
+}
+
+static int
+hci_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	struct hci_pcb *pcb = (struct hci_pcb *)so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	memset(sa, 0, sizeof(struct sockaddr_bt));
+	nam->m_len =
+	sa->bt_len = sizeof(struct sockaddr_bt);
+	sa->bt_family = AF_BLUETOOTH;
+	bdaddr_copy(&sa->bt_bdaddr, &pcb->hp_raddr);
+	return 0;
+}
+
+static int
+hci_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	struct hci_pcb *pcb = (struct hci_pcb *)so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	memset(sa, 0, sizeof(struct sockaddr_bt));
+	nam->m_len =
+	sa->bt_len = sizeof(struct sockaddr_bt);
+	sa->bt_family = AF_BLUETOOTH;
+	bdaddr_copy(&sa->bt_bdaddr, &pcb->hp_laddr);
+	return 0;
+}
+
+static int
+hci_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+hci_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+hci_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct hci_pcb *pcb = so->so_pcb;
+	struct sockaddr_bt * sa = NULL;
+	int err = 0;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+
+	if (control) /* have no use for this */
+		m_freem(control);
+
+	if (nam) {
+		sa = mtod(nam, struct sockaddr_bt *);
+
+		if (sa->bt_len != sizeof(struct sockaddr_bt)) {
+			err = EINVAL;
+			goto release;
+		}
+
+		if (sa->bt_family != AF_BLUETOOTH) {
+			err = EAFNOSUPPORT;
+			goto release;
+		}
+	}
+
+	return hci_send_pcb(pcb, m, (sa ? &sa->bt_bdaddr : &pcb->hp_raddr));
+
+release:
+	if (m)
+		m_freem(m);
+
+	return err;
+}
+
+static int
+hci_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	if (m)
+		m_freem(m);
+	if (control)
+		m_freem(control);
+
+	return EOPNOTSUPP;
+}
+
+static int
+hci_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	return EOPNOTSUPP;
+}
+
 /*
  * User Request.
  * up is socket
- * m is either
- *	optional mbuf chain containing message
- *	ioctl command (PRU_CONTROL)
- * nam is either
- *	optional mbuf chain containing an address
- *	ioctl data (PRU_CONTROL)
- *      optionally, protocol number (PRU_ATTACH)
+ * m is optional mbuf chain containing message
+ * nam is optional mbuf chain containing an address
  * ctl is optional mbuf chain containing socket options
  * l is pointer to process requesting action (if any)
  *
- * we are responsible for disposing of m and ctl if
- * they are mbuf chains
+ * we are responsible for disposing of m and ctl
  */
-int
+static int
 hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
-	struct hci_pcb *pcb = (struct hci_pcb *)up->so_pcb;
-	struct sockaddr_bt *sa;
+	struct hci_pcb *pcb = up->so_pcb;
 	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
-
-	switch(req) {
-	case PRU_CONTROL:
-		mutex_enter(bt_lock);
-		err = hci_ioctl((unsigned long)m, (void *)nam, l);
-		mutex_exit(bt_lock);
-		return err;
-
-	case PRU_PURGEIF:
-		return EOPNOTSUPP;
-
-	case PRU_ATTACH:
-		if (up->so_lock == NULL) {
-			mutex_obj_hold(bt_lock);
-			up->so_lock = bt_lock;
-			solock(up);
-		}
-		KASSERT(solocked(up));
-		if (pcb)
-			return EINVAL;
-		err = soreserve(up, hci_sendspace, hci_recvspace);
-		if (err)
-			return err;
-
-		pcb = malloc(sizeof(struct hci_pcb), M_PCB, M_NOWAIT | M_ZERO);
-		if (pcb == NULL)
-			return ENOMEM;
-
-		up->so_pcb = pcb;
-		pcb->hp_socket = up;
-
-		if (l != NULL)
-			pcb->hp_cred = kauth_cred_dup(l->l_cred);
-
-		/*
-		 * Set default user filter. By default, socket only passes
-		 * Command_Complete and Command_Status Events.
-		 */
-		hci_filter_set(HCI_EVENT_COMMAND_COMPL, &pcb->hp_efilter);
-		hci_filter_set(HCI_EVENT_COMMAND_STATUS, &pcb->hp_efilter);
-		hci_filter_set(HCI_EVENT_PKT, &pcb->hp_pfilter);
-
-		LIST_INSERT_HEAD(&hci_pcb, pcb, hp_next);
-
-		return 0;
-	}
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
+	KASSERT(req != PRU_BIND);
+	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
+	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
+	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
 	/* anything after here *requires* a pcb */
 	if (pcb == NULL) {
@@ -504,127 +772,6 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_DISCONNECT:
-		bdaddr_copy(&pcb->hp_raddr, BDADDR_ANY);
-
-		/* XXX we cannot call soisdisconnected() here, as it sets
-		 * SS_CANTRCVMORE and SS_CANTSENDMORE. The problem being,
-		 * that soisconnected() does not clear these and if you
-		 * try to reconnect this socket (which is permitted) you
-		 * get a broken pipe when you try to write any data.
-		 */
-		up->so_state &= ~SS_ISCONNECTED;
-		break;
-
-	case PRU_ABORT:
-		soisdisconnected(up);
-		/* fall through to */
-	case PRU_DETACH:
-		if (up->so_snd.sb_mb != NULL)
-			hci_cmdwait_flush(up);
-
-		if (pcb->hp_cred != NULL)
-			kauth_cred_free(pcb->hp_cred);
-
-		up->so_pcb = NULL;
-		LIST_REMOVE(pcb, hp_next);
-		free(pcb, M_PCB);
-		return 0;
-
-	case PRU_BIND:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		if (sa->bt_len != sizeof(struct sockaddr_bt))
-			return EINVAL;
-
-		if (sa->bt_family != AF_BLUETOOTH)
-			return EAFNOSUPPORT;
-
-		bdaddr_copy(&pcb->hp_laddr, &sa->bt_bdaddr);
-
-		if (bdaddr_any(&sa->bt_bdaddr))
-			pcb->hp_flags |= HCI_PROMISCUOUS;
-		else
-			pcb->hp_flags &= ~HCI_PROMISCUOUS;
-
-		return 0;
-
-	case PRU_CONNECT:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		if (sa->bt_len != sizeof(struct sockaddr_bt))
-			return EINVAL;
-
-		if (sa->bt_family != AF_BLUETOOTH)
-			return EAFNOSUPPORT;
-
-		if (hci_unit_lookup(&sa->bt_bdaddr) == NULL)
-			return EADDRNOTAVAIL;
-
-		bdaddr_copy(&pcb->hp_raddr, &sa->bt_bdaddr);
-		soisconnected(up);
-		return 0;
-
-	case PRU_PEERADDR:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		memset(sa, 0, sizeof(struct sockaddr_bt));
-		nam->m_len =
-		sa->bt_len = sizeof(struct sockaddr_bt);
-		sa->bt_family = AF_BLUETOOTH;
-		bdaddr_copy(&sa->bt_bdaddr, &pcb->hp_raddr);
-		return 0;
-
-	case PRU_SOCKADDR:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		memset(sa, 0, sizeof(struct sockaddr_bt));
-		nam->m_len =
-		sa->bt_len = sizeof(struct sockaddr_bt);
-		sa->bt_family = AF_BLUETOOTH;
-		bdaddr_copy(&sa->bt_bdaddr, &pcb->hp_laddr);
-		return 0;
-
-	case PRU_SHUTDOWN:
-		socantsendmore(up);
-		break;
-
-	case PRU_SEND:
-		sa = NULL;
-		if (nam) {
-			sa = mtod(nam, struct sockaddr_bt *);
-
-			if (sa->bt_len != sizeof(struct sockaddr_bt)) {
-				err = EINVAL;
-				goto release;
-			}
-
-			if (sa->bt_family != AF_BLUETOOTH) {
-				err = EAFNOSUPPORT;
-				goto release;
-			}
-		}
-
-		if (ctl) /* have no use for this */
-			m_freem(ctl);
-
-		return hci_send(pcb, m, (sa ? &sa->bt_bdaddr : &pcb->hp_raddr));
-
-	case PRU_SENSE:
-		return 0;		/* (no sense - Doh!) */
-
-	case PRU_RCVD:
-	case PRU_RCVOOB:
-		return EOPNOTSUPP;	/* (no release) */
-
-	case PRU_ACCEPT:
-	case PRU_CONNECT2:
-	case PRU_LISTEN:
-	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -849,3 +996,49 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 		}
 	}
 }
+
+PR_WRAP_USRREQS(hci)
+
+#define	hci_attach		hci_attach_wrapper
+#define	hci_detach		hci_detach_wrapper
+#define	hci_accept		hci_accept_wrapper
+#define	hci_bind		hci_bind_wrapper
+#define	hci_listen		hci_listen_wrapper
+#define	hci_connect		hci_connect_wrapper
+#define	hci_connect2		hci_connect2_wrapper
+#define	hci_disconnect		hci_disconnect_wrapper
+#define	hci_shutdown		hci_shutdown_wrapper
+#define	hci_abort		hci_abort_wrapper
+#define	hci_ioctl		hci_ioctl_wrapper
+#define	hci_stat		hci_stat_wrapper
+#define	hci_peeraddr		hci_peeraddr_wrapper
+#define	hci_sockaddr		hci_sockaddr_wrapper
+#define	hci_rcvd		hci_rcvd_wrapper
+#define	hci_recvoob		hci_recvoob_wrapper
+#define	hci_send		hci_send_wrapper
+#define	hci_sendoob		hci_sendoob_wrapper
+#define	hci_purgeif		hci_purgeif_wrapper
+#define	hci_usrreq		hci_usrreq_wrapper
+
+const struct pr_usrreqs hci_usrreqs = {
+	.pr_attach	= hci_attach,
+	.pr_detach	= hci_detach,
+	.pr_accept	= hci_accept,
+	.pr_bind	= hci_bind,
+	.pr_listen	= hci_listen,
+	.pr_connect	= hci_connect,
+	.pr_connect2	= hci_connect2,
+	.pr_disconnect	= hci_disconnect,
+	.pr_shutdown	= hci_shutdown,
+	.pr_abort	= hci_abort,
+	.pr_ioctl	= hci_ioctl,
+	.pr_stat	= hci_stat,
+	.pr_peeraddr	= hci_peeraddr,
+	.pr_sockaddr	= hci_sockaddr,
+	.pr_rcvd	= hci_rcvd,
+	.pr_recvoob	= hci_recvoob,
+	.pr_send	= hci_send,
+	.pr_sendoob	= hci_sendoob,
+	.pr_purgeif	= hci_purgeif,
+	.pr_generic	= hci_usrreq,
+};

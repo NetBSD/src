@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpioreg.h,v 1.2 2013/04/14 15:11:52 skrll Exp $	*/
+/*	$NetBSD: bcm2835_gpioreg.h,v 1.2.8.1 2014/08/10 06:53:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -32,6 +32,26 @@
 #define BCM2835_GPIO_GPFSEL(x)	(0x000 + (x) * sizeof(uint32_t))
 #define BCM2835_GPIO_GPFSEL_PINS_PER_REGISTER	10
 #define BCM2835_GPIO_GPFSEL_BITS_PER_PIN	3
+
+#define BCM2835_GPIO_GPSET(x)	(0x01C + (x) * sizeof(uint32_t))
+#define BCM2835_GPIO_GPSET_PINS_PER_REGISTER 32
+#define BCM2835_GPIO_GPCLR(x)	(0x028 + (x) * sizeof(uint32_t))
+#define BCM2835_GPIO_GPCLR_PINS_PER_REGISTER BCM2835_GPIO_GPSET_PINS_PER_REGISTER
+#define BCM2835_GPIO_GPLEV(x)	(0x034 + (x) * sizeof(uint32_t))
+#define BCM2835_GPIO_GPLEV_PINS_PER_REGISTER 32
+#define BCM2835_GPIO_GPEDS(x)	(0x040 + (x) * sizeof(uint32_t))
+#define BCM2835_GPIO_GPREN(x)	(0x04C + (x) * sizeof(uint32_t))
+#define BCM2835_GPIO_GPFEN(x)	(0x058 + (x) * sizeof(uint32_t))
+#define BCM2835_GPIO_GPHEN(x)	(0x064 + (x) * sizeof(uint32_t))
+#define BCM2835_GPIO_GPLEN(x)	(0x070 + (x) * sizeof(uint32_t))
+#define BCM2835_GPIO_GPAREN(x)	(0x07C + (x) * sizeof(uint32_t))
+#define BCM2835_GPIO_GPAFEN(x)	(0x088 + (x) * sizeof(uint32_t))
+#define BCM2835_GPIO_GPPUD	(0x094)
+#define BCM2835_GPIO_GPPUD_PULLOFF  0x0
+#define BCM2835_GPIO_GPPUD_PULLDOWN 0x1
+#define BCM2835_GPIO_GPPUD_PULLUP   0x2
+#define BCM2835_GPIO_GPPUDCLK(x)	(0x098 + (x) * sizeof(uint32_t))
+#define BCM2835_GPIO_GPPUD_PINS_PER_REGISTER 32
 
 #define BCM2835_GPIO_IN		00
 #define BCM2835_GPIO_OUT	01

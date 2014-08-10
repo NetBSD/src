@@ -1,3 +1,8 @@
+2013-05-07  Jayant Sonar  <jayant.sonar@kpitcummins.com>
+	    Kaushik Phatak <Kaushik.Phatak@kpitcummins.com>
+
+	* movw-movt.ms: New file: Test movw & movt instructions.
+
 2011-07-01  Nick Clifton  <nickc@redhat.com>
 
 	PR sim/12737

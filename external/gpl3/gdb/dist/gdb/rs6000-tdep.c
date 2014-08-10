@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -943,7 +943,7 @@ rs6000_fetch_pointer_argument (struct frame_info *frame, int argi,
 
 /* Sequence of bytes for breakpoint instruction.  */
 
-const static unsigned char *
+static const unsigned char *
 rs6000_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *bp_addr,
 			   int *bp_size)
 {
@@ -1616,7 +1616,19 @@ skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc, CORE_ADDR lim_pc,
 	  continue;
 
 	}
-      else if ((op & 0xffff0000) == 0x60000000)
+      else if ((op & 0xffff0000) == 0x3c4c0000
+	       || (op & 0xffff0000) == 0x3c400000
+	       || (op & 0xffff0000) == 0x38420000)
+	{
+	  /* .	0:	addis 2,12,.TOC.-0b@ha
+	     .		addi 2,2,.TOC.-0b@l
+	     or
+	     .		lis 2,.TOC.@ha
+	     .		addi 2,2,.TOC.@l
+	     used by ELFv2 global entry points to set up r2.  */
+	  continue;
+	}
+      else if (op == 0x60000000)
         {
 	  /* nop */
 	  /* Allow nops in the prologue, but do not consider them to
@@ -1627,8 +1639,7 @@ skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc, CORE_ADDR lim_pc,
 
 	}
       else if ((op & 0xffff0000) == 0x3c000000)
-	{			/* addis 0,0,NUM, used
-				   for >= 32k frames */
+	{			/* addis 0,0,NUM, used for >= 32k frames */
 	  fdata->offset = (op & 0x0000ffff) << 16;
 	  fdata->frameless = 0;
           r0_contains_arg = 0;
@@ -1636,8 +1647,7 @@ skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc, CORE_ADDR lim_pc,
 
 	}
       else if ((op & 0xffff0000) == 0x60000000)
-	{			/* ori 0,0,NUM, 2nd ha
-				   lf of >= 32k frames */
+	{			/* ori 0,0,NUM, 2nd half of >= 32k frames */
 	  fdata->offset |= (op & 0x0000ffff);
 	  fdata->frameless = 0;
           r0_contains_arg = 0;
@@ -2152,15 +2162,15 @@ rs6000_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
     {
       CORE_ADDR displ = op & BL_DISPLACEMENT_MASK;
       CORE_ADDR call_dest = pc + 4 + displ;
-      struct minimal_symbol *s = lookup_minimal_symbol_by_pc (call_dest);
+      struct bound_minimal_symbol s = lookup_minimal_symbol_by_pc (call_dest);
 
       /* We check for ___eabi (three leading underscores) in addition
          to __eabi in case the GCC option "-fleading-underscore" was
 	 used to compile the program.  */
-      if (s != NULL
-          && SYMBOL_LINKAGE_NAME (s) != NULL
-	  && (strcmp (SYMBOL_LINKAGE_NAME (s), "__eabi") == 0
-	      || strcmp (SYMBOL_LINKAGE_NAME (s), "___eabi") == 0))
+      if (s.minsym != NULL
+          && SYMBOL_LINKAGE_NAME (s.minsym) != NULL
+	  && (strcmp (SYMBOL_LINKAGE_NAME (s.minsym), "__eabi") == 0
+	      || strcmp (SYMBOL_LINKAGE_NAME (s.minsym), "___eabi") == 0))
 	pc += 4;
     }
   return pc;
@@ -2226,7 +2236,7 @@ rs6000_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
   unsigned int ii, op;
   int rel;
   CORE_ADDR solib_target_pc;
-  struct minimal_symbol *msymbol;
+  struct bound_minimal_symbol msymbol;
 
   static unsigned trampoline_code[] =
   {
@@ -2242,9 +2252,9 @@ rs6000_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 
   /* Check for bigtoc fixup code.  */
   msymbol = lookup_minimal_symbol_by_pc (pc);
-  if (msymbol 
+  if (msymbol.minsym
       && rs6000_in_solib_return_trampoline (gdbarch, pc,
-					    SYMBOL_LINKAGE_NAME (msymbol)))
+					    SYMBOL_LINKAGE_NAME (msymbol.minsym)))
     {
       /* Double-check that the third instruction from PC is relative "b".  */
       op = read_memory_integer (pc + 8, 4, byte_order);
@@ -2854,7 +2864,7 @@ rs6000_stab_reg_to_regnum (struct gdbarch *gdbarch, int num)
   else if (77 <= num && num <= 108)
     return tdep->ppc_vr0_regnum + (num - 77);
   else if (1200 <= num && num < 1200 + 32)
-    return tdep->ppc_ev0_regnum + (num - 1200);
+    return tdep->ppc_ev0_upper_regnum + (num - 1200);
   else
     switch (num)
       {
@@ -2896,7 +2906,7 @@ rs6000_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int num)
   else if (1124 <= num && num < 1124 + 32)
     return tdep->ppc_vr0_regnum + (num - 1124);
   else if (1200 <= num && num < 1200 + 32)
-    return tdep->ppc_ev0_regnum + (num - 1200);
+    return tdep->ppc_ev0_upper_regnum + (num - 1200);
   else
     switch (num)
       {
@@ -4238,14 +4248,15 @@ show_powerpc_exact_watchpoints (struct ui_file *file, int from_tty,
   fprintf_filtered (file, _("Use of exact watchpoints is %s.\n"), value);
 }
 
-/* Read a PPC instruction from memory.  PPC instructions are always
-   big-endian, no matter what endianness the program is running in, so
-   we can hardcode BFD_ENDIAN_BIG for read_memory_unsigned_integer.  */
+/* Read a PPC instruction from memory.  */
 
 static unsigned int
-read_insn (CORE_ADDR pc)
+read_insn (struct frame_info *frame, CORE_ADDR pc)
 {
-  return read_memory_unsigned_integer (pc, 4, BFD_ENDIAN_BIG);
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+
+  return read_memory_unsigned_integer (pc, 4, byte_order);
 }
 
 /* Return non-zero if the instructions at PC match the series
@@ -4262,19 +4273,25 @@ read_insn (CORE_ADDR pc)
    i'th instruction in memory.  */
 
 int
-ppc_insns_match_pattern (CORE_ADDR pc, struct ppc_insn_pattern *pattern,
-			 unsigned int *insn)
+ppc_insns_match_pattern (struct frame_info *frame, CORE_ADDR pc,
+			 struct ppc_insn_pattern *pattern,
+			 unsigned int *insns)
 {
   int i;
+  unsigned int insn;
 
-  for (i = 0; pattern[i].mask; i++)
+  for (i = 0, insn = 0; pattern[i].mask; i++)
     {
-      insn[i] = read_insn (pc);
-      if ((insn[i] & pattern[i].mask) == pattern[i].data)
-	pc += 4;
-      else if (pattern[i].optional)
-	insn[i] = 0;
-      else
+      if (insn == 0)
+	insn = read_insn (frame, pc);
+      insns[i] = 0;
+      if ((insn & pattern[i].mask) == pattern[i].data)
+	{
+	  insns[i] = insn;
+	  pc += 4;
+	  insn = 0;
+	}
+      else if (!pattern[i].optional)
 	return 0;
     }
 

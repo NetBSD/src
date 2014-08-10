@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.107 2014/04/02 17:09:23 justin Exp $	*/
+/*      $NetBSD: hijack.c,v 1.107.2.1 2014/08/10 06:52:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.107 2014/04/02 17:09:23 justin Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.107.2.1 2014/08/10 06:52:22 tls Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2069,14 +2069,10 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		errno_host = parg.errnum;
 
 		/* strip cross-thread notification from real results */
-		if (pfd_host[nfds].revents & POLLIN) {
-			assert((pfd_rump[nfds].revents & POLLIN) == 0);
-			assert(rv_host > 0);
+		if (rv_host > 0 && pfd_host[nfds].revents & POLLIN) {
 			rv_host--;
 		}
-		if (pfd_rump[nfds].revents & POLLIN) {
-			assert((pfd_host[nfds].revents & POLLIN) == 0);
-			assert(rv_rump > 0);
+		if (rv_rump > 0 && pfd_rump[nfds].revents & POLLIN) {
 			rv_rump--;
 		}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/01/05 16:38:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2014/08/10 07:08:02 tls Exp $
 
 PROG_CXX=	lld
 NOMAN=		yes
@@ -27,6 +27,9 @@ LLD_LIBS+= \
 
 LLVM_LIBS+= \
 	Object \
+	BitReader \
+	IR \
+	DebugInfo \
 	Option \
 	Support
 

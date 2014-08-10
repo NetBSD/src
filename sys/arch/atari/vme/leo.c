@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.20 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: leo.c,v 1.20.2.1 2014/08/10 06:53:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.20 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.20.2.1 2014/08/10 06:53:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,7 @@ const struct cdevsw leo_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = leommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

@@ -23,7 +23,7 @@ ddd
 DAs
 TLSCACertificateFile
 BNF
-TLSEphemeralDHParamFile
+TLSDHParamFile
 ppolicy
 gavin
 ASN
@@ -1361,8 +1361,10 @@ AuthcId
 MChAODQ
 lookups
 GnuTLS
-GNUtls
 gnutls
+MozNSS
+MOZNSS
+moznss
 LTONLY
 SNMP
 timelimit

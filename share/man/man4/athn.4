@@ -1,4 +1,4 @@
-.\" $NetBSD: athn.4,v 1.6 2013/07/31 13:34:04 soren Exp $
+.\" $NetBSD: athn.4,v 1.6.2.1 2014/08/10 06:53:25 tls Exp $
 .\" $OpenBSD: athn.4,v 1.21 2012/09/17 11:04:24 sthen Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
@@ -166,9 +166,9 @@ For USB devices, the driver needs at least version 1.1 of the following
 firmware files, which are loaded when an interface is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It /etc/firmware/athn-ar7010
-.It /etc/firmware/athn-ar7010-11
-.It /etc/firmware/athn-ar9271
+.It /libdata/firmware/athn-ar7010
+.It /libdata/firmware/athn-ar7010-11
+.It /libdata/firmware/athn-ar9271
 .El
 .\".Pp
 .\"A prepackaged version of the firmware can be installed using

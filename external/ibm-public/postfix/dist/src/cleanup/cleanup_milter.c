@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.7 2013/01/02 18:58:55 tron Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.7.6.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -108,6 +108,7 @@
 #include <is_header.h>
 #include <quote_821_local.h>
 #include <dsn_util.h>
+#include <xtext.h>
 
 /* Application-specific. */
 
@@ -394,7 +395,8 @@ static int cleanup_milter_header_checks(CLEANUP_STATE *state, VSTRING *buf)
     if (ret == 0) {
 	return (0);
     } else if (ret == HBC_CHECKS_STAT_ERROR) {
-	msg_warn("%s: %s lookup error -- deferring delivery",
+	msg_warn("%s: %s map lookup problem -- "
+		 "message not accepted, try again later",
 		 state->queue_id, VAR_MILT_HEAD_CHECKS);
 	state->errs |= CLEANUP_STAT_WRITE;
 	return (0);
@@ -1389,9 +1391,10 @@ static const char *cleanup_chg_from(void *context, const char *ext_from,
     return (CLEANUP_OUT_OK(state) ? 0 : cleanup_milter_error(state, 0));
 }
 
-/* cleanup_add_rcpt - append recipient address */
+/* cleanup_add_rcpt_par - append recipient address, with ESMTP arguments */
 
-static const char *cleanup_add_rcpt(void *context, const char *ext_rcpt)
+static const char *cleanup_add_rcpt_par(void *context, const char *ext_rcpt,
+					        const char *esmtp_args)
 {
     const char *myname = "cleanup_add_rcpt";
     CLEANUP_STATE *state = (CLEANUP_STATE *) context;
@@ -1401,7 +1404,45 @@ static const char *cleanup_add_rcpt(void *context, const char *ext_rcpt)
     TOK822 *tree;
     TOK822 *tp;
     VSTRING *int_rcpt_buf;
+    ARGV   *esmtp_argv;
+    int     dsn_notify = 0;
+    const char *dsn_orcpt_info = 0;
+    size_t  type_len;
+    int     i;
+    const char *arg;
+    const char *arg_val;
 
+    if (esmtp_args[0]) {
+	esmtp_argv = argv_split(esmtp_args, " ");
+	for (i = 0; i < esmtp_argv->argc; ++i) {
+	    arg = esmtp_argv->argv[i];
+	    if (strncasecmp(arg, "NOTIFY=", 7) == 0) {	/* RFC 3461 */
+		if (dsn_notify || (dsn_notify = dsn_notify_mask(arg + 7)) == 0)
+		    msg_warn("%s: Bad NOTIFY parameter from MILTER: \"%.100s\"",
+			     state->queue_id, arg);
+	    } else if (strncasecmp(arg, "ORCPT=", 6) == 0) {	/* RFC 3461 */
+		if (state->milter_orcpt_buf == 0)
+		    state->milter_orcpt_buf = vstring_alloc(100);
+		if (dsn_orcpt_info
+		    || (type_len = strcspn(arg_val = arg + 6, ";")) == 0
+		    || (arg_val)[type_len] != ';'
+		    || xtext_unquote_append(
+				    vstring_sprintf(state->milter_orcpt_buf,
+						    "%.*s;", (int) type_len,
+						    arg_val),
+					    arg_val + type_len + 1) == 0) {
+		    msg_warn("%s: Bad ORCPT parameter from MILTER: \"%.100s\"",
+			     state->queue_id, arg);
+		} else {
+		    dsn_orcpt_info = STR(state->milter_orcpt_buf);
+		}
+	    } else {
+		msg_warn("%s: ignoring ESMTP argument from MILTER: \"%.100s\"",
+			 state->queue_id, arg);
+	    }
+	}
+	argv_free(esmtp_argv);
+    }
     if (msg_verbose)
 	msg_info("%s: \"%s\"", myname, ext_rcpt);
 
@@ -1427,8 +1468,6 @@ static const char *cleanup_add_rcpt(void *context, const char *ext_rcpt)
      * overwrite the old "recipient append" pointer with the forward pointer
      * to the new recipient.
      */
-#define NO_DSN_ORCPT	((char *) 0)
-
     if ((new_rcpt_offset = vstream_fseek(state->dst, (off_t) 0, SEEK_END)) < 0) {
 	msg_warn("%s: seek file %s: %m", myname, cleanup_path);
 	return (cleanup_milter_error(state, errno));
@@ -1455,7 +1494,8 @@ static const char *cleanup_add_rcpt(void *context, const char *ext_rcpt)
 	}
     }
     tok822_free_tree(tree);
-    cleanup_addr_bcc_dsn(state, STR(int_rcpt_buf), NO_DSN_ORCPT, DEF_DSN_NOTIFY);
+    cleanup_addr_bcc_dsn(state, STR(int_rcpt_buf), dsn_orcpt_info,
+			 dsn_notify ? dsn_notify : DEF_DSN_NOTIFY);
     vstring_free(int_rcpt_buf);
     if (addr_count == 0) {
 	msg_warn("%s: ignoring attempt from Milter to add null recipient",
@@ -1495,18 +1535,11 @@ static const char *cleanup_add_rcpt(void *context, const char *ext_rcpt)
     return (CLEANUP_OUT_OK(state) ? 0 : cleanup_milter_error(state, 0));
 }
 
-/* cleanup_add_rcpt_par - append recipient address, ignore ESMTP arguments */
+/* cleanup_add_rcpt - append recipient address */
 
-static const char *cleanup_add_rcpt_par(void *context, const char *ext_rcpt,
-					        const char *esmtp_args)
+static const char *cleanup_add_rcpt(void *context, const char *ext_rcpt)
 {
-    const char *myname = "cleanup_add_rcpt";
-    CLEANUP_STATE *state = (CLEANUP_STATE *) context;
-
-    if (esmtp_args[0])
-	msg_warn("%s: %s: ignoring ESMTP arguments \"%.100s\"",
-		 state->queue_id, myname, esmtp_args);
-    return (cleanup_add_rcpt(context, ext_rcpt));
+    return (cleanup_add_rcpt_par(context, ext_rcpt, ""));
 }
 
 /* cleanup_del_rcpt - remove recipient and all its expansions */
@@ -2094,7 +2127,7 @@ void    cleanup_milter_emul_rcpt(CLEANUP_STATE *state,
 	&& cleanup_milter_apply(state, "RCPT", resp) != 0) {
 	msg_warn("%s: milter configuration error: can't reject recipient "
 		 "in non-smtpd(8) submission", state->queue_id);
-	msg_warn("%s: deferring delivery of this message", state->queue_id);
+	msg_warn("%s: message not accepted, try again later", state->queue_id);
 	CLEANUP_MILTER_SET_REASON(state, "4.3.5 Server configuration error");
 	state->errs |= CLEANUP_STAT_DEFER;
     }

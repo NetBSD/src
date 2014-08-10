@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.42 2013/10/19 21:01:39 mrg Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.42.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.42 2013/10/19 21:01:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.42.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -290,7 +290,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	/*
 	 * We play a slight trick here.  If we're a reader, we want
 	 * increment the read count.  If we're a writer, we want to
-	 * set the owner field and whe WRITE_LOCKED bit.
+	 * set the owner field and the WRITE_LOCKED bit.
 	 *
 	 * In the latter case, we expect those bits to be zero,
 	 * therefore we can use an add operation to set them, which

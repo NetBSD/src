@@ -1,5 +1,5 @@
 # Makefile fragment for common parts of all simulators.
-# Copyright 1997-2013 Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 # Contributed by Cygnus Support.
 
 # This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@ VPATH = @srcdir@:$(srccom)
 srcdir = @srcdir@
 srccom = $(srcdir)/../common
 srcroot = $(srcdir)/../..
+srcsim = $(srcdir)/..
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -300,12 +301,8 @@ stamp-tvals: gentmap
 	$(SHELL) $(srcroot)/move-if-change tmp-tmap.c targ-map.c
 	touch stamp-tvals
 
-version.c: Makefile ../../gdb/version.in
-	rm -f version.c-tmp version.c
-	echo '#include "version.h"' >> version.c-tmp
-	echo 'const char version[] = "'"`sed q ${srcdir}/../../gdb/version.in`"'";' >> version.c-tmp
-	mv version.c-tmp version.c
-
+version.c: Makefile $(srccom)/create-version.sh ../../bfd/version.h ../../gdb/version.in
+	$(SHELL) $(srccom)/create-version.sh $(srcsim) $(host_alias) $(target_alias) version.c
 
 #
 # Rules for building sim-* components.  Triggered by listing the corresponding

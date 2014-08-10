@@ -1,4 +1,4 @@
-/*      $NetBSD: clpscom.c,v 1.2.2.1 2014/04/07 03:37:30 tls Exp $      */
+/*      $NetBSD: clpscom.c,v 1.2.2.2 2014/08/10 06:53:51 tls Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.2.2.1 2014/04/07 03:37:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.2.2.2 2014/08/10 06:53:51 tls Exp $");
 
 #include "rnd.h"
 
@@ -179,6 +179,7 @@ const struct cdevsw clpscom_cdevsw = {
 	.d_poll = clpscompoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

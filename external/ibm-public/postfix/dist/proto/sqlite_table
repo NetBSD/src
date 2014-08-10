@@ -4,9 +4,9 @@
 # SUMMARY
 #	Postfix SQLite configuration
 # SYNOPSIS
-#	\fBpostmap -q "\fIstring\fB" sqlite:/etc/postfix/filename\fR
+#	\fBpostmap -q "\fIstring\fB" sqlite:/etc/postfix/\fIfilename\fR
 #
-#	\fBpostmap -q - sqlite:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+#	\fBpostmap -q - sqlite:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
 #	rewriting or mail routing. These tables are usually in

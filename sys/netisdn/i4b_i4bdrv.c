@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.38 2014/03/16 05:20:30 dholland Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.38.2.1 2014/08/10 06:56:36 tls Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.38 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.38.2.1 2014/08/10 06:56:36 tls Exp $");
 
 #include "isdn.h"
 
@@ -206,6 +206,7 @@ const struct cdevsw isdn_cdevsw = {
 	.d_poll = isdnpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = isdnkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 #endif /* __NetBSD__ */

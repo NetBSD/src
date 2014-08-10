@@ -1,5 +1,5 @@
 /* OpenCL language support for GDB, the GNU debugger.
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
    Contributed by Ken Werner <ken.werner@de.ibm.com>.
 
@@ -19,13 +19,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdbtypes.h"
 #include "symtab.h"
 #include "expression.h"
 #include "parser-defs.h"
-#include "symtab.h"
 #include "language.h"
+#include "varobj.h"
 #include "c-lang.h"
 #include "gdb_assert.h"
 
@@ -1035,15 +1035,13 @@ Cannot perform conditional operation on vectors with different sizes"));
 	  }
 	else
 	  {
+	    struct value *v = value_struct_elt (&arg1, NULL,
+						&exp->elts[pc + 2].string, NULL,
+						"structure");
+
 	    if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	      return
-		  value_zero (lookup_struct_elt_type
-			      (value_type (arg1),&exp->elts[pc + 2].string, 0),
-			      lval_memory);
-	    else
-	      return value_struct_elt (&arg1, NULL,
-				       &exp->elts[pc + 2].string, NULL,
-				       "structure");
+	      v = value_zero (value_type (v), not_lval);
+	    return v;
 	  }
       }
     default:
@@ -1104,6 +1102,7 @@ const struct exp_descriptor exp_descriptor_opencl =
 const struct language_defn opencl_language_defn =
 {
   "opencl",			/* Language name */
+  "OpenCL C",
   language_opencl,
   range_check_off,
   case_sensitive_on,
@@ -1139,6 +1138,7 @@ const struct language_defn opencl_language_defn =
   c_get_string,
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
+  &default_varobj_ops,
   LANG_MAGIC
 };
 

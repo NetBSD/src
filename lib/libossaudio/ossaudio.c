@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.28 2012/05/05 15:57:45 christos Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.28.8.1 2014/08/10 06:52:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.28 2012/05/05 15:57:45 christos Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.28.8.1 2014/08/10 06:52:06 tls Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -44,6 +44,9 @@ __RCSID("$NetBSD: ossaudio.c,v 1.28 2012/05/05 15:57:45 christos Exp $");
 #include <sys/audioio.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
 #include <stdarg.h>
 
 #include "soundcard.h"
@@ -93,9 +96,17 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	struct audio_buf_info bufinfo;
 	struct count_info cntinfo;
 	struct audio_encoding tmpenc;
+	struct oss_sysinfo tmpsysinfo;
+	struct oss_audioinfo *tmpaudioinfo;
+	audio_device_t tmpaudiodev;
+	struct stat tmpstat;
+	dev_t devno;
+	char version[32] = "4.01";
+	char license[16] = "NetBSD";
 	u_int u;
 	int idat, idata;
 	int retval;
+	int i;
 
 	idat = 0;
 
@@ -316,13 +327,21 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 				idat |= AFMT_S8;
 				break;
 			case AUDIO_ENCODING_SLINEAR_LE:
-				if (tmpenc.precision == 16)
+				if (tmpenc.precision == 32)
+					idat |= AFMT_S32_LE;
+				else if (tmpenc.precision == 24)
+					idat |= AFMT_S24_LE;
+				else if (tmpenc.precision == 16)
 					idat |= AFMT_S16_LE;
 				else
 					idat |= AFMT_S8;
 				break;
 			case AUDIO_ENCODING_SLINEAR_BE:
-				if (tmpenc.precision == 16)
+				if (tmpenc.precision == 32)
+					idat |= AFMT_S32_BE;
+				else if (tmpenc.precision == 24)
+					idat |= AFMT_S24_BE;
+				else if (tmpenc.precision == 16)
 					idat |= AFMT_S16_BE;
 				else
 					idat |= AFMT_S8;
@@ -445,6 +464,130 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		cntinfo.ptr = tmpoffs.offset;
 		*(struct count_info *)argp = cntinfo;
 		break;
+	case SNDCTL_SYSINFO:
+		strncpy(tmpsysinfo.product, "OSS/NetBSD", 31);
+		tmpsysinfo.product[31] = 0; 
+		strncpy(tmpsysinfo.version, version, 31); 
+		tmpsysinfo.version[31] = 0; 
+		strncpy(tmpsysinfo.license, license, 15);
+		tmpsysinfo.license[15] = 0; 
+		tmpsysinfo.versionnum = SOUND_VERSION;
+		memset(tmpsysinfo.options, 0, 8);
+		tmpsysinfo.numaudios = OSS_MAX_AUDIO_DEVS;
+		tmpsysinfo.numaudioengines = 1;
+		memset(tmpsysinfo.openedaudio, 0, 8);
+		tmpsysinfo.numsynths = 1;
+		tmpsysinfo.nummidis = -1;
+		tmpsysinfo.numtimers = -1;
+		tmpsysinfo.nummixers = 1;
+		tmpsysinfo.numcards = 1;
+		memset(tmpsysinfo.openedmidi, 0, 8);
+		*(struct oss_sysinfo *)argp = tmpsysinfo;
+		break;
+	case SNDCTL_ENGINEINFO:
+	case SNDCTL_AUDIOINFO:
+		devno = 0;
+		tmpaudioinfo = (struct oss_audioinfo*)argp;
+		if (tmpaudioinfo == NULL)
+			return EINVAL;
+		if (tmpaudioinfo->dev < 0) {
+			fstat(fd, &tmpstat);
+			if ((tmpstat.st_rdev & 0xff00) == 0x2a00)
+				devno = tmpstat.st_rdev & 0xff;
+			if (devno >= 0x80)
+				tmpaudioinfo->dev = devno & 0x7f;
+		}
+		if (tmpaudioinfo->dev < 0)
+			tmpaudioinfo->dev = 0;
+
+		snprintf(tmpaudioinfo->devnode, OSS_DEVNODE_SIZE,
+		    "/dev/audio%d", tmpaudioinfo->dev); 
+
+		retval = ioctl(fd, AUDIO_GETDEV, &tmpaudiodev);
+		if (retval < 0)
+			return retval;
+		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		retval = ioctl(fd, AUDIO_GETPROPS, &idata);
+		if (retval < 0)
+			return retval;
+		idat = DSP_CAP_TRIGGER; /* pretend we have trigger */
+		if (idata & AUDIO_PROP_FULLDUPLEX)
+			idat |= DSP_CAP_DUPLEX;
+		if (idata & AUDIO_PROP_MMAP)
+			idat |= DSP_CAP_MMAP;
+		idat = PCM_CAP_INPUT | PCM_CAP_OUTPUT;
+		strncpy(tmpaudioinfo->name, tmpaudiodev.name, 64);
+		tmpaudioinfo->name[63] = 0;
+		tmpaudioinfo->busy = tmpinfo.play.open;
+		tmpaudioinfo->pid = -1;
+		tmpaudioinfo->caps = idat;
+		ioctl(fd, SNDCTL_DSP_GETFMTS, &tmpaudioinfo->iformats);
+		tmpaudioinfo->oformats = tmpaudioinfo->iformats;
+		tmpaudioinfo->magic = -1;
+		memset(tmpaudioinfo->cmd, 0, 64);
+		tmpaudioinfo->card_number = -1;
+		memset(tmpaudioinfo->song_name, 0, 64);
+		memset(tmpaudioinfo->label, 0, 16);
+		tmpaudioinfo->port_number = tmpinfo.play.port;
+		tmpaudioinfo->mixer_dev = tmpaudioinfo->dev;
+		tmpaudioinfo->legacy_device = -1;
+		tmpaudioinfo->enabled = 1;
+		tmpaudioinfo->flags = -1;
+		tmpaudioinfo->min_rate = tmpinfo.play.sample_rate;
+		tmpaudioinfo->max_rate = tmpinfo.play.sample_rate;
+		tmpaudioinfo->nrates = 2;
+		for (i = 0; i < tmpaudioinfo->nrates; i++)
+			tmpaudioinfo->rates[i] = tmpinfo.play.sample_rate;
+		tmpaudioinfo->min_channels = tmpinfo.play.channels;
+		tmpaudioinfo->max_channels = tmpinfo.play.channels;
+		tmpaudioinfo->binding = -1;
+		tmpaudioinfo->rate_source = -1;
+		memset(tmpaudioinfo->handle, 0, 16);
+		tmpaudioinfo->next_play_engine = 0;
+		tmpaudioinfo->next_rec_engine = 0;
+		argp = tmpaudioinfo;
+		break;
+	case SNDCTL_DSP_GETPLAYVOL:
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		*(uint *)argp = tmpinfo.play.gain;
+		break;
+	case SNDCTL_DSP_SETPLAYVOL:
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		if (*(uint *)argp > 255)
+			tmpinfo.play.gain = 255;
+		else
+			tmpinfo.play.gain = *(uint *)argp;
+		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		break;
+	case SNDCTL_DSP_GETRECVOL:
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		*(uint *)argp = tmpinfo.record.gain;
+		break;
+	case SNDCTL_DSP_SETRECVOL:
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		if (*(uint *)argp > 255)
+			tmpinfo.record.gain = 255;
+		else
+			tmpinfo.record.gain = *(uint *)argp;
+		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		break;
+	case SNDCTL_DSP_SKIP:
+	case SNDCTL_DSP_SILENCE:
+		return EINVAL;
 	case SNDCTL_DSP_SETDUPLEX:
 		idat = 1;
 		retval = ioctl(fd, AUDIO_SETFD, &idat);

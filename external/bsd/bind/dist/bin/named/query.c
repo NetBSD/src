@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.15 2014/03/01 22:50:34 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.15.2.1 2014/08/10 07:06:35 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -2303,7 +2303,7 @@ query_dns64(ns_client_t *client, dns_name_t **namep, dns_rdataset_t *rdataset,
 		     dns64 != NULL; dns64 = dns_dns64_next(dns64)) {
 
 			dns_rdataset_current(rdataset, &rdata);
-			isc__buffer_availableregion(buffer, &r);
+			isc_buffer_availableregion(buffer, &r);
 			INSIST(r.length >= 16);
 			result = dns_dns64_aaaafroma(dns64, &netaddr,
 						     client->signer,
@@ -6077,7 +6077,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	dns_fixedname_t fixed;
 	dns_fixedname_t wildcardname;
 	dns_dbversion_t *version, *zversion;
-	dns_zone_t *zone, *raw = NULL, *mayberaw;
+	dns_zone_t *zone;
 	dns_rdata_cname_t cname;
 	dns_rdata_dname_t dname;
 	unsigned int options;
@@ -6608,7 +6608,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 					 * and set the TTL then.
 					 */
 					if (dns_rdataset_isassociated(rdataset))
-						dns_rdataset_disassociate(rdataset);
+					    dns_rdataset_disassociate(rdataset);
 				} else {
 					/*
 					 * We will add this rdataset.
@@ -7644,8 +7644,11 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 				if (rpz_st != NULL)
 					rdataset->ttl = ISC_MIN(rdataset->ttl,
 							    rpz_st->m.ttl);
-				if (!is_zone && RECURSIONOK(client))
-					query_prefetch(client, fname, rdataset);
+				if (!is_zone && RECURSIONOK(client)) {
+					dns_name_t *name;
+					name = (fname != NULL) ? fname : tname;
+					query_prefetch(client, name, rdataset);
+				}
 				query_addrrset(client,
 					       fname != NULL ? &fname : &tname,
 					       &rdataset, NULL,
@@ -7871,25 +7874,33 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 		/*
 		 * Return the time to expire for slave zones.
 		 */
-		if (is_zone)
-			dns_zone_getraw(zone, &raw);
-		mayberaw = (raw != NULL) ? raw : zone;
+		if (zone != NULL) {
+			dns_zone_t *raw = NULL, *mayberaw;
 
-		if (is_zone && qtype == dns_rdatatype_soa &&
-		    (client->attributes & NS_CLIENTATTR_WANTEXPIRE) != 0 &&
-		    client->query.restarts == 0 &&
-		    dns_zone_gettype(mayberaw) == dns_zone_slave) {
-			isc_time_t expiretime;
-			isc_uint32_t secs;
-			dns_zone_getexpiretime(zone, &expiretime);
-			secs = isc_time_seconds(&expiretime);
-			if (secs >= client->now && result == ISC_R_SUCCESS) {
-				client->attributes |= NS_CLIENTATTR_HAVEEXPIRE;
-				client->expire = secs - client->now;
+			if (is_zone)
+				dns_zone_getraw(zone, &raw);
+			mayberaw = (raw != NULL) ? raw : zone;
+
+			if (is_zone && qtype == dns_rdatatype_soa &&
+			    ((client->attributes &
+			      NS_CLIENTATTR_WANTEXPIRE) != 0) &&
+			    client->query.restarts == 0 &&
+			    dns_zone_gettype(mayberaw) == dns_zone_slave)
+			{
+				isc_time_t expiretime;
+				isc_uint32_t secs;
+				dns_zone_getexpiretime(zone, &expiretime);
+				secs = isc_time_seconds(&expiretime);
+				if (secs >= client->now &&
+				    result == ISC_R_SUCCESS) {
+					client->attributes |=
+						NS_CLIENTATTR_HAVEEXPIRE;
+					client->expire = secs - client->now;
+				}
 			}
+			if (raw != NULL)
+				dns_zone_detach(&raw);
 		}
-		if (raw != NULL)
-			dns_zone_detach(&raw);
 
 		if (dns64) {
 			qtype = type = dns_rdatatype_aaaa;

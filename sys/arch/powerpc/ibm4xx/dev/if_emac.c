@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.41 2012/07/22 14:32:52 matt Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.41.12.1 2014/08/10 06:54:05 tls Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.41 2012/07/22 14:32:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.41.12.1 2014/08/10 06:54:05 tls Exp $");
 
 #include "opt_emac.h"
 
@@ -522,7 +522,8 @@ emac_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ethercom.ec_mii = mii;
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
-	mii_attach(self, mii, 0xffffffff, mii_phy, MII_OFFSET_ANY, 0);
+	mii_attach(self, mii, 0xffffffff, mii_phy, MII_OFFSET_ANY,
+	    MIIF_DOPAUSE);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_NONE);

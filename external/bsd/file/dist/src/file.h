@@ -1,5 +1,4 @@
-/*	$NetBSD: file.h,v 1.10 2014/01/07 02:12:07 joerg Exp $	*/
-
+/*	$NetBSD: file.h,v 1.10.2.1 2014/08/10 07:07:11 tls Exp $	*/
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -29,7 +28,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$File: file.h,v 1.145 2013/04/22 15:30:11 christos Exp $
+ * @(#)$File: file.h,v 1.152 2014/06/03 19:01:34 christos Exp $
  */
 
 #ifndef __file_h__
@@ -85,7 +84,7 @@
 
 #define private static
 
-#if HAVE_VISIBILITY
+#if HAVE_VISIBILITY && !defined(WIN32)
 #define public  __attribute__ ((__visibility__("default")))
 #ifndef protected
 #define protected __attribute__ ((__visibility__("hidden")))
@@ -135,7 +134,7 @@
 #define MAXstring 64		/* max len of "string" types */
 
 #define MAGICNO		0xF11E041C
-#define VERSIONNO	11
+#define VERSIONNO	12
 #define FILE_MAGICSIZE	248
 
 #define	FILE_LOAD	0
@@ -323,6 +322,7 @@ struct magic {
 #define PSTRING_2_LE				BIT(9)
 #define PSTRING_4_BE				BIT(10)
 #define PSTRING_4_LE				BIT(11)
+#define REGEX_LINE_COUNT			BIT(11)
 #define PSTRING_LEN	\
     (PSTRING_1_BE|PSTRING_2_LE|PSTRING_2_BE|PSTRING_4_LE|PSTRING_4_BE)
 #define PSTRING_LENGTH_INCLUDES_ITSELF		BIT(12)
@@ -441,7 +441,7 @@ protected int file_encoding(struct magic_set *, const unsigned char *, size_t,
     unichar **, size_t *, const char **, const char **, const char **);
 protected int file_is_tar(struct magic_set *, const unsigned char *, size_t);
 protected int file_softmagic(struct magic_set *, const unsigned char *, size_t,
-    int, int);
+    size_t, int, int);
 protected int file_apprentice(struct magic_set *, const char *, int);
 protected int file_magicfind(struct magic_set *, const char *, struct mlist *);
 protected uint64_t file_signextend(struct magic_set *, struct magic *,
@@ -470,6 +470,18 @@ protected int file_os2_apptype(struct magic_set *, const char *, const void *,
     size_t);
 #endif /* __EMX__ */
 
+typedef struct {
+	const char *pat;
+	char *old_lc_ctype;
+	int rc;
+	regex_t rx;
+} file_regex_t;
+
+protected int file_regcomp(file_regex_t *, const char *, int);
+protected int file_regexec(file_regex_t *, const char *, size_t, regmatch_t *,
+    int);
+protected void file_regfree(file_regex_t *);
+protected void file_regerror(file_regex_t *, int, struct magic_set *);
 
 #ifndef COMPILE_ONLY
 extern const char *file_names[];
@@ -494,24 +506,31 @@ ssize_t pread(int, void *, size_t, off_t);
 int vasprintf(char **, const char *, va_list);
 #endif
 #ifndef HAVE_ASPRINTF
-int asprintf(char **ptr, const char *format_string, ...);
+int asprintf(char **, const char *, ...);
 #endif
 
 #ifndef HAVE_STRLCPY
-size_t strlcpy(char *dst, const char *src, size_t siz);
+size_t strlcpy(char *, const char *, size_t);
 #endif
 #ifndef HAVE_STRLCAT
-size_t strlcat(char *dst, const char *src, size_t siz);
+size_t strlcat(char *, const char *, size_t);
+#endif
+#ifndef HAVE_STRCASESTR
+char *strcasestr(const char *, const char *);
 #endif
 #ifndef HAVE_GETLINE
-ssize_t getline(char **dst, size_t *len, FILE *fp);
-ssize_t getdelim(char **dst, size_t *len, int delimiter, FILE *fp);
+ssize_t getline(char **, size_t *, FILE *);
+ssize_t getdelim(char **, size_t *, int, FILE *);
 #endif
 #ifndef HAVE_CTIME_R
 char   *ctime_r(const time_t *, char *);
 #endif
 #ifndef HAVE_ASCTIME_R
 char   *asctime_r(const struct tm *, char *);
+#endif
+#ifndef HAVE_FMTCHECK
+const char *fmtcheck(const char *, const char *) 
+     __attribute__((__format_arg__(2)));
 #endif
 
 #if defined(HAVE_MMAP) && defined(HAVE_SYS_MMAN_H) && !defined(QUICK)

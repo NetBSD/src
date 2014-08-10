@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/appendix-common-errors.sdf,v 1.4.2.6 2010/04/13 20:22:32 kurt Exp
-# Copyright 2007-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 2007-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Common errors encountered when using OpenLDAP Software
@@ -11,7 +11,7 @@ H2: Common causes of LDAP errors
 
 H3: ldap_*: Can't contact LDAP server
 
-The {[B:Can't contact LDAP server}} error is usually returned when the LDAP 
+The {{B:Can't contact LDAP server}} error is usually returned when the LDAP 
 server cannot be contacted. This may occur for many reasons:
 
 * the LDAP server is not running; this can be checked by running, for example,
@@ -532,7 +532,8 @@ beyond reach of intruders.
 
 That's why the default keytab file is owned by root and protected from being 
 read by others. Do not mess with these permissions, build a different keytab 
-file for slapd instead.
+file for slapd instead, and make sure it is owned by the user that slapd
+runs as.
 
 To do this, start kadmin, and enter the following commands:
 
@@ -541,7 +542,7 @@ To do this, start kadmin, and enter the following commands:
 
 Then, on the shell, do:
 
->     chown ldap.ldap /etc/openldap/ldap.keytab
+>     chown ldap:ldap /etc/openldap/ldap.keytab
 >     chmod 600 /etc/openldap/ldap.keytab 
 
 Now you have to tell slapd (well, actually tell the gssapi library in Kerberos 5 
@@ -636,9 +637,9 @@ values of <n>.
 H3: ldap_*: Internal (implementation specific) error (80) - additional info: entry index delete failed
 
 This seems to be related with wrong ownership of the BDB's dir (/var/lib/ldap) 
-and files.
+and files. The files must be owned by the user that slapd runs as.
 
->    chmod -R openldap:openldap /var/lib/ldap 
+>    chown -R ldap:ldap /var/lib/ldap 
 
 fixes it in Debian
 

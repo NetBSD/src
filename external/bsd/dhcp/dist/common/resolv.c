@@ -1,11 +1,11 @@
-/*	$NetBSD: resolv.c,v 1.1.1.1 2013/03/24 15:45:54 christos Exp $	*/
-
+/*	$NetBSD: resolv.c,v 1.1.1.1.8.1 2014/08/10 07:06:55 tls Exp $	*/
 /* resolv.c
 
    Parser for /etc/resolv.conf file. */
 
 /*
- * Copyright (c) 2004-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,16 +26,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resolv.c,v 1.1.1.1 2013/03/24 15:45:54 christos Exp $");
+__RCSID("$NetBSD: resolv.c,v 1.1.1.1.8.1 2014/08/10 07:06:55 tls Exp $");
 
 #include "dhcpd.h"
 
@@ -94,7 +88,6 @@ void read_resolv_conf (parse_time)
 						(struct domain_search_list *)0;
 					*dp = nd;
 					nd -> domain = dn;
-					dn = (char *)0;
 				}
 				nd -> rcdate = parse_time;
 				token = peek_token (&val,
@@ -105,7 +98,7 @@ void read_resolv_conf (parse_time)
 					    "junk after domain declaration");
 				skip_to_semi (cfile);
 			}
-			token = next_token (&val, (unsigned *)0, cfile);
+			skip_token(&val, (unsigned *)0, cfile);
 		} else if (token == NAMESERVER) {
 			struct name_server *ns, **sp;
 			struct iaddr iaddr;
@@ -141,7 +134,7 @@ void read_resolv_conf (parse_time)
 		} else
 			skip_to_semi (cfile); /* Ignore what we don't grok. */
 	} while (1);
-	token = next_token (&val, (unsigned *)0, cfile);
+	skip_token(&val, (unsigned *)0, cfile);
 
 	/* Lose servers that are no longer in /etc/resolv.conf. */
 	sl = (struct name_server *)0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.6 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.6.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 /*! \file */
 
@@ -61,7 +59,7 @@
 		result = (x); \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define RBT_MAGIC               ISC_MAGIC('R', 'B', 'T', '+')
 #define VALID_RBT(rbt)          ISC_MAGIC_VALID(rbt, RBT_MAGIC)
@@ -309,17 +307,27 @@ Name(dns_rbtnode_t *node) {
 static void printnodename(dns_rbtnode_t *node);
 
 static void
-hexdump(const char *desc, void *data, size_t size) {
-	char hexdump[BUFSIZ];
+hexdump(const char *desc, void *blob, size_t size) {
+	char hexdump[BUFSIZ * 2 + 1];
 	isc_buffer_t b;
 	isc_region_t r;
+	isc_result_t result;
+	size_t bytes;
+	isc_uint8_t *data = blob;
 
-	isc_buffer_init(&b, hexdump, sizeof(hexdump));
-	r.base = data;
-	r.length = size;
-	isc_hex_totext(&r, 0, "", &b);
-	isc_buffer_putuint8(&b, 0);
-	fprintf(stderr, "%s: %s\n", desc, hexdump);
+	fprintf(stderr, "%s: ", desc);
+	do {
+		isc_buffer_init(&b, hexdump, sizeof(hexdump));
+		r.base = data;
+		r.length = bytes = (size > BUFSIZ) ? BUFSIZ : size;
+		result = isc_hex_totext(&r, 0, "", &b);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		isc_buffer_putuint8(&b, 0);
+		fprintf(stderr, "%s", hexdump);
+		data += bytes;
+		size -= bytes;
+	} while (size > 0);
+	fprintf(stderr, "\n");
 }
 #endif
 
@@ -528,7 +536,7 @@ serialize_node(FILE *file, dns_rbtnode_t *node, uintptr_t left,
 	fprintf(stderr, "serialize ");
 	dns_name_print(&nodename, stderr);
 	fprintf(stderr, "\n");
-	hexdump("node header", (unsigned char*) &temp_node,
+	hexdump("node header", &temp_node,
 		sizeof(dns_rbtnode_t));
 	hexdump("node data", node_data, datasize);
 #endif
@@ -668,7 +676,7 @@ dns_rbt_serialize_tree(FILE *file, dns_rbt_t *rbt,
 		result = ISC_R_INVALIDFILE; \
 		goto cleanup; \
 	} \
-} while(0);
+} while(/*CONSTCOND*/0);
 
 static isc_result_t
 treefix(dns_rbt_t *rbt, void *base, size_t filesize, dns_rbtnode_t *n,
@@ -770,7 +778,7 @@ treefix(dns_rbt_t *rbt, void *base, size_t filesize, dns_rbtnode_t *n,
 	fprintf(stderr, "deserialize ");
 	dns_name_print(&nodename, stderr);
 	fprintf(stderr, "\n");
-	hexdump("node header", (unsigned char *) &header,
+	hexdump("node header", &header,
 		sizeof(dns_rbtnode_t));
 	hexdump("node data", node_data, datasize);
 #endif
@@ -860,7 +868,7 @@ dns_rbt_deserialize_tree(void *base_address, size_t filesize,
 		result = ISC_R_INVALIDFILE;
 
  cleanup:
-	if (result != ISC_R_SUCCESS) {
+	if (result != ISC_R_SUCCESS && rbt != NULL) {
 		rbt->root = NULL;
 		rbt->nodecount = 0;
 		dns_rbt_destroy(&rbt);

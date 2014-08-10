@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/release/install.sdf,v 1.23.2.5 2010/04/13 20:22:35 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 P1: Making and Installing the OpenLDAP Distribution
@@ -40,8 +40,8 @@ E:	% ./configure --help
 
 .to list available configuration options.
 
-.The {{EX:configure}} script uses environment variables for
-determining compiler/linker options including:
+.The {{EX:configure}} script also looks for compiler/linker options
+on the command line and in the environment.  These include:
 
 >	Variable	Description	Example
 >	CC		C compiler	gcc
@@ -51,24 +51,28 @@ determining compiler/linker options including:
 >	LIBS		libraries	-llib
 >	PATH		command path	/usr/local/bin:/usr/bin:/bin
 
-+ Configure the build system
+!if $var{'OPT_TARGET'} eq 'txt'
+.See doc/install/configure for generic configure documentation.
+!endif
 
-E:	% [env settings] ./configure [options]
++ Configure the build system:
+
+E:	% ./configure [options] [var=value ...]
 
 .If all goes well, the {{EX:configure}} script will automatically detect
 the appropriate settings.  If the {{EX:configure}} script fails, you should
 read the {{FILE:config.log}} file that it generated to see what it was trying
 to do and exactly what failed.  You may need to specify additional
-options and/or environment variables besides those listed above to
+options and/or variables besides those listed above to
 obtain desired results, depending on your operating system. The
 {{Platform Hints}} section of the {{FAQ}} provides help for operating system
 related problems.
 
-+ Build dependencies
++ Build dependencies:
 
 E:	% make depend
 
-+ Build the system
++ Build the system:
 
 E:	% make
 
@@ -77,7 +81,7 @@ return to step 3 after reviewing the configuration settings.  You
 may want to consult the {{Platform Hints}} subsection of the {{FAQ}}
 if you have not done so already.
 
-+ Test the standalone system
++ Test the standalone system:
 
 .This step requires the standalone LDAP server, {{slapd}}(8),
 with {{HDB}} and/or {{BDB}} support.
@@ -85,17 +89,17 @@ with {{HDB}} and/or {{BDB}} support.
 E:	% make test
 
 .If all goes well, the system has been built as configured.  If not,
-return to step 4 after reviewing your configuration settings.  You
+return to step 2 after reviewing your configuration settings.  You
 may want to consult the {{Installation}} section of the {{FAQ}}
 if you have not done so already.
 
-+ Install the binaries and man pages.  You may need to become the
++ Install the software.  You may need to become the
 {{super-user}} (e.g. {{EX:root}}) to do this (depending on where you
 are installing things):
 
 E:	% su root -c 'make install'
 
-+ That's it!
++ That's it.  Enjoy!
 
 See the {{OpenLDAP Administrator's Guide}} and the manual pages
 for the individual applications for configuration and use information.

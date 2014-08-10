@@ -54,6 +54,13 @@ struct foo4
 };
 struct foo4 foo4;
 
+struct foo5
+{
+  struct { int x; } *p;
+};
+
+struct foo5 *nullptr;
+
 void marker1 ()
 {
 }

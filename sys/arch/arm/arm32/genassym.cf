@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.68 2014/03/28 21:56:02 matt Exp $
+#	$NetBSD: genassym.cf,v 1.68.2.1 2014/08/10 06:53:50 tls Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -84,6 +84,10 @@ endif
 
 ifdef ARM_MMU_EXTENDED
 define  ARM_MMU_EXTENDED	1
+endif
+
+ifdef VERBOSE_INIT_ARM
+define	VERBOSE_INIT_ARM	1
 endif
 
 define	KERNEL_BASE		KERNEL_BASE

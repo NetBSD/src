@@ -4,6 +4,7 @@ LIBRARY libisccfg
 EXPORTS
 
 cfg_acl_fromconfig
+cfg_acl_fromconfig2
 cfg_aclconfctx_attach
 cfg_aclconfctx_create
 cfg_aclconfctx_detach

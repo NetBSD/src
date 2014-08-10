@@ -3,7 +3,7 @@ int bar()
   return 1;
 }
 
-int baz(int a, int b)
+int baz(int a)
 {
-  return a + b;
+  return a + 1;
 }

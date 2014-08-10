@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.1.1.4 2014/02/28 17:40:07 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.1.1.4.2.1 2014/08/10 07:06:37 tls Exp $	*/
 
 /*
  * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -54,7 +54,7 @@
 		result = (x); \
 		if (result != ISC_R_SUCCESS) \
 			goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /* For this simple example, use fixed sized strings */
 struct record {

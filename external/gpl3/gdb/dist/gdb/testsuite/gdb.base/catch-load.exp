@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -24,9 +24,7 @@ if {[get_compiler_info]} {
     return -1
 }
 
-set testfile catch-load
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug shlib_load}] != "" } {
     untested catch-load.exp
     return -1
@@ -34,7 +32,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 
 set testfile2 catch-load-so
 set srcfile2 ${testfile2}.c
-set binfile2 ${objdir}/${subdir}/${testfile2}.so
+set binfile2 [standard_output_file ${testfile2}.so]
 set binfile2_dlopen [shlib_target_file ${testfile2}.so]
 if { [gdb_compile_shlib "${srcdir}/${subdir}/${srcfile2}" ${binfile2} {debug}] != "" } {
     untested catch-load.exp
@@ -46,54 +44,56 @@ if { [gdb_compile_shlib "${srcdir}/${subdir}/${srcfile2}" ${binfile2} {debug}] !
 # names.
 # KIND is passed to the "catch" command.
 # MATCH is a boolean saying whether we expect the catchpoint to be hit.
-proc one_catch_load_test {scenario kind match sostop} { with_test_prefix "${scenario}" {
-    global verbose testfile testfile2 binfile2 binfile2_dlopen
-    global srcfile
-    global decimal gdb_prompt
+proc one_catch_load_test {scenario kind match sostop} {
+    with_test_prefix "${scenario}" {
+	global verbose testfile testfile2 binfile2 binfile2_dlopen
+	global srcfile
+	global decimal gdb_prompt
 
-    clean_restart $testfile
-    gdb_load_shlibs $binfile2
+	clean_restart $testfile
+	gdb_load_shlibs $binfile2
 
-    if {![runto_main]} {
-	fail "can't run to main"
-	return
+	if {![runto_main]} {
+	    fail "can't run to main"
+	    return
+	}
+
+	gdb_breakpoint [gdb_get_line_number "final breakpoint here"]
+	gdb_test_no_output "set var libname = \"$binfile2_dlopen\""
+	gdb_test_no_output "set stop-on-solib-events $sostop"
+	gdb_test "catch $kind" "Catchpoint $decimal \\(.*\\)"
+
+	gdb_test_multiple "continue" "continue" {
+	    -re "Catchpoint $decimal\r\n.*loaded .*(\\\\|/)$testfile2.*\r\n.*$gdb_prompt $" {
+		if {$match} {
+		    pass "continue"
+		} else {
+		    fail "continue"
+		}
+	    }
+
+	    -re "Stopped due to shared library event.*\r\n$gdb_prompt $" {
+		if {$sostop} {
+		    pass "continue"
+		} else {
+		    fail "continue"
+		}
+	    }
+
+	    -re "Breakpoint $decimal, .*\r\n$gdb_prompt $" {
+		if {!$match} {
+		    pass "continue"
+		} else {
+		    fail "continue"
+		}
+	    }
+
+	    -re ".*$gdb_prompt $" {
+		fail "continue"
+	    }
+	}
     }
-
-    gdb_breakpoint [gdb_get_line_number "final breakpoint here"]
-    gdb_test_no_output "set var libname = \"$binfile2_dlopen\""
-    gdb_test_no_output "set stop-on-solib-events $sostop"
-    gdb_test "catch $kind" "Catchpoint $decimal \\(.*\\)"
-
-    gdb_test_multiple "continue" "continue" {
-	-re "Catchpoint $decimal\r\n.*loaded .*/$testfile2.*\r\n.*$gdb_prompt $" {
-	    if {$match} {
-		pass "continue"
-	    } else {
-		fail "continue"
-	    }
-	}
-
-	-re "Stopped due to shared library event.*\r\n$gdb_prompt $" {
-	    if {$sostop} {
-		pass "continue"
-	    } else {
-		fail "continue"
-	    }
-	}
-
-	-re "Breakpoint $decimal, .*\r\n$gdb_prompt $" {
-	    if {!$match} {
-		pass "continue"
-	    } else {
-		fail "continue"
-	    }
-	}
-
-	-re ".*$gdb_prompt $" {
-	    fail "continue"
-	}
-    }
-}}
+}
 
 one_catch_load_test "plain load" "load" 1 0
 one_catch_load_test "plain load with stop-on-solib-events" "load" 1 1

@@ -14,7 +14,6 @@
 #include "clang/Sema/SemaInternal.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Lex/Lexer.h"
 #include "clang/Sema/DelayedDiagnostic.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/ScopeInfo.h"
@@ -29,16 +28,15 @@ static Attr *handleFallThroughAttr(Sema &S, Stmt *St, const AttributeList &A,
     S.Diag(A.getRange().getBegin(), diag::err_fallthrough_attr_wrong_target)
         << St->getLocStart();
     if (isa<SwitchCase>(St)) {
-      SourceLocation L = Lexer::getLocForEndOfToken(Range.getEnd(), 0,
-                                  S.getSourceManager(), S.getLangOpts());
+      SourceLocation L = S.getLocForEndOfToken(Range.getEnd());
       S.Diag(L, diag::note_fallthrough_insert_semi_fixit)
           << FixItHint::CreateInsertion(L, ";");
     }
-    return 0;
+    return nullptr;
   }
   if (S.getCurFunction()->SwitchStack.empty()) {
     S.Diag(A.getRange().getBegin(), diag::err_fallthrough_attr_outside_switch);
-    return 0;
+    return nullptr;
   }
   return ::new (S.Context) FallThroughAttr(A.getRange(), S.Context,
                                            A.getAttributeSpellingListIndex());
@@ -52,7 +50,7 @@ static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const AttributeList &A,
     S.Diag(A.getLoc(), A.isDeclspecAttribute() ?
            diag::warn_unhandled_ms_attribute_ignored :
            diag::warn_unknown_attribute_ignored) << A.getName();
-    return 0;
+    return nullptr;
   case AttributeList::AT_FallThrough:
     return handleFallThroughAttr(S, St, A, Range);
   default:
@@ -60,7 +58,7 @@ static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const AttributeList &A,
     // it as a statement attribute => it is declaration attribute
     S.Diag(A.getRange().getBegin(), diag::err_attribute_invalid_on_stmt)
         << A.getName() << St->getLocStart();
-    return 0;
+    return nullptr;
   }
 }
 

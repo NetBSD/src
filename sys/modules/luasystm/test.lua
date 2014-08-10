@@ -1,4 +1,4 @@
-require 'systm'
+local systm = require 'systm'
 
 systm.print("hello, kernel world!\n")
 

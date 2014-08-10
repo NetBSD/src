@@ -1,4 +1,4 @@
-#   Copyright 2003-2013 Free Software Foundation, Inc.
+#   Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,12 +23,10 @@ if {[skip_shlib_tests]} {
     return 0
 }
 
-set testfile "pending"
+standard_testfile .c
 set libfile "pendshr"
-set srcfile $testfile.c
 set libsrc  $srcdir/$subdir/$libfile.c
-set binfile $objdir/$subdir/$testfile
-set lib_sl  $objdir/$subdir/$libfile.sl
+set lib_sl  [standard_output_file $libfile.sl]
 
 set lib_opts  debug
 set exec_opts [list debug shlib=$lib_sl]

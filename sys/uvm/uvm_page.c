@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.183.2.1 2014/04/07 03:37:33 tls Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.183.2.2 2014/08/10 06:57:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.183.2.1 2014/04/07 03:37:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.183.2.2 2014/08/10 06:57:00 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1686,15 +1686,10 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 void
 uvm_page_own(struct vm_page *pg, const char *tag)
 {
-	struct uvm_object *uobj;
-	struct vm_anon *anon;
 
 	KASSERT((pg->flags & (PG_PAGEOUT|PG_RELEASED)) == 0);
-
-	uobj = pg->uobject;
-	anon = pg->uanon;
-	KASSERT(uvm_page_locked_p(pg));
 	KASSERT((pg->flags & PG_WANTED) == 0);
+	KASSERT(uvm_page_locked_p(pg));
 
 	/* gain ownership? */
 	if (tag) {
@@ -1705,8 +1700,8 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 			    pg->owner, pg->owner_tag);
 			panic("uvm_page_own");
 		}
-		pg->owner = (curproc) ? curproc->p_pid :  (pid_t) -1;
-		pg->lowner = (curlwp) ? curlwp->l_lid :  (lwpid_t) -1;
+		pg->owner = curproc->p_pid;
+		pg->lowner = curlwp->l_lid;
 		pg->owner_tag = tag;
 		return;
 	}

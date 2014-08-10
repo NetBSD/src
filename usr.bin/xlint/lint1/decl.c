@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.58 2013/12/15 03:43:37 christos Exp $ */
+/* $NetBSD: decl.c,v 1.58.2.1 2014/08/10 06:59:20 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.58 2013/12/15 03:43:37 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.58.2.1 2014/08/10 06:59:20 tls Exp $");
 #endif
 
 #include <sys/param.h>
@@ -757,6 +757,7 @@ deftyp(void)
 			break;
 		case DOUBLE:
 			if (l == LONG) {
+		case LDOUBLE:
 				l = NOTSPEC;
 				t = LDOUBLE;
 				if (tflag)
@@ -778,7 +779,7 @@ deftyp(void)
 		case LCOMPLEX:
 			break;
 		default:
-			LERROR("deftyp()");
+			LERROR("deftyp(%s)", basictyname(t));
 		}
 		if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
 			dcs->d_terr = 1;

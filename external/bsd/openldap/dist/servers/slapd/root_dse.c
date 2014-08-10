@@ -1,10 +1,10 @@
-/*	$NetBSD: root_dse.c,v 1.1.1.3 2010/12/12 15:22:38 adam Exp $	*/
+/*	$NetBSD: root_dse.c,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* root_dse.c - Provides the Root DSA-Specific Entry */
-/* OpenLDAP: pkg/ldap/servers/slapd/root_dse.c,v 1.113.2.12 2010/04/13 20:23:18 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -403,7 +403,8 @@ int
 root_dse_read_file( const char *fname )
 {
 	struct LDIFFP	*fp;
-	int rc = 0, lineno = 0, lmax = 0, ldifrc;
+	int rc = 0, lmax = 0, ldifrc;
+	unsigned long lineno = 0;
 	char	*buf = NULL;
 
 	if ( (fp = ldif_open( fname, "r" )) == NULL ) {
@@ -429,7 +430,7 @@ root_dse_read_file( const char *fname )
 
 		if( e == NULL ) {
 			Debug( LDAP_DEBUG_ANY, "root_dse_read_file: "
-				"could not parse entry (file=\"%s\" line=%d)\n",
+				"could not parse entry (file=\"%s\" line=%lu)\n",
 				fname, lineno, 0 );
 			rc = LDAP_OTHER;
 			break;
@@ -439,7 +440,7 @@ root_dse_read_file( const char *fname )
 		if( e->e_nname.bv_len ) {
 			Debug( LDAP_DEBUG_ANY,
 				"root_dse_read_file: invalid rootDSE "
-				"- dn=\"%s\" (file=\"%s\" line=%d)\n",
+				"- dn=\"%s\" (file=\"%s\" line=%lu)\n",
 				e->e_dn, fname, lineno );
 			entry_free( e );
 			rc = LDAP_OTHER;

@@ -1,10 +1,10 @@
-/*	$NetBSD: refint.c,v 1.1.1.4 2010/12/12 15:23:40 adam Exp $	*/
+/*	$NetBSD: refint.c,v 1.1.1.4.24.1 2014/08/10 07:09:51 tls Exp $	*/
 
 /* refint.c - referential integrity module */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/refint.c,v 1.19.2.15 2010/06/17 20:08:31 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2010 The OpenLDAP Foundation.
+ * Copyright 2004-2014 The OpenLDAP Foundation.
  * Portions Copyright 2004 Symas Corporation.
  * All rights reserved.
  *
@@ -57,6 +57,7 @@ typedef struct refint_attrs_s {
 	BerVarray		new_vals;
 	BerVarray		new_nvals;
 	int				ra_numvals;
+	int				dont_empty;
 } refint_attrs;
 
 typedef struct dependents_s {
@@ -417,8 +418,9 @@ refint_search_cb(
 	**	if this attr exists in the search result,
 	**	and it has a value matching the target:
 	**		allocate an attr;
-	**		if this is a delete and there's only one value:
-	**			allocate the same attr again;
+	**		save/build DNs of any subordinate matches;
+	**		handle special case: found exact + subordinate match;
+	**		handle olcRefintNothing;
 	**
 	*/
 
@@ -430,14 +432,20 @@ refint_search_cb(
 	ip->attrs = NULL;
 	for(ia = da; ia; ia = ia->next) {
 		if ( (a = attr_find(rs->sr_entry->e_attrs, ia->attr) ) ) {
-			int		first = -1, count = 0, deleted = 0;
+			int exact = -1, is_exact;
 
 			na = NULL;
 
 			for(i = 0, b = a->a_nvals; b[i].bv_val; i++) {
-				count++;
-
 				if(dnIsSuffix(&b[i], &rq->oldndn)) {
+					is_exact = b[i].bv_len == rq->oldndn.bv_len;
+
+					/* Paranoia: skip buggy duplicate exact match,
+					 * it would break ra_numvals
+					 */
+					if ( is_exact && exact >= 0 )
+						continue;
+
 					/* first match? create structure */
 					if ( na == NULL ) {
 						na = op->o_tmpcalloc( 1,
@@ -446,91 +454,66 @@ refint_search_cb(
 						na->next = ip->attrs;
 						ip->attrs = na;
 						na->attr = ia->attr;
-
-						/* delete, or exact match? note it's first match */
-						if ( BER_BVISEMPTY( &rq->newdn ) &&
-							b[i].bv_len == rq->oldndn.bv_len )
-						{
-							first = i;
-						}
 					}
 
-					/* if it's a rename, or a subordinate match,
-					 * save old and build new dn */
-					if ( !BER_BVISEMPTY( &rq->newdn ) &&
-						b[i].bv_len != rq->oldndn.bv_len )
-					{
+					na->ra_numvals++;
+
+					if ( is_exact ) {
+						/* Exact match: refint_repair will deduce the DNs */
+						exact = i;
+
+					} else {
+						/* Subordinate match */
 						struct berval	newsub, newdn, olddn, oldndn;
 
-						/* if not first, save first as well */
-						if ( first != -1 ) {
-
-							ber_dupbv_x( &olddn, &a->a_vals[first], op->o_tmpmemctx );
-							ber_bvarray_add_x( &na->old_vals, &olddn, op->o_tmpmemctx );
-							ber_dupbv_x( &oldndn, &a->a_nvals[first], op->o_tmpmemctx );
-							ber_bvarray_add_x( &na->old_nvals, &oldndn, op->o_tmpmemctx );
-							na->ra_numvals++;
-
-							newsub = a->a_vals[first];
-							newsub.bv_len -= rq->olddn.bv_len + 1;
-
-							build_new_dn( &newdn, &rq->newdn, &newsub, op->o_tmpmemctx );
-
-							ber_bvarray_add_x( &na->new_vals, &newdn, op->o_tmpmemctx );
-
-							newsub = a->a_nvals[first];
-							newsub.bv_len -= rq->oldndn.bv_len + 1;
-
-							build_new_dn( &newdn, &rq->newndn, &newsub, op->o_tmpmemctx );
-
-							ber_bvarray_add_x( &na->new_nvals, &newdn, op->o_tmpmemctx );
-							
-							first = -1;
-						}
-
+						/* Save old DN */
 						ber_dupbv_x( &olddn, &a->a_vals[i], op->o_tmpmemctx );
 						ber_bvarray_add_x( &na->old_vals, &olddn, op->o_tmpmemctx );
+
 						ber_dupbv_x( &oldndn, &a->a_nvals[i], op->o_tmpmemctx );
 						ber_bvarray_add_x( &na->old_nvals, &oldndn, op->o_tmpmemctx );
-						na->ra_numvals++;
 
+						if ( BER_BVISEMPTY( &rq->newdn ) )
+							continue;
+
+						/* Rename subordinate match: Build new DN */
 						newsub = a->a_vals[i];
 						newsub.bv_len -= rq->olddn.bv_len + 1;
-
 						build_new_dn( &newdn, &rq->newdn, &newsub, op->o_tmpmemctx );
-
 						ber_bvarray_add_x( &na->new_vals, &newdn, op->o_tmpmemctx );
 
 						newsub = a->a_nvals[i];
 						newsub.bv_len -= rq->oldndn.bv_len + 1;
-
 						build_new_dn( &newdn, &rq->newndn, &newsub, op->o_tmpmemctx );
-
 						ber_bvarray_add_x( &na->new_nvals, &newdn, op->o_tmpmemctx );
 					}
-
-					/* count deletes */
-					if ( BER_BVISEMPTY( &rq->newdn ) ) {
-						deleted++;
-					}
 				}
-
-				/* If this is a delete and no value would be left, and
-				 * we have a nothing DN configured, allocate the attr again.
-				 */
-				if ( count == deleted && !BER_BVISNULL(&dd->nothing) )
-				{
-					na = op->o_tmpcalloc( 1,
-						sizeof( refint_attrs ),
-						op->o_tmpmemctx );
-					na->next = ip->attrs;
-					ip->attrs = na;
-					na->attr = ia->attr;
-				}
-
-				Debug( LDAP_DEBUG_TRACE, "refint_search_cb: %s: %s (#%d)\n",
-					a->a_desc->ad_cname.bv_val, rq->olddn.bv_val, count );
 			}
+
+			/* If we got both subordinate and exact match,
+			 * refint_repair won't special-case the exact match */
+			if ( exact >= 0 && na->old_vals ) {
+				struct berval	dn;
+
+				ber_dupbv_x( &dn, &a->a_vals[exact], op->o_tmpmemctx );
+				ber_bvarray_add_x( &na->old_vals, &dn, op->o_tmpmemctx );
+				ber_dupbv_x( &dn, &a->a_nvals[exact], op->o_tmpmemctx );
+				ber_bvarray_add_x( &na->old_nvals, &dn, op->o_tmpmemctx );
+
+				if ( !BER_BVISEMPTY( &rq->newdn ) ) {
+					ber_dupbv_x( &dn, &rq->newdn, op->o_tmpmemctx );
+					ber_bvarray_add_x( &na->new_vals, &dn, op->o_tmpmemctx );
+					ber_dupbv_x( &dn, &rq->newndn, op->o_tmpmemctx );
+					ber_bvarray_add_x( &na->new_nvals, &dn, op->o_tmpmemctx );
+				}
+			}
+
+			/* Deleting/replacing all values and a nothing DN is configured? */
+			if ( na && na->ra_numvals == i && !BER_BVISNULL(&dd->nothing) )
+				na->dont_empty = 1;
+
+			Debug( LDAP_DEBUG_TRACE, "refint_search_cb: %s: %s (#%d)\n",
+				a->a_desc->ad_cname.bv_val, rq->olddn.bv_val, i );
 		}
 	}
 
@@ -540,11 +523,13 @@ refint_search_cb(
 static int
 refint_repair(
 	Operation	*op,
-	SlapReply	*rs,
 	refint_data	*id,
 	refint_q	*rq )
 {
 	dependent_data	*dp;
+	SlapReply		rs = {REP_RESULT};
+	Operation		op2;
+	unsigned long	opid;
 	int		rc;
 
 	op->o_callback->sc_response = refint_search_cb;
@@ -554,7 +539,7 @@ refint_repair(
 	op->o_ndn = op->o_bd->be_rootndn;
 
 	/* search */
-	rc = op->o_bd->be_search( op, rs );
+	rc = op->o_bd->be_search( op, &rs );
 
 	if ( rc != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE,
@@ -583,16 +568,15 @@ refint_repair(
 	 *
 	 */
 
+	opid = op->o_opid;
+	op2 = *op;
 	for ( dp = rq->attrs; dp; dp = dp->next ) {
-		Operation	op2 = *op;
-		SlapReply	rs2 = { 0 };
+		SlapReply	rs2 = {REP_RESULT};
 		refint_attrs	*ra;
 		Modifications	*m;
 
-		op2.o_tag = LDAP_REQ_MODIFY;
-		op2.orm_modlist = NULL;
-		op2.o_req_dn	= dp->dn;
-		op2.o_req_ndn	= dp->ndn;
+		if ( dp->attrs == NULL ) continue; /* TODO: Is this needed? */
+
 		op2.o_bd = select_backend( &dp->ndn, 1 );
 		if ( !op2.o_bd ) {
 			Debug( LDAP_DEBUG_TRACE,
@@ -600,13 +584,17 @@ refint_repair(
 				dp->dn.bv_val, 0, 0 );
 			continue;
 		}
+		op2.o_tag = LDAP_REQ_MODIFY;
+		op2.orm_modlist = NULL;
+		op2.o_req_dn	= dp->dn;
+		op2.o_req_ndn	= dp->ndn;
+		/* Internal ops, never replicate these */
+		op2.orm_no_opattrs = 1;
+		op2.o_dont_replicate = 1;
+		op2.o_opid = 0;
 
-		rs2.sr_type = REP_RESULT;
-		for ( ra = dp->attrs; ra; ra = ra->next ) {
-			size_t	len;
-
-			/* Set our ModifiersName */
-			if ( SLAP_LASTMOD( op->o_bd ) ) {
+		/* Set our ModifiersName */
+		if ( SLAP_LASTMOD( op->o_bd ) ) {
 				m = op2.o_tmpalloc( sizeof(Modifications) +
 					4*sizeof(BerValue), op2.o_tmpmemctx );
 				m->sml_next = op2.orm_modlist;
@@ -622,10 +610,13 @@ refint_repair(
 				BER_BVZERO( &m->sml_nvalues[1] );
 				m->sml_values[0] = id->refint_dn;
 				m->sml_nvalues[0] = id->refint_ndn;
-			}
-			if ( !BER_BVISEMPTY( &rq->newdn ) || ( ra->next &&
-				ra->attr == ra->next->attr ) )
-			{
+		}
+
+		for ( ra = dp->attrs; ra; ra = ra->next ) {
+			size_t	len;
+
+			/* Add values */
+			if ( ra->dont_empty || !BER_BVISEMPTY( &rq->newdn ) ) {
 				len = sizeof(Modifications);
 
 				if ( ra->new_vals == NULL ) {
@@ -659,11 +650,11 @@ refint_repair(
 				}
 			}
 
+			/* Delete values */
 			len = sizeof(Modifications);
 			if ( ra->old_vals == NULL ) {
 				len += 4*sizeof(BerValue);
 			}
-
 			m = op2.o_tmpalloc( len, op2.o_tmpmemctx );
 			m->sml_next = op2.orm_modlist;
 			op2.orm_modlist = m;
@@ -688,8 +679,8 @@ refint_repair(
 
 		op2.o_dn = op2.o_bd->be_rootdn;
 		op2.o_ndn = op2.o_bd->be_rootndn;
-		slap_op_time( &op2.o_time, &op2.o_tincr );
-		if ( ( rc = op2.o_bd->be_modify( &op2, &rs2 ) ) != LDAP_SUCCESS ) {
+		rc = op2.o_bd->be_modify( &op2, &rs2 );
+		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_TRACE,
 				"refint_repair: dependent modify failed: %d\n",
 				rs2.sr_err, 0, 0 );
@@ -700,6 +691,7 @@ refint_repair(
 			op2.o_tmpfree( m, op2.o_tmpmemctx );
 		}
 	}
+	op2.o_opid = opid;
 
 	return 0;
 }
@@ -712,7 +704,6 @@ refint_qtask( void *ctx, void *arg )
 	Connection conn = {0};
 	OperationBuffer opbuf;
 	Operation *op;
-	SlapReply rs = {REP_RESULT};
 	slap_callback cb = { NULL, NULL, NULL, NULL };
 	Filter ftop, *fptr;
 	refint_q *rq;
@@ -789,7 +780,7 @@ refint_qtask( void *ctx, void *arg )
 
 		if ( rq->db != NULL ) {
 			op->o_bd = rq->db;
-			refint_repair( op, &rs, id, rq );
+			refint_repair( op, id, rq );
 
 		} else {
 			BackendDB	*be;
@@ -802,7 +793,7 @@ refint_qtask( void *ctx, void *arg )
 
 				if ( be->be_search && be->be_modify ) {
 					op->o_bd = be;
-					refint_repair( op, &rs, id, rq );
+					refint_repair( op, id, rq );
 				}
 			}
 		}

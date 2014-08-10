@@ -27,7 +27,7 @@ ldapwhoami       * DE**HI**  NO QR  UVWXYZ   def*h*** *nop*    vwxy
 	-h host
 	-n no-op
 	-N no (SASLprep) normalization of simple bind password
-	-o general connection options (currently nettimeout only)
+	-o general options (currently nettimeout and ldif-wrap only)
 	-p port
 	-v verbose
 	-V version
@@ -60,4 +60,4 @@ Not used
 
 
 ---
-OpenLDAP: pkg/ldap/doc/devel/args,v 1.29.2.5 2009/01/21 00:27:40 quanah Exp
+$OpenLDAP$

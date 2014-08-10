@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.15 2013/09/24 13:27:50 njoly Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.15.2.1 2014/08/10 06:54:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #define LINUX_AT_NO_AUTOMOUNT		0x0800
 #define LINUX_AT_EMPTY_PATH		0x1000
 
+int linux_to_bsd_ioflags(int);
 int linux_to_bsd_atflags(int);
 
 struct linux_flock {

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcq.c,v 1.7 2014/02/06 03:47:16 riastradh Exp $	*/
+/*	$NetBSD: subr_pcq.c,v 1.7.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.7 2014/02/06 03:47:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.7.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,6 +60,7 @@ struct pcq {
  * Consumer (c) - in the higher 16 bits.
  *
  * We have a limitation of 16 bits i.e. 0xffff items in the queue.
+ * The PCQ_MAXLEN constant is set accordingly.
  */
 
 static inline void
@@ -197,7 +198,7 @@ pcq_create(size_t nitems, km_flag_t kmflags)
 {
 	pcq_t *pcq;
 
-	KASSERT(nitems > 0 || nitems <= 0xffff);
+	KASSERT(nitems > 0 || nitems <= PCQ_MAXLEN);
 
 	pcq = kmem_zalloc(offsetof(pcq_t, pcq_items[nitems]), kmflags);
 	if (pcq == NULL) {

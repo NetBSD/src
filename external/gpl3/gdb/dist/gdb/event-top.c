@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -36,6 +36,7 @@
 #include "continuations.h"
 #include "gdbcmd.h"		/* for dont_repeat() */
 #include "annotate.h"
+#include "maint.h"
 
 /* readline include files.  */
 #include "readline/readline.h"
@@ -166,9 +167,11 @@ rl_callback_read_char_wrapper (gdb_client_data client_data)
 }
 
 /* Initialize all the necessary variables, start the event loop,
-   register readline, and stdin, start the loop.  */
+   register readline, and stdin, start the loop.  The DATA is the
+   interpreter data cookie, ignored for now.  */
+
 void
-cli_command_loop (void)
+cli_command_loop (void *data)
 {
   display_gdb_prompt (0);
 
@@ -268,6 +271,7 @@ display_gdb_prompt (char *new_prompt)
 	     rl_callback_handler_remove(), does the job.  */
 
 	  rl_callback_handler_remove ();
+	  do_cleanups (old_chain);
 	  return;
 	}
       else
@@ -602,8 +606,7 @@ command_line_handler (char *rl)
   *p = 0;
 
   /* Add line to history if appropriate.  */
-  if (instream == stdin
-      && ISATTY (stdin) && *linebuffer)
+  if (*linebuffer && input_from_terminal_p ())
     add_history (linebuffer);
 
   /* Note: lines consisting solely of comments are added to the command
@@ -867,7 +870,7 @@ async_disconnect (gdb_client_data arg)
 
   TRY_CATCH (exception, RETURN_MASK_ALL)
     {
-      pop_all_targets (1);
+      pop_all_targets ();
     }
 
   signal (SIGHUP, SIG_DFL);	/*FIXME: ???????????  */
@@ -953,7 +956,7 @@ gdb_setup_readline (void)
      time.  */
   if (!batch_silent)
     gdb_stdout = stdio_fileopen (stdout);
-  gdb_stderr = stdio_fileopen (stderr);
+  gdb_stderr = stderr_fileopen ();
   gdb_stdlog = gdb_stderr;  /* for moment */
   gdb_stdtarg = gdb_stderr; /* for moment */
   gdb_stdtargerr = gdb_stderr; /* for moment */

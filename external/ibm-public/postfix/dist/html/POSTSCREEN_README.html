@@ -227,24 +227,9 @@ specifies the location of the temporary whitelist.  The
 temporary whitelist is not used for SMTP client addresses
 that appear on the <i>permanent</i> access list. </p>
 
-<blockquote> 
-
-    <p> NOTE: To share a <a href="postscreen.8.html">postscreen(8)</a> cache between multiple
-    <a href="postscreen.8.html">postscreen(8)</a> instances under the same <a href="master.8.html">master(8)</a> daemon, use
-    "<tt><a href="postconf.5.html#postscreen_cache_map">postscreen_cache_map</a> =
-    <a href="proxymap.8.html">proxy</a>:btree:$<a href="postconf.5.html#data_directory">data_directory</a>/postscreen_cache</tt>", and disable
-    cache cleanup (<a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a> = 0) in all
-    <a href="postscreen.8.html">postscreen(8)</a> instances except one that is responsible for cache
-    cleanup. </p>
-
-    <p> <a href="postscreen.8.html">postscreen(8)</a> cache sharing requires Postfix 2.9 or later;
-    earlier <a href="proxymap.8.html">proxymap(8)</a> implementations don't support cache cleanup.
-    </p>
-
-    <p>  For an alternative <a href="postscreen.8.html">postscreen(8)</a> cache sharing approach,
-    see the <a href="memcache_table.5.html">memcache_table(5)</a> manpage. </p>
-
-</blockquote>
+<p> By default the temporary whitelist is not shared with other
+postscreen(8) daemons. See <a href="#temp_white_sharing"> Sharing
+the temporary whitelist </a> below for alternatives. </p>
 
 <p> When the SMTP client address appears on the temporary
 whitelist, <a href="postscreen.8.html">postscreen(8)</a> logs this with the client address and port
@@ -464,36 +449,50 @@ this test the next time the client connects. </dd>
 number of "deep protocol" tests. These tests use an SMTP protocol
 engine that is built into the <a href="postscreen.8.html">postscreen(8)</a> server. </p>
 
-<p> Important note: deep protocol tests are disabled by default.
+<p> Important note: these protocol tests are disabled by default.
 They are more intrusive than the pregreet and DNSBL tests, and they
 have limitations as discussed next. </p>
 
 <ul>
 
-<li> <p> When a good client passes the <a href="#after_220">deep
-protocol tests</a>, postscreen(8) adds the client to the temporary
-whitelist but it cannot hand off the "live" connection to a Postfix
-SMTP server process in the middle of the session. Instead, <a href="postscreen.8.html">postscreen(8)</a>
-defers mail delivery attempts with a 4XX status, logs the
-helo/sender/recipient information, and waits for the client to
-disconnect. </p>
+<li> <p> The main limitation of "after 220 greeting" tests is that
+a new client must disconnect after passing these tests (reason:
+postscreen is not a proxy).  Then the client must reconnect from
+the same IP address before it can deliver mail.  The following
+measures may help to avoid email delays: </p>
 
-<p> The next time the client connects it will be allowed to talk
-to a Postfix SMTP server process to deliver its mail.  To minimize the
-impact of this limitation, <a href="postscreen.8.html">postscreen(8)</a> gives deep protocol tests
-a relatively long expiration time. </p>
+<ul>
 
-<li> <p> <a href="postscreen.8.html">postscreen(8)</a>'s built-in SMTP engine does not implement
-the AUTH, XCLIENT, and XFORWARD features.  AUTH support may be added
-in a future version. In the mean time, if you need to make these
-services available on port 25, then do not enable the tests after
-the 220 server greeting. </p>
+<li> <p> Allow "good" clients to skip tests with the
+<a href="postconf.5.html#postscreen_dnsbl_whitelist_threshold">postscreen_dnsbl_whitelist_threshold</a> feature (Postfix 2.11 and
+later). This is especially effective for sites such as Google that
+never retry immediately from the same IP address. </p>
+
+<li> <p> Small sites: Configure <a href="postscreen.8.html">postscreen(8)</a> to listen on multiple
+IP addresses, published in DNS as different IP addresses for the
+same MX hostname or for different MX hostnames. This avoids mail
+delivery delays with clients that reconnect immediately from the
+same IP address.  </p>
+
+<li> <p> Large sites: Share the <a href="postscreen.8.html">postscreen(8)</a> cache between different
+Postfix MTAs with a large-enough <a href="memcache_table.5.html">memcache_table(5)</a>. Again, this
+avoids mail delivery delays with clients that reconnect immediately
+from the same IP address. </p>
 
 </ul>
 
-<p> End-user clients should connect directly to the submission
+<li> <p> <a href="postscreen.8.html">postscreen(8)</a>'s built-in SMTP engine does not implement the
+AUTH, XCLIENT, and XFORWARD features. If you need to make these
+services available on port 25, then do not enable the tests after
+the 220 server greeting. </p>
+
+<li> <p> End-user clients should connect directly to the submission
 service, so that they never have to deal with <a href="postscreen.8.html">postscreen(8)</a>'s tests.
 </p>
+
+</ul>
+
+<p> The following "after 220 greeting" tests are available: </p>
 
 <ul>
 
@@ -775,6 +774,9 @@ mail</a>
 
 <li> <a href="#turnoff"> Turning off postscreen(8) </a>
 
+<li> <a href="#temp_white_sharing"> Sharing the temporary whitelist
+</a>
+
 </ul>
 
 <h3> <a name="enable"> Turning on postscreen(8) without blocking mail</a> </h3>
@@ -874,7 +876,7 @@ For example: </p>
     secret.zen.spamhaus.org    zen.spamhaus.org
 </pre>
 
-<p> The <a href="DATABASE_README.html#types">texthash</a>: format is similar to hash: except that there is
+<p> The <a href="DATABASE_README.html#types">texthash</a>: format is similar to <a href="DATABASE_README.html#types">hash</a>: except that there is
 no need to run <a href="postmap.1.html">postmap(1)</a> before the file can be used, and that it
 does not detect changes after the file is read. It is new with
 Postfix version 2.8. </p>
@@ -1056,6 +1058,88 @@ may follow.  </p>
 </p>
 
 </ol>
+
+<h3> <a name="temp_white_sharing"> Sharing the temporary whitelist </a> </h3>
+
+<p> By default, the temporary whitelist is not shared between
+multiple <a href="postscreen.8.html">postscreen(8)</a> daemons.  To enable sharing, choose one
+of the following options: </p>
+
+<ul>
+
+<li> <p> A non-persistent <a href="memcache_table.5.html">memcache</a>: temporary whitelist can be shared
+    between <a href="postscreen.8.html">postscreen(8)</a> daemons on the same host or different
+    hosts.  Disable cache cleanup (<a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a>
+    = 0) in all <a href="postscreen.8.html">postscreen(8)</a> daemons because <a href="memcache_table.5.html">memcache</a>: does not
+    implement this (but see example 4 below for <a href="memcache_table.5.html">memcache</a>: with
+    persistent backup). This requires Postfix 2.9 or later. </p>
+
+    <pre>
+    # Example 1: non-persistent <a href="memcache_table.5.html">memcache</a>: whitelist.
+    /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+        <a href="postconf.5.html#postscreen_cache_map">postscreen_cache_map</a> = <a href="memcache_table.5.html">memcache</a>:/etc/postfix/postscreen_cache
+        <a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a> = 0
+
+    /etc/postfix/postscreen_cache:
+        memcache = inet:127.0.0.1:11211
+        key_format = postscreen:%s
+    </pre>
+
+<li> <p>
+    A persistent <a href="lmdb_table.5.html">lmdb</a>: temporary whitelist can be shared between
+    <a href="postscreen.8.html">postscreen(8)</a> daemons that run under the same <a href="master.8.html">master(8)</a> daemon,
+    or under different <a href="master.8.html">master(8)</a> daemons on the same host.  Disable
+    cache cleanup (<a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a> = 0) in all
+    <a href="postscreen.8.html">postscreen(8)</a> daemons except one that is responsible for cache
+    cleanup. This requires Postfix 2.11 or later. </p>
+
+    <pre>
+    # Example 2: persistent <a href="lmdb_table.5.html">lmdb</a>: whitelist.
+    /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+        <a href="postconf.5.html#postscreen_cache_map">postscreen_cache_map</a> = <a href="lmdb_table.5.html">lmdb</a>:$<a href="postconf.5.html#data_directory">data_directory</a>/postscreen_cache
+        # See note 1 below.
+        # <a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a> = 0
+    </pre>
+
+<li> <p> Other kinds of persistent temporary whitelist can be shared
+    only between <a href="postscreen.8.html">postscreen(8)</a> daemons that run under the same
+    <a href="master.8.html">master(8)</a> daemon. In this case, temporary whitelist access must
+    be shared through the <a href="proxymap.8.html">proxymap(8)</a> daemon. This requires Postfix
+    2.9 or later. </p>
+
+    <pre> 
+    # Example 3: proxied <a href="DATABASE_README.html#types">btree</a>: whitelist.
+    /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+        <a href="postconf.5.html#postscreen_cache_map">postscreen_cache_map</a> = 
+            <a href="proxymap.8.html">proxy</a>:<a href="DATABASE_README.html#types">btree</a>:/var/lib/postfix/postscreen_cache
+        # See note 1 below.
+        # <a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a> = 0
+
+    # Example 4: proxied <a href="DATABASE_README.html#types">btree</a>: whitelist with <a href="memcache_table.5.html">memcache</a>: accelerator.
+    /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+        <a href="postconf.5.html#postscreen_cache_map">postscreen_cache_map</a> = <a href="memcache_table.5.html">memcache</a>:/etc/postfix/postscreen_cache
+        <a href="postconf.5.html#proxy_write_maps">proxy_write_maps</a> = 
+            <a href="proxymap.8.html">proxy</a>:<a href="DATABASE_README.html#types">btree</a>:/var/lib/postfix/postscreen_cache 
+            ... other proxied tables ...
+        # See note 1 below.
+        # <a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a> = 0
+
+    /etc/postfix/postscreen_cache:
+        # Note: the $<a href="postconf.5.html#data_directory">data_directory</a> macro is not defined in this context.
+        memcache = inet:127.0.0.1:11211
+        backup = <a href="proxymap.8.html">proxy</a>:<a href="DATABASE_README.html#types">btree</a>:/var/lib/postfix/postscreen_cache
+        key_format = postscreen:%s
+    </pre>
+
+    <p> Note 1: disable cache cleanup (<a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a>
+    = 0) in all <a href="postscreen.8.html">postscreen(8)</a> daemons except one that is responsible
+    for cache cleanup. </p>
+
+    <p> Note 2: <a href="postscreen.8.html">postscreen(8)</a> cache sharing via <a href="proxymap.8.html">proxymap(8)</a> requires Postfix
+    2.9 or later; earlier <a href="proxymap.8.html">proxymap(8)</a> implementations don't support
+    cache cleanup.  </p>
+
+</ul>
 
 <h2> <a name="historical"> Historical notes and credits </a> </h2>
 

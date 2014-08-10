@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.58 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: magma.c,v 1.58.2.1 2014/08/10 06:54:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.58 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.58.2.1 2014/08/10 06:54:57 tls Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -198,6 +198,7 @@ const struct cdevsw mtty_cdevsw = {
 	.d_poll = mttypoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 
@@ -217,6 +218,7 @@ const struct cdevsw mbpp_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

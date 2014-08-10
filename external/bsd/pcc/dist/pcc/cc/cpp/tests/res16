@@ -1,0 +1,108 @@
+
+# 1 "<stdin>"
+This file is testing line counting in various scenarios involving
+escaped newlines, including using the trigraph escape sequence
+
+--> 4 4
+"multi-line string"
+
+
+--> 8 8
+'multi-line character constant'
+
+
+--> 12 12
+multi-line 012345678 integer constant
+
+
+
+--> 17 17
+multi-line list of tokens
+
+
+
+
+
+--> 24 24
+ 
+
+
+--> 28 28
+ 
+
+ 
+
+
+
+
+--> 36 36
+ 
+
+
+--> 40 40
+   
+
+
+
+
+
+
+--> 48 48
+
+#pragma multi-line #pragma directive
+# 49 "<stdin>"
+
+
+
+--> 52 52
+
+
+
+
+--> 57 57
+multi-line macro   embedded
+--> 59 59
+  
+
+
+
+--> 64 64
+macro with a leading comment
+--> 66 66
+ 	
+
+
+--> 70 70
+macro with leading whitespace and escaped newlines
+--> 72 72
+
+a token split by escaped newlines
+
+
+--> 77 77
+
+
+
+
+
+
+
+#pragma multi-line #pragma inside if-true block
+# 84 "<stdin>"
+
+
+
+--> 87 87
+
+--> 89 89
+  
+#pragma with a preceding comment
+# 90 "<stdin>"
+
+--> 91 91
+
+
+
+
+
+--> 97 97

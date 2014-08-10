@@ -1,8 +1,8 @@
 dnl OpenLDAP Autoconf Macros
-dnl OpenLDAP: pkg/ldap/build/openldap.m4,v 1.157.2.10 2010/04/13 20:22:21 kurt Exp
+dnl $OpenLDAP$
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2010 The OpenLDAP Foundation.
+dnl Copyright 1998-2014 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -357,15 +357,22 @@ dnl Try to locate appropriate library
 AC_DEFUN([OL_BERKELEY_DB_LINK],
 [ol_cv_lib_db=no
 
-if test $ol_cv_bdb_major = 4 ; then
+if test $ol_cv_bdb_major = 5 ; then
+	OL_BERKELEY_DB_TRY(ol_cv_db_db_5_dot_m,[-ldb-5.$ol_cv_bdb_minor])
+	OL_BERKELEY_DB_TRY(ol_cv_db_db5m,[-ldb5$ol_cv_bdb_minor])
+	OL_BERKELEY_DB_TRY(ol_cv_db_db_5m,[-ldb-5$ol_cv_bdb_minor])
+	OL_BERKELEY_DB_TRY(ol_cv_db_db_5_m,[-ldb-5-$ol_cv_bdb_minor])
+	OL_BERKELEY_DB_TRY(ol_cv_db_db_5,[-ldb-5])
+	OL_BERKELEY_DB_TRY(ol_cv_db_db5,[-ldb5])
+elif test $ol_cv_bdb_major = 4 ; then
 	OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_m,[-ldb-4.$ol_cv_bdb_minor])
 	OL_BERKELEY_DB_TRY(ol_cv_db_db4m,[-ldb4$ol_cv_bdb_minor])
 	OL_BERKELEY_DB_TRY(ol_cv_db_db_4m,[-ldb-4$ol_cv_bdb_minor])
 	OL_BERKELEY_DB_TRY(ol_cv_db_db_4_m,[-ldb-4-$ol_cv_bdb_minor])
 	OL_BERKELEY_DB_TRY(ol_cv_db_db_4,[-ldb-4])
 	OL_BERKELEY_DB_TRY(ol_cv_db_db4,[-ldb4])
-	OL_BERKELEY_DB_TRY(ol_cv_db_db,[-ldb])
 fi
+OL_BERKELEY_DB_TRY(ol_cv_db_db,[-ldb])
 OL_BERKELEY_DB_TRY(ol_cv_db_none)
 ])
 dnl

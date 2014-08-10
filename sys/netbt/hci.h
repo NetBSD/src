@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.35 2011/09/17 08:23:36 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.35.26.1 2014/08/10 06:56:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.35 2011/09/17 08:23:36 plunky Exp $
+ * $Id: hci.h,v 1.35.26.1 2014/08/10 06:56:23 tls Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2536,7 +2536,7 @@ extern SIMPLEQ_HEAD(hci_unit_list, hci_unit) hci_unit_list;
 void hci_event(struct mbuf *, struct hci_unit *);
 
 /* hci_ioctl.c */
-int hci_ioctl(unsigned long, void *, struct lwp *);
+int hci_ioctl_pcb(unsigned long, void *);
 
 /* hci_link.c */
 struct hci_link *hci_acl_open(struct hci_unit *, bdaddr_t *);
@@ -2567,13 +2567,12 @@ void hci_memo_free(struct hci_memo *);
 /* hci_socket.c */
 void hci_drop(void *);
 void hci_init(void);
-int hci_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 int hci_ctloutput(int, struct socket *, struct sockopt *);
 void hci_mtap(struct mbuf *, struct hci_unit *);
 
 /* hci_unit.c */
-struct hci_unit *hci_attach(const struct hci_if *, device_t, uint16_t);
-void hci_detach(struct hci_unit *);
+struct hci_unit *hci_attach_pcb(const struct hci_if *, device_t, uint16_t);
+void hci_detach_pcb(struct hci_unit *);
 int hci_enable(struct hci_unit *);
 void hci_disable(struct hci_unit *);
 struct hci_unit *hci_unit_lookup(const bdaddr_t *);

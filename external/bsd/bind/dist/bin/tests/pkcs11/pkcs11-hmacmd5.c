@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11-hmacmd5.c,v 1.1.1.1 2014/02/28 17:40:07 christos Exp $	*/
+/*	$NetBSD: pkcs11-hmacmd5.c,v 1.1.1.1.2.1 2014/08/10 07:06:36 tls Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -74,6 +74,7 @@
 #include <isc/types.h>
 
 #include <pk11/pk11.h>
+#include <pk11/result.h>
 
 #if !(defined(HAVE_GETPASSPHRASE) || (defined (__SVR4) && defined (__sun)))
 #define getpassphrase(x)	getpass(x)
@@ -109,6 +110,7 @@ main(int argc, char *argv[]) {
 		{ CKA_VALUE, NULL, 0 }
 	};
 	pk11_context_t pctx;
+	pk11_optype_t op_type = OP_DIGEST;
 	char *lib_name = NULL;
 	char *pin = NULL;
 	int error = 0;
@@ -125,6 +127,7 @@ main(int argc, char *argv[]) {
 			break;
 		case 's':
 			slot = atoi(isc_commandline_argument);
+			op_type = OP_ANY;
 			break;
 		case 'n':
 			logon = ISC_FALSE;
@@ -213,6 +216,8 @@ main(int argc, char *argv[]) {
 	keyTemplate[5].pValue = buffer;
 	keyTemplate[5].ulValueLen = (CK_ULONG) len;
 
+	pk11_result_register();
+
 	/* Initialize the CRYPTOKI library */
 	if (lib_name != NULL)
 		pk11_set_lib_name(lib_name);
@@ -220,9 +225,11 @@ main(int argc, char *argv[]) {
 	if (logon && pin == NULL)
 		pin = getpassphrase("Enter Pin: ");
 
-	result = pk11_get_session(&pctx, OP_ANY, ISC_FALSE, logon,
+	result = pk11_get_session(&pctx, op_type, ISC_FALSE, ISC_FALSE, logon,
 				  (const char *) pin, slot);
-	if (result != ISC_R_SUCCESS) {
+	if ((result != ISC_R_SUCCESS) &&
+	    (result != PK11_R_NORANDOMSERVICE) &&
+	    (result != PK11_R_NOAESSERVICE)) {
 		fprintf(stderr, "Error initializing PKCS#11: %s\n",
 			isc_result_totext(result));
 		exit(1);
@@ -321,7 +328,7 @@ partial_block:
 
     exit_session:
 	pk11_return_session(&pctx);
-	pk11_shutdown();
+	(void) pk11_finalize();
 
 	exit(error);
 }

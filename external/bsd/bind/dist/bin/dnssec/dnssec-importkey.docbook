@@ -17,10 +17,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-importkey.docbook,v 1.15 2011/11/03 20:21:37 each Exp  -->
 <refentry id="man.dnssec-importkey">
   <refentryinfo>
-    <date>August 30, 2013</date>
+    <date>February 20, 2014</date>
   </refentryinfo>
 
   <refmeta>

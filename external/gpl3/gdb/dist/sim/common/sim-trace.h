@@ -1,5 +1,5 @@
 /* Simulator tracing/debugging support.
-   Copyright (C) 1997-2013 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -228,24 +228,24 @@ typedef struct _trace_data {
 
 /* Prime the trace buffers ready for any trace output.
    Must be called prior to any other trace operation */
-extern void trace_prefix PARAMS ((SIM_DESC sd,
-				  sim_cpu *cpu,
-				  sim_cia cia,
-				  address_word pc,
-				  int print_linenum_p,
-				  const char *file_name,
-				  int line_nr,
-				  const char *fmt,
-				  ...))
+extern void trace_prefix (SIM_DESC sd,
+			  sim_cpu *cpu,
+			  sim_cia cia,
+			  address_word pc,
+			  int print_linenum_p,
+			  const char *file_name,
+			  int line_nr,
+			  const char *fmt,
+			  ...)
        __attribute__((format (printf, 8, 9)));
 
 /* Generic trace print, assumes trace_prefix() has been called */
 
-extern void trace_generic PARAMS ((SIM_DESC sd,
-				   sim_cpu *cpu,
-				   int trace_idx,
-				   const char *fmt,
-				   ...))
+extern void trace_generic (SIM_DESC sd,
+			   sim_cpu *cpu,
+			   int trace_idx,
+			   const char *fmt,
+			   ...)
      __attribute__((format (printf, 4, 5)));
 
 typedef enum {
@@ -262,149 +262,149 @@ typedef enum {
 /* Trace a varying number of word sized inputs/outputs.  trace_result*
    must be called to close the trace operation. */
 
-extern void save_data PARAMS ((SIM_DESC sd,
-                               TRACE_DATA *data,
-                               data_fmt fmt,
-                               long size,
-                               const void *buf));
+extern void save_data (SIM_DESC sd,
+		       TRACE_DATA *data,
+		       data_fmt fmt,
+		       long size,
+		       const void *buf);
 
-extern void trace_input0 PARAMS ((SIM_DESC sd,
-				  sim_cpu *cpu,
-				  int trace_idx));
+extern void trace_input0 (SIM_DESC sd,
+			  sim_cpu *cpu,
+			  int trace_idx);
 
-extern void trace_input_word1 PARAMS ((SIM_DESC sd,
-				       sim_cpu *cpu,
-				       int trace_idx,
-				       unsigned_word d0));
+extern void trace_input_word1 (SIM_DESC sd,
+			       sim_cpu *cpu,
+			       int trace_idx,
+			       unsigned_word d0);
 
-extern void trace_input_word2 PARAMS ((SIM_DESC sd,
-				       sim_cpu *cpu,
-				       int trace_idx,
-				       unsigned_word d0,
-				       unsigned_word d1));
+extern void trace_input_word2 (SIM_DESC sd,
+			       sim_cpu *cpu,
+			       int trace_idx,
+			       unsigned_word d0,
+			       unsigned_word d1);
 
-extern void trace_input_word3 PARAMS ((SIM_DESC sd,
-				       sim_cpu *cpu,
-				       int trace_idx,
-				       unsigned_word d0,
-				       unsigned_word d1,
-				       unsigned_word d2));
-
-extern void trace_input_word4 PARAMS ((SIM_DESC sd,
+extern void trace_input_word3 (SIM_DESC sd,
 				       sim_cpu *cpu,
 				       int trace_idx,
 				       unsigned_word d0,
 				       unsigned_word d1,
-				       unsigned_word d2,
-				       unsigned_word d3));
+				       unsigned_word d2);
 
-extern void trace_input_addr1 PARAMS ((SIM_DESC sd,
-				       sim_cpu *cpu,
-				       int trace_idx,
-				       address_word d0));
+extern void trace_input_word4 (SIM_DESC sd,
+			       sim_cpu *cpu,
+			       int trace_idx,
+			       unsigned_word d0,
+			       unsigned_word d1,
+			       unsigned_word d2,
+			       unsigned_word d3);
 
-extern void trace_input_bool1 PARAMS ((SIM_DESC sd,
-				       sim_cpu *cpu,
-				       int trace_idx,
-				       int d0));
+extern void trace_input_addr1 (SIM_DESC sd,
+			       sim_cpu *cpu,
+			       int trace_idx,
+			       address_word d0);
 
-extern void trace_input_fp1 PARAMS ((SIM_DESC sd,
-				     sim_cpu *cpu,
-				     int trace_idx,
-				     fp_word f0));
+extern void trace_input_bool1 (SIM_DESC sd,
+			       sim_cpu *cpu,
+			       int trace_idx,
+			       int d0);
 
-extern void trace_input_fp2 PARAMS ((SIM_DESC sd,
-				     sim_cpu *cpu,
-				     int trace_idx,
-				     fp_word f0,
-				     fp_word f1));
+extern void trace_input_fp1 (SIM_DESC sd,
+			     sim_cpu *cpu,
+			     int trace_idx,
+			     fp_word f0);
 
-extern void trace_input_fp3 PARAMS ((SIM_DESC sd,
-				     sim_cpu *cpu,
-				     int trace_idx,
-				     fp_word f0,
-				     fp_word f1,
-				     fp_word f2));
+extern void trace_input_fp2 (SIM_DESC sd,
+			     sim_cpu *cpu,
+			     int trace_idx,
+			     fp_word f0,
+			     fp_word f1);
 
-extern void trace_input_fpu1 PARAMS ((SIM_DESC sd,
-				     sim_cpu *cpu,
-				     int trace_idx,
-				     struct _sim_fpu *f0));
+extern void trace_input_fp3 (SIM_DESC sd,
+			     sim_cpu *cpu,
+			     int trace_idx,
+			     fp_word f0,
+			     fp_word f1,
+			     fp_word f2);
 
-extern void trace_input_fpu2 PARAMS ((SIM_DESC sd,
-				     sim_cpu *cpu,
-				     int trace_idx,
-				     struct _sim_fpu *f0,
-				     struct _sim_fpu *f1));
+extern void trace_input_fpu1 (SIM_DESC sd,
+			      sim_cpu *cpu,
+			      int trace_idx,
+			      struct _sim_fpu *f0);
 
-extern void trace_input_fpu3 PARAMS ((SIM_DESC sd,
-				     sim_cpu *cpu,
-				     int trace_idx,
-				     struct _sim_fpu *f0,
-				     struct _sim_fpu *f1,
-				     struct _sim_fpu *f2));
+extern void trace_input_fpu2 (SIM_DESC sd,
+			      sim_cpu *cpu,
+			      int trace_idx,
+			      struct _sim_fpu *f0,
+			      struct _sim_fpu *f1);
+
+extern void trace_input_fpu3 (SIM_DESC sd,
+			      sim_cpu *cpu,
+			      int trace_idx,
+			      struct _sim_fpu *f0,
+			      struct _sim_fpu *f1,
+			      struct _sim_fpu *f2);
 
 /* Other trace_input{_<fmt><nr-inputs>} functions can go here */
 
-extern void trace_result0 PARAMS ((SIM_DESC sd,
-				   sim_cpu *cpu,
-				   int trace_idx));
+extern void trace_result0 (SIM_DESC sd,
+			   sim_cpu *cpu,
+			   int trace_idx);
 
-extern void trace_result_word1 PARAMS ((SIM_DESC sd,
-					sim_cpu *cpu,
-					int trace_idx,
-					unsigned_word r0));
+extern void trace_result_word1 (SIM_DESC sd,
+				sim_cpu *cpu,
+				int trace_idx,
+				unsigned_word r0);
 
-extern void trace_result_word2 PARAMS ((SIM_DESC sd,
+extern void trace_result_word2 (SIM_DESC sd,
+				sim_cpu *cpu,
+				int trace_idx,
+				unsigned_word r0,
+				unsigned_word r1);
+
+extern void trace_result_word4 (SIM_DESC sd,
+				sim_cpu *cpu,
+				int trace_idx,
+				unsigned_word r0,
+				unsigned_word r1,
+				unsigned_word r2,
+				unsigned_word r3);
+
+extern void trace_result_bool1 (SIM_DESC sd,
+				sim_cpu *cpu,
+				int trace_idx,
+				int r0);
+
+extern void trace_result_addr1 (SIM_DESC sd,
+				sim_cpu *cpu,
+				int trace_idx,
+				address_word r0);
+
+extern void trace_result_fp1 (SIM_DESC sd,
+			      sim_cpu *cpu,
+			      int trace_idx,
+			      fp_word f0);
+
+extern void trace_result_fp2 (SIM_DESC sd,
+			      sim_cpu *cpu,
+			      int trace_idx,
+			      fp_word f0,
+			      fp_word f1);
+
+extern void trace_result_fpu1 (SIM_DESC sd,
+			       sim_cpu *cpu,
+			       int trace_idx,
+			       struct _sim_fpu *f0);
+
+extern void trace_result_string1 (SIM_DESC sd,
+				  sim_cpu *cpu,
+				  int trace_idx,
+				  char *str0);
+
+extern void trace_result_word1_string1 (SIM_DESC sd,
 					sim_cpu *cpu,
 					int trace_idx,
 					unsigned_word r0,
-					unsigned_word r1));
-
-extern void trace_result_word4 PARAMS ((SIM_DESC sd,
-					sim_cpu *cpu,
-					int trace_idx,
-					unsigned_word r0,
-					unsigned_word r1,
-					unsigned_word r2,
-					unsigned_word r3));
-
-extern void trace_result_bool1 PARAMS ((SIM_DESC sd,
-					sim_cpu *cpu,
-					int trace_idx,
-					int r0));
-
-extern void trace_result_addr1 PARAMS ((SIM_DESC sd,
-					sim_cpu *cpu,
-					int trace_idx,
-					address_word r0));
-
-extern void trace_result_fp1 PARAMS ((SIM_DESC sd,
-				      sim_cpu *cpu,
-				      int trace_idx,
-				      fp_word f0));
-
-extern void trace_result_fp2 PARAMS ((SIM_DESC sd,
-				      sim_cpu *cpu,
-				      int trace_idx,
-				      fp_word f0,
-				      fp_word f1));
-
-extern void trace_result_fpu1 PARAMS ((SIM_DESC sd,
-				       sim_cpu *cpu,
-				       int trace_idx,
-				       struct _sim_fpu *f0));
-
-extern void trace_result_string1 PARAMS ((SIM_DESC sd,
-					  sim_cpu *cpu,
-					  int trace_idx,
-					  char *str0));
-
-extern void trace_result_word1_string1 PARAMS ((SIM_DESC sd,
-						sim_cpu *cpu,
-						int trace_idx,
-						unsigned_word r0,
-						char *s0));
+					char *s0);
 
 /* Other trace_result{_<type><nr-results>} */
 
@@ -555,21 +555,21 @@ do { \
 
 /* The function trace_one_insn has been replaced by the function pair
    trace_prefix() + trace_generic() */
-extern void trace_one_insn PARAMS ((SIM_DESC sd,
-				    sim_cpu * cpu,
-				    address_word cia,
-				    int print_linenum_p,
-				    const char *file_name,
-				    int line_nr,
-				    const char *unit,
-				    const char *fmt,
-				    ...))
+extern void trace_one_insn (SIM_DESC sd,
+			    sim_cpu * cpu,
+			    address_word cia,
+			    int print_linenum_p,
+			    const char *file_name,
+			    int line_nr,
+			    const char *unit,
+			    const char *fmt,
+			    ...)
      __attribute__((format (printf, 8, 9)));
 
-extern void trace_printf PARAMS ((SIM_DESC, sim_cpu *, const char *, ...))
+extern void trace_printf (SIM_DESC, sim_cpu *, const char *, ...)
      __attribute__((format (printf, 3, 4)));
 
-extern void trace_vprintf PARAMS ((SIM_DESC, sim_cpu *, const char *, va_list));
+extern void trace_vprintf (SIM_DESC, sim_cpu *, const char *, va_list);
 
 /* Debug support.
    This is included here because there isn't enough of it to justify
@@ -583,7 +583,7 @@ extern void trace_vprintf PARAMS ((SIM_DESC, sim_cpu *, const char *, va_list));
 /* Non-zero if "--debug-insn" specified.  */
 #define DEBUG_INSN_P(cpu) DEBUG_P (cpu, DEBUG_INSN_IDX)
 
-extern void debug_printf PARAMS ((sim_cpu *, const char *, ...))
+extern void debug_printf (sim_cpu *, const char *, ...)
      __attribute__((format (printf, 2, 3)));
 
 #endif /* SIM_TRACE_H */

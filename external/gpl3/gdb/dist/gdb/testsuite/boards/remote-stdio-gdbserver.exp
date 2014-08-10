@@ -1,0 +1,130 @@
+# Copyright 2011-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is a dejagnu "board file" and is used to run the testsuite
+# with a remotehost and gdbserver using stdio for communicating through
+# ssh. Certain firewalls prevent gdbserver from using the usual mechanism of
+# listening on a remote port, so use stdio via ssh instead.
+#
+# To use this file:
+# bash$ cd ${build_dir}/gdb
+# bash$ make check RUNTESTFLAGS="--target_board=remote-stdio-gdbserver \
+#    REMOTE_USERNAME=... REMOTE_HOSTNAME=... REMOTE_PORTNUM=... \
+#    [REMOTE_TMPDIR=${remote_dir}] [GDBSERVER=${remote_gdbserver}]"
+
+load_board_description "native-stdio-gdbserver"
+
+# Test machine info. The generic_config gdbserver reads some of these
+# values from board_info, so this file must set them there.
+if [info exists REMOTE_USERNAME] {
+    set_board_info username $REMOTE_USERNAME
+} else {
+    set_board_info username unspecified_username
+}
+if [info exists REMOTE_HOSTNAME] {
+    set_board_info hostname $REMOTE_HOSTNAME
+} else {
+    set_board_info hostname unspecified_hostname
+}
+
+# The two programs have different syntax to set the remote port, so
+# set it as part of the program name rather than in get_remote_login.
+
+if [info exists REMOTE_PORTNUM] {
+    set_board_info portnum $REMOTE_PORTNUM
+    set_board_info rsh_prog "/usr/bin/ssh -p$REMOTE_PORTNUM"
+    set_board_info rcp_prog "/usr/bin/scp -P$REMOTE_PORTNUM"
+} else {
+    set_board_info rsh_prog /usr/bin/ssh
+    set_board_info rcp_prog /usr/bin/scp
+}
+
+# Some remote machines don't have writable home directories.
+if [info exists REMOTE_TMPDIR] {
+    set_board_info remotedir $REMOTE_TMPDIR
+}
+
+unset_board_info gdb_server_prog
+set_board_info gdb_server_prog "/usr/bin/gdbserver"
+
+# Used to pass a value between ${board}_spawn and ${board}_get_remote_address.
+set stdio_gdbserver_command "--unset--"
+
+proc get_remote_login { } {
+    set result ""
+    if {[board_info [target_info name] exists username]} {
+	append result "[board_info [target_info name] username]@"
+    }
+    if {[board_info [target_info name] exists hostname]} {
+	append result "[board_info [target_info name] hostname]"
+    }
+    return $result
+}
+
+proc ${board}_build_remote_cmd { cmd } {
+    set stdio_gdbserver_template "| @RSH_CMD@ @GDBSERVER_PROG@ @ARGS@ stdio @PROG_AND_ARGS@"
+
+    # First parse $cmd, picking out the various pieces.
+    set gdbserver_prog [lindex $cmd 0]
+    set args ""
+    set len [llength $cmd]
+
+    for { set i 1 } { $i < $len } { incr i } {
+	set elm [lindex $cmd $i]
+	switch $elm {
+	    --multi {
+		set args "$args $elm"
+	    }
+	    --once {
+		set args "$args $elm"
+	    }
+	    default {
+		break
+	    }
+	}
+    }
+
+    set prog_and_args [lrange $cmd $i end]
+
+    set buf $stdio_gdbserver_template
+
+    set rsh_cmd "[board_info [target_info name] rsh_prog] [get_remote_login]"
+    regsub {@RSH_CMD@} $buf $rsh_cmd buf
+    regsub {@GDBSERVER_PROG@} $buf $gdbserver_prog buf
+    regsub {@ARGS@} $buf $args buf
+    regsub {@PROG_AND_ARGS@} $buf $prog_and_args buf
+
+    return $buf
+}
+
+proc ${board}_download { board host dest } {
+    if { [board_info [target_info name] exists remotedir] } {
+	set remotedir "[board_info [target_info name] remotedir]/"
+    } else {
+	set remotedir ""
+    }
+    return [standard_download $board $host "$remotedir$dest"]
+}
+
+proc ${board}_upload {dest srcfile args} {
+    return [standard_upload $dest $srcfile $args]
+}
+
+proc ${board}_file { dest op args } {
+    if { $op == "delete" } {
+	return [remote_exec [get_remote_login] "rm -f $args"]
+    }
+    return [eval [list standard_file $dest $op] $args]
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.263 2014/04/03 15:22:57 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.263.2.1 2014/08/10 06:56:55 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -73,6 +73,7 @@ extern const char osrelease[];	/* short system version */
 extern const char ostype[];	/* system type */
 extern const char kernel_ident[];/* kernel configuration ID */
 extern const char version[];	/* system version */
+extern const char buildinfo[];	/* information from build environment */
 
 extern int autonicetime;        /* time (in seconds) before autoniceval */
 extern int autoniceval;         /* proc priority after autonicetime */
@@ -527,7 +528,7 @@ void assert_sleepable(void);
 #if defined(DEBUG)
 #define	ASSERT_SLEEPABLE()	assert_sleepable()
 #else /* defined(DEBUG) */
-#define	ASSERT_SLEEPABLE()	/* nothing */
+#define	ASSERT_SLEEPABLE()	do {} while (0)
 #endif /* defined(DEBUG) */
 
 vaddr_t calc_cache_size(vsize_t , int, int);

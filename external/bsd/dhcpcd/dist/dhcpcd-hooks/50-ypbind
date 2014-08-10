@@ -1,11 +1,14 @@
-# $NetBSD: 50-ypbind,v 1.1.1.6 2013/06/21 19:33:08 roy Exp $
+# $NetBSD: 50-ypbind,v 1.1.1.6.4.1 2014/08/10 07:06:59 tls Exp $
 
 # Sample dhcpcd hook for ypbind
-# This script is only suitable for the Linux version.
+# This script is only suitable for the BSD versions.
 
-: ${ypbind_restart_cmd:=service_command ypbind restart}
-: ${ypbind_stop_cmd:=service_condcommand ypbind stop}
+: ${ypbind_restart_cmd:=service_command ypbind restart &}
+: ${ypbind_stop_cmd:=service_condcommand ypbind stop &}
 ypbind_dir="$state_dir/ypbind"
+: ${ypdomain_dir:=/var/yp}
+: ${ypdomain_suffix:=.ypservers}
+
 
 best_domain()
 {
@@ -25,17 +28,20 @@ make_yp_binding()
 	echo "$new_nis_domain" >"$ypbind_dir/$ifname"
 	local nd="$(best_domain)"
 
-	local cf=/var/yp/binding/"$new_nis_domain".ypservers
-	if [ -n "$new_nis_servers" ]; then
-		local ncf="$cf.$ifname" x=
-		rm -f "$ncf"
-		for x in $new_nis_servers; do
-			echo "$x" >>"$ncf"
-		done
-		change_file "$cf" "$ncf"
+	if [ -z "$ypdomain_dir" ]; then
+		false
 	else
-		# Because this is not an if .. fi then we can use $? below
-		[ -e "$cf" ] && rm "$cf"
+		local cf="$ypdomain_dir/$new_nis_domain$ypdomain_suffix"
+		if [ -n "$new_nis_servers" ]; then
+			local ncf="$cf.$ifname" x=
+			rm -f "$ncf"
+			for x in $new_nis_servers; do
+				echo "$x" >>"$ncf"
+			done
+			change_file "$cf" "$ncf"
+		else
+			[ -e "$cf" ] && rm "$cf"
+		fi
 	fi
 
 	if [ $? = 0 -o "$nd" != "$(domainname)" ]; then
@@ -48,6 +54,7 @@ make_yp_binding()
 
 restore_yp_binding()
 {
+
 	rm -f "$ypbind_dir/$ifname"
 	local nd="$(best_domain)"
 	# We need to stop ypbind if there is no best domain

@@ -85,6 +85,7 @@ enum aarch64_operand_class
   AARCH64_OPND_CLASS_ADDRESS,
   AARCH64_OPND_CLASS_IMMEDIATE,
   AARCH64_OPND_CLASS_SYSTEM,
+  AARCH64_OPND_CLASS_COND,
 };
 
 /* Operand code that helps both parsing and coding.
@@ -168,6 +169,7 @@ enum aarch64_opnd
   AARCH64_OPND_IMM_MOV,	/* Immediate operand for the MOV alias.  */
 
   AARCH64_OPND_COND,	/* Standard condition as the last operand.  */
+  AARCH64_OPND_COND1,	/* Same as the above, but excluding AL and NV.  */
 
   AARCH64_OPND_ADDR_ADRP,	/* Memory address for ADRP */
   AARCH64_OPND_ADDR_PCREL14,	/* 14-bit PC-relative address for e.g. TBZ.  */
@@ -609,10 +611,19 @@ struct aarch64_name_value_pair
 };
 
 extern const struct aarch64_name_value_pair aarch64_operand_modifiers [];
-extern const struct aarch64_name_value_pair aarch64_sys_regs [];
-extern const struct aarch64_name_value_pair aarch64_pstatefields [];
 extern const struct aarch64_name_value_pair aarch64_barrier_options [16];
 extern const struct aarch64_name_value_pair aarch64_prfops [32];
+
+typedef struct
+{
+  const char *  name;
+  aarch64_insn	value;
+  uint32_t	flags;
+} aarch64_sys_reg;
+
+extern const aarch64_sys_reg aarch64_sys_regs [];
+extern const aarch64_sys_reg aarch64_pstatefields [];
+extern bfd_boolean aarch64_sys_reg_deprecated_p (const aarch64_sys_reg *);
 
 typedef struct
 {

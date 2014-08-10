@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.45 2013/06/08 02:16:03 dholland Exp $	 */
+/* $NetBSD: main.c,v 1.45.4.1 2014/08/10 06:52:52 tls Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -35,6 +35,7 @@
 #include <ufs/lfs/lfs.h>
 
 #include <fstab.h>
+#include <stdbool.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,7 +74,9 @@ main(int argc, char **argv)
 	int ch;
 	int ret = FSCK_EXIT_OK;
 	const char *optstring = "b:dfi:m:npPqUy";
+	bool reallypreen;
 
+	reallypreen = false;
 	ckfinish = ckfini;
 	skipclean = 1;
 	exitonfail = 0;
@@ -95,6 +98,7 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			skipclean = 0;
+			reallypreen = true;
 			break;
 		case 'i':
 			idaddr = strtol(optarg, NULL, 0);
@@ -141,6 +145,29 @@ main(int argc, char **argv)
 
 	if (!argc)
 		usage();
+
+	/*
+	 * Don't do anything in preen mode. This is a replacement for
+	 * version 1.111 of src/distrib/utils/sysinst/disks.c, which
+	 * disabled fsck on installer-generated lfs partitions. That
+	 * isn't the right way to do it; better to run fsck but have
+	 * it not do anything, so that when the issues in fsck get
+	 * resolved it can be turned back on.
+	 *
+	 * If you really want to run fsck in preen mode you can do:
+	 *    fsck_lfs -p -f image
+	 *
+	 * This was prompted by
+	 * http://mail-index.netbsd.org/tech-kern/2010/02/09/msg007306.html.
+	 *
+	 * It would be nice if someone prepared a more detailed report
+	 * of the problems.
+	 *
+	 * XXX.
+	 */
+	if (preen && !reallypreen) {
+		return ret;
+	}
 
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		(void) signal(SIGINT, catch);

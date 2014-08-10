@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.24 2014/01/02 08:21:38 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.24.2.1 2014/08/10 06:52:40 tls Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -259,7 +259,11 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	if (!httpd->cgibin && !httpd->process_cgi)
 		return 0;
 
-	uri = request->hr_oldfile ? request->hr_oldfile : request->hr_file;
+	if (request->hr_oldfile && strcmp(request->hr_oldfile, "/") != 0)
+		uri = request->hr_oldfile;
+	else
+		uri = request->hr_file;
+
 	if (uri[0] == '/')
 		file = bozostrdup(httpd, uri);
 	else

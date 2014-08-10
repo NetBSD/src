@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.9 2014/02/26 00:19:01 matt Exp $ */
+/* $NetBSD: awin_var.h,v 1.9.4.1 2014/08/10 06:53:50 tls Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -91,6 +91,7 @@ void	awin_gpio_pinset_release(const struct awin_gpio_pinset *);
 bool	awin_gpio_pin_reserve(const char *, struct awin_gpio_pindata *);
 
 void	awin_wdog_reset(void);
+void	awin_tmr_cpu_init(struct cpu_info *);
 
 static inline void
 awin_gpio_pindata_write(const struct awin_gpio_pindata *pd, int value)

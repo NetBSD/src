@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.19 2014/03/25 16:19:14 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.19.2.1 2014/08/10 06:54:57 tls Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.19 2014/03/25 16:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.19.2.1 2014/08/10 06:54:57 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3593,6 +3593,7 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	int err, i;
 	bool rv;
 
+	aprint_naive("\n");
 	sc->sc_dev = self;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -4178,7 +4179,7 @@ static int
 hdafg_get_props(void *opaque)
 {
 	struct hdaudio_audiodev *ad = opaque;
-	int props = 0;
+	int props = AUDIO_PROP_MMAP;
 
 	if (ad->ad_playback)
 		props |= AUDIO_PROP_PLAYBACK;
@@ -4188,8 +4189,6 @@ hdafg_get_props(void *opaque)
 		props |= AUDIO_PROP_FULLDUPLEX;
 		props |= AUDIO_PROP_INDEPENDENT;
 	}
-
-	/* TODO: AUDIO_PROP_MMAP */
 
 	return props;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2013/03/06 11:34:37 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.30.10.1 2014/08/10 06:53:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -43,6 +43,7 @@
 #include <lib/libkern/libkern.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/bootcfg.h>
 
 #include <libi386.h>
 #include <bootmenu.h>
@@ -84,7 +85,7 @@ static void
 clearit(void)
 {
 
-	if (bootconf.clear)
+	if (bootcfg_info.clear)
 		clear_pc_screen();
 }
 
@@ -138,23 +139,23 @@ main(void)
 
 #ifndef SMALL
 	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
-		parsebootconf(BOOTCONF);
+		parsebootconf(BOOTCFG_FILENAME);
 	} else {
-		bootconf.timeout = boot_params.bp_timeout;
+		bootcfg_info.timeout = boot_params.bp_timeout;
 	}
 
 	/*
 	 * If console set in boot.cfg, switch to it.
 	 * This will print the banner, so we don't need to explicitly do it
 	 */
-	if (bootconf.consdev)
-		command_consdev(bootconf.consdev);
+	if (bootcfg_info.consdev)
+		command_consdev(bootcfg_info.consdev);
 	else 
 		print_banner();
 
 	/* Display the menu, if applicable */
 	twiddle_toggle = 0;
-	if (bootconf.nummenu > 0) {
+	if (bootcfg_info.nummenu > 0) {
 		/* Does not return */
 		doboottypemenu();
 	}
@@ -169,7 +170,7 @@ main(void)
 #ifdef SMALL
 	c = awaitkey(boot_params.bp_timeout, 1);
 #else
-	c = awaitkey((bootconf.timeout < 0) ? 0 : bootconf.timeout, 1);
+	c = awaitkey((bootcfg_info.timeout < 0) ? 0 : bootcfg_info.timeout, 1);
 #endif
 	if ((c != '\r') && (c != '\n') && (c != '\0') &&
 	    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0

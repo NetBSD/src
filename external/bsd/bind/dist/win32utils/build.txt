@@ -43,24 +43,24 @@ Step 1: Download and build OpenSSL
   Download and untar the OpenSSL sources from http://www.openssl.org/.
   Extract them at in the same directory in which you extracted the BIND 9
   source:  If BIND 9 is in \build\bind-9.10.0, for instance, OpenSSL should
-  be in \build\openssl-1.0.1f (subject to version number changes).
+  be in \build\openssl-1.0.1g (subject to version number changes).
 
   Note: Building OpenSSL requires that you install Perl as it uses it
   during its build process. The following commands work as of
-  openssl-1.0.1f, but you should check the OpenSSL distribution to see
+  openssl-1.0.1g, but you should check the OpenSSL distribution to see
   if the build instructions in the INSTALL.W32 (or INSTALL.W64) file
   have changed, in particular for the assembler options:
 
     32-bit builds:
       (In an x86 Visual Studio Command Prompt window)
-      cd openssl-1.0.1f
+      cd openssl-1.0.1g
       perl Configure --prefix=c:\openssl enable-static-engine VC-WIN32
       ms\do_ms
       nmake /f ms\ntdll.mak
 
     64-bit builds:
       (In an x64 Visual Studio Command Prompt window)
-      cd openssl-1.0.1f
+      cd openssl-1.0.1g
       perl Configure --prefix=c:\openssl64 enable-static-engine VC-WIN64A
       ms\do_win64a
       nmake /f ms\ntdll.mak
@@ -72,7 +72,7 @@ Step 1: Download and build OpenSSL
   If you wish to use OpenSSL-based PKCS#11 to control a cryptographic
   hardware service module, please see "PKCS#11 (Cryptoki) support" in
   chapter 4 of the BIND 9 Administrator Reference Guide.  You will need to
-  apply the patch in bind9\bin\pkcs11\openssl-1.0.1f-patch (this can be
+  apply the patch in bind9\bin\pkcs11\openssl-1.0.1g-patch (this can be
   done using the Cygwin 'patch' utility) and add --pk11-libname and
   --pk11-flavor to the Configure command above.
 

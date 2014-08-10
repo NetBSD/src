@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.15 2014/03/29 14:00:30 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.15.2.1 2014/08/10 06:53:55 tls Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.15 2014/03/29 14:00:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.15.2.1 2014/08/10 06:53:55 tls Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -185,16 +185,18 @@ __KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.15 2014/03/29 14:00:30 matt Exp 
 #include <dev/i2c/ddcreg.h>
 
 #include <dev/usb/ukbdvar.h>
+#include <net/if_ether.h>
 
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 char *boot_file = NULL;
+static uint8_t uboot_enaddr[ETHER_ADDR_LEN];
 
 bool cubietruck_p;
 /*
  * uboot_args are filled in by cubie_start.S and must be in .data
- * and not .bbs since .bss is cleared after uboot_args are filled in.
+ * and not .bss since .bss is cleared after uboot_args are filled in.
  */
 uintptr_t uboot_args[4] = { 0 };
 
@@ -216,7 +218,6 @@ int use_fb_console = true;
  * kernel address space.  *Not* for general use.
  */
 #define KERNEL_BASE_PHYS	((paddr_t)KERNEL_BASE_phys)
-#define KERNEL_PHYS_VOFFSET	(KERNEL_BASE - AWIN_SDRAM_PBASE)
 #define AWIN_CORE_VOFFSET	(AWIN_CORE_VBASE - AWIN_CORE_PBASE)
 
 /* Prototypes */
@@ -279,6 +280,15 @@ static const struct pmap_devmap devmap[] = {
 #undef	_A
 #undef	_S
 
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+static struct boot_physmem bp_highgig = {
+	.bp_start = AWIN_SDRAM_PBASE / NBPG,
+	.bp_pages = (KERNEL_VM_BASE - KERNEL_BASE) / NBPG,
+	.bp_freelist = VM_FREELIST_ISADMA,
+	.bp_flags = 0,
+};
+#endif
+
 /*
  * u_int initarm(...)
  *
@@ -321,6 +331,8 @@ initarm(void *arg)
 	printf("\nNetBSD/evbarm (cubie) booting ...\n");
 #endif
 
+	const uint8_t *uboot_bootinfo = (void*)uboot_args[0];
+
 #ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
@@ -330,7 +342,9 @@ initarm(void *arg)
 	printf("initarm: Configuring system ...\n");
 
 #if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA15)
-	printf("initarm: cbar=%#x\n", armreg_cbar_read());
+	if (!CPU_ID_CORTEX_A8_P(curcpu()->ci_arm_cpuid)) {
+		printf("initarm: cbar=%#x\n", armreg_cbar_read());
+	}
 #endif
 #endif
 
@@ -366,12 +380,14 @@ initarm(void *arg)
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	const bool mapallmem_p = true;
+#ifndef PMAP_NEED_ALLOC_POOLPAGE
 	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
 		printf("%s: dropping RAM size from %luMB to %uMB\n",
 		   __func__, (unsigned long) (ram_size >> 20),
 		   (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
 		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
 	}
+#endif
 #else
 	const bool mapallmem_p = false;
 #endif
@@ -390,10 +406,18 @@ initarm(void *arg)
 		 */
 		if (uboot_args[3] - AWIN_SDRAM_PBASE < ram_size) {
 			const char * const args = (const char *)
-			     (uboot_args[3] + KERNEL_PHYS_VOFFSET);
+			     (uboot_args[3] + KERNEL_BASE_VOFFSET);
 			strlcpy(bootargs, args, sizeof(bootargs));
 		}
+		if (uboot_args[0]
+		   && uboot_args[0] - AWIN_SDRAM_PBASE < ram_size) {
+			uboot_bootinfo =
+			    (void*)(uboot_args[0] + KERNEL_BASE_VOFFSET);
+		}
 	}
+
+	/* copy u-boot bootinfo ethernet address */
+	memcpy(uboot_enaddr, uboot_bootinfo + 0x250, sizeof(uboot_enaddr));
 
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
@@ -408,7 +432,19 @@ initarm(void *arg)
 		use_fb_console = true;
 	}
 #endif
-	
+	/*
+	 * If we couldn't map all of memory via TTBR1, limit the memory the
+	 * kernel can allocate from to be from the highest available 1GB.
+	 */
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+	if (atop(ram_size) > bp_highgig.bp_pages) {
+		bp_highgig.bp_start += atop(ram_size) - bp_highgig.bp_pages;
+		arm_poolpage_vmfreelist = bp_highgig.bp_freelist;
+		return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
+		    &bp_highgig, 1);
+	}
+#endif
+
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
 }
@@ -579,6 +615,12 @@ cubie_device_register(device_t self, void *aux)
 		prop_dictionary_set_uint32(dict, "nc-h", 0x03c53f04);
 		prop_dictionary_set_uint32(dict, "nc-i", 0x003fc03f);
 		return;
+	}
+	if (device_is_a(self, "awge") || device_is_a(self, "awe")) {
+		prop_data_t blob =
+		    prop_data_create_data(uboot_enaddr, ETHER_ADDR_LEN);
+		prop_dictionary_set(dict, "mac-address", blob);
+		prop_object_release(blob);
 	}
 
 	if (device_is_a(self, "ehci")) {

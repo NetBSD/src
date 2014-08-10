@@ -25,13 +25,13 @@
 
 using namespace clang;
 
-static ASTReader *createASTReader(CompilerInstance &CI,
-                             StringRef pchFile,
-                             SmallVectorImpl<llvm::MemoryBuffer *> &memBufs,
-                             SmallVectorImpl<std::string> &bufNames,
-                             ASTDeserializationListener *deserialListener = 0) {
+static ASTReader *
+createASTReader(CompilerInstance &CI, StringRef pchFile,
+                SmallVectorImpl<llvm::MemoryBuffer *> &memBufs,
+                SmallVectorImpl<std::string> &bufNames,
+                ASTDeserializationListener *deserialListener = nullptr) {
   Preprocessor &PP = CI.getPreprocessor();
-  OwningPtr<ASTReader> Reader;
+  std::unique_ptr<ASTReader> Reader;
   Reader.reset(new ASTReader(PP, CI.getASTContext(), /*isysroot=*/"",
                              /*DisableValidation=*/true));
   for (unsigned ti = 0; ti < bufNames.size(); ++ti) {
@@ -44,7 +44,7 @@ static ASTReader *createASTReader(CompilerInstance &CI,
   case ASTReader::Success:
     // Set the predefines buffer as suggested by the PCH reader.
     PP.setPredefines(Reader->getSuggestedPredefines());
-    return Reader.take();
+    return Reader.release();
 
   case ASTReader::Failure:
   case ASTReader::Missing:
@@ -54,7 +54,7 @@ static ASTReader *createASTReader(CompilerInstance &CI,
   case ASTReader::HadErrors:
     break;
   }
-  return 0;
+  return nullptr;
 }
 
 ChainedIncludesSource::~ChainedIncludesSource() {
@@ -76,7 +76,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
 
   for (unsigned i = 0, e = includes.size(); i != e; ++i) {
     bool firstInclude = (i == 0);
-    OwningPtr<CompilerInvocation> CInvok;
+    std::unique_ptr<CompilerInvocation> CInvok;
     CInvok.reset(new CompilerInvocation(CI.getInvocation()));
     
     CInvok->getPreprocessorOpts().ChainedIncludes.clear();
@@ -97,27 +97,27 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
     IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
         new DiagnosticsEngine(DiagID, &CI.getDiagnosticOpts(), DiagClient));
 
-    OwningPtr<CompilerInstance> Clang(new CompilerInstance());
-    Clang->setInvocation(CInvok.take());
+    std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
+    Clang->setInvocation(CInvok.release());
     Clang->setDiagnostics(Diags.getPtr());
     Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
                                                   &Clang->getTargetOpts()));
     Clang->createFileManager();
     Clang->createSourceManager(Clang->getFileManager());
-    Clang->createPreprocessor();
+    Clang->createPreprocessor(TU_Prefix);
     Clang->getDiagnosticClient().BeginSourceFile(Clang->getLangOpts(),
                                                  &Clang->getPreprocessor());
     Clang->createASTContext();
 
     SmallVector<char, 256> serialAST;
     llvm::raw_svector_ostream OS(serialAST);
-    OwningPtr<ASTConsumer> consumer;
-    consumer.reset(new PCHGenerator(Clang->getPreprocessor(), "-", 0,
+    std::unique_ptr<ASTConsumer> consumer;
+    consumer.reset(new PCHGenerator(Clang->getPreprocessor(), "-", nullptr,
                                     /*isysroot=*/"", &OS));
     Clang->getASTContext().setASTMutationListener(
                                             consumer->GetASTMutationListener());
-    Clang->setASTConsumer(consumer.take());
-    Clang->createSema(TU_Prefix, 0);
+    Clang->setASTConsumer(consumer.release());
+    Clang->createSema(TU_Prefix, nullptr);
 
     if (firstInclude) {
       Preprocessor &PP = Clang->getPreprocessor();
@@ -142,13 +142,13 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
       Reader = createASTReader(*Clang, pchName, bufs, serialBufNames, 
         Clang->getASTConsumer().GetASTDeserializationListener());
       if (!Reader)
-        return 0;
+        return nullptr;
       Clang->setModuleManager(Reader);
       Clang->getASTContext().setExternalSource(Reader);
     }
     
     if (!Clang->InitializeSourceManager(InputFile))
-      return 0;
+      return nullptr;
 
     ParseAST(Clang->getSema());
     OS.flush();
@@ -156,7 +156,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
     serialBufs.push_back(
       llvm::MemoryBuffer::getMemBufferCopy(StringRef(serialAST.data(),
                                                            serialAST.size())));
-    source->CIs.push_back(Clang.take());
+    source->CIs.push_back(Clang.release());
   }
 
   assert(!serialBufs.empty());
@@ -165,7 +165,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
   IntrusiveRefCntPtr<ASTReader> Reader;
   Reader = createASTReader(CI, pchName, serialBufs, serialBufNames);
   if (!Reader)
-    return 0;
+    return nullptr;
 
   source->FinalReader = Reader;
   return source;

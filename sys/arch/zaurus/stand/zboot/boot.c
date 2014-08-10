@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2012/01/18 23:12:21 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.20.1 2014/08/10 06:54:12 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -199,7 +199,7 @@ boot(dev_t bootdev)
 
 	snprintf(bootconfpath, sizeof(bootconfpath), "%s%d%c:%s",
 	    default_devname, default_unit, 'a' + default_partition,
-	    _PATH_BOOTCONF);
+	    BOOTCFG_FILENAME);
 	parsebootconf(bootconfpath);
 
 #ifdef SUPPORT_CONSDEV
@@ -207,8 +207,8 @@ boot(dev_t bootdev)
 	 * If console set in boot.cfg, switch to it.
 	 * This will print the banner, so we don't need to explicitly do it
 	 */
-	if (bootconf.consdev)
-		bootcmd_consdev(bootconf.consdev);
+	if (bootcfg_info.consdev)
+		bootcmd_consdev(bootcfg_info.consdev);
 	else 
 #endif
 		print_banner();
@@ -217,7 +217,7 @@ boot(dev_t bootdev)
 
 	/* Display the menu, if applicable */
 	twiddle_toggle = 0;
-	if (bootconf.nummenu > 0) {
+	if (bootcfg_info.nummenu > 0) {
 		/* Does not return */
 		doboottypemenu();
 	}
@@ -228,7 +228,8 @@ boot(dev_t bootdev)
 		printf("booting %s - starting in ", 
 		    sprint_bootsel(names[currname][0]));
 
-		c = awaitkey((bootconf.timeout < 0) ? 0 : bootconf.timeout, 1);
+		c = awaitkey((bootcfg_info.timeout < 0) ? 0
+		    : bootcfg_info.timeout, 1);
 		if ((c != '\r') && (c != '\n') && (c != '\0')) {
 			printf("type \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */

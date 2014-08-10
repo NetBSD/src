@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.228 2013/11/18 01:32:52 chs Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.228.2.1 2014/08/10 06:54:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.228 2013/11/18 01:32:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.228.2.1 2014/08/10 06:54:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1377,34 +1377,6 @@ linux_sys_getpriority(struct lwp *l, const struct linux_sys_getpriority_args *ua
         *retval = NZERO - *retval;
 
         return 0;
-}
-
-int
-linux_sys_utimes(struct lwp *l, const struct linux_sys_utimes_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const char *) path;
-		syscallarg(const struct linux_timeval) *times;
-	} */
-	struct linux_timeval ltv[2];
-	struct timeval tv[2];
-	struct timeval *tptr = NULL;
-	int error;
-
-	if (SCARG(uap, times)) {
-		if ((error = copyin(SCARG(uap, times), &ltv, sizeof(ltv))))
-			return error;
-
-		tv[0].tv_sec = ltv[0].tv_sec;
-		tv[0].tv_usec = ltv[0].tv_usec;
-		tv[1].tv_sec = ltv[1].tv_sec;
-		tv[1].tv_usec = ltv[1].tv_usec;
-
-		tptr = tv;
-	}
-
-	return do_sys_utimes(l, NULL, SCARG(uap, path), FOLLOW,
-	    tptr, UIO_SYSSPACE);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_align.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libelf_align.c,v 1.2.2.1 2014/08/10 07:07:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -38,7 +38,7 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_align.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
+__RCSID("$NetBSD: libelf_align.c,v 1.2.2.1 2014/08/10 07:07:04 tls Exp $");
 ELFTC_VCSID("Id: libelf_align.c 2225 2011-11-26 18:55:54Z jkoshy ");
 
 struct align {
@@ -46,7 +46,7 @@ struct align {
 	int a64;
 };
 
-#ifdef	__GNUC__
+#if defined(__GNUC__) || defined(__lint__)
 #define	MALIGN(N)	{					\
 		.a32 = __alignof__(Elf32_##N),			\
 		.a64 = __alignof__(Elf64_##N)			\

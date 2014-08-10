@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.53 2013/10/21 14:47:46 christos Exp $	*/
+/*	$NetBSD: tip.c,v 1.53.2.1 2014/08/10 06:59:08 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.53 2013/10/21 14:47:46 christos Exp $");
+__RCSID("$NetBSD: tip.c,v 1.53.2.1 2014/08/10 06:59:08 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 	char *p;
 	const char *q;
 	char sbuf[12];
-	static char brbuf[16];
+	int cmdlineBR;
 	int fcarg;
 
 	setprogname(argv[0]);
@@ -95,6 +95,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	cmdlineBR = 0;
 	while((c = getopt(argc, argv, "v0123456789")) != -1) {
 		switch(c) {
 
@@ -104,8 +105,8 @@ main(int argc, char *argv[])
 
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			(void)snprintf(brbuf, sizeof(brbuf) -1, "%s%c", brbuf, c);
-			BR = atoi(brbuf);
+			cmdlineBR = cmdlineBR * 10 + (c - '0');
+			BR = cmdlineBR;
 			break;
 
 		default:
@@ -497,9 +498,9 @@ ttysetup(speed_t spd)
 	cntrl.c_cc[VMIN] = 1;
 	cntrl.c_cc[VTIME] = 0;
 	if (boolean(value(TAND)))
-		cntrl.c_iflag |= IXOFF|IXON|IXANY;
+		cntrl.c_iflag |= IXOFF|IXON;
 	else
-		cntrl.c_iflag &= ~(IXOFF|IXON|IXANY);
+		cntrl.c_iflag &= ~(IXOFF|IXON);
 	return tcsetattr(FD, TCSAFLUSH, &cntrl);
 }
 

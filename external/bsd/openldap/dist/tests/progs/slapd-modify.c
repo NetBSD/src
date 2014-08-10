@@ -1,9 +1,9 @@
-/*	$NetBSD: slapd-modify.c,v 1.1.1.3 2010/12/12 15:24:16 adam Exp $	*/
+/*	$NetBSD: slapd-modify.c,v 1.1.1.3.24.1 2014/08/10 07:09:52 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/tests/progs/slapd-modify.c,v 1.19.2.8 2010/04/13 20:23:58 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

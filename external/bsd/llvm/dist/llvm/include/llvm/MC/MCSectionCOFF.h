@@ -58,7 +58,7 @@ class MCSymbol;
       assert ((Characteristics & 0x00F00000) == 0 &&
         "alignment must not be set upon section creation");
       assert ((Selection == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) ==
-              (Assoc != 0) &&
+              (Assoc != nullptr) &&
         "associative COMDAT section must have an associated section");
     }
     ~MCSectionCOFF();
@@ -69,23 +69,23 @@ class MCSymbol;
     bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;
 
     StringRef getSectionName() const { return SectionName; }
-    virtual std::string getLabelBeginName() const {
+    std::string getLabelBeginName() const override {
       return SectionName.str() + "_begin";
     }
-    virtual std::string getLabelEndName() const {
+    std::string getLabelEndName() const override {
       return SectionName.str() + "_end";
     }
     unsigned getCharacteristics() const { return Characteristics; }
     int getSelection() const { return Selection; }
     const MCSectionCOFF *getAssocSection() const { return Assoc; }
 
-    void setSelection(int Selection, const MCSectionCOFF *Assoc = 0) const;
+    void setSelection(int Selection,
+                      const MCSectionCOFF *Assoc = nullptr) const;
 
-    virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
-                                      raw_ostream &OS,
-                                      const MCExpr *Subsection) const;
-    virtual bool UseCodeAlign() const;
-    virtual bool isVirtualSection() const;
+    void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
+                              const MCExpr *Subsection) const override;
+    bool UseCodeAlign() const override;
+    bool isVirtualSection() const override;
 
     static bool classof(const MCSection *S) {
       return S->getVariant() == SV_COFF;

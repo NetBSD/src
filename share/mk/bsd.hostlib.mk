@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.17 2013/10/29 16:11:46 joerg Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.17.2.1 2014/08/10 06:53:30 tls Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -7,8 +7,6 @@
 
 ##### Default values
 CFLAGS+=	${COPTS}
-HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
-HOST_MKDEPCXX?=	CC=${HOST_CXX:Q} mkdep
 MKDEP_SUFFIXES?=	.o .lo
 
 # Override these:

@@ -389,9 +389,9 @@ void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
   // already-constructed members if an initializer throws.
   // For that, we'll need an EH cleanup.
   QualType::DestructionKind dtorKind = elementType.isDestructedType();
-  llvm::AllocaInst *endOfInit = 0;
+  llvm::AllocaInst *endOfInit = nullptr;
   EHScopeStack::stable_iterator cleanup;
-  llvm::Instruction *cleanupDominator = 0;
+  llvm::Instruction *cleanupDominator = nullptr;
   if (CGF.needsEHCleanup(dtorKind)) {
     // In principle we could tell the cleanup where we are more
     // directly, but the control flow can get so varied here that it
@@ -539,7 +539,7 @@ static Expr *findPeephole(Expr *op, CastKind kind) {
       if (castE->getCastKind() == CK_NoOp)
         continue;
     }
-    return 0;
+    return nullptr;
   }
 }
 
@@ -1044,7 +1044,7 @@ AggExprEmitter::EmitInitializationToLValue(Expr *E, LValue LV) {
     return;
   case TEK_Scalar:
     if (LV.isSimple()) {
-      CGF.EmitScalarInit(E, /*D=*/0, LV, /*Captured=*/false);
+      CGF.EmitScalarInit(E, /*D=*/nullptr, LV, /*Captured=*/false);
     } else {
       CGF.EmitStoreThroughLValue(RValue::get(CGF.EmitScalarExpr(E)), LV);
     }
@@ -1141,9 +1141,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 #ifndef NDEBUG
       // Make sure that it's really an empty and not a failure of
       // semantic analysis.
-      for (RecordDecl::field_iterator Field = record->field_begin(),
-                                   FieldEnd = record->field_end();
-           Field != FieldEnd; ++Field)
+      for (const auto *Field : record->fields())
         assert(Field->isUnnamedBitfield() && "Only unnamed bitfields allowed");
 #endif
       return;
@@ -1167,14 +1165,12 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // We'll need to enter cleanup scopes in case any of the member
   // initializers throw an exception.
   SmallVector<EHScopeStack::stable_iterator, 16> cleanups;
-  llvm::Instruction *cleanupDominator = 0;
+  llvm::Instruction *cleanupDominator = nullptr;
 
   // Here we iterate over the fields; this makes it simpler to both
   // default-initialize fields and skip over unnamed fields.
   unsigned curInitIndex = 0;
-  for (RecordDecl::field_iterator field = record->field_begin(),
-                               fieldEnd = record->field_end();
-       field != fieldEnd; ++field) {
+  for (const auto *field : record->fields()) {
     // We're done once we hit the flexible array member.
     if (field->getType()->isIncompleteArrayType())
       break;
@@ -1191,7 +1187,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       break;
     
 
-    LValue LV = CGF.EmitLValueForFieldInitialization(DestLV, *field);
+    LValue LV = CGF.EmitLValueForFieldInitialization(DestLV, field);
     // We never generate write-barries for initialized fields.
     LV.setNonGC(true);
     
@@ -1256,7 +1252,7 @@ static CharUnits GetNumNonZeroBytesInInit(const Expr *E, CodeGenFunction &CGF) {
   // If this is an initlist expr, sum up the size of sizes of the (present)
   // elements.  If this is something weird, assume the whole thing is non-zero.
   const InitListExpr *ILE = dyn_cast<InitListExpr>(E);
-  if (ILE == 0 || !CGF.getTypes().isZeroInitializable(ILE->getType()))
+  if (!ILE || !CGF.getTypes().isZeroInitializable(ILE->getType()))
     return CGF.getContext().getTypeSizeInChars(E->getType());
   
   // InitListExprs for structs have to be handled carefully.  If there are
@@ -1268,8 +1264,7 @@ static CharUnits GetNumNonZeroBytesInInit(const Expr *E, CodeGenFunction &CGF) {
       CharUnits NumNonZeroBytes = CharUnits::Zero();
       
       unsigned ILEElement = 0;
-      for (RecordDecl::field_iterator Field = SD->field_begin(),
-           FieldEnd = SD->field_end(); Field != FieldEnd; ++Field) {
+      for (const auto *Field : SD->fields()) {
         // We're done once we hit the flexible array member or run out of
         // InitListExpr elements.
         if (Field->getType()->isIncompleteArrayType() ||
@@ -1306,7 +1301,8 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
                                      CodeGenFunction &CGF) {
   // If the slot is already known to be zeroed, nothing to do.  Don't mess with
   // volatile stores.
-  if (Slot.isZeroed() || Slot.isVolatile() || Slot.getAddr() == 0) return;
+  if (Slot.isZeroed() || Slot.isVolatile() || Slot.getAddr() == nullptr)
+    return;
 
   // C++ objects with a user-declared constructor don't need zero'ing.
   if (CGF.getLangOpts().CPlusPlus)
@@ -1353,7 +1349,7 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
 void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot) {
   assert(E && hasAggregateEvaluationKind(E->getType()) &&
          "Invalid aggregate expression to emit");
-  assert((Slot.getAddr() != 0 || Slot.isIgnored()) &&
+  assert((Slot.getAddr() != nullptr || Slot.isIgnored()) &&
          "slot has bits but no address");
 
   // Optimize the slot if possible.
@@ -1473,10 +1469,10 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // memcpy, as well as the TBAA tags for the members of the struct, in case
   // the optimizer wishes to expand it in to scalar memory operations.
   llvm::MDNode *TBAAStructTag = CGM.getTBAAStructInfo(Ty);
-  
+
   Builder.CreateMemCpy(DestPtr, SrcPtr,
                        llvm::ConstantInt::get(IntPtrTy, 
                                               TypeInfo.first.getQuantity()),
                        alignment.getQuantity(), isVolatile,
-                       /*TBAATag=*/0, TBAAStructTag);
+                       /*TBAATag=*/nullptr, TBAAStructTag);
 }

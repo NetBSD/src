@@ -1,4 +1,4 @@
-.\"	$NetBSD: iostat.8,v 1.22 2003/08/07 11:25:22 agc Exp $
+.\"	$NetBSD: iostat.8,v 1.22.72.1 2014/08/10 06:59:37 tls Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)iostat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd March 1, 2003
+.Dd June 11, 2014
 .Dt IOSTAT 8
 .Os
 .Sh NAME
@@ -41,8 +41,6 @@ statistics
 .Nm
 .Op Fl CdDITx
 .Op Fl c Ar count
-.Op Fl M Ar core
-.Op Fl N Ar system
 .Op Fl w Ar wait
 .Op Ar drives
 .Sh DESCRIPTION
@@ -106,13 +104,6 @@ transfers, and time spent in transfers.
 Use of this flag disables the default display.
 .It Fl I
 Show the running total values, rather than an average.
-.It Fl M Ar core
-Extract values associated with the name list from the specified core
-instead of the default
-.Dq Pa /dev/mem .
-.It Fl N Ar system
-Extract the name list from the specified system instead of the default
-.Dq Pa /netbsd .
 .It Fl T
 Show tty statistics.
 This is enabled by default unless the
@@ -190,13 +181,6 @@ Seconds spent in disk activity
 .It \&id
 % of CPU time in idle mode
 .El
-.El
-.Sh FILES
-.Bl -tag -width /dev/mem -compact
-.It Pa /netbsd
-Default kernel namelist.
-.It Pa /dev/mem
-Default memory file.
 .El
 .Sh SEE ALSO
 .Xr fstat 1 ,

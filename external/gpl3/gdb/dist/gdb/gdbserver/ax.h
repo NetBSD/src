@@ -1,5 +1,5 @@
 /* Data structures and functions associated with agent expressions in GDB.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -83,4 +83,61 @@ enum eval_result_type
   gdb_eval_agent_expr (struct eval_agent_expr_context *ctx,
 		       struct agent_expr *aexpr,
 		       ULONGEST *rslt);
+
+/* Bytecode compilation function vector.  */
+
+struct emit_ops
+{
+  void (*emit_prologue) (void);
+  void (*emit_epilogue) (void);
+  void (*emit_add) (void);
+  void (*emit_sub) (void);
+  void (*emit_mul) (void);
+  void (*emit_lsh) (void);
+  void (*emit_rsh_signed) (void);
+  void (*emit_rsh_unsigned) (void);
+  void (*emit_ext) (int arg);
+  void (*emit_log_not) (void);
+  void (*emit_bit_and) (void);
+  void (*emit_bit_or) (void);
+  void (*emit_bit_xor) (void);
+  void (*emit_bit_not) (void);
+  void (*emit_equal) (void);
+  void (*emit_less_signed) (void);
+  void (*emit_less_unsigned) (void);
+  void (*emit_ref) (int size);
+  void (*emit_if_goto) (int *offset_p, int *size_p);
+  void (*emit_goto) (int *offset_p, int *size_p);
+  void (*write_goto_address) (CORE_ADDR from, CORE_ADDR to, int size);
+  void (*emit_const) (LONGEST num);
+  void (*emit_call) (CORE_ADDR fn);
+  void (*emit_reg) (int reg);
+  void (*emit_pop) (void);
+  void (*emit_stack_flush) (void);
+  void (*emit_zero_ext) (int arg);
+  void (*emit_swap) (void);
+  void (*emit_stack_adjust) (int n);
+
+  /* Emit code for a generic function that takes one fixed integer
+     argument and returns a 64-bit int (for instance, tsv getter).  */
+  void (*emit_int_call_1) (CORE_ADDR fn, int arg1);
+
+  /* Emit code for a generic function that takes one fixed integer
+     argument and a 64-bit int from the top of the stack, and returns
+     nothing (for instance, tsv setter).  */
+  void (*emit_void_call_2) (CORE_ADDR fn, int arg1);
+
+  /* Emit code specialized for common combinations of compare followed
+     by a goto.  */
+  void (*emit_eq_goto) (int *offset_p, int *size_p);
+  void (*emit_ne_goto) (int *offset_p, int *size_p);
+  void (*emit_lt_goto) (int *offset_p, int *size_p);
+  void (*emit_le_goto) (int *offset_p, int *size_p);
+  void (*emit_gt_goto) (int *offset_p, int *size_p);
+  void (*emit_ge_goto) (int *offset_p, int *size_p);
+};
+
+extern CORE_ADDR current_insn_ptr;
+extern int emit_error;
+
 #endif /* AX_H */

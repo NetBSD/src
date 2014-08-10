@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.43 2014/03/16 05:20:22 dholland Exp $	*/
+/*	$NetBSD: fd.c,v 1.43.2.1 2014/08/10 06:53:50 tls Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.43 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.43.2.1 2014/08/10 06:53:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,6 +193,7 @@ const struct bdevsw fd_bdevsw = {
 	.d_ioctl = fdioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -207,6 +208,7 @@ const struct cdevsw fd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.7 2014/03/28 21:39:09 matt Exp $	*/
+/*	$NetBSD: gic.c,v 1.7.2.1 2014/08/10 06:53:51 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.7 2014/03/28 21:39:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.7.2.1 2014/08/10 06:53:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.7 2014/03/28 21:39:09 matt Exp $");
 #include <sys/intr.h>
 #include <sys/cpu.h>
 #include <sys/proc.h>
-#include <sys/xcall.h>		/* for xc_ipi_handler */
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
@@ -139,18 +138,21 @@ gicd_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 
 /*
  * In the GIC prioritization scheme, lower numbers have higher priority.
+ * Only write priorities that could be non-secure.
  */
 static inline uint32_t
 armgic_ipl_to_priority(int ipl)
 {
-	return (IPL_HIGH - ipl) * GICC_PMR_PRIORITIES / NIPL;
+	return GICC_PMR_NONSECURE
+	    | ((IPL_HIGH - ipl) * GICC_PMR_NS_PRIORITIES / NIPL);
 }
 
 #if 0
 static inline int
 armgic_priority_to_ipl(uint32_t priority)
 {
-	return IPL_HIGH - priority * NIPL / GICC_PMR_PRIORITIES;
+	return IPL_HIGH
+	    - (priority & ~GICC_PMR_NONSECURE) * NIPL / GICC_PMR_NS_PRIORITIES;
 }
 #endif
 
@@ -563,6 +565,10 @@ armgic_attach(device_t parent, device_t self, void *aux)
 		sc->sc_gic_valid_lines[group] = valid;
 	}
 
+	aprint_normal(": Generic Interrupt Controller, "
+	    "%zu sources (%zu valid)\n",
+	    sc->sc_pic.pic_maxsources, sc->sc_gic_lines);
+
 	pic_add(&sc->sc_pic, 0);
 
 	/*
@@ -605,6 +611,8 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	    pic_ipi_nop, (void *)-1);
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_XCALL, IPL_VM, IST_EDGE,
 	    pic_ipi_xcall, (void *)-1);
+	intr_establish(ARMGIC_SGI_IPIBASE + IPI_GENERIC, IPL_VM, IST_EDGE,
+	    pic_ipi_generic, (void *)-1);
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_NOP, IPL_VM, IST_EDGE,
 	    pic_ipi_nop, (void *)-1);
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_SHOOTDOWN, IPL_VM, IST_EDGE,
@@ -619,10 +627,6 @@ armgic_attach(device_t parent, device_t self, void *aux)
 #endif
 	armgic_cpu_init(&sc->sc_pic, curcpu());
 #endif
-
-	aprint_normal(": Generic Interrupt Controller, "
-	    "%zu sources (%zu valid)\n",
-	    sc->sc_pic.pic_maxsources, sc->sc_gic_lines);
 
 	const u_int ppis = popcount32(sc->sc_gic_valid_lines[0] >> 16);
 	const u_int sgis = popcount32(sc->sc_gic_valid_lines[0] & 0xffff);

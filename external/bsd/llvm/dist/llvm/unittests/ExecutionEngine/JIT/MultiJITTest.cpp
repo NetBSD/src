@@ -81,9 +81,9 @@ TEST(MultiJitTest, EagerMode) {
   createModule2(Context2, M2, FooF2);
 
   // Now we create the JIT in eager mode
-  OwningPtr<ExecutionEngine> EE1(EngineBuilder(M1).create());
+  std::unique_ptr<ExecutionEngine> EE1(EngineBuilder(M1).create());
   EE1->DisableLazyCompilation(true);
-  OwningPtr<ExecutionEngine> EE2(EngineBuilder(M2).create());
+  std::unique_ptr<ExecutionEngine> EE2(EngineBuilder(M2).create());
   EE2->DisableLazyCompilation(true);
 
   // Call the `foo' function with no arguments:
@@ -111,9 +111,9 @@ TEST(MultiJitTest, LazyMode) {
   createModule2(Context2, M2, FooF2);
 
   // Now we create the JIT in lazy mode
-  OwningPtr<ExecutionEngine> EE1(EngineBuilder(M1).create());
+  std::unique_ptr<ExecutionEngine> EE1(EngineBuilder(M1).create());
   EE1->DisableLazyCompilation(false);
-  OwningPtr<ExecutionEngine> EE2(EngineBuilder(M2).create());
+  std::unique_ptr<ExecutionEngine> EE2(EngineBuilder(M2).create());
   EE2->DisableLazyCompilation(false);
 
   // Call the `foo' function with no arguments:
@@ -145,8 +145,8 @@ TEST(MultiJitTest, JitPool) {
   createModule2(Context2, M2, FooF2);
 
   // Now we create two JITs
-  OwningPtr<ExecutionEngine> EE1(EngineBuilder(M1).create());
-  OwningPtr<ExecutionEngine> EE2(EngineBuilder(M2).create());
+  std::unique_ptr<ExecutionEngine> EE1(EngineBuilder(M1).create());
+  std::unique_ptr<ExecutionEngine> EE2(EngineBuilder(M2).create());
 
   Function *F1 = EE1->FindFunctionNamed("foo1");
   void *foo1 = EE1->getPointerToFunction(F1);
@@ -173,6 +173,14 @@ TEST(MultiJitTest, JitPool) {
     fa = *(intptr_t *)(fa + 2); // Address to IAT
     EXPECT_TRUE(fa != 0);
     fa = *(intptr_t *)fa;       // Bound value of IAT
+  }
+#elif defined(__x86_64__)
+  // getPointerToNamedFunction might be indirect jump
+  // on Win32 x64 --enable-shared.
+  // FF 25 <pcrel32>: jmp *(RIP + pointer to IAT)
+  if (sa != fa && memcmp((char *)fa, "\xFF\x25", 2) == 0) {
+    fa += *(int32_t *)(fa + 2) + 6;     // Address to IAT(RIP)
+    fa = *(intptr_t *)fa;               // Bound value of IAT
   }
 #endif
   EXPECT_TRUE(sa == fa);

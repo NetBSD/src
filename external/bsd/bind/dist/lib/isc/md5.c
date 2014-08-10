@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.c,v 1.4 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: md5.c,v 1.4.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -79,8 +79,8 @@ isc_md5_init(isc_md5_t *ctx) {
 	CK_RV rv;
 	CK_MECHANISM mech = { CKM_MD5, NULL, 0 };
 
-	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_FALSE, ISC_FALSE,
-				       NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
 	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
 }
 

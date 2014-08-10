@@ -1,4 +1,4 @@
-# Copyright 1999-2013 Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,9 +31,7 @@ set breakpoints_invalid "\r\n\032\032breakpoints-invalid\r\n"
 # test running programs
 #
 
-set testfile "annota1"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
     untested annota1.exp
@@ -41,10 +39,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 }
 
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 # The commands we test here produce many lines of output; disable "press 
 # <return> to continue" prompts.
@@ -445,10 +440,10 @@ if { [remote_file host exists core] } {
 }
 
 proc thread_test {} {
-    global objdir subdir srcdir testfile
+    global subdir srcdir testfile
     global gdb_prompt old_gdb_prompt
     set srcfile watch_thread_num.c
-    set binfile ${objdir}/${subdir}/${testfile}-watch_thread_num
+    set binfile [standard_output_file ${testfile}-watch_thread_num]
     set gdb_prompt $old_gdb_prompt
 
     if { ![get_compiler_info] && [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] == "" } {

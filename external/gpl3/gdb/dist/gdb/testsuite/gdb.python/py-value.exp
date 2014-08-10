@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2013 Free Software Foundation, Inc.
+# Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,13 +21,26 @@ load_lib gdb-python.exp
 standard_testfile
 
 # Build inferior to language specification.
+# LANG is one of "c" or "c++".
 proc build_inferior {exefile lang} {
   global srcdir subdir srcfile testfile hex
 
-  if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${exefile}" executable "debug $lang"] != "" } {
+  # Use different names for .o files based on the language.
+  # For Fission, the debug info goes in foo.dwo and we don't want,
+  # for example, a C++ compile to clobber the dwo of a C compile.
+  # ref: http://gcc.gnu.org/wiki/DebugFission
+  switch ${lang} {
+      "c" { set filename ${testfile}.o }
+      "c++" { set filename ${testfile}-cxx.o }
+  }
+  set objfile [standard_output_file $filename]
+
+  if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${objfile}" object "debug $lang"] != ""
+       || [gdb_compile "${objfile}" "${exefile}" executable "debug $lang"] != "" } {
       untested "Couldn't compile ${srcfile} in $lang mode"
       return -1
   }
+  return 0
 }
 
 proc test_value_creation {} {
@@ -278,6 +291,12 @@ proc test_value_in_inferior {} {
   # For the purposes of this test, use repr()
   gdb_py_test_silent_cmd "python nullst = nullst.string (length = 9)" "get string beyond null" 1
   gdb_test "python print (repr(nullst))" "u?'divide\\\\x00et'"
+
+  # Test fetching a string longer than its declared (in C) size.
+  # PR 16286
+  gdb_py_test_silent_cmd "python xstr = gdb.parse_and_eval('xstr')" "get xstr" 1
+  gdb_test "python print xstr\['text'\].string (length = xstr\['length'\])" "x{100}" \
+    "read string beyond declared size"
 }
 
 proc test_lazy_strings {} {
@@ -288,8 +307,8 @@ proc test_lazy_strings {} {
   gdb_py_test_silent_cmd "python sptr = gdb.history (0)" "Get value from history" 1
 
   gdb_py_test_silent_cmd "python lstr = sptr.lazy_string()" "Aquire lazy string" 1
-  gdb_test "python print (lstr.type)" "const char \*." "Test type name equality"
-  gdb_test "python print (sptr.type)" "const char \*." "Test type name equality"
+  gdb_test "python print (lstr.type)" "const char \*." "Test lazy-string type name equality"
+  gdb_test "python print (sptr.type)" "const char \*." "Test string type name equality"
   gdb_test "print sn" "0x0"
   gdb_py_test_silent_cmd "python snptr = gdb.history (0)" "Get value from history" 1
   gdb_test "python snstr = snptr.lazy_string(length=5)" ".*Cannot create a lazy string with address.*" "Test lazy string"
@@ -411,12 +430,12 @@ proc test_subscript_regression {exefile lang} {
      "Create a value for subscript test" 1
 
  # Try to access an int with a subscript.  This should fail.
- gdb_test "python print (intv)" "1" "Baseline print of a Python value"
+ gdb_test "python print (intv)" "1" "Baseline print of an int Python value"
  gdb_test "python print (intv\[0\])" "gdb.error: Cannot subscript requested type.*" \
      "Attempt to access an integer with a subscript"
 
  # Try to access a string with a subscript.  This should pass.
- gdb_test "python print (stringv)" "foo." "Baseline print of a Python value"
+ gdb_test "python print (stringv)" "foo." "Baseline print of a string Python value"
  gdb_test "python print (stringv\[0\])" "f." "Attempt to access a string with a subscript"
 
  # Try to access an int array via a pointer with a subscript.  This should pass.
@@ -463,9 +482,10 @@ proc test_value_hash {} {
     gdb_test "python print (one.__hash__() == hash(one))" "True" "Test inbuilt hash"
 }
 
-# Build C and C++ versions of executable
-build_inferior "${binfile}" "c"
-build_inferior "${binfile}-cxx" "c++"
+# Build C version of executable.  C++ is built later.
+if { [build_inferior "${binfile}" "c"] < 0 } {
+    return -1
+}
 
 # Start with a fresh gdb.
 clean_restart ${binfile}
@@ -494,5 +514,14 @@ test_lazy_strings
 test_value_after_death
 
 # Test either C or C++ values. 
+
 test_subscript_regression "${binfile}" "c"
-test_subscript_regression "${binfile}-cxx" "c++"
+
+if ![skip_cplus_tests] {
+    if { [build_inferior "${binfile}-cxx" "c++"] < 0 } {
+	return -1
+    }
+    with_test_prefix "c++" {
+	test_subscript_regression "${binfile}-cxx" "c++"
+    }
+}

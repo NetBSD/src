@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.19 2013/01/26 16:51:51 christos Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.19.10.1 2014/08/10 06:55:53 tls Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -250,6 +250,10 @@ struct msdosfsmount {
 void msdosfs_init(void);
 void msdosfs_reinit(void);
 void msdosfs_done(void);
+
+#ifndef MAKEFS
+VFS_PROTOS(msdosfs);
+#endif
 
 #endif /* _KERNEL || MAKEFS */
 #endif /* _MSDOSFS_MSDOSFSMOUNT_H_ */

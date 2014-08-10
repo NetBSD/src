@@ -1,6 +1,6 @@
 /* Disassemble support for GDB.
 
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "target.h"
 #include "value.h"
 #include "ui-out.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "disasm.h"
 #include "gdbcore.h"
 #include "dis-asm.h"
@@ -47,7 +47,7 @@ static int
 dis_asm_read_memory (bfd_vma memaddr, gdb_byte *myaddr, unsigned int len,
 		     struct disassemble_info *info)
 {
-  return target_read_memory (memaddr, myaddr, len);
+  return target_read_code (memaddr, myaddr, len);
 }
 
 /* Like memory_error with slightly different parameters.  */

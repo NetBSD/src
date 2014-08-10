@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.35 2013/12/17 01:27:21 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.35.2.1 2014/08/10 06:53:50 tls Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -40,7 +40,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.35 2013/12/17 01:27:21 joerg Exp $")
+	RCSID("$NetBSD: locore.S,v 1.35.2.1 2014/08/10 06:53:50 tls Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -123,8 +123,8 @@ svcstk:
 
 #ifndef OFW
 	/* OFW based systems will used OF_boot() */
-	
-.Lcpufuncs:	
+
+.Lcpufuncs:
 	.word	_C_LABEL(cpufuncs)
 
 ENTRY_NP(cpu_reset)

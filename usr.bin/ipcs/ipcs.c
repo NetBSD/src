@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.42 2009/01/18 01:10:34 lukem Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.42.24.1 2014/08/10 06:58:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -66,9 +66,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <grp.h>
-#include <kvm.h>
 #include <limits.h>
-#include <nlist.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -90,13 +88,11 @@
 #define PID		8
 #define TIME		16
 
-static char	*core = NULL, *namelist = NULL;
 static int	display = 0;
 static int	option = 0;
 
 static void	cvt_time(time_t, char *, size_t);
 static char    *fmt_perm(u_short);
-static void	ipcs_kvm(void);
 static void	msg_sysctl(void);
 static void	sem_sysctl(void);
 static void	shm_sysctl(void);
@@ -174,7 +170,7 @@ main(int argc, char *argv[])
 	int i;
 	time_t now;
 
-	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != -1)
+	while ((i = getopt(argc, argv, "MmQqSsabcoptT")) != -1)
 		switch (i) {
 		case 'M':
 			display |= SHMTOTAL;
@@ -203,14 +199,8 @@ main(int argc, char *argv[])
 		case 'b':
 			option |= BIGGEST;
 			break;
-		case 'C':
-			core = optarg;
-			break;
 		case 'c':
 			option |= CREATOR;
-			break;
-		case 'N':
-			namelist = optarg;
 			break;
 		case 'o':
 			option |= OUTSTANDING;
@@ -229,22 +219,19 @@ main(int argc, char *argv[])
 		usage();
 
 	(void)time(&now);
-	(void)printf("IPC status from %s as of %s\n",
+	(void)printf("IPC status from <running system> as of %s\n",
 	    /* and extra \n from ctime(3) */
-	    core == NULL ? "<running system>" : core, ctime(&now));
+	    ctime(&now));
 
         if (display == 0)
 		display = SHMINFO | MSGINFO | SEMINFO;
 
-	if (core == NULL) {
-		if (display & (MSGINFO | MSGTOTAL))
-			msg_sysctl();
-		if (display & (SHMINFO | SHMTOTAL))
-			shm_sysctl();
-		if (display & (SEMINFO | SEMTOTAL))
-			sem_sysctl();
-	} else
-		ipcs_kvm();
+	if (display & (MSGINFO | MSGTOTAL))
+		msg_sysctl();
+	if (display & (SHMINFO | SHMTOTAL))
+		shm_sysctl();
+	if (display & (SEMINFO | SEMTOTAL))
+		sem_sysctl();
 	return 0;
 }
 
@@ -680,214 +667,12 @@ done:
 	free(buf);
 }
 
-static struct nlist symbols[] = {
-	{ .n_name = "_sema" },
-#define X_SEMA		0
-	{ .n_name = "_seminfo" },
-#define X_SEMINFO	1
-	{ .n_name = "_semu" },
-#define X_SEMU		2
-	{ .n_name = "_msginfo" },
-#define X_MSGINFO	3
-	{ .n_name = "_msqids" },
-#define X_MSQIDS	4
-	{ .n_name = "_shminfo" },
-#define X_SHMINFO	5
-	{ .n_name = "_shmsegs" },
-#define X_SHMSEGS	6
-	{ .n_name = NULL }
-};
-
-static void
-ipcs_kvm(void)
-{
-	struct msginfo msginfo;
-	struct msqid_ds *msqids;
-	struct seminfo seminfo;
-	struct semid_ds *sema;
-	struct shminfo shminfo;
-	struct shmid_ds *shmsegs;
-	kvm_t *kd;
-	char errbuf[_POSIX2_LINE_MAX];
-	int32_t i;
-	uint32_t u;
-
-	if ((kd = kvm_openfiles(namelist, core, NULL, O_RDONLY,
-	    errbuf)) == NULL)
-		errx(1, "can't open kvm: %s", errbuf);
-
-
-	switch (kvm_nlist(kd, symbols)) {
-	case 0:
-		break;
-	case -1:
-		errx(1, "%s: unable to read symbol table.",
-		    namelist == NULL ? _PATH_UNIX : namelist);
-		/* NOTREACHED */
-	default:
-#ifdef notdef		/* they'll be told more civilly later */
-		warnx("nlist failed");
-		for (i = 0; symbols[i].n_name != NULL; i++)
-			if (symbols[i].n_value == 0)
-				warnx("symbol %s not found",
-				    symbols[i].n_name);
-#endif
-		break;
-	}
-
-	if ((display & (MSGINFO | MSGTOTAL)) &&
-	    (kvm_read(kd, symbols[X_MSGINFO].n_value,
-	     &msginfo, sizeof(msginfo)) == sizeof(msginfo))) {
-
-		if (display & MSGTOTAL)
-			show_msgtotal(&msginfo);
-
-		if (display & MSGINFO) {
-			struct msqid_ds *xmsqids;
-
-			if (kvm_read(kd, symbols[X_MSQIDS].n_value,
-			    &msqids, sizeof(msqids)) != sizeof(msqids))
-				errx(1, "kvm_read (%s): %s",
-				    symbols[X_MSQIDS].n_name, kvm_geterr(kd));
-
-			xmsqids = malloc(sizeof(struct msqid_ds) *
-			    msginfo.msgmni);
-
-			if ((size_t)kvm_read(kd, (u_long)msqids, xmsqids,
-			    sizeof(struct msqid_ds) * msginfo.msgmni) !=
-			    sizeof(struct msqid_ds) * msginfo.msgmni)
-				errx(1, "kvm_read (msqids): %s",
-				    kvm_geterr(kd));
-
-			show_msginfo_hdr();
-			for (i = 0; i < msginfo.msgmni; i++) {
-				struct msqid_ds *msqptr = &xmsqids[i];
-				if (msqptr->msg_qbytes != 0)
-					show_msginfo(msqptr->msg_stime,
-					    msqptr->msg_rtime,
-					    msqptr->msg_ctime,
-					    IXSEQ_TO_IPCID(i, msqptr->msg_perm),
-					    (u_int64_t)msqptr->msg_perm._key,
-					    msqptr->msg_perm.mode,
-					    msqptr->msg_perm.uid,
-					    msqptr->msg_perm.gid,
-					    msqptr->msg_perm.cuid,
-					    msqptr->msg_perm.cgid,
-					    (u_int64_t)msqptr->_msg_cbytes,
-					    (u_int64_t)msqptr->msg_qnum,
-					    (u_int64_t)msqptr->msg_qbytes,
-					    msqptr->msg_lspid,
-					    msqptr->msg_lrpid);
-			}
-			(void)printf("\n");
-			free(xmsqids);
-		}
-	} else
-		if (display & (MSGINFO | MSGTOTAL))
-			unconfmsg();
-	if ((display & (SHMINFO | SHMTOTAL)) &&
-	    (kvm_read(kd, symbols[X_SHMINFO].n_value, &shminfo,
-	     sizeof(shminfo)) == sizeof(shminfo))) {
-
-		if (display & SHMTOTAL)
-			show_shmtotal(&shminfo);
-
-		if (display & SHMINFO) {
-			struct shmid_ds *xshmids;
-
-			if (kvm_read(kd, symbols[X_SHMSEGS].n_value, &shmsegs,
-			    sizeof(shmsegs)) != sizeof(shmsegs))
-				errx(1, "kvm_read (%s): %s",
-				    symbols[X_SHMSEGS].n_name, kvm_geterr(kd));
-
-			xshmids = malloc(sizeof(struct shmid_ds) *
-			    shminfo.shmmni);
-
-			if ((size_t)kvm_read(kd, (u_long)shmsegs, xshmids,
-			    sizeof(struct shmid_ds) * shminfo.shmmni) !=
-			    sizeof(struct shmid_ds) * shminfo.shmmni)
-				errx(1, "kvm_read (shmsegs): %s",
-				    kvm_geterr(kd));
-
-			show_shminfo_hdr();
-			for (u = 0; u < shminfo.shmmni; u++) {
-				struct shmid_ds *shmptr = &xshmids[u];
-				if (shmptr->shm_perm.mode & 0x0800)
-					show_shminfo(shmptr->shm_atime,
-					    shmptr->shm_dtime,
-					    shmptr->shm_ctime,
-					    IXSEQ_TO_IPCID(u, shmptr->shm_perm),
-					    (u_int64_t)shmptr->shm_perm._key,
-					    shmptr->shm_perm.mode,
-					    shmptr->shm_perm.uid,
-					    shmptr->shm_perm.gid,
-					    shmptr->shm_perm.cuid,
-					    shmptr->shm_perm.cgid,
-					    shmptr->shm_nattch,
-					    (u_int64_t)shmptr->shm_segsz,
-					    shmptr->shm_cpid,
-					    shmptr->shm_lpid);
-			}
-			(void)printf("\n");
-			free(xshmids);
-		}
-	} else
-		if (display & (SHMINFO | SHMTOTAL))
-			unconfshm();
-	if ((display & (SEMINFO | SEMTOTAL)) &&
-	    (kvm_read(kd, symbols[X_SEMINFO].n_value, &seminfo,
-	     sizeof(seminfo)) == sizeof(seminfo))) {
-		struct semid_ds *xsema;
-
-		if (display & SEMTOTAL)
-			show_semtotal(&seminfo);
-
-		if (display & SEMINFO) {
-			if (kvm_read(kd, symbols[X_SEMA].n_value, &sema,
-			    sizeof(sema)) != sizeof(sema))
-				errx(1, "kvm_read (%s): %s",
-				    symbols[X_SEMA].n_name, kvm_geterr(kd));
-
-			xsema = malloc(sizeof(struct semid_ds) *
-			    seminfo.semmni);
-
-			if ((size_t)kvm_read(kd, (u_long)sema, xsema,
-			    sizeof(struct semid_ds) * seminfo.semmni) !=
-			    sizeof(struct semid_ds) * seminfo.semmni)
-				errx(1, "kvm_read (sema): %s",
-				    kvm_geterr(kd));
-
-			show_seminfo_hdr();
-			for (i = 0; i < seminfo.semmni; i++) {
-				struct semid_ds *semaptr = &xsema[i];
-				if ((semaptr->sem_perm.mode & SEM_ALLOC) != 0)
-					show_seminfo(semaptr->sem_otime,
-					    semaptr->sem_ctime,
-					    IXSEQ_TO_IPCID(i, semaptr->sem_perm),
-					    (u_int64_t)semaptr->sem_perm._key,
-					    semaptr->sem_perm.mode,
-					    semaptr->sem_perm.uid,
-					    semaptr->sem_perm.gid,
-					    semaptr->sem_perm.cuid,
-					    semaptr->sem_perm.cgid,
-					    semaptr->sem_nsems);
-			}
-
-			(void)printf("\n");
-			free(xsema);
-		}
-	} else
-		if (display & (SEMINFO | SEMTOTAL)) 
-			unconfsem();
-	(void)kvm_close(kd);
-}
-
 static void
 usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-abcmopqstMQST] [-C corefile] [-N namelist]\n",
+	    "Usage: %s [-abcmopqstMQST]\n",
 	    getprogname());
 	exit(1);
 }

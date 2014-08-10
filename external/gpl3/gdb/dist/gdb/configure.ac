@@ -1,8 +1,8 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995-2013 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2014 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
-dnl 
+dnl
 dnl This program is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
 dnl the Free Software Foundation; either version 3 of the License, or
@@ -23,15 +23,14 @@ AC_INIT(main.c)
 AC_CONFIG_HEADER(config.h:config.in)
 AM_MAINTAINER_MODE
 
-# Provide more thorough testing by -lmcheck.
-# Set it to 'true' for development snapshots, 'false' for releases or
-# pre-releases.
-development=false
+# Set the 'development' global.
+. $srcdir/development.sh
 
 AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
 ACX_LARGEFILE
 AM_PROG_CC_STDC
+AM_PROG_INSTALL_STRIP
 
 AC_CONFIG_AUX_DIR(..)
 AC_CANONICAL_SYSTEM
@@ -78,7 +77,7 @@ AC_SUBST(localedir)
 
 if test x"$USE_NLS" = xyes; then
    CONFIG_ALL="$CONFIG_ALL all-po"
-   CONFIG_CLEAN="$CONFIG_CLEAN clean-po"		   
+   CONFIG_CLEAN="$CONFIG_CLEAN clean-po"
    CONFIG_INSTALL="$CONFIG_INSTALL install-po"
    CONFIG_UNINSTALL="$CONFIG_UNINSTALL uninstall-po"
 fi
@@ -203,6 +202,7 @@ fi
 
 TARGET_OBS=
 all_targets=
+HAVE_NATIVE_GCORE_TARGET=
 
 for targ_alias in `echo $target_alias $enable_targets | sed 's/,/ /g'`
 do
@@ -236,6 +236,12 @@ do
     if test x${want64} = xfalse; then
       . ${srcdir}/../bfd/config.bfd
     fi
+
+    # Check whether this target is native and supports gcore.
+    if test $gdb_native = yes -a "$targ_alias" = "$target_alias" \
+       && $gdb_have_gcore; then
+      HAVE_NATIVE_GCORE_TARGET=1
+    fi
   fi
 done
 
@@ -264,6 +270,7 @@ if test x${all_targets} = xtrue; then
 fi
 
 AC_SUBST(TARGET_OBS)
+AC_SUBST(HAVE_NATIVE_GCORE_TARGET)
 
 # For other settings, only the main target counts.
 gdb_sim=
@@ -478,8 +485,15 @@ AC_CHECK_TOOL(AR, ar)
 AC_CHECK_TOOL(DLLTOOL, dlltool)
 AC_CHECK_TOOL(WINDRES, windres)
 
-# Needed for GNU/Hurd.
-AC_CHECK_TOOL(MIG, mig)
+case $host_os in
+  gnu*)
+    # Needed for GNU Hurd hosts.
+    AC_CHECK_TOOL(MIG, mig)
+    if test x"$MIG" = x; then
+      AC_MSG_ERROR([MIG not found but required for $host hosts])
+    fi
+    ;;
+esac
 
 # ---------------------- #
 # Checks for libraries.  #
@@ -535,7 +549,7 @@ AS_HELP_STRING([--with-iconv-bin=PATH], [specify where to find the iconv program
 # On alpha-osf, it appears that libtermcap and libcurses are not compatible.
 # There is a very specific comment in /usr/include/curses.h explaining that
 # termcap routines built into libcurses must not be used.
-# 
+#
 # The symptoms we observed so far is GDB unexpectedly changing
 # the terminal settings when tgetent is called - this is particularly
 # visible as the output is missing carriage returns, and so rapidly
@@ -612,7 +626,7 @@ case $host_os in
   go32* | *djgpp*)
     ac_cv_search_tgetent="none required"
     ;;
-  *mingw32*)	 
+  *mingw32*)
     ac_cv_search_tgetent="none required"
     CONFIG_OBS="$CONFIG_OBS windows-termcap.o"
     ;;
@@ -698,6 +712,10 @@ else
     LIBS=$save_LIBS
   fi
 fi
+
+# --------------------- #
+# Check for libpython.  #
+# --------------------- #
 
 dnl Utility to simplify finding libpython.
 dnl $1 = pythonX.Y
@@ -1037,60 +1055,43 @@ AC_SUBST(PYTHON_CFLAGS)
 AC_SUBST(PYTHON_CPPFLAGS)
 AC_SUBST(PYTHON_LIBS)
 
-# Provide a --enable-libmcheck/--disable-libmcheck set of options
-# allowing a user to enable this option even when building releases,
-# or to disable it when building a snapshot.
-AC_ARG_ENABLE(libmcheck,
-  AS_HELP_STRING([--enable-libmcheck],
-                 [Try building GDB with -lmcheck if available]),
-  [case "${enableval}" in
-     yes | y) ENABLE_LIBMCHECK="yes" ;;
-     no | n)  ENABLE_LIBMCHECK="no" ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --enable-libmcheck) ;;
-   esac])
+# --------------------- #
+# Check for libmcheck.  #
+# --------------------- #
 
 # Enable -lmcheck by default (it provides cheap-enough memory mangling),
 # but turn it off if Python is enabled with threads, since -lmcheck is
 # not thread safe (http://sourceware.org/bugzilla/show_bug.cgi?id=9939),
 # and for releases.
-if test -z "${ENABLE_LIBMCHECK}" \
-        -a \( "${have_libpython}" = "no" \
-	     -o "${python_has_threads}" = "no" \) \
-    && $development; then
-  ENABLE_LIBMCHECK=yes
+if test \( "${have_libpython}" = "no" -o "${python_has_threads}" = "no" \) \
+   && $development; then
+  libmcheck_default=yes
+else
+  libmcheck_default=no
 fi
+GDB_AC_LIBMCHECK(${libmcheck_default})
 
-if test "$ENABLE_LIBMCHECK" = "yes" ; then
-  if test "${have_libpython}" != "no" -a "${python_has_threads}" = "yes" ; then
-    AC_MSG_WARN(--enable-libmcheck may lead to spurious crashes if threads are used in python)
-  fi
-  AC_CHECK_LIB(mcheck, main)
+if test "$ENABLE_LIBMCHECK" = "yes" \
+	-a "${have_libpython}" != "no" \
+	-a "${python_has_threads}" = "yes" ; then
+  AC_MSG_WARN(--enable-libmcheck may lead to spurious crashes if threads are used in python)
 fi
 
 # ------------------------- #
 # Checks for header files.  #
 # ------------------------- #
 
-AC_HEADER_DIRENT
 AC_HEADER_STDC
 # elf_hp.h is for HP/UX 64-bit shared library support.
 AC_CHECK_HEADERS([nlist.h machine/reg.h poll.h sys/poll.h proc_service.h \
-                  thread_db.h signal.h stddef.h \
-		  stdlib.h string.h memory.h strings.h sys/fault.h \
+                  thread_db.h \
+		  sys/fault.h \
 		  sys/file.h sys/filio.h sys/ioctl.h sys/param.h \
 		  sys/resource.h sys/procfs.h sys/ptrace.h ptrace.h \
 		  sys/reg.h sys/debugreg.h sys/select.h sys/syscall.h \
-		  sys/types.h sys/wait.h wait.h termios.h termio.h \
-		  sgtty.h unistd.h elf_hp.h locale.h \
-		  dlfcn.h sys/socket.h sys/un.h linux/perf_event.h])
-AC_CHECK_HEADERS(link.h, [], [],
-[#if HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-#if HAVE_NLIST_H
-# include <nlist.h>
-#endif
-])
+		  termios.h termio.h \
+		  sgtty.h elf_hp.h \
+		  dlfcn.h])
 AC_CHECK_HEADERS(sys/proc.h, [], [],
 [#if HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -1124,8 +1125,7 @@ AC_CHECK_HEADERS(term.h, [], [],
 # Checks for declarations.  #
 # ------------------------- #
 
-AC_CHECK_DECLS([free, malloc, realloc, strerror, strstr, getopt,
-                snprintf, vsnprintf])
+AC_CHECK_DECLS([free, malloc, realloc, snprintf])
 AM_LC_MESSAGES
 
 # ----------------------- #
@@ -1162,17 +1162,17 @@ AC_FUNC_VFORK
 AC_CHECK_FUNCS([canonicalize_file_name realpath getrusage getuid getgid \
 		pipe poll pread pread64 pwrite readlink resize_term \
 		sbrk setpgid setpgrp setsid \
-		sigaction sigprocmask sigsetmask socketpair syscall \
+		sigaction sigprocmask sigsetmask socketpair \
 		ttrace wborder wresize setlocale iconvlist libiconvlist btowc \
-		setrlimit getrlimit posix_madvise waitpid lstat])
+		setrlimit getrlimit posix_madvise waitpid lstat \
+		ptrace64])
 AM_LANGINFO_CODESET
+GDB_AC_COMMON
 
 # Check the return and argument types of ptrace.  No canned test for
 # this, so roll our own.
 gdb_ptrace_headers='
-#if HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
+#include <sys/types.h>
 #if HAVE_SYS_PTRACE_H
 # include <sys/ptrace.h>
 #endif
@@ -1205,7 +1205,7 @@ AC_CACHE_CHECK([types of arguments for ptrace], gdb_cv_func_ptrace_args, [
 for gdb_arg1 in 'int' 'long'; do
  for gdb_arg2 in 'pid_t' 'int' 'long'; do
   for gdb_arg3 in 'int *' 'caddr_t' 'int' 'long' 'void *'; do
-   for gdb_arg4 in 'int' 'long'; do
+   for gdb_arg4 in 'int' 'long' 'void *'; do
      AC_TRY_COMPILE($gdb_ptrace_headers, [
 extern $gdb_cv_func_ptrace_ret
   ptrace ($gdb_arg1, $gdb_arg2, $gdb_arg3, $gdb_arg4);
@@ -1232,6 +1232,8 @@ IFS=$ac_save_IFS
 shift
 AC_DEFINE_UNQUOTED(PTRACE_TYPE_ARG3, $[3],
   [Define to the type of arg 3 for ptrace.])
+AC_DEFINE_UNQUOTED(PTRACE_TYPE_ARG4, $[4],
+  [Define to the type of arg 4 for ptrace.])
 if test -n "$[5]"; then
   AC_DEFINE_UNQUOTED(PTRACE_TYPE_ARG5, $[5],
     [Define to the type of arg 5 for ptrace.])
@@ -1343,7 +1345,7 @@ AC_CACHE_VAL(gdb_cv_have_ptrace_getregs,
 		[gdb_cv_have_ptrace_getregs=no])])
 AC_MSG_RESULT($gdb_cv_have_ptrace_getregs)
 if test $gdb_cv_have_ptrace_getregs = yes; then
-  AC_DEFINE(HAVE_PTRACE_GETREGS, 1, 
+  AC_DEFINE(HAVE_PTRACE_GETREGS, 1,
   [Define if sys/ptrace.h defines the PTRACE_GETREGS request.])
 fi
 
@@ -1392,15 +1394,13 @@ fi
 
 if test "${target}" = "${host}"; then
   case "${host}" in
-  *-*-sysv4.2* | *-*-sysv5* | *-*-interix* )
+  *-*-sysv4.2* | *-*-sysv5* )
       AC_DEFINE(NEW_PROC_API, 1,
-      [Define if you want to use new multi-fd /proc interface
-       (replaces HAVE_MULTIPLE_PROC_FDS as well as other macros).])
+      [Define if you want to use new multi-fd /proc interface.])
       ;;
   *-*-solaris2.[[6789]] | *-*-solaris2.1[[0-9]]*)
       AC_DEFINE(NEW_PROC_API, 1,
-      [Define if you want to use new multi-fd /proc interface
-       (replaces HAVE_MULTIPLE_PROC_FDS as well as other macros).])
+      [Define if you want to use new multi-fd /proc interface.])
       ;;
   mips-sgi-irix5*)
       # Work around <sys/proc.h> needing _KMEMUSER problem on IRIX 5.
@@ -1412,14 +1412,11 @@ if test "${target}" = "${host}"; then
 fi
 
 if test "$ac_cv_header_sys_procfs_h" = yes; then
-  BFD_HAVE_SYS_PROCFS_TYPE(pstatus_t)
-  BFD_HAVE_SYS_PROCFS_TYPE(prrun_t)
   BFD_HAVE_SYS_PROCFS_TYPE(gregset_t)
   BFD_HAVE_SYS_PROCFS_TYPE(fpregset_t)
   BFD_HAVE_SYS_PROCFS_TYPE(prgregset_t)
   BFD_HAVE_SYS_PROCFS_TYPE(prfpregset_t)
   BFD_HAVE_SYS_PROCFS_TYPE(prgregset32_t)
-  BFD_HAVE_SYS_PROCFS_TYPE(prfpregset32_t)
   BFD_HAVE_SYS_PROCFS_TYPE(lwpid_t)
   BFD_HAVE_SYS_PROCFS_TYPE(psaddr_t)
   BFD_HAVE_SYS_PROCFS_TYPE(prsysent_t)
@@ -1453,99 +1450,6 @@ if test "$ac_cv_header_sys_procfs_h" = yes; then
       AC_DEFINE(PRFPREGSET_T_BROKEN, 1,
       [Define if the prfpregset_t type is broken.])
     fi
-  fi
-
-  dnl Check for PIOCSET ioctl entry 
-
-  AC_MSG_CHECKING(for PIOCSET ioctl entry in sys/procfs.h)
-  AC_CACHE_VAL(gdb_cv_have_procfs_piocset,
-  [AC_TRY_COMPILE([#include <unistd.h>
-#include <sys/types.h>
-#include <sys/procfs.h>
-], [
-    int dummy;;
-    dummy = ioctl(0, PIOCSET, &dummy);
-  ],
-  gdb_cv_have_procfs_piocset=yes, gdb_cv_have_procfs_piocset=no)])
-  AC_MSG_RESULT($gdb_cv_have_procfs_piocset)
-  if test $gdb_cv_have_procfs_piocset = yes; then
-    AC_DEFINE(HAVE_PROCFS_PIOCSET, 1,
-    [Define if ioctl argument PIOCSET is available.])
-  fi
-fi
-
-dnl For native ports (host == target), check to see what kind of
-dnl legacy link.h support is needed.  (See solib-legacy.c.)
-if test ${host} = ${target} ; then
-  dnl Check for struct link_map with l_ members which are indicative
-  dnl of SVR4-like shared libraries
-
-  AC_MSG_CHECKING(for member l_addr in struct link_map)
-  AC_CACHE_VAL(gdb_cv_have_struct_link_map_with_l_members,
-    [AC_TRY_COMPILE([#include <link.h>],
-                    [struct link_map lm; (void) lm.l_addr;],
-                    gdb_cv_have_struct_link_map_with_l_members=yes,
-                    gdb_cv_have_struct_link_map_with_l_members=no)])
-  AC_MSG_RESULT($gdb_cv_have_struct_link_map_with_l_members)
-  if test $gdb_cv_have_struct_link_map_with_l_members = yes; then
-    AC_DEFINE(HAVE_STRUCT_LINK_MAP_WITH_L_MEMBERS,1,
-    [Define if <link.h> exists and defines struct link_map which has
-     members with an ``l_'' prefix.  (For Solaris, SVR4, and
-     SVR4-like systems.)])
-  fi
-
-  dnl Check for struct link_map with lm_ members which are indicative
-  dnl of SunOS-like shared libraries
-
-  AC_MSG_CHECKING(for member lm_addr in struct link_map)
-  AC_CACHE_VAL(gdb_cv_have_struct_link_map_with_lm_members,
-    [AC_TRY_COMPILE([#include <sys/types.h>
-#include <link.h>],
-                    [struct link_map lm; (void) lm.lm_addr;],
-                    gdb_cv_have_struct_link_map_with_lm_members=yes,
-                    gdb_cv_have_struct_link_map_with_lm_members=no)])
-  AC_MSG_RESULT($gdb_cv_have_struct_link_map_with_lm_members)
-  if test $gdb_cv_have_struct_link_map_with_lm_members = yes; then
-    AC_DEFINE(HAVE_STRUCT_LINK_MAP_WITH_LM_MEMBERS, 1,
-    [Define if <link.h> exists and defines struct link_map which has
-     members with an ``lm_'' prefix.  (For SunOS.)])
-  fi
-
-  dnl Check for struct so_map with som_ members which are found on 
-  dnl some *BSD systems.
-
-  AC_MSG_CHECKING(for member som_addr in struct so_map)
-  AC_CACHE_VAL(gdb_cv_have_struct_so_map_with_som_members,
-    [AC_TRY_COMPILE([#include <sys/types.h>
-#ifdef HAVE_NLIST_H
-#include <nlist.h>
-#endif
-#include <link.h>],
-                    [struct so_map lm; (void) lm.som_addr;],
-                    gdb_cv_have_struct_so_map_with_som_members=yes,
-                    gdb_cv_have_struct_so_map_with_som_members=no)])
-  AC_MSG_RESULT($gdb_cv_have_struct_so_map_with_som_members)
-  if test $gdb_cv_have_struct_so_map_with_som_members = yes; then
-    AC_DEFINE(HAVE_STRUCT_SO_MAP_WITH_SOM_MEMBERS, 1,
-    [Define if <link.h> exists and defines a struct so_map which has
-     members with an ``som_'' prefix.  (Found on older *BSD systems.)])
-  fi
-
-  dnl Check for struct link_map32 type, which allows a 64-bit Solaris
-  dnl debugger to debug a 32-bit Solaris app with 32-bit shared libraries.
-
-  AC_MSG_CHECKING(for struct link_map32 in sys/link.h)
-  AC_CACHE_VAL(gdb_cv_have_struct_link_map32, 
-    [AC_TRY_COMPILE([#define _SYSCALL32
-#include <sys/link.h>], [struct link_map32 l;],
-     gdb_cv_have_struct_link_map32=yes,
-     gdb_cv_have_struct_link_map32=no)])
-  AC_MSG_RESULT($gdb_cv_have_struct_link_map32)
-  if test $gdb_cv_have_struct_link_map32 = yes; then
-    AC_DEFINE(HAVE_STRUCT_LINK_MAP32, 1,
-    [Define if <sys/link.h> has struct link_map32])
-    AC_DEFINE(_SYSCALL32, 1,
-    [Define if <sys/link.h> has link_map32 (solaris sparc-64 target)])
   fi
 fi
 
@@ -1635,7 +1539,7 @@ fi
 
 # Check if the compiler and runtime support scanning long doubles.
 
-AC_CACHE_CHECK([for long double support in scanf], 
+AC_CACHE_CHECK([for long double support in scanf],
                gdb_cv_scanf_has_long_double,
                [AC_RUN_IFELSE([AC_LANG_PROGRAM(
 [[#include <stdio.h>]],
@@ -1839,8 +1743,10 @@ if test "x$ac_cv_header_sys_syscall_h" = "xyes"; then
    )
 fi
 dnl See if we can issue tkill syscall.
-if test "x$gdb_cv_sys_syscall_h_has_tkill" = "xyes" && test "x$ac_cv_func_syscall" = "xyes"; then
-  AC_DEFINE(HAVE_TKILL_SYSCALL, 1, [Define if you support the tkill syscall.])
+if test "x$gdb_cv_sys_syscall_h_has_tkill" = "xyes"; then
+  AC_CHECK_FUNC(syscall,
+    AC_DEFINE(HAVE_TKILL_SYSCALL, 1, [Define if you support the tkill syscall.])
+  )
 fi
 
 dnl Check if we can disable the virtual address space randomization.
@@ -1865,6 +1771,17 @@ then
     AC_DEFINE([HAVE_PERSONALITY], 1,
 	      [Define if you support the personality syscall.])
 fi
+
+dnl Set the host's .gdbinit filename.
+case $host_os in
+  go32* | *djgpp*)
+    gdbinit=gdb.ini
+    ;;
+  *)
+    gdbinit=.gdbinit
+    ;;
+esac
+AC_DEFINE_UNQUOTED(GDBINIT,"$gdbinit",[The .gdbinit filename.])
 
 dnl Handle optional features that can be enabled.
 
@@ -1905,21 +1822,18 @@ if test "${ERROR_ON_WARNING}" = yes ; then
     WERROR_CFLAGS="-Werror"
 fi
 
-# The entries after -Wno-pointer-sign are disabled warnings which may
-# be enabled in the future, which can not currently be used to build
-# GDB.
-# NOTE: If you change this list, remember to update
-# gdb/doc/gdbint.texinfo.
 build_warnings="-Wall -Wdeclaration-after-statement -Wpointer-arith \
--Wformat-nonliteral -Wno-pointer-sign \
+-Wpointer-sign \
 -Wno-unused -Wunused-value -Wunused-function \
 -Wno-switch -Wno-char-subscripts -Wmissing-prototypes \
--Wdeclaration-after-statement -Wempty-body"
+-Wdeclaration-after-statement -Wempty-body -Wmissing-parameter-type \
+-Wold-style-declaration -Wold-style-definition"
 
 # Enable -Wno-format by default when using gcc on mingw since many
 # GCC versions complain about %I64.
 case "${host}" in
   *-*-mingw32*) build_warnings="$build_warnings -Wno-format" ;;
+  *) build_warnings="$build_warnings -Wformat-nonliteral" ;;
 esac
 
 AC_ARG_ENABLE(build-warnings,
@@ -1973,7 +1887,7 @@ AC_SUBST(WERROR_CFLAGS)
 
 # In the Cygwin environment, we need some additional flags.
 AC_CACHE_CHECK([for cygwin], gdb_cv_os_cygwin,
-[AC_EGREP_CPP(lose, [
+[AC_EGREP_CPP(^lose$, [
 #if defined (__CYGWIN__) || defined (__CYGWIN32__)
 lose
 #endif],[gdb_cv_os_cygwin=yes],[gdb_cv_os_cygwin=no])])
@@ -2002,13 +1916,13 @@ fi
 case ${host} in
   *mingw32*)
     AC_DEFINE(USE_WIN32API, 1,
-              [Define if we should use the Windows API, instead of the 
-	       POSIX API.  On Windows, we use the Windows API when 
-	       building for MinGW, but the POSIX API when building 
+              [Define if we should use the Windows API, instead of the
+	       POSIX API.  On Windows, we use the Windows API when
+	       building for MinGW, but the POSIX API when building
 	       for Cygwin.])
     WIN32LIBS="$WIN32LIBS -lws2_32"
     ;;
-esac	    
+esac
 AC_SUBST(WIN32LIBS)
 
 # Add ELF support to GDB, but only if BFD includes ELF support.
@@ -2020,7 +1934,7 @@ if test $gdb_cv_var_elf = yes; then
 	    [Define if ELF support should be included.])
   # -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
   if test "$plugins" = "yes"; then
-    LIBS="-ldl $LIBS"
+    AC_SEARCH_LIBS(dlopen, dl)
   fi
 fi
 
@@ -2120,7 +2034,7 @@ if test "${enable_gdbtk}" = "yes"; then
           # If building tcl in the same src tree, private headers
           # are not needed, but we need to be sure to use the right
           # headers library
-	  TCL_INCLUDE="-I${TCL_SRC_DIR}/generic"          
+	  TCL_INCLUDE="-I${TCL_SRC_DIR}/generic"
           TCL_LIBRARY="${TCL_BUILD_LIB_SPEC}"
           TCL_DEPS="../tcl/${configdir}${TCL_LIB_FILE}"
         fi
@@ -2133,7 +2047,7 @@ if test "${enable_gdbtk}" = "yes"; then
         # Check for in-tree Tk
         intree="no"
         if test "${TK_SRC_DIR}" = "${topdir}/tk"; then
-          intree="yes" 
+          intree="yes"
         fi
 
         # Find Tk private headers
@@ -2190,8 +2104,8 @@ AC_SUBST(GDBTK_SRC_DIR)
 
 AC_PATH_X
 
-# Unlike the sim directory, whether a simulator is linked is controlled by 
-# presence of a gdb_sim definition in the target configure.tgt entry.  
+# Unlike the sim directory, whether a simulator is linked is controlled by
+# presence of a gdb_sim definition in the target configure.tgt entry.
 # This code just checks for a few cases where we'd like to ignore those
 # definitions, even when they're present in the '.mt' file.  These cases
 # are when --disable-sim is specified, or if the simulator directory is
@@ -2315,6 +2229,47 @@ if test "$enable_gdbserver" = "yes" -a "$gdbserver_build_enabled" != "yes"; then
   AC_MSG_ERROR(Automatic gdbserver build is not supported for this configuration)
 fi
 
+# Check for babeltrace and babeltrace-ctf
+AC_ARG_WITH(babeltrace,
+  AC_HELP_STRING([--with-babeltrace], [include babeltrace support (auto/yes/no)]),
+  [], [with_babeltrace=auto])
+AC_MSG_CHECKING([whether to use babeltrace])
+AC_MSG_RESULT([$with_babeltrace])
+
+if test "x$with_babeltrace" = "xno"; then
+  AC_MSG_WARN([babletrace support disabled; GDB is unable to read CTF data.])
+else
+  # Append -Werror to CFLAGS so that configure can catch the warning
+  # "assignment from incompatible pointer type", which is related to
+  # the babeltrace change from 1.0.3 to 1.1.0.  Babeltrace 1.1.0 works
+  # in GDB, while babeltrace 1.0.3 is broken.
+  # AC_LIB_HAVE_LINKFLAGS may modify CPPFLAGS in it, so it should be
+  # safe to save and restore CFLAGS here.
+  saved_CFLAGS=$CFLAGS
+  CFLAGS="$CFLAGS -Werror"
+  AC_LIB_HAVE_LINKFLAGS([babeltrace], [babeltrace-ctf],
+			[#include <babeltrace/babeltrace.h>
+			 #include <babeltrace/ctf/events.h>
+			 #include <babeltrace/ctf/iterator.h>],
+			[struct bt_iter_pos *pos = bt_iter_get_pos (bt_ctf_get_iter (NULL));
+			struct bt_ctf_event *event = NULL;
+			const struct bt_definition *scope;
+
+			scope = bt_ctf_get_top_level_scope (event,
+			      				   BT_STREAM_EVENT_HEADER);
+		        bt_ctf_get_uint64 (bt_ctf_get_field (event, scope, "id"));
+			])
+  CFLAGS=$saved_CFLAGS
+
+  if test "$HAVE_LIBBABELTRACE" != yes; then
+     if test "$with_babeltrace" = yes; then
+       AC_MSG_ERROR([babeltrace is missing or unusable])
+     else
+       AC_MSG_WARN([babeltrace is missing or unusable; GDB is unable to read CTF data.])
+     fi
+  fi
+fi
+
 # If nativefile (NAT_FILE) is not set in config/*/*.m[ht] files, we link
 # to an empty version.
 
@@ -2342,6 +2297,20 @@ dnl  Detect the character set used by this host.
 dnl  At the moment, we just assume it's UTF-8.
 AC_DEFINE(GDB_DEFAULT_HOST_CHARSET, "UTF-8",
           [Define to be a string naming the default host character set.])
+
+# Undo the $ec_script escaping suitable for Makefile.
+transform=`echo "$program_transform_name" | sed -e 's/[\\$][\\$]/\\$/g'`
+GDB_TRANSFORM_NAME=`echo gdb | sed -e "$transform"`
+if test "x$GDB_TRANSFORM_NAME" = x; then
+  GDB_TRANSFORM_NAME=gdb
+fi
+AC_SUBST(GDB_TRANSFORM_NAME)
+GCORE_TRANSFORM_NAME=`echo gcore | sed -e "$transform"`
+if test "x$GCORE_TRANSFORM_NAME" = x; then
+  GCORE_TRANSFORM_NAME=gcore
+fi
+AC_SUBST(GCORE_TRANSFORM_NAME)
+AC_CONFIG_FILES([gcore], [chmod +x gcore])
 
 AC_OUTPUT(Makefile gdb-gdb.gdb doc/Makefile data-directory/Makefile,
 [

@@ -4,8 +4,6 @@ Some things that need to be done:
 High priority:
 --------------
 
-On a short control transfer the status phase needs to be executed anyway.
-
 Fix flow control in ucom (copy from com driver).
 
 Use some encapsulation in the upl driver to allow multiple protocols.
@@ -60,8 +58,6 @@ uaudio problems:
 Stylistic changes:
 	use usb_ and usbd_ consistently
 	rearrange the contents and names of some files (Nick)
-
-Use splsoftusb() or a thread to deliver callbacks.
 
 Add threads to the Ethernet drivers.
 

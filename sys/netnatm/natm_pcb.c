@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.14 2011/02/01 19:40:24 chuck Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.14.28.1 2014/08/10 06:56:41 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -31,18 +31,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.14 2011/02/01 19:40:24 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.14.28.1 2014/08/10 06:56:41 tls Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 
 #include <net/if.h>
 #include <net/radix.h>
@@ -56,21 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.14 2011/02/01 19:40:24 chuck Exp $");
  * npcb_alloc: allocate a npcb [in the free state]
  */
 
-struct natmpcb *npcb_alloc(wait)
-
-int wait;
-
+struct natmpcb *
+npcb_alloc(bool wait)
 {
   struct natmpcb *npcb;
 
-  npcb = malloc(sizeof(*npcb), M_PCB, wait);
-
-#ifdef DIAGNOSTIC
-  if (wait == M_WAITOK && npcb == NULL) panic("npcb_alloc: malloc didn't wait");
-#endif
-
+  npcb = kmem_intr_zalloc(sizeof(*npcb), wait ? KM_SLEEP : KM_NOSLEEP);
   if (npcb) {
-    memset(npcb, 0, sizeof(*npcb));
     npcb->npcb_flags = NPCB_FREE;
   }
   return(npcb);
@@ -81,11 +73,8 @@ int wait;
  * npcb_free: free a npcb
  */
 
-void npcb_free(npcb, op)
-
-struct natmpcb *npcb;
-int op;
-
+void
+npcb_free(struct natmpcb *npcb, int op)
 {
   int s = splnet();
 
@@ -95,9 +84,9 @@ int op;
   }
   if (op == NPCB_DESTROY) {
     if (npcb->npcb_inq) {
-      npcb->npcb_flags = NPCB_DRAIN;	/* flag for distruction */
+      npcb->npcb_flags = NPCB_DRAIN;	/* flag for destruction */
     } else {
-      free(npcb, M_PCB);		/* kill it! */
+      kmem_intr_free(npcb, sizeof(*npcb));
     }
   }
 
@@ -110,13 +99,9 @@ int op;
  *   returns npcb if ok
  */
 
-struct natmpcb *npcb_add(npcb, ifp, vci, vpi)
-
-struct natmpcb *npcb;
-struct ifnet *ifp;
-u_int16_t vci;
-u_int8_t vpi;
-
+struct natmpcb *
+npcb_add(struct natmpcb *npcb, struct ifnet *ifp,
+	u_int16_t vci, u_int8_t vpi)
 {
   struct natmpcb *cpcb = NULL;		/* current pcb */
   int s = splnet();
@@ -146,7 +131,7 @@ u_int8_t vpi;
    */
 
   if (npcb == NULL) {
-    cpcb = npcb_alloc(M_NOWAIT);	/* could be called from lower half */
+    cpcb = npcb_alloc(false);	/* could be called from lower half */
     if (cpcb == NULL)
       goto done;			/* fail */
   } else {

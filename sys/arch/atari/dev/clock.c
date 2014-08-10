@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.58 2014/03/26 18:04:33 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.58.2.1 2014/08/10 06:53:52 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.58 2014/03/26 18:04:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.58.2.1 2014/08/10 06:53:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -132,6 +132,7 @@ const struct cdevsw rtc_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

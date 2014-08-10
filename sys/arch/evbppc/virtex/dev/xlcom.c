@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.10 2014/03/16 05:20:24 dholland Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.10.2.1 2014/08/10 06:53:57 tls Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.10 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.10.2.1 2014/08/10 06:53:57 tls Exp $");
 
 #include "opt_kgdb.h"
 
@@ -148,6 +148,7 @@ const struct cdevsw xlcom_cdevsw = {
 	.d_poll = xlcom_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.349 2014/04/04 05:10:15 matt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.349.2.1 2014/08/10 06:53:30 tls Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -169,7 +169,9 @@ CFLAGS+=	-g
 # Platform-independent linker flags for ELF shared libraries
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
 SHLIB_SHFLAGS=		-Wl,-soname,${_LIB}.so.${SHLIB_SOVERSION}
+.if !defined(SHLIB_WARNTEXTREL) || ${SHLIB_WARNTEXTREL} != "no"
 SHLIB_SHFLAGS+=		-Wl,--warn-shared-textrel
+.endif
 .if !defined(SHLIB_MKMAP) || ${SHLIB_MKMAP} != "no"
 SHLIB_SHFLAGS+=		-Wl,-Map=${_LIB}.so.${SHLIB_SOVERSION}.map
 .endif
@@ -602,8 +604,6 @@ LDADD+= -lgcc
 LIBCC:=	${CXX}
 . if ${MKLIBCXX} == "yes"
 LIBDPLIBS+=     c++	${.CURDIR}/../../../../../external/bsd/libc++/lib
-. elif defined(HAVE_GCC) && ${HAVE_GCC} == 4
-LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../gnu/lib/libstdc++-v3_4
 . else
 LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
 . endif
@@ -618,11 +618,10 @@ ${_LIB.so.full}: ${SOLIB} ${DPADD} ${DPLIBC} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	${LIBCC} ${LDLIBC} -shared ${SHLIB_SHFLAGS} \
+	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} \
 	    ${_LDFLAGS.${_LIB}} -o ${.TARGET} ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${_LDADD.${_LIB}}
-	${OBJCOPY} -x ${.TARGET}
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX

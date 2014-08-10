@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mips-asm-printer"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "MCTargetDesc/MipsMCNaCl.h"
@@ -51,6 +50,8 @@
 #include <string>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mips-asm-printer"
 
 MipsTargetStreamer &MipsAsmPrinter::getTargetStreamer() {
   return static_cast<MipsTargetStreamer &>(*OutStreamer.getTargetStreamer());
@@ -147,7 +148,8 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // removing another test for this situation downstream in the
     // callchain.
     //
-    if (I->isPseudo() && !Subtarget->inMips16Mode())
+    if (I->isPseudo() && !Subtarget->inMips16Mode()
+        && !isLongBranchPseudo(I->getOpcode()))
       llvm_unreachable("Pseudo opcode found in EmitInstruction()");
 
     MCInst TmpInst0;
@@ -285,9 +287,8 @@ void MipsAsmPrinter::EmitFunctionEntryLabel() {
 
   if (Subtarget->inMicroMipsMode())
     TS.emitDirectiveSetMicroMips();
-  // leave out until FSF available gas has micromips changes
-  //  else
-  //    TS.emitDirectiveSetNoMicroMips();
+  else
+    TS.emitDirectiveSetNoMicroMips();
 
   if (Subtarget->inMips16Mode())
     TS.emitDirectiveSetMips16();
@@ -621,15 +622,28 @@ printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
 void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // TODO: Need to add -mabicalls and -mno-abicalls flags.
   // Currently we assume that -mabicalls is the default.
-  getTargetStreamer().emitDirectiveAbiCalls();
-  Reloc::Model RM = Subtarget->getRelocationModel();
-  if (RM == Reloc::Static && !Subtarget->hasMips64())
-    getTargetStreamer().emitDirectiveOptionPic0();
+  bool IsABICalls = true;
+  if (IsABICalls) {
+    getTargetStreamer().emitDirectiveAbiCalls();
+    Reloc::Model RM = Subtarget->getRelocationModel();
+    // FIXME: This condition should be a lot more complicated that it is here.
+    //        Ideally it should test for properties of the ABI and not the ABI
+    //        itself.
+    //        For the moment, I'm only correcting enough to make MIPS-IV work.
+    if (RM == Reloc::Static && !Subtarget->isABI_N64())
+      getTargetStreamer().emitDirectiveOptionPic0();
+  }
 
   // Tell the assembler which ABI we are using
   std::string SectionName = std::string(".mdebug.") + getCurrentABIString();
   OutStreamer.SwitchSection(OutContext.getELFSection(
       SectionName, ELF::SHT_PROGBITS, 0, SectionKind::getDataRel()));
+
+  // NaN: At the moment we only support:
+  // 1. .nan legacy (default)
+  // 2. .nan 2008
+  Subtarget->isNaN2008() ? getTargetStreamer().emitDirectiveNaN2008()
+    : getTargetStreamer().emitDirectiveNaNLegacy();
 
   // TODO: handle O64 ABI
 
@@ -824,7 +838,7 @@ void MipsAsmPrinter::EmitFPCallStub(
   const MCSectionELF *M = OutContext.getELFSection(
       ".mips16.call.fp." + std::string(Symbol), ELF::SHT_PROGBITS,
       ELF::SHF_ALLOC | ELF::SHF_EXECINSTR, SectionKind::getText());
-  OutStreamer.SwitchSection(M, 0);
+  OutStreamer.SwitchSection(M, nullptr);
   //
   // .align 2
   //
@@ -939,6 +953,12 @@ void MipsAsmPrinter::NaClAlignIndirectJumpTargets(MachineFunction &MF) {
     if (MBB->hasAddressTaken())
       MBB->setAlignment(MIPS_NACL_BUNDLE_ALIGN);
   }
+}
+
+bool MipsAsmPrinter::isLongBranchPseudo(int Opcode) const {
+  return (Opcode == Mips::LONG_BRANCH_LUi
+          || Opcode == Mips::LONG_BRANCH_ADDiu
+          || Opcode == Mips::LONG_BRANCH_DADDiu);
 }
 
 // Force static initialization.

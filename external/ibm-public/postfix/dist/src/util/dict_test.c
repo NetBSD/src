@@ -1,10 +1,8 @@
-/*	$NetBSD: dict_test.c,v 1.1.1.2 2013/09/25 19:06:37 tron Exp $	*/
+/*	$NetBSD: dict_test.c,v 1.1.1.2.2.1 2014/08/10 07:12:50 tls Exp $	*/
 
  /*
-  * Proof-of-concept test program. Create, update or read a database. When
-  * the input is a name=value pair, the database is updated, otherwise the
-  * program assumes that the input specifies a lookup key and prints the
-  * corresponding value.
+  * Proof-of-concept test program. Create, update or read a database. Type
+  * '?' for a list of commands.
   */
 
 /* System library. */
@@ -28,7 +26,7 @@
 
 static NORETURN usage(char *myname)
 {
-    msg_fatal("usage: %s type:file read|write|create [fold] [sync]", myname);
+    msg_fatal("usage: %s type:file read|write|create [flags...]", myname);
 }
 
 void    dict_test(int argc, char **argv)
@@ -43,9 +41,11 @@ void    dict_test(int argc, char **argv)
     const char *key;
     const char *value;
     int     ch;
-    int     dict_flags = DICT_FLAG_LOCK | DICT_FLAG_DUP_REPLACE;
+    int     dict_flags = 0;
     int     n;
     int     rc;
+
+#define USAGE	"verbose|del key|get key|put key=value|first|next|masks|flags"
 
     signal(SIGPIPE, SIG_IGN);
 
@@ -70,17 +70,12 @@ void    dict_test(int argc, char **argv)
 	open_flags = O_RDONLY;
     else
 	msg_fatal("unknown access mode: %s", argv[2]);
-    for (n = 2; argv[optind + n]; n++) {
-	if (strcasecmp(argv[optind + 2], "fold") == 0)
-	    dict_flags |= DICT_FLAG_FOLD_ANY;
-	else if (strcasecmp(argv[optind + 2], "sync") == 0)
-	    dict_flags |= DICT_FLAG_SYNC_UPDATE;
-	else if (strcasecmp(argv[optind + 2], "open_lock") == 0) {
-	    dict_flags |= DICT_FLAG_OPEN_LOCK;
-	    dict_flags &= ~DICT_FLAG_LOCK;
-	} else
-	    usage(argv[0]);
-    }
+    for (n = 2; argv[optind + n]; n++)
+	dict_flags |= dict_flags_mask(argv[optind + 2]);
+    if ((dict_flags & DICT_FLAG_OPEN_LOCK) == 0)
+	dict_flags |= DICT_FLAG_LOCK;
+    if ((dict_flags & (DICT_FLAG_DUP_WARN | DICT_FLAG_DUP_IGNORE)) == 0)
+	dict_flags |= DICT_FLAG_DUP_REPLACE;
     vstream_fflush(VSTREAM_OUT);
     dict_name = argv[optind];
     dict_allow_surrogate = 1;
@@ -95,7 +90,7 @@ void    dict_test(int argc, char **argv)
 	if (*bufp == '#')
 	    continue;
 	if ((cmd = mystrtok(&bufp, " ")) == 0) {
-	    vstream_printf("usage: verbose|del key|get key|put key=value|first|next|masks|flags\n");
+	    vstream_printf("usage: %s\n", USAGE);
 	    vstream_fflush(VSTREAM_OUT);
 	    continue;
 	}
@@ -150,7 +145,7 @@ void    dict_test(int argc, char **argv)
 	    vstream_printf("DICT_FLAG_INST_MASK %s\n",
 			   dict_flags_str(DICT_FLAG_INST_MASK));
 	} else {
-	    vstream_printf("usage: del key|get key|put key=value|first|next|masks|flags\n");
+	    vstream_printf("usage: %s\n", USAGE);
 	}
 	vstream_fflush(VSTREAM_OUT);
     }

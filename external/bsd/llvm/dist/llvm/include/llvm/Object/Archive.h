@@ -89,17 +89,17 @@ public:
       return StringRef(Data.data() + StartOfFile, getSize());
     }
 
-    error_code getMemoryBuffer(OwningPtr<MemoryBuffer> &Result,
+    error_code getMemoryBuffer(std::unique_ptr<MemoryBuffer> &Result,
                                bool FullPath = false) const;
 
-    error_code getAsBinary(OwningPtr<Binary> &Result,
-                           LLVMContext *Context = 0) const;
+    error_code getAsBinary(std::unique_ptr<Binary> &Result,
+                           LLVMContext *Context = nullptr) const;
   };
 
   class child_iterator {
     Child child;
   public:
-    child_iterator() : child(Child(0, 0)) {}
+    child_iterator() : child(Child(nullptr, nullptr)) {}
     child_iterator(const Child &c) : child(c) {}
     const Child* operator->() const {
       return &child;

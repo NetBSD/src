@@ -1,6 +1,6 @@
-.\"	$NetBSD: nsupdate.1,v 1.4 2014/03/01 03:24:33 christos Exp $
+.\"	$NetBSD: nsupdate.1,v 1.4.2.1 2014/08/10 07:06:36 tls Exp $
 .\"
-.\" Copyright (C) 2004-2012 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -22,11 +22,11 @@
 .\"     Title: nsupdate
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
-.\"      Date: Aug 25, 2009
+.\"      Date: April 18, 2014
 .\"    Manual: BIND9
 .\"    Source: BIND9
 .\"
-.TH "NSUPDATE" "1" "Aug 25, 2009" "BIND9" "BIND9"
+.TH "NSUPDATE" "1" "April 18, 2014" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -35,7 +35,7 @@
 nsupdate \- Dynamic DNS update utility
 .SH "SYNOPSIS"
 .HP 9
-\fBnsupdate\fR [\fB\-d\fR] [\fB\-D\fR] [[\fB\-g\fR] | [\fB\-o\fR] | [\fB\-l\fR] | [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIkeyname:secret\fR\fR] | [\fB\-k\ \fR\fB\fIkeyfile\fR\fR]] [\fB\-t\ \fR\fB\fItimeout\fR\fR] [\fB\-u\ \fR\fB\fIudptimeout\fR\fR] [\fB\-r\ \fR\fB\fIudpretries\fR\fR] [\fB\-R\ \fR\fB\fIrandomdev\fR\fR] [\fB\-v\fR] [\fB\-T\fR] [\fB\-P\fR] [filename]
+\fBnsupdate\fR [\fB\-d\fR] [\fB\-D\fR] [[\fB\-g\fR] | [\fB\-o\fR] | [\fB\-l\fR] | [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIkeyname:secret\fR\fR] | [\fB\-k\ \fR\fB\fIkeyfile\fR\fR]] [\fB\-t\ \fR\fB\fItimeout\fR\fR] [\fB\-u\ \fR\fB\fIudptimeout\fR\fR] [\fB\-r\ \fR\fB\fIudpretries\fR\fR] [\fB\-R\ \fR\fB\fIrandomdev\fR\fR] [\fB\-v\fR] [\fB\-T\fR] [\fB\-P\fR] [\fB\-V\fR] [filename]
 .SH "DESCRIPTION"
 .PP
 \fBnsupdate\fR
@@ -99,7 +99,18 @@ option is used, a signature is generated from
 \fIkeyname\fR
 is the name of the key, and
 \fIsecret\fR
-is the base64 encoded shared secret. Use of the
+is the base64 encoded shared secret.
+\fIhmac\fR
+is the name of the key algorithm; valid choices are
+hmac\-md5,
+hmac\-sha1,
+hmac\-sha224,
+hmac\-sha256,
+hmac\-sha384, or
+hmac\-sha512. If
+\fIhmac\fR
+is not specified, the default is
+hmac\-md5. NOTE: Use of the
 \fB\-y\fR
 option is discouraged because the shared secret is supplied as a command line argument in clear text. This may be visible in the output from
 \fBps\fR(1)
@@ -185,6 +196,10 @@ prints out the list of private types specific to
 \fBnamed\fR. These options may be combined.
 \fBnsupdate\fR
 will exit after the lists are printed.
+.PP
+The \-V option causes
+\fBnsupdate\fR
+to print the version number and exit.
 .SH "INPUT FORMAT"
 .PP
 \fBnsupdate\fR
@@ -245,12 +260,15 @@ Specify the default time to live for records to be added. The value
 will clear the default ttl.
 .RE
 .PP
-\fBkey\fR {name} {secret}
+\fBkey\fR [hmac:] {keyname} {secret}
 .RS 4
 Specifies that all updates are to be TSIG\-signed using the
 \fIkeyname\fR
-\fIkeysecret\fR
-pair. The
+\fIsecret\fR
+pair. If
+\fIhmac\fR
+is specified, then it sets the signing algorithm in use; the default is
+hmac\-md5. The
 \fBkey\fR
 command overrides any key specified on the command line via
 \fB\-y\fR
@@ -375,6 +393,16 @@ Displays the answer.
 Turn on debugging.
 .RE
 .PP
+\fBversion\fR
+.RS 4
+Print version number.
+.RE
+.PP
+\fBhelp\fR
+.RS 4
+Print a list of commands.
+.RE
+.PP
 Lines beginning with a semicolon are comments and are ignored.
 .SH "EXAMPLES"
 .PP
@@ -452,7 +480,7 @@ RFC 2931,
 .PP
 The TSIG key is redundantly stored in two separate files. This is a consequence of nsupdate using the DST library for its cryptographic operations, and may change in future releases.
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2012 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000\-2003 Internet Software Consortium.
 .br

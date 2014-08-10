@@ -1,9 +1,9 @@
-/*	$NetBSD: urestubs.c,v 1.1.1.3 2010/12/12 15:22:07 adam Exp $	*/
+/*	$NetBSD: urestubs.c,v 1.1.1.3.24.1 2014/08/10 07:09:47 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/liblunicode/ure/urestubs.c,v 1.14.2.5 2010/04/13 20:23:04 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
  * OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* Id: urestubs.c,v 1.2 1999/09/21 15:47:44 mleisher Exp" */
+/* Id: urestubs.c,v 1.2 1999/09/21 15:47:44 mleisher Exp " */
 
 #include "portable.h"
 #include <ac/bytes.h>

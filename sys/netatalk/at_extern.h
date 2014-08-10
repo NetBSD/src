@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.16 2007/12/05 23:47:18 dyoung Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.16.76.1 2014/08/10 06:56:21 tls Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -41,6 +41,8 @@ struct socket;
 extern struct mowner atalk_rx_mowner;
 extern struct mowner atalk_tx_mowner;
 
+extern const struct pr_usrreqs ddp_usrreqs;
+
 void	atintr(void);
 void	aarpprobe(void *);
 int	aarpresolve(struct ifnet *, struct mbuf *, const struct sockaddr_at *,
@@ -48,14 +50,12 @@ int	aarpresolve(struct ifnet *, struct mbuf *, const struct sockaddr_at *,
 void	aarpinput(struct ifnet *, struct mbuf *);
 int	at_broadcast(const struct sockaddr_at *);
 void	aarp_clean(void);
-int	at_control(u_long, void *, struct ifnet *, struct lwp *);
+int	at_control(u_long, void *, struct ifnet *);
 int	at_inithead(void **, int);
 void	at_purgeaddr(struct ifaddr *);
 void	at_purgeif(struct ifnet *);
 u_int16_t
 	at_cksum(struct mbuf *, int);
-int	ddp_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
-    struct mbuf *, struct lwp *);
 void	ddp_init(void);
 struct ifaddr *
 	at_ifawithnet(const struct sockaddr_at *, struct ifnet *);

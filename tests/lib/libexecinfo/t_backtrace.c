@@ -1,4 +1,4 @@
-/*	$NetBSD: t_backtrace.c,v 1.13 2014/03/11 13:43:23 joerg Exp $	*/
+/*	$NetBSD: t_backtrace.c,v 1.13.2.1 2014/08/10 06:57:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_backtrace.c,v 1.13 2014/03/11 13:43:23 joerg Exp $");
+__RCSID("$NetBSD: t_backtrace.c,v 1.13.2.1 2014/08/10 06:57:21 tls Exp $");
 
 #include <atf-c.h>
 #include <atf-c/config.h>
@@ -79,6 +79,7 @@ myfunc3(size_t ncalls)
 		++max_frames;
 	}
 	nptrs = backtrace(buffer, __arraycount(buffer));
+	ATF_REQUIRE(nptrs != (size_t)-1);
 	strings = backtrace_symbols_fmt(buffer, nptrs, "%n");
 
 	ATF_CHECK(strings != NULL);
@@ -146,7 +147,8 @@ myfunc(size_t ncalls)
 ATF_TC(backtrace_fmt_basic);
 ATF_TC_HEAD(backtrace_fmt_basic, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "Test backtrace_fmt(3)");
+	atf_tc_set_md_var(tc, "descr", "Test backtrace_fmt(3)");
+	atf_tc_set_md_var(tc, "require.files", "/proc/self");
 }
 
 ATF_TC_BODY(backtrace_fmt_basic, tc)

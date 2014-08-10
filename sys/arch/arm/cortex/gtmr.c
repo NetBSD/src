@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.6 2014/03/28 21:41:46 matt Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.6.2.1 2014/08/10 06:53:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.6 2014/03/28 21:41:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.6.2.1 2014/08/10 06:53:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,6 +103,7 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	 * This runs at a fixed frequency of 1 to 50MHz.
 	 */
 	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);            
+	KASSERT(sc->sc_freq != 0);
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
@@ -139,6 +140,11 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 		    "cp15 CNT_FRQ (%u) differs from supplied frequency\n",
 		    cnt_frq);
 	}
+
+	gtmr_timecounter.tc_name = device_xname(sc->sc_dev);
+	gtmr_timecounter.tc_frequency = sc->sc_freq;
+
+	tc_init(&gtmr_timecounter);
 }
 
 void
@@ -149,10 +155,14 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	KASSERT(ci == curcpu());
 
 	int s = splsched();
+
 	/*
 	 * enable timer and stop masking the timer.
 	 */
 	armreg_cntv_ctl_write(ARM_CNTCTL_ENABLE);
+#if 0
+	printf("%s: cntctl=%#x\n", __func__, armreg_cntv_ctl_read());
+#endif
 
 	/*
 	 * Get now and update the compare timer.
@@ -165,6 +175,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	    armreg_cntv_cval_read() - ci->ci_lastintr);
 #endif
 	splx(s);
+	KASSERT(armreg_cntv_ct_read() != 0);
 #if 0
 	printf("%s: %s: ctl %#x cmp %#"PRIx64" now %#"PRIx64"\n",
 	    __func__, ci->ci_data.cpu_name, armreg_cntv_ctl_read(),
@@ -209,11 +220,6 @@ cpu_initclocks(void)
 	sc->sc_autoinc = sc->sc_freq / hz;
 
 	gtmr_init_cpu_clock(curcpu());
-
-	gtmr_timecounter.tc_name = device_xname(sc->sc_dev);
-	gtmr_timecounter.tc_frequency = sc->sc_freq;
-
-	tc_init(&gtmr_timecounter);
 }
 
 void

@@ -126,6 +126,7 @@ CLEAN :
 	-@erase "$(INTDIR)\byaddr.obj"
 	-@erase "$(INTDIR)\cache.obj"
 	-@erase "$(INTDIR)\callbacks.obj"
+	-@erase "$(INTDIR)\client.obj"
 	-@erase "$(INTDIR)\clientinfo.obj"
 	-@erase "$(INTDIR)\compress.obj"
 	-@erase "$(INTDIR)\db.obj"
@@ -142,6 +143,7 @@ CLEAN :
 	-@erase "$(INTDIR)\dst_lib.obj"
 	-@erase "$(INTDIR)\dst_parse.obj"
 	-@erase "$(INTDIR)\dst_result.obj"
+	-@erase "$(INTDIR)\ecdb.obj"
 	-@erase "$(INTDIR)\forward.obj"
 @IF GEOIP
 	-@erase "$(INTDIR)\geoip.obj"
@@ -209,6 +211,7 @@ CLEAN :
 	-@erase "$(INTDIR)\time.obj"
 	-@erase "$(INTDIR)\timer.obj"
 	-@erase "$(INTDIR)\tkey.obj"
+	-@erase "$(INTDIR)\tsec.obj"
 	-@erase "$(INTDIR)\tsig.obj"
 	-@erase "$(INTDIR)\ttl.obj"
 	-@erase "$(INTDIR)\update.obj"
@@ -280,6 +283,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\byaddr.obj" \
 	"$(INTDIR)\cache.obj" \
 	"$(INTDIR)\callbacks.obj" \
+	"$(INTDIR)\client.obj" \
 	"$(INTDIR)\clientinfo.obj" \
 	"$(INTDIR)\compress.obj" \
 	"$(INTDIR)\db.obj" \
@@ -292,6 +296,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\dns64.obj" \
 	"$(INTDIR)\dnssec.obj" \
 	"$(INTDIR)\ds.obj" \
+	"$(INTDIR)\ecdb.obj" \
 	"$(INTDIR)\forward.obj" \
 @IF GEOIP
 	"$(INTDIR)\geoip.obj" \
@@ -340,6 +345,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\time.obj" \
 	"$(INTDIR)\timer.obj" \
 	"$(INTDIR)\tkey.obj" \
+	"$(INTDIR)\tsec.obj" \
 	"$(INTDIR)\tsig.obj" \
 	"$(INTDIR)\ttl.obj" \
 	"$(INTDIR)\update.obj" \
@@ -418,6 +424,8 @@ CLEAN :
 	-@erase "$(INTDIR)\cache.sbr"
 	-@erase "$(INTDIR)\callbacks.obj"
 	-@erase "$(INTDIR)\callbacks.sbr"
+	-@erase "$(INTDIR)\client.obj"
+	-@erase "$(INTDIR)\client.sbr"
 	-@erase "$(INTDIR)\clientinfo.obj"
 	-@erase "$(INTDIR)\clientinfo.sbr"
 	-@erase "$(INTDIR)\compress.obj"
@@ -450,6 +458,8 @@ CLEAN :
 	-@erase "$(INTDIR)\dst_parse.sbr"
 	-@erase "$(INTDIR)\dst_result.obj"
 	-@erase "$(INTDIR)\dst_result.sbr"
+	-@erase "$(INTDIR)\ecdb.obj"
+	-@erase "$(INTDIR)\ecdb.sbr"
 	-@erase "$(INTDIR)\forward.obj"
 	-@erase "$(INTDIR)\forward.sbr"
 @IF GEOIP
@@ -582,6 +592,8 @@ CLEAN :
 	-@erase "$(INTDIR)\timer.sbr"
 	-@erase "$(INTDIR)\tkey.obj"
 	-@erase "$(INTDIR)\tkey.sbr"
+	-@erase "$(INTDIR)\tsec.obj"
+	-@erase "$(INTDIR)\tsec.sbr"
 	-@erase "$(INTDIR)\tsig.obj"
 	-@erase "$(INTDIR)\tsig.sbr"
 	-@erase "$(INTDIR)\ttl.obj"
@@ -661,6 +673,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\byaddr.sbr" \
 	"$(INTDIR)\cache.sbr" \
 	"$(INTDIR)\callbacks.sbr" \
+	"$(INTDIR)\client.sbr" \
 	"$(INTDIR)\clientinfo.sbr" \
 	"$(INTDIR)\compress.sbr" \
 	"$(INTDIR)\db.sbr" \
@@ -673,6 +686,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\dns64.sbr" \
 	"$(INTDIR)\dnssec.sbr" \
 	"$(INTDIR)\ds.sbr" \
+	"$(INTDIR)\ecdb.sbr" \
 	"$(INTDIR)\forward.sbr" \
 @IF GEOIP
 	"$(INTDIR)\geoip.sbr" \
@@ -721,6 +735,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\time.sbr" \
 	"$(INTDIR)\timer.sbr" \
 	"$(INTDIR)\tkey.sbr" \
+	"$(INTDIR)\tsec.sbr" \
 	"$(INTDIR)\tsig.sbr" \
 	"$(INTDIR)\ttl.sbr" \
 	"$(INTDIR)\update.sbr" \
@@ -773,6 +788,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\byaddr.obj" \
 	"$(INTDIR)\cache.obj" \
 	"$(INTDIR)\callbacks.obj" \
+	"$(INTDIR)\client.obj" \
 	"$(INTDIR)\clientinfo.obj" \
 	"$(INTDIR)\compress.obj" \
 	"$(INTDIR)\db.obj" \
@@ -785,6 +801,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\dns64.obj" \
 	"$(INTDIR)\dnssec.obj" \
 	"$(INTDIR)\ds.obj" \
+	"$(INTDIR)\ecdb.obj" \
 	"$(INTDIR)\forward.obj" \
 @IF GEOIP
 	"$(INTDIR)\geoip.obj" \
@@ -833,6 +850,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\time.obj" \
 	"$(INTDIR)\timer.obj" \
 	"$(INTDIR)\tkey.obj" \
+	"$(INTDIR)\tsec.obj" \
 	"$(INTDIR)\tsig.obj" \
 	"$(INTDIR)\ttl.obj" \
 	"$(INTDIR)\update.obj" \
@@ -992,6 +1010,24 @@ SOURCE=..\callbacks.c
 
 
 "$(INTDIR)\callbacks.obj"	"$(INTDIR)\callbacks.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\client.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\client.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\client.obj"	"$(INTDIR)\client.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
@@ -1210,6 +1246,24 @@ SOURCE=..\ds.c
 
 
 "$(INTDIR)\ds.obj"	"$(INTDIR)\ds.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\ecdb.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\ecdb.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\ecdb.obj"	"$(INTDIR)\ecdb.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
@@ -2042,6 +2096,24 @@ SOURCE=..\tkey.c
 
 
 "$(INTDIR)\tkey.obj"	"$(INTDIR)\tkey.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\tsec.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\tsec.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\tsec.obj"	"$(INTDIR)\tsec.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

@@ -1,5 +1,5 @@
 .\"
-.\" Id: ucpgba.man,v 1.1 1999/11/19 16:08:34 mleisher Exp
+.\" Id: ucpgba.man,v 1.1 1999/11/19 16:08:34 mleisher Exp 
 .\"
 .TH ucpgba 3 "19 November 1999"
 .SH NAME 

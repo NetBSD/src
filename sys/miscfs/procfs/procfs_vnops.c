@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.189 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.189.2.1 2014/08/10 06:56:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.189 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.189.2.1 2014/08/10 06:56:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,6 +259,8 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, procfs_setattr },		/* setattr */
 	{ &vop_read_desc, procfs_read },		/* read */
 	{ &vop_write_desc, procfs_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, procfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, procfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, procfs_poll },		/* poll */
@@ -439,8 +441,18 @@ procfs_reclaim(void *v)
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct pfsnode *pfs = VTOPFS(vp);
 
-	return (procfs_freevp(ap->a_vp));
+	/*
+	 * To interlock with procfs_revoke_vnodes().
+	 */
+	mutex_enter(vp->v_interlock);
+	vp->v_data = NULL;
+	mutex_exit(vp->v_interlock);
+	vcache_remove(vp->v_mount, &pfs->pfs_key, sizeof(pfs->pfs_key));
+	kmem_free(pfs, sizeof(*pfs));
+	return 0;
 }
 
 /*
@@ -1035,7 +1047,7 @@ procfs_lookup(void *v)
 
 		if (i != nproc_root_targets) {
 			error = procfs_allocvp(dvp->v_mount, vpp, 0,
-			    pt->pt_pfstype, -1, NULL);
+			    pt->pt_pfstype, -1);
 			return (error);
 		}
 
@@ -1055,14 +1067,14 @@ procfs_lookup(void *v)
 
 		if (procfs_proc_lock(pid, &p, ESRCH) != 0)
 			break;
-		error = procfs_allocvp(dvp->v_mount, vpp, vnpid, type, -1, p);
+		error = procfs_allocvp(dvp->v_mount, vpp, vnpid, type, -1);
 		procfs_proc_unlock(p);
 		return (error);
 
 	case PFSproc:
 		if (cnp->cn_flags & ISDOTDOT) {
 			error = procfs_allocvp(dvp->v_mount, vpp, 0, PFSroot,
-			    -1, NULL);
+			    -1);
 			return (error);
 		}
 
@@ -1110,7 +1122,7 @@ procfs_lookup(void *v)
 		}
 
 		error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
-		    pt->pt_pfstype, -1, p);
+		    pt->pt_pfstype, -1);
 		procfs_proc_unlock(p);
 		return (error);
 
@@ -1123,7 +1135,7 @@ procfs_lookup(void *v)
 
 		if (cnp->cn_flags & ISDOTDOT) {
 			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
-			    PFSproc, -1, p);
+			    PFSproc, -1);
 			procfs_proc_unlock(p);
 			return (error);
 		}
@@ -1147,7 +1159,7 @@ procfs_lookup(void *v)
 
 		closef(fp);
 		error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
-		    PFSfd, fd, p);
+		    PFSfd, fd);
 		procfs_proc_unlock(p);
 		return error;
 	}
@@ -1159,7 +1171,7 @@ procfs_lookup(void *v)
 
 		if (cnp->cn_flags & ISDOTDOT) {
 			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
-			    PFSproc, -1, p);
+			    PFSproc, -1);
 			procfs_proc_unlock(p);
 			return (error);
 		}
@@ -1170,7 +1182,7 @@ procfs_lookup(void *v)
 			return ENOENT;
 		}
 		error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
-		    PFStask, 0, p);
+		    PFStask, 0);
 		procfs_proc_unlock(p);
 		return error;
 	}

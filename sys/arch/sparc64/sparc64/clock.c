@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.114 2013/12/07 11:17:25 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.114.2.1 2014/08/10 06:54:09 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.114 2013/12/07 11:17:25 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.114.2.1 2014/08/10 06:54:09 tls Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.114 2013/12/07 11:17:25 nakayama Exp $")
  *  no counter-timer	 %tick		 -		 %tick
  *  US-IIe		 STICK		 -		 STICK
  *  US-IIIi		 %stick		 -		 %stick
+ *  sun4v		 %stick		 -		 %stick
  *
  * US-IIe and US-IIIi could use %tick as statclock
  */
@@ -472,7 +473,8 @@ cpu_initclocks(void)
 	}
 
 	/* Initialize the %tick register */
-	settick(0);
+	if (CPU_ISSUN4U || CPU_ISSUN4US)
+		settick(0);
 
 	/* Register timecounter "tick-counter" */
 	tick_timecounter.tc_frequency = ci->ci_cpu_clockrate[0];
@@ -480,7 +482,7 @@ cpu_initclocks(void)
 
 	/* Register timecounter "stick-counter" */
 	if (ci->ci_system_clockrate[0] != 0) {
-		if (CPU_IS_HUMMINGBIRD()) {
+		if (CPU_ISSUN4U && CPU_IS_HUMMINGBIRD()) {
 #if NPSYCHO > 0
 			psycho_setstick(0);
 			stick2e_timecounter.tc_frequency =
@@ -488,7 +490,8 @@ cpu_initclocks(void)
 			tc_init(&stick2e_timecounter);
 #endif
 		} else {
-			setstick(0);
+			if (CPU_ISSUN4U || CPU_ISSUN4US)
+				setstick(0);
 			stick_timecounter.tc_frequency =
 			    ci->ci_system_clockrate[0];
 			tc_init(&stick_timecounter);
@@ -508,16 +511,17 @@ cpu_initclocks(void)
 
 		if (ci->ci_system_clockrate[0] == 0) {
 			aprint_normal("No counter-timer -- using %%tick "
-			    "at %luMHz as system clock.\n",
-			    (unsigned long)ci->ci_cpu_clockrate[1]);
+			    "at %sMHz as system clock.\n",
+			    clockfreq(ci->ci_cpu_clockrate[0]));
 
 			/* We don't have a counter-timer -- use %tick */
 			tickintr_establish(PIL_CLOCK, tickintr);
-		} else if (CPU_IS_HUMMINGBIRD()) {
+		} else if (CPU_ISSUN4U && CPU_IS_HUMMINGBIRD()) {
 #if NPSYCHO > 0
 			aprint_normal("No counter-timer -- using STICK "
-			    "at %luMHz as system clock.\n",
-			    (unsigned long)ci->ci_system_clockrate[1]);
+			    "at %sMHz as system clock.\n",
+			    clockfreq(ci->ci_system_clockrate[0]));
+
 			/* We don't have a counter-timer -- use STICK */
 			stick2eintr_establish(PIL_CLOCK, stick2eintr);
 #else
@@ -525,8 +529,8 @@ cpu_initclocks(void)
 #endif
 		} else {
 			aprint_normal("No counter-timer -- using %%stick "
-			    "at %luMHz as system clock.\n",
-			    (unsigned long)ci->ci_system_clockrate[1]);
+			    "at %sMHz as system clock.\n",
+			    clockfreq(ci->ci_system_clockrate[0]));
 
 			/* We don't have a counter-timer -- use %stick */
 			stickintr_establish(PIL_CLOCK, stickintr);
@@ -556,7 +560,10 @@ cpu_initclocks(void)
 	 * Establish scheduler softint.
 	 */
 	schedint = sparc_softintr_establish(PIL_SCHED, schedintr, NULL);
-	schedhz = 16;	/* 16Hz is best according to kern/kern_clock.c */
+	if (stathz > 60)
+		schedhz = 16;	/* 16Hz is best according to kern/kern_clock.c */
+	else
+		schedhz = stathz / 2 + 1;
 	statscheddiv = stathz / schedhz;
 	if (statscheddiv <= 0)
 		panic("statscheddiv");

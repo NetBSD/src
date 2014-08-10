@@ -1,4 +1,4 @@
-# Copyright 1992-2013 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
 
-set testfile "watchpoint"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 if [get_compiler_info] {
     return -1
@@ -55,23 +53,23 @@ proc initialize {} {
     global srcfile
 
     if [gdb_test "break marker1" "Breakpoint 1 at $hex: file .*$srcfile, line $decimal.*" "set breakpoint at marker1" ] { 
-      return 0; 
+      return 0
     }
 
 
     if [gdb_test "break marker2" "Breakpoint 2 at $hex: file .*$srcfile, line $decimal.*" "set breakpoint at marker2" ] { 
-      return 0; 
+      return 0
     }
 
 
     if [gdb_test "info break" "1\[ \]*breakpoint.*marker1.*\r\n2\[ \]*breakpoint.*marker2.*" "info break in watchpoint.exp" ] { 
-      return 0; 
+      return 0
     }
 
     gdb_test "watch ival3" ".*\[Ww\]atchpoint 3: ival3.*" "set watchpoint on ival3"
 
     if [gdb_test "info watch" "3\[ \]*.*watchpoint.*ival3" "watchpoint found in watchpoint/breakpoint table" ] { 
-      return 0; 
+      return 0
     }
 
 
@@ -80,7 +78,7 @@ proc initialize {} {
     # we get to the first marker function.
 
     if [gdb_test "disable 3" "disable 3\[\r\n\]+" "disable watchpoint" ] { 
-      return 0; 
+      return 0
     }
 
 
@@ -99,7 +97,7 @@ proc test_simple_watchpoint {} {
     # Ensure that the watchpoint is disabled when we startup.
 
     if [gdb_test "disable 3" "^disable 3\[\r\n\]+" "disable watchpoint in test_simple_watchpoint" ] { 
-      return 0; 
+      return 0
     }
 
     # Run until we get to the first marker function.
@@ -120,7 +118,7 @@ proc test_simple_watchpoint {} {
     # After reaching the marker function, enable the watchpoint.
 
     if [gdb_test "enable 3" "^enable 3\[\r\n\]+" "enable watchpoint" ] { 
-      return ; 
+      return
     }
 
 
@@ -187,7 +185,7 @@ Continuing.*\[Ww\]atchpoint.*ival3.*Old value = -1.*New value = 0.*ival3 = count
     # Disable the watchpoint so we run at full speed until we exit.
 
     if [gdb_test "disable 3" "^disable 3\[\r\n\]+" "watchpoint disabled" ] { 
-      return ; 
+      return
     }
 
 
@@ -212,7 +210,7 @@ proc test_disabling_watchpoints {} {
     # Ensure that the watchpoint is disabled when we startup.
 
     if [gdb_test "disable 3" "^disable 3\[\r\n\]+" "disable watchpoint in test_disabling_watchpoints" ] { 
-      return 0; 
+      return 0
     }
 
 
@@ -234,7 +232,7 @@ proc test_disabling_watchpoints {} {
     # After reaching the marker function, enable the watchpoint.
 
     if [gdb_test "enable 3" "^enable 3\[\r\n\]+" "watchpoint enabled" ] { 
-      return ; 
+      return
     }
 
 
@@ -249,7 +247,7 @@ proc test_disabling_watchpoints {} {
     # Disable the watchpoint but leave breakpoints
 
     if [gdb_test "disable 3" "^disable 3\[\r\n\]+" "disable watchpoint #2 in test_disabling_watchpoints" ] { 
-      return 0; 
+      return 0
     }
 
 
@@ -344,7 +342,7 @@ proc test_watchpoint_triggered_in_syscall {} {
 
     # These tests won't work without printf support.
     if [gdb_skip_stdio_test "watchpoints triggered in syscall"] {
-	return;
+	return
     }
     # Run until we get to the first marker function.
     set x 0
@@ -364,14 +362,14 @@ proc test_watchpoint_triggered_in_syscall {} {
 	# to gdb, not the inferior, and we lose.  So that is why we have
 	# watchpoint.c prompt us, so we can wait for that prompt.
 
-	send_gdb "continue\n";
+	send_gdb "continue\n"
 	gdb_expect {
 	    -re "Continuing\\.\r\ntype stuff for buf now:" {
 		pass "continue to read"
 	    }
 	    default {
-		fail "continue to read";
-		return ;
+		fail "continue to read"
+		return
 	    }
 	}
 
@@ -605,6 +603,9 @@ proc test_watch_location {} {
     gdb_breakpoint [gdb_get_line_number "func5 breakpoint here"]
     gdb_continue_to_breakpoint "func5 breakpoint here"
 
+    gdb_test "watch -location nullptr->p->x" \
+	"Cannot access memory at address 0x0"
+
     gdb_test "watch -location *x" "atchpoint .*: .*" "watch -location .x"
 
     gdb_test "continue" \
@@ -824,8 +825,12 @@ proc test_no_hw_watchpoints {} {
     # refrains from using them.
     #
     gdb_test "rwatch ival3" \
-	"Expression cannot be implemented with read/access watchpoint..*" \
+	"Can't set read/access watchpoint when hardware watchpoints are disabled." \
 	"rwatch disallowed when can-set-hw-watchpoints cleared"
+    gdb_test "awatch ival3" \
+	"Can't set read/access watchpoint when hardware watchpoints are disabled." \
+	"awatch disallowed when can-set-hw-watchpoints cleared"
+
 
     # Re-enable hardware watchpoints if necessary.
     if ![target_info exists gdb,no_hardware_watchpoints] {
@@ -876,6 +881,22 @@ proc test_watchpoint_in_big_blob {} {
     }
 
     gdb_test_no_output "delete \$bpnum" "delete watch buf"
+}
+
+proc test_watch_register_location {} {
+    global no_hw
+
+    if {!$no_hw && ![target_info exists gdb,no_hardware_watchpoints]} {
+	# Non-memory read/access watchpoints are not supported, they would
+	# require software read/access watchpoint support (which is not
+	# currently available).
+	gdb_test "rwatch \$pc" \
+	    "Expression cannot be implemented with read/access watchpoint..*" \
+	    "rwatch disallowed for register based expression"
+	gdb_test "awatch \$pc" \
+	    "Expression cannot be implemented with read/access watchpoint..*" \
+	    "awatch disallowed for register based expression"
+    }
 }
 
 # Start with a fresh gdb.
@@ -939,6 +960,8 @@ proc do_tests {} {
 
     test_wide_location_1
     test_wide_location_2
+
+    test_watch_register_location
 }
 
 # On targets that can do hardware watchpoints, run the tests twice:

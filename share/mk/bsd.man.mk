@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.114 2013/10/25 22:16:29 apb Exp $
+#	$NetBSD: bsd.man.mk,v 1.114.2.1 2014/08/10 06:53:30 tls Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -40,7 +40,7 @@ _MSECTIONREGEX=	${_MSECTIONS:ts|} # e.g. 1|2|3|...
 MANCOMPRESS?=
 MANSUFFIX?=
 .else
-MANCOMPRESS?=	${TOOL_GZIP} -ncf
+MANCOMPRESS?=	${TOOL_GZIP_N} -cf
 MANSUFFIX?=	.gz
 .endif
 

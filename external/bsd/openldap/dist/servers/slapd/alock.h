@@ -1,10 +1,10 @@
-/*	$NetBSD: alock.h,v 1.1.1.3 2010/12/12 15:22:17 adam Exp $	*/
+/*	$NetBSD: alock.h,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* alock.h - access lock header */
-/* OpenLDAP: pkg/ldap/servers/slapd/alock.h,v 1.3.2.6 2010/04/13 20:23:10 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2014 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -17,7 +17,7 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 /* ACKNOWLEDGEMENTS:
- * This work was initially developed by Matthew Backes at Symas
+ * This work was initially developed by Emily Backes at Symas
  * Corporation for inclusion in OpenLDAP Software.
  */
 

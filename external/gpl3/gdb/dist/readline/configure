@@ -2285,6 +2285,7 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
+
 opt_curses=no
 opt_purify=no
 
@@ -6264,7 +6265,7 @@ fi
 
 
 
-case "$host_os" in
+case "$build_os" in
 msdosdjgpp*)	BUILD_DIR=`pwd.exe` ;;	# to prevent //d/path/file
 *)		BUILD_DIR=`pwd` ;;
 esac

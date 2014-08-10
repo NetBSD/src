@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.85 2014/03/18 15:44:37 skrll Exp $ */
+/* $NetBSD: cgd.c,v 1.85.2.1 2014/08/10 06:54:50 tls Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.85 2014/03/18 15:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.85.2.1 2014/08/10 06:54:50 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.85 2014/03/18 15:44:37 skrll Exp $");
 #include <dev/dkvar.h>
 #include <dev/cgdvar.h>
 
+#include <miscfs/specfs/specdev.h> /* for v_rdev */
+
 /* Entry Point Functions */
 
 void	cgdattach(int);
@@ -75,6 +77,7 @@ const struct bdevsw cgd_bdevsw = {
 	.d_ioctl = cgdioctl,
 	.d_dump = cgddump,
 	.d_psize = cgdsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -89,6 +92,7 @@ const struct cdevsw cgd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -100,7 +104,7 @@ static int cgd_destroy(device_t);
 
 /* Internal Functions */
 
-static int	cgdstart(struct dk_softc *, struct buf *);
+static void	cgdstart(struct dk_softc *);
 static void	cgdiodone(struct buf *);
 
 static int	cgd_ioctl_set(struct cgd_softc *, void *, struct lwp *);
@@ -226,6 +230,7 @@ cgd_detach(device_t self, int flags)
 		return ret;
 
 	disk_destroy(&dksc->sc_dkdev);
+	mutex_destroy(&sc->sc_lock);
 
 	return 0;
 }
@@ -381,69 +386,78 @@ cgd_putdata(struct dk_softc *dksc, void *data)
 	}
 }
 
-static int
-cgdstart(struct dk_softc *dksc, struct buf *bp)
+static void
+cgdstart(struct dk_softc *dksc)
 {
 	struct	cgd_softc *cs = (struct cgd_softc *)dksc;
-	struct	buf *nbp;
+	struct	buf *bp, *nbp;
+#ifdef DIAGNOSTIC
+	struct	buf *qbp;
+#endif
 	void *	addr;
 	void *	newaddr;
 	daddr_t	bn;
 	struct	vnode *vp;
 
-	DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
-	disk_busy(&dksc->sc_dkdev); /* XXX: put in dksubr.c */
+	while ((bp = bufq_peek(dksc->sc_bufq)) != NULL) {
 
-	bn = bp->b_rawblkno;
+		DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
+		disk_busy(&dksc->sc_dkdev);
 
-	/*
-	 * We attempt to allocate all of our resources up front, so that
-	 * we can fail quickly if they are unavailable.
-	 */
+		bn = bp->b_rawblkno;
 
-	nbp = getiobuf(cs->sc_tvn, false);
-	if (nbp == NULL) {
-		disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
-		return -1;
-	}
-
-	/*
-	 * If we are writing, then we need to encrypt the outgoing
-	 * block into a new block of memory.  If we fail, then we
-	 * return an error and let the dksubr framework deal with it.
-	 */
-	newaddr = addr = bp->b_data;
-	if ((bp->b_flags & B_READ) == 0) {
-		newaddr = cgd_getdata(dksc, bp->b_bcount);
-		if (!newaddr) {
-			putiobuf(nbp);
+		/*
+		 * We attempt to allocate all of our resources up front, so that
+		 * we can fail quickly if they are unavailable.
+		 */
+		nbp = getiobuf(cs->sc_tvn, false);
+		if (nbp == NULL) {
 			disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
-			return -1;
+			break;
 		}
-		cgd_cipher(cs, newaddr, addr, bp->b_bcount, bn,
-		    DEV_BSIZE, CGD_CIPHER_ENCRYPT);
+
+		/*
+		 * If we are writing, then we need to encrypt the outgoing
+		 * block into a new block of memory.
+		 */
+		newaddr = addr = bp->b_data;
+		if ((bp->b_flags & B_READ) == 0) {
+			newaddr = cgd_getdata(dksc, bp->b_bcount);
+			if (!newaddr) {
+				putiobuf(nbp);
+				disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
+				break;
+			}
+			cgd_cipher(cs, newaddr, addr, bp->b_bcount, bn,
+			    DEV_BSIZE, CGD_CIPHER_ENCRYPT);
+		}
+		/* we now have all needed resources to process this buf */
+#ifdef DIAGNOSTIC
+		qbp = bufq_get(dksc->sc_bufq);
+		KASSERT(bp == qbp);
+#else
+		(void)bufq_get(dksc->sc_bufq);
+#endif
+		nbp->b_data = newaddr;
+		nbp->b_flags = bp->b_flags;
+		nbp->b_oflags = bp->b_oflags;
+		nbp->b_cflags = bp->b_cflags;
+		nbp->b_iodone = cgdiodone;
+		nbp->b_proc = bp->b_proc;
+		nbp->b_blkno = bn;
+		nbp->b_bcount = bp->b_bcount;
+		nbp->b_private = bp;
+
+		BIO_COPYPRIO(nbp, bp);
+
+		if ((nbp->b_flags & B_READ) == 0) {
+			vp = nbp->b_vp;
+			mutex_enter(vp->v_interlock);
+			vp->v_numoutput++;
+			mutex_exit(vp->v_interlock);
+		}
+		VOP_STRATEGY(cs->sc_tvn, nbp);
 	}
-
-	nbp->b_data = newaddr;
-	nbp->b_flags = bp->b_flags;
-	nbp->b_oflags = bp->b_oflags;
-	nbp->b_cflags = bp->b_cflags;
-	nbp->b_iodone = cgdiodone;
-	nbp->b_proc = bp->b_proc;
-	nbp->b_blkno = bn;
-	nbp->b_bcount = bp->b_bcount;
-	nbp->b_private = bp;
-
-	BIO_COPYPRIO(nbp, bp);
-
-	if ((nbp->b_flags & B_READ) == 0) {
-		vp = nbp->b_vp;
-		mutex_enter(vp->v_interlock);
-		vp->v_numoutput++;
-		mutex_exit(vp->v_interlock);
-	}
-	VOP_STRATEGY(cs->sc_tvn, nbp);
-	return 0;
 }
 
 static void
@@ -492,7 +506,7 @@ cgdiodone(struct buf *nbp)
 	disk_unbusy(&dksc->sc_dkdev, obp->b_bcount - obp->b_resid,
 	    (obp->b_flags & B_READ));
 	biodone(obp);
-	dk_iodone(di, dksc);
+	cgdstart(dksc);
 	splx(s);
 }
 
@@ -799,7 +813,6 @@ cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	struct lwp *l)
 {
 	struct	disk_geom *dg;
-	struct	vattr va;
 	int	ret;
 	char	*tmppath;
 	uint64_t psize;
@@ -816,13 +829,7 @@ cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	cs->sc_tpath = malloc(cs->sc_tpathlen, M_DEVBUF, M_WAITOK);
 	memcpy(cs->sc_tpath, tmppath, cs->sc_tpathlen);
 
-	vn_lock(vp, LK_SHARED | LK_RETRY);
-	ret = VOP_GETATTR(vp, &va, l->l_cred);
-	VOP_UNLOCK(vp);
-	if (ret != 0)
-		goto bail;
-
-	cs->sc_tdev = va.va_rdev;
+	cs->sc_tdev = vp->v_rdev;
 
 	if ((ret = getdisksize(vp, &psize, &secsize)) != 0)
 		goto bail;

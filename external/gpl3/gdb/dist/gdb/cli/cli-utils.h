@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -117,6 +117,13 @@ extern char *remove_trailing_whitespace (const char *start, char *s);
    argument was found, or an xmalloc'd string.  */
 
 extern char *extract_arg (char **arg);
+
+/* A const-correct version of "extract_arg".
+
+   Since the returned value is xmalloc'd, it eventually needs to be
+   xfree'ed, which prevents us from making it const as well.  */
+
+extern char *extract_arg_const (const char **arg);
 
 /* A helper function that looks for an argument at the start of a
    string.  The argument must also either be at the end of the string,

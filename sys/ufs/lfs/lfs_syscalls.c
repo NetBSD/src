@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.152 2014/03/24 13:42:40 hannken Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.152.2.1 2014/08/10 06:56:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.152 2014/03/24 13:42:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.152.2.1 2014/08/10 06:56:58 tls Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -743,9 +743,10 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 */
 			mutex_enter(&ulfs_ihash_lock);
 			vp = ulfs_ihashlookup(ump->um_dev, blkp->bi_inode);
+			if (vp != NULL)
+				mutex_enter(vp->v_interlock);
 			if (vp != NULL && vdead_check(vp, VDEAD_NOWAIT) == 0) {
 				ip = VTOI(vp);
-				mutex_enter(vp->v_interlock);
 				mutex_exit(&ulfs_ihash_lock);
 				if (lfs_vref(vp)) {
 					v_daddr = LFS_UNUSED_DADDR;
@@ -753,6 +754,8 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				}
 				numrefed++;
 			} else {
+				if (vp != NULL)
+					mutex_exit(vp->v_interlock);
 				mutex_exit(&ulfs_ihash_lock);
 				/*
 				 * Don't VFS_VGET if we're being unmounted,

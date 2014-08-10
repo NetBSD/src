@@ -1,6 +1,6 @@
 /* Target description support for GDB.
 
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -1675,7 +1675,8 @@ maint_print_c_tdesc_cmd (char *args, int from_tty)
 	      printed_field_type = 1;
 	    }
 
-	  if (type->kind == TDESC_TYPE_UNION
+	  if ((type->kind == TDESC_TYPE_UNION
+	      || type->kind == TDESC_TYPE_STRUCT)
 	      && VEC_length (tdesc_type_field, type->u.u.fields) > 0)
 	    {
 	      printf_unfiltered ("  struct tdesc_type *type;\n");
@@ -1745,6 +1746,36 @@ feature = tdesc_create_feature (result, \"%s\");\n",
 	      printf_unfiltered
 		("  tdesc_create_vector (feature, \"%s\", field_type, %d);\n",
 		 type->name, type->u.v.count);
+	      break;
+	    case TDESC_TYPE_STRUCT:
+	      printf_unfiltered
+		("  type = tdesc_create_struct (feature, \"%s\");\n",
+		 type->name);
+	      if (type->u.u.size != 0)
+		printf_unfiltered
+		  ("  tdesc_set_struct_size (type, %s);\n",
+		   plongest (type->u.u.size));
+	      for (ix3 = 0;
+		   VEC_iterate (tdesc_type_field, type->u.u.fields, ix3, f);
+		   ix3++)
+		{
+		  /* Going first for implicitly sized types, else part handles
+		     bitfields.  As reported on xml-tdesc.c implicitly sized types
+		     cannot contain a bitfield.  */
+		  if (f->type != NULL)
+		    {
+		      printf_unfiltered
+			("  field_type = tdesc_named_type (feature, \"%s\");\n",
+			 f->type->name);
+		      printf_unfiltered
+			("  tdesc_add_field (type, \"%s\", field_type);\n",
+			 f->name);
+		    }
+		  else
+		    printf_unfiltered
+		      ("  tdesc_add_bitfield (type, \"%s\", %d, %d);\n",
+		       f->name, f->start, f->end);
+		}
 	      break;
 	    case TDESC_TYPE_UNION:
 	      printf_unfiltered

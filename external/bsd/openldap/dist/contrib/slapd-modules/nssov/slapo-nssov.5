@@ -1,7 +1,7 @@
 .TH SLAPO-NSSOV 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2010 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2014 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/slapo-nssov.5,v 1.4.2.5 2010/04/15 21:32:57 quanah Exp
+.\" $OpenLDAP$
 .SH NAME
 slapo-nssov \- NSS and PAM requests through a local Unix Domain socket
 .SH SYNOPSIS
@@ -12,9 +12,10 @@ The
 overlay to
 .BR slapd (8)
 services NSS and PAM requests through a local Unix Domain socket. 
-It uses the same IPC protocol as Arthur de Jong's nss-ldapd, and 
-a complete copy of the nss-ldapd source is included along with the
-nssov source code.
+It uses the same IPC protocol as Arthur de Jong's nss-pam-ldapd.
+An extract of the nss-ldapd source is included along with the
+nssov source code to allow the overlay to communicate with the
+nss-pam-ldapd client stubs.
 .LP
 Using a separate IPC protocol for NSS and PAM requests eliminates the
 libldap dependencies/clashes that the current pam_ldap/nss_ldap solutions
@@ -39,7 +40,7 @@ Another major benefit of nssov is that it allows all security policy to be
 administered centrally via LDAP, instead of having fragile rules scattered 
 across multiple flat files. As such, there is no client-side configuration at 
 all for the NSS/PAM stub libraries. (The stubs talk to the server via a Unix
-domain socket whose path is hardcoded to /var/run/nslcd/). As a side benefit,
+domain socket whose path is hardcoded to NSLCDPATH). As a side benefit,
 this can finally eliminate the perpetual confusion between OpenLDAP's
 ldap.conf file in ETCDIR/ldap.conf and the similarly named files typically
 used by pam_ldap and nss_ldap.
@@ -48,7 +49,7 @@ User authentication is performed by internal simple Binds. User authorization
 leverages the slapd ACL engine, which offers much more power and flexibility 
 than the simple group/hostname checks in the old pam_ldap code.
 .LP
-To use this code, you will need the client-side stuf library from
+To use this code, you will need the client-side stub library from
 nss-pam-ldapd.  You can get it from:
 http://arthurdejong.org/nss-pam-ldapd
 You will not need the nslcd daemon; this overlay replaces that part.
@@ -213,12 +214,12 @@ There is no default value.  This setting is only relevant if the
 .B usergroup
 option has been set.
 .TP
-.B nssov-pam-minuid <integer>
+.B nssov-pam-min-uid <integer>
 Specify a minimum uid that is allowed to login. Users with a uidNumber
 lower than this value will be denied access. The default is zero, which
 disables this setting.
 .TP
-.B nssov-pam-maxuid <integer>
+.B nssov-pam-max-uid <integer>
 Specify a maximum uid that is allowed to login. Users with a uidNumber
 higher than this value will be denied access. The default is zero, which
 disables this setting.
@@ -239,6 +240,17 @@ directive must be configured for this setting to have any effect.
 .B nssov-pam-session <service>
 Specify a PAM service name whose sessions will be recorded. For the
 configured services, logins will be recorded in the
+.TP
+.B nssov-pam-password-prohibit-message <message>
+Diable password change service and return the specified message to
+users.
+.TP
+.B nssov-pam-pwdmgr-dn <dn>
+Specify the dn of the password manager.
+.TP
+.B nssov-pam-pwdmgr-pwd <pwd>
+Specify the pwd of the password manager.
+.TP
 .B loginStatus
 operational attribute of the user's entry. The attribute's values are
 of the form
@@ -301,3 +313,4 @@ default slapd configuration file
 .BR slapd (8).
 .SH AUTHOR
 Howard Chu, inspired by nss-ldapd by Arthur de Jong and pam_ldap by Luke Howard
+Enhancements by Ted C. Cheng, Symas Corp.

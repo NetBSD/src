@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.36 2014/02/13 03:34:40 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.36.2.1 2014/08/10 07:00:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #define	NPF_DEV_PATH	"/dev/npf"
 #define	NPF_CONF_PATH	"/etc/npf.conf"
-#define	NPF_SESSDB_PATH	"/var/db/npf_sessions.db"
+#define	NPF_DB_PATH	"/var/db/npf.db"
 
 typedef struct fam_addr_mask {
 	sa_family_t	fam_family;
@@ -166,7 +166,7 @@ void		npfctl_bpf_proto(npf_bpf_t *, sa_family_t, int);
 void		npfctl_bpf_cidr(npf_bpf_t *, u_int, sa_family_t,
 		    const npf_addr_t *, const npf_netmask_t);
 void		npfctl_bpf_ports(npf_bpf_t *, u_int, in_port_t, in_port_t);
-void		npfctl_bpf_tcpfl(npf_bpf_t *, uint8_t, uint8_t);
+void		npfctl_bpf_tcpfl(npf_bpf_t *, uint8_t, uint8_t, bool);
 void		npfctl_bpf_icmp(npf_bpf_t *, int, int);
 void		npfctl_bpf_table(npf_bpf_t *, u_int, u_int);
 

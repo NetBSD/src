@@ -1,6 +1,6 @@
 /* Common code for i386 XSAVE extended state.
 
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,19 +24,32 @@
 #define I386_XSTATE_X87		(1ULL << 0)
 #define I386_XSTATE_SSE		(1ULL << 1)
 #define I386_XSTATE_AVX		(1ULL << 2)
+#define I386_XSTATE_BNDREGS	(1ULL << 3)
+#define I386_XSTATE_BNDCFG	(1ULL << 4)
+#define I386_XSTATE_MPX		(I386_XSTATE_BNDREGS | I386_XSTATE_BNDCFG)
 
 /* Supported mask and size of the extended state.  */
 #define I386_XSTATE_X87_MASK	I386_XSTATE_X87
 #define I386_XSTATE_SSE_MASK	(I386_XSTATE_X87 | I386_XSTATE_SSE)
 #define I386_XSTATE_AVX_MASK	(I386_XSTATE_SSE_MASK | I386_XSTATE_AVX)
+#define I386_XSTATE_MPX_MASK	(I386_XSTATE_AVX_MASK | I386_XSTATE_MPX)
+
+#define I386_XSTATE_ALL_MASK    I386_XSTATE_MPX_MASK
 
 #define I386_XSTATE_SSE_SIZE	576
 #define I386_XSTATE_AVX_SIZE	832
-#define I386_XSTATE_MAX_SIZE	832
+#define I386_XSTATE_BNDREGS_SIZE	1024
+#define I386_XSTATE_BNDCFG_SIZE	1088
+
+#define I386_XSTATE_MAX_SIZE	1088
+
+/* In case one of the MPX XCR0 bits is set we consider we have MPX.  */
+#define HAS_MPX(XCR0) (((XCR0) & I386_XSTATE_MPX) != 0)
+#define HAS_AVX(XCR0) (((XCR0) & I386_XSTATE_AVX) != 0)
 
 /* Get I386 XSAVE extended state size.  */
-#define I386_XSTATE_SIZE(XCR0)	\
-  (((XCR0) & I386_XSTATE_AVX) != 0 \
-   ? I386_XSTATE_AVX_SIZE : I386_XSTATE_SSE_SIZE)
+#define I386_XSTATE_SIZE(XCR0) \
+    (HAS_MPX (XCR0) ? I386_XSTATE_BNDCFG_SIZE : \
+     (HAS_AVX (XCR0) ? I386_XSTATE_AVX_SIZE : I386_XSTATE_SSE_SIZE))
 
 #endif /* I386_XSTATE_H */

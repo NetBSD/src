@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.25 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: et4000.c,v 1.25.2.1 2014/08/10 06:53:53 tls Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.25 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.25.2.1 2014/08/10 06:53:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -148,6 +148,7 @@ const struct cdevsw et4k_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = et4kmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

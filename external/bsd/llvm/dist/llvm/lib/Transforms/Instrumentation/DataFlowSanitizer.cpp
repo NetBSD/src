@@ -52,11 +52,11 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
+#include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
-#include "llvm/InstVisitor.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -190,7 +190,7 @@ class DataFlowSanitizer : public ModulePass {
   Constant *DFSanSetLabelFn;
   Constant *DFSanNonzeroLabelFn;
   MDNode *ColdCallWeights;
-  OwningPtr<SpecialCaseList> ABIList;
+  std::unique_ptr<SpecialCaseList> ABIList;
   DenseMap<Value *, Function *> UnwrappedFnMap;
   AttributeSet ReadOnlyNoneAttrs;
 
@@ -211,10 +211,11 @@ class DataFlowSanitizer : public ModulePass {
 
  public:
   DataFlowSanitizer(StringRef ABIListFile = StringRef(),
-                    void *(*getArgTLS)() = 0, void *(*getRetValTLS)() = 0);
+                    void *(*getArgTLS)() = nullptr,
+                    void *(*getRetValTLS)() = nullptr);
   static char ID;
-  bool doInitialization(Module &M);
-  bool runOnModule(Module &M);
+  bool doInitialization(Module &M) override;
+  bool runOnModule(Module &M) override;
 };
 
 struct DFSanFunction {
@@ -233,8 +234,8 @@ struct DFSanFunction {
 
   DFSanFunction(DataFlowSanitizer &DFS, Function *F, bool IsNativeABI)
       : DFS(DFS), F(F), IA(DFS.getInstrumentedABI()),
-        IsNativeABI(IsNativeABI), ArgTLSPtr(0), RetvalTLSPtr(0),
-        LabelReturnAlloca(0) {}
+        IsNativeABI(IsNativeABI), ArgTLSPtr(nullptr), RetvalTLSPtr(nullptr),
+        LabelReturnAlloca(nullptr) {}
   Value *getArgTLSPtr();
   Value *getArgTLS(unsigned Index, Instruction *Pos);
   Value *getRetvalTLS();
@@ -303,7 +304,7 @@ FunctionType *DataFlowSanitizer::getArgsFunctionType(FunctionType *T) {
     ArgTypes.push_back(ShadowPtrTy);
   Type *RetType = T->getReturnType();
   if (!RetType->isVoidTy())
-    RetType = StructType::get(RetType, ShadowTy, (Type *)0);
+    RetType = StructType::get(RetType, ShadowTy, (Type *)nullptr);
   return FunctionType::get(RetType, ArgTypes, T->isVarArg());
 }
 
@@ -345,7 +346,7 @@ FunctionType *DataFlowSanitizer::getCustomFunctionType(FunctionType *T) {
 bool DataFlowSanitizer::doInitialization(Module &M) {
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   if (!DLP)
-    return false;
+    report_fatal_error("data layout missing");
   DL = &DLP->getDataLayout();
 
   Mod = &M;
@@ -373,18 +374,20 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
 
   if (GetArgTLSPtr) {
     Type *ArgTLSTy = ArrayType::get(ShadowTy, 64);
-    ArgTLS = 0;
+    ArgTLS = nullptr;
     GetArgTLS = ConstantExpr::getIntToPtr(
         ConstantInt::get(IntptrTy, uintptr_t(GetArgTLSPtr)),
         PointerType::getUnqual(
-            FunctionType::get(PointerType::getUnqual(ArgTLSTy), (Type *)0)));
+            FunctionType::get(PointerType::getUnqual(ArgTLSTy),
+                              (Type *)nullptr)));
   }
   if (GetRetvalTLSPtr) {
-    RetvalTLS = 0;
+    RetvalTLS = nullptr;
     GetRetvalTLS = ConstantExpr::getIntToPtr(
         ConstantInt::get(IntptrTy, uintptr_t(GetRetvalTLSPtr)),
         PointerType::getUnqual(
-            FunctionType::get(PointerType::getUnqual(ShadowTy), (Type *)0)));
+            FunctionType::get(PointerType::getUnqual(ShadowTy),
+                              (Type *)nullptr)));
   }
 
   ColdCallWeights = MDBuilder(*Ctx).createBranchWeights(1, 1000);
@@ -554,8 +557,7 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
     ++i;
     // Don't stop on weak.  We assume people aren't playing games with the
     // instrumentedness of overridden weak aliases.
-    if (Function *F = dyn_cast<Function>(
-            GA->resolveAliasedGlobal(/*stopOnWeak=*/false))) {
+    if (Function *F = dyn_cast<Function>(GA->getAliasee())) {
       bool GAInst = isInstrumented(GA), FInst = isInstrumented(F);
       if (GAInst && FInst) {
         addGlobalNamePrefix(GA);
@@ -607,10 +609,10 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
         }
         NewF->getBasicBlockList().splice(NewF->begin(), F.getBasicBlockList());
 
-        for (Function::use_iterator ui = F.use_begin(), ue = F.use_end();
-             ui != ue;) {
-          BlockAddress *BA = dyn_cast<BlockAddress>(ui.getUse().getUser());
-          ++ui;
+        for (Function::user_iterator UI = F.user_begin(), UE = F.user_end();
+             UI != UE;) {
+          BlockAddress *BA = dyn_cast<BlockAddress>(*UI);
+          ++UI;
           if (BA) {
             BA->replaceAllUsesWith(
                 BlockAddress::get(NewF, BA->getBasicBlock()));
@@ -630,7 +632,7 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
                // function... yet.
     } else if (FT->isVarArg()) {
       UnwrappedFnMap[&F] = &F;
-      *i = 0;
+      *i = nullptr;
     } else if (!IsZeroArgsVoidRet || getWrapperKind(&F) == WK_Custom) {
       // Build a wrapper function for F.  The wrapper simply calls F, and is
       // added to FnsToInstrument so that any instrumentation according to its
@@ -681,9 +683,8 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
 
     // DFSanVisitor may create new basic blocks, which confuses df_iterator.
     // Build a copy of the list before iterating over it.
-    llvm::SmallVector<BasicBlock *, 4> BBList;
-    std::copy(df_begin(&(*i)->getEntryBlock()), df_end(&(*i)->getEntryBlock()),
-              std::back_inserter(BBList));
+    llvm::SmallVector<BasicBlock *, 4> BBList(
+        depth_first(&(*i)->getEntryBlock()));
 
     for (llvm::SmallVector<BasicBlock *, 4>::iterator i = BBList.begin(),
                                                       e = BBList.end();
@@ -850,7 +851,6 @@ Value *DataFlowSanitizer::combineShadows(Value *V1, Value *V2,
   PHINode *Phi = PHINode::Create(ShadowTy, 2, "", Tail->begin());
   Phi->addIncoming(Call, Call->getParent());
   Phi->addIncoming(V1, Head);
-  Pos = Phi;
   return Phi;
 }
 
@@ -1105,12 +1105,11 @@ void DFSanVisitor::visitInsertValueInst(InsertValueInst &I) {
 
 void DFSanVisitor::visitAllocaInst(AllocaInst &I) {
   bool AllLoadsStores = true;
-  for (Instruction::use_iterator i = I.use_begin(), e = I.use_end(); i != e;
-       ++i) {
-    if (isa<LoadInst>(*i))
+  for (User *U : I.users()) {
+    if (isa<LoadInst>(U))
       continue;
 
-    if (StoreInst *SI = dyn_cast<StoreInst>(*i)) {
+    if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       if (SI->getPointerOperand() == &I)
         continue;
     }
@@ -1316,7 +1315,7 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
     }
   }
 
-  Instruction *Next = 0;
+  Instruction *Next = nullptr;
   if (!CS.getType()->isVoidTy()) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
       if (II->getNormalDest()->getSinglePredecessor()) {

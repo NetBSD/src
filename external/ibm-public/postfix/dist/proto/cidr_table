@@ -6,7 +6,7 @@
 # SYNOPSIS
 #	\fBpostmap -q "\fIstring\fB" cidr:/etc/postfix/\fIfilename\fR
 #
-#	\fBpostmap -q - cidr:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+#	\fBpostmap -q - cidr:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional lookup tables.
 #	These tables are usually in \fBdbm\fR or \fBdb\fR format.
@@ -34,6 +34,9 @@
 #	An IPv4 network address is a sequence of four decimal octets
 #	separated by ".", and an IPv6 network address is a sequence
 #	of three to eight hexadecimal octet pairs separated by ":".
+#
+#	The \fInetwork_mask\fR is the number of high-order bits in
+#	the \fInetwork_address\fR that the search string must match.
 #
 #	Before comparisons are made, lookup keys and table entries
 #	are converted from string to binary. Therefore table entries

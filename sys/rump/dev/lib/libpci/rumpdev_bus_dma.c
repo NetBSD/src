@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_dma.c,v 1.1 2014/04/04 12:53:59 pooka Exp $	*/
+/*	$NetBSD: rumpdev_bus_dma.c,v 1.1.2.1 2014/08/10 06:56:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee
@@ -85,11 +85,6 @@
 
 int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct vmspace *, int, paddr_t *, int *, int);
-
-#undef PHYS_TO_BUS_MEM
-#define PHYS_TO_BUS_MEM(_t_, _a_) rumpcomp_pci_virt_to_mach((void *)_a_)
-#undef BUS_MEM_TO_PHYS
-#define BUS_MEM_TO_PHYS(_t_, _a_) rumpcomp_pci_mach_to_virt(_a_)
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -212,7 +207,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		 * the previous segment if possible.
 		 */
 		if (first) {
-			map->dm_segs[seg].ds_addr = PHYS_TO_BUS_MEM(t, curaddr);
+			map->dm_segs[seg].ds_addr
+			    = rumpcomp_pci_virt_to_mach((void *)curaddr);
 			map->dm_segs[seg].ds_len = sgsize;
 			first = 0;
 		} else {
@@ -221,13 +217,13 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 			     map->dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     (PHYS_TO_BUS_MEM(t, curaddr) & bmask)))
+			     (rumpcomp_pci_virt_to_mach((void*)curaddr)&bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
 				if (++seg >= map->_dm_segcnt)
 					break;
 				map->dm_segs[seg].ds_addr =
-					PHYS_TO_BUS_MEM(t, curaddr);
+				    rumpcomp_pci_virt_to_mach((void *)curaddr);
 				map->dm_segs[seg].ds_len = sgsize;
 			}
 		}
@@ -334,7 +330,7 @@ bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 				continue;
 			}
 			map->dm_segs[seg].ds_addr =
-			    PHYS_TO_BUS_MEM(t, lastaddr);
+			    rumpcomp_pci_virt_to_mach((void *)lastaddr);
 			map->dm_segs[seg].ds_len = m->m_len;
 			lastaddr += m->m_len;
 			continue;
@@ -462,12 +458,25 @@ int
 bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	size_t size, void **kvap, int flags)
 {
+	struct rumpcomp_pci_dmaseg *dss;
+	size_t allocsize = nsegs * sizeof(*dss);
+	int rv, i;
 
-	if (nsegs != 1)
-		panic("bus_dmamem_map: only nsegs == 1 supported");
-	*kvap = rumpcomp_pci_mach_to_virt(segs[0].ds_addr);
+	/*
+	 * Though rumpcomp_pci_dmaseg "accidentally" matches the
+	 * bus_dma segment descriptor (at least for now), act
+	 * proper and actually translate it.
+	 */
+	dss = kmem_alloc(allocsize, KM_SLEEP);
+	for (i = 0; i < nsegs; i++) {
+		dss[i].ds_pa = segs[i].ds_addr;
+		dss[i].ds_len = segs[i].ds_len;
+		dss[i].ds_vacookie = segs[i]._ds_vacookie;
+	}
+	rv = rumpcomp_pci_dmamem_map(dss, nsegs, size, kvap);
+	kmem_free(dss, allocsize);
 
-	return 0;
+	return rv;
 }
 
 /*
@@ -499,6 +508,7 @@ bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	int flags)
 {
 	paddr_t curaddr, lastaddr, pa;
+	vaddr_t vacookie;
 	int curseg, error;
 
 	/* Always round the size. */
@@ -513,7 +523,7 @@ bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 #else
 	/* XXX: ignores boundary, nsegs, etc. */
 	//printf("dma allocation %lx %lx %d\n", alignment, boundary, nsegs);
-	error = rumpcomp_pci_dmalloc(size, alignment, &pa);
+	error = rumpcomp_pci_dmalloc(size, alignment, &pa, &vacookie);
 #endif
 	if (error)
 		return (error);
@@ -525,10 +535,13 @@ bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	curseg = 0;
 	lastaddr = segs[curseg].ds_addr = pa;
 	segs[curseg].ds_len = PAGE_SIZE;
+	segs[curseg]._ds_vacookie = vacookie;
 	size -= PAGE_SIZE;
 	pa += PAGE_SIZE;
+	vacookie += PAGE_SIZE;
 
-	for (; size; pa += PAGE_SIZE, size -= PAGE_SIZE) {
+	for (; size;
+	    pa += PAGE_SIZE, vacookie += PAGE_SIZE, size -= PAGE_SIZE) {
 		curaddr = pa;
 		if (curaddr == (lastaddr + PAGE_SIZE) &&
 		    (lastaddr & boundary) == (curaddr & boundary)) {
@@ -539,6 +552,7 @@ bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 				return EFBIG;
 			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
+			segs[curseg]._ds_vacookie = vacookie;
 		}
 		lastaddr = curaddr;
 	}

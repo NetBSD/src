@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.175 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.175.6.1 2014/08/10 06:56:25 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.175 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.175.6.1 2014/08/10 06:56:25 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -351,7 +351,8 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 #ifdef INET
 	if (inp) {
 #if defined(IPSEC)
-		if (! IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND))
+		if (ipsec_used &&
+		    !IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
 		optlen += ip_optlen(inp);
@@ -361,7 +362,8 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 #ifdef INET
 	if (in6p && tp->t_family == AF_INET) {
 #if defined(IPSEC)
-		if (! IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
+		if (ipsec_used &&
+		    !IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
 		/* XXX size -= ip_optlen(in6p); */
@@ -369,7 +371,8 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 #endif
 	if (in6p && tp->t_family == AF_INET6) {
 #if defined(IPSEC)
-		if (! IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
+		if (ipsec_used &&
+		    !IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec6_hdrsiz_tcp(tp);
 #endif
 		optlen += ip6_optlen(in6p);
@@ -627,20 +630,20 @@ tcp_output(struct tcpcb *tp)
 #if defined(INET)
 	has_tso4 = tp->t_inpcb != NULL &&
 #if defined(IPSEC)
-		  IPSEC_PCB_SKIP_IPSEC(tp->t_inpcb->inp_sp,
-		  		       IPSEC_DIR_OUTBOUND) &&
+	    ipsec_used && IPSEC_PCB_SKIP_IPSEC(tp->t_inpcb->inp_sp,
+	    IPSEC_DIR_OUTBOUND) &&
 #endif
-		  (rt = rtcache_validate(&tp->t_inpcb->inp_route)) != NULL &&
-		  (rt->rt_ifp->if_capenable & IFCAP_TSOv4) != 0;
+	    (rt = rtcache_validate(&tp->t_inpcb->inp_route)) != NULL &&
+	    (rt->rt_ifp->if_capenable & IFCAP_TSOv4) != 0;
 #endif /* defined(INET) */
 #if defined(INET6)
 	has_tso6 = tp->t_in6pcb != NULL &&
 #if defined(IPSEC)
-		  IPSEC_PCB_SKIP_IPSEC(tp->t_in6pcb->in6p_sp,
-		  		       IPSEC_DIR_OUTBOUND) &&
+	    ipsec_used && IPSEC_PCB_SKIP_IPSEC(tp->t_in6pcb->in6p_sp,
+	    IPSEC_DIR_OUTBOUND) &&
 #endif
-		  (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL &&
-		  (rt->rt_ifp->if_capenable & IFCAP_TSOv6) != 0;
+	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL &&
+	    (rt->rt_ifp->if_capenable & IFCAP_TSOv6) != 0;
 #endif /* defined(INET6) */
 	has_tso = (has_tso4 || has_tso6) && !alwaysfrag;
 

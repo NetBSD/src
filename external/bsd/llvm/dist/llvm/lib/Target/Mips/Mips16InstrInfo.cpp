@@ -29,6 +29,7 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "mips16-instrinfo"
 
 Mips16InstrInfo::Mips16InstrInfo(MipsTargetMachine &tm)
   : MipsInstrInfo(tm, Mips::Bimm16),
@@ -411,7 +412,7 @@ Mips16InstrInfo::loadImmediate(unsigned FrameReg,
     BuildMI(MBB, II, DL, get(Mips::  AdduRxRyRz16), Reg).addReg(FrameReg)
       .addReg(Reg, RegState::Kill);
   if (FirstRegSaved || SecondRegSaved) {
-    II = llvm::next(II);
+    II = std::next(II);
     if (FirstRegSaved)
       copyPhysReg(MBB, II, DL, FirstRegSaved, FirstRegSavedTo, true);
     if (SecondRegSaved)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #include <sys/endian.h>
 #include <sys/time.h>
 
+#include <linux/time.h>
+
 union ktime {
 	int64_t kt_nsec;
 	struct {
@@ -50,6 +52,12 @@ union ktime {
 };
 
 typedef union ktime ktime_t;
+
+static inline ktime_t
+ktime_add_ns(ktime_t kt, int64_t nsec)
+{
+	return (ktime_t) { .kt_nsec = (kt.kt_nsec + nsec) };
+}
 
 static inline int64_t
 ktime_to_ns(ktime_t kt)
@@ -77,41 +85,6 @@ static inline ktime_t
 ktime_sub_ns(ktime_t a, int64_t nsec)
 {
 	return ns_to_ktime(ktime_to_ns(a) - nsec);
-}
-
-static inline int64_t
-timespec_to_ns(struct timespec *t)
-{
-	return (t->tv_sec * 1000000000ul) + t->tv_nsec;
-}
-
-static inline int64_t
-timeval_to_ns(struct timeval *tv)
-{
-	return (tv->tv_sec * 1000000000ul) + (tv->tv_usec * 1000ul);
-}
-
-static inline struct timespec
-ns_to_timespec(int64_t nsec)
-{
-	struct timespec t;
-
-	t.tv_sec = (nsec / 1000000000ul);
-	t.tv_nsec = (nsec % 1000000000ul);
-
-	return t;
-}
-
-static inline struct timeval
-ns_to_timeval(int64_t nsec)
-{
-	struct timespec ts;
-	struct timeval tv;
-
-	ts = ns_to_timespec(nsec);
-	TIMESPEC_TO_TIMEVAL(&tv, &ts);
-
-	return tv;
 }
 
 static inline struct timespec
@@ -146,6 +119,12 @@ static inline ktime_t
 ktime_get_monotonic_offset(void)
 {
 	return ns_to_ktime(0);	/* XXX Obviously wrong!  Revisit.  */
+}
+
+static inline bool
+time_in_range(unsigned long x, unsigned long a, unsigned long b)
+{
+	return ((a <= x) && (x <= b));
 }
 
 #endif  /* _LINUX_KTIME_H_ */

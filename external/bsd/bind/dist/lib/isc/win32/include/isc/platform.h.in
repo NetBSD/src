@@ -80,6 +80,11 @@
 @ISC_PLATFORM_OPENSSLHASH@
 
 /*
+ * Define if AES support is wanted
+ */
+@ISC_PLATFORM_WANTAES@
+
+/*
  * If the "xadd" operation is available on this architecture,
  * ISC_PLATFORM_HAVEXADD will be defined.
  */
@@ -110,9 +115,9 @@
 @ISC_PLATFORM_NEEDSTRCASESTR@
 
 /*
- * Define to enable Source Identity Token support.
+ * Defined if we are enabling SIT (Source Identity Token).
  */
-#define ISC_PLATFORM_USESIT 1
+@ISC_PLATFORM_USESIT@
 
 /*
  * Set up a macro for importing and exporting from the DLL

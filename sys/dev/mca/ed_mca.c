@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.55.2.1 2014/04/07 03:37:33 tls Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.55.2.2 2014/08/10 06:54:52 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.55.2.1 2014/04/07 03:37:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.55.2.2 2014/08/10 06:54:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ const struct bdevsw ed_bdevsw = {
 	.d_ioctl = edmcaioctl,
 	.d_dump = edmcadump,
 	.d_psize = edmcasize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -116,6 +117,7 @@ const struct cdevsw ed_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

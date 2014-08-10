@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.5 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.5.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -455,7 +455,8 @@ getaddrinfo(const char *hostname, const char *servname,
 					SIN6(ai->ai_addr)->sin6_scope_id =
 						scopeid;
 #endif
-				if (getnameinfo(ai->ai_addr, ai->ai_addrlen,
+				if (getnameinfo(ai->ai_addr,
+						(socklen_t)ai->ai_addrlen,
 						nbuf, sizeof(nbuf), NULL, 0,
 						NI_NUMERICHOST) == 0) {
 					ai->ai_canonname = strdup(nbuf);
@@ -543,7 +544,7 @@ make_resstate(isc_mem_t *mctx, gai_statehead_t *head, const char *hostname,
 	gai_resstate_t *state;
 	dns_fixedname_t fixeddomain;
 	dns_name_t *qdomain;
-	size_t namelen;
+	unsigned int namelen;
 	isc_buffer_t b;
 	isc_boolean_t need_v4 = ISC_FALSE;
 	isc_boolean_t need_v6 = ISC_FALSE;

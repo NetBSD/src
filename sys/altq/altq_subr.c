@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.28 2009/01/04 18:41:36 pooka Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.28.38.1 2014/08/10 06:53:38 tls Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.28 2009/01/04 18:41:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.28.38.1 2014/08/10 06:53:38 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -356,7 +356,7 @@ tbr_timeout(void *arg)
 
 	active = 0;
 	s = splnet();
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list)) {
+	IFNET_FOREACH(ifp) {
 		if (!TBR_IS_ENABLED(&ifp->if_snd))
 			continue;
 		active++;

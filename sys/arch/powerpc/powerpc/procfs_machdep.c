@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_machdep.c,v 1.8 2014/04/05 18:44:32 christos Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.8.2.1 2014/08/10 06:54:05 tls Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.8 2014/04/05 18:44:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.8.2.1 2014/08/10 06:54:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -22,7 +22,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.8 2014/04/05 18:44:32 christos 
 int
 procfs_getcpuinfstr(char *buf, size_t *len)
 {
-	*size_t = 0;
+	*len = 0;
 
 	return 0;
 }

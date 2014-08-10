@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb_hdr.h,v 1.10 2013/11/23 22:23:26 christos Exp $	*/
+/*	$NetBSD: in_pcb_hdr.h,v 1.10.2.1 2014/08/10 06:56:25 tls Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -80,9 +80,7 @@ struct inpcb_hdr {
 	int       inph_portalgo;
 	struct	  socket *inph_socket;	/* back pointer to socket */
 	struct	  inpcbtable *inph_table;
-#if 1 /* IPSEC */
 	struct	  inpcbpolicy *inph_sp;	/* security policy */
-#endif
 };
 
 #define	sotoinpcb_hdr(so)	((struct inpcb_hdr *)(so)->so_pcb)

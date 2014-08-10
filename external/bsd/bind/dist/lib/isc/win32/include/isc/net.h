@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.7 2014/03/01 03:24:40 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.7.2.1 2014/08/10 07:06:44 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -167,7 +167,7 @@ typedef isc_uint16_t in_port_t;
 	    break; \
 	} \
     } \
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #undef FD_SET
 #define FD_SET(fd, set) do { \
@@ -183,7 +183,7 @@ typedef isc_uint16_t in_port_t;
 	    ((fd_set FAR *)(set))->fd_count++; \
 	} \
     } \
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * Windows Sockets errors redefined as regular Berkeley error constants.

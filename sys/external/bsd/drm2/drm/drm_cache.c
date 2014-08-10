@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/xcall.h>
@@ -47,6 +47,18 @@ static bool		drm_md_clflush_finegrained_p(void);
 static void		drm_md_clflush_all(void);
 static void		drm_md_clflush_page(struct page *);
 static void		drm_md_clflush_virt_range(const void *, size_t);
+
+void
+drm_clflush_pages(struct page **pages, unsigned long npages)
+{
+
+	if (drm_md_clflush_finegrained_p()) {
+		while (npages--)
+			drm_md_clflush_page(pages[npages]);
+	} else {
+		drm_md_clflush_all();
+	}
+}
 
 void
 drm_clflush_pglist(struct pglist *list)

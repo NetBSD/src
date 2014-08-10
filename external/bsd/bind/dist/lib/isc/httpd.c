@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.c,v 1.5 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: httpd.c,v 1.5.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2006-2008, 2010-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -52,9 +52,9 @@
 #define EXIT(x) do { fprintf(stderr, "EXIT %s\n", (x)); } while (/*CONSTCOND*/0)
 #define NOTICE(x) do { fprintf(stderr, "NOTICE %s\n", (x)); } while (/*CONSTCOND*/0)
 #else
-#define ENTER(x) do { } while(0)
-#define EXIT(x) do { } while(0)
-#define NOTICE(x) do { } while(0)
+#define ENTER(x) do { } while(/*CONSTCOND*/0)
+#define EXIT(x) do { } while(/*CONSTCOND*/0)
+#define NOTICE(x) do { } while(/*CONSTCOND*/0)
 #endif
 
 #define HTTP_RECVLEN			1024

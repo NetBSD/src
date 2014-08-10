@@ -27,6 +27,8 @@
 #include <algorithm>
 using namespace llvm;
 
+#define DEBUG_TYPE "lower-switch"
+
 namespace {
   /// LowerSwitch Pass - Replace all SwitchInst instructions with chained branch
   /// instructions.
@@ -37,9 +39,9 @@ namespace {
       initializeLowerSwitchPass(*PassRegistry::getPassRegistry());
     } 
 
-    virtual bool runOnFunction(Function &F);
-    
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    bool runOnFunction(Function &F) override;
+
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       // This is a cluster of orthogonal Transforms
       AU.addPreserved<UnifyFunctionExitNodes>();
       AU.addPreserved("mem2reg");
@@ -51,7 +53,8 @@ namespace {
       Constant* High;
       BasicBlock* BB;
 
-      CaseRange(Constant *low = 0, Constant *high = 0, BasicBlock *bb = 0) :
+      CaseRange(Constant *low = nullptr, Constant *high = nullptr,
+                BasicBlock *bb = nullptr) :
         Low(low), High(high), BB(bb) { }
     };
 
@@ -182,7 +185,7 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
   F->getBasicBlockList().insert(++FI, NewLeaf);
 
   // Emit comparison
-  ICmpInst* Comp = NULL;
+  ICmpInst* Comp = nullptr;
   if (Leaf.Low == Leaf.High) {
     // Make the seteq instruction...
     Comp = new ICmpInst(*NewLeaf, ICmpInst::ICMP_EQ, Val,
@@ -245,7 +248,8 @@ unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
 
   // Merge case into clusters
   if (Cases.size()>=2)
-    for (CaseItr I=Cases.begin(), J=llvm::next(Cases.begin()); J!=Cases.end(); ) {
+    for (CaseItr I = Cases.begin(), J = std::next(Cases.begin());
+         J != Cases.end();) {
       int64_t nextValue = cast<ConstantInt>(J->Low)->getSExtValue();
       int64_t currentValue = cast<ConstantInt>(I->High)->getSExtValue();
       BasicBlock* nextBB = J->BB;

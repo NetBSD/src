@@ -1,4 +1,4 @@
-#   Copyright 1997-2013 Free Software Foundation, Inc.
+#   Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,14 +24,11 @@ if {![istarget "hppa*-hp-hpux*"] && ![istarget "*-linux*"]} then {
     continue
 }
 
-global srcfile
-set testfile "foll-fork"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     untested foll-fork.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
+    untested $testfile.exp
+    return -1
 }
 
 proc check_fork_catchpoints {} {
@@ -330,13 +327,6 @@ By default, the debugger will follow the parent process..*" \
     #
     if [runto_main] then { tcatch_fork_parent_follow }
 }
-
-# Start with a fresh gdb
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 # The "Detaching..." and "Attaching..." messages may be hidden by
 # default.

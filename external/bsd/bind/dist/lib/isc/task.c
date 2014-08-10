@@ -1,7 +1,7 @@
-/*	$NetBSD: task.c,v 1.9 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: task.c,v 1.9.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1759,7 +1759,7 @@ isc__task_privilege(isc_task_t *task0) {
 }
 
 isc_result_t
-isc__task_register() {
+isc__task_register(void) {
 	return (isc_task_register(isc__taskmgr_create));
 }
 
@@ -1773,7 +1773,7 @@ isc_task_exiting(isc_task_t *t) {
 
 
 #ifdef HAVE_LIBXML2
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
 int
 isc_taskmgr_renderxml(isc_taskmgr_t *mgr0, xmlTextWriterPtr writer) {
 	isc__taskmgr_t *mgr = (isc__taskmgr_t *)mgr0;
@@ -1881,7 +1881,7 @@ isc_taskmgr_renderxml(isc_taskmgr_t *mgr0, xmlTextWriterPtr writer) {
 		result = ISC_R_NOMEMORY;\
 		goto error;\
 	} \
-} while(0)
+} while(/*CONSTCOND*/0)
 
 isc_result_t
 isc_taskmgr_renderjson(isc_taskmgr_t *mgr0, json_object *tasks) {

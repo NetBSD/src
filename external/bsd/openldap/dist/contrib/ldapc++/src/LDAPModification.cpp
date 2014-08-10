@@ -1,6 +1,6 @@
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPModification.cpp,v 1.4.10.1 2008/04/14 23:09:26 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -37,4 +37,12 @@ LDAPMod* LDAPModification::toLDAPMod() const  {
 	break;
     }
     return ret;
+}
+
+const LDAPAttribute* LDAPModification::getAttribute() const {
+	return &m_attr;
+}
+
+LDAPModification::mod_op LDAPModification::getOperation() const {
+	return m_mod_op;
 }

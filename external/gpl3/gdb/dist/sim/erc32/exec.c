@@ -220,14 +220,14 @@ int ext_irl = 0;
 
 /* Forward declarations */
 
-static uint32	sub_cc PARAMS ((uint32 psr, int32 operand1, int32 operand2,
-				int32 result));
-static uint32	add_cc PARAMS ((uint32 psr, int32 operand1, int32 operand2,
-				int32 result));
-static void	log_cc PARAMS ((int32 result, struct pstate *sregs));
-static int	fpexec PARAMS ((uint32 op3, uint32 rd, uint32 rs1, uint32 rs2,
-				struct pstate *sregs));
-static int	chk_asi PARAMS ((struct pstate *sregs, uint32 *asi, uint32 op3));
+static uint32	sub_cc (uint32 psr, int32 operand1, int32 operand2,
+			int32 result);
+static uint32	add_cc (uint32 psr, int32 operand1, int32 operand2,
+			int32 result);
+static void	log_cc (int32 result, struct pstate *sregs);
+static int	fpexec (uint32 op3, uint32 rd, uint32 rs1, uint32 rs2,
+			struct pstate *sregs);
+static int	chk_asi (struct pstate *sregs, uint32 *asi, uint32 op3);
 
 
 extern struct estate ebase;

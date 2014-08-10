@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.262 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: audio.c,v 1.262.2.1 2014/08/10 06:54:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.262 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.262.2.1 2014/08/10 06:54:50 tls Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -359,6 +359,7 @@ const struct cdevsw audio_cdevsw = {
 	.d_poll = audiopoll,
 	.d_mmap = audiommap,
 	.d_kqfilter = audiokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

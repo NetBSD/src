@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 2013/02/09 03:35:33 rmind Exp $
+$NetBSD: README,v 1.4.6.1 2014/08/10 07:00:01 tls Exp $
 
 npftest - a tool for regression testing and debugging NPF.
 It uses RUMP framework to run NPF kernel module in the userspace.
@@ -12,11 +12,15 @@ npftest -c /tmp/npf.plist -t
 
 Stream:
 
-tcpdump -w stream.pcap -i $INTERFACE "host $HOST and tcp"
-npfctl debug
-npftest -c /tmp/npf.plist -s stream.pcap -o stream_npf_data.txt
+tcpdump -w stream.pcap -i $interface "host $host and tcp"
+npfctl debug npftest.conf /tmp/npf.plist
+npftest -c /tmp/npf.plist -s stream.pcap > stream_npf_data.txt
 
 Preferably, use MALLOC_OPTIONS="AJ" and/or other facilities.
+
+Benchmark:
+
+npftest -b rule -c /tmp/npf.plist -p $ncpu
 
 ---
 

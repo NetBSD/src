@@ -1,4 +1,4 @@
-# Copyright 1998-2013 Free Software Foundation, Inc.
+# Copyright 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ set prototypes 1
 set testfile1 "reread1"
 set srcfile1 ${testfile1}.c
 # Cygwin needs $EXEEXT.
-set binfile1 ${objdir}/${subdir}/${testfile1}$EXEEXT
+set binfile1 [standard_output_file ${testfile1}$EXEEXT]
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile1}" executable {debug nowarnings}] != "" } {
     untested reread.exp
@@ -31,7 +31,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile1}" executable {d
 
 set testfile2 "reread2"
 set srcfile2 ${testfile2}.c
-set binfile2 ${objdir}/${subdir}/${testfile2}$EXEEXT
+set binfile2 [standard_output_file ${testfile2}$EXEEXT]
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {debug nowarnings}] != ""
       && [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {debug nowarnings additional_flags=-DNO_SECTIONS}] != ""} {
@@ -42,7 +42,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {d
 # Start with a fresh gdb.
 
 set testfile "reread"
-set binfile ${objdir}/${subdir}/${testfile}$EXEEXT
+set binfile [standard_output_file ${testfile}$EXEEXT]
 
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
@@ -65,11 +65,11 @@ gdb_run_cmd
 
 gdb_expect {
     -re ".*Breakpoint.* foo .* at .*$srcfile1:14.*$gdb_prompt $"  {
-	pass "run to foo()";
+	pass "run to foo()"
     }
     -re ".*$gdb_prompt $" {
-	fail "run to foo()";
-	gdb_suppress_tests;
+	fail "run to foo()"
+	gdb_suppress_tests
     }
     timeout { fail "run to foo() (timeout)" ; gdb_suppress_tests }
 }
@@ -88,20 +88,20 @@ gdb_touch_execfile ${binfile}
 # Should see "Breakpoint 1, foo () at reread2.c:9"
 
 if [is_remote target] {
-    unsupported "run to foo() second time ";
+    unsupported "run to foo() second time "
 } else {
     gdb_run_cmd
     gdb_expect {
 	#    -re ".*re-reading symbols.*Breakpoint.* foo .* at .*$srcfile2:9.*$gdb_prompt $" {}
 	-re ".*Breakpoint.* foo .* at .*:9.*$gdb_prompt $" {
-	    pass "run to foo() second time ";
+	    pass "run to foo() second time "
 	}
 	-re ".*$gdb_prompt $" {
-	    fail "run to foo() second time";
-	    gdb_suppress_tests;
+	    fail "run to foo() second time"
+	    gdb_suppress_tests
 	}
 	timeout { 
-	    fail "run to foo() second time (timeout)" ; 
+	    fail "run to foo() second time (timeout)"
 	    gdb_suppress_tests 
 	}
     }
@@ -131,11 +131,11 @@ if [is_remote target] {
     gdb_run_cmd
     gdb_expect {
         -re ".*Breakpoint.* foo .* at .*$srcfile1:14.*$gdb_prompt $"  {
-            pass "second pass: run to foo()";
+            pass "second pass: run to foo()"
         }
         -re ".*$gdb_prompt $" {
-            fail "second pass: run to foo()";
-            gdb_suppress_tests;
+            fail "second pass: run to foo()"
+            gdb_suppress_tests
         }
         timeout {
             fail "second pass: run to foo() (timeout)"
@@ -155,14 +155,14 @@ if [is_remote target] {
     gdb_run_cmd
     gdb_expect {
 	-re ".*Breakpoint.* foo .* at .*:9.*$gdb_prompt $" {
-	    pass "second pass: run to foo() second time ";
+	    pass "second pass: run to foo() second time "
 	}
 	-re ".*$gdb_prompt $" {
-	    fail "second pass: run to foo() second time";
-	    gdb_suppress_tests;
+	    fail "second pass: run to foo() second time"
+	    gdb_suppress_tests
 	}
 	timeout { 
-	    fail "second pass: run to foo() second time (timeout)" ; 
+	    fail "second pass: run to foo() second time (timeout)"
 	    gdb_suppress_tests 
 	}
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: concatenate.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: concatenate.c,v 1.1.1.1.26.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -37,6 +37,7 @@
 
 #include "mymalloc.h"
 #include "stringops.h"
+#include "compat_va_copy.h"
 
 /* concatenate - concatenate null-terminated list of strings */
 
@@ -44,13 +45,19 @@ char   *concatenate(const char *arg0,...)
 {
     char   *result;
     va_list ap;
+    va_list ap2;
     ssize_t len;
     char   *arg;
 
     /*
-     * Compute the length of the resulting string.
+     * Initialize argument lists.
      */
     va_start(ap, arg0);
+    VA_COPY(ap2, ap);
+
+    /*
+     * Compute the length of the resulting string.
+     */
     len = strlen(arg0);
     while ((arg = va_arg(ap, char *)) != 0)
 	len += strlen(arg);
@@ -60,10 +67,9 @@ char   *concatenate(const char *arg0,...)
      * Build the resulting string. Don't care about wasting a CPU cycle.
      */
     result = mymalloc(len + 1);
-    va_start(ap, arg0);
     strcpy(result, arg0);
-    while ((arg = va_arg(ap, char *)) != 0)
+    while ((arg = va_arg(ap2, char *)) != 0)
 	strcat(result, arg);
-    va_end(ap);
+    va_end(ap2);
     return (result);
 }

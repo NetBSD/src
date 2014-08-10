@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.34 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: putter.c,v 1.34.2.1 2014/08/10 06:54:57 tls Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.34 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.34.2.1 2014/08/10 06:54:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ const struct cdevsw putter_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

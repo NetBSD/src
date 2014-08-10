@@ -808,7 +808,8 @@ _bfd_stringtab_free (struct bfd_strtab_hash *table)
 
 /* Get the index of a string in a strtab, adding it if it is not
    already present.  If HASH is FALSE, we don't really use the hash
-   table, and we don't eliminate duplicate strings.  */
+   table, and we don't eliminate duplicate strings.  If COPY is true
+   then store a copy of STR if creating a new entry.  */
 
 bfd_size_type
 _bfd_stringtab_add (struct bfd_strtab_hash *tab,
@@ -834,11 +835,13 @@ _bfd_stringtab_add (struct bfd_strtab_hash *tab,
 	entry->root.string = str;
       else
 	{
+	  size_t len = strlen (str) + 1;
 	  char *n;
 
-	  n = (char *) bfd_hash_allocate (&tab->table, strlen (str) + 1);
+	  n = (char *) bfd_hash_allocate (&tab->table, len);
 	  if (n == NULL)
 	    return (bfd_size_type) -1;
+          memcpy (n, str, len);
 	  entry->root.string = n;
 	}
       entry->index = (bfd_size_type) -1;

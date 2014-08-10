@@ -1,4 +1,4 @@
-/*	$NetBSD: intel-gtt.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: intel-gtt.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,40 +32,30 @@
 #ifndef _DRM_INTEL_GTT_H_
 #define _DRM_INTEL_GTT_H_
 
+#include <sys/types.h>
 #include <sys/bus.h>
 
-#include "drm/bus_dma_hacks.h"
+struct pci_dev;
+struct agp_bridge_data;
 
-#include <linux/pci.h>
-
-#include <drm/drm_agp_netbsd.h>
-
-struct intel_gtt {
-	paddr_t			gma_bus_addr;
-	unsigned int		stolen_size;
-	unsigned int		gtt_total_entries;
-	unsigned int		gtt_mappable_entries;
-	bus_dma_segment_t	gtt_scratch_seg;
-	bus_dmamap_t		gtt_scratch_map;
-	bus_space_handle_t	gtt_bsh;
-	bool			do_idle_maps;
-};
-
-struct intel_gtt *
-	intel_gtt_get(void);
+void	intel_gtt_get(size_t * /* GPU VA size in bytes */,
+	    size_t * /* graphics stolen memory in bytes */,
+	    bus_addr_t * /* aperture base */,
+	    unsigned long * /* aperture size in bytes */);
 int	intel_gmch_probe(struct pci_dev *, struct pci_dev *,
 	    struct agp_bridge_data *);
 void	intel_gmch_remove(void);
 bool	intel_enable_gtt(void);
 void	intel_gtt_chipset_flush(void);
-#ifndef __NetBSD__
-void	intel_gtt_insert_sg_entries(struct sg_table *, unsigned int,
-	    unsigned int);
-#endif
-void	intel_gtt_clear_range(unsigned int, unsigned int);
+void	intel_gtt_insert_entries(bus_dmamap_t, unsigned, unsigned);
+void	intel_gtt_clear_range(unsigned, unsigned);
 
 #define	AGP_DCACHE_MEMORY	1
 #define	AGP_PHYS_MEMORY		2
+
+/* XXX Dummy stubs -- should make these mean something and respect them.   */
+#define	AGP_USER_MEMORY		0
+#define	AGP_USER_CACHED_MEMORY	0
 
 #define	AGP_USER_CACHED_MEMORY_GFDT	__BIT(3)
 

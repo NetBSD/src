@@ -1,4 +1,4 @@
-/* $NetBSD: ttyflags.c,v 1.18 2011/08/27 18:58:51 joerg Exp $ */
+/* $NetBSD: ttyflags.c,v 1.18.18.1 2014/08/10 06:53:07 tls Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ttyflags.c,v 1.18 2011/08/27 18:58:51 joerg Exp $");
+__RCSID("$NetBSD: ttyflags.c,v 1.18.18.1 2014/08/10 06:53:07 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -214,7 +214,7 @@ change_ttyflags(struct ttyent *tep)
 		return (0);
 
 	/* Open the device NON-BLOCKING, set the flags, and close it. */
-	if ((fd = open(path, O_RDONLY | O_NONBLOCK, 0)) == -1) {
+	if ((fd = open(path, O_RDWR | O_NONBLOCK, 0)) == -1) {
 		if (!(errno == ENXIO ||
 		      (errno == ENOENT && (st & TTY_ON) == 0)))
 			rval = 1;

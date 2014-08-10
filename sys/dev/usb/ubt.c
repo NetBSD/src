@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.50 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: ubt.c,v 1.50.2.1 2014/08/10 06:54:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.50 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.50.2.1 2014/08/10 06:54:59 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -471,7 +471,7 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach HCI */
-	sc->sc_unit = hci_attach(&ubt_hci, sc->sc_dev, 0);
+	sc->sc_unit = hci_attach_pcb(&ubt_hci, sc->sc_dev, 0);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   sc->sc_dev);
@@ -552,16 +552,16 @@ ubt_detach(device_t self, int flags)
 
 	/* Detach HCI interface */
 	if (sc->sc_unit) {
-		hci_detach(sc->sc_unit);
+		hci_detach_pcb(sc->sc_unit);
 		sc->sc_unit = NULL;
 	}
 
 	/*
 	 * Abort all pipes. Causes processes waiting for transfer to wake.
 	 *
-	 * Actually, hci_detach() above will call ubt_disable() which may
-	 * call ubt_abortdealloc(), but lets be sure since doing it twice
-	 * wont cause an error.
+	 * Actually, hci_detach_pcb() above will call ubt_disable() which
+	 * may call ubt_abortdealloc(), but lets be sure since doing it
+	 * twice wont cause an error.
 	 */
 	ubt_abortdealloc(sc);
 

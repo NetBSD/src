@@ -1,5 +1,5 @@
 /* Helper routines for C++ support in GDB.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
    Namespace support contributed by David Carlton.
@@ -220,6 +220,11 @@ extern struct symbol *cp_lookup_nested_symbol (struct type *parent_type,
 
 struct type *cp_lookup_transparent_type (const char *name);
 
+/* See description in cp-namespace.c.  */
+
+struct type *find_type_baseclass_by_name (struct type *parent_type,
+					  const char *name);
+
 /* Functions from cp-name-parser.y.  */
 
 extern struct demangle_parse_info *cp_demangled_name_to_comp
@@ -240,5 +245,9 @@ extern struct demangle_parse_info *cp_new_demangle_parse_info (void);
 /* The list of "maint cplus" commands.  */
 
 extern struct cmd_list_element *maint_cplus_cmd_list;
+
+/* A wrapper for bfd_demangle.  */
+
+char *gdb_demangle (const char *name, int options);
 
 #endif /* CP_SUPPORT_H */

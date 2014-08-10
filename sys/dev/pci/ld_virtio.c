@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.5 2012/02/02 19:43:06 tls Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.5.20.1 2014/08/10 06:54:54 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.5 2012/02/02 19:43:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.5.20.1 2014/08/10 06:54:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,6 +250,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	vsc->sc_nvqs = 1;
 	vsc->sc_config_change = 0;
 	vsc->sc_intrhand = virtio_vq_intr;
+	vsc->sc_flags = 0;
 
 	features = virtio_negotiate_features(vsc,
 					     (VIRTIO_BLK_F_SIZE_MAX |

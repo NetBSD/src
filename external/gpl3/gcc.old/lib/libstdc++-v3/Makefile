@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2014/02/26 10:57:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.2.2.1 2014/08/10 07:11:11 tls Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -52,8 +52,6 @@ COPTS.wlocale-inst.cc = -Wno-stack-protector
 COPTS.concept-inst.cc=	-D_GLIBCPP_CONCEPT_CHECKS -fimplicit-templates
 CPPFLAGS.strstream.cc=	-I$(GLIBCPP_INCLUDE_DIR)/backward -Wno-deprecated
 
-# For GCC 4.5
-.if ${HAVE_GCC} >= 45
 # XXX also need this for some PCHs.
 CPPFLAGS.atomic.cc = -std=gnu++0x
 CPPFLAGS.compatibility-c++0x.cc = -std=gnu++0x
@@ -76,7 +74,6 @@ CPPFLAGS.concept-inst.cc += -D_GLIBCXX_CONCEPT_CHECKS
 CPPFLAGS.parallel_list.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.parallel_settings.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.compatibility-parallel_list.cc += -D_GLIBCXX_PARALLEL
-.endif
 
 # XXX
 MKDEPFLAGS+=	-I$(GLIBCPP_INCLUDE_DIR)/backward

@@ -6,7 +6,7 @@
 # SYNOPSIS
 #	\fBpostmap -q "\fIstring\fB" "nisplus:[\fIname\fB=%s];\fIname.name.\fB"\fR
 #
-#	\fBpostmap -q - "nisplus:[\fIname\fB=%s];\fIname.name.\fB"\fR <\fIinputfile\fR
+#	\fBpostmap -q - "nisplus:[\fIname\fB=%s];\fIname.name.\fB" <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional lookup tables.
 #	These tables are usually in \fBdbm\fR or \fBdb\fR format.

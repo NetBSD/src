@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.13 2013/12/26 18:34:28 christos Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.13.2.1 2014/08/10 06:51:51 tls Exp $	*/
 
 #ifndef TZFILE_H
 #define TZFILE_H
@@ -98,7 +98,7 @@ struct tzhead {
 */
 
 #ifndef TZ_MAX_TIMES
-#define TZ_MAX_TIMES	1200
+#define TZ_MAX_TIMES	2000
 #endif /* !defined TZ_MAX_TIMES */
 
 #ifndef TZ_MAX_TYPES

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.155 2014/02/24 07:23:40 skrll Exp $
+.\"	$NetBSD: ddb.4,v 1.155.2.1 2014/08/10 06:53:25 tls Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd May 15, 2013
+.Dd June 12, 2014
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -657,14 +657,6 @@ Display information about a lock at
 .Ar address .
 This command is useful only if a kernel is compiled with
 .Cd options LOCKDEBUG .
-.It Ic show malloc Ar address
-If
-.Ar address
-is supplied, display the kernel memory allocator's idea on the
-allocation status for it.
-Also, print out global statistics for the memory allocator.
-This command is useful only if a kernel is compiled with
-.Cd options MALLOC_DEBUG .
 .It Ic show map Ns Oo Cm /f Oc Ar address
 Print the vm_map at
 .Ar address .

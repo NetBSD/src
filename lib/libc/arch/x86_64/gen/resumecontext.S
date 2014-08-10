@@ -1,4 +1,4 @@
-/*	$NetBSD: resumecontext.S,v 1.5 2013/09/12 15:36:16 joerg Exp $	*/
+/*	$NetBSD: resumecontext.S,v 1.5.2.1 2014/08/10 06:51:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: resumecontext.S,v 1.5 2013/09/12 15:36:16 joerg Exp $")
+	RCSID("$NetBSD: resumecontext.S,v 1.5.2.1 2014/08/10 06:51:49 tls Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -77,3 +77,4 @@ NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
 	movq	$SYS_exit,%rax
 	syscall
 	/* NOTREACHED */
+END(_resumecontext)

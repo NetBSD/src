@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.53 2014/03/16 05:20:25 dholland Exp $	*/
+/*	$NetBSD: kd.c,v 1.53.2.1 2014/08/10 06:54:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.53 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.53.2.1 2014/08/10 06:54:08 tls Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -120,6 +120,7 @@ const struct cdevsw kd_cdevsw = {
 	.d_poll = kdpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

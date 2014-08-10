@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.47 2013/11/28 16:45:36 wiz Exp $
+.\"	$NetBSD: queue.3,v 1.47.2.1 2014/08/10 06:53:25 tls Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd November 27, 2013
+.Dd May 17, 2014
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -85,6 +85,7 @@
 .Nm LIST_INSERT_HEAD ,
 .Nm LIST_REMOVE ,
 .Nm LIST_REPLACE ,
+.Nm LIST_MOVE ,
 .Nm SIMPLEQ_HEAD ,
 .Nm SIMPLEQ_HEAD_INITIALIZER ,
 .Nm SIMPLEQ_ENTRY ,
@@ -138,7 +139,7 @@
 .Nm STAILQ_REMOVE_HEAD ,
 .Nm STAILQ_REMOVE ,
 .Nm STAILQ_CONCAT ,
-.Nd implementations of singly-linked lists, lists, simple queues, tail queues, and singly-linked tail queues.
+.Nd implementations of singly-linked lists, lists, simple queues, tail queues, and singly-linked tail queues
 .Sh SYNOPSIS
 .In sys/queue.h
 .Pp
@@ -176,6 +177,7 @@
 .Fn LIST_INSERT_HEAD "LIST_HEAD *head" "TYPE *elm" "LIST_ENTRY NAME"
 .Fn LIST_REMOVE "TYPE *elm" "LIST_ENTRY NAME"
 .Fn LIST_REPLACE "TYPE *elm" "TYPE *new" "LIST_ENTRY NAME"
+.Fn LIST_MOVE "LIST_HEAD *head1" "LIST_HEAD *head2"
 .Pp
 .Fn SIMPLEQ_HEAD "HEADNAME" "TYPE"
 .Fn SIMPLEQ_HEAD_INITIALIZER "head"
@@ -375,8 +377,8 @@ of data structure.
 .Pp
 .TS
 box tab(:);
-l | c | c | c | c | c 
-l | c | c | c | c | c 
+l | c | c | c | c | c
+l | c | c | c | c | c
 l | c | c | c | c | c
 l | c | c | c | c | c
 l | c | c | c | c | c
@@ -661,6 +663,14 @@ replaces the element
 with
 .Fa new
 in the list.
+.Pp
+The macro
+.Nm LIST_MOVE
+moves the list headed by
+.Fa head1
+onto the list headed by
+.Fa head2 ,
+always making the former empty.
 .Sh LIST EXAMPLE
 .Bd -literal
 LIST_HEAD(listhead, entry) head;

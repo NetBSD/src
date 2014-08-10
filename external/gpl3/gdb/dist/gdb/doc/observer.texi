@@ -2,7 +2,7 @@
 
 @c This file is part of the GDB manual.
 @c
-@c Copyright (C) 2003-2013 Free Software Foundation, Inc.
+@c Copyright (C) 2003-2014 Free Software Foundation, Inc.
 @c
 @c See the file gdbint.texinfo for copying conditions.
 @c
@@ -136,6 +136,10 @@ symbols have not been unloaded yet, and thus are still available.
 The symbol file specified by @var{objfile} has been loaded.
 Called with @var{objfile} equal to @code{NULL} to indicate
 previously loaded symbol table data has now been invalidated.
+@end deftypefun
+
+@deftypefun void free_objfile (struct objfile *@var{objfile})
+The object file specified by @var{objfile} is about to be freed.
 @end deftypefun
 
 @deftypefun void new_thread (struct thread_info *@var{t})

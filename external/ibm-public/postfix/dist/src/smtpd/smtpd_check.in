@@ -45,13 +45,13 @@ helo 123.123.123.123
 #
 sender_restrictions permit_mynetworks,reject_unknown_client
 client unknown 131.155.210.17
-mail foo@watson.ibm.com
+mail foo@ibm.com
 client unknown 168.100.189.13
-mail foo@watson.ibm.com
+mail foo@ibm.com
 client foo 123.123.123.123
-mail foo@watson.ibm.com
+mail foo@ibm.com
 sender_restrictions reject_unknown_address
-mail foo@watson.ibm.com
+mail foo@ibm.com
 mail foo@bad.domain
 sender_restrictions hash:./smtpd_check_access
 mail bad-sender@any.domain
@@ -67,18 +67,18 @@ mail foo@friend.bad.domain
 #
 recipient_restrictions permit_mynetworks,reject_unknown_client,check_relay_domains
 client unknown 131.155.210.17
-rcpt foo@watson.ibm.com
+rcpt foo@ibm.com
 client unknown 168.100.189.13
-rcpt foo@watson.ibm.com
+rcpt foo@ibm.com
 client foo 123.123.123.123
-rcpt foo@watson.ibm.com
+rcpt foo@ibm.com
 rcpt foo@porcupine.org
 recipient_restrictions check_relay_domains
 client foo.porcupine.org 168.100.189.13
-rcpt foo@watson.ibm.com
+rcpt foo@ibm.com
 rcpt foo@porcupine.org
 client foo 123.123.123.123
-rcpt foo@watson.ibm.com
+rcpt foo@ibm.com
 rcpt foo@porcupine.org
 recipient_restrictions hash:./smtpd_check_access
 mail bad-sender@any.domain
@@ -98,7 +98,7 @@ client foo 127.0.0.2
 #
 recipient_restrictions check_relay_domains
 client foo 131.155.210.17
-rcpt foo@watson.ibm.com
+rcpt foo@ibm.com
 recipient_restrictions check_client_access,hash:./smtpd_check_access,check_relay_domains
 client foo 131.155.210.17
 rcpt foo@porcupine.org

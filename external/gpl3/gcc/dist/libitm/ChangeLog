@@ -1,3 +1,66 @@
+2014-05-22  Release Manager
+
+	* GCC 4.8.3 released.
+
+2014-04-14  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* acinclude.m4: Move s390* case from RTM to HTM check.
+	* configure: Regenerate.
+
+2014-04-09  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config/generic/asmcfi.h: Also check for
+	__GCC_HAVE_DWARF2_CFI_ASM.
+
+2014-04-04  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	Backport from mainline r204808:
+
+	2013-11-14  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+
+	* config/powerpc/sjlj.S [__powerpc64__ && _CALL_ELF == 2]:
+	(FUNC): Define ELFv2 variant.
+	(END): Likewise.
+	(HIDDEN): Likewise.
+	(CALL): Likewise.
+	(BASE): Likewise.
+	(LR_SAVE): Likewise.
+
+2014-04-04  Bill Schmidt <wschmidt@linux.vnet.ibm.com>
+
+	Power8 HTM Support
+	Backport from mainline
+	* acinclude.m4 (LIBITM_CHECK_AS_HTM): New.
+	* configure: Rebuild.
+	* configure.tgt (target_cpu): Add -mhtm to XCFLAGS.
+	* config/powerpc/target.h: Include sys/auxv.h and htmintrin.h.
+	(USE_HTM_FASTPATH): Define.
+	(_TBEGIN_STARTED, _TBEGIN_INDETERMINATE, _TBEGIN_PERSISTENT)
+	(_HTM_RETRIES) New macros.
+	(htm_abort, htm_abort_should_retry, htm_available, htm_begin, htm_init)
+	(htm_begin_success, htm_commit, htm_transaction_active): New functions.
+
+2014-03-26  Jakub Jelinek  <jakub@redhat.com>
+
+	* config/linux/futex_bits.h: Include errno.h.
+	(sys_futex0): If syscall returns -1, return -errno rather than
+	-1.
+
+2014-03-03  Peter Bergner  <bergner@vnet.ibm.com>
+
+	Backport from mainline
+	2013-06-20  Torvald Riegel  <triegel@redhat.com>
+
+	* query.cc (_ITM_inTransaction): Abort when using the HTM fastpath.
+	(_ITM_getTransactionId): Same.
+	* config/x86/target.h (htm_transaction_active): New.
+
+	2013-06-20  Torvald Riegel  <triegel@redhat.com>
+
+	PR libitm/57643
+	* beginend.cc (gtm_thread::begin_transaction): Handle reentrancy in
+	the HTM fastpath.
+
 2013-10-16  Release Manager
 
 	* GCC 4.8.2 released.
@@ -8,13 +71,12 @@
 	2013-08-02  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 
 	* configure.tgt: Add -msoft-float to XCFLAGS.
-	
 
 2013-08-14  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 
 	* config/s390/sjlj.S: Add file missing from last commit.
 	* config/s390/target.h: Likewise.
-	
+
 2013-08-02  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 
 	Backports from mainline:

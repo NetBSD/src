@@ -1,6 +1,6 @@
 /* C language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2013 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,18 +23,20 @@
 #include "expression.h"
 #include "parser-defs.h"
 #include "language.h"
+#include "varobj.h"
 #include "c-lang.h"
 #include "valprint.h"
 #include "macroscope.h"
 #include "gdb_assert.h"
 #include "charset.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "demangle.h"
 #include "cp-abi.h"
 #include "cp-support.h"
 #include "gdb_obstack.h"
 #include <ctype.h>
 #include "exceptions.h"
+#include "gdbcore.h"
 
 extern void _initialize_c_language (void);
 
@@ -225,9 +227,13 @@ c_printstr (struct ui_file *stream, struct type *type,
    until a null character of the appropriate width is found, otherwise
    the string is read to the length of characters specified.  The size
    of a character is determined by the length of the target type of
-   the pointer or array.  If VALUE is an array with a known length,
-   the function will not read past the end of the array.  On
-   completion, *LENGTH will be set to the size of the string read in
+   the pointer or array.
+
+   If VALUE is an array with a known length, and *LENGTH is -1,
+   the function will not read past the end of the array.  However, any
+   declared size of the array is ignored if *LENGTH > 0.
+
+   On completion, *LENGTH will be set to the size of the string read in
    characters.  (If a length of -1 is specified, the length returned
    will not include the null character).  CHARSET is always set to the
    target charset.  */
@@ -307,17 +313,27 @@ c_get_string (struct value *value, gdb_byte **buffer,
     {
       CORE_ADDR addr = value_as_address (value);
 
+      /* Prior to the fix for PR 16196 read_string would ignore fetchlimit
+	 if length > 0.  The old "broken" behaviour is the behaviour we want:
+	 The caller may want to fetch 100 bytes from a variable length array
+	 implemented using the common idiom of having an array of length 1 at
+	 the end of a struct.  In this case we want to ignore the declared
+	 size of the array.  However, it's counterintuitive to implement that
+	 behaviour in read_string: what does fetchlimit otherwise mean if
+	 length > 0.  Therefore we implement the behaviour we want here:
+	 If *length > 0, don't specify a fetchlimit.  This preserves the
+	 previous behaviour.  We could move this check above where we know
+	 whether the array is declared with a fixed size, but we only want
+	 to apply this behaviour when calling read_string.  PR 16286.  */
+      if (*length > 0)
+	fetchlimit = UINT_MAX;
+
       err = read_string (addr, *length, width, fetchlimit,
 			 byte_order, buffer, length);
       if (err)
 	{
 	  xfree (*buffer);
-	  if (err == EIO)
-	    throw_error (MEMORY_ERROR, "Address %s out of bounds",
-			 paddress (get_type_arch (type), addr));
-	  else
-	    error (_("Error reading string from inferior: %s"),
-		   safe_strerror (err));
+	  memory_error (err, addr);
 	}
     }
 
@@ -658,7 +674,7 @@ evaluate_subexp_c (struct type *expect_type, struct expression *exp,
 	    if (obstack_object_size (&output) != TYPE_LENGTH (type))
 	      error (_("Could not convert character "
 		       "constant to target character set"));
-	    value = unpack_long (type, obstack_base (&output));
+	    value = unpack_long (type, (gdb_byte *) obstack_base (&output));
 	    result = value_from_longest (type, value);
 	  }
 	else
@@ -815,6 +831,7 @@ const struct exp_descriptor exp_descriptor_c =
 const struct language_defn c_language_defn =
 {
   "c",				/* Language name */
+  "C",
   language_c,
   range_check_off,
   case_sensitive_on,
@@ -850,6 +867,7 @@ const struct language_defn c_language_defn =
   c_get_string,
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
+  &c_varobj_ops,
   LANG_MAGIC
 };
 
@@ -938,6 +956,7 @@ cplus_language_arch_info (struct gdbarch *gdbarch,
 const struct language_defn cplus_language_defn =
 {
   "c++",			/* Language name */
+  "C++",
   language_cplus,
   range_check_off,
   case_sensitive_on,
@@ -959,7 +978,7 @@ const struct language_defn cplus_language_defn =
   "this",                       /* name_of_this */
   cp_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
   cp_lookup_transparent_type,   /* lookup_transparent_type */
-  cplus_demangle,		/* Language specific symbol demangler */
+  gdb_demangle,			/* Language specific symbol demangler */
   cp_class_name_from_physname,  /* Language specific
 				   class_name_from_physname */
   c_op_print_tab,		/* expression operators for printing */
@@ -973,12 +992,14 @@ const struct language_defn cplus_language_defn =
   c_get_string,
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
+  &cplus_varobj_ops,
   LANG_MAGIC
 };
 
 const struct language_defn asm_language_defn =
 {
   "asm",			/* Language name */
+  "assembly",
   language_asm,
   range_check_off,
   case_sensitive_on,
@@ -1014,6 +1035,7 @@ const struct language_defn asm_language_defn =
   c_get_string,
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
+  &default_varobj_ops,
   LANG_MAGIC
 };
 
@@ -1025,6 +1047,7 @@ const struct language_defn asm_language_defn =
 const struct language_defn minimal_language_defn =
 {
   "minimal",			/* Language name */
+  "Minimal",
   language_minimal,
   range_check_off,
   case_sensitive_on,
@@ -1060,6 +1083,7 @@ const struct language_defn minimal_language_defn =
   c_get_string,
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
+  &default_varobj_ops,
   LANG_MAGIC
 };
 

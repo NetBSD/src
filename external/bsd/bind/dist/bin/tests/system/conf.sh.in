@@ -15,8 +15,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: conf.sh.in,v 1.71 2011/12/05 17:10:50 each Exp 
-
 #
 # Common configuration data for system tests, to be sourced into
 # other shell scripts.
@@ -33,10 +31,11 @@ NAMED=$TOP/bin/named/named
 # if the program is libtoolized.
 LWRESD="$TOP/bin/named/named -l"
 DIG=$TOP/bin/dig/dig
-DELVE=$TOP/bin/delve/delve
+DELV=$TOP/bin/delv/delv
 RNDC=$TOP/bin/rndc/rndc
 NSUPDATE=$TOP/bin/nsupdate/nsupdate
 DDNSCONFGEN=$TOP/bin/confgen/ddns-confgen
+TSIGKEYGEN=$TOP/bin/confgen/tsig-keygen
 RNDCCONFGEN=$TOP/bin/confgen/rndc-confgen
 KEYGEN=$TOP/bin/dnssec/dnssec-keygen
 KEYFRLAB=$TOP/bin/dnssec/dnssec-keyfromlabel

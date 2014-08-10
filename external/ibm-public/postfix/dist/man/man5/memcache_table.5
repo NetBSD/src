@@ -1,4 +1,4 @@
-.\"	$NetBSD: memcache_table.5,v 1.1.1.2 2013/09/25 19:06:24 tron Exp $
+.\"	$NetBSD: memcache_table.5,v 1.1.1.2.2.1 2014/08/10 07:12:47 tls Exp $
 .\"
 .TH MEMCACHE_TABLE 5 
 .ad
@@ -10,9 +10,9 @@ Postfix memcache client configuration
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostmap -q "\fIstring\fB" memcache:/etc/postfix/filename\fR
+\fBpostmap -q "\fIstring\fB" memcache:/etc/postfix/\fIfilename\fR
 
-\fBpostmap -q - memcache:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+\fBpostmap -q - memcache:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -81,7 +81,7 @@ NOTE 1: When sharing a persistent \fBpostscreen\fR(8) or
 *_cache_cleanup_interval = 0) except with one Postfix
 instance that will be responsible for cache cleanup.
 
-NOTE 2: When different tables share the same memcache
+NOTE 2: When multiple tables share the same memcache
 database, each table should use the \fBkey_format\fR feature
 (see below) to prepend its own unique string to the lookup
 key.  Otherwise, automatic \fBpostscreen\fR(8) or \fBverify\fR(8)
@@ -115,14 +115,16 @@ time. Smaller values are relative to the time of the update.
 .ad
 .fi
 .IP "\fBkey_format (default: %s)\fB"
-Format of the lookup and update keys in memcache requests.
+Format of the lookup and update keys that the Postfix
+memcache client sends to the memcache server.
 By default, these are the same as the lookup and update
-keys that are given to the Postfix memcache client.
+keys that the memcache client receives from Postfix
+applications.
 
 NOTE 1: The \fBkey_format\fR feature is not used for \fBbackup\fR
 database requests.
 
-NOTE 2: When different tables share the same memcache
+NOTE 2: When multiple tables share the same memcache
 database, each table should prepend its own unique string
 to the lookup key.  Otherwise, automatic \fBpostscreen\fR(8)
 or \fBverify\fR(8) cache cleanup may not work.

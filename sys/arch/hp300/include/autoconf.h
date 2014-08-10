@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.12 2011/02/06 18:26:52 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.12.28.1 2014/08/10 06:53:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@ extern  int conscode;			/* select code of console device */
 extern  void *conaddr;			/* KVA of console device */
 
 void	hp300_cninit(void);
+void	hp300_cninit_deferred(void);
 void	iomap_init(void);
 void *	iomap(void *, int);
 void	iounmap(void *, int);

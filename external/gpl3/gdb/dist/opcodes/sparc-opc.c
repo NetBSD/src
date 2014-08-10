@@ -33,6 +33,7 @@
 #define MASK_V6		SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V6)
 #define MASK_V7		SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V7)
 #define MASK_V8		SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V8)
+#define MASK_LEON	SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_LEON)
 #define MASK_SPARCLET	SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_SPARCLET)
 #define MASK_SPARCLITE	SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_SPARCLITE)
 #define MASK_V9		SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V9)
@@ -41,12 +42,13 @@
 
 /* Bit masks of architectures supporting the insn.  */
 
-#define v6		(MASK_V6 | MASK_V7 | MASK_V8 | MASK_SPARCLET \
-			 | MASK_SPARCLITE | MASK_V9 | MASK_V9A | MASK_V9B)
+#define v6		(MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON \
+			 | MASK_SPARCLET | MASK_SPARCLITE \
+			 | MASK_V9 | MASK_V9A | MASK_V9B)
 /* v6 insns not supported on the sparclet.  */
-#define v6notlet	(MASK_V6 | MASK_V7 | MASK_V8 \
+#define v6notlet	(MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON \
 			 | MASK_SPARCLITE | MASK_V9 | MASK_V9A | MASK_V9B)
-#define v7		(MASK_V7 | MASK_V8 | MASK_SPARCLET \
+#define v7		(MASK_V7 | MASK_V8 | MASK_LEON | MASK_SPARCLET \
 			 | MASK_SPARCLITE | MASK_V9 | MASK_V9A | MASK_V9B)
 /* Although not all insns are implemented in hardware, sparclite is defined
    to be a superset of v8.  Unimplemented insns trap and are then theoretically
@@ -54,15 +56,19 @@
    It's not clear that the same is true for sparclet, although the docs
    suggest it is.  Rather than complicating things, the sparclet assembler
    recognizes all v8 insns.  */
-#define v8		(MASK_V8 | MASK_SPARCLET | MASK_SPARCLITE \
+#define v8		(MASK_V8 | MASK_LEON | MASK_SPARCLET | MASK_SPARCLITE \
 			 | MASK_V9 | MASK_V9A | MASK_V9B)
 #define sparclet	(MASK_SPARCLET)
+/* sparclet insns supported by leon.  */
+#define letandleon	(MASK_SPARCLET | MASK_LEON)
 #define sparclite	(MASK_SPARCLITE)
 #define v9		(MASK_V9 | MASK_V9A | MASK_V9B)
+/* v9 insns supported by leon.  */
+#define v9andleon	(MASK_V9 | MASK_V9A | MASK_V9B | MASK_LEON)
 #define v9a		(MASK_V9A | MASK_V9B)
 #define v9b		(MASK_V9B)
 /* v6 insns not supported by v9.  */
-#define v6notv9		(MASK_V6 | MASK_V7 | MASK_V8 \
+#define v6notv9		(MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON \
 			 | MASK_SPARCLET | MASK_SPARCLITE)
 /* v9a instructions which would appear to be aliases to v9's impdep's
    otherwise.  */
@@ -76,6 +82,7 @@ const struct sparc_opcode_arch sparc_opcode_archs[] =
   { "v6", MASK_V6 },
   { "v7", MASK_V6 | MASK_V7 },
   { "v8", MASK_V6 | MASK_V7 | MASK_V8 },
+  { "leon", MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON },
   { "sparclet", MASK_V6 | MASK_V7 | MASK_V8 | MASK_SPARCLET },
   { "sparclite", MASK_V6 | MASK_V7 | MASK_V8 | MASK_SPARCLITE },
   /* ??? Don't some v8 priviledged insns conflict with v9?  */
@@ -219,18 +226,25 @@ const struct sparc_opcode sparc_opcodes[] = {
 { "lduw",	F3(3, 0x00, 1), F3(~3, ~0x00, ~1)|RS1_G0,	"[i],d", F_ALIAS, 0, v9 },
 { "lduw",	F3(3, 0x00, 1), F3(~3, ~0x00, ~1)|SIMM13(~0),	"[1],d", F_ALIAS, 0, v9 }, /* ld [rs1+0],d */
 
-{ "ldd",	F3(3, 0x03, 0), F3(~3, ~0x03, ~0)|ASI(~0),	"[1+2],d", 0, 0, v6 },
-{ "ldd",	F3(3, 0x03, 0), F3(~3, ~0x03, ~0)|ASI_RS2(~0),	"[1],d", 0, 0, v6 }, /* ldd [rs1+%g0],d */
-{ "ldd",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1),		"[1+i],d", 0, 0, v6 },
-{ "ldd",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1),		"[i+1],d", 0, 0, v6 },
-{ "ldd",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1)|RS1_G0,	"[i],d", 0, 0, v6 },
-{ "ldd",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1)|SIMM13(~0),	"[1],d", 0, 0, v6 }, /* ldd [rs1+0],d */
-{ "ldd",	F3(3, 0x23, 0), F3(~3, ~0x23, ~0)|ASI(~0),	"[1+2],H", 0, 0, v6 },
-{ "ldd",	F3(3, 0x23, 0), F3(~3, ~0x23, ~0)|ASI_RS2(~0),	"[1],H", 0, 0, v6 }, /* ldd [rs1+%g0],d */
-{ "ldd",	F3(3, 0x23, 1), F3(~3, ~0x23, ~1),		"[1+i],H", 0, 0, v6 },
-{ "ldd",	F3(3, 0x23, 1), F3(~3, ~0x23, ~1),		"[i+1],H", 0, 0, v6 },
-{ "ldd",	F3(3, 0x23, 1), F3(~3, ~0x23, ~1)|RS1_G0,	"[i],H", 0, 0, v6 },
-{ "ldd",	F3(3, 0x23, 1), F3(~3, ~0x23, ~1)|SIMM13(~0),	"[1],H", 0, 0, v6 }, /* ldd [rs1+0],d */
+{ "ldtw",	F3(3, 0x03, 0), F3(~3, ~0x03, ~0)|ASI(~0),	"[1+2],d", 0, 0, v9 },
+{ "ldtw",	F3(3, 0x03, 0), F3(~3, ~0x03, ~0)|ASI_RS2(~0),	"[1],d", 0, 0, v9 }, /* ldd [rs1+%g0],d */
+{ "ldtw",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1),		"[1+i],d", 0, 0, v9 },
+{ "ldtw",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1),		"[i+1],d", 0, 0, v9 },
+{ "ldtw",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1)|RS1_G0,	"[i],d", 0, 0, v9 },
+{ "ldtw",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1)|SIMM13(~0),	"[1],d", 0, 0, v9 }, /* ldd [rs1+0],d */
+
+{ "ldd",	F3(3, 0x03, 0), F3(~3, ~0x03, ~0)|ASI(~0),	"[1+2],d", F_ALIAS, 0, v6 },
+{ "ldd",	F3(3, 0x03, 0), F3(~3, ~0x03, ~0)|ASI_RS2(~0),	"[1],d", F_ALIAS, 0, v6 }, /* ldd [rs1+%g0],d */
+{ "ldd",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1),		"[1+i],d", F_ALIAS, 0, v6 },
+{ "ldd",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1),		"[i+1],d", F_ALIAS, 0, v6 },
+{ "ldd",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1)|RS1_G0,	"[i],d", F_ALIAS, 0, v6 },
+{ "ldd",	F3(3, 0x03, 1), F3(~3, ~0x03, ~1)|SIMM13(~0),	"[1],d", F_ALIAS, 0, v6 }, /* ldd [rs1+0],d */
+{ "ldd",	F3(3, 0x23, 0), F3(~3, ~0x23, ~0)|ASI(~0),	"[1+2],H", F_ALIAS, 0, v6 },
+{ "ldd",	F3(3, 0x23, 0), F3(~3, ~0x23, ~0)|ASI_RS2(~0),	"[1],H", F_ALIAS, 0, v6 }, /* ldd [rs1+%g0],d */
+{ "ldd",	F3(3, 0x23, 1), F3(~3, ~0x23, ~1),		"[1+i],H", F_ALIAS, 0, v6 },
+{ "ldd",	F3(3, 0x23, 1), F3(~3, ~0x23, ~1),		"[i+1],H", F_ALIAS, 0, v6 },
+{ "ldd",	F3(3, 0x23, 1), F3(~3, ~0x23, ~1)|RS1_G0,	"[i],H", F_ALIAS, 0, v6 },
+{ "ldd",	F3(3, 0x23, 1), F3(~3, ~0x23, ~1)|SIMM13(~0),	"[1],H", F_ALIAS, 0, v6 }, /* ldd [rs1+0],d */
 
 { "ldd",	F3(3, 0x33, 0), F3(~3, ~0x33, ~0)|ASI(~0),	"[1+2],D", 0, 0, v6notv9 },
 { "ldd",	F3(3, 0x33, 0), F3(~3, ~0x33, ~0)|ASI_RS2(~0),	"[1],D", 0, 0, v6notv9 }, /* ldd [rs1+%g0],d */
@@ -322,12 +336,19 @@ const struct sparc_opcode sparc_opcodes[] = {
 { "lda",	F3(3, 0x30, 1), F3(~3, ~0x30, ~1)|RS1_G0,	"[i]o,g", 0, 0, v9 },
 { "lda",	F3(3, 0x30, 1), F3(~3, ~0x30, ~1)|SIMM13(~0),	"[1]o,g", 0, 0, v9 }, /* ld [rs1+0],d */
 
-{ "ldda",	F3(3, 0x13, 0), F3(~3, ~0x13, ~0),		"[1+2]A,d", 0, 0, v6 },
-{ "ldda",	F3(3, 0x13, 0), F3(~3, ~0x13, ~0)|RS2_G0,	"[1]A,d", 0, 0, v6 }, /* ldda [rs1+%g0],d */
-{ "ldda",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1),		"[1+i]o,d", 0, 0, v9 },
-{ "ldda",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1),		"[i+1]o,d", 0, 0, v9 },
-{ "ldda",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1)|RS1_G0,	"[i]o,d", 0, 0, v9 },
-{ "ldda",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1)|SIMM13(~0),	"[1]o,d", 0, 0, v9 }, /* ld [rs1+0],d */
+{ "ldtwa",	F3(3, 0x13, 0), F3(~3, ~0x13, ~0),		"[1+2]A,d", 0, 0, v9 },
+{ "ldtwa",	F3(3, 0x13, 0), F3(~3, ~0x13, ~0)|RS2_G0,	"[1]A,d", 0, 0, v9 }, /* ldda [rs1+%g0],d */
+{ "ldtwa",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1),		"[1+i]o,d", 0, 0, v9 },
+{ "ldtwa",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1),		"[i+1]o,d", 0, 0, v9 },
+{ "ldtwa",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1)|RS1_G0,	"[i]o,d", 0, 0, v9 },
+{ "ldtwa",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1)|SIMM13(~0),	"[1]o,d", 0, 0, v9 }, /* ld [rs1+0],d */
+
+{ "ldda",	F3(3, 0x13, 0), F3(~3, ~0x13, ~0),		"[1+2]A,d", F_ALIAS, 0, v6 },
+{ "ldda",	F3(3, 0x13, 0), F3(~3, ~0x13, ~0)|RS2_G0,	"[1]A,d", F_ALIAS, 0, v6 }, /* ldda [rs1+%g0],d */
+{ "ldda",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1),		"[1+i]o,d", F_ALIAS, 0, v9 },
+{ "ldda",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1),		"[i+1]o,d", F_ALIAS, 0, v9 },
+{ "ldda",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1)|RS1_G0,	"[i]o,d", F_ALIAS, 0, v9 },
+{ "ldda",	F3(3, 0x13, 1), F3(~3, ~0x13, ~1)|SIMM13(~0),	"[1]o,d", F_ALIAS, 0, v9 }, /* ld [rs1+0],d */
 
 { "ldda",	F3(3, 0x33, 0), F3(~3, ~0x33, ~0),		"[1+2]A,H", 0, 0, v9 },
 { "ldda",	F3(3, 0x33, 0), F3(~3, ~0x33, ~0)|RS2_G0,	"[1]A,H", 0, 0, v9 }, /* ldda [rs1+%g0],d */
@@ -531,12 +552,19 @@ const struct sparc_opcode sparc_opcodes[] = {
 { "stuba",	F3(3, 0x15, 1), F3(~3, ~0x15, ~1)|RS1_G0,	"d,[i]o", F_ALIAS, 0, v9 },
 { "stuba",	F3(3, 0x15, 1), F3(~3, ~0x15, ~1)|SIMM13(~0),	"d,[1]o", F_ALIAS, 0, v9 }, /* stb d,[rs1+0] */
 
-{ "std",	F3(3, 0x07, 0), F3(~3, ~0x07, ~0)|ASI(~0),	"d,[1+2]", 0, 0, v6 },
-{ "std",	F3(3, 0x07, 0), F3(~3, ~0x07, ~0)|ASI_RS2(~0),	"d,[1]", 0, 0, v6 }, /* std d,[rs1+%g0] */
-{ "std",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1),		"d,[1+i]", 0, 0, v6 },
-{ "std",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1),		"d,[i+1]", 0, 0, v6 },
-{ "std",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1)|RS1_G0,	"d,[i]", 0, 0, v6 },
-{ "std",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1)|SIMM13(~0),	"d,[1]", 0, 0, v6 }, /* std d,[rs1+0] */
+{ "sttw",	F3(3, 0x07, 0), F3(~3, ~0x07, ~0)|ASI(~0),	"d,[1+2]", 0, 0, v9 },
+{ "sttw",	F3(3, 0x07, 0), F3(~3, ~0x07, ~0)|ASI_RS2(~0),	"d,[1]", 0, 0, v9 }, /* std d,[rs1+%g0] */
+{ "sttw",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1),		"d,[1+i]", 0, 0, v9 },
+{ "sttw",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1),		"d,[i+1]", 0, 0, v9 },
+{ "sttw",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1)|RS1_G0,	"d,[i]", 0, 0, v9 },
+{ "sttw",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1)|SIMM13(~0),	"d,[1]", 0, 0, v9 }, /* std d,[rs1+0] */
+
+{ "std",	F3(3, 0x07, 0), F3(~3, ~0x07, ~0)|ASI(~0),	"d,[1+2]", F_PREF_ALIAS, 0, v6 },
+{ "std",	F3(3, 0x07, 0), F3(~3, ~0x07, ~0)|ASI_RS2(~0),	"d,[1]", F_PREF_ALIAS, 0, v6 }, /* std d,[rs1+%g0] */
+{ "std",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1),		"d,[1+i]", F_PREF_ALIAS, 0, v6 },
+{ "std",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1),		"d,[i+1]", F_PREF_ALIAS, 0, v6 },
+{ "std",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1)|RS1_G0,	"d,[i]", F_PREF_ALIAS, 0, v6 },
+{ "std",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1)|SIMM13(~0),	"d,[1]", F_PREF_ALIAS, 0, v6 }, /* std d,[rs1+0] */
 
 { "std",	F3(3, 0x26, 0), F3(~3, ~0x26, ~0)|ASI(~0),	"q,[1+2]", 0, 0, v6notv9 },
 { "std",	F3(3, 0x26, 0), F3(~3, ~0x26, ~0)|ASI_RS2(~0),	"q,[1]", 0, 0, v6notv9 }, /* std d,[rs1+%g0] */
@@ -571,12 +599,19 @@ const struct sparc_opcode sparc_opcodes[] = {
 { "spilld",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1)|RS1_G0,	"d,[i]", F_ALIAS, 0, v6 },
 { "spilld",	F3(3, 0x07, 1), F3(~3, ~0x07, ~1)|SIMM13(~0),	"d,[1]", F_ALIAS, 0, v6 }, /* std d,[rs1+0] */
 
-{ "stda",	F3(3, 0x17, 0), F3(~3, ~0x17, ~0),		"d,[1+2]A", 0, 0, v6 },
-{ "stda",	F3(3, 0x17, 0), F3(~3, ~0x17, ~0)|RS2(~0),	"d,[1]A", 0, 0, v6 }, /* stda d,[rs1+%g0] */
-{ "stda",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1),		"d,[1+i]o", 0, 0, v9 },
-{ "stda",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1),		"d,[i+1]o", 0, 0, v9 },
-{ "stda",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1)|RS1_G0,	"d,[i]o", 0, 0, v9 },
-{ "stda",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1)|SIMM13(~0),	"d,[1]o", 0, 0, v9 }, /* std d,[rs1+0] */
+{ "sttwa",	F3(3, 0x17, 0), F3(~3, ~0x17, ~0),		"d,[1+2]A", 0, 0, v9 },
+{ "sttwa",	F3(3, 0x17, 0), F3(~3, ~0x17, ~0)|RS2(~0),	"d,[1]A", 0, 0, v9 }, /* stda d,[rs1+%g0] */
+{ "sttwa",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1),		"d,[1+i]o", 0, 0, v9 },
+{ "sttwa",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1),		"d,[i+1]o", 0, 0, v9 },
+{ "sttwa",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1)|RS1_G0,	"d,[i]o", 0, 0, v9 },
+{ "sttwa",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1)|SIMM13(~0),	"d,[1]o", 0, 0, v9 }, /* std d,[rs1+0] */
+
+{ "stda",	F3(3, 0x17, 0), F3(~3, ~0x17, ~0),		"d,[1+2]A", F_ALIAS, 0, v6 },
+{ "stda",	F3(3, 0x17, 0), F3(~3, ~0x17, ~0)|RS2(~0),	"d,[1]A", F_ALIAS, 0, v6 }, /* stda d,[rs1+%g0] */
+{ "stda",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1),		"d,[1+i]o", F_ALIAS, 0, v9 },
+{ "stda",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1),		"d,[i+1]o", F_ALIAS, 0, v9 },
+{ "stda",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1)|RS1_G0,	"d,[i]o", F_ALIAS, 0, v9 },
+{ "stda",	F3(3, 0x17, 1), F3(~3, ~0x17, ~1)|SIMM13(~0),	"d,[1]o", F_ALIAS, 0, v9 }, /* std d,[rs1+0] */
 { "stda",	F3(3, 0x37, 0), F3(~3, ~0x37, ~0),		"H,[1+2]A", 0, 0, v9 },
 { "stda",	F3(3, 0x37, 0), F3(~3, ~0x37, ~0)|RS2(~0),	"H,[1]A", 0, 0, v9 }, /* stda d,[rs1+%g0] */
 { "stda",	F3(3, 0x37, 1), F3(~3, ~0x37, ~1),		"H,[1+i]o", 0, 0, v9 },
@@ -711,12 +746,19 @@ const struct sparc_opcode sparc_opcodes[] = {
 { "invalw",	F3(2, 0x31, 0)|RD(5), F3(~2, ~0x31, ~0)|RD(~5)|RS1_G0|SIMM13(~0),	"", 0, 0, v9 },
 { "sir",	F3(2, 0x30, 1)|RD(0xf), F3(~2, ~0x30, ~1)|RD(~0xf)|RS1_G0,		"i", 0, 0, v9 },
 
-{ "flush",	F3(2, 0x3b, 0), F3(~2, ~0x3b, ~0)|ASI(~0),	"1+2", 0, 0, v8 },
-{ "flush",	F3(2, 0x3b, 0), F3(~2, ~0x3b, ~0)|ASI_RS2(~0),	"1", 0, 0, v8 }, /* flush rs1+%g0 */
-{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1)|SIMM13(~0),	"1", 0, 0, v8 }, /* flush rs1+0 */
-{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1)|RS1_G0,	"i", 0, 0, v8 }, /* flush %g0+i */
-{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"1+i", 0, 0, v8 },
-{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"i+1", 0, 0, v8 },
+{ "flush",	F3(2, 0x3b, 0), F3(~2, ~0x3b, ~0)|ASI(~0),	"[1+2]", 0, 0, v9 },
+{ "flush",	F3(2, 0x3b, 0), F3(~2, ~0x3b, ~0)|ASI_RS2(~0),	"[1]", 0, 0, v9 }, /* flush rs1+%g0 */
+{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1)|SIMM13(~0),	"[1]", 0, 0, v9 }, /* flush rs1+0 */
+{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1)|RS1_G0,	"[i]", 0, 0, v9 }, /* flush %g0+i */
+{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"[1+i]", 0, 0, v9 },
+{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"[i+1]", 0, 0, v9 },
+
+{ "flush",	F3(2, 0x3b, 0), F3(~2, ~0x3b, ~0)|ASI(~0),	"1+2", F_ALIAS, 0, v8 },
+{ "flush",	F3(2, 0x3b, 0), F3(~2, ~0x3b, ~0)|ASI_RS2(~0),	"1", F_ALIAS, 0, v8 }, /* flush rs1+%g0 */
+{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1)|SIMM13(~0),	"1", F_ALIAS, 0, v8 }, /* flush rs1+0 */
+{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1)|RS1_G0,	"i", F_ALIAS, 0, v8 }, /* flush %g0+i */
+{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"1+i", F_ALIAS, 0, v8 },
+{ "flush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"i+1", F_ALIAS, 0, v8 },
 
 /* IFLUSH was renamed to FLUSH in v8.  */
 { "iflush",	F3(2, 0x3b, 0), F3(~2, ~0x3b, ~0)|ASI(~0),	"1+2", F_ALIAS, 0, v6 },
@@ -825,29 +867,34 @@ const struct sparc_opcode sparc_opcodes[] = {
 
 { "wr",	F3(2, 0x30, 0),		F3(~2, ~0x30, ~0)|ASI(~0),		"1,2,m", 0, 0, v8 }, /* wr r,r,%asrX */
 { "wr",	F3(2, 0x30, 1),		F3(~2, ~0x30, ~1),			"1,i,m", 0, 0, v8 }, /* wr r,i,%asrX */
-{ "wr",	F3(2, 0x30, 0),		F3(~2, ~0x30, ~0)|RS1_G0|ASI(~0),	"2,m", F_ALIAS, 0, v8 }, /* wr %g0,rs2,%asrX */
-{ "wr",	F3(2, 0x30, 1),		F3(~2, ~0x30, ~1)|RS1_G0,		"i,m", F_ALIAS, 0, v8 }, /* wr %g0,i,%asrX */
-{ "wr",	F3(2, 0x30, 0),		F3(~2, ~0x30, ~0)|ASI_RS2(~0),		"1,m", F_ALIAS, 0, v8 }, /* wr rs1,%g0,%asrX */
+{ "wr",	F3(2, 0x30, 0),		F3(~2, ~0x30, ~0)|RS1_G0|ASI(~0),	"2,m", F_PREF_ALIAS, 0, v8 }, /* wr %g0,rs2,%asrX */
+{ "wr",	F3(2, 0x30, 1),		F3(~2, ~0x30, ~1)|RS1_G0,		"i,m", F_PREF_ALIAS, 0, v8 }, /* wr %g0,i,%asrX */
+{ "wr",	F3(2, 0x30, 1),		F3(~2, ~0x30, ~1)|SIMM13(~0),		"1,m", F_PREF_ALIAS, 0, v8 }, /* wr rs1,%asrX */
+{ "wr",	F3(2, 0x30, 0),		F3(~2, ~0x30, ~0)|ASI_RS2(~0),		"1,m", F_PREF_ALIAS, 0, v8 }, /* wr rs1,%g0,%asrX */
 { "wr",	F3(2, 0x30, 0),		F3(~2, ~0x30, ~0)|RD_G0|ASI(~0),	"1,2,y", 0, 0, v6 }, /* wr r,r,%y */
 { "wr",	F3(2, 0x30, 1),		F3(~2, ~0x30, ~1)|RD_G0,		"1,i,y", 0, 0, v6 }, /* wr r,i,%y */
-{ "wr",	F3(2, 0x30, 0),		F3(~2, ~0x30, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,y", F_ALIAS, 0, v6 }, /* wr %g0,rs2,%y */
-{ "wr",	F3(2, 0x30, 1),		F3(~2, ~0x30, ~1)|RD_G0|RS1_G0,		"i,y", F_ALIAS, 0, v6 }, /* wr %g0,i,%y */
-{ "wr",	F3(2, 0x30, 0),		F3(~2, ~0x30, ~0)|RD_G0|ASI_RS2(~0),	"1,y", F_ALIAS, 0, v6 }, /* wr rs1,%g0,%y */
+{ "wr",	F3(2, 0x30, 0),		F3(~2, ~0x30, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,y", F_PREF_ALIAS, 0, v6 }, /* wr %g0,rs2,%y */
+{ "wr",	F3(2, 0x30, 1),		F3(~2, ~0x30, ~1)|RD_G0|RS1_G0,		"i,y", F_PREF_ALIAS, 0, v6 }, /* wr %g0,i,%y */
+{ "wr",	F3(2, 0x30, 1),		F3(~2, ~0x30, ~1)|RD_G0|SIMM13(~0),	"1,y", F_PREF_ALIAS, 0, v6 }, /* wr rs1,0,%y */
+{ "wr",	F3(2, 0x30, 0),		F3(~2, ~0x30, ~0)|RD_G0|ASI_RS2(~0),	"1,y", F_PREF_ALIAS, 0, v6 }, /* wr rs1,%g0,%y */
 { "wr",	F3(2, 0x31, 0),		F3(~2, ~0x31, ~0)|RD_G0|ASI(~0),	"1,2,p", 0, 0, v6notv9 }, /* wr r,r,%psr */
 { "wr",	F3(2, 0x31, 1),		F3(~2, ~0x31, ~1)|RD_G0,		"1,i,p", 0, 0, v6notv9 }, /* wr r,i,%psr */
-{ "wr",	F3(2, 0x31, 0),		F3(~2, ~0x31, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,p", F_ALIAS, 0, v6notv9 }, /* wr %g0,rs2,%psr */
-{ "wr",	F3(2, 0x31, 1),		F3(~2, ~0x31, ~1)|RD_G0|RS1_G0,		"i,p", F_ALIAS, 0, v6notv9 }, /* wr %g0,i,%psr */
-{ "wr",	F3(2, 0x31, 0),		F3(~2, ~0x31, ~0)|RD_G0|ASI_RS2(~0),	"1,p", F_ALIAS, 0, v6notv9 }, /* wr rs1,%g0,%psr */
+{ "wr",	F3(2, 0x31, 0),		F3(~2, ~0x31, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,p", F_PREF_ALIAS, 0, v6notv9 }, /* wr %g0,rs2,%psr */
+{ "wr",	F3(2, 0x31, 1),		F3(~2, ~0x31, ~1)|RD_G0|RS1_G0,		"i,p", F_PREF_ALIAS, 0, v6notv9 }, /* wr %g0,i,%psr */
+{ "wr",	F3(2, 0x31, 1),		F3(~2, ~0x31, ~1)|RD_G0|SIMM13(~0),	"1,p", F_PREF_ALIAS, 0, v6notv9 }, /* wr rs1,0,%psr */
+{ "wr",	F3(2, 0x31, 0),		F3(~2, ~0x31, ~0)|RD_G0|ASI_RS2(~0),	"1,p", F_PREF_ALIAS, 0, v6notv9 }, /* wr rs1,%g0,%psr */
 { "wr",	F3(2, 0x32, 0),		F3(~2, ~0x32, ~0)|RD_G0|ASI(~0),	"1,2,w", 0, 0, v6notv9 }, /* wr r,r,%wim */
 { "wr",	F3(2, 0x32, 1),		F3(~2, ~0x32, ~1)|RD_G0,		"1,i,w", 0, 0, v6notv9 }, /* wr r,i,%wim */
-{ "wr",	F3(2, 0x32, 0),		F3(~2, ~0x32, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,w", F_ALIAS, 0, v6notv9 }, /* wr %g0,rs2,%wim */
-{ "wr",	F3(2, 0x32, 1),		F3(~2, ~0x32, ~1)|RD_G0|RS1_G0,		"i,w", F_ALIAS, 0, v6notv9 }, /* wr %g0,i,%wim */
-{ "wr",	F3(2, 0x32, 0),		F3(~2, ~0x32, ~0)|RD_G0|ASI_RS2(~0),	"1,w", F_ALIAS, 0, v6notv9 }, /* wr rs1,%g0,%wim */
+{ "wr",	F3(2, 0x32, 0),		F3(~2, ~0x32, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,w", F_PREF_ALIAS, 0, v6notv9 }, /* wr %g0,rs2,%wim */
+{ "wr",	F3(2, 0x32, 1),		F3(~2, ~0x32, ~1)|RD_G0|RS1_G0,		"i,w", F_PREF_ALIAS, 0, v6notv9 }, /* wr %g0,i,%wim */
+{ "wr",	F3(2, 0x32, 1),		F3(~2, ~0x32, ~1)|RD_G0|SIMM13(~0),	"1,w", F_PREF_ALIAS, 0, v6notv9 }, /* wr rs1,0,%wim */
+{ "wr",	F3(2, 0x32, 0),		F3(~2, ~0x32, ~0)|RD_G0|ASI_RS2(~0),	"1,w", F_PREF_ALIAS, 0, v6notv9 }, /* wr rs1,%g0,%wim */
 { "wr",	F3(2, 0x33, 0),		F3(~2, ~0x33, ~0)|RD_G0|ASI(~0),	"1,2,t", 0, 0, v6notv9 }, /* wr r,r,%tbr */
 { "wr",	F3(2, 0x33, 1),		F3(~2, ~0x33, ~1)|RD_G0,		"1,i,t", 0, 0, v6notv9 }, /* wr r,i,%tbr */
-{ "wr",	F3(2, 0x33, 0),		F3(~2, ~0x33, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,t", F_ALIAS, 0, v6notv9 }, /* wr %g0,rs2,%tbr */
-{ "wr",	F3(2, 0x33, 1),		F3(~2, ~0x33, ~1)|RD_G0|RS1_G0,		"i,t", F_ALIAS, 0, v6notv9 }, /* wr %g0,i,%tbr */
-{ "wr",	F3(2, 0x33, 0),		F3(~2, ~0x33, ~0)|RD_G0|ASI_RS2(~0),	"1,t", F_ALIAS, 0, v6notv9 }, /* wr rs1,%g0,%tbr */
+{ "wr",	F3(2, 0x33, 0),		F3(~2, ~0x33, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,t", F_PREF_ALIAS, 0, v6notv9 }, /* wr %g0,rs2,%tbr */
+{ "wr",	F3(2, 0x33, 1),		F3(~2, ~0x33, ~1)|RD_G0|RS1_G0,		"i,t", F_PREF_ALIAS, 0, v6notv9 }, /* wr %g0,i,%tbr */
+{ "wr",	F3(2, 0x33, 1),		F3(~2, ~0x33, ~1)|RD_G0|SIMM13(~0),	"1,t", F_PREF_ALIAS, 0, v6notv9 }, /* wr rs1,0,%tbr */
+{ "wr",	F3(2, 0x33, 0),		F3(~2, ~0x33, ~0)|RD_G0|ASI_RS2(~0),	"1,t", F_PREF_ALIAS, 0, v6notv9 }, /* wr rs1,%g0,%tbr */
 
 { "wr", F3(2, 0x30, 0)|RD(2),	F3(~2, ~0x30, ~0)|RD(~2)|ASI(~0),	"1,2,E", 0, 0, v9 }, /* wr r,r,%ccr */
 { "wr", F3(2, 0x30, 1)|RD(2),	F3(~2, ~0x30, ~1)|RD(~2),		"1,i,E", 0, 0, v9 }, /* wr r,i,%ccr */
@@ -903,9 +950,9 @@ const struct sparc_opcode sparc_opcodes[] = {
 { "rd",	F3(2, 0x28, 0)|RS1(19),		F3(~2, ~0x28, ~0)|RS1(~19)|SIMM13(~0),	"/,d", 0, HWCAP_VIS, v9a }, /* rd %gsr,r */
 { "rd",	F3(2, 0x28, 0)|RS1(22),		F3(~2, ~0x28, ~0)|RS1(~22)|SIMM13(~0),	"/,d", 0, HWCAP_VIS, v9a }, /* rd %softint,r */
 { "rd",	F3(2, 0x28, 0)|RS1(23),		F3(~2, ~0x28, ~0)|RS1(~23)|SIMM13(~0),	"/,d", 0, HWCAP_VIS, v9a }, /* rd %tick_cmpr,r */
-{ "rd",	F3(2, 0x28, 0)|RS1(24),		F3(~2, ~0x28, ~0)|RS1(~24)|SIMM13(~0),	"/,d", HWCAP_VIS2, 0, v9b }, /* rd %sys_tick,r */
-{ "rd",	F3(2, 0x28, 0)|RS1(25),		F3(~2, ~0x28, ~0)|RS1(~25)|SIMM13(~0),	"/,d", HWCAP_VIS2, 0, v9b }, /* rd %sys_tick_cmpr,r */
-{ "rd",	F3(2, 0x28, 0)|RS1(26),		F3(~2, ~0x28, ~0)|RS1(~26)|SIMM13(~0),	"/,d", HWCAP_CBCOND, 0, v9b }, /* rd %cfr,r */
+{ "rd",	F3(2, 0x28, 0)|RS1(24),		F3(~2, ~0x28, ~0)|RS1(~24)|SIMM13(~0),	"/,d", 0, HWCAP_VIS2, v9b }, /* rd %sys_tick,r */
+{ "rd",	F3(2, 0x28, 0)|RS1(25),		F3(~2, ~0x28, ~0)|RS1(~25)|SIMM13(~0),	"/,d", 0, HWCAP_VIS2, v9b }, /* rd %sys_tick_cmpr,r */
+{ "rd",	F3(2, 0x28, 0)|RS1(26),		F3(~2, ~0x28, ~0)|RS1(~26)|SIMM13(~0),	"/,d", 0, HWCAP_CBCOND, v9b }, /* rd %cfr,r */
 { "rd",	F3(2, 0x28, 0)|RS1(28),		F3(~2, ~0x28, ~0)|RS1(~28)|SIMM13(~0),	"/,d", 0, HWCAP_VIS3, v9b }, /* rd %cps,r */
 
 { "rdpr",	F3(2, 0x2a, 0),		F3(~2, ~0x2a, ~0)|SIMM13(~0),	"?,d", 0, 0, v9 },   /* rdpr %priv,r */
@@ -922,18 +969,6 @@ const struct sparc_opcode sparc_opcodes[] = {
 { "wrhpr",	F3(2, 0x33, 1),		F3(~2, ~0x33, ~1),		"i,1,%", F_ALIAS, 0, v9 }, /* wrhpr i,r1,%hpriv */
 { "wrhpr",	F3(2, 0x33, 1),		F3(~2, ~0x33, ~1)|RS1(~0),	"i,%", 0, 0, v9 },   /* wrhpr i,%hpriv */
 
-/* ??? This group seems wrong.  A three operand move?  */
-{ "mov",	F3(2, 0x30, 0), F3(~2, ~0x30, ~0)|ASI(~0),		"1,2,m", F_ALIAS, 0, v8 }, /* wr r,r,%asrX */
-{ "mov",	F3(2, 0x30, 1), F3(~2, ~0x30, ~1),			"1,i,m", F_ALIAS, 0, v8 }, /* wr r,i,%asrX */
-{ "mov",	F3(2, 0x30, 0), F3(~2, ~0x30, ~0)|RD_G0|ASI(~0),	"1,2,y", F_ALIAS, 0, v6 }, /* wr r,r,%y */
-{ "mov",	F3(2, 0x30, 1), F3(~2, ~0x30, ~1)|RD_G0,		"1,i,y", F_ALIAS, 0, v6 }, /* wr r,i,%y */
-{ "mov",	F3(2, 0x31, 0), F3(~2, ~0x31, ~0)|RD_G0|ASI(~0),	"1,2,p", F_ALIAS, 0, v6notv9 }, /* wr r,r,%psr */
-{ "mov",	F3(2, 0x31, 1), F3(~2, ~0x31, ~1)|RD_G0,		"1,i,p", F_ALIAS, 0, v6notv9 }, /* wr r,i,%psr */
-{ "mov",	F3(2, 0x32, 0), F3(~2, ~0x32, ~0)|RD_G0|ASI(~0),	"1,2,w", F_ALIAS, 0, v6notv9 }, /* wr r,r,%wim */
-{ "mov",	F3(2, 0x32, 1), F3(~2, ~0x32, ~1)|RD_G0,		"1,i,w", F_ALIAS, 0, v6notv9 }, /* wr r,i,%wim */
-{ "mov",	F3(2, 0x33, 0), F3(~2, ~0x33, ~0)|RD_G0|ASI(~0),	"1,2,t", F_ALIAS, 0, v6notv9 }, /* wr r,r,%tbr */
-{ "mov",	F3(2, 0x33, 1), F3(~2, ~0x33, ~1)|RD_G0,		"1,i,t", F_ALIAS, 0, v6notv9 }, /* wr r,i,%tbr */
-
 { "mov",	F3(2, 0x28, 0), F3(~2, ~0x28, ~0)|SIMM13(~0),		"M,d", F_ALIAS, 0, v8 }, /* rd %asr1,r */
 { "mov",	F3(2, 0x28, 0), F3(~2, ~0x28, ~0)|RS1_G0|SIMM13(~0),	"y,d", F_ALIAS, 0, v6 }, /* rd %y,r */
 { "mov",	F3(2, 0x29, 0), F3(~2, ~0x29, ~0)|RS1_G0|SIMM13(~0),	"p,d", F_ALIAS, 0, v6notv9 }, /* rd %psr,r */
@@ -942,24 +977,14 @@ const struct sparc_opcode sparc_opcodes[] = {
 
 { "mov",	F3(2, 0x30, 0), F3(~2, ~0x30, ~0)|RS1_G0|ASI(~0),	"2,m", F_ALIAS, 0, v8 }, /* wr %g0,rs2,%asrX */
 { "mov",	F3(2, 0x30, 1), F3(~2, ~0x30, ~1)|RS1_G0,		"i,m", F_ALIAS, 0, v8 }, /* wr %g0,i,%asrX */
-{ "mov",	F3(2, 0x30, 0), F3(~2, ~0x30, ~0)|ASI_RS2(~0),		"1,m", F_ALIAS, 0, v8 }, /* wr rs1,%g0,%asrX */
-{ "mov",	F3(2, 0x30, 1), F3(~2, ~0x30, ~1)|SIMM13(~0),		"1,m", F_ALIAS, 0, v8 }, /* wr rs1,0,%asrX */
 { "mov",	F3(2, 0x30, 0), F3(~2, ~0x30, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,y", F_ALIAS, 0, v6 }, /* wr %g0,rs2,%y */
 { "mov",	F3(2, 0x30, 1), F3(~2, ~0x30, ~1)|RD_G0|RS1_G0,		"i,y", F_ALIAS, 0, v6 }, /* wr %g0,i,%y */
-{ "mov",	F3(2, 0x30, 0), F3(~2, ~0x30, ~0)|RD_G0|ASI_RS2(~0),	"1,y", F_ALIAS, 0, v6 }, /* wr rs1,%g0,%y */
-{ "mov",	F3(2, 0x30, 1), F3(~2, ~0x30, ~1)|RD_G0|SIMM13(~0),	"1,y", F_ALIAS, 0, v6 }, /* wr rs1,0,%y */
 { "mov",	F3(2, 0x31, 0), F3(~2, ~0x31, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,p", F_ALIAS, 0, v6notv9 }, /* wr %g0,rs2,%psr */
 { "mov",	F3(2, 0x31, 1), F3(~2, ~0x31, ~1)|RD_G0|RS1_G0,		"i,p", F_ALIAS, 0, v6notv9 }, /* wr %g0,i,%psr */
-{ "mov",	F3(2, 0x31, 0), F3(~2, ~0x31, ~0)|RD_G0|ASI_RS2(~0),	"1,p", F_ALIAS, 0, v6notv9 }, /* wr rs1,%g0,%psr */
-{ "mov",	F3(2, 0x31, 1), F3(~2, ~0x31, ~1)|RD_G0|SIMM13(~0),	"1,p", F_ALIAS, 0, v6notv9 }, /* wr rs1,0,%psr */
 { "mov",	F3(2, 0x32, 0), F3(~2, ~0x32, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,w", F_ALIAS, 0, v6notv9 }, /* wr %g0,rs2,%wim */
 { "mov",	F3(2, 0x32, 1), F3(~2, ~0x32, ~1)|RD_G0|RS1_G0,		"i,w", F_ALIAS, 0, v6notv9 }, /* wr %g0,i,%wim */
-{ "mov",	F3(2, 0x32, 0), F3(~2, ~0x32, ~0)|RD_G0|ASI_RS2(~0),	"1,w", F_ALIAS, 0, v6notv9 }, /* wr rs1,%g0,%wim */
-{ "mov",	F3(2, 0x32, 1), F3(~2, ~0x32, ~1)|RD_G0|SIMM13(~0),	"1,w", F_ALIAS, 0, v6notv9 }, /* wr rs1,0,%wim */
 { "mov",	F3(2, 0x33, 0), F3(~2, ~0x33, ~0)|RD_G0|RS1_G0|ASI(~0),	"2,t", F_ALIAS, 0, v6notv9 }, /* wr %g0,rs2,%tbr */
 { "mov",	F3(2, 0x33, 1), F3(~2, ~0x33, ~1)|RD_G0|RS1_G0,		"i,t", F_ALIAS, 0, v6notv9 }, /* wr %g0,i,%tbr */
-{ "mov",	F3(2, 0x33, 0), F3(~2, ~0x33, ~0)|RD_G0|ASI_RS2(~0),	"1,t", F_ALIAS, 0, v6notv9 }, /* wr rs1,%g0,%tbr */
-{ "mov",	F3(2, 0x33, 1), F3(~2, ~0x33, ~1)|RD_G0|SIMM13(~0),	"1,t", F_ALIAS, 0, v6notv9 }, /* wr rs1,0,%tbr */
 
 { "mov",	F3(2, 0x02, 0), F3(~2, ~0x02, ~0)|RS1_G0|ASI(~0),	"2,d", 0, 0, v6 }, /* or %g0,rs2,d */
 { "mov",	F3(2, 0x02, 1), F3(~2, ~0x02, ~1)|RS1_G0,		"i,d", 0, 0, v6 }, /* or %g0,i,d	*/
@@ -1202,30 +1227,34 @@ cond ("bz",	"tz",   CONDZ, F_CONDBR|F_ALIAS), /* for e */
 /* v9 */ condr("brlez", 0x2, F_CONDBR),
 /* v9 */ condr("brgz", 0x6, F_CONDBR),
 
-#define cbcond(cop, cmask) \
+#define cbcond(cop, cmask, flgs) \
   { "cw" cop, F2(0, 3)|CBCOND(cmask)|F3I(0),F2(~0,~3)|CBCOND(~(cmask))|F3I(~0)|CBCOND_XCC, \
-    "1,2,=", F_CONDBR, HWCAP_CBCOND, v9}, \
+    "1,2,=", flgs, HWCAP_CBCOND, v9}, \
   { "cw" cop, F2(0, 3)|CBCOND(cmask)|F3I(1),F2(~0,~3)|CBCOND(~(cmask))|F3I(~1)|CBCOND_XCC, \
-    "1,X,=", F_CONDBR, HWCAP_CBCOND, v9}, \
+    "1,X,=", flgs, HWCAP_CBCOND, v9}, \
   { "cx" cop, F2(0, 3)|CBCOND(cmask)|F3I(0)|CBCOND_XCC,F2(~0,~3)|CBCOND(~(cmask))|F3I(~0), \
-    "1,2,=", F_CONDBR, HWCAP_CBCOND, v9}, \
+    "1,2,=", flgs, HWCAP_CBCOND, v9}, \
   { "cx" cop, F2(0, 3)|CBCOND(cmask)|F3I(1)|CBCOND_XCC,F2(~0,~3)|CBCOND(~(cmask))|F3I(~1), \
-    "1,X,=", F_CONDBR, HWCAP_CBCOND, v9},
+    "1,X,=", flgs, HWCAP_CBCOND, v9},
 
-cbcond("be",   0x09)
-cbcond("ble",  0x0a)
-cbcond("bl",   0x0b)
-cbcond("bleu", 0x0c)
-cbcond("bcs",  0x0d)
-cbcond("bneg", 0x0e)
-cbcond("bvs",  0x0f)
-cbcond("bne",  0x19)
-cbcond("bg",   0x1a)
-cbcond("bge",  0x1b)
-cbcond("bgu",  0x1c)
-cbcond("bcc",  0x1d)
-cbcond("bpos", 0x1e)
-cbcond("bvc",  0x1f)
+cbcond("be",   0x09, F_CONDBR)
+cbcond("bz",   0x09, F_CONDBR|F_ALIAS)
+cbcond("ble",  0x0a, F_CONDBR)
+cbcond("bl",   0x0b, F_CONDBR)
+cbcond("bleu", 0x0c, F_CONDBR)
+cbcond("bcs",  0x0d, F_CONDBR)
+cbcond("blu",  0x0d, F_CONDBR|F_ALIAS)
+cbcond("bneg", 0x0e, F_CONDBR)
+cbcond("bvs",  0x0f, F_CONDBR)
+cbcond("bne",  0x19, F_CONDBR)
+cbcond("bnz",  0x19, F_CONDBR|F_ALIAS)
+cbcond("bg",   0x1a, F_CONDBR)
+cbcond("bge",  0x1b, F_CONDBR)
+cbcond("bgu",  0x1c, F_CONDBR)
+cbcond("bcc",  0x1d, F_CONDBR)
+cbcond("bgeu", 0x1d, F_CONDBR|F_ALIAS)
+cbcond("bpos", 0x1e, F_CONDBR)
+cbcond("bvc",  0x1f, F_CONDBR)
 
 #undef cbcond
 #undef condr /* v9 */
@@ -1706,8 +1735,9 @@ EFPOP2_2 ("efcmpes",	0x055, "e,f"),
 
 /* sparclet specific insns */
 
-COMMUTEOP ("umac", 0x3e, sparclet),
-COMMUTEOP ("smac", 0x3f, sparclet),
+COMMUTEOP ("umac", 0x3e, letandleon),
+COMMUTEOP ("smac", 0x3f, letandleon),
+
 COMMUTEOP ("umacd", 0x2e, sparclet),
 COMMUTEOP ("smacd", 0x2f, sparclet),
 COMMUTEOP ("umuld", 0x09, sparclet),
@@ -1758,8 +1788,8 @@ SLCBCC("cbnefr", 15),
 #undef SLCBCC2
 #undef SLCBCC
 
-{ "casa",	F3(3, 0x3c, 0), F3(~3, ~0x3c, ~0), "[1]A,2,d", 0, 0, v9 },
-{ "casa",	F3(3, 0x3c, 1), F3(~3, ~0x3c, ~1), "[1]o,2,d", 0, 0, v9 },
+{ "casa",	F3(3, 0x3c, 0), F3(~3, ~0x3c, ~0), "[1]A,2,d", 0, 0, v9andleon },
+{ "casa",	F3(3, 0x3c, 1), F3(~3, ~0x3c, ~1), "[1]o,2,d", 0, 0, v9andleon },
 { "casxa",	F3(3, 0x3e, 0), F3(~3, ~0x3e, ~0), "[1]A,2,d", 0, 0, v9 },
 { "casxa",	F3(3, 0x3e, 1), F3(~3, ~0x3e, ~1), "[1]o,2,d", 0, 0, v9 },
 
@@ -1769,8 +1799,8 @@ SLCBCC("cbnefr", 15),
 { "signx",	F3(2, 0x27, 0), F3(~2, ~0x27, ~0)|(1<<12)|ASI(~0)|RS2_G0, "r", F_ALIAS, 0, v9 }, /* sra rd,%g0,rd */
 { "clruw",	F3(2, 0x26, 0), F3(~2, ~0x26, ~0)|(1<<12)|ASI(~0)|RS2_G0, "1,d", F_ALIAS, 0, v9 }, /* srl rs1,%g0,rd */
 { "clruw",	F3(2, 0x26, 0), F3(~2, ~0x26, ~0)|(1<<12)|ASI(~0)|RS2_G0, "r", F_ALIAS, 0, v9 }, /* srl rd,%g0,rd */
-{ "cas",	F3(3, 0x3c, 0)|ASI(0x80), F3(~3, ~0x3c, ~0)|ASI(~0x80), "[1],2,d", F_ALIAS, 0, v9 }, /* casa [rs1]ASI_P,rs2,rd */
-{ "casl",	F3(3, 0x3c, 0)|ASI(0x88), F3(~3, ~0x3c, ~0)|ASI(~0x88), "[1],2,d", F_ALIAS, 0, v9 }, /* casa [rs1]ASI_P_L,rs2,rd */
+{ "cas",	F3(3, 0x3c, 0)|ASI(0x80), F3(~3, ~0x3c, ~0)|ASI(~0x80), "[1],2,d", F_ALIAS, 0, v9andleon }, /* casa [rs1]ASI_P,rs2,rd */
+{ "casl",	F3(3, 0x3c, 0)|ASI(0x88), F3(~3, ~0x3c, ~0)|ASI(~0x88), "[1],2,d", F_ALIAS, 0, v9andleon }, /* casa [rs1]ASI_P_L,rs2,rd */
 { "casx",	F3(3, 0x3e, 0)|ASI(0x80), F3(~3, ~0x3e, ~0)|ASI(~0x80), "[1],2,d", F_ALIAS, 0, v9 }, /* casxa [rs1]ASI_P,rs2,rd */
 { "casxl",	F3(3, 0x3e, 0)|ASI(0x88), F3(~3, ~0x3e, ~0)|ASI(~0x88), "[1],2,d", F_ALIAS, 0, v9 }, /* casxa [rs1]ASI_P_L,rs2,rd */
 
@@ -1806,54 +1836,89 @@ SLCBCC("cbnefr", 15),
 { "alignaddrl",	F3F(2, 0x36, 0x01a), F3F(~2, ~0x36, ~0x01a), "1,2,d", 0, HWCAP_VIS, v9a },
 { "faligndata",	F3F(2, 0x36, 0x048), F3F(~2, ~0x36, ~0x048), "v,B,H", 0, HWCAP_VIS, v9a },
 
-{ "fzero",	F3F(2, 0x36, 0x060), F3F(~2, ~0x36, ~0x060), "H", 0, HWCAP_VIS, v9a },
+{ "fzerod",	F3F(2, 0x36, 0x060), F3F(~2, ~0x36, ~0x060), "H", 0, HWCAP_VIS, v9a },
+{ "fzero",	F3F(2, 0x36, 0x060), F3F(~2, ~0x36, ~0x060), "H", F_ALIAS, HWCAP_VIS, v9a },
 { "fzeros",	F3F(2, 0x36, 0x061), F3F(~2, ~0x36, ~0x061), "g", 0, HWCAP_VIS, v9a },
-{ "fone",	F3F(2, 0x36, 0x07e), F3F(~2, ~0x36, ~0x07e), "H", 0, HWCAP_VIS, v9a },
+{ "foned",	F3F(2, 0x36, 0x07e), F3F(~2, ~0x36, ~0x07e), "H", 0, HWCAP_VIS, v9a },
+{ "fone",	F3F(2, 0x36, 0x07e), F3F(~2, ~0x36, ~0x07e), "H", F_ALIAS, HWCAP_VIS, v9a },
 { "fones",	F3F(2, 0x36, 0x07f), F3F(~2, ~0x36, ~0x07f), "g", 0, HWCAP_VIS, v9a },
-{ "fsrc1",	F3F(2, 0x36, 0x074), F3F(~2, ~0x36, ~0x074), "v,H", 0, HWCAP_VIS, v9a },
+{ "fsrc1d",	F3F(2, 0x36, 0x074), F3F(~2, ~0x36, ~0x074), "v,H", 0, HWCAP_VIS, v9a },
+{ "fsrc1",	F3F(2, 0x36, 0x074), F3F(~2, ~0x36, ~0x074), "v,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fsrc1s",	F3F(2, 0x36, 0x075), F3F(~2, ~0x36, ~0x075), "e,g", 0, HWCAP_VIS, v9a },
-{ "fsrc2",	F3F(2, 0x36, 0x078), F3F(~2, ~0x36, ~0x078), "B,H", 0, HWCAP_VIS, v9a },
+{ "fsrc2d",	F3F(2, 0x36, 0x078), F3F(~2, ~0x36, ~0x078), "B,H", 0, HWCAP_VIS, v9a },
+{ "fsrc2",	F3F(2, 0x36, 0x078), F3F(~2, ~0x36, ~0x078), "B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fsrc2s",	F3F(2, 0x36, 0x079), F3F(~2, ~0x36, ~0x079), "f,g", 0, HWCAP_VIS, v9a },
-{ "fnot1",	F3F(2, 0x36, 0x06a), F3F(~2, ~0x36, ~0x06a), "v,H", 0, HWCAP_VIS, v9a },
+{ "fnot1d",	F3F(2, 0x36, 0x06a), F3F(~2, ~0x36, ~0x06a), "v,H", 0, HWCAP_VIS, v9a },
+{ "fnot1",	F3F(2, 0x36, 0x06a), F3F(~2, ~0x36, ~0x06a), "v,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fnot1s",	F3F(2, 0x36, 0x06b), F3F(~2, ~0x36, ~0x06b), "e,g", 0, HWCAP_VIS, v9a },
-{ "fnot2",	F3F(2, 0x36, 0x066), F3F(~2, ~0x36, ~0x066), "B,H", 0, HWCAP_VIS, v9a },
+{ "fnot2d",	F3F(2, 0x36, 0x066), F3F(~2, ~0x36, ~0x066), "B,H", 0, HWCAP_VIS, v9a },
+{ "fnot2",	F3F(2, 0x36, 0x066), F3F(~2, ~0x36, ~0x066), "B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fnot2s",	F3F(2, 0x36, 0x067), F3F(~2, ~0x36, ~0x067), "f,g", 0, HWCAP_VIS, v9a },
-{ "for",	F3F(2, 0x36, 0x07c), F3F(~2, ~0x36, ~0x07c), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "ford",	F3F(2, 0x36, 0x07c), F3F(~2, ~0x36, ~0x07c), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "for",	F3F(2, 0x36, 0x07c), F3F(~2, ~0x36, ~0x07c), "v,B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fors",	F3F(2, 0x36, 0x07d), F3F(~2, ~0x36, ~0x07d), "e,f,g", 0, HWCAP_VIS, v9a },
-{ "fnor",	F3F(2, 0x36, 0x062), F3F(~2, ~0x36, ~0x062), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fnord",	F3F(2, 0x36, 0x062), F3F(~2, ~0x36, ~0x062), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fnor",	F3F(2, 0x36, 0x062), F3F(~2, ~0x36, ~0x062), "v,B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fnors",	F3F(2, 0x36, 0x063), F3F(~2, ~0x36, ~0x063), "e,f,g", 0, HWCAP_VIS, v9a },
-{ "fand",	F3F(2, 0x36, 0x070), F3F(~2, ~0x36, ~0x070), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fandd",	F3F(2, 0x36, 0x070), F3F(~2, ~0x36, ~0x070), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fand",	F3F(2, 0x36, 0x070), F3F(~2, ~0x36, ~0x070), "v,B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fands",	F3F(2, 0x36, 0x071), F3F(~2, ~0x36, ~0x071), "e,f,g", 0, HWCAP_VIS, v9a },
-{ "fnand",	F3F(2, 0x36, 0x06e), F3F(~2, ~0x36, ~0x06e), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fnandd",	F3F(2, 0x36, 0x06e), F3F(~2, ~0x36, ~0x06e), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fnand",	F3F(2, 0x36, 0x06e), F3F(~2, ~0x36, ~0x06e), "v,B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fnands",	F3F(2, 0x36, 0x06f), F3F(~2, ~0x36, ~0x06f), "e,f,g", 0, HWCAP_VIS, v9a },
-{ "fxor",	F3F(2, 0x36, 0x06c), F3F(~2, ~0x36, ~0x06c), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fxord",	F3F(2, 0x36, 0x06c), F3F(~2, ~0x36, ~0x06c), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fxor",	F3F(2, 0x36, 0x06c), F3F(~2, ~0x36, ~0x06c), "v,B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fxors",	F3F(2, 0x36, 0x06d), F3F(~2, ~0x36, ~0x06d), "e,f,g", 0, HWCAP_VIS, v9a },
-{ "fxnor",	F3F(2, 0x36, 0x072), F3F(~2, ~0x36, ~0x072), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fxnord",	F3F(2, 0x36, 0x072), F3F(~2, ~0x36, ~0x072), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fxnor",	F3F(2, 0x36, 0x072), F3F(~2, ~0x36, ~0x072), "v,B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fxnors",	F3F(2, 0x36, 0x073), F3F(~2, ~0x36, ~0x073), "e,f,g", 0, HWCAP_VIS, v9a },
-{ "fornot1",	F3F(2, 0x36, 0x07a), F3F(~2, ~0x36, ~0x07a), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fornot1d",	F3F(2, 0x36, 0x07a), F3F(~2, ~0x36, ~0x07a), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fornot1",	F3F(2, 0x36, 0x07a), F3F(~2, ~0x36, ~0x07a), "v,B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fornot1s",	F3F(2, 0x36, 0x07b), F3F(~2, ~0x36, ~0x07b), "e,f,g", 0, HWCAP_VIS, v9a },
-{ "fornot2",	F3F(2, 0x36, 0x076), F3F(~2, ~0x36, ~0x076), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fornot2d",	F3F(2, 0x36, 0x076), F3F(~2, ~0x36, ~0x076), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fornot2",	F3F(2, 0x36, 0x076), F3F(~2, ~0x36, ~0x076), "v,B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fornot2s",	F3F(2, 0x36, 0x077), F3F(~2, ~0x36, ~0x077), "e,f,g", 0, HWCAP_VIS, v9a },
-{ "fandnot1",	F3F(2, 0x36, 0x068), F3F(~2, ~0x36, ~0x068), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fandnot1d",	F3F(2, 0x36, 0x068), F3F(~2, ~0x36, ~0x068), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fandnot1",	F3F(2, 0x36, 0x068), F3F(~2, ~0x36, ~0x068), "v,B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fandnot1s",	F3F(2, 0x36, 0x069), F3F(~2, ~0x36, ~0x069), "e,f,g", 0, HWCAP_VIS, v9a },
-{ "fandnot2",	F3F(2, 0x36, 0x064), F3F(~2, ~0x36, ~0x064), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fandnot2d",	F3F(2, 0x36, 0x064), F3F(~2, ~0x36, ~0x064), "v,B,H", 0, HWCAP_VIS, v9a },
+{ "fandnot2",	F3F(2, 0x36, 0x064), F3F(~2, ~0x36, ~0x064), "v,B,H", F_ALIAS, HWCAP_VIS, v9a },
 { "fandnot2s",	F3F(2, 0x36, 0x065), F3F(~2, ~0x36, ~0x065), "e,f,g", 0, HWCAP_VIS, v9a },
 
-{ "fcmpgt16",	F3F(2, 0x36, 0x028), F3F(~2, ~0x36, ~0x028), "v,B,d", 0, HWCAP_VIS, v9a },
-{ "fcmpgt32",	F3F(2, 0x36, 0x02c), F3F(~2, ~0x36, ~0x02c), "v,B,d", 0, HWCAP_VIS, v9a },
-{ "fcmple16",	F3F(2, 0x36, 0x020), F3F(~2, ~0x36, ~0x020), "v,B,d", 0, HWCAP_VIS, v9a },
-{ "fcmple32",	F3F(2, 0x36, 0x024), F3F(~2, ~0x36, ~0x024), "v,B,d", 0, HWCAP_VIS, v9a },
-{ "fcmpne16",	F3F(2, 0x36, 0x022), F3F(~2, ~0x36, ~0x022), "v,B,d", 0, HWCAP_VIS, v9a },
-{ "fcmpne32",	F3F(2, 0x36, 0x026), F3F(~2, ~0x36, ~0x026), "v,B,d", 0, HWCAP_VIS, v9a },
-{ "fcmpeq16",	F3F(2, 0x36, 0x02a), F3F(~2, ~0x36, ~0x02a), "v,B,d", 0, HWCAP_VIS, v9a },
-{ "fcmpeq32",	F3F(2, 0x36, 0x02e), F3F(~2, ~0x36, ~0x02e), "v,B,d", 0, HWCAP_VIS, v9a },
+{ "fpcmpgt16",	F3F(2, 0x36, 0x028), F3F(~2, ~0x36, ~0x028), "v,B,d", 0, HWCAP_VIS, v9a },
+{ "fcmpgt16",	F3F(2, 0x36, 0x028), F3F(~2, ~0x36, ~0x028), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "fpcmpgt32",	F3F(2, 0x36, 0x02c), F3F(~2, ~0x36, ~0x02c), "v,B,d", 0, HWCAP_VIS, v9a },
+{ "fcmpgt32",	F3F(2, 0x36, 0x02c), F3F(~2, ~0x36, ~0x02c), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "fpcmple16",	F3F(2, 0x36, 0x020), F3F(~2, ~0x36, ~0x020), "v,B,d", 0, HWCAP_VIS, v9a },
+{ "fcmple16",	F3F(2, 0x36, 0x020), F3F(~2, ~0x36, ~0x020), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "fpcmple32",	F3F(2, 0x36, 0x024), F3F(~2, ~0x36, ~0x024), "v,B,d", 0, HWCAP_VIS, v9a },
+{ "fcmple32",	F3F(2, 0x36, 0x024), F3F(~2, ~0x36, ~0x024), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "fpcmpne16",	F3F(2, 0x36, 0x022), F3F(~2, ~0x36, ~0x022), "v,B,d", 0, HWCAP_VIS, v9a },
+{ "fpcmpune16",	F3F(2, 0x36, 0x022), F3F(~2, ~0x36, ~0x022), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "fcmpne16",	F3F(2, 0x36, 0x022), F3F(~2, ~0x36, ~0x022), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "fpcmpne32",	F3F(2, 0x36, 0x026), F3F(~2, ~0x36, ~0x026), "v,B,d", 0, HWCAP_VIS, v9a },
+{ "fpcmpune32",	F3F(2, 0x36, 0x026), F3F(~2, ~0x36, ~0x026), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "fcmpne32",	F3F(2, 0x36, 0x026), F3F(~2, ~0x36, ~0x026), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "fpcmpeq16",	F3F(2, 0x36, 0x02a), F3F(~2, ~0x36, ~0x02a), "v,B,d", 0, HWCAP_VIS, v9a },
+{ "fpcmpueq16",	F3F(2, 0x36, 0x02a), F3F(~2, ~0x36, ~0x02a), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "fcmpeq16",	F3F(2, 0x36, 0x02a), F3F(~2, ~0x36, ~0x02a), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "fpcmpeq32",	F3F(2, 0x36, 0x02e), F3F(~2, ~0x36, ~0x02e), "v,B,d", 0, HWCAP_VIS, v9a },
+{ "fpcmpueq32",	F3F(2, 0x36, 0x02e), F3F(~2, ~0x36, ~0x02e), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "fcmpeq32",	F3F(2, 0x36, 0x02e), F3F(~2, ~0x36, ~0x02e), "v,B,d", F_ALIAS, HWCAP_VIS, v9a },
 
-{ "edge8",	F3F(2, 0x36, 0x000), F3F(~2, ~0x36, ~0x000), "1,2,d", 0, HWCAP_VIS, v9a },
-{ "edge8l",	F3F(2, 0x36, 0x002), F3F(~2, ~0x36, ~0x002), "1,2,d", 0, HWCAP_VIS, v9a },
-{ "edge16",	F3F(2, 0x36, 0x004), F3F(~2, ~0x36, ~0x004), "1,2,d", 0, HWCAP_VIS, v9a },
-{ "edge16l",	F3F(2, 0x36, 0x006), F3F(~2, ~0x36, ~0x006), "1,2,d", 0, HWCAP_VIS, v9a },
-{ "edge32",	F3F(2, 0x36, 0x008), F3F(~2, ~0x36, ~0x008), "1,2,d", 0, HWCAP_VIS, v9a },
-{ "edge32l",	F3F(2, 0x36, 0x00a), F3F(~2, ~0x36, ~0x00a), "1,2,d", 0, HWCAP_VIS, v9a },
+{ "edge8cc",	F3F(2, 0x36, 0x000), F3F(~2, ~0x36, ~0x000), "1,2,d", 0, HWCAP_VIS, v9a },
+{ "edge8lcc",	F3F(2, 0x36, 0x002), F3F(~2, ~0x36, ~0x002), "1,2,d", 0, HWCAP_VIS, v9a },
+{ "edge16cc",	F3F(2, 0x36, 0x004), F3F(~2, ~0x36, ~0x004), "1,2,d", 0, HWCAP_VIS, v9a },
+{ "edge16lcc",	F3F(2, 0x36, 0x006), F3F(~2, ~0x36, ~0x006), "1,2,d", 0, HWCAP_VIS, v9a },
+{ "edge32cc",	F3F(2, 0x36, 0x008), F3F(~2, ~0x36, ~0x008), "1,2,d", 0, HWCAP_VIS, v9a },
+{ "edge32lcc",	F3F(2, 0x36, 0x00a), F3F(~2, ~0x36, ~0x00a), "1,2,d", 0, HWCAP_VIS, v9a },
+
+{ "edge8",	F3F(2, 0x36, 0x000), F3F(~2, ~0x36, ~0x000), "1,2,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "edge8l",	F3F(2, 0x36, 0x002), F3F(~2, ~0x36, ~0x002), "1,2,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "edge16",	F3F(2, 0x36, 0x004), F3F(~2, ~0x36, ~0x004), "1,2,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "edge16l",	F3F(2, 0x36, 0x006), F3F(~2, ~0x36, ~0x006), "1,2,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "edge32",	F3F(2, 0x36, 0x008), F3F(~2, ~0x36, ~0x008), "1,2,d", F_ALIAS, HWCAP_VIS, v9a },
+{ "edge32l",	F3F(2, 0x36, 0x00a), F3F(~2, ~0x36, ~0x00a), "1,2,d", F_ALIAS, HWCAP_VIS, v9a },
 
 { "pdist",	F3F(2, 0x36, 0x03e), F3F(~2, ~0x36, ~0x03e), "v,B,H", 0, HWCAP_VIS, v9a },
 
@@ -1908,7 +1973,8 @@ SLCBCC("cbnefr", 15),
 { "addxccc",	F3F(2, 0x36, 0x013), F3F(~2, ~0x36, ~0x013), "1,2,d", 0, HWCAP_VIS3, v9b },
 { "random",	F3F(2, 0x36, 0x015), F3F(~2, ~0x36, ~0x015), "H", F_FLOAT, HWCAP_RANDOM, v9b },
 { "umulxhi",	F3F(2, 0x36, 0x016), F3F(~2, ~0x36, ~0x016), "1,2,d", 0, HWCAP_VIS3, v9b },
-{ "lzd",	F3F(2, 0x36, 0x017), F3F(~2, ~0x36, ~0x017), "2,d", 0, HWCAP_VIS3, v9b },
+{ "lzcnt",	F3F(2, 0x36, 0x017), F3F(~2, ~0x36, ~0x017), "2,d", 0, HWCAP_VIS3, v9b },
+{ "lzd",	F3F(2, 0x36, 0x017), F3F(~2, ~0x36, ~0x017), "2,d", F_ALIAS, HWCAP_VIS3, v9b },
 { "cmask8",	F3F(2, 0x36, 0x01b), F3F(~2, ~0x36, ~0x01b), "2", 0, HWCAP_VIS3, v9b },
 { "cmask16",	F3F(2, 0x36, 0x01d), F3F(~2, ~0x36, ~0x01d), "2", 0, HWCAP_VIS3, v9b },
 { "cmask32",	F3F(2, 0x36, 0x01f), F3F(~2, ~0x36, ~0x01f), "2", 0, HWCAP_VIS3, v9b },
@@ -1940,10 +2006,16 @@ SLCBCC("cbnefr", 15),
 { "movwtos",	F3F(2, 0x36, 0x119), F3F(~2, ~0x36, ~0x119), "2,g", F_FLOAT, HWCAP_VIS3, v9b },
 { "xmulx",	F3F(2, 0x36, 0x115), F3F(~2, ~0x36, ~0x115), "1,2,d", 0, HWCAP_VIS3, v9b },
 { "xmulxhi",	F3F(2, 0x36, 0x116), F3F(~2, ~0x36, ~0x116), "1,2,d", 0, HWCAP_VIS3, v9b },
-{ "fucmple8",	F3F(2, 0x36, 0x120), F3F(~2, ~0x36, ~0x120), "v,B,d", 0, HWCAP_VIS3, v9b },
-{ "fucmpne8",	F3F(2, 0x36, 0x122), F3F(~2, ~0x36, ~0x122), "v,B,d", 0, HWCAP_VIS3, v9b },
-{ "fucmpgt8",	F3F(2, 0x36, 0x128), F3F(~2, ~0x36, ~0x128), "v,B,d", 0, HWCAP_VIS3, v9b },
-{ "fucmpeq8",	F3F(2, 0x36, 0x12a), F3F(~2, ~0x36, ~0x12a), "v,B,d", 0, HWCAP_VIS3, v9b },
+{ "fpcmpule8",	F3F(2, 0x36, 0x120), F3F(~2, ~0x36, ~0x120), "v,B,d", 0, HWCAP_VIS3, v9b },
+{ "fucmple8",	F3F(2, 0x36, 0x120), F3F(~2, ~0x36, ~0x120), "v,B,d", F_ALIAS, HWCAP_VIS3, v9b },
+{ "fpcmpune8",	F3F(2, 0x36, 0x122), F3F(~2, ~0x36, ~0x122), "v,B,d", 0, HWCAP_VIS3, v9b },
+{ "fpcmpne8",	F3F(2, 0x36, 0x122), F3F(~2, ~0x36, ~0x122), "v,B,d", F_PREF_ALIAS, HWCAP_VIS3, v9b },
+{ "fucmpne8",	F3F(2, 0x36, 0x122), F3F(~2, ~0x36, ~0x122), "v,B,d", F_ALIAS, HWCAP_VIS3, v9b },
+{ "fpcmpugt8",	F3F(2, 0x36, 0x128), F3F(~2, ~0x36, ~0x128), "v,B,d", 0, HWCAP_VIS3, v9b },
+{ "fucmpgt8",	F3F(2, 0x36, 0x128), F3F(~2, ~0x36, ~0x128), "v,B,d", F_ALIAS, HWCAP_VIS3, v9b },
+{ "fpcmpueq8",	F3F(2, 0x36, 0x12a), F3F(~2, ~0x36, ~0x12a), "v,B,d", 0, HWCAP_VIS3, v9b },
+{ "fpcmpeq8",	F3F(2, 0x36, 0x12a), F3F(~2, ~0x36, ~0x12a), "v,B,d", F_PREF_ALIAS, HWCAP_VIS3, v9b },
+{ "fucmpeq8",	F3F(2, 0x36, 0x12a), F3F(~2, ~0x36, ~0x12a), "v,B,d", F_ALIAS, HWCAP_VIS3, v9b },
 {"aes_kexpand0",F3F(2, 0x36, 0x130), F3F(~2, ~0x36, ~0x130), "v,B,H", F_FLOAT, HWCAP_AES, v9b },
 {"aes_kexpand2",F3F(2, 0x36, 0x131), F3F(~2, ~0x36, ~0x131), "v,B,H", F_FLOAT, HWCAP_AES, v9b },
 { "des_ip",     F3F(2, 0x36, 0x134), F3F(~2, ~0x36, ~0x134), "v,H", F_FLOAT, HWCAP_DES, v9b },

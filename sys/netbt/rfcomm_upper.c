@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.13 2010/01/04 19:20:05 plunky Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.13.36.1 2014/08/10 06:56:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,12 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.13 2010/01/04 19:20:05 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.13.36.1 2014/08/10 06:56:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/proc.h>
+#include <sys/kmem.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
 
@@ -56,12 +56,12 @@ __KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.13 2010/01/04 19:20:05 plunky Exp
  */
 
 /*
- * rfcomm_attach(handle, proto, upper)
+ * rfcomm_attach_pcb(handle, proto, upper)
  *
  * attach a new RFCOMM DLC to handle, populate with reasonable defaults
  */
 int
-rfcomm_attach(struct rfcomm_dlc **handle,
+rfcomm_attach_pcb(struct rfcomm_dlc **handle,
 		const struct btproto *proto, void *upper)
 {
 	struct rfcomm_dlc *dlc;
@@ -70,9 +70,7 @@ rfcomm_attach(struct rfcomm_dlc **handle,
 	KASSERT(proto != NULL);
 	KASSERT(upper != NULL);
 
-	dlc = malloc(sizeof(struct rfcomm_dlc), M_BLUETOOTH, M_NOWAIT | M_ZERO);
-	if (dlc == NULL)
-		return ENOMEM;
+	dlc = kmem_zalloc(sizeof(struct rfcomm_dlc), KM_SLEEP);
 
 	dlc->rd_state = RFCOMM_DLC_CLOSED;
 	dlc->rd_mtu = rfcomm_mtu_default;
@@ -98,12 +96,12 @@ rfcomm_attach(struct rfcomm_dlc **handle,
 }
 
 /*
- * rfcomm_bind(dlc, sockaddr)
+ * rfcomm_bind_pcb(dlc, sockaddr)
  *
  * bind DLC to local address
  */
 int
-rfcomm_bind(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
+rfcomm_bind_pcb(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 {
 
 	if (dlc->rd_state != RFCOMM_DLC_CLOSED)
@@ -114,12 +112,12 @@ rfcomm_bind(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 }
 
 /*
- * rfcomm_sockaddr(dlc, sockaddr)
+ * rfcomm_sockaddr_pcb(dlc, sockaddr)
  *
  * return local address
  */
 int
-rfcomm_sockaddr(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
+rfcomm_sockaddr_pcb(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 {
 
 	memcpy(addr, &dlc->rd_laddr, sizeof(struct sockaddr_bt));
@@ -127,12 +125,12 @@ rfcomm_sockaddr(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 }
 
 /*
- * rfcomm_connect(dlc, sockaddr)
+ * rfcomm_connect_pcb(dlc, sockaddr)
  *
  * Initiate connection of RFCOMM DLC to remote address.
  */
 int
-rfcomm_connect(struct rfcomm_dlc *dlc, struct sockaddr_bt *dest)
+rfcomm_connect_pcb(struct rfcomm_dlc *dlc, struct sockaddr_bt *dest)
 {
 	struct rfcomm_session *rs;
 	int err = 0;
@@ -169,7 +167,7 @@ rfcomm_connect(struct rfcomm_dlc *dlc, struct sockaddr_bt *dest)
 		rs->rs_flags |= RFCOMM_SESSION_INITIATOR;
 		rs->rs_state = RFCOMM_SESSION_WAIT_CONNECT;
 
-		err = l2cap_connect(rs->rs_l2cap, &dlc->rd_raddr);
+		err = l2cap_connect_pcb(rs->rs_l2cap, &dlc->rd_raddr);
 		if (err) {
 			rfcomm_session_free(rs);
 			return err;
@@ -186,7 +184,7 @@ rfcomm_connect(struct rfcomm_dlc *dlc, struct sockaddr_bt *dest)
 	if (rfcomm_dlc_lookup(rs, dlc->rd_dlci))
 		return EBUSY;
 
-	l2cap_sockaddr(rs->rs_l2cap, &dlc->rd_laddr);
+	l2cap_sockaddr_pcb(rs->rs_l2cap, &dlc->rd_laddr);
 
 	/*
 	 * attach the DLC to the session and start it off
@@ -202,12 +200,12 @@ rfcomm_connect(struct rfcomm_dlc *dlc, struct sockaddr_bt *dest)
 }
 
 /*
- * rfcomm_peeraddr(dlc, sockaddr)
+ * rfcomm_peeraddr_pcb(dlc, sockaddr)
  *
  * return remote address
  */
 int
-rfcomm_peeraddr(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
+rfcomm_peeraddr_pcb(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 {
 
 	memcpy(addr, &dlc->rd_raddr, sizeof(struct sockaddr_bt));
@@ -215,12 +213,12 @@ rfcomm_peeraddr(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 }
 
 /*
- * rfcomm_disconnect(dlc, linger)
+ * rfcomm_disconnect_pcb(dlc, linger)
  *
  * disconnect RFCOMM DLC
  */
 int
-rfcomm_disconnect(struct rfcomm_dlc *dlc, int linger)
+rfcomm_disconnect_pcb(struct rfcomm_dlc *dlc, int linger)
 {
 	struct rfcomm_session *rs = dlc->rd_session;
 	int err = 0;
@@ -270,12 +268,12 @@ rfcomm_disconnect(struct rfcomm_dlc *dlc, int linger)
 }
 
 /*
- * rfcomm_detach(handle)
+ * rfcomm_detach_pcb(handle)
  *
  * detach RFCOMM DLC from handle
  */
-int
-rfcomm_detach(struct rfcomm_dlc **handle)
+void
+rfcomm_detach_pcb(struct rfcomm_dlc **handle)
 {
 	struct rfcomm_dlc *dlc = *handle;
 
@@ -298,14 +296,12 @@ rfcomm_detach(struct rfcomm_dlc **handle)
 		dlc->rd_flags |= RFCOMM_DLC_DETACH;
 	else {
 		callout_destroy(&dlc->rd_timeout);
-		free(dlc, M_BLUETOOTH);
+		kmem_free(dlc, sizeof(*dlc));
 	}
-
-	return 0;
 }
 
 /*
- * rfcomm_listen(dlc)
+ * rfcomm_listen_pcb(dlc)
  *
  * This DLC is a listener. We look for an existing listening session
  * with a matching address to attach to or else create a new one on
@@ -313,7 +309,7 @@ rfcomm_detach(struct rfcomm_dlc **handle)
  * available for the session.
  */
 int
-rfcomm_listen(struct rfcomm_dlc *dlc)
+rfcomm_listen_pcb(struct rfcomm_dlc *dlc)
 {
 	struct rfcomm_session *rs;
 	struct rfcomm_dlc *used;
@@ -336,7 +332,7 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
 		return EADDRNOTAVAIL;
 
 	LIST_FOREACH(rs, &rfcomm_session_listen, rs_next) {
-		l2cap_sockaddr(rs->rs_l2cap, &addr);
+		l2cap_sockaddr_pcb(rs->rs_l2cap, &addr);
 
 		if (addr.bt_psm != dlc->rd_laddr.bt_psm)
 			continue;
@@ -353,7 +349,7 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
 
 		rs->rs_state = RFCOMM_SESSION_LISTEN;
 
-		err = l2cap_listen(rs->rs_l2cap);
+		err = l2cap_listen_pcb(rs->rs_l2cap);
 		if (err) {
 			rfcomm_session_free(rs);
 			return err;
@@ -386,14 +382,14 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
 }
 
 /*
- * rfcomm_send(dlc, mbuf)
+ * rfcomm_send_pcb(dlc, mbuf)
  *
  * Output data on DLC. This is streamed data, so we add it
  * to our buffer and start the DLC, which will assemble
  * packets and send them if it can.
  */
 int
-rfcomm_send(struct rfcomm_dlc *dlc, struct mbuf *m)
+rfcomm_send_pcb(struct rfcomm_dlc *dlc, struct mbuf *m)
 {
 
 	if (dlc->rd_txbuf != NULL) {
@@ -410,7 +406,7 @@ rfcomm_send(struct rfcomm_dlc *dlc, struct mbuf *m)
 }
 
 /*
- * rfcomm_rcvd(dlc, space)
+ * rfcomm_rcvd_pcb(dlc, space)
  *
  * Indicate space now available in receive buffer
  *
@@ -419,7 +415,7 @@ rfcomm_send(struct rfcomm_dlc *dlc, struct mbuf *m)
  * buffer after that.
  */
 int
-rfcomm_rcvd(struct rfcomm_dlc *dlc, size_t space)
+rfcomm_rcvd_pcb(struct rfcomm_dlc *dlc, size_t space)
 {
 
 	KASSERT(dlc != NULL);

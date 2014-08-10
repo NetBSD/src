@@ -33,27 +33,27 @@ entry:
 }
 
 ; CHECK-LABEL: test_cmpxchg_i32
-; CHECK:       or  %g0, 123, [[R:%[gilo][0-7]]]
+; CHECK:       mov 123, [[R:%[gilo][0-7]]]
 ; CHECK:       cas [%o1], %o0, [[R]]
 
 define i32 @test_cmpxchg_i32(i32 %a, i32* %ptr) {
 entry:
-  %b = cmpxchg i32* %ptr, i32 %a, i32 123 monotonic
+  %b = cmpxchg i32* %ptr, i32 %a, i32 123 monotonic monotonic
   ret i32 %b
 }
 
 ; CHECK-LABEL: test_cmpxchg_i64
-; CHECK:       or  %g0, 123, [[R:%[gilo][0-7]]]
+; CHECK:       mov 123, [[R:%[gilo][0-7]]]
 ; CHECK:       casx [%o1], %o0, [[R]]
 
 define i64 @test_cmpxchg_i64(i64 %a, i64* %ptr) {
 entry:
-  %b = cmpxchg i64* %ptr, i64 %a, i64 123 monotonic
+  %b = cmpxchg i64* %ptr, i64 %a, i64 123 monotonic monotonic
   ret i64 %b
 }
 
 ; CHECK-LABEL: test_swap_i32
-; CHECK:       or  %g0, 42, [[R:%[gilo][0-7]]]
+; CHECK:       mov 42, [[R:%[gilo][0-7]]]
 ; CHECK:       swap [%o1], [[R]]
 
 define i32 @test_swap_i32(i32 %a, i32* %ptr) {

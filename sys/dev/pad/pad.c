@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.20 2013/11/02 00:37:12 christos Exp $ */
+/* $NetBSD: pad.c,v 1.20.2.1 2014/08/10 06:54:54 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.20 2013/11/02 00:37:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.20.2.1 2014/08/10 06:54:54 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -133,6 +133,7 @@ const struct cdevsw pad_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE,
 };
 

@@ -1,7 +1,8 @@
-.TH SLAPCAT 8C "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH SLAPCAT 8C "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man8/slapcat.8,v 1.28.2.14 2010/04/14 22:59:08 quanah Exp
+.\" $OpenLDAP$
 .SH NAME
 slapcat \- SLAPD database to LDIF utility
 .SH SYNOPSIS
@@ -82,6 +83,11 @@ option.
 .TP
 .B \-c
 Enable continue (ignore errors) mode.
+Multiple occorrences of
+.B \-c
+make
+.BR slapcat (8)
+try harder.
 .TP
 .BI \-d \ debug-level
 Enable debugging messages as defined by the specified
@@ -144,7 +150,12 @@ Possible generic options/values are:
               syslog\-level=<level> (see `\-S' in slapd(8))
               syslog\-user=<user>   (see `\-l' in slapd(8))
 
-.fi
+              ldif-wrap={no|<n>}
+
+.in
+\fIn\fP is the number of columns allowed for the LDIF output
+(\fIn\fP equal to \fI0\fP uses the default, corresponding to 76).
+Use \fIno\fP for no wrap.
 .TP
 .BI \-s \ subtree-dn
 Only dump entries in the subtree specified by this DN.
@@ -189,8 +200,10 @@ give the command:
 .LP
 "OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
 .SH ACKNOWLEDGEMENTS
+.lf 1 ./../Project
 .\" Shared Project Acknowledgement Text
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from University of Michigan LDAP 3.3 Release.  
+.lf 203 stdin

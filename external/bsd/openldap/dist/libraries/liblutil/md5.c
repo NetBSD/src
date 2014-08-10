@@ -1,10 +1,10 @@
-/*	$NetBSD: md5.c,v 1.2 2011/07/01 02:01:21 joerg Exp $	*/
+/*	$NetBSD: md5.c,v 1.2.20.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* md5.c -- MD5 message-digest algorithm */
-/* OpenLDAP: pkg/ldap/libraries/liblutil/md5.c,v 1.19.2.5 2010/04/13 20:23:06 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

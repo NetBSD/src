@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_job.c,v 1.1.1.1 2009/06/23 10:08:52 tron Exp $	*/
+/*	$NetBSD: qmgr_job.c,v 1.1.1.1.26.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -132,12 +132,7 @@ static void qmgr_job_link(QMGR_JOB *job)
 {
     QMGR_TRANSPORT *transport = job->transport;
     QMGR_MESSAGE *message = job->message;
-    QMGR_JOB *prev,
-           *next,
-           *list_prev,
-           *list_next,
-           *unread,
-           *current;
+    QMGR_JOB *prev, *next, *list_prev, *list_next, *unread, *current;
     int     delay;
 
     /*
@@ -165,6 +160,13 @@ static void qmgr_job_link(QMGR_JOB *job)
      * for jobs which are created long after the first chunk of recipients
      * was read in-core (either of these can happen only for multi-transport
      * messages).
+     * 
+     * XXX Note that we test stack_parent rather than stack_level below. This
+     * subtle difference allows us to enqueue the job in correct time order
+     * with respect to orphaned children even after their original parent on
+     * level zero is gone. Consequently, the early loop stop in candidate
+     * selection works reliably, too. These are the reasons why we care to
+     * bother with children adoption at all.
      */
     current = transport->job_current;
     for (next = 0, prev = transport->job_list.prev; prev;
@@ -280,8 +282,7 @@ void    qmgr_job_move_limits(QMGR_JOB *job)
     QMGR_TRANSPORT *transport = job->transport;
     QMGR_MESSAGE *message = job->message;
     QMGR_JOB *next = transport->job_next_unread;
-    int     rcpt_unused,
-            msg_rcpt_unused;
+    int     rcpt_unused, msg_rcpt_unused;
 
     /*
      * Find next unread job on the job list if necessary. Cache it for later.
@@ -485,13 +486,9 @@ static void qmgr_job_count_slots(QMGR_JOB *job)
 static QMGR_JOB *qmgr_job_candidate(QMGR_JOB *current)
 {
     QMGR_TRANSPORT *transport = current->transport;
-    QMGR_JOB *job,
-           *best_job = 0;
-    double  score,
-            best_score = 0.0;
-    int     max_slots,
-            max_needed_entries,
-            max_total_entries;
+    QMGR_JOB *job, *best_job = 0;
+    double  score, best_score = 0.0;
+    int     max_slots, max_needed_entries, max_total_entries;
     int     delay;
     time_t  now = sane_time();
 
@@ -578,8 +575,7 @@ static QMGR_JOB *qmgr_job_preempt(QMGR_JOB *current)
 {
     const char *myname = "qmgr_job_preempt";
     QMGR_TRANSPORT *transport = current->transport;
-    QMGR_JOB *job,
-           *prev;
+    QMGR_JOB *job, *prev;
     int     expected_slots;
     int     rcpt_slots;
 
@@ -708,6 +704,9 @@ static void qmgr_job_pop(QMGR_JOB *job)
 
     /*
      * Adjust the number of delivery slots available to preempt job's parent.
+     * Note that the -= actually adds back any unused slots, as we have
+     * already subtracted the expected amount of slots from both counters
+     * when we did the preemption.
      * 
      * Note that we intentionally do not adjust slots_used of the parent. Doing
      * so would decrease the maximum per message inflation factor if the
@@ -779,16 +778,16 @@ static QMGR_PEER *qmgr_job_peer_select(QMGR_JOB *job)
      * in. Otherwise single recipient for slow destination might starve the
      * entire message delivery, leaving lot of fast destination recipients
      * sitting idle in the queue file.
-     *
-     * Ideally we would like to read in recipients whenever there is a
-     * space, but to prevent excessive I/O, we read them only when enough
-     * time has passed or we can read enough of them at once.
-     *
+     * 
+     * Ideally we would like to read in recipients whenever there is a space,
+     * but to prevent excessive I/O, we read them only when enough time has
+     * passed or we can read enough of them at once.
+     * 
      * Note that even if we read the recipients few at a time, the message
      * loading code tries to put them to existing recipient entries whenever
      * possible, so the per-destination recipient grouping is not grossly
      * affected.
-     *
+     * 
      * XXX Workaround for logic mismatch. The message->refcount test needs
      * explanation. If the refcount is zero, it means that qmgr_active_done()
      * is being completed asynchronously.  In such case, we can't read in
@@ -801,7 +800,7 @@ static QMGR_PEER *qmgr_job_peer_select(QMGR_JOB *job)
 	&& message->refcount > 0
 	&& (message->rcpt_limit - message->rcpt_count >= job->transport->refill_limit
 	    || (message->rcpt_limit > message->rcpt_count
-		&& sane_time() - message->refill_time >= job->transport->refill_delay)))
+    && sane_time() - message->refill_time >= job->transport->refill_delay)))
 	qmgr_message_realloc(message);
 
     /*
@@ -811,8 +810,9 @@ static QMGR_PEER *qmgr_job_peer_select(QMGR_JOB *job)
 	return (peer);
 
     /*
-     * There is no suitable peer in-core, so try reading in more recipients if possible.
-     * This is our last chance to get suitable peer before giving up on this job for now.
+     * There is no suitable peer in-core, so try reading in more recipients
+     * if possible. This is our last chance to get suitable peer before
+     * giving up on this job for now.
      * 
      * XXX For message->refcount, see above.
      */
@@ -830,8 +830,7 @@ static QMGR_PEER *qmgr_job_peer_select(QMGR_JOB *job)
 
 QMGR_ENTRY *qmgr_job_entry_select(QMGR_TRANSPORT *transport)
 {
-    QMGR_JOB *job,
-           *next;
+    QMGR_JOB *job, *next;
     QMGR_PEER *peer;
     QMGR_ENTRY *entry;
 
@@ -950,7 +949,7 @@ QMGR_ENTRY *qmgr_job_entry_select(QMGR_TRANSPORT *transport)
 
 /* qmgr_job_blocker_update - update "blocked job" status */
 
-void     qmgr_job_blocker_update(QMGR_QUEUE *queue)
+void    qmgr_job_blocker_update(QMGR_QUEUE *queue)
 {
     QMGR_TRANSPORT *transport = queue->transport;
 
@@ -979,4 +978,3 @@ void     qmgr_job_blocker_update(QMGR_QUEUE *queue)
 	    queue->blocker_tag = 0;
     }
 }
-

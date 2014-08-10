@@ -1,6 +1,6 @@
 /* Remote debugging interface for boot monitors, for GDB.
 
-   Copyright (C) 1990-2013 Free Software Foundation, Inc.
+   Copyright (C) 1990-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by Rob Savoye for Cygnus.
    Resurrected from the ashes by Stu Grossman.
@@ -43,7 +43,7 @@
 #include "exceptions.h"
 #include <signal.h>
 #include <ctype.h>
-#include "gdb_string.h"
+#include <string.h>
 #include <sys/types.h>
 #include "command.h"
 #include "serial.h"
@@ -853,7 +853,7 @@ monitor_open (char *args, struct monitor_ops *mon_ops, int from_tty)
    control.  */
 
 void
-monitor_close (int quitting)
+monitor_close (void)
 {
   if (monitor_desc)
     serial_close (monitor_desc);
@@ -875,9 +875,9 @@ monitor_close (int quitting)
    when you want to detach and do something else with your gdb.  */
 
 static void
-monitor_detach (struct target_ops *ops, char *args, int from_tty)
+monitor_detach (struct target_ops *ops, const char *args, int from_tty)
 {
-  pop_target ();		/* calls monitor_close to do the real work.  */
+  unpush_target (ops);		/* calls monitor_close to do the real work.  */
   if (from_tty)
     printf_unfiltered (_("Ending remote %s debugging\n"), target_shortname);
 }
@@ -1036,7 +1036,7 @@ monitor_interrupt_query (void)
 Give up (and stop debugging it)? ")))
     {
       target_mourn_inferior ();
-      deprecated_throw_reason (RETURN_QUIT);
+      quit ();
     }
 
   target_terminal_inferior ();
@@ -1439,7 +1439,7 @@ monitor_files_info (struct target_ops *ops)
 }
 
 static int
-monitor_write_memory (CORE_ADDR memaddr, char *myaddr, int len)
+monitor_write_memory (CORE_ADDR memaddr, const gdb_byte *myaddr, int len)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   unsigned int val, hostval;
@@ -1542,7 +1542,7 @@ monitor_write_memory (CORE_ADDR memaddr, char *myaddr, int len)
 
 
 static int
-monitor_write_memory_bytes (CORE_ADDR memaddr, char *myaddr, int len)
+monitor_write_memory_bytes (CORE_ADDR memaddr, const gdb_byte *myaddr, int len)
 {
   unsigned char val;
   int written = 0;
@@ -1638,7 +1638,7 @@ longlong_hexchars (unsigned long long value,
    Which possably entails endian conversions.  */
 
 static int
-monitor_write_memory_longlongs (CORE_ADDR memaddr, char *myaddr, int len)
+monitor_write_memory_longlongs (CORE_ADDR memaddr, const gdb_byte *myaddr, int len)
 {
   static char hexstage[20];	/* At least 16 digits required, plus null.  */
   char *endstring;
@@ -1646,7 +1646,7 @@ monitor_write_memory_longlongs (CORE_ADDR memaddr, char *myaddr, int len)
   long long value;
   int written = 0;
 
-  llptr = (unsigned long long *) myaddr;
+  llptr = (long long *) myaddr;
   if (len == 0)
     return 0;
   monitor_printf (current_monitor->setmem.cmdll, memaddr);
@@ -1686,7 +1686,7 @@ monitor_write_memory_longlongs (CORE_ADDR memaddr, char *myaddr, int len)
    monitor variations.  */
 
 static int
-monitor_write_memory_block (CORE_ADDR memaddr, char *myaddr, int len)
+monitor_write_memory_block (CORE_ADDR memaddr, const gdb_byte *myaddr, int len)
 {
   int written;
 
@@ -1706,7 +1706,7 @@ monitor_write_memory_block (CORE_ADDR memaddr, char *myaddr, int len)
    which can only read a single byte/word/etc. at a time.  */
 
 static int
-monitor_read_memory_single (CORE_ADDR memaddr, char *myaddr, int len)
+monitor_read_memory_single (CORE_ADDR memaddr, gdb_byte *myaddr, int len)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   unsigned int val;
@@ -1837,7 +1837,7 @@ monitor_read_memory_single (CORE_ADDR memaddr, char *myaddr, int len)
    than 16 bytes at a time.  */
 
 static int
-monitor_read_memory (CORE_ADDR memaddr, char *myaddr, int len)
+monitor_read_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len)
 {
   unsigned int val;
   char buf[512];
@@ -2015,29 +2015,47 @@ monitor_read_memory (CORE_ADDR memaddr, char *myaddr, int len)
   return len;
 }
 
-/* Transfer LEN bytes between target address MEMADDR and GDB address
-   MYADDR.  Returns 0 for success, errno code for failure.  TARGET is
-   unused.  */
+/* Helper for monitor_xfer_partial that handles memory transfers.
+   Arguments are like target_xfer_partial.  */
 
-static int
-monitor_xfer_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len, int write,
-		     struct mem_attrib *attrib, struct target_ops *target)
+static LONGEST
+monitor_xfer_memory (gdb_byte *readbuf, const gdb_byte *writebuf,
+		     ULONGEST memaddr, LONGEST len)
 {
   int res;
 
-  if (write)
+  if (writebuf != NULL)
     {
       if (current_monitor->flags & MO_HAS_BLOCKWRITES)
-	res = monitor_write_memory_block(memaddr, myaddr, len);
+	res = monitor_write_memory_block (memaddr, writebuf, len);
       else
-	res = monitor_write_memory(memaddr, myaddr, len);
+	res = monitor_write_memory (memaddr, writebuf, len);
     }
   else
     {
-      res = monitor_read_memory(memaddr, myaddr, len);
+      res = monitor_read_memory (memaddr, readbuf, len);
     }
 
+  if (res == 0)
+    return TARGET_XFER_E_IO;
   return res;
+}
+
+/* Target to_xfer_partial implementation.  */
+
+static LONGEST
+monitor_xfer_partial (struct target_ops *ops, enum target_object object,
+		      const char *annex, gdb_byte *readbuf,
+		      const gdb_byte *writebuf, ULONGEST offset, LONGEST len)
+{
+  switch (object)
+    {
+    case TARGET_OBJECT_MEMORY:
+      return monitor_xfer_memory (readbuf, writebuf, offset, len);
+
+    default:
+      return TARGET_XFER_E_IO;
+    }
 }
 
 static void
@@ -2344,7 +2362,7 @@ init_base_monitor_ops (void)
   monitor_ops.to_fetch_registers = monitor_fetch_registers;
   monitor_ops.to_store_registers = monitor_store_registers;
   monitor_ops.to_prepare_to_store = monitor_prepare_to_store;
-  monitor_ops.deprecated_xfer_memory = monitor_xfer_memory;
+  monitor_ops.to_xfer_partial = monitor_xfer_partial;
   monitor_ops.to_files_info = monitor_files_info;
   monitor_ops.to_insert_breakpoint = monitor_insert_breakpoint;
   monitor_ops.to_remove_breakpoint = monitor_remove_breakpoint;

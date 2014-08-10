@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2013 Free Software Foundation, Inc.
+# Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,9 +26,11 @@ if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
 
 if { [skip_python_tests] } { continue }
 
-set remote_python_file [remote_download host ${srcdir}/${subdir}/${testfile}.py]
+set remote_python_file [gdb_remote_download host \
+			    ${srcdir}/${subdir}/${testfile}.py]
 
-gdb_test_no_output "python exec (open ('${remote_python_file}').read ())"
+gdb_test_no_output "python exec (open ('${remote_python_file}').read ())" \
+    "python exec (open ('[file tail ${remote_python_file}]').read ())"
 
 cp_test_ptype_class s "basic test" "class" "templ<string>" {
     { field public "T x;" }

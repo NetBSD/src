@@ -1,3 +1,53 @@
+2013-12-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4: Remove +x file mode.
+
+2013-11-29  Marek Polacek  <polacek@redhat.com>
+
+	* bootstrap-ubsan.mk (POSTSTAGE1_LDFLAGS): Remove -lpthread -ldl.
+	Add -B$$r/prev-$(TARGET_SUBDIR)/libsanitizer/.
+
+2013-11-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bootstrap-asan.mk (POSTSTAGE1_LDFLAGS): Add
+	-B$$r/prev-$(TARGET_SUBDIR)/libsanitizer/.
+
+2013-11-19  Marek Polacek  <polacek@redhat.com>
+
+	* bootstrap-ubsan.mk (POSTSTAGE1_LDFLAGS): Add -ldl.
+
+2013-11-18  Jan Hubicka  <jh@suse.cz>
+
+	* bootstrap-lto.mk: Use -ffat-lto-objects.
+
+2013-11-15  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* picflag.m4 (m68k-*-*): Use default PIC flag.
+
+2013-09-29  Iain Sandoe  <iain@codesourcery.com>
+
+	* mh-darwin (BOOT_CFLAGS): Only add -mdynamic-no-pic for m32 hosts.
+	(STAGE1_CFLAGS, STAGE1_LDFLAGS): New.
+	Fix over-length lines and amend comments.
+
+2013-08-30  Marek Polacek  <polacek@redhat.com>
+
+	* bootstrap-ubsan.mk: New.
+
+2013-03-27  Kai Tietz  <ktietz@redhat.com>
+
+	* dfp.m4: Add support for cygwin x64 target.
+	* picflag.m4: Likewise.
+
+2013-02-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bootstrap-asan.mk (POSTSTAGE1_LDFLAGS): Add
+	-B$$r/prev-$(TARGET_SUBDIR)/libsanitizer/asan/.
+
+2013-01-23  Shenghou Ma  <minux.ma@gmail.com>
+
+	* isl.m4: don't echo $CFLAGS for ISL_CHECK_VERSION.
+
 2013-01-15  Richard Biener  <rguenther@suse.de>
 
 	PR other/55973

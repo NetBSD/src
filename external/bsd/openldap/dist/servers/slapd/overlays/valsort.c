@@ -1,10 +1,10 @@
-/*	$NetBSD: valsort.c,v 1.1.1.3 2010/12/12 15:23:47 adam Exp $	*/
+/*	$NetBSD: valsort.c,v 1.1.1.3.24.1 2014/08/10 07:09:51 tls Exp $	*/
 
 /* valsort.c - sort attribute values */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/valsort.c,v 1.17.2.9 2010/06/10 17:37:40 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2014 The OpenLDAP Foundation.
  * Portions copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -299,20 +299,7 @@ valsort_response( Operation *op, SlapReply *rs )
 		a = attr_find( rs->sr_entry->e_attrs, vi->vi_ad );
 		if ( !a ) continue;
 
-		if (( rs->sr_flags & ( REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED ) ) !=
-			( REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED ) )
-		{
-			Entry *e;
-
-			e = entry_dup( rs->sr_entry );
-			if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
-				overlay_entry_release_ov( op, rs->sr_entry, 0, on );
-				rs->sr_flags &= ~REP_ENTRY_MUSTRELEASE;
-			} else if ( rs->sr_flags & REP_ENTRY_MUSTBEFREED ) {
-				entry_free( rs->sr_entry );
-			}
-			rs->sr_entry = e;
-			rs->sr_flags |= REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED;
+		if ( rs_entry2modifiable( op, rs, on )) {
 			a = attr_find( rs->sr_entry->e_attrs, vi->vi_ad );
 		}
 
@@ -504,6 +491,10 @@ valsort_destroy(
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
 	valsort_info *vi = on->on_bi.bi_private, *next;
+
+#ifdef SLAP_CONFIG_DELETE
+	overlay_unregister_control( be, LDAP_CONTROL_VALSORT );
+#endif /* SLAP_CONFIG_DELETE */
 
 	for (; vi; vi = next) {
 		next = vi->vi_next;

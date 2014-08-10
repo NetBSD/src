@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.243 2014/03/27 18:22:56 christos Exp $ */
+/*	$NetBSD: cpu.c,v 1.243.2.1 2014/08/10 06:54:08 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.243 2014/03/27 18:22:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.243.2.1 2014/08/10 06:54:08 tls Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.243 2014/03/27 18:22:56 christos Exp $");
 #include <sys/kernel.h>
 #include <sys/evcnt.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 #include <sys/cpu.h>
 
 #include <uvm/uvm.h>
@@ -812,6 +813,21 @@ xc_send_ipi(struct cpu_info *target)
 	else
 		cpuset = CPUSET_ALL & ~(1 << cpuinfo.ci_cpuid);
 	XCALL0(xc_ipi_handler, cpuset);
+}
+
+void
+cpu_ipi(struct cpu_info *target)
+{
+	u_int cpuset;
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != target);
+
+	if (target)
+		cpuset = 1 << target->ci_cpuid;
+	else
+		cpuset = CPUSET_ALL & ~(1 << cpuinfo.ci_cpuid);
+	XCALL0(ipi_cpu_handler, cpuset);
 }
 
 /*

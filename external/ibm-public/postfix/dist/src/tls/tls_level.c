@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_level.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_level.c,v 1.1.1.1.26.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -56,19 +56,27 @@
 /* Application-specific. */
 
  /*
-  * Order is critical:
+  * Numerical order of levels is critical (see tls.h):
   * 
-  * Levels > "encrypt" are expected to match a peer certificate.
+  * - With "may" and higher, TLS is enabled.
   * 
-  * Levels >= "verify" are expected to require a valid CA trust-chain
+  * - With "encrypt" and higher, TLS is required.
   * 
-  * This forces "fingerprint" between "encrypt" and "verify".
+  * - With "fingerprint" and higher, the peer certificate must match.
+  * 
+  * - With "dane" and higher, the peer certificate must also be trusted,
+  * possibly via TLSA RRs that make it its own authority.
+  * 
+  * The smtp(8) client will report trust failure in preference to reporting
+  * failure to match, so we make "dane" larger than "fingerprint".
   */
 const NAME_CODE tls_level_table[] = {
     "none", TLS_LEV_NONE,
     "may", TLS_LEV_MAY,
     "encrypt", TLS_LEV_ENCRYPT,
     "fingerprint", TLS_LEV_FPRINT,
+    "dane", TLS_LEV_DANE,
+    "dane-only", TLS_LEV_DANE_ONLY,
     "verify", TLS_LEV_VERIFY,
     "secure", TLS_LEV_SECURE,
     0, TLS_LEV_INVALID,

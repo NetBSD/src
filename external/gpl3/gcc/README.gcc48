@@ -1,4 +1,4 @@
-$Id: README.gcc48,v 1.4 2014/03/10 19:55:51 mrg Exp $
+$Id: README.gcc48,v 1.4.2.1 2014/08/10 07:10:37 tls Exp $
 
 usr.bin:
 	note:
@@ -27,31 +27,17 @@ arch/feature list.  anything not here has been switched already:
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 ------------	-----	-------	------	----------	------------	----	---
 coldfire	yes	N/A[9]	yes	yes		yes[7]		?	?
-i386		yes	yes	yes	yes		yes		yes
-ia64		yes	?	yes[6]	yes		no[6]
 m68000		yes	?	yes	no[3]		
 m68k		yes	yes	yes	yes		no[7]
-mips64eb	yes	yes[5]	yes	yes		
-mips64el	yes	yes	yes	yes		yes[8]		no
-mipseb		yes	yes[5]	yes	yes		yes
-mipsel		yes	yes	yes	yes		yes		yes	no[2]
 powerpc		yes	yes[1]	yes	yes		yes		yes	yes
 powerpc64	yes[4]
-sh3eb		yes	?	yes	yes		no[7]
-sh3el		yes	?	yes	yes		no[7]
-vax		yes	yes	yes	yes		no[7]
-x86_64		yes	yes	yes	yes		yes		?
 
 [1] ofppc/pegasos has issues with symtab loading.
     sandpoint works fine in multi-user, found an annoyance by com(4) change.
-[2] weird failures.
 [3] relocations fail in libgcc
 [4] cc1 gets segv compiling libgcc.
-[5] mips*eb kernels seem to work as well as gcc 4.5 ones.
-[6] ia64 port is missing libc, libkvm and more support.  libgcc has some uncommited hacks.
 [7] m68k/vax/sh3 gcc seem to randomly get -fstack-protector/-Wstack-protector
     wrong, for example m68k flags alarm() as unprotected in
     libc/gen/alarm.c:53, vax ifinit() in sbin/routed/if.c:680.
-   --> hacked around
-[8] LOONGSON kernel has general problems
+   --> hacked around, now fixed?
 [9] no kernels in evbcf port yet

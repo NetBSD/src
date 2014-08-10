@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2014/03/18 18:20:43 riastradh Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2014/08/10 06:56:10 tls Exp $
 
 .include "../Makefile.inc"
 
@@ -11,12 +11,13 @@ CPPFLAGS+=	-DDIAGNOSTIC
 
 KMOD=	drmkms_linux
 
-SRCS+=	linux_gfp.c
+SRCS+=	linux_dmi.c
 SRCS+=	linux_kmap.c
 SRCS+=	linux_i2c.c
 SRCS+=	linux_idr.c
 SRCS+=	linux_list_sort.c
 SRCS+=	linux_module.c
 SRCS+=	linux_work.c
+SRCS+=	linux_writecomb.c
 
 .include <bsd.kmodule.mk>

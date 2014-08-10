@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.3 2010/12/12 15:22:26 adam Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* config.c - configuration file handling routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.37 2010/04/19 15:32:26 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -197,13 +197,16 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 	c->type = arg_user;
 	memset(&c->values, 0, sizeof(c->values));
 	if(arg_type == ARG_STRING) {
+		assert( c->argc == 2 );
 		if ( !check_only )
 			c->value_string = ch_strdup(c->argv[1]);
 	} else if(arg_type == ARG_BERVAL) {
+		assert( c->argc == 2 );
 		if ( !check_only )
 			ber_str2bv( c->argv[1], 0, 1, &c->value_bv );
 	} else if(arg_type == ARG_DN) {
 		struct berval bv;
+		assert( c->argc == 2 );
 		ber_str2bv( c->argv[1], 0, 0, &bv );
 		rc = dnPrettyNormal( NULL, &bv, &c->value_dn, &c->value_ndn, NULL );
 		if ( rc != LDAP_SUCCESS ) {
@@ -218,6 +221,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 		}
 	} else if(arg_type == ARG_ATDESC) {
 		const char *text = NULL;
+		assert( c->argc == 2 );
 		c->value_ad = NULL;
 		rc = slap_str2ad( c->argv[1], &c->value_ad, &text );
 		if ( rc != LDAP_SUCCESS ) {
@@ -231,6 +235,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 		iarg = 0; larg = 0; barg = 0;
 		switch(arg_type) {
 			case ARG_INT:
+				assert( c->argc == 2 );
 				if ( lutil_atoix( &iarg, c->argv[1], 0 ) != 0 ) {
 					snprintf( c->cr_msg, sizeof( c->cr_msg ),
 						"<%s> unable to parse \"%s\" as int",
@@ -241,6 +246,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 				}
 				break;
 			case ARG_UINT:
+				assert( c->argc == 2 );
 				if ( lutil_atoux( &uiarg, c->argv[1], 0 ) != 0 ) {
 					snprintf( c->cr_msg, sizeof( c->cr_msg ),
 						"<%s> unable to parse \"%s\" as unsigned int",
@@ -251,6 +257,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 				}
 				break;
 			case ARG_LONG:
+				assert( c->argc == 2 );
 				if ( lutil_atolx( &larg, c->argv[1], 0 ) != 0 ) {
 					snprintf( c->cr_msg, sizeof( c->cr_msg ),
 						"<%s> unable to parse \"%s\" as long",
@@ -261,6 +268,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 				}
 				break;
 			case ARG_ULONG:
+				assert( c->argc == 2 );
 				if ( lutil_atoulx( &ularg, c->argv[1], 0 ) != 0 ) {
 					snprintf( c->cr_msg, sizeof( c->cr_msg ),
 						"<%s> unable to parse \"%s\" as unsigned long",
@@ -272,6 +280,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 				break;
 			case ARG_BER_LEN_T: {
 				unsigned long	l;
+				assert( c->argc == 2 );
 				if ( lutil_atoulx( &l, c->argv[1], 0 ) != 0 ) {
 					snprintf( c->cr_msg, sizeof( c->cr_msg ),
 						"<%s> unable to parse \"%s\" as ber_len_t",
@@ -283,6 +292,8 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 				barg = (ber_len_t)l;
 				} break;
 			case ARG_ON_OFF:
+				/* note: this is an explicit exception
+				 * to the "need exactly 2 args" rule */
 				if (c->argc == 1) {
 					iarg = 1;
 				} else if ( !strcasecmp(c->argv[1], "on") ||
@@ -469,7 +480,7 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 				c->value_string = ch_strdup(*(char **)ptr);
 			break;
 		case ARG_BERVAL:
-			ber_dupbv( &c->value_bv, (struct berval *)ptr ); break;
+			c->value_bv = *((struct berval *)ptr); break;
 		case ARG_ATDESC:
 			c->value_ad = *(AttributeDescription **)ptr; break;
 		}
@@ -937,6 +948,66 @@ mask_to_verbs(slap_verbmasks *v, slap_mask_t m, BerVarray *bva) {
 	return rc;
 }
 
+/* Return the verbs as a single string, separated by delim */
+int
+mask_to_verbstring(slap_verbmasks *v, slap_mask_t m0, char delim, struct berval *bv)
+{
+	int i, rc = 1;
+
+	BER_BVZERO( bv );
+	if (m0) {
+		slap_mask_t m = m0;
+		char *ptr;
+		for (i=0; !BER_BVISNULL(&v[i].word); i++) {
+			if (!v[i].mask) continue;
+			if (( m & v[i].mask ) == v[i].mask ) {
+				bv->bv_len += v[i].word.bv_len + 1;
+				rc = 0;
+				m ^= v[i].mask;
+				if ( !m ) break;
+			}
+		}
+		bv->bv_val = ch_malloc(bv->bv_len);
+		bv->bv_len--;
+		ptr = bv->bv_val;
+		m = m0;
+		for (i=0; !BER_BVISNULL(&v[i].word); i++) {
+			if (!v[i].mask) continue;
+			if (( m & v[i].mask ) == v[i].mask ) {
+				ptr = lutil_strcopy(ptr, v[i].word.bv_val);
+				*ptr++ = delim;
+				m ^= v[i].mask;
+				if ( !m ) break;
+			}
+		}
+		ptr[-1] = '\0';
+	}
+	return rc;
+}
+
+/* Parse a verbstring */
+int
+verbstring_to_mask(slap_verbmasks *v, char *str, char delim, slap_mask_t *m) {
+	int j;
+	char *d;
+	struct berval bv;
+
+	do {
+		bv.bv_val = str;
+		d = strchr( str, delim );
+		if ( d )
+			bv.bv_len = d - str;
+		else
+			bv.bv_len = strlen( str );
+		j = bverb_to_mask( &bv, v );
+		if(BER_BVISNULL(&v[j].word)) return 1;
+		while (!v[j].mask) j--;
+		*m |= v[j].mask;
+		str += bv.bv_len + 1;
+	} while ( d );
+	return(0);
+}
+
 int
 slap_verbmasks_init( slap_verbmasks **vp, slap_verbmasks *v )
 {
@@ -1190,9 +1261,11 @@ static slap_verbmasks crlkeys[] = {
 
 static slap_verbmasks vfykeys[] = {
 		{ BER_BVC("never"),	LDAP_OPT_X_TLS_NEVER },
-		{ BER_BVC("demand"),	LDAP_OPT_X_TLS_DEMAND },
+		{ BER_BVC("allow"),	LDAP_OPT_X_TLS_ALLOW },
 		{ BER_BVC("try"),	LDAP_OPT_X_TLS_TRY },
+		{ BER_BVC("demand"),	LDAP_OPT_X_TLS_DEMAND },
 		{ BER_BVC("hard"),	LDAP_OPT_X_TLS_HARD },
+		{ BER_BVC("true"),	LDAP_OPT_X_TLS_HARD },
 		{ BER_BVNULL, 0 }
 	};
 #endif
@@ -1212,7 +1285,7 @@ static slap_verbmasks versionkey[] = {
 	{ BER_BVNULL, 0 }
 };
 
-static int 
+int
 slap_keepalive_parse(
 	struct berval *val,
 	void *bc,
@@ -1728,6 +1801,10 @@ void bindconf_free( slap_bindconf *bc ) {
 		bc->sb_tls_crlcheck = NULL;
 	}
 #endif
+	if ( bc->sb_tls_ctx ) {
+		ldap_pvt_tls_ctx_free( bc->sb_tls_ctx );
+		bc->sb_tls_ctx = NULL;
+	}
 #endif
 }
 
@@ -1851,6 +1928,29 @@ int bindconf_tls_set( slap_bindconf *bc, LDAP *ld )
 #endif
 
 /*
+ * set connection keepalive options
+ */
+void
+slap_client_keepalive(LDAP *ld, slap_keepalive *sk)
+{
+	if (!sk) return;
+
+	if ( sk->sk_idle ) {
+		ldap_set_option( ld, LDAP_OPT_X_KEEPALIVE_IDLE, &sk->sk_idle );
+	}
+
+	if ( sk->sk_probes ) {
+		ldap_set_option( ld, LDAP_OPT_X_KEEPALIVE_PROBES, &sk->sk_probes );
+	}
+
+	if ( sk->sk_interval ) {
+		ldap_set_option( ld, LDAP_OPT_X_KEEPALIVE_INTERVAL, &sk->sk_interval );
+	}
+
+	return;
+}
+
+/*
  * connect to a client using the bindconf data
  * note: should move "version" into bindconf...
  */
@@ -1888,17 +1988,8 @@ slap_client_connect( LDAP **ldp, slap_bindconf *sb )
 		ldap_set_option( ld, LDAP_OPT_NETWORK_TIMEOUT, &tv );
 	}
 
-	if ( sb->sb_keepalive.sk_idle ) {
-		ldap_set_option( ld, LDAP_OPT_X_KEEPALIVE_IDLE, &sb->sb_keepalive.sk_idle );
-	}
-
-	if ( sb->sb_keepalive.sk_probes ) {
-		ldap_set_option( ld, LDAP_OPT_X_KEEPALIVE_PROBES, &sb->sb_keepalive.sk_probes );
-	}
-
-	if ( sb->sb_keepalive.sk_interval ) {
-		ldap_set_option( ld, LDAP_OPT_X_KEEPALIVE_INTERVAL, &sb->sb_keepalive.sk_interval );
-	}
+	/* setting network keepalive options */
+	slap_client_keepalive(ld, &sb->sb_keepalive);
 
 #ifdef HAVE_TLS
 	if ( sb->sb_tls_do_init ) {

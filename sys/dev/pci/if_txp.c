@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.40 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: if_txp.c,v 1.40.2.1 2014/08/10 06:54:54 tls Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.40 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.40.2.1 2014/08/10 06:54:54 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -1838,13 +1838,13 @@ txp_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 		if (anlpar & ANLPAR_TX_FD)
 			ifmr->ifm_active |= IFM_100_TX|IFM_FDX;
 		else if (anlpar & ANLPAR_T4)
-			ifmr->ifm_active |= IFM_100_T4;
+			ifmr->ifm_active |= IFM_100_T4|IFM_HDX;
 		else if (anlpar & ANLPAR_TX)
-			ifmr->ifm_active |= IFM_100_TX;
+			ifmr->ifm_active |= IFM_100_TX|IFM_HDX;
 		else if (anlpar & ANLPAR_10_FD)
 			ifmr->ifm_active |= IFM_10_T|IFM_FDX;
 		else if (anlpar & ANLPAR_10)
-			ifmr->ifm_active |= IFM_10_T;
+			ifmr->ifm_active |= IFM_10_T|IFM_HDX;
 		else
 			ifmr->ifm_active |= IFM_NONE;
 	} else

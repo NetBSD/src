@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2014/02/24 07:23:40 skrll Exp $	*/
+/*	$NetBSD: main.c,v 1.38.2.1 2014/08/10 06:52:47 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.38 2014/02/24 07:23:40 skrll Exp $");
+__RCSID("$NetBSD: main.c,v 1.38.2.1 2014/08/10 06:52:47 tls Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1384,7 +1384,7 @@ makedisktab(FILE *f, struct disklabel *lp)
 		did = "";
 	}
 	if (lp->d_headswitch != 0) {
-		(void) fprintf(f, "%shs#%" PRIu16 ":", did, lp->d_headswitch);
+		(void) fprintf(f, "%shs#%" PRIu32 ":", did, lp->d_headswitch);
 		did = "";
 	}
 	if (lp->d_trkseek != 0) {

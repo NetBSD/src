@@ -1,7 +1,8 @@
-.TH SLAPO-ACCESSLOG 5 "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 2005-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH SLAPO-ACCESSLOG 5 "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 2005-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-accesslog.5,v 1.9.2.9 2010/04/13 20:22:43 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapo\-accesslog \- Access Logging overlay to slapd
 .SH SYNOPSIS
@@ -49,6 +50,13 @@ abandon, bind, unbind
 .B all
 all operations
 .RE
+.TP
+.B logbase <operations> <baseDN>
+Specify a set of operations that will only be logged if they occur under
+a specific subtree of the database. The operation types are as above for
+the
+.B logops
+setting, and delimited by a '|' character.
 .TP
 .B logold <filter>
 Specify a filter for matching against Deleted and Modified entries. If
@@ -101,6 +109,7 @@ succeed or not. The default is FALSE.
 	overlay accesslog
 	logdb cn=log
 	logops writes reads
+	logbase search|compare ou=testing,dc=example,dc=com
 	logold (objectclass=person)
 
 	database bdb

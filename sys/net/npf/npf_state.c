@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.15 2013/11/04 22:17:21 rmind Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.15.2.1 2014/08/10 06:56:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 /*
- * NPF state engine to track sessions.
+ * NPF state engine to track connection.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.15 2013/11/04 22:17:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.15.2.1 2014/08/10 06:56:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,34 +44,34 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.15 2013/11/04 22:17:21 rmind Exp $")
 #include "npf_impl.h"
 
 /*
- * Generic session states and timeout table.
+ * Generic connection states and timeout table.
  *
  * Note: used for connection-less protocols.
  */
 
-#define	NPF_ANY_SESSION_CLOSED		0
-#define	NPF_ANY_SESSION_NEW		1
-#define	NPF_ANY_SESSION_ESTABLISHED	2
-#define	NPF_ANY_SESSION_NSTATES		3
+#define	NPF_ANY_CONN_CLOSED		0
+#define	NPF_ANY_CONN_NEW		1
+#define	NPF_ANY_CONN_ESTABLISHED	2
+#define	NPF_ANY_CONN_NSTATES		3
 
-static const uint8_t npf_generic_fsm[NPF_ANY_SESSION_NSTATES][2] = {
-	[NPF_ANY_SESSION_CLOSED] = {
-		[NPF_FLOW_FORW]		= NPF_ANY_SESSION_NEW,
+static const uint8_t npf_generic_fsm[NPF_ANY_CONN_NSTATES][2] = {
+	[NPF_ANY_CONN_CLOSED] = {
+		[NPF_FLOW_FORW]		= NPF_ANY_CONN_NEW,
 	},
-	[NPF_ANY_SESSION_NEW] = {
-		[NPF_FLOW_FORW]		= NPF_ANY_SESSION_NEW,
-		[NPF_FLOW_BACK]		= NPF_ANY_SESSION_ESTABLISHED,
+	[NPF_ANY_CONN_NEW] = {
+		[NPF_FLOW_FORW]		= NPF_ANY_CONN_NEW,
+		[NPF_FLOW_BACK]		= NPF_ANY_CONN_ESTABLISHED,
 	},
-	[NPF_ANY_SESSION_ESTABLISHED] = {
-		[NPF_FLOW_FORW]		= NPF_ANY_SESSION_ESTABLISHED,
-		[NPF_FLOW_BACK]		= NPF_ANY_SESSION_ESTABLISHED,
+	[NPF_ANY_CONN_ESTABLISHED] = {
+		[NPF_FLOW_FORW]		= NPF_ANY_CONN_ESTABLISHED,
+		[NPF_FLOW_BACK]		= NPF_ANY_CONN_ESTABLISHED,
 	},
 };
 
 static u_int npf_generic_timeout[] __read_mostly = {
-	[NPF_ANY_SESSION_CLOSED]	= 0,
-	[NPF_ANY_SESSION_NEW]		= 30,
-	[NPF_ANY_SESSION_ESTABLISHED]	= 60,
+	[NPF_ANY_CONN_CLOSED]		= 0,
+	[NPF_ANY_CONN_NEW]		= 30,
+	[NPF_ANY_CONN_ESTABLISHED]	= 60,
 };
 
 /*
@@ -92,7 +92,7 @@ static void (*npf_state_sample)(npf_state_t *, bool) = NULL;
  * success and false otherwise (e.g. if protocol is not supported).
  */
 bool
-npf_state_init(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
+npf_state_init(npf_cache_t *npc, npf_state_t *nst)
 {
 	const int proto = npc->npc_proto;
 	bool ret;
@@ -101,12 +101,11 @@ npf_state_init(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
 	memset(nst, 0, sizeof(npf_state_t));
-	mutex_init(&nst->nst_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 
 	switch (proto) {
 	case IPPROTO_TCP:
 		/* Pass to TCP state tracking engine. */
-		ret = npf_state_tcp(npc, nbuf, nst, NPF_FLOW_FORW);
+		ret = npf_state_tcp(npc, nst, NPF_FLOW_FORW);
 		break;
 	case IPPROTO_UDP:
 	case IPPROTO_ICMP:
@@ -125,7 +124,6 @@ void
 npf_state_destroy(npf_state_t *nst)
 {
 	nst->nst_state = 0;
-	mutex_destroy(&nst->nst_lock);
 }
 
 /*
@@ -135,18 +133,16 @@ npf_state_destroy(npf_state_t *nst)
  * the packet belongs to the tracked connection) and false otherwise.
  */
 bool
-npf_state_inspect(npf_cache_t *npc, nbuf_t *nbuf,
-    npf_state_t *nst, const bool forw)
+npf_state_inspect(npf_cache_t *npc, npf_state_t *nst, const bool forw)
 {
 	const int proto = npc->npc_proto;
 	const int di = forw ? NPF_FLOW_FORW : NPF_FLOW_BACK;
 	bool ret;
 
-	mutex_enter(&nst->nst_lock);
 	switch (proto) {
 	case IPPROTO_TCP:
 		/* Pass to TCP state tracking engine. */
-		ret = npf_state_tcp(npc, nbuf, nst, di);
+		ret = npf_state_tcp(npc, nst, di);
 		break;
 	case IPPROTO_UDP:
 	case IPPROTO_ICMP:
@@ -158,13 +154,12 @@ npf_state_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 		ret = false;
 	}
 	NPF_STATE_SAMPLE(nst, ret);
-	mutex_exit(&nst->nst_lock);
 
 	return ret;
 }
 
 /*
- * npf_state_etime: return session expiration time according to the state.
+ * npf_state_etime: return connection expiration time according to the state.
  */
 int
 npf_state_etime(const npf_state_t *nst, const int proto)

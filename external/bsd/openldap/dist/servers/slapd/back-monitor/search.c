@@ -1,10 +1,10 @@
-/*	$NetBSD: search.c,v 1.1.1.3 2010/12/12 15:23:16 adam Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
 /* search.c - monitor backend search function */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.39.2.7 2010/04/13 20:23:33 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -32,29 +32,41 @@
 #include "back-monitor.h"
 #include "proto-back-monitor.h"
 
+static void
+monitor_find_children(
+	Operation *op,
+	SlapReply *rs,
+	Entry *e_parent,
+	Entry **nonv,
+	Entry **vol
+)
+{
+	monitor_entry_t *mp;
+
+	mp = ( monitor_entry_t * )e_parent->e_private;
+	*nonv = mp->mp_children;
+
+	if ( MONITOR_HAS_VOLATILE_CH( mp ) ) {
+		monitor_entry_create( op, rs, NULL, e_parent, vol );
+	}
+}
+
 static int
 monitor_send_children(
 	Operation	*op,
 	SlapReply	*rs,
-	Entry		*e_parent,
+	Entry		*e_nonvolatile,
+	Entry		*e_ch,
 	int		sub )
 {
 	monitor_info_t	*mi = ( monitor_info_t * )op->o_bd->be_private;
 	Entry 			*e,
-				*e_tmp,
-				*e_ch = NULL,
-				*e_nonvolatile = NULL;
+				*e_tmp;
 	monitor_entry_t *mp;
 	int			rc,
 				nonvolatile = 0;
 
-	mp = ( monitor_entry_t * )e_parent->e_private;
-	e_nonvolatile = e = mp->mp_children;
-
-	if ( MONITOR_HAS_VOLATILE_CH( mp ) ) {
-		monitor_entry_create( op, rs, NULL, e_parent, &e_ch );
-	}
-	monitor_cache_release( mi, e_parent );
+	e = e_nonvolatile;
 
 	/* no volatile entries? */
 	if ( e_ch == NULL ) {
@@ -62,7 +74,7 @@ monitor_send_children(
 		if ( e == NULL ) {
 			return LDAP_SUCCESS;
 		}
-	
+
 	/* volatile entries */
 	} else {
 		/* if no persistent, return only volatile */
@@ -86,50 +98,55 @@ monitor_send_children(
 	}
 
 	/* return entries */
-	for ( monitor_cache_lock( e ); e != NULL; ) {
+	for ( ; e != NULL; e = e_tmp ) {
+		Entry *sub_nv = NULL, *sub_ch = NULL;
+
+		monitor_cache_lock( e );
 		monitor_entry_update( op, rs, e );
 
-		if ( op->o_abandon ) {
-			/* FIXME: may leak generated children */
-			if ( nonvolatile == 0 ) {
-				for ( e_tmp = e; e_tmp != NULL; ) {
-					mp = ( monitor_entry_t * )e_tmp->e_private;
-					e = e_tmp;
-					e_tmp = mp->mp_next;
-					monitor_cache_release( mi, e );
-
-					if ( e_tmp == e_nonvolatile ) {
-						break;
-					}
-				}
-
-			} else {
-				monitor_cache_release( mi, e );
-			}
-
-			return SLAPD_ABANDON;
-		}
-		
-		rc = test_filter( op, e, op->oq_search.rs_filter );
-		if ( rc == LDAP_COMPARE_TRUE ) {
-			rs->sr_entry = e;
-			rs->sr_flags = 0;
-			rc = send_search_entry( op, rs );
-			rs->sr_entry = NULL;
-		}
+		if ( e == e_nonvolatile )
+			nonvolatile = 1;
 
 		mp = ( monitor_entry_t * )e->e_private;
 		e_tmp = mp->mp_next;
 
-		if ( sub ) {
-			rc = monitor_send_children( op, rs, e, sub );
+		if ( op->o_abandon ) {
+			monitor_cache_release( mi, e );
+			rc = SLAPD_ABANDON;
+			goto freeout;
+		}
+
+		if ( sub )
+			monitor_find_children( op, rs, e, &sub_nv, &sub_ch );
+
+		rc = test_filter( op, e, op->oq_search.rs_filter );
+		if ( rc == LDAP_COMPARE_TRUE ) {
+			rs->sr_entry = e;
+			rs->sr_flags = REP_ENTRY_MUSTRELEASE;
+			rc = send_search_entry( op, rs );
 			if ( rc ) {
-				/* FIXME: may leak generated children */
+				for ( e = sub_ch; e != NULL; e = sub_nv ) {
+					mp = ( monitor_entry_t * )e->e_private;
+					sub_nv = mp->mp_next;
+					monitor_cache_lock( e );
+					monitor_cache_release( mi, e );
+				}
+				goto freeout;
+			}
+		} else {
+			monitor_cache_release( mi, e );
+		}
+
+		if ( sub ) {
+			rc = monitor_send_children( op, rs, sub_nv, sub_ch, sub );
+			if ( rc ) {
+freeout:
 				if ( nonvolatile == 0 ) {
 					for ( ; e_tmp != NULL; ) {
 						mp = ( monitor_entry_t * )e_tmp->e_private;
 						e = e_tmp;
 						e_tmp = mp->mp_next;
+						monitor_cache_lock( e );
 						monitor_cache_release( mi, e );
 	
 						if ( e_tmp == e_nonvolatile ) {
@@ -140,20 +157,6 @@ monitor_send_children(
 
 				return( rc );
 			}
-		}
-
-		if ( e_tmp != NULL ) {
-			monitor_cache_lock( e_tmp );
-		}
-
-		if ( !sub ) {
-			/* otherwise the recursive call already released */
-			monitor_cache_release( mi, e );
-		}
-
-		e = e_tmp;
-		if ( e == e_nonvolatile ) {
-			nonvolatile = 1;
 		}
 	}
 	
@@ -166,6 +169,7 @@ monitor_back_search( Operation *op, SlapReply *rs )
 	monitor_info_t	*mi = ( monitor_info_t * )op->o_bd->be_private;
 	int		rc = LDAP_SUCCESS;
 	Entry		*e = NULL, *matched = NULL;
+	Entry		*e_nv = NULL, *e_ch = NULL;
 	slap_mask_t	mask;
 
 	Debug( LDAP_DEBUG_TRACE, "=> monitor_back_search\n", 0, 0, 0 );
@@ -220,31 +224,37 @@ monitor_back_search( Operation *op, SlapReply *rs )
 		rc = test_filter( op, e, op->oq_search.rs_filter );
  		if ( rc == LDAP_COMPARE_TRUE ) {
 			rs->sr_entry = e;
-			rs->sr_flags = 0;
+			rs->sr_flags = REP_ENTRY_MUSTRELEASE;
 			send_search_entry( op, rs );
 			rs->sr_entry = NULL;
+		} else {
+			monitor_cache_release( mi, e );
 		}
 		rc = LDAP_SUCCESS;
-		monitor_cache_release( mi, e );
 		break;
 
 	case LDAP_SCOPE_ONELEVEL:
 	case LDAP_SCOPE_SUBORDINATE:
-		rc = monitor_send_children( op, rs, e,
+		monitor_find_children( op, rs, e, &e_nv, &e_ch );
+		monitor_cache_release( mi, e );
+		rc = monitor_send_children( op, rs, e_nv, e_ch,
 			op->oq_search.rs_scope == LDAP_SCOPE_SUBORDINATE );
 		break;
 
 	case LDAP_SCOPE_SUBTREE:
 		monitor_entry_update( op, rs, e );
+		monitor_find_children( op, rs, e, &e_nv, &e_ch );
 		rc = test_filter( op, e, op->oq_search.rs_filter );
 		if ( rc == LDAP_COMPARE_TRUE ) {
 			rs->sr_entry = e;
-			rs->sr_flags = 0;
+			rs->sr_flags = REP_ENTRY_MUSTRELEASE;
 			send_search_entry( op, rs );
 			rs->sr_entry = NULL;
+		} else {
+			monitor_cache_release( mi, e );
 		}
 
-		rc = monitor_send_children( op, rs, e, 1 );
+		rc = monitor_send_children( op, rs, e_nv, e_ch, 1 );
 		break;
 
 	default:

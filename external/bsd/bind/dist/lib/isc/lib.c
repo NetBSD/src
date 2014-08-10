@@ -1,7 +1,7 @@
-/*	$NetBSD: lib.c,v 1.5 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: lib.c,v 1.5.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -85,8 +85,6 @@ isc_lib_initmsgcat(void) {
 	}
 }
 
-#ifndef WIN32
-
 static isc_once_t		register_once = ISC_ONCE_INIT;
 
 static void
@@ -101,9 +99,7 @@ do_register(void) {
 }
 
 void
-isc_lib_register() {
+isc_lib_register(void) {
 	RUNTIME_CHECK(isc_once_do(&register_once, do_register)
 		      == ISC_R_SUCCESS);
 }
-
-#endif

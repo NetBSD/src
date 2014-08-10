@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.17 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.17.2.1 2014/08/10 06:54:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.17 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.17.2.1 2014/08/10 06:54:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ const struct cdevsw m41t00_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

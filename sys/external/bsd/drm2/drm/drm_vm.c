@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -47,16 +47,24 @@ static paddr_t	drm_mmap_map_paddr(struct drm_device *, struct drm_local_map *,
 
 int
 drm_mmap_object(struct drm_device *dev, off_t offset, size_t size, int prot,
-    struct uvm_object **uobjp)
+    struct uvm_object **uobjp, voff_t *uoffsetp, struct file *file __unused)
 {
 	dev_t devno = cdevsw_lookup_major(&drm_cdevsw);
 	struct uvm_object *uobj;
 
+	KASSERT(offset == (offset & ~(PAGE_SIZE-1)));
+
+	/*
+	 * Attach the device.  The size and offset are used only for
+	 * access checks; offset does not become a base address for the
+	 * subsequent uvm_map, hence we set *uoffsetp to offset, not 0.
+	 */
 	uobj = udv_attach(&devno, prot, offset, size);
 	if (uobj == NULL)
 		return -EINVAL;
 
 	*uobjp = uobj;
+	*uoffsetp = offset;
 	return 0;
 }
 
@@ -64,6 +72,9 @@ paddr_t
 drm_mmap_paddr(struct drm_device *dev, off_t byte_offset, int prot)
 {
 	paddr_t paddr;
+
+	if (byte_offset != (byte_offset & ~(PAGE_SIZE-1)))
+		return -1;
 
 	mutex_lock(&dev->struct_mutex);
 	paddr = drm_mmap_paddr_locked(dev, byte_offset, prot);
@@ -79,13 +90,11 @@ drm_mmap_paddr_locked(struct drm_device *dev, off_t byte_offset, int prot)
 	struct drm_hash_item *hash;
 
 	KASSERT(mutex_is_locked(&dev->struct_mutex));
-
-	if (byte_offset != (byte_offset & ~(PAGE_SIZE-1)))
-		return -1;
+	KASSERT(byte_offset == (byte_offset & ~(PAGE_SIZE-1)));
 
 	if ((dev->dma != NULL) &&
 	    (0 <= byte_offset) &&
-	    (byte_offset <= (dev->dma->page_count << PAGE_SHIFT)))
+	    (page_offset <= dev->dma->page_count))
 		return drm_mmap_dma_paddr(dev, byte_offset, prot);
 
 	if (drm_ht_find_item(&dev->map_hash, page_offset, &hash))
@@ -105,11 +114,12 @@ drm_mmap_paddr_locked(struct drm_device *dev, off_t byte_offset, int prot)
 	if (ISSET(map->flags, _DRM_RESTRICTED) && !DRM_SUSER())
 		return -1;
 
-	if (byte_offset < map->offset)
+	if (!(map->offset <= byte_offset))
+		return -1;
+	if (map->size < (map->offset - byte_offset))
 		return -1;
 
-	return drm_mmap_map_paddr(dev, map, (map->offset - byte_offset),
-	    prot);
+	return drm_mmap_map_paddr(dev, map, (byte_offset - map->offset), prot);
 }
 
 static paddr_t
@@ -118,11 +128,10 @@ drm_mmap_dma_paddr(struct drm_device *dev, off_t byte_offset, int prot)
 	const off_t page_offset = (byte_offset >> PAGE_SHIFT);
 
 	KASSERT(mutex_is_locked(&dev->struct_mutex));
+	KASSERT(byte_offset == (byte_offset & ~(PAGE_SIZE-1)));
+	KASSERT(page_offset <= dev->dma->page_count);
 
 	if (dev->dma->pagelist == NULL)
-		return (paddr_t)-1;
-
-	if (page_offset >= dev->dma->page_count)
 		return (paddr_t)-1;
 
 	return dev->dma->pagelist[page_offset];
@@ -134,6 +143,8 @@ drm_mmap_map_paddr(struct drm_device *dev, struct drm_local_map *map,
 {
 	int flags = 0;
 
+	KASSERT(byte_offset <= map->size);
+
 	switch (map->type) {
 	case _DRM_FRAME_BUFFER:
 	case _DRM_AGP:
@@ -143,8 +154,8 @@ drm_mmap_map_paddr(struct drm_device *dev, struct drm_local_map *map,
 	case _DRM_REGISTERS:
 		flags |= BUS_SPACE_MAP_LINEAR; /* XXX Why?  */
 
-		return bus_space_mmap(dev->bst, map->offset, byte_offset, prot,
-		    flags);
+		return bus_space_mmap(map->lm_data.bus_space.bst, map->offset,
+		    byte_offset, prot, flags);
 
 	case _DRM_CONSISTENT: {
 		struct drm_dma_handle *const dmah = map->lm_data.dmah;
@@ -171,7 +182,6 @@ drm_mmap_map_paddr(struct drm_device *dev, struct drm_local_map *map,
 	}
 
 	case _DRM_SHM:
-	case _DRM_GEM:
 	default:
 		return (paddr_t)-1;
 	}

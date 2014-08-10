@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.11 2013/08/29 17:49:21 rmind Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.11.2.1 2014/08/10 06:56:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.11 2013/08/29 17:49:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.11.2.1 2014/08/10 06:56:23 tls Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -81,73 +81,332 @@ static const struct btproto rfcomm_proto = {
 int rfcomm_sendspace = 4096;
 int rfcomm_recvspace = 4096;
 
+static int
+rfcomm_attach(struct socket *so, int proto)
+{
+	int error;
+
+	KASSERT(so->so_pcb == NULL);
+
+	if (so->so_lock == NULL) {
+		mutex_obj_hold(bt_lock);
+		so->so_lock = bt_lock;
+		solock(so);
+	}
+	KASSERT(solocked(so));
+
+	/*
+	 * Since we have nothing to add, we attach the DLC
+	 * structure directly to our PCB pointer.
+	 */
+	error = soreserve(so, rfcomm_sendspace, rfcomm_recvspace);
+	if (error)
+		return error;
+
+	error = rfcomm_attach_pcb((struct rfcomm_dlc **)&so->so_pcb,
+				&rfcomm_proto, so);
+	if (error)
+		return error;
+
+	error = rfcomm_rcvd_pcb(so->so_pcb, sbspace(&so->so_rcv));
+	if (error) {
+		rfcomm_detach_pcb((struct rfcomm_dlc **)&so->so_pcb);
+		return error;
+	}
+	return 0;
+}
+
+static void
+rfcomm_detach(struct socket *so)
+{
+	KASSERT(so->so_pcb != NULL);
+	rfcomm_detach_pcb((struct rfcomm_dlc **)&so->so_pcb);
+	KASSERT(so->so_pcb == NULL);
+}
+
+static int
+rfcomm_accept(struct socket *so, struct mbuf *nam)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return rfcomm_peeraddr_pcb(pcb, sa);
+}
+
+static int
+rfcomm_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	if (sa->bt_len != sizeof(struct sockaddr_bt))
+		return EINVAL;
+
+	if (sa->bt_family != AF_BLUETOOTH)
+		return EAFNOSUPPORT;
+
+	return rfcomm_bind_pcb(pcb, sa);
+}
+
+static int
+rfcomm_listen(struct socket *so, struct lwp *l)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	return rfcomm_listen_pcb(pcb);
+}
+
+static int
+rfcomm_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	if (sa->bt_len != sizeof(struct sockaddr_bt))
+		return EINVAL;
+
+	if (sa->bt_family != AF_BLUETOOTH)
+		return EAFNOSUPPORT;
+
+	soisconnecting(so);
+	return rfcomm_connect_pcb(pcb, sa);
+}
+
+static int
+rfcomm_connect2(struct socket *so, struct socket *so2)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	return EOPNOTSUPP;
+}
+
+static int
+rfcomm_disconnect(struct socket *so)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	soisdisconnecting(so);
+	return rfcomm_disconnect_pcb(pcb, so->so_linger);
+}
+
+static int
+rfcomm_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	socantsendmore(so);
+	return 0;
+}
+
+static int
+rfcomm_abort(struct socket *so)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	rfcomm_disconnect_pcb(pcb, 0);
+	soisdisconnected(so);
+	rfcomm_detach(so);
+	return 0;
+}
+
+static int
+rfcomm_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
+{
+	return EPASSTHROUGH;
+}
+
+static int
+rfcomm_stat(struct socket *so, struct stat *ub)
+{
+	KASSERT(solocked(so));
+
+	return 0;
+}
+
+static int
+rfcomm_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return rfcomm_peeraddr_pcb(pcb, sa);
+}
+
+static int
+rfcomm_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return rfcomm_sockaddr_pcb(pcb, sa);
+}
+
+static int
+rfcomm_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	return rfcomm_rcvd_pcb(pcb, sbspace(&so->so_rcv));
+}
+
+static int
+rfcomm_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+rfcomm_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+	int err = 0;
+	struct mbuf *m0;
+
+	KASSERT(solocked(so));
+	KASSERT(m != NULL);
+
+	if (control)	/* no use for that */
+		m_freem(control);
+
+	if (pcb == NULL) {
+		err = EINVAL;
+		goto release;
+	}
+
+	m0 = m_copypacket(m, M_DONTWAIT);
+	if (m0 == NULL) {
+		err = ENOMEM;
+		goto release;
+	}
+
+	sbappendstream(&so->so_snd, m);
+	return rfcomm_send_pcb(pcb, m0);
+
+release:
+	m_freem(m);
+	return err;
+}
+
+static int
+rfcomm_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	if (m)
+		m_freem(m);
+	if (control)
+		m_freem(control);
+
+	return EOPNOTSUPP;
+}
+
+static int
+rfcomm_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	return EOPNOTSUPP;
+}
+
 /*
  * User Request.
  * up is socket
- * m is either
- *	optional mbuf chain containing message
- *	ioctl command (PRU_CONTROL)
- * nam is either
- *	optional mbuf chain containing an address
- *	ioctl data (PRU_CONTROL)
- *	optionally protocol number (PRU_ATTACH)
- *	message flags (PRU_RCVD)
+ * m is optional mbuf chain containing message
  * ctl is either
  *	optional mbuf chain containing socket options
- *	optional interface pointer (PRU_CONTROL, PRU_PURGEIF)
  * l is pointer to process requesting action (if any)
  *
  * we are responsible for disposing of m and ctl if
  * they are mbuf chains
  */
-int
+static int
 rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
 	struct rfcomm_dlc *pcb = up->so_pcb;
-	struct sockaddr_bt *sa;
-	struct mbuf *m0;
 	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
-
-	switch (req) {
-	case PRU_CONTROL:
-		return EPASSTHROUGH;
-
-	case PRU_PURGEIF:
-		return EOPNOTSUPP;
-
-	case PRU_ATTACH:
-		if (up->so_lock == NULL) {
-			mutex_obj_hold(bt_lock);
-			up->so_lock = bt_lock;
-			solock(up);
-		}
-		KASSERT(solocked(up));
-		if (pcb != NULL)
-			return EINVAL;
-		/*
-		 * Since we have nothing to add, we attach the DLC
-		 * structure directly to our PCB pointer.
-		 */
-		err = soreserve(up, rfcomm_sendspace, rfcomm_recvspace);
-		if (err)
-			return err;
-
-		err = rfcomm_attach((struct rfcomm_dlc **)&up->so_pcb,
-					&rfcomm_proto, up);
-		if (err)
-			return err;
-
-		err = rfcomm_rcvd(up->so_pcb, sbspace(&up->so_rcv));
-		if (err) {
-			rfcomm_detach((struct rfcomm_dlc **)&up->so_pcb);
-			return err;
-		}
-
-		return 0;
-	}
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
+	KASSERT(req != PRU_BIND);
+	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
+	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
+	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
 	if (pcb == NULL) {
 		err = EINVAL;
@@ -155,92 +414,6 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_DISCONNECT:
-		soisdisconnecting(up);
-		return rfcomm_disconnect(pcb, up->so_linger);
-
-	case PRU_ABORT:
-		rfcomm_disconnect(pcb, 0);
-		soisdisconnected(up);
-		/* fall through to */
-	case PRU_DETACH:
-		return rfcomm_detach((struct rfcomm_dlc **)&up->so_pcb);
-
-	case PRU_BIND:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		if (sa->bt_len != sizeof(struct sockaddr_bt))
-			return EINVAL;
-
-		if (sa->bt_family != AF_BLUETOOTH)
-			return EAFNOSUPPORT;
-
-		return rfcomm_bind(pcb, sa);
-
-	case PRU_CONNECT:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		if (sa->bt_len != sizeof(struct sockaddr_bt))
-			return EINVAL;
-
-		if (sa->bt_family != AF_BLUETOOTH)
-			return EAFNOSUPPORT;
-
-		soisconnecting(up);
-		return rfcomm_connect(pcb, sa);
-
-	case PRU_PEERADDR:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return rfcomm_peeraddr(pcb, sa);
-
-	case PRU_SOCKADDR:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return rfcomm_sockaddr(pcb, sa);
-
-	case PRU_SHUTDOWN:
-		socantsendmore(up);
-		break;
-
-	case PRU_SEND:
-		KASSERT(m != NULL);
-
-		if (ctl)	/* no use for that */
-			m_freem(ctl);
-
-		m0 = m_copypacket(m, M_DONTWAIT);
-		if (m0 == NULL)
-			return ENOMEM;
-
-		sbappendstream(&up->so_snd, m);
-
-		return rfcomm_send(pcb, m0);
-
-	case PRU_SENSE:
-		return 0;		/* (no release) */
-
-	case PRU_RCVD:
-		return rfcomm_rcvd(pcb, sbspace(&up->so_rcv));
-
-	case PRU_RCVOOB:
-		return EOPNOTSUPP;	/* (no release) */
-
-	case PRU_LISTEN:
-		return rfcomm_listen(pcb);
-
-	case PRU_ACCEPT:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return rfcomm_peeraddr(pcb, sa);
-
-	case PRU_CONNECT2:
-	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -386,7 +559,7 @@ rfcomm_linkmode(void *arg, int new)
 	if (((mode & RFCOMM_LM_AUTH) && !(new & RFCOMM_LM_AUTH))
 	    || ((mode & RFCOMM_LM_ENCRYPT) && !(new & RFCOMM_LM_ENCRYPT))
 	    || ((mode & RFCOMM_LM_SECURE) && !(new & RFCOMM_LM_SECURE)))
-		rfcomm_disconnect(so->so_pcb, 0);
+		rfcomm_disconnect_pcb(so->so_pcb, 0);
 }
 
 /*
@@ -411,3 +584,49 @@ rfcomm_input(void *arg, struct mbuf *m)
 	sbappendstream(&so->so_rcv, m);
 	sorwakeup(so);
 }
+
+PR_WRAP_USRREQS(rfcomm)
+
+#define	rfcomm_attach		rfcomm_attach_wrapper
+#define	rfcomm_detach		rfcomm_detach_wrapper
+#define	rfcomm_accept		rfcomm_accept_wrapper
+#define	rfcomm_bind		rfcomm_bind_wrapper
+#define	rfcomm_listen		rfcomm_listen_wrapper
+#define	rfcomm_connect		rfcomm_connect_wrapper
+#define	rfcomm_connect2		rfcomm_connect2_wrapper
+#define	rfcomm_disconnect	rfcomm_disconnect_wrapper
+#define	rfcomm_shutdown		rfcomm_shutdown_wrapper
+#define	rfcomm_abort		rfcomm_abort_wrapper
+#define	rfcomm_ioctl		rfcomm_ioctl_wrapper
+#define	rfcomm_stat		rfcomm_stat_wrapper
+#define	rfcomm_peeraddr		rfcomm_peeraddr_wrapper
+#define	rfcomm_sockaddr		rfcomm_sockaddr_wrapper
+#define	rfcomm_rcvd		rfcomm_rcvd_wrapper
+#define	rfcomm_recvoob		rfcomm_recvoob_wrapper
+#define	rfcomm_send		rfcomm_send_wrapper
+#define	rfcomm_sendoob		rfcomm_sendoob_wrapper
+#define	rfcomm_purgeif		rfcomm_purgeif_wrapper
+#define	rfcomm_usrreq		rfcomm_usrreq_wrapper
+
+const struct pr_usrreqs rfcomm_usrreqs = {
+	.pr_attach	= rfcomm_attach,
+	.pr_detach	= rfcomm_detach,
+	.pr_accept	= rfcomm_accept,
+	.pr_bind	= rfcomm_bind,
+	.pr_listen	= rfcomm_listen,
+	.pr_connect	= rfcomm_connect,
+	.pr_connect2	= rfcomm_connect2,
+	.pr_disconnect	= rfcomm_disconnect,
+	.pr_shutdown	= rfcomm_shutdown,
+	.pr_abort	= rfcomm_abort,
+	.pr_ioctl	= rfcomm_ioctl,
+	.pr_stat	= rfcomm_stat,
+	.pr_peeraddr	= rfcomm_peeraddr,
+	.pr_sockaddr	= rfcomm_sockaddr,
+	.pr_rcvd	= rfcomm_rcvd,
+	.pr_recvoob	= rfcomm_recvoob,
+	.pr_send	= rfcomm_send,
+	.pr_sendoob	= rfcomm_sendoob,
+	.pr_purgeif	= rfcomm_purgeif,
+	.pr_generic	= rfcomm_usrreq,
+};

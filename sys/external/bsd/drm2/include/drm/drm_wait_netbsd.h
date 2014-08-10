@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,9 @@
 
 #include <sys/param.h>
 #include <sys/condvar.h>
+#if DIAGNOSTIC
+#include <sys/cpu.h>		/* cpu_intr_p */
+#endif
 #include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/systm.h>
@@ -44,6 +47,8 @@
 typedef kcondvar_t drm_waitqueue_t;
 
 #define	DRM_HZ	hz		/* XXX Hurk...  */
+
+#define	DRM_UDELAY	DELAY
 
 static inline void
 DRM_INIT_WAITQUEUE(drm_waitqueue_t *q, const char *name)
@@ -102,6 +107,8 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 #define	_DRM_WAIT_UNTIL(RET, WAIT, Q, INTERLOCK, CONDITION) do		\
 {									\
 	KASSERT(mutex_is_locked((INTERLOCK)));				\
+	ASSERT_SLEEPABLE();						\
+	KASSERT(!cold);							\
 	for (;;) {							\
 		if (CONDITION) {					\
 			(RET) = 0;					\
@@ -128,6 +135,8 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 	const int _dtwu_start = hardclock_ticks;			\
 	int _dtwu_ticks = (TICKS);					\
 	KASSERT(mutex_is_locked((INTERLOCK)));				\
+	ASSERT_SLEEPABLE();						\
+	KASSERT(!cold);							\
 	for (;;) {							\
 		if (CONDITION) {					\
 			(RET) = _dtwu_ticks;				\
@@ -155,9 +164,19 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 #define	DRM_TIMED_WAIT_UNTIL(RET, Q, I, T, C)			\
 	_DRM_TIMED_WAIT_UNTIL(RET, cv_timedwait_sig, Q, I, T, C)
 
+/*
+ * XXX Can't assert sleepable here because we hold a spin lock.  At
+ * least we can assert that we're not in (soft) interrupt context, and
+ * hope that nobody tries to use these with a sometimes quickly
+ * satisfied condition while holding a different spin lock.
+ */
+
 #define	_DRM_SPIN_WAIT_UNTIL(RET, WAIT, Q, INTERLOCK, CONDITION) do	\
 {									\
 	KASSERT(spin_is_locked((INTERLOCK)));				\
+	KASSERT(!cpu_intr_p());						\
+	KASSERT(!cpu_softintr_p());					\
+	KASSERT(!cold);							\
 	while (!(CONDITION)) {						\
 		/* XXX errno NetBSD->Linux */				\
 		(RET) = -WAIT((Q), &(INTERLOCK)->sl_lock);		\
@@ -179,6 +198,9 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 	const int _dstwu_start = hardclock_ticks;			\
 	int _dstwu_ticks = (TICKS);					\
 	KASSERT(spin_is_locked((INTERLOCK)));				\
+	KASSERT(!cpu_intr_p());						\
+	KASSERT(!cpu_softintr_p());					\
+	KASSERT(!cold);							\
 	for (;;) {							\
 		if (CONDITION) {					\
 			(RET) = _dstwu_ticks;				\

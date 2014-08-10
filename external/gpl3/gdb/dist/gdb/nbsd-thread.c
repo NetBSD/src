@@ -83,12 +83,6 @@ struct td_proc_callbacks_t nbsd_thread_callbacks;
 static ptid_t find_active_thread (void);
 static void nbsd_find_new_threads (struct target_ops *);
 
-#define GET_PID(ptid)		ptid_get_pid (ptid)
-#define GET_LWP(ptid)		ptid_get_lwp (ptid)
-
-#define IS_LWP(ptid)		(GET_LWP (ptid) != 0)
-
-#define BUILD_LWP(lwp, ptid)	ptid_build (GET_PID(ptid), (lwp), 0)
 
 static td_proc_t *main_ta;
 
@@ -143,7 +137,8 @@ nbsd_thread_activate (void)
   nbsd_thread_active = 1;
   main_ptid = inferior_ptid;
   cached_thread = minus_one_ptid;
-  thread_change_ptid(inferior_ptid, BUILD_LWP(1, inferior_ptid));
+  thread_change_ptid(inferior_ptid,
+      ptid_build (ptid_get_pid (inferior_ptid), 1, 0));
   nbsd_find_new_threads (NULL);
   inferior_ptid = find_active_thread ();
 }
@@ -198,10 +193,9 @@ nbsd_thread_post_attach (int pid)
    started via the normal ptrace (PTRACE_TRACEME).  */
 
 static void
-nbsd_thread_detach (struct target_ops *ops, char *args, int from_tty)
+nbsd_thread_detach (struct target_ops *ops, const char *args, int from_tty)
 {
   struct target_ops *beneath = find_target_beneath (ops);
-  nbsd_thread_deactivate ();
   unpush_target (ops);
   /* Ordinarily, gdb caches solib information, but this means that it
      won't call the new_obfile hook on a reattach. Clear the symbol file
@@ -209,6 +203,7 @@ nbsd_thread_detach (struct target_ops *ops, char *args, int from_tty)
   clear_solib();
   symbol_file_clear(0);
   beneath->to_detach (beneath, args, from_tty);
+  nbsd_thread_deactivate ();
 }
 
 static int nsusp;
@@ -280,10 +275,11 @@ find_active_thread (void)
   if (target_has_execution)
     {
       pl.pl_lwpid = 0;
-      val = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
+      val = ptrace (PT_LWPINFO, ptid_get_pid(inferior_ptid), (void *)&pl, sizeof(pl));
       while ((val != -1) && (pl.pl_lwpid != 0) &&
-	     (pl.pl_event != PL_EVENT_SIGNAL))
-	val = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
+	     (pl.pl_event != PL_EVENT_SIGNAL)) {
+	val = ptrace (PT_LWPINFO, ptid_get_pid(inferior_ptid), (void *)&pl, sizeof(pl));
+    }
       if (pl.pl_lwpid == 0)
 	/* found no "active" thread, stay with current */
 	pl.pl_lwpid = inferior_ptid.lwp;
@@ -293,7 +289,7 @@ find_active_thread (void)
       return inferior_ptid;
     }
 
-  cached_thread = BUILD_LWP (pl.pl_lwpid, main_ptid);
+  cached_thread = ptid_build (ptid_get_pid (main_ptid), pl.pl_lwpid, 0);
   return cached_thread;
 }
 
@@ -341,8 +337,8 @@ nbsd_thread_fetch_registers (struct target_ops *ops, struct regcache *cache,
 
   if (!target_has_execution)
     {
-      inferior_ptid = pid_to_ptid ((GET_LWP (inferior_ptid) << 16) | 
-				    GET_PID (inferior_ptid));
+      inferior_ptid = pid_to_ptid ((ptid_get_lwp (inferior_ptid) << 16) | 
+				    ptid_get_pid (inferior_ptid));
     }
     beneath->to_fetch_registers (beneath, cache, regno);
   
@@ -418,11 +414,11 @@ nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
   td_thread_t *th;
   char name[32];
 
-  if ((GET_LWP(ptid) == 0) && 
+  if ((ptid_get_lwp(ptid) == 0) && 
       (nbsd_thread_active == 0))
-    sprintf (buf, "process %d", GET_PID (ptid));
+    sprintf (buf, "process %d", ptid_get_pid (ptid));
   else
-    sprintf (buf, "LWP %ld", GET_LWP (ptid));
+    sprintf (buf, "LWP %ld", ptid_get_lwp (ptid));
 
   return buf;
 }
@@ -440,7 +436,7 @@ nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
 
   regval = atoi (bfd_section_name (abfd, asect) + 5);
 
-  add_thread (BUILD_LWP(regval, main_ptid));
+  add_thread (ptid_build (ptid_get_pid (main_ptid), regval, 0));
 }
 #endif
 
@@ -505,11 +501,11 @@ nbsd_thread_alive (struct target_ops *ops, ptid_t ptid)
 
   if (nbsd_thread_active)
     {
-      if (IS_LWP (ptid))
+      if (ptid_lwp_p (ptid))
 	{
 	  struct ptrace_lwpinfo pl;
-	  pl.pl_lwpid = GET_LWP (ptid);
-	  val = ptrace (PT_LWPINFO, GET_PID (ptid), (void *)&pl, sizeof(pl));
+	  pl.pl_lwpid = ptid_get_lwp (ptid);
+	  val = ptrace (PT_LWPINFO, ptid_get_pid (ptid), (void *)&pl, sizeof(pl));
 	  if (val == -1)
 	    val = 0;
 	  else
@@ -553,13 +549,13 @@ nbsd_find_new_threads (struct target_ops *ops)
     {
       struct ptrace_lwpinfo pl;
       pl.pl_lwpid = 0;
-      retval = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
+      retval = ptrace (PT_LWPINFO, ptid_get_pid(inferior_ptid), (void *)&pl, sizeof(pl));
       while ((retval != -1) && pl.pl_lwpid != 0)
 	{
-	  ptid = BUILD_LWP (pl.pl_lwpid, main_ptid);
+	  ptid = ptid_build (ptid_get_pid (main_ptid), pl.pl_lwpid, 0);
 	  if (!in_thread_list (ptid))
 	    add_thread (ptid);
-	  retval = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
+	  retval = ptrace (PT_LWPINFO, ptid_get_pid(inferior_ptid), (void *)&pl, sizeof(pl));
 	}
     }
 }
@@ -668,7 +664,7 @@ nbsd_thread_proc_getregs (void *arg, int regset, int lwp, void *buf)
     {
       /* Fetching registers from a live process requires that
 	 inferior_ptid is a LWP value rather than a thread value. */
-      inferior_ptid = BUILD_LWP (lwp, main_ptid);
+      inferior_ptid = ptid_build (ptid_get_pid (main_ptid), lwp, 0);
       beneath->to_fetch_registers (beneath, cache, -1);
     }
   else
@@ -676,7 +672,7 @@ nbsd_thread_proc_getregs (void *arg, int regset, int lwp, void *buf)
       /* Fetching registers from a core process requires that
 	 the PID value of inferior_ptid have the funky value that
 	 the kernel drops rather than the real PID. Gross. */
-      inferior_ptid = pid_to_ptid ((lwp << 16) | GET_PID (main_ptid));
+      inferior_ptid = pid_to_ptid ((lwp << 16) | ptid_get_pid (main_ptid));
       beneath->to_fetch_registers (ops, cache, -1);
     }
 
@@ -729,7 +725,7 @@ nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
 
   /* Storing registers requires that inferior_ptid is a LWP value
      rather than a thread value. */
-  inferior_ptid = BUILD_LWP (lwp, main_ptid);
+  inferior_ptid = ptid_build (ptid_get_pid (main_ptid), lwp, 0);
   beneath->to_store_registers (beneath, cache, -1);
   do_cleanups (old_chain);
 

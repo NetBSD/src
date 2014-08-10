@@ -35,7 +35,7 @@
 #define _GLIBCXX_CXX_CONFIG_H 1
 
 // The current version of the C++ library in compressed ISO date format.
-#define __GLIBCXX__ 20140302
+#define __GLIBCXX__ 20140522
 
 // Macros for various attributes.
 //   _GLIBCXX_PURE
@@ -471,58 +471,58 @@ namespace std
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the `acosf' function. */
-/* #undef _GLIBCXX_HAVE_ACOSF */
+#define _GLIBCXX_HAVE_ACOSF 1
 
 /* Define to 1 if you have the `acosl' function. */
-/* #undef _GLIBCXX_HAVE_ACOSL */
+#define _GLIBCXX_HAVE_ACOSL 1
 
 /* Define to 1 if you have the `asinf' function. */
-/* #undef _GLIBCXX_HAVE_ASINF */
+#define _GLIBCXX_HAVE_ASINF 1
 
 /* Define to 1 if you have the `asinl' function. */
-/* #undef _GLIBCXX_HAVE_ASINL */
+#define _GLIBCXX_HAVE_ASINL 1
 
 /* Define to 1 if the target assembler supports .symver directive. */
 #define _GLIBCXX_HAVE_AS_SYMVER_DIRECTIVE 1
 
 /* Define to 1 if you have the `atan2f' function. */
-/* #undef _GLIBCXX_HAVE_ATAN2F */
+#define _GLIBCXX_HAVE_ATAN2F 1
 
 /* Define to 1 if you have the `atan2l' function. */
-/* #undef _GLIBCXX_HAVE_ATAN2L */
+#define _GLIBCXX_HAVE_ATAN2L 1
 
 /* Define to 1 if you have the `atanf' function. */
-/* #undef _GLIBCXX_HAVE_ATANF */
+#define _GLIBCXX_HAVE_ATANF 1
 
 /* Define to 1 if you have the `atanl' function. */
-/* #undef _GLIBCXX_HAVE_ATANL */
+#define _GLIBCXX_HAVE_ATANL 1
 
 /* Define to 1 if you have the `at_quick_exit' function. */
-/* #undef _GLIBCXX_HAVE_AT_QUICK_EXIT */
+#define _GLIBCXX_HAVE_AT_QUICK_EXIT 1
 
 /* Define to 1 if the target assembler supports thread-local storage. */
 /* #undef _GLIBCXX_HAVE_CC_TLS */
 
 /* Define to 1 if you have the `ceilf' function. */
-/* #undef _GLIBCXX_HAVE_CEILF */
+#define _GLIBCXX_HAVE_CEILF 1
 
 /* Define to 1 if you have the `ceill' function. */
-/* #undef _GLIBCXX_HAVE_CEILL */
+#define _GLIBCXX_HAVE_CEILL 1
 
 /* Define to 1 if you have the <complex.h> header file. */
 #define _GLIBCXX_HAVE_COMPLEX_H 1
 
 /* Define to 1 if you have the `cosf' function. */
-/* #undef _GLIBCXX_HAVE_COSF */
+#define _GLIBCXX_HAVE_COSF 1
 
 /* Define to 1 if you have the `coshf' function. */
-/* #undef _GLIBCXX_HAVE_COSHF */
+#define _GLIBCXX_HAVE_COSHF 1
 
 /* Define to 1 if you have the `coshl' function. */
-/* #undef _GLIBCXX_HAVE_COSHL */
+#define _GLIBCXX_HAVE_COSHL 1
 
 /* Define to 1 if you have the `cosl' function. */
-/* #undef _GLIBCXX_HAVE_COSL */
+#define _GLIBCXX_HAVE_COSL 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define _GLIBCXX_HAVE_DLFCN_H 1
@@ -591,16 +591,16 @@ namespace std
 #define _GLIBCXX_HAVE_EXECINFO_H 1
 
 /* Define to 1 if you have the `expf' function. */
-/* #undef _GLIBCXX_HAVE_EXPF */
+#define _GLIBCXX_HAVE_EXPF 1
 
 /* Define to 1 if you have the `expl' function. */
-/* #undef _GLIBCXX_HAVE_EXPL */
+#define _GLIBCXX_HAVE_EXPL 1
 
 /* Define to 1 if you have the `fabsf' function. */
-/* #undef _GLIBCXX_HAVE_FABSF */
+#define _GLIBCXX_HAVE_FABSF 1
 
 /* Define to 1 if you have the `fabsl' function. */
-/* #undef _GLIBCXX_HAVE_FABSL */
+#define _GLIBCXX_HAVE_FABSL 1
 
 /* Define to 1 if you have the <fenv.h> header file. */
 #define _GLIBCXX_HAVE_FENV_H 1
@@ -618,16 +618,16 @@ namespace std
 #define _GLIBCXX_HAVE_FLOAT_H 1
 
 /* Define to 1 if you have the `floorf' function. */
-/* #undef _GLIBCXX_HAVE_FLOORF */
+#define _GLIBCXX_HAVE_FLOORF 1
 
 /* Define to 1 if you have the `floorl' function. */
-/* #undef _GLIBCXX_HAVE_FLOORL */
+#define _GLIBCXX_HAVE_FLOORL 1
 
 /* Define to 1 if you have the `fmodf' function. */
-/* #undef _GLIBCXX_HAVE_FMODF */
+#define _GLIBCXX_HAVE_FMODF 1
 
 /* Define to 1 if you have the `fmodl' function. */
-/* #undef _GLIBCXX_HAVE_FMODL */
+#define _GLIBCXX_HAVE_FMODL 1
 
 /* Define to 1 if you have the `fpclass' function. */
 /* #undef _GLIBCXX_HAVE_FPCLASS */
@@ -639,7 +639,7 @@ namespace std
 #define _GLIBCXX_HAVE_FREXPF 1
 
 /* Define to 1 if you have the `frexpl' function. */
-/* #undef _GLIBCXX_HAVE_FREXPL */
+#define _GLIBCXX_HAVE_FREXPL 1
 
 /* Define if _Unwind_GetIPInfo is available. */
 #define _GLIBCXX_HAVE_GETIPINFO 1
@@ -648,16 +648,16 @@ namespace std
 #define _GLIBCXX_HAVE_GETS 1
 
 /* Define to 1 if you have the `hypot' function. */
-/* #undef _GLIBCXX_HAVE_HYPOT */
+#define _GLIBCXX_HAVE_HYPOT 1
 
 /* Define to 1 if you have the `hypotf' function. */
 #define _GLIBCXX_HAVE_HYPOTF 1
 
 /* Define to 1 if you have the `hypotl' function. */
-/* #undef _GLIBCXX_HAVE_HYPOTL */
+#define _GLIBCXX_HAVE_HYPOTL 1
 
 /* Define if you have the iconv() function. */
-/* #undef _GLIBCXX_HAVE_ICONV */
+#define _GLIBCXX_HAVE_ICONV 1
 
 /* Define to 1 if you have the <ieeefp.h> header file. */
 #define _GLIBCXX_HAVE_IEEEFP_H 1
@@ -699,28 +699,28 @@ namespace std
 #define _GLIBCXX_HAVE_LC_MESSAGES 1
 
 /* Define to 1 if you have the `ldexpf' function. */
-/* #undef _GLIBCXX_HAVE_LDEXPF */
+#define _GLIBCXX_HAVE_LDEXPF 1
 
 /* Define to 1 if you have the `ldexpl' function. */
-/* #undef _GLIBCXX_HAVE_LDEXPL */
+#define _GLIBCXX_HAVE_LDEXPL 1
 
 /* Define to 1 if you have the <libintl.h> header file. */
 /* #undef _GLIBCXX_HAVE_LIBINTL_H */
 
 /* Only used in build directory testsuite_hooks.h. */
-/* #undef _GLIBCXX_HAVE_LIMIT_AS */
+#define _GLIBCXX_HAVE_LIMIT_AS 1
 
 /* Only used in build directory testsuite_hooks.h. */
-/* #undef _GLIBCXX_HAVE_LIMIT_DATA */
+#define _GLIBCXX_HAVE_LIMIT_DATA 1
 
 /* Only used in build directory testsuite_hooks.h. */
-/* #undef _GLIBCXX_HAVE_LIMIT_FSIZE */
+#define _GLIBCXX_HAVE_LIMIT_FSIZE 1
 
 /* Only used in build directory testsuite_hooks.h. */
-/* #undef _GLIBCXX_HAVE_LIMIT_RSS */
+#define _GLIBCXX_HAVE_LIMIT_RSS 1
 
 /* Only used in build directory testsuite_hooks.h. */
-/* #undef _GLIBCXX_HAVE_LIMIT_VMEM */
+#define _GLIBCXX_HAVE_LIMIT_VMEM 1
 
 /* Define if futex syscall is available. */
 /* #undef _GLIBCXX_HAVE_LINUX_FUTEX */
@@ -729,16 +729,16 @@ namespace std
 #define _GLIBCXX_HAVE_LOCALE_H 1
 
 /* Define to 1 if you have the `log10f' function. */
-/* #undef _GLIBCXX_HAVE_LOG10F */
+#define _GLIBCXX_HAVE_LOG10F 1
 
 /* Define to 1 if you have the `log10l' function. */
-/* #undef _GLIBCXX_HAVE_LOG10L */
+#define _GLIBCXX_HAVE_LOG10L 1
 
 /* Define to 1 if you have the `logf' function. */
-/* #undef _GLIBCXX_HAVE_LOGF */
+#define _GLIBCXX_HAVE_LOGF 1
 
 /* Define to 1 if you have the `logl' function. */
-/* #undef _GLIBCXX_HAVE_LOGL */
+#define _GLIBCXX_HAVE_LOGL 1
 
 /* Define to 1 if you have the <machine/endian.h> header file. */
 #define _GLIBCXX_HAVE_MACHINE_ENDIAN_H 1
@@ -753,10 +753,10 @@ namespace std
 #define _GLIBCXX_HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `modf' function. */
-/* #undef _GLIBCXX_HAVE_MODF */
+#define _GLIBCXX_HAVE_MODF 1
 
 /* Define to 1 if you have the `modff' function. */
-/* #undef _GLIBCXX_HAVE_MODFF */
+#define _GLIBCXX_HAVE_MODFF 1
 
 /* Define to 1 if you have the `modfl' function. */
 /* #undef _GLIBCXX_HAVE_MODFL */
@@ -768,19 +768,19 @@ namespace std
 #define _GLIBCXX_HAVE_POLL 1
 
 /* Define to 1 if you have the `powf' function. */
-/* #undef _GLIBCXX_HAVE_POWF */
+#define _GLIBCXX_HAVE_POWF 1
 
 /* Define to 1 if you have the `powl' function. */
-/* #undef _GLIBCXX_HAVE_POWL */
+#define _GLIBCXX_HAVE_POWL 1
 
 /* Define to 1 if you have the `qfpclass' function. */
 /* #undef _GLIBCXX_HAVE_QFPCLASS */
 
 /* Define to 1 if you have the `quick_exit' function. */
-/* #undef _GLIBCXX_HAVE_QUICK_EXIT */
+#define _GLIBCXX_HAVE_QUICK_EXIT 1
 
 /* Define to 1 if you have the `setenv' function. */
-/* #undef _GLIBCXX_HAVE_SETENV */
+#define _GLIBCXX_HAVE_SETENV 1
 
 /* Define to 1 if you have the `sincos' function. */
 /* #undef _GLIBCXX_HAVE_SINCOS */
@@ -792,25 +792,25 @@ namespace std
 /* #undef _GLIBCXX_HAVE_SINCOSL */
 
 /* Define to 1 if you have the `sinf' function. */
-/* #undef _GLIBCXX_HAVE_SINF */
+#define _GLIBCXX_HAVE_SINF 1
 
 /* Define to 1 if you have the `sinhf' function. */
-/* #undef _GLIBCXX_HAVE_SINHF */
+#define _GLIBCXX_HAVE_SINHF 1
 
 /* Define to 1 if you have the `sinhl' function. */
-/* #undef _GLIBCXX_HAVE_SINHL */
+#define _GLIBCXX_HAVE_SINHL 1
 
 /* Define to 1 if you have the `sinl' function. */
-/* #undef _GLIBCXX_HAVE_SINL */
+#define _GLIBCXX_HAVE_SINL 1
 
 /* Defined if sleep exists. */
 #define _GLIBCXX_HAVE_SLEEP 1
 
 /* Define to 1 if you have the `sqrtf' function. */
-/* #undef _GLIBCXX_HAVE_SQRTF */
+#define _GLIBCXX_HAVE_SQRTF 1
 
 /* Define to 1 if you have the `sqrtl' function. */
-/* #undef _GLIBCXX_HAVE_SQRTL */
+#define _GLIBCXX_HAVE_SQRTL 1
 
 /* Define to 1 if you have the <stdalign.h> header file. */
 /* #undef _GLIBCXX_HAVE_STDALIGN_H */
@@ -837,10 +837,10 @@ namespace std
 #define _GLIBCXX_HAVE_STRING_H 1
 
 /* Define to 1 if you have the `strtof' function. */
-/* #undef _GLIBCXX_HAVE_STRTOF */
+#define _GLIBCXX_HAVE_STRTOF 1
 
 /* Define to 1 if you have the `strtold' function. */
-/* #undef _GLIBCXX_HAVE_STRTOLD */
+#define _GLIBCXX_HAVE_STRTOLD 1
 
 /* Define if strxfrm_l is available in <string.h>. */
 /* #undef _GLIBCXX_HAVE_STRXFRM_L */
@@ -898,22 +898,22 @@ namespace std
 #define _GLIBCXX_HAVE_S_ISREG 1
 
 /* Define to 1 if you have the `tanf' function. */
-/* #undef _GLIBCXX_HAVE_TANF */
+#define _GLIBCXX_HAVE_TANF 1
 
 /* Define to 1 if you have the `tanhf' function. */
-/* #undef _GLIBCXX_HAVE_TANHF */
+#define _GLIBCXX_HAVE_TANHF 1
 
 /* Define to 1 if you have the `tanhl' function. */
-/* #undef _GLIBCXX_HAVE_TANHL */
+#define _GLIBCXX_HAVE_TANHL 1
 
 /* Define to 1 if you have the `tanl' function. */
-/* #undef _GLIBCXX_HAVE_TANL */
+#define _GLIBCXX_HAVE_TANL 1
 
 /* Define to 1 if you have the <tgmath.h> header file. */
 #define _GLIBCXX_HAVE_TGMATH_H 1
 
 /* Define to 1 if the target supports thread-local storage. */
-/* #undef _GLIBCXX_HAVE_TLS */
+#define _GLIBCXX_HAVE_TLS 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define _GLIBCXX_HAVE_UNISTD_H 1
@@ -1135,7 +1135,7 @@ namespace std
 /* #undef _GLIBCXX_HAVE___CXA_THREAD_ATEXIT_IMPL */
 
 /* Define as const if the declaration of iconv() needs const. */
-/* #undef _GLIBCXX_ICONV_CONST */
+#define _GLIBCXX_ICONV_CONST const
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -1194,7 +1194,7 @@ namespace std
 #define _GLIBCXX_FULLY_DYNAMIC_STRING 0
 
 /* Define if gthreads library is available. */
-/* #undef _GLIBCXX_HAS_GTHREADS */
+#define _GLIBCXX_HAS_GTHREADS 1
 
 /* Define to 1 if a full hosted library is built, or 0 if freestanding. */
 #define _GLIBCXX_HOSTED 1
@@ -1205,7 +1205,7 @@ namespace std
 #define _GLIBCXX_PTRDIFF_T_IS_INT 1
 
 /* Define if using setrlimit to set resource limits during "make check" */
-/* #undef _GLIBCXX_RES_LIMITS */
+#define _GLIBCXX_RES_LIMITS 1
 
 /* Define if size_t is unsigned int. */
 #define _GLIBCXX_SIZE_T_IS_UINT 1
@@ -1321,7 +1321,7 @@ namespace std
 
 /* Define if /dev/random and /dev/urandom are available for the random_device
    of TR1 (Chapter 5.1). */
-/* #undef _GLIBCXX_USE_RANDOM_TR1 */
+#define _GLIBCXX_USE_RANDOM_TR1 1
 
 /* Defined if sched_yield is available. */
 /* #undef _GLIBCXX_USE_SCHED_YIELD */

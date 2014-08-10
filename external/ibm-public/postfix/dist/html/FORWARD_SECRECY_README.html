@@ -1,0 +1,574 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>TLS Forward Secrecy in Postfix</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">
+TLS Forward Secrecy in Postfix
+</h1>
+
+<hr>
+
+<h2> Warning </h2>
+
+<p> Forward secrecy does not protect against active attacks such
+as forged DNS replies or forged TLS server certificates. If such
+attacks are a concern, then the SMTP client will need to authenticate
+the remote SMTP server in a sufficiently-secure manner.  For example,
+by the fingerprint of a (CA or leaf) public key or certificate.
+Conventional PKI relies on many trusted parties and is easily
+subverted by a state-funded adversary.  </p>
+
+<h2> Overview </h2>
+
+<p> Postfix supports forward secrecy of TLS network communication
+since version 2.2. This support was adopted from Lutz J&auml;nicke's
+"Postfix TLS patch" for earlier Postfix versions.  This document
+will focus on TLS Forward Secrecy in the Postfix SMTP client and
+server.  See <a href="TLS_README.html">TLS_README</a> for a general
+description of Postfix TLS support. </p>
+
+<p> Topics covered in this document: </p>
+
+<ul>
+
+<li> <p> Give me some background on forward secrecy in Postfix </p>
+
+<ul> 
+
+<li><a href="#dfn_fs">What is Forward Secrecy</a>
+
+<li><a href="#tls_fs">Forward Secrecy in TLS</a>
+
+<li><a href="#server_fs">Forward Secrecy in the Postfix SMTP Server</a>
+
+<li><a href="#client_fs">Forward Secrecy in the Postfix SMTP Client</a>
+
+</ul>
+
+<li> <p> Never mind, just show me what it takes to get forward
+secrecy </p>
+
+<ul> 
+
+<li><a href="#quick-start">Getting started, quick and dirty</a>
+
+<li><a href="#test">How can I see that a connection has forward secrecy?</a>
+
+<li><a href="#ciphers"> What ciphers provide forward secrecy? </a>
+
+<li><a href="#status"> What do "Anonymous", "Untrusted", etc. in
+Postfix logging mean? </a> 
+
+</ul>
+
+<li> <p> <a href="#credits"> Credits </a> </p>
+
+</ul>
+
+<h2><a name="dfn_fs">What is Forward Secrecy</a></h2>
+
+<p> The term "Forward Secrecy" (or sometimes "Perfect Forward Secrecy")
+is used to describe security protocols in which the confidentiality
+of past traffic is not compromised when long-term keys used by either
+or both sides are later disclosed.  </p>
+
+<p> Forward secrecy is accomplished by negotiating session keys
+using per-session cryptographically-strong random numbers that are
+not saved, and signing the exchange with long-term authentication
+keys.  Later disclosure of the long-term keys allows impersonation
+of the key holder from that point on, but not recovery of prior
+traffic, since with forward secrecy, the discarded random key
+agreement inputs are not available to the attacker. </p>
+
+<p> Forward secrecy is only "perfect" when brute-force attacks on
+the key agreement algorithm are impractical even for the best-funded
+adversary and the random-number generators used by both parties are
+sufficiently strong.  Otherwise, forward secrecy leaves the attacker
+with the challenge of cracking the key-agreement protocol, which
+is likely quite computationally intensive, but may be feasible for
+sessions of sufficiently high value.  Thus forward secrecy places
+cost constraints on the efficacy of bulk surveillance, recovering
+all past traffic is generally infeasible, and even recovery of
+individual sessions may be infeasible given a sufficiently-strong
+key agreement method. </p>
+
+<h2><a name="tls_fs">Forward Secrecy in TLS</a></h2>
+
+<p> Early implementations of the SSL protocol do not provide forward
+secrecy (some provide it only with artificially-weakened "export"
+cipher suites, but we will ignore those here). The client
+sends a random "pre-master secret" to the server encrypted with the
+server's RSA public key.  The server decrypts this with its private
+key, and uses it together with other data exchanged in the clear
+to generate the session key.  An attacker with access to the server's
+private key can perform the same computation at any later time.
+The TLS library in Windows XP and Windows Server 2003 only supported
+cipher suites of this type, and Exchange 2003 servers largely do
+not support forward secrecy.  </p>
+
+<p> Later revisions to the TLS protocol introduced forward-secrecy
+cipher suites in which the client and server implement a key exchange
+protocol based on ephemeral secrets.  Sessions encrypted with one
+of these newer cipher suites are not compromised by future disclosure
+of long-term authentication keys. </p>
+
+<p> The key-exchange algorithms used for forward secrecy require
+the TLS server to designate appropriate "parameters" consisting of a
+mathematical "group" and an element of that group called a "generator".
+Presently, there are two flavors of "groups" that work with PFS: </p>
+
+<ul>
+
+<li> <p> <b> Prime-field groups (EDH):</b>  The server needs to be
+configured with a suitably-large prime and a corresponding "generator".
+The acronym for forward secrecy over prime fields is EDH for Ephemeral
+Diffie-Hellman (also abbreviated as DHE).
+</p>
+
+<li> <p> <b> Elliptic-curve groups (EECDH): </b>  The server needs
+to be configured with a "named curve".  These offer better security
+at lower computational cost than prime field groups, but are not
+as widely implemented.  The acronym for the elliptic curve version
+is EECDH which is short for Ephemeral Elliptic Curve Diffie-Hellman
+(also abbreviated as ECDHE). </p>
+
+</ul>
+
+<p> It is not essential to know what these are, but one does need
+to know that OpenSSL supports EECDH with version 1.0.0 or later.
+Thus the configuration parameters related to Elliptic-Curve forward
+secrecy are available when Postfix is linked with OpenSSL &ge; 1.0.0
+(provided EC support has not been disabled by the vendor, as in
+some versions of RedHat Linux).  </p>
+
+<p> Elliptic curves used in cryptography are typically identified
+by a "name" that stands for a set of well-known parameter values,
+and it is these "names" (or associated ASN.1 object identifiers)
+that are used in the TLS protocol.  On the other hand, with TLS there
+are no specially designated prime field groups, so each server is
+free to select its own suitably-strong prime and generator.  </p>
+
+<h2><a name="server_fs">Forward Secrecy in the Postfix SMTP Server</a></h2>
+
+<p> The Postfix &ge; 2.2 SMTP server supports forward secrecy in
+its default configuration.  If the remote SMTP client prefers cipher
+suites with forward secrecy, then the traffic between the server
+and client will resist decryption even if the server's long-term
+authentication keys are <i>later</i> compromised. </p>
+
+<p> Some remote SMTP clients may support forward secrecy, but prefer
+cipher suites <i>without</i> forward secrecy. In that case, Postfix
+&ge; 2.8 could be configured to ignore the client's preference with
+the <a href="postconf.5.html">main.cf</a> setting "<a href="postconf.5.html#tls_preempt_cipherlist">tls_preempt_cipherlist</a> = yes".  However, this
+will likely cause interoperability issues with older Exchange servers
+and is not recommended for now.  </p>
+
+<h3> EDH Server support </h3>
+
+<p> Postfix &ge; 2.2 support 1024-bit-prime EDH out of the box,
+with no additional configuration, but you may want to override the
+default prime to be 2048 bits long, and you may want to regenerate
+your primes periodically. See the <a href="#quick-start">quick-start</a>
+section for details.  </p>
+
+<p> With prime-field EDH, OpenSSL wants the server to provide
+two explicitly-selected (prime, generator) combinations.  One for
+the now long-obsolete "export" cipher suites, and another for
+non-export cipher suites.  Postfix has two such default combinations
+compiled in, but also supports explicitly-configured overrides.
+</p>
+
+<ul>
+
+<li> <p> The "export" EDH parameters are used only with the obsolete
+"export" ciphers.  To use a non-default prime, generate a 512-bit
+DH parameter file and set <a href="postconf.5.html#smtpd_tls_dh512_param_file">smtpd_tls_dh512_param_file</a> to the filename
+(see the <a href="#quick-start">quick-start</a> section for details).
+</p>
+
+<li> <p> The non-export EDH parameters are used for all other EDH
+cipher suites.  To use a non-default prime, generate a 1024-bit or
+2048-bit DH parameter file and set <a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a> to
+the filename.  Despite the name this is simply the non-export
+parameter file and the prime need not actually be 1024 bits long
+(see the <a href="#quick-start">quick-start</a> section for details).
+</p>
+
+</ul>
+
+<p> It turns out that (inadvisably-patched in some Debian releases)
+Exim SMTP clients require a &ge; 2048-bit length for the non-export
+prime.  See the <a href="#quick-start">quick-start</a> section for
+the recommended configuration to work around this issue.  </p>
+
+<h3> EECDH Server support </h3>
+
+<p> Postfix &ge; 2.6 support NIST P-256 EECDH when built with OpenSSL
+&ge; 1.0.0.  When the remote SMTP client also supports EECDH and
+implements the P-256 curve, forward secrecy just works.  </p>
+
+<blockquote> <p> Note: With Postfix 2.6 and 2.7, enable EECDH by
+setting the <a href="postconf.5.html">main.cf</a> parameter <a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a> to "strong".
+</p> </blockquote>
+
+<p> The elliptic curve situation is evolving, with new curves being
+introduced to augment or replace the NIST curves tarnished by the
+Snowden revelations.  Fortunately, TLS clients advertise the list
+of supported curves to the server so that servers can in principle
+choose newer stronger curves when mutually supported.  The OpenSSL
+code for making this possible is not yet released as of late 2013
+(it is available only in OpenSSL development snapshots). </p>
+
+<p> At some point Postfix will need to adjust to the new API for
+setting the elliptic-curve options.  Fortunately, when EECDH support
+was added to Postfix, it introduced a layer of indirection: </p>
+
+<blockquote>
+<pre>
+    <a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a> = strong | ultra
+    <a href="postconf.5.html#tls_eecdh_strong_curve">tls_eecdh_strong_curve</a> = prime256v1
+    <a href="postconf.5.html#tls_eecdh_ultra_curve">tls_eecdh_ultra_curve</a> = secp384r1
+</pre>
+</blockquote>
+
+<p> When it becomes possible in OpenSSL to support a "menu" of
+curves, we will likely extend "<a href="postconf.5.html#tls_eecdh_strong_curve">tls_eecdh_strong_curve</a>" to be an
+ordered list of curves and likewise with the "ultra" version, where
+the two might now overlap, and differ mostly in the preference
+order.  As a result most existing configurations will then support
+more curves at the desired security level without any changes to
+<a href="postconf.5.html">main.cf</a>. </p>
+
+<h2> <a name="client_fs">Forward Secrecy in the Postfix SMTP Client</a> </h2>
+
+<p> The Postfix &ge; 2.2 SMTP client supports forward secrecy in
+its default configuration.  No configuration changes are needed
+besides turning on elliptic-curve support with Postfix 2.6 and 2.7
+(see the <a href="#quick-start"> quick-start</a> section).  If the
+remote SMTP server supports cipher suites with forward secrecy (and
+does not override the SMTP client's cipher preference), then the
+traffic between the server and client will resist decryption even
+if the server's long-term authentication keys are <i>later</i>
+compromised.  </p>
+
+<p> The default Postfix SMTP client cipher lists are correctly
+ordered to prefer EECDH and EDH cipher suites ahead of similar
+cipher suites that don't implement forward secrecy.  Administrators
+are strongly discouraged from changing the cipher list definitions.
+It is likely safe to set "<a href="postconf.5.html#smtp_tls_ciphers">smtp_tls_ciphers</a> = medium" if you wish
+to disable the obsolete "export" and "low" grade ciphers even with
+opportunistic TLS.  Setting a minimum strength does not change the
+preference
+order.  Note that strengths higher than "medium" exclude Exchange
+2003 and likely other widely used MTAs, thus "high" grade ciphers
+should only be used on a case-by-case basis via the <a
+href="TLS_README.html#client_tls_policy">TLS policy</a> table. </p>
+
+<h2><a name="quick-start">Getting started, quick and dirty</a></h2>
+
+<h3> EECDH Client and server support (Postfix &ge; 2.6 with OpenSSL
+&ge; 1.0.0) </h3>
+
+<p> With Postfix 2.6 and 2.7, enable elliptic-curve support in the
+Postfix SMTP client and server. This is the default with Postfix
+&ge; 2.8. Note, however, that elliptic-curve support may be disabled
+by the vendor, as in some versions of RedHat Linux. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    # Postfix 2.6 or 2.7 only. This is default with Postfix 2.8 and later.
+    <a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a> = strong
+</pre>
+</blockquote>
+
+<h3> EDH Client support (Postfix &ge; 2.2, all supported OpenSSL
+versions) </h3>
+
+<p> This works "out of the box" without additional configuration. </p>
+
+<h3> EDH Server support (Postfix &ge; 2.2, all supported OpenSSL
+versions) </h3>
+
+<p> Optionally generate non-default Postfix SMTP server EDH parameters
+for improved security against pre-computation attacks and for
+compatibility with Debian-patched Exim SMTP clients that require a
+&ge; 2048-bit length for the non-export prime. </p>
+
+<p> Execute as root (prime group generation can take a
+few seconds to a few minutes): </p>
+
+<blockquote>
+<pre>
+# cd /etc/postfix
+# umask 022
+# openssl dhparam -out dh512.tmp 512 && mv dh512.tmp dh512.pem
+# openssl dhparam -out dh1024.tmp 1024 && mv dh1024.tmp dh1024.pem
+# openssl dhparam -out dh2048.tmp 2048 && mv dh2048.tmp dh2048.pem
+# chmod 644 dh512.pem dh1024.pem dh2048.pem
+</pre>
+</blockquote>
+
+<p> The Postfix SMTP server EDH parameter files are not secret,
+after all these parameters are sent to all remote SMTP clients in
+the clear. Mode 0644 is fine. </p>
+
+<p> You can improve security against pre-computation attacks further
+by regenerating the Postfix SMTP server EDH parameters periodically
+(an hourly or daily cron job running the above commands as root can
+automate this task). </p>
+
+<p> Once the parameters are in place, update <a href="postconf.5.html">main.cf</a> as follows: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a> = ${<a href="postconf.5.html#config_directory">config_directory</a>}/dh2048.pem
+    <a href="postconf.5.html#smtpd_tls_dh512_param_file">smtpd_tls_dh512_param_file</a> = ${<a href="postconf.5.html#config_directory">config_directory</a>}/dh512.pem
+</pre>
+</blockquote>
+
+<p> If some of your MSA clients don't support 2048-bit EDH, you may
+need to adjust the submission entry in <a href="master.5.html">master.cf</a> accordingly: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="master.5.html">master.cf</a>:
+    submission inet n       -       n       -       -       smtpd
+        # Some submission clients may not yet do 2048-bit EDH, if such
+        # clients use your MSA, configure 1024-bit EDH instead:
+        -o <a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a>=${<a href="postconf.5.html#config_directory">config_directory</a>}/dh1024.pem
+        -o <a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a>=encrypt
+        -o <a href="postconf.5.html#smtpd_sasl_auth_enable">smtpd_sasl_auth_enable</a>=yes
+        ...
+</pre>
+</blockquote>
+
+<h2><a name="test">How can I see that a connection has forward
+secrecy? </a> </h2>
+
+<p> Postfix can be configured to report information about the
+negotiated cipher, the corresponding key lengths, and the remote
+peer certificate or public-key verification status.  </p>
+
+<ul>
+
+<li> <p> With "<a href="postconf.5.html#smtp_tls_loglevel">smtp_tls_loglevel</a> = 1" and "<a href="postconf.5.html#smtpd_tls_loglevel">smtpd_tls_loglevel</a> = 1",
+the Postfix SMTP client and server will log TLS connection information
+to the maillog file. The general logfile format is: </p>
+
+<blockquote>
+<pre>
+postfix/smtp[<i>process-id</i>]: Untrusted TLS connection established
+to host.example.com[192.168.0.2]:25: TLSv1 with cipher <i>cipher-name</i>
+(<i>actual-key-size</i>/<i>raw-key-size</i> bits)
+
+postfix/smtpd[<i>process-id</i>]: Anonymous TLS connection established
+from host.example.com[192.168.0.2]: TLSv1 with cipher <i>cipher-name</i>
+(<i>actual-key-size</i>/<i>raw-key-size</i> bits)
+</pre>
+</blockquote>
+
+<li> <p> With "<a href="postconf.5.html#smtpd_tls_received_header">smtpd_tls_received_header</a> = yes", the Postfix SMTP
+server will record TLS connection information in the Received:
+header in the form of comments (text inside parentheses). The general
+format depends on the <a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a> setting:
+
+<blockquote>
+<pre>
+Received: from host.example.com (host.example.com [192.168.0.2])
+        (using TLSv1 with cipher <i>cipher-name</i>
+        (<i>actual-key-size</i>/<i>raw-key-size</i> bits))
+        (Client CN "host.example.com", Issuer "John Doe" (not verified))
+
+Received: from host.example.com (host.example.com [192.168.0.2])
+        (using TLSv1 with cipher <i>cipher-name</i>
+        (<i>actual-key-size</i>/<i>raw-key-size</i> bits))
+        (No client certificate requested)
+</pre>
+</blockquote>
+
+</ul>
+
+<p> The next sections will explain what <i>cipher-name</i>,
+<i>key-size</i>, and peer verification status information to expect.
+</p>
+
+<h2><a name="ciphers"> What ciphers provide forward secrecy? </a> </h2>
+
+<p> There are dozens of ciphers that support forward secrecy.  What
+follows is the beginning of a list of 51 ciphers available with
+OpenSSL 1.0.1e.  The list is sorted in the default Postfix preference
+order.  It excludes null ciphers that only authenticate and don't
+encrypt, together with export and low-grade ciphers whose encryption
+is too weak to offer meaningful secrecy. The first column shows the
+cipher name, and the second shows the key exchange method.  </p>
+
+<blockquote>
+<pre>
+$ openssl ciphers -v \
+        'aNULL:-aNULL:kEECDH:kEDH:+RC4:!eNULL:!EXPORT:!LOW:@STRENGTH' | 
+    awk '{printf "%-32s %s\n", $1, $3}'
+AECDH-AES256-SHA                 Kx=ECDH
+ECDHE-RSA-AES256-GCM-SHA384      Kx=ECDH
+ECDHE-ECDSA-AES256-GCM-SHA384    Kx=ECDH
+ECDHE-RSA-AES256-SHA384          Kx=ECDH
+ECDHE-ECDSA-AES256-SHA384        Kx=ECDH
+ECDHE-RSA-AES256-SHA             Kx=ECDH
+ECDHE-ECDSA-AES256-SHA           Kx=ECDH
+ADH-AES256-GCM-SHA384            Kx=DH
+ADH-AES256-SHA256                Kx=DH
+ADH-AES256-SHA                   Kx=DH
+ADH-CAMELLIA256-SHA              Kx=DH
+DHE-DSS-AES256-GCM-SHA384        Kx=DH
+DHE-RSA-AES256-GCM-SHA384        Kx=DH
+DHE-RSA-AES256-SHA256            Kx=DH
+...
+</pre>
+</blockquote>
+
+<p> To date, all ciphers that support forward secrecy have one of
+five values for the first component of their OpenSSL name: "AECDH",
+"ECDHE", "ADH", "EDH" or "DHE".  Ciphers that don't implement forward
+secrecy have names that don't start with one of these prefixes.
+This pattern is likely to persist until some new key-exchange
+mechanism is invented that also supports forward secrecy.  </p>
+
+<p> The actual key length and raw algorithm key length 
+are generally the same with non-export ciphers, but may they
+differ for the legacy export ciphers where the actual key 
+is artificially shortened. </p>
+
+<h2><a name="status"> What do "Anonymous", "Untrusted", etc. in
+Postfix logging mean? </a> </h2>
+
+<p> The verification levels below are subject to man-in-the-middle
+attacks to different degrees.  If such attacks are a concern, then
+the SMTP client will need to authenticate the remote SMTP server
+in a sufficiently-secure manner. For example, by the fingerprint
+of a (CA or leaf) public key or certificate.  Remember that
+conventional PKI relies on many trusted parties and is easily
+subverted by a state-funded adversary.  </p>
+
+<dl>
+
+<dt><b>Anonymous</b> (no peer certificate)</dt>
+
+<dd> <p> <b> Postfix SMTP client:</b> With opportunistic TLS (the "may" security level) the Postfix
+SMTP client does not verify any information in the peer certificate.
+In this case it enables and prefers anonymous cipher suites in which
+the remote SMTP server does not present a certificate (these ciphers
+offer forward secrecy of necessity).  When the remote SMTP server
+also supports anonymous TLS, and agrees to such a cipher suite, the
+verification status will be logged as "Anonymous".  </p> </dd>
+
+<dd> <p> <b> Postfix SMTP server:</b> This is by far most common,
+as client certificates are optional, and the Postfix SMTP server
+does not request client certificates by default (see <a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a>).
+Even when client certificates are requested, the remote SMTP client
+might not send a certificate.  Unlike the Postfix SMTP client, the
+Postfix SMTP server "anonymous" verification status does not imply
+that the cipher suite is anonymous, which corresponds to the
+<i>server</i> not sending a certificate.  </p> </dd>
+
+<dt><b>Untrusted</b> (peer certificate not signed by trusted CA)</dt>
+
+<dd>
+
+<p> <b> Postfix SMTP client:</b> The remote SMTP server presented
+a certificate, but the Postfix SMTP client was unable to check the
+issuing CA signature.  With opportunistic TLS this is common with
+remote SMTP servers that don't support anonymous cipher suites.
+</p>
+
+<p> <b> Postfix SMTP server:</b> The remote SMTP client presented
+a certificate, but the Postfix SMTP server was unable to check the
+issuing CA signature.  This can happen when the server is configured
+to request client certificates (see <a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a>).  </p>
+
+</dd>
+
+<dt><b>Trusted</b> (peer certificate signed by trusted CA, unverified
+peer name)</dt>
+
+<dd>
+
+<p> <b> Postfix SMTP client:</b> The remote SMTP server's certificate
+was signed by a CA that the Postfix SMTP client trusts, but either
+the client was not configured to verify the destination server name
+against the certificate, or the server certificate did not contain
+any matching names.  This is common with opportunistic TLS
+(<a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> is "may" or else "dane" with no usable
+TLSA DNS records) when the Postfix SMTP client's trusted CAs can
+verify the authenticity of the remote SMTP server's certificate,
+but the client is not configured or unable to verify the server
+name. </p>
+
+<p> <b> Postfix SMTP server:</b> The remote SMTP client certificate
+was signed by a CA that the Postfix SMTP server trusts.  The Postfix
+SMTP server never verifies the remote SMTP client name against the
+names in the client certificate. Since the client chooses to connect
+to the server, the Postfix SMTP server has no expectation of a
+particular client hostname. </p>
+
+</dd>
+
+<dt><b>Verified</b> (peer certificate signed by trusted CA and
+verified peer name; or: peer certificate with expected public-key
+or certificate fingerprint)</dt>
+
+<dd>
+
+<p> <b> Postfix SMTP client:</b> The remote SMTP server's certificate
+was signed by a CA that the Postfix SMTP client trusts, and the
+certificate name matches the destination or server name(s).  The
+Postfix SMTP client was configured to require a verified name,
+otherwise the verification status would have been just "Trusted".
+</p>
+
+<p> <b> Postfix SMTP client:</b> The "Verified" status may also
+mean that the Postfix SMTP client successfully matched the expected
+fingerprint against the remote SMTP server public key or certificate.
+The expected fingerprint may come from <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> or from
+TLSA (secure) DNS records.  The Postfix SMTP client ignores the CA
+signature.  </p>
+
+<p> <b> Postfix SMTP server:</b> The status is never "Verified",
+because the Postfix SMTP server never verifies the remote SMTP
+client name against the names in the client certificate, and because
+the Postfix SMTP does not expect a specific fingerprint in the
+client public key or certificate.  </p>
+
+</dd>
+
+</dl>
+
+<h2><a name="credits">Credits </a> </h2>
+
+<ul>
+
+<li> TLS support for Postfix was originally developed by  Lutz
+J&auml;nicke at Cottbus Technical University.
+
+<li> Wietse Venema adopted and restructured the code and documentation.
+
+<li> Viktor Dukhovni implemented support for many subsequent TLS
+features, including EECDH, and authored the initial version of this
+document.
+
+</ul>
+
+</body>
+
+</html>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sample-request.c,v 1.1.1.1 2014/02/28 17:40:16 christos Exp $	*/
+/*	$NetBSD: sample-request.c,v 1.1.1.1.2.1 2014/08/10 07:06:44 tls Exp $	*/
 
 /*
  * Copyright (C) 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 
 #include <config.h>
 
+#ifndef WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -27,14 +28,17 @@
 
 #include <arpa/inet.h>
 
+#include <netdb.h>
 #include <unistd.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netdb.h>
 
 #include <isc/base64.h>
 #include <isc/buffer.h>
+#include <isc/commandline.h>
 #include <isc/lib.h>
 #include <isc/mem.h>
 #include <isc/sockaddr.h>
@@ -77,7 +81,7 @@ make_querymessage(dns_message_t *message, const char *namestr,
 	dns_rdataset_t *qrdataset = NULL;
 	isc_result_t result;
 	isc_buffer_t b;
-	size_t namelen;
+	unsigned int namelen;
 
 	REQUIRE(message != NULL);
 	REQUIRE(namestr != NULL);
@@ -155,15 +159,16 @@ main(int argc, char *argv[]) {
 	dns_rdatatype_t type = dns_rdatatype_a;
 	isc_buffer_t *outputbuf;
 
-	while ((ch = getopt(argc, argv, "t:")) != -1) {
+	while ((ch = isc_commandline_parse(argc, argv, "t:")) != -1) {
 		switch (ch) {
 		case 't':
-			tr.base = optarg;
-			tr.length = strlen(optarg);
+			tr.base = isc_commandline_argument;
+			tr.length = strlen(isc_commandline_argument);
 			result = dns_rdatatype_fromtext(&type, &tr);
 			if (result != ISC_R_SUCCESS) {
 				fprintf(stderr,
-					"invalid RRtype: %s\n", optarg);
+					"invalid RRtype: %s\n",
+					isc_commandline_argument);
 				exit(1);
 			}
 			break;
@@ -172,8 +177,8 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
+	argc -= isc_commandline_index;
+	argv += isc_commandline_index;
 	if (argc < 2)
 		usage();
 
@@ -225,7 +230,7 @@ main(int argc, char *argv[]) {
 	INSIST(res->ai_addrlen <= sizeof(sa.type));
 	memmove(&sa.type, res->ai_addr, res->ai_addrlen);
 	freeaddrinfo(res);
-	sa.length = res->ai_addrlen;
+	sa.length = (unsigned int)res->ai_addrlen;
 	ISC_LINK_INIT(&sa, link);
 
 	/* Construct qname */

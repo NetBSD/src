@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux m32r.
 
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include "target.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
 #include <sys/procfs.h>
@@ -200,9 +200,9 @@ m32r_linux_fetch_inferior_registers (struct target_ops *ops,
   int tid;
 
   /* GNU/Linux LWP ID's are process ID's.  */
-  tid = TIDGET (inferior_ptid);
+  tid = ptid_get_lwp (inferior_ptid);
   if (tid == 0)
-    tid = PIDGET (inferior_ptid);	/* Not a threaded program.  */
+    tid = ptid_get_pid (inferior_ptid);	/* Not a threaded program.  */
 
   /* Use the PTRACE_GETREGS request whenever possible, since it
      transfers more registers in one system call, and we'll cache the
@@ -227,8 +227,8 @@ m32r_linux_store_inferior_registers (struct target_ops *ops,
   int tid;
 
   /* GNU/Linux LWP ID's are process ID's.  */
-  if ((tid = TIDGET (inferior_ptid)) == 0)
-    tid = PIDGET (inferior_ptid);	/* Not a threaded program.  */
+  if ((tid = ptid_get_lwp (inferior_ptid)) == 0)
+    tid = ptid_get_pid (inferior_ptid);	/* Not a threaded program.  */
 
   /* Use the PTRACE_SETREGS request whenever possible, since it
      transfers more registers in one system call.  */

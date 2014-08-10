@@ -1,4 +1,4 @@
-#   Copyright 1988-2013 Free Software Foundation, Inc.
+#   Copyright 1988-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,8 +24,9 @@ if [gdb_skip_stdio_test "a2run.exp"] {
 # test running programs
 #
 
-set testfile a2-run
-if { [prepare_for_testing ${testfile}.exp $testfile run.c] } {
+standard_testfile run.c
+
+if { [prepare_for_testing ${testfile}.exp $testfile $srcfile] } {
     return -1
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.15 2014/02/26 13:50:29 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.15.2.1 2014/08/10 06:51:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.15 2014/02/26 13:50:29 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.15.2.1 2014/08/10 06:51:57 tls Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -125,6 +125,13 @@ el_set(EditLine *el, int op, ...)
 		break;
 	}
 
+	case EL_ALIAS_TEXT: {
+		el_afunc_t p = va_arg(ap, el_afunc_t);
+		void *arg = va_arg(ap, void *);
+		ret = ch_aliasfun(el, p, arg);
+		break;
+	}
+
 	case EL_PROMPT_ESC:
 	case EL_RPROMPT_ESC: {
 		el_pfunc_t p = va_arg(ap, el_pfunc_t);
@@ -158,10 +165,10 @@ el_set(EditLine *el, int op, ...)
 		const char *argv[20];
 		int i;
 		const wchar_t **wargv;
-		for (i = 1; i < (int)__arraycount(argv); ++i)
-			if ((argv[i] = va_arg(ap, char *)) == NULL)
+		for (i = 1; i < (int)__arraycount(argv) - 1; ++i)
+			if ((argv[i] = va_arg(ap, const char *)) == NULL)
 			    break;
-		argv[0] = NULL;
+		argv[0] = argv[i] = NULL;
 		wargv = (const wchar_t **)
 		    ct_decode_argv(i + 1, argv, &el->el_lgcyconv);
 		if (!wargv) {

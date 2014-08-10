@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.21 2014/03/13 23:47:53 matt Exp $	*/
+/*	$NetBSD: pic.c,v 1.21.2.1 2014/08/10 06:53:52 tls Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.21 2014/03/13 23:47:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.21.2.1 2014/08/10 06:53:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.21 2014/03/13 23:47:53 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
@@ -104,6 +105,13 @@ int
 pic_ipi_xcall(void *arg)
 {
 	xc_ipi_handler();
+	return 1;
+}
+
+int
+pic_ipi_generic(void *arg)
+{
+	ipi_cpu_handler();
 	return 1;
 }
 

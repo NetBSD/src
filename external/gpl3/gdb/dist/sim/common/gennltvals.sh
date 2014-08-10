@@ -69,6 +69,10 @@ dir=libgloss target=mn10300
 $shell ${srccom}/gentvals.sh $target sys ${srcroot}/$dir \
 	"syscall.h" 'SYS_[_[:alnum:]]*' "${cpp}"
 
+dir=libgloss target=msp430
+$shell ${srccom}/gentvals.sh $target sys ${srcroot}/$dir \
+	"syscall.h" 'SYS_[_[:alnum:]]*' "${cpp}"
+
 dir=libgloss target=sparc
 $shell ${srccom}/gentvals.sh $target sys ${srcroot}/$dir \
 	"syscall.h" 'SYS_[_[:alnum:]]*' "${cpp}"

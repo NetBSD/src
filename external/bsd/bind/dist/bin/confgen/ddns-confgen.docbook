@@ -2,7 +2,7 @@
 	       "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,10 +17,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: ddns-confgen.docbook,v 1.6 2009/09/18 22:08:55 fdupont Exp  -->
 <refentry id="man.ddns-confgen">
   <refentryinfo>
-    <date>Jan 29, 2009</date>
+    <date>March 6, 2014</date>
   </refentryinfo>
 
   <refmeta>
@@ -37,53 +36,70 @@
   <docinfo>
     <copyright>
       <year>2009</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
 
   <refsynopsisdiv>
     <cmdsynopsis>
+      <command>tsig-keygen</command>
+      <arg><option>-a <replaceable class="parameter">algorithm</replaceable></option></arg>
+      <arg><option>-h</option></arg>
+      <arg><option>-r <replaceable class="parameter">randomfile</replaceable></option></arg>
+      <arg choice="opt">name</arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
       <command>ddns-confgen</command>
       <arg><option>-a <replaceable class="parameter">algorithm</replaceable></option></arg>
       <arg><option>-h</option></arg>
       <arg><option>-k <replaceable class="parameter">keyname</replaceable></option></arg>
+      <arg><option>-q</option></arg>
       <arg><option>-r <replaceable class="parameter">randomfile</replaceable></option></arg>
       <group>
         <arg choice="plain">-s <replaceable class="parameter">name</replaceable></arg>
         <arg choice="plain">-z <replaceable class="parameter">zone</replaceable></arg>
       </group>
-      <arg><option>-q</option></arg>
-      <arg choice="opt">name</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsect1>
     <title>DESCRIPTION</title>
-    <para><command>ddns-confgen</command>
-      generates a key for use by <command>nsupdate</command>
-      and <command>named</command>.  It simplifies configuration
-      of dynamic zones by generating a key and providing the
-      <command>nsupdate</command> and <command>named.conf</command>
-      syntax that will be needed to use it, including an example
-      <command>update-policy</command> statement.
+    <para>
+      <command>tsig-keygen</command> and <command>ddns-confgen</command>
+      are invokation methods for a utility that generates keys for use
+      in TSIG signing.  The resulting keys can be used, for example,
+      to secure dynamic DNS updates to a zone or for the
+      <command>rndc</command> command channel.
     </para>
 
     <para>
-      If a domain name is specified on the command line, it will
-      be used in the name of the generated key and in the sample
-      <command>named.conf</command> syntax.  For example,
-      <command>ddns-confgen example.com</command> would
-      generate a key called "ddns-key.example.com", and sample
-      <command>named.conf</command> command that could be used
-      in the zone definition for "example.com".
+      When run as <command>tsig-keygen</command>, a domain name
+      can be specified on the command line which will be used as
+      the name of the generated key.  If no name is specified,
+      the default is <constant>tsig-key</constant>.
+    </para>
+
+    <para>
+      When run as <command>ddns-confgen</command>, the generated
+      key is accompanied by configuration text and instructions
+      that can be used with <command>nsupdate</command> and
+      <command>named</command> when setting up dynamic DNS,
+      including an example <command>update-policy</command>
+      statement.  (This usage similar to the
+      <command>rndc-confgen</command> command for setting
+      up command channel security.)
     </para>
 
     <para>
       Note that <command>named</command> itself can configure a
-      local DDNS key for use with <command>nsupdate -l</command>.
+      local DDNS key for use with <command>nsupdate -l</command>:
+      it does this when a zone is configured with
+      <command>update-policy local;</command>.
       <command>ddns-confgen</command> is only needed when a 
-      more elaborate configuration is required: for instance, if
-      <command>nsupdate</command> is to be used from a remote system.
+      more elaborate configuration is required: for instance,
+      if <command>nsupdate</command> is to be used from a remote
+      system.
     </para>
   </refsect1>
 
@@ -98,6 +114,8 @@
             Specifies the algorithm to use for the TSIG key.  Available
             choices are: hmac-md5, hmac-sha1, hmac-sha224, hmac-sha256,
             hmac-sha384 and hmac-sha512.  The default is hmac-sha256.
+            Options are case-insensitive, and the "hmac-" prefix
+            may be omitted.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -106,8 +124,7 @@
 	<term>-h</term>
 	<listitem>
 	  <para>
-	    Prints a short summary of the options and arguments to
-	    <command>ddns-confgen</command>.
+	    Prints a short summary of options and arguments.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -133,8 +150,9 @@
 	<term>-q</term>
 	<listitem>
 	  <para>
-	    Quiet mode:  Print only the key, with no explanatory text or
-            usage examples.
+	    (<command>ddns-confgen</command> only.) Quiet mode:  Print
+            only the key, with no explanatory text or usage examples;
+            This is essentially identical to <command>tsig-keygen</command>.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -160,11 +178,12 @@
 	<term>-s <replaceable class="parameter">name</replaceable></term>
 	<listitem>
 	  <para>
-	    Single host mode: The example <command>named.conf</command> text
-	    shows how to set an update policy for the specified
-	    <replaceable class="parameter">name</replaceable>
-	    using the "name" nametype.
-	    The default key name is
+            (<command>ddns-confgen</command> only.)
+	    Generate configuration example to allow dynamic updates
+            of a single hostname.  The example <command>named.conf</command>
+            text shows how to set an update policy for the specified
+            <replaceable class="parameter">name</replaceable>
+	    using the "name" nametype.  The default key name is
 	    ddns-key.<replaceable class="parameter">name</replaceable>.
 	    Note that the "self" nametype cannot be used, since
 	    the name to be updated may differ from the key name.
@@ -177,12 +196,14 @@
 	<term>-z <replaceable class="parameter">zone</replaceable></term>
 	<listitem>
 	  <para>
-	    zone mode:  The example <command>named.conf</command> text
+            (<command>ddns-confgen</command> only.)
+	    Generate configuration example to allow dynamic updates
+            of a zone:  The example <command>named.conf</command> text
             shows how to set an update policy for the specified
 	    <replaceable class="parameter">zone</replaceable>
-	    using the "zonesub" nametype, allowing updates to all subdomain
-	    names within
-	    that <replaceable class="parameter">zone</replaceable>.
+	    using the "zonesub" nametype, allowing updates to
+            all subdomain names within that
+            <replaceable class="parameter">zone</replaceable>.
 	    This option cannot be used with the <option>-s</option> option.
 	  </para>
 	</listitem>

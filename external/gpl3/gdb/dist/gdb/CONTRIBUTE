@@ -70,10 +70,10 @@ o	Submitting Patches
 	unlike some other projects, we do require ChangeLogs also for
 	documentation (i.e., .texi files).
 
-	The patch itself. If you are accessing the CVS repository use
-	"cvs update; cvs diff -up"; else, use "diff -up OLD NEW". If
-	your version of diff does not support these options, then get
-	the latest version of GNU diff.
+	The patch itself.  If you are accessing the git repository, use
+	"git diff", remembering first to update to the current master;
+	else, use "diff -up OLD NEW". If your version of diff does not
+	support these options, then get the latest version of GNU diff.
 
 	We accept patches as plain text (preferred for the compilers
 	themselves), MIME attachments (preferred for the web pages),
@@ -83,8 +83,8 @@ o	Submitting Patches
 	message and send it to gdb-patches@sourceware.org. All
 	patches and related discussion should be sent to the
 	gdb-patches mailinglist. For further information on the GDB
-	CVS repository, see the Anonymous read-only CVS access and
-	Read-write CVS access page.
+	git repository, see the Anonymous read-only git access and
+	Read-write git access page.
 
 --
 
@@ -140,5 +140,5 @@ o	When submitting a patch that fixes a bug
 	Fix PR gdb/4705.
 
 	The text ``PR gdb/4705'' should also be included
-	in the CVS commit message.  That causes the
+	in the git commit message.  That causes the
 	patch to automatically be archived with the PR.

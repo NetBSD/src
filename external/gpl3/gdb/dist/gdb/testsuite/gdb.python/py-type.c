@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2013 Free Software Foundation, Inc.
+   Copyright 2009-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,6 +19,12 @@ struct s
 {
   int a;
   int b;
+};
+
+struct SS
+{
+  union { int x; char y; };
+  union { int a; char b; };
 };
 
 typedef struct s TS;
@@ -58,6 +64,7 @@ main ()
 {
   int ar[2] = {1,2};
   struct s st;
+  struct SS ss;
 #ifdef __cplusplus
   C c;
   c.c = 1;
@@ -72,6 +79,8 @@ main ()
   st.b = 5;
 
   e = v2;
+
+  ss.x = 100;
   
   return 0;      /* break to inspect struct and array.  */
 }

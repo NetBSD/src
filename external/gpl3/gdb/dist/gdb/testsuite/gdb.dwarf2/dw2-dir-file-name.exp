@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -322,10 +322,35 @@ if { [gdb_compile "${asmsrcfile} ${srcdir}/${subdir}/$srcfile" "${binfile}" exec
     return -1
 }
 
-remote_exec host "sh -c \"rm -f ${srcabsdir}{/rdir,}{/xdir,}{/compdir,}{/ldir,}{/fdir,}/${srctmpfile}\""
-remote_exec host "sh -c \"rmdir ${srcabsdir}{/rdir,}{/xdir,}{/compdir,}{/ldir,}{/fdir,}\""
-remote_exec host "sh -c \"mkdir ${srcabsdir}{,/rdir}{,/xdir}{,/compdir}{,/ldir}{,/fdir}\""
-remote_exec host "sh -c \"for d in ${srcabsdir}{,/rdir}{,/xdir}{,/compdir}{,/ldir}{,/fdir};do cp ${srcdir}/${subdir}/${srcfile} \\\$d/${srctmpfile}; done\""
+set dirs {}
+foreach r {"" /rdir} {
+  foreach x {"" /xdir} {
+      foreach comp {"" /compdir} {
+	  foreach l {"" /ldir} {
+	      foreach f {"" /fdir} {
+		  lappend dirs $r$x$comp$l$f
+	      }
+	  }
+      }
+  }
+}
+
+proc pathexpand {prefix dirlst suffix} {
+    set retlst {}
+    foreach dir $dirlst {
+	lappend retlst "$prefix$dir$suffix"
+    }
+    return $retlst
+}
+
+set filelist [pathexpand $srcabsdir $dirs "/$srctmpfile"]
+set dircreatelist [pathexpand $srcabsdir $dirs ""]
+set dirremovelist [pathexpand $srcabsdir [lreverse $dirs] ""]
+
+remote_exec host "sh -c \"rm -f $filelist\""
+remote_exec host "sh -c \"rmdir $dirremovelist\""
+remote_exec host "sh -c \"mkdir $dircreatelist\""
+remote_exec host "sh -c \"for d in $dircreatelist; do cp ${srcdir}/${subdir}/${srcfile} \\\$d/${srctmpfile}; done\""
 
 clean_restart ${testfile}
 
@@ -335,34 +360,36 @@ if ![runto_main] {
 
 gdb_test "cd ${srcabsdir}/rdir" "Working directory [string_to_regexp ${srcabsdir}]/rdir\\." "cd .../rdir"
 
-proc test { func compdir filename } { with_test_prefix "$func" {
-    # Clear the GDB cache.
-    gdb_test_no_output "set directories" ""
+proc test { func compdir filename } {
+    with_test_prefix "$func" {
+	# Clear the GDB cache.
+	gdb_test_no_output "set directories" ""
 
-    if {$compdir == ""} {
-        set absolute "$filename"
-    } else {
-        set absolute "$compdir/$filename"
+	if {$compdir == ""} {
+	    set absolute "$filename"
+	} else {
+	    set absolute "$compdir/$filename"
+	}
+	if {[string index $absolute 0] != "/"} {
+	    error "not absolute"
+	}
+
+	gdb_breakpoint $func
+	gdb_continue_to_breakpoint $func "$func \\(\\) at .*"
+
+	gdb_test_no_output "set filename-display absolute"
+	verbose -log "expect: ${absolute}"
+	gdb_test "frame" " in $func \\(\\) at [string_to_regexp ${absolute}]:999" "absolute"
+
+	gdb_test_no_output "set filename-display basename"
+	verbose -log "expect: [file tail $filename]"
+	gdb_test "frame" " in $func \\(\\) at [string_to_regexp [file tail $filename]]:999" "basename"
+
+	gdb_test_no_output "set filename-display relative"
+	verbose -log "expect: $filename"
+	gdb_test "frame" " in $func \\(\\) at [string_to_regexp $filename]:999" "relative"
     }
-    if {[string index $absolute 0] != "/"} {
-	error "not absolute"
-    }
-
-    gdb_breakpoint $func
-    gdb_continue_to_breakpoint $func "$func \\(\\) at .*"
-
-    gdb_test_no_output "set filename-display absolute"
-    verbose -log "expect: ${absolute}"
-    gdb_test "frame" " in $func \\(\\) at [string_to_regexp ${absolute}]:999" "absolute"
-
-    gdb_test_no_output "set filename-display basename"
-    verbose -log "expect: [file tail $filename]"
-    gdb_test "frame" " in $func \\(\\) at [string_to_regexp [file tail $filename]]:999" "basename"
-
-    gdb_test_no_output "set filename-display relative"
-    verbose -log "expect: $filename"
-    gdb_test "frame" " in $func \\(\\) at [string_to_regexp $filename]:999" "relative"
-}}
+}
 
 set bdir "${srcabsdir}"
 set file "${srctmpfile}"

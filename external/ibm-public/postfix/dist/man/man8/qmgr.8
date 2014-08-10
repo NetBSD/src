@@ -1,4 +1,4 @@
-.\"	$NetBSD: qmgr.8,v 1.1.1.4 2013/09/25 19:06:25 tron Exp $
+.\"	$NetBSD: qmgr.8,v 1.1.1.4.2.1 2014/08/10 07:12:47 tls Exp $
 .\"
 .TH QMGR 8 
 .ad
@@ -316,8 +316,9 @@ prior to Postfix 2.4 the default value was 1000s.
 .IP "\fBmaximal_backoff_time (4000s)\fR"
 The maximal time between attempts to deliver a deferred message.
 .IP "\fBmaximal_queue_lifetime (5d)\fR"
-The maximal time a message is queued before it is sent back as
-undeliverable.
+Consider a message as undeliverable, when delivery fails with a
+temporary error, and the time in the queue has reached the
+maximal_queue_lifetime limit.
 .IP "\fBqueue_run_delay (300s)\fR"
 The time between deferred queue scans by the queue manager;
 prior to Postfix 2.4 the default value was 1000s.
@@ -327,8 +328,9 @@ a malfunctioning message delivery transport.
 .PP
 Available in Postfix version 2.1 and later:
 .IP "\fBbounce_queue_lifetime (5d)\fR"
-The maximal time a bounce message is queued before it is considered
-undeliverable.
+Consider a bounce message as undeliverable, when delivery fails
+with a temporary error, and the time in the queue has reached the
+bounce_queue_lifetime limit.
 .PP
 Available in Postfix version 2.5 and later:
 .IP "\fBdefault_destination_rate_delay (0s)\fR"

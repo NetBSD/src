@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.116 2013/03/18 16:32:32 para Exp $	*/
+/*	$NetBSD: pmap.h,v 1.116.10.1 2014/08/10 06:53:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -402,6 +402,7 @@ pmap_pte_flush(void)
 
 struct vm_map;
 struct trapframe;
+struct pcb;
 
 int	pmap_exec_fixup(struct vm_map *, struct trapframe *, struct pcb *);
 void	pmap_ldt_cleanup(struct lwp *);

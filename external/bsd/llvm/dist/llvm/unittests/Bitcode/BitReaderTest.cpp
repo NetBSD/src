@@ -45,7 +45,7 @@ static Module *makeLLVMModule() {
 }
 
 static void writeModuleToBuffer(SmallVectorImpl<char> &Buffer) {
-  OwningPtr<Module> Mod(makeLLVMModule());
+  std::unique_ptr<Module> Mod(makeLLVMModule());
   raw_svector_ostream OS(Buffer);
   WriteBitcodeToFile(Mod.get(), OS);
 }
@@ -56,9 +56,10 @@ TEST(BitReaderTest, MaterializeFunctionsForBlockAddr) { // PR11677
   MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(Mem.str(), "test", false);
   ErrorOr<Module *> ModuleOrErr =
       getLazyBitcodeModule(Buffer, getGlobalContext());
-  OwningPtr<Module> m(ModuleOrErr.get());
+  std::unique_ptr<Module> m(ModuleOrErr.get());
   PassManager passes;
   passes.add(createVerifierPass());
+  passes.add(createDebugInfoVerifierPass());
   passes.run(*m);
 }
 

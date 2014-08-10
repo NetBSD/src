@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.48 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.48.2.1 2014/08/10 06:54:56 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.48 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.48.2.1 2014/08/10 06:54:56 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ struct voodoofb_softc {
 	int sc_bits_per_pixel;
 	int sc_width, sc_height, sc_linebytes;
 	const struct videomode *sc_videomode;
+	int sc_is_mapped;
 
 	/* glyph cache */
 	long sc_defattr, sc_kernattr;
@@ -403,6 +404,7 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_ioregsize)) {
 		aprint_error_dev(self, "failed to map IO-mapped registers.\n");
 	}
+	sc->sc_is_mapped = TRUE;
 	voodoofb_init(sc);
 	
 	/* we should read these from the chip instead of depending on OF */
@@ -561,11 +563,17 @@ voodoofb_drm_print(void *opaque, const char *pnp)
 static int
 voodoofb_drm_unmap(struct voodoofb_softc *sc)
 {
+
+	if (!sc->sc_is_mapped)
+		return 0;
+
 	printf("%s: releasing bus resources\n", device_xname(sc->sc_dev));
 
 	bus_space_unmap(sc->sc_ioregt, sc->sc_ioregh, sc->sc_ioregsize);
 	bus_space_unmap(sc->sc_regt, sc->sc_regh, sc->sc_regsize);
 
+	sc->sc_is_mapped = FALSE;
+ 
 	return 0;
 }
 
@@ -573,18 +581,25 @@ static int
 voodoofb_drm_map(struct voodoofb_softc *sc)
 {
 
+	if (sc->sc_is_mapped)
+		return 0;
+
 	/* memory-mapped registers */
 	if (pci_mapreg_map(&sc->sc_pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_regt, &sc->sc_regh, &sc->sc_regs, &sc->sc_regsize)) {
-		aprint_error_dev(sc->sc_dev, "failed to map memory-mapped registers.\n");
+		aprint_error_dev(sc->sc_dev,
+		    "failed to map memory-mapped registers.\n");
 	}
 
 	/* IO-mapped registers */
 	if (pci_mapreg_map(&sc->sc_pa, 0x18, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_ioregt, &sc->sc_ioregh, &sc->sc_ioreg,
 	    &sc->sc_ioregsize)) {
-		aprint_error_dev(sc->sc_dev, "failed to map IO-mapped registers.\n");
+		aprint_error_dev(sc->sc_dev,
+		    "failed to map IO-mapped registers.\n");
 	}
+
+	sc->sc_is_mapped = TRUE;
 
 	voodoofb_init(sc);
 	/* XXX this should at least be configurable via kernel config */
@@ -1212,52 +1227,61 @@ voodoofb_mmap(void *v, void *vs, off_t offset, int prot)
 	paddr_t pa;
 		
 	/* 'regular' framebuffer mmap()ing */
-	if (offset < sc->sc_fbsize) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
-		return pa;
-	}
+	if (sc->sc_mode == WSDISPLAYIO_MODE_DUMBFB) {
+		if (offset < sc->sc_fbsize) {
+			pa = bus_space_mmap(sc->sc_memt, sc->sc_fb, offset,
+			    prot, 
+			    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);	
+			return pa;
+		}
+	} else if (sc->sc_mode == WSDISPLAYIO_MODE_MAPPED) {
 
-	/*
-	 * restrict all other mappings to processes with superuser privileges
-	 * or the kernel itself
-	 */
-	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
-	    NULL, NULL, NULL, NULL) != 0) {
-		aprint_error_dev(sc->sc_dev, "mmap() rejected.\n");
-		return -1;
-	}
+		if (kauth_authorize_machdep(kauth_cred_get(),
+		    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0) {
+			aprint_error_dev(sc->sc_dev, "mmap() rejected.\n");
+			return -1;
+		}
 
-	if ((offset >= sc->sc_fb) && (offset < (sc->sc_fb + sc->sc_fbsize))) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
-		return pa;
-	}
+		if ((offset >= 0xa0000) &&
+		    (offset < 0xb0000)) {
+			pa = bus_space_mmap(sc->sc_memt,
+			    sc->sc_fb, offset - 0xa0000,
+			    prot, BUS_SPACE_MAP_LINEAR);	
+			return pa;
+		}
 
-	if ((offset >= sc->sc_regs) && (offset < (sc->sc_regs + 
-	    sc->sc_regsize))) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
-		return pa;
-	}
+		if ((offset >= sc->sc_fb) &&
+		    (offset < (sc->sc_fb + sc->sc_fbsize))) {
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+			    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);	
+			return pa;
+		}
+
+		if ((offset >= sc->sc_regs) && (offset < (sc->sc_regs + 
+		    sc->sc_regsize))) {
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+			    BUS_SPACE_MAP_LINEAR);	
+			return pa;
+		}
 
 #ifdef PCI_MAGIC_IO_RANGE
-	/* allow mapping of IO space */
-	if ((offset >= PCI_MAGIC_IO_RANGE) &&\
-	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
-		pa = bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
-		    0, prot, BUS_SPACE_MAP_LINEAR);	
-		return pa;
-	}		
+		/* allow mapping of IO space */
+		if ((offset >= PCI_MAGIC_IO_RANGE) &&
+		    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
+			pa = bus_space_mmap(sc->sc_iot,
+			    offset - PCI_MAGIC_IO_RANGE, 0, prot, 0);
+			return pa;
+		}		
 #endif
 
 #ifdef OFB_ALLOW_OTHERS
-	if (offset >= 0x80000000) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
-		return pa;
-	}		
+		if (offset >= 0x80000000) {
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+			    BUS_SPACE_MAP_LINEAR);	
+			return pa;
+		}		
 #endif
+	}
 	return -1;
 }
 

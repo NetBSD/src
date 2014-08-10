@@ -15,8 +15,8 @@
 
 #include "X86.h"
 #include "X86CallingConv.h"
-#include "X86ISelLowering.h"
 #include "X86InstrBuilder.h"
+#include "X86MachineFunctionInfo.h"
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
@@ -26,22 +26,22 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Operator.h"
-#include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 namespace {
 
-class X86FastISel : public FastISel {
+class X86FastISel final : public FastISel {
   /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
   /// make the right decision when generating code for different targets.
   const X86Subtarget *Subtarget;
@@ -62,16 +62,16 @@ public:
     X86ScalarSSEf32 = Subtarget->hasSSE1();
   }
 
-  virtual bool TargetSelectInstruction(const Instruction *I);
+  bool TargetSelectInstruction(const Instruction *I) override;
 
   /// \brief The specified machine instr operand is a vreg, and that
   /// vreg is being provided by the specified load instruction.  If possible,
   /// try to fold the load as an operand to the instruction, returning true if
   /// possible.
-  virtual bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
-                                   const LoadInst *LI);
+  bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
+                           const LoadInst *LI) override;
 
-  virtual bool FastLowerArguments();
+  bool FastLowerArguments() override;
 
 #include "X86GenFastISel.inc"
 
@@ -128,11 +128,11 @@ private:
 
   bool handleConstantAddresses(const Value *V, X86AddressMode &AM);
 
-  unsigned TargetMaterializeConstant(const Constant *C);
+  unsigned TargetMaterializeConstant(const Constant *C) override;
 
-  unsigned TargetMaterializeAlloca(const AllocaInst *C);
+  unsigned TargetMaterializeAlloca(const AllocaInst *C) override;
 
-  unsigned TargetMaterializeFloatZero(const ConstantFP *CF);
+  unsigned TargetMaterializeFloatZero(const ConstantFP *CF) override;
 
   /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
   /// computed in an SSE register, not on the X87 floating point stack.
@@ -183,7 +183,7 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, const X86AddressMode &AM,
                                   unsigned &ResultReg) {
   // Get opcode and regclass of the output for the given load instruction.
   unsigned Opc = 0;
-  const TargetRegisterClass *RC = NULL;
+  const TargetRegisterClass *RC = nullptr;
   switch (VT.getSimpleVT().SimpleTy) {
   default: return false;
   case MVT::i1:
@@ -355,17 +355,8 @@ bool X86FastISel::handleConstantAddresses(const Value *V, X86AddressMode &AM) {
       return false;
 
     // Can't handle TLS yet.
-    if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
-      if (GVar->isThreadLocal())
-        return false;
-
-    // Can't handle TLS yet, part 2 (this is slightly crazy, but this is how
-    // it works...).
-    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-      if (const GlobalVariable *GVar =
-            dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal(false)))
-        if (GVar->isThreadLocal())
-          return false;
+    if (GV->isThreadLocal())
+      return false;
 
     // RIP-relative addresses can't have additional register operands, so if
     // we've already folded stuff into the addressing mode, just force the
@@ -406,7 +397,7 @@ bool X86FastISel::handleConstantAddresses(const Value *V, X86AddressMode &AM) {
       } else {
         // Issue load from stub.
         unsigned Opc = 0;
-        const TargetRegisterClass *RC = NULL;
+        const TargetRegisterClass *RC = nullptr;
         X86AddressMode StubAM;
         StubAM.Base.Reg = AM.Base.Reg;
         StubAM.GV = GV;
@@ -441,7 +432,7 @@ bool X86FastISel::handleConstantAddresses(const Value *V, X86AddressMode &AM) {
       // Now construct the final address. Note that the Disp, Scale,
       // and Index values may already be set here.
       AM.Base.Reg = LoadReg;
-      AM.GV = 0;
+      AM.GV = nullptr;
       return true;
     }
   }
@@ -467,7 +458,7 @@ bool X86FastISel::handleConstantAddresses(const Value *V, X86AddressMode &AM) {
 bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
   SmallVector<const Value *, 32> GEPs;
 redo_gep:
-  const User *U = NULL;
+  const User *U = nullptr;
   unsigned Opcode = Instruction::UserOp1;
   if (const Instruction *I = dyn_cast<Instruction>(V)) {
     // Don't walk into other basic blocks; it's possible we haven't
@@ -626,7 +617,7 @@ redo_gep:
 /// X86SelectCallAddress - Attempt to fill in an address from the given value.
 ///
 bool X86FastISel::X86SelectCallAddress(const Value *V, X86AddressMode &AM) {
-  const User *U = NULL;
+  const User *U = nullptr;
   unsigned Opcode = Instruction::UserOp1;
   const Instruction *I = dyn_cast<Instruction>(V);
   // Record if the value is defined in the same basic block.
@@ -876,7 +867,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
   // a virtual register in the entry block, so now we copy the value out
   // and into %rax. We also do the same with %eax for Win32.
   if (F.hasStructRetAttr() &&
-      (Subtarget->is64Bit() || Subtarget->isTargetWindows())) {
+      (Subtarget->is64Bit() || Subtarget->isTargetKnownWindowsMSVC())) {
     unsigned Reg = X86MFInfo->getSRetReturnReg();
     assert(Reg &&
            "SRetReturnReg should have been set in LowerFormalArguments()!");
@@ -1247,7 +1238,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
 
 bool X86FastISel::X86SelectShift(const Instruction *I) {
   unsigned CReg = 0, OpReg = 0;
-  const TargetRegisterClass *RC = NULL;
+  const TargetRegisterClass *RC = nullptr;
   if (I->getType()->isIntegerTy(8)) {
     CReg = X86::CL;
     RC = &X86::GR8RegClass;
@@ -1487,7 +1478,7 @@ bool X86FastISel::X86SelectSelect(const Instruction *I) {
   if (!Subtarget->hasCMov()) return false;
 
   unsigned Opc = 0;
-  const TargetRegisterClass *RC = NULL;
+  const TargetRegisterClass *RC = nullptr;
   if (VT == MVT::i16) {
     Opc = X86::CMOVE16rr;
     RC = &X86::GR16RegClass;
@@ -1821,10 +1812,10 @@ bool X86FastISel::FastLowerArguments() {
     }
   }
 
-  static const uint16_t GPR32ArgRegs[] = {
+  static const MCPhysReg GPR32ArgRegs[] = {
     X86::EDI, X86::ESI, X86::EDX, X86::ECX, X86::R8D, X86::R9D
   };
-  static const uint16_t GPR64ArgRegs[] = {
+  static const MCPhysReg GPR64ArgRegs[] = {
     X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8 , X86::R9
   };
 
@@ -1865,7 +1856,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   if (cast<CallInst>(I)->isTailCall())
     return false;
 
-  return DoSelectCall(I, 0);
+  return DoSelectCall(I, nullptr);
 }
 
 static unsigned computeBytesPoppedByCallee(const X86Subtarget &Subtarget,
@@ -1936,8 +1927,8 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   if (!X86SelectCallAddress(Callee, CalleeAM))
     return false;
   unsigned CalleeOp = 0;
-  const GlobalValue *GV = 0;
-  if (CalleeAM.GV != 0) {
+  const GlobalValue *GV = nullptr;
+  if (CalleeAM.GV != nullptr) {
     GV = CalleeAM.GV;
   } else if (CalleeAM.Base.Reg != 0) {
     CalleeOp = CalleeAM.Base.Reg;
@@ -2163,7 +2154,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
   if (Subtarget->is64Bit() && isVarArg && !isWin64) {
     // Count the number of XMM registers allocated.
-    static const uint16_t XMMArgRegs[] = {
+    static const MCPhysReg XMMArgRegs[] = {
       X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
       X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
     };
@@ -2387,7 +2378,7 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
 
   // Get opcode and regclass of the output for the given load instruction.
   unsigned Opc = 0;
-  const TargetRegisterClass *RC = NULL;
+  const TargetRegisterClass *RC = nullptr;
   switch (VT.SimpleTy) {
   default: return 0;
   case MVT::i8:
@@ -2437,7 +2428,7 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
       // If the expression is just a basereg, then we're done, otherwise we need
       // to emit an LEA.
       if (AM.BaseType == X86AddressMode::RegBase &&
-          AM.IndexReg == 0 && AM.Disp == 0 && AM.GV == 0)
+          AM.IndexReg == 0 && AM.Disp == 0 && AM.GV == nullptr)
         return AM.Base.Reg;
 
       Opc = TLI.getPointerTy() == MVT::i32 ? X86::LEA32r : X86::LEA64r;
@@ -2510,7 +2501,7 @@ unsigned X86FastISel::TargetMaterializeFloatZero(const ConstantFP *CF) {
 
   // Get opcode and regclass for the given zero.
   unsigned Opc = 0;
-  const TargetRegisterClass *RC = NULL;
+  const TargetRegisterClass *RC = nullptr;
   switch (VT.SimpleTy) {
   default: return 0;
   case MVT::f32:
@@ -2558,7 +2549,7 @@ bool X86FastISel::tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
 
   MachineInstr *Result =
     XII.foldMemoryOperandImpl(*FuncInfo.MF, MI, OpNo, AddrOps, Size, Alignment);
-  if (Result == 0) return false;
+  if (!Result) return false;
 
   FuncInfo.MBB->insert(FuncInfo.InsertPt, Result);
   MI->eraseFromParent();

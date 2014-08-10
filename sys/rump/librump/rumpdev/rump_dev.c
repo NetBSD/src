@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.25 2014/04/04 01:35:11 christos Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.25.2.1 2014/08/10 06:56:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.25 2014/04/04 01:35:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.25.2.1 2014/08/10 06:56:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,6 +72,12 @@ RUMP_COMPONENT(RUMP__FACTION_DEV)
 	config_finalize();
 
 	KERNEL_UNLOCK_LAST(curlwp);
+
+	/* if there is a vfs, perform activity deferred until mountroot */
+	if (rump_component_count(RUMP__FACTION_VFS)) {
+		config_create_mountrootthreads();
+		yield();
+	}
 }
 
 void

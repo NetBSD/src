@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.18 2011/06/05 10:19:24 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.4 2011/09/01 12:46:33 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.20 2014/06/01 11:35:02 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.4.20.1 2014/08/10 07:10:06 tls Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -101,11 +101,11 @@ typedef long long OFFSZ;
 #undef	BACKTEMP	/* stack grows upwards */
 
 #define	FIELDOPS	/* have bit field ops */
-#define TARGET_ENDIAN TARGET_BE
+#define	TARGET_ENDIAN	TARGET_BE
+#define	TARGET_FLT_EVAL_METHOD	0	/* all as their type */
 
 #define	BYTEOFF(x)	((x)&03)
 #define	wdal(k)		(BYTEOFF(k)==0)
-#define	BITOOR(x)	(x)	/* bit offset to oreg offset XXX die! */
 
 #define	STOARG(p)
 #define	STOFARG(p)

@@ -1,7 +1,7 @@
-/*	$NetBSD: isctest.c,v 1.1.1.4 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: isctest.c,v 1.1.1.4.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
- * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,7 @@ static isc_logcategory_t categories[] = {
 };
 
 static void
-cleanup_managers() {
+cleanup_managers(void) {
 	if (maintask != NULL)
 		isc_task_destroy(&maintask);
 	if (socketmgr != NULL)
@@ -77,7 +77,7 @@ cleanup_managers() {
 }
 
 static isc_result_t
-create_managers() {
+create_managers(void) {
 	isc_result_t result;
 #ifdef ISC_PLATFORM_USETHREADS
 	ncpus = isc_os_ncpus();
@@ -145,7 +145,7 @@ isc_test_begin(FILE *logfile, isc_boolean_t start_managers) {
 }
 
 void
-isc_test_end() {
+isc_test_end(void) {
 	if (maintask != NULL)
 		isc_task_detach(&maintask);
 	if (taskmgr != NULL)

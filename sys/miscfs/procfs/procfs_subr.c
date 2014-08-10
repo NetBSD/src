@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.104 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.104.2.1 2014/08/10 06:56:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.104 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.104.2.1 2014/08/10 06:56:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,224 +118,22 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.104 2014/02/07 15:29:22 hannken Ex
 
 #include <miscfs/procfs/procfs.h>
 
-void procfs_hashins(struct pfsnode *);
-void procfs_hashrem(struct pfsnode *);
-struct vnode *procfs_hashget(pid_t, pfstype, int, struct mount *);
-
-LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
-u_long	pfs_ihash;	/* size of hash table - 1 */
-#define PFSPIDHASH(pid)	((pid) & pfs_ihash)
-
-kmutex_t pfs_hashlock;
-kmutex_t pfs_ihash_lock;
-
-#define	ISSET(t, f)	((t) & (f))
-
 /*
- * allocate a pfsnode/vnode pair.  the vnode is
- * referenced, and locked.
- *
- * the pid, pfs_type, and mount point uniquely
- * identify a pfsnode.  the mount point is needed
- * because someone might mount this filesystem
- * twice.
- *
- * all pfsnodes are maintained on a singly-linked
- * list.  new nodes are only allocated when they cannot
- * be found on this list.  entries on the list are
- * removed when the vfs reclaim entry is called.
- *
- * a single lock is kept for the entire list.  this is
- * needed because the getnewvnode() function can block
- * waiting for a vnode to become free, in which case there
- * may be more than one process trying to get the same
- * vnode.  this lock is only taken if we are going to
- * call getnewvnode, since the kernel itself is single-threaded.
- *
- * if an entry is found on the list, then call vget() to
- * take a reference.  this is done because there may be
- * zero references to it and so it needs to removed from
- * the vnode free list.
+ * Allocate a pfsnode/vnode pair.  The vnode is referenced.
+ * The pid, type, and file descriptor uniquely identify a pfsnode.
  */
 int
 procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid,
-    pfstype pfs_type, int fd, struct proc *p)
+    pfstype type, int fd)
 {
-	struct pfsnode *pfs;
-	struct vnode *vp;
-	int error;
+	struct pfskey key;
 
-	*vpp = procfs_hashget(pid, pfs_type, fd, mp);
-	if (*vpp != NULL)
-		return (0);
+	memset(&key, 0, sizeof(key));
+	key.pk_type = type;
+	key.pk_pid = pid;
+	key.pk_fd = fd;
 
-	error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, NULL, &vp);
-	if (error) {
-		*vpp = NULL;
-		return (error);
-	}
-	pfs = malloc(sizeof(struct pfsnode), M_TEMP, M_WAITOK);
-
-	mutex_enter(&pfs_hashlock);
-	if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL) {
-		mutex_exit(&pfs_hashlock);
-		ungetnewvnode(vp);
-		free(pfs, M_TEMP);
-		return 0;
-	}
-
-	vp->v_data = pfs;
-	pfs->pfs_pid = pid;
-	pfs->pfs_type = pfs_type;
-	pfs->pfs_vnode = vp;
-	pfs->pfs_flags = 0;
-	pfs->pfs_fileno = PROCFS_FILENO(pid, pfs_type, fd);
-	pfs->pfs_fd = fd;
-
-	switch (pfs_type) {
-	case PFSroot:	/* /proc = dr-xr-xr-x */
-		vp->v_vflag |= VV_ROOT;
-		/*FALLTHROUGH*/
-	case PFSproc:	/* /proc/N = dr-xr-xr-x */
-		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-		vp->v_type = VDIR;
-		break;
-
-	case PFStask:	/* /proc/N/task = dr-xr-xr-x */
-		if (fd == -1) {
-			pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|
-			    S_IROTH|S_IXOTH;
-			vp->v_type = VDIR;
-			break;
-		}
-		/*FALLTHROUGH*/
-	case PFScurproc:	/* /proc/curproc = lr-xr-xr-x */
-	case PFSself:	/* /proc/self    = lr-xr-xr-x */
-	case PFScwd:	/* /proc/N/cwd = lr-xr-xr-x */
-	case PFSchroot:	/* /proc/N/chroot = lr-xr-xr-x */
-	case PFSexe:	/* /proc/N/exe = lr-xr-xr-x */
-		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-		vp->v_type = VLNK;
-		break;
-
-	case PFSfd:
-		if (fd == -1) {	/* /proc/N/fd = dr-x------ */
-			pfs->pfs_mode = S_IRUSR|S_IXUSR;
-			vp->v_type = VDIR;
-		} else {	/* /proc/N/fd/M = [ps-]rw------- */
-			file_t *fp;
-			vnode_t *vxp;
-
-			if ((fp = fd_getfile2(p, pfs->pfs_fd)) == NULL) {
-				error = EBADF;
-				goto bad;
-			}
-
-			pfs->pfs_mode = S_IRUSR|S_IWUSR;
-			switch (fp->f_type) {
-			case DTYPE_VNODE:
-				vxp = fp->f_data;
-
-				/*
-				 * We make symlinks for directories
-				 * to avoid cycles.
-				 */
-				if (vxp->v_type == VDIR)
-					goto symlink;
-				vp->v_type = vxp->v_type;
-				break;
-			case DTYPE_PIPE:
-				vp->v_type = VFIFO;
-				break;
-			case DTYPE_SOCKET:
-				vp->v_type = VSOCK;
-				break;
-			case DTYPE_KQUEUE:
-			case DTYPE_MISC:
-			case DTYPE_SEM:
-			symlink:
-				pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|
-				    S_IXGRP|S_IROTH|S_IXOTH;
-				vp->v_type = VLNK;
-				break;
-			default:
-				error = EOPNOTSUPP;
-				closef(fp);
-				goto bad;
-			}
-			closef(fp);
-		}
-		break;
-
-	case PFSfile:	/* /proc/N/file = -rw------- */
-	case PFSmem:	/* /proc/N/mem = -rw------- */
-	case PFSregs:	/* /proc/N/regs = -rw------- */
-	case PFSfpregs:	/* /proc/N/fpregs = -rw------- */
-		pfs->pfs_mode = S_IRUSR|S_IWUSR;
-		vp->v_type = VREG;
-		break;
-
-	case PFSctl:	/* /proc/N/ctl = --w------ */
-	case PFSnote:	/* /proc/N/note = --w------ */
-	case PFSnotepg:	/* /proc/N/notepg = --w------ */
-		pfs->pfs_mode = S_IWUSR;
-		vp->v_type = VREG;
-		break;
-
-	case PFSmap:	/* /proc/N/map = -r--r--r-- */
-	case PFSmaps:	/* /proc/N/maps = -r--r--r-- */
-	case PFSstatus:	/* /proc/N/status = -r--r--r-- */
-	case PFSstat:	/* /proc/N/stat = -r--r--r-- */
-	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
-	case PFSemul:	/* /proc/N/emul = -r--r--r-- */
-	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
-	case PFScpustat:	/* /proc/stat = -r--r--r-- */
-	case PFSdevices:	/* /proc/devices = -r--r--r-- */
-	case PFScpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
-	case PFSuptime:	/* /proc/uptime = -r--r--r-- */
-	case PFSmounts:	/* /proc/mounts = -r--r--r-- */
-	case PFSloadavg:	/* /proc/loadavg = -r--r--r-- */
-	case PFSstatm:	/* /proc/N/statm = -r--r--r-- */
-	case PFSversion:	/* /proc/version = -r--r--r-- */
-		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
-		vp->v_type = VREG;
-		break;
-
-#ifdef __HAVE_PROCFS_MACHDEP
-	PROCFS_MACHDEP_NODETYPE_CASES
-		procfs_machdep_allocvp(vp);
-		break;
-#endif
-
-	default:
-		panic("procfs_allocvp");
-	}
-
-	procfs_hashins(pfs);
-	uvm_vnp_setsize(vp, 0);
-	mutex_exit(&pfs_hashlock);
-
-	*vpp = vp;
-	return (0);
-
- bad:
-	mutex_exit(&pfs_hashlock);
-	free(pfs, M_TEMP);
-	vp->v_data = NULL;
-	ungetnewvnode(vp);
-	return (error);
-}
-
-int
-procfs_freevp(struct vnode *vp)
-{
-	struct pfsnode *pfs = VTOPFS(vp);
-
-	procfs_hashrem(pfs);
-
-	free(vp->v_data, M_TEMP);
-	vp->v_data = NULL;
-	return (0);
+	return vcache_get(mp, &key, sizeof(key), vpp);
 }
 
 int
@@ -550,132 +348,34 @@ vfs_findname(const vfs_namemap_t *nm, const char *bf, int buflen)
 	return (0);
 }
 
-/*
- * Initialize pfsnode hash table.
- */
-void
-procfs_hashinit(void)
+static bool
+procfs_revoke_selector(void *arg, struct vnode *vp)
 {
-	mutex_init(&pfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&pfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
-	pfs_hashtbl = hashinit(desiredvnodes / 4, HASH_LIST, true, &pfs_ihash);
-}
+	struct proc *p = arg;
+	struct pfsnode *pfs = VTOPFS(vp);
 
-void
-procfs_hashreinit(void)
-{
-	struct pfsnode *pp;
-	struct pfs_hashhead *oldhash, *hash;
-	u_long i, oldmask, mask, val;
-
-	hash = hashinit(desiredvnodes / 4, HASH_LIST, true, &mask);
-
-	mutex_enter(&pfs_ihash_lock);
-	oldhash = pfs_hashtbl;
-	oldmask = pfs_ihash;
-	pfs_hashtbl = hash;
-	pfs_ihash = mask;
-	for (i = 0; i <= oldmask; i++) {
-		while ((pp = LIST_FIRST(&oldhash[i])) != NULL) {
-			LIST_REMOVE(pp, pfs_hash);
-			val = PFSPIDHASH(pp->pfs_pid);
-			LIST_INSERT_HEAD(&hash[val], pp, pfs_hash);
-		}
-	}
-	mutex_exit(&pfs_ihash_lock);
-	hashdone(oldhash, HASH_LIST, oldmask);
-}
-
-/*
- * Free pfsnode hash table.
- */
-void
-procfs_hashdone(void)
-{
-	hashdone(pfs_hashtbl, HASH_LIST, pfs_ihash);
-	mutex_destroy(&pfs_hashlock);
-	mutex_destroy(&pfs_ihash_lock);
-}
-
-struct vnode *
-procfs_hashget(pid_t pid, pfstype type, int fd, struct mount *mp)
-{
-	struct pfs_hashhead *ppp;
-	struct pfsnode *pp;
-	struct vnode *vp;
-
-loop:
-	mutex_enter(&pfs_ihash_lock);
-	ppp = &pfs_hashtbl[PFSPIDHASH(pid)];
-	LIST_FOREACH(pp, ppp, pfs_hash) {
-		vp = PFSTOV(pp);
-		if (pid == pp->pfs_pid && pp->pfs_type == type &&
-		    pp->pfs_fd == fd && vp->v_mount == mp) {
-			mutex_enter(vp->v_interlock);
-			mutex_exit(&pfs_ihash_lock);
-			if (vget(vp, 0))
-				goto loop;
-			return (vp);
-		}
-	}
-	mutex_exit(&pfs_ihash_lock);
-	return (NULL);
-}
-
-/*
- * Insert the pfsnode into the hash table and lock it.
- */
-void
-procfs_hashins(struct pfsnode *pp)
-{
-	struct pfs_hashhead *ppp;
-
-	mutex_enter(&pfs_ihash_lock);
-	ppp = &pfs_hashtbl[PFSPIDHASH(pp->pfs_pid)];
-	LIST_INSERT_HEAD(ppp, pp, pfs_hash);
-	mutex_exit(&pfs_ihash_lock);
-}
-
-/*
- * Remove the pfsnode from the hash table.
- */
-void
-procfs_hashrem(struct pfsnode *pp)
-{
-	mutex_enter(&pfs_ihash_lock);
-	LIST_REMOVE(pp, pfs_hash);
-	mutex_exit(&pfs_ihash_lock);
+	return (pfs != NULL && pfs->pfs_pid == p->p_pid);
 }
 
 void
 procfs_revoke_vnodes(struct proc *p, void *arg)
 {
-	struct pfsnode *pfs, *pnext;
 	struct vnode *vp;
+	struct vnode_iterator *marker;
 	struct mount *mp = (struct mount *)arg;
-	struct pfs_hashhead *ppp;
 
 	if (!(p->p_flag & PK_SUGID))
 		return;
 
-	mutex_enter(&pfs_ihash_lock);
-	ppp = &pfs_hashtbl[PFSPIDHASH(p->p_pid)];
-	for (pfs = LIST_FIRST(ppp); pfs; pfs = pnext) {
-		vp = PFSTOV(pfs);
-		pnext = LIST_NEXT(pfs, pfs_hash);
-		if (pfs->pfs_pid != p->p_pid || vp->v_mount != mp)
-			continue;
-		mutex_enter(vp->v_interlock);
-		mutex_exit(&pfs_ihash_lock);
-		if (vget(vp, 0) != 0) {
-			mutex_enter(&pfs_ihash_lock);
-			continue;
-		}
+	vfs_vnode_iterator_init(mp, &marker);
+
+	while ((vp = vfs_vnode_iterator_next(marker,
+	    procfs_revoke_selector, p)) != NULL) {
 		VOP_REVOKE(vp, REVOKEALL);
 		vrele(vp);
-		mutex_enter(&pfs_ihash_lock);
 	}
-	mutex_exit(&pfs_ihash_lock);
+
+	vfs_vnode_iterator_destroy(marker);
 }
 
 int

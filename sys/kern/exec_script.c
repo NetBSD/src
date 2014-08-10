@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.70 2014/03/07 01:34:29 christos Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.70.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.70 2014/03/07 01:34:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.70.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -138,11 +138,8 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 		return ENOEXEC;
 
 	/*
-	 * check that the shell spec is terminated by a newline,
-	 * and that it isn't too large.  Don't modify the
-	 * buffer unless we're ready to commit to handling it.
-	 * (The latter requirement means that we have to check
-	 * for both spaces and tabs later on.)
+	 * Check that the shell spec is terminated by a newline, and that
+	 * it isn't too large.
 	 */
 	hdrlinelen = min(epp->ep_hdrvalid, SCRIPT_HDR_SIZE);
 	for (cp = hdrstr + EXEC_SCRIPT_MAGICLEN; cp < hdrstr + hdrlinelen;
@@ -155,20 +152,19 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 	if (cp >= hdrstr + hdrlinelen)
 		return ENOEXEC;
 
-	shellname = NULL;
-	shellarg = NULL;
-	shellarglen = 0;
-
 	/* strip spaces before the shell name */
 	for (cp = hdrstr + EXEC_SCRIPT_MAGICLEN; *cp == ' ' || *cp == '\t';
 	    cp++)
 		;
+	if (*cp == '\0')
+		return ENOEXEC;
 
-	/* collect the shell name; remember it's length for later */
+	shellarg = NULL;
+	shellarglen = 0;
+
+	/* collect the shell name; remember its length for later */
 	shellname = cp;
 	shellnamelen = 0;
-	if (*cp == '\0')
-		goto check_shell;
 	for ( /* cp = cp */ ; *cp != '\0' && *cp != ' ' && *cp != '\t'; cp++)
 		shellnamelen++;
 	if (*cp == '\0')
@@ -222,10 +218,7 @@ check_shell:
 	    ) {
 		struct file *fp;
 
-#if defined(DIAGNOSTIC) && defined(FDSCRIPTS)
-		if (epp->ep_flags & EXEC_HASFD)
-			panic("exec_script_makecmds: epp already has a fd");
-#endif
+		KASSERT(!(epp->ep_flags & EXEC_HASFD));
 
 		if ((error = fd_allocfile(&fp, &epp->ep_fd)) != 0) {
 			scriptvp = NULL;
@@ -262,12 +255,9 @@ check_shell:
 #endif
 		/* normally can't fail, but check for it if diagnostic */
 		error = copystr(epp->ep_kname, tmpsap->fa_arg, MAXPATHLEN,
-		    (size_t *)0);
+		    NULL);
+		KASSERT(error == 0);
 		tmpsap++;
-#ifdef DIAGNOSTIC
-		if (error != 0)
-			panic("exec_script: copystr couldn't fail");
-#endif
 #ifdef FDSCRIPTS
 	} else {
 		snprintf(tmpsap->fa_arg, MAXPATHLEN, "/dev/fd/%d", epp->ep_fd);

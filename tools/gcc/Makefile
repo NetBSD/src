@@ -1,15 +1,11 @@
-#	$NetBSD: Makefile,v 1.66 2014/02/27 20:15:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.66.2.1 2014/08/10 06:57:41 tls Exp $
 
 .include <bsd.own.mk>
 
 GCC_LANGUAGES=c c++ objc
 MODULE=			gcc4
 
-.if ${HAVE_GCC} < 45
-GCCDIST=	${.CURDIR}/../../gnu/dist/gcc4
-.else
 GCCDIST=	${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
-.endif
 GNUHOSTDIST=	${GCCDIST}
 
 .if ${HAVE_GCC} == 48
@@ -35,13 +31,16 @@ MULTILIB_ARGS= --disable-multilib
 SOFTFLOAT_ARGS=	-with-float=soft
 .endif
 
+.include "gcc-version.mk"
+
 COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--enable-long-long \
 			--enable-threads \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
-			--with-pkgversion="NetBSD nb1 20120916" \
+			--with-pkgversion="NetBSD ${NETBSD_GCC_VERSION}" \
 			--with-system-zlib \
-			--enable-__cxa_atexit
+			--enable-__cxa_atexit \
+			--enable-libstdcxx-threads
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
 .endif
@@ -50,14 +49,11 @@ COMMON_CONFIGURE_ARGS+=	--with-tune=${GCC_CONFIG_TUNE.${MACHINE_ARCH}}
 .endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
-.if ${HAVE_GCC} >= 45
 CONFIGURE_ARGS+= \
 		--with-sysroot=${DESTDIR} \
 		--with-mpc=${TOOLDIR} \
 		--with-mpfr=${TOOLDIR} \
-		--with-gmp=${TOOLDIR}
-.endif
-CONFIGURE_ARGS+= \
+		--with-gmp=${TOOLDIR} \
 		--disable-nls \
 		${MULTILIB_ARGS} \
 		${SOFTFLOAT_ARGS} \
@@ -85,22 +81,20 @@ BUILD_MAKE=${TOOL_GMAKE}
 # mknative-gcc specific stuff
 #
 
-MKNATIVE_CONFIG_TARGET_LIBS= \
-	configure-target-libstdc++-v3 \
-	configure-target-libobjc
+MKNATIVE_CONFIG_TARGET_LIBS=
 
 .if ${HAVE_GCC} == 48
-MKNATIVE_CONFIG_TARGET_LIBS += configure-target-libgcc
+MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgcc
+MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgomp
 MKNATIVE_TARGET=	gcc48
-MKNATIVE_CONFIG_TARGET_LIBS+= \
-	configure-target-libgomp
 .elif ${HAVE_GCC} == 45
+MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgomp
 MKNATIVE_TARGET=	gcc45
-MKNATIVE_CONFIG_TARGET_LIBS+= \
-	configure-target-libgomp
-.else
-MKNATIVE_TARGET=	gcc4
 .endif
+
+MKNATIVE_CONFIG_TARGET_LIBS+= \
+	configure-target-libstdc++-v3 \
+	configure-target-libobjc
 
 BINENV=		/usr/bin/env -i
 
@@ -158,7 +152,6 @@ native-gcc: .native/.configure_done
 		${MACHINE_GNU_PLATFORM} ${DESTDIR} ${TOOLDIR}
 
 NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
-.if ${HAVE_GCC} >= 45
 MPC=		${NETBSDSRCDIR}/external/lgpl3/mpc
 MPFR=		${NETBSDSRCDIR}/external/lgpl3/mpfr
 GMP=		${NETBSDSRCDIR}/external/lgpl3/gmp
@@ -176,13 +169,13 @@ NATIVE_CONFIGURE_ARGS+=	\
 			--with-mpfr-include=${MPFR}/dist/src \
 			--with-gmp-include=${GMP}/lib/libgmp/arch/${GMP_MACHINE_ARCH}
 
-.  if ${MACHINE_ARCH} != "vax"
+.if ${MACHINE_ARCH} != "vax"
 NATIVE_CONFIGURE_ARGS+= --enable-tls
-.  endif
-.  if !empty(MACHINE_ARCH:Mearm*)
-NATIVE_CONFIGURE_ARGS+=	--enable-initfini-array
-.  endif
 .endif
+.if !empty(MACHINE_ARCH:Mearm*)
+NATIVE_CONFIGURE_ARGS+=	--enable-initfini-array
+.endif
+
 NATIVE_CONFIGURE_ARGS+=	\
 			--disable-multilib \
 			--disable-symvers \

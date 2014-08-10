@@ -204,7 +204,7 @@ dummy ()
 {
   /* setvar.exp wants to allocate memory for constants.  So make sure malloc
      gets linked into the program.  */
-  malloc (1);
+  void *p = malloc (1);
 
   /* Some linkers (e.g. on AIX) remove unreferenced variables,
      so make sure to reference them. */
@@ -278,4 +278,5 @@ dummy ()
   sef.field = s1;
   uef.field = u1;
 #endif
+  free (p);
 }

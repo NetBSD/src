@@ -86,14 +86,15 @@ a private key. Both must be in "PEM" format. The private key must not be
 encrypted, meaning: the key must be accessible without a password. The
 certificate and private key may be in the same file, in which case the
 certificate file should be owned by "root" and not be readable by any other
-user. If the key is stored separately, this applies to the key file only, and
-the certificate file may be "world-readable".
+user. If the key is stored separately, this access restriction applies to the
+key file only, and the certificate file may be "world-readable".
 
-Public Internet MX hosts without certificates signed by a "reputable" CA must
-generate, and be prepared to present to most clients, a self-signed or private-
-CA signed certificate. The remote SMTP client will generally not be able to
-authenticate the self-signed certificate, but unless the client is running
-Postfix or similar software, it will still insist on a server certificate.
+Public Internet MX hosts without certificates signed by a well-known public CA
+must still generate, and be prepared to present to most clients, a self-signed
+or private-CA signed certificate. The remote SMTP client will generally not be
+able to verify the self-signed certificate, but unless the client is running
+Postfix or similar software, it will only negotiate TLS ciphersuites that
+require a server certificate.
 
 For servers that are nnoott public Internet MX hosts, Postfix supports
 configurations with no certificates. This entails the use of just the anonymous
@@ -106,34 +107,73 @@ administrator explicitly sets "smtpd_tls_cert_file = none". This ensures that
 new Postfix SMTP server configurations will not accidentally run with no
 certificates.
 
-RSA, DSA and ECDSA (Postfix >= 2.6) certificates are supported. Typically you
-will only have RSA certificates issued by a commercial CA. In addition, the
-tools supplied with OpenSSL will by default issue RSA certificates. You can
-configure all three at the same time, in which case the cipher used determines
-which certificate is presented. For Netscape and OpenSSL clients without
-special cipher choices, the RSA certificate is preferred.
+RSA, DSA and ECDSA (Postfix >= 2.6) certificates are supported. Most sites only
+have RSA certificates. You can configure all three at the same time, in which
+case the ciphersuite negotiated with the remote SMTP client determines which
+certificate is used. If your DNS zone is signed, and you want to publish RFC
+6698 TLSA records, these must match any of the configured certificates. Since
+the best practice is to publish "3 1 1" certificate associations, create a
+separate TLSA record for each public-key certificate digest.
 
-To enable a remote SMTP client to verify the Postfix SMTP server certificate,
-the issuing CA certificates must be made available to the client. You should
-include the required certificates in the server certificate file, the server
-certificate first, then the issuing CA(s) (bottom-up order).
+CCrreeaattiinngg tthhee sseerrvveerr cceerrttiiffiiccaattee ffiillee
 
-Example: the certificate for "server.example.com" was issued by "intermediate
-CA" which itself has a certificate issued by "root CA". Create the server.pem
-file with:
-
-    % ccaatt sseerrvveerr__cceerrtt..ppeemm iinntteerrmmeeddiiaattee__CCAA..ppeemm >> sseerrvveerr..ppeemm
-
-A Postfix SMTP server certificate supplied here must be usable as SSL server
+To verify the Postfix SMTP server certificate, the remote SMTP client must
+receive the issuing CA certificates via the TLS handshake or via public-key
+infrastructure. This means that the Postfix server public-key certificate file
+must include the server certificate first, then the issuing CA(s) (bottom-up
+order). The Postfix SMTP server certificate must be usable as SSL server
 certificate and hence pass the "openssl verify -purpose sslserver ..." test.
 
-A client that trusts the root CA has a local copy of the root CA certificate,
-so it is not necessary to include the root CA certificate here. Leaving it out
-of the "server.pem" file reduces the overhead of the TLS exchange.
+The examples that follow show how to create a server certificate file. We
+assume that the certificate for "server.example.com" was issued by
+"intermediate CA" which itself has a certificate issued by "root CA".
+
+  * With legacy public CA trust verification, you can omit the root certificate
+    from the "server.pem" certificate file. If the client trusts the root CA,
+    it will already have a local copy of the root CA certificate. Omitting the
+    root CA certificate reduces the size of the server TLS handshake.
+
+        % ccaatt sseerrvveerr__cceerrtt..ppeemm iinntteerrmmeeddiiaattee__CCAA..ppeemm >> sseerrvveerr..ppeemm
+
+  * If you publish RFC 6698 TLSA "2 0 1" or "2 1 1" records to specify root CA
+    certificate digests, you must include the corresponding root CA
+    certificates in the "server.pem" certificate file. See the documentation of
+    the tls_dane_trust_anchor_digest_enable main.cf parameter.
+
+        % ccaatt sseerrvveerr__cceerrtt..ppeemm iinntteerrmmeeddiiaattee__CCAA..ppeemm rroooott..ppeemm >> sseerrvveerr..ppeemm
+
+    Remote SMTP clients will be able to use the TLSA record you publish (which
+    only contains the certificate digest) only if they have access to the
+    corresponding certificate. Failure to verify certificates per the server's
+    published TLSA records will typically cause the SMTP client to defer mail
+    delivery. The foregoing also applies to "2 0 2" and "2 1 2" TLSA records or
+    any other digest of a CA certificate, but it is expected that SHA256 will
+    be by far the most common digest for TLSA.
+
+    As a best practice, publish either "3 0 1" or "3 1 1" TLSA associations
+    that specify the SHA256 digest of the server certificate public key with
+    the alias-expanded hostname of each STARTTLS capable SMTP server. These
+    continue to work when a certificate is renewed with the same public/private
+    key pair.
+
+For instructions on how to compute the digest of a certificate or its public
+key for use in TLSA records, see the documentation of the
+smtpd_tls_fingerprint_digest main.cf parameter.
+
+When a new key or certificate is generated, an additional TLSA record with the
+new digest must be published in advance of the actual deployment of the new key
+or certificate on the server. You must allow sufficient time for any TLSA
+RRsets with only the old digest to expire from DNS caches. The safest practice
+is to wait until the DNSSEC signature on the previous TLSA RRset expires, and
+only then switch the server to use new keys published in the updated TLSA
+RRset. Once the new certificate trust chain and private key are in effect, the
+DNS should be updated once again to remove the old digest from the TLSA RRset.
 
 If you want the Postfix SMTP server to accept remote SMTP client certificates
-issued by these CAs, append the root certificate to $smtpd_tls_CAfile or
-install it in the $smtpd_tls_CApath directory.
+issued by one or more root CAs, append the root certificate to
+$smtpd_tls_CAfile or install it in the $smtpd_tls_CApath directory.
+
+CCoonnffiigguurriinngg tthhee sseerrvveerr cceerrttiiffiiccaattee aanndd kkeeyy ffiilleess
 
 RSA key and certificate examples:
 
@@ -207,27 +247,25 @@ To get additional information about Postfix SMTP server TLS activity you can
 increase the log level from 0..4. Each logging level also includes the
 information that is logged at a lower logging level.
 
-     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    |LLeevveell|PPoossttffiixx 22..99 aanndd llaatteerr             |EEaarrlliieerr rreelleeaasseess..               |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |0    |Log only a summary message on TLS |Disable logging of TLS activity.|
-    |     |handshake completion -- no logging|                                |
-    |     |of client certificate trust-chain |                                |
-    |     |verification errors if client     |                                |
-    |     |certificate verification is not   |                                |
-    |     |required.                         |                                |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |1    |Also log trust-chain verification |Also log TLS handshake and      |
-    |     |errors and peer certificate       |certificate information.        |
-    |     |summary information.              |                                |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |2    |Also log levels during TLS negotiation.                            |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |3    |Also log hexadecimal and ASCII dump of TLS negotiation process.    |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |4    |Also log hexadecimal and ASCII dump of complete transmission after |
-    |     |STARTTLS.                                                          |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |LLeevveell|PPoossttffiixx 22..99 aanndd llaatteerr             |EEaarrlliieerr rreelleeaasseess..              |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |0    |Disable logging of TLS activity.                                  |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |1    |Log only a summary message on TLS |Log the summary message, peer  |
+    |     |handshake completion -- no logging|certificate summary information|
+    |     |of client certificate trust-chain |and unconditionally log trust- |
+    |     |verification errors if client     |chain verification errors.     |
+    |     |certificate verification is not   |                               |
+    |     |required.                         |                               |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |2    |Also log levels during TLS negotiation.                           |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |3    |Also log hexadecimal and ASCII dump of TLS negotiation process.   |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |4    |Also log hexadecimal and ASCII dump of complete transmission after|
+    |     |STARTTLS.                                                         |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
 
 Use log level 3 only in case of problems. Use of log level 4 is strongly
 discouraged.
@@ -364,16 +402,40 @@ Example:
 SSeerrvveerr--ssiiddee TTLLSS sseessssiioonn ccaacchhee
 
 The Postfix SMTP server and the remote SMTP client negotiate a session, which
-takes some computer time and network bandwidth. By default, this session
-information is cached only in the smtpd(8) process actually using this session
-and is lost when the process terminates. To share the session information
-between multiple smtpd(8) processes, a persistent session cache can be used.
-You can specify any database type that can store objects of several kbytes and
-that supports the sequence operator. DBM databases are not suitable because
-they can only store small objects. The cache is maintained by the tlsmgr(8)
-process, so there is no problem with concurrent access. Session caching is
-highly recommended, because the cost of repeatedly negotiating TLS session keys
-is high.
+takes some computer time and network bandwidth. SSL protocol versions other
+than SSLv2 support resumption of cached sessions. Not only is this more CPU and
+bandwidth efficient, it also reduces latency as only one network round-trip is
+used to resume a session while it takes two round-trips to create a session
+from scratch.
+
+Since Postfix uses multiple smtpd(8) service processes, an in-memory cache is
+not sufficient for session re-use. Clients store at most one cached session per
+server and are very unlikely to repeatedly connect to the same server process.
+Thus session caching in the Postfix SMTP server generally requires a shared
+cache (an alternative available with Postfix >= 2.11 is described below).
+
+To share the session information between multiple smtpd(8) processes, a session
+cache database is used. You can specify any database type that can store
+objects of several kbytes and that supports the sequence operator. DBM
+databases are not suitable because they can only store small objects. The cache
+is maintained by the tlsmgr(8) process, so there is no problem with concurrent
+access. Session caching is highly recommended, because the cost of repeatedly
+negotiating TLS session keys is high.
+
+Starting with Postfix 2.11, linked with a compatible OpenSSL library (at least
+0.9.8h, preferably 1.0.0 or later) the Postfix SMTP server supports RFC 5077
+TLS session resumption without server-side state when the remote SMTP client
+also supports RFC 5077. The session is encrypted by the server in a session
+ticket returned to client for storage. When a client sends a valid session
+ticket, the server decrypts it and resumes the session, provided neither the
+ticket nor the session have expired. This makes it possible to resume cached
+sessions without allocating space for a shared database on the server. This
+feature can be disabled by setting the session cache timeout to zero, otherwise
+the timeout must be at least 2 minutes and at most 100 days.
+
+Note, session tickets can only be negotiated if the client disables SSLv2 and
+does not use the legacy SSLv2 compatible HELLO message. This is true by default
+with the Postfix >= 2.6 SMTP client.
 
 Example:
 
@@ -395,11 +457,15 @@ Example:
     /etc/postfix/main.cf:
         smtpd_tls_session_cache_timeout = 3600s
 
+As of Postfix 2.11 this setting cannot exceed 100 days. If set <= 0, session
+caching is disabled. If set to a positive value less than 2 minutes, the
+minimum value of 2 minutes is used instead.
+
 When the Postfix SMTP server does not save TLS sessions to an external cache
-database, client-side session caching is unlikely to be useful. To prevent such
-wastage, the Postfix SMTP server can be configured to not issue TLS session
-ids. By default the Postfix SMTP server always issues TLS session ids. This
-works around known interoperability issues with some MUAs, and prevents
+database, client-side session caching is unlikely to be useful. To reduce waste
+of client resources, the Postfix SMTP server can be configured to not issue TLS
+session ids. By default the Postfix SMTP server always issues TLS session ids.
+This works around known interoperability issues with some MUAs, and prevents
 possible interoperability issues with other MTAs.
 
 Example:
@@ -540,7 +606,8 @@ configurations with no server certificates that use oonnllyy the anonymous c
 This is enabled by explicitly setting "smtpd_tls_cert_file = none" and not
 specifying an smtpd_tls_dcert_file or smtpd_tls_eccert_file.
 
-Example, MSA that requires TLSv1, not SSLv2 or SSLv3, with high grade ciphers:
+Example, MSA that requires TLSv1 or higher, not SSLv2 or SSLv3, with high grade
+ciphers:
 
     /etc/postfix/main.cf:
         smtpd_tls_cert_file = /etc/postfix/cert.pem
@@ -548,55 +615,37 @@ Example, MSA that requires TLSv1, not SSLv2 or SSLv3, with high grade ciphers:
         smtpd_tls_mandatory_ciphers = high
         smtpd_tls_mandatory_exclude_ciphers = aNULL, MD5
         smtpd_tls_security_level = encrypt
-        # Preferred form with Postfix >= 2.5:
+        # Preferred syntax with Postfix >= 2.5:
         smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3
-        # Alternative form.
+        # Legacy syntax:
         smtpd_tls_mandatory_protocols = TLSv1
 
-If you want to take advantage of ciphers with ephemeral Diffie-Hellman (EDH)
-key exchange (this offers "forward-secrecy"), DH parameters are needed. Instead
-of using the built-in DH parameters for both 1024-bit (non-export ciphers) and
-512-bit (export ciphers), it is better to generate your own parameters, since
-otherwise it would "pay" for a possible attacker to start a brute force attack
-against parameters that are used by everybody. Postfix defaults to compiled-in
-parameters that are shared by all Postfix users who don't generate their own
-settings.
-
-To generate your own set of DH parameters, use:
-
-    % ooppeennssssll ggeennddhh --oouutt //eettcc//ppoossttffiixx//ddhh__551122..ppeemm --22 551122
-    % ooppeennssssll ggeennddhh --oouutt //eettcc//ppoossttffiixx//ddhh__11002244..ppeemm --22 11002244
-
-Support for elliptic curve cryptography is available with Postfix 2.6 and
-OpenSSL 1.0.0 or later. To enable ephemeral elliptic curve Diffie-Hellman
-(EECDH) key-exchange, set "smtpd_tls_eecdh_grade = strong" or
-"smtpd_tls_eecdh_grade = ultra". The "ultra" setting is substantially more CPU
-intensive, and "strong" is sufficiently secure for most situations.
-
-Examples:
-
-    /etc/postfix/main.cf:
-        smtpd_tls_dh1024_param_file = /etc/postfix/dh_1024.pem
-        smtpd_tls_dh512_param_file = /etc/postfix/dh_512.pem
-        # Postfix >= 2.6:
-        smtpd_tls_eecdh_grade = strong
+If you want to take maximal advantage of ciphers that offer forward secrecy see
+the Getting started section of FORWARD_SECRECY_README. The full document
+conveniently presents all information about Postfix "perfect" forward secrecy
+support in one place: what forward secrecy is, how to tweak settings, and what
+you can expect to see when Postfix uses ciphers with forward secrecy.
 
 Postfix 2.8 and later, in combination with OpenSSL 0.9.7 and later allows TLS
-servers to preempt the TLS client's cipher preference list. This is possible
-only with SSLv3 and later, as in SSLv2 the client chooses the cipher from a
-list supplied by the server.
+servers to preempt the TLS client's cipher-suite preference list. This is
+possible only with SSLv3 and later, as in SSLv2 the client chooses the cipher-
+suite from a list supplied by the server.
 
-By default, the OpenSSL server selects the client's most preferred cipher that
-the server supports. With SSLv3 and later, the server may choose its own most
-preferred cipher that is supported (offered) by the client. Setting
-"tls_preempt_cipherlist = yes" enables server cipher preferences. The default
-OpenSSL behavior applies with "tls_preempt_cipherlist = no".
+By default, the OpenSSL server selects the client's most preferred cipher-suite
+that the server supports. With SSLv3 and later, the server may choose its own
+most preferred cipher-suite that is supported (offered) by the client. Setting
+"tls_preempt_cipherlist = yes" enables server cipher-suite preferences. The
+default OpenSSL behavior applies with "tls_preempt_cipherlist = no".
 
-While server cipher selection may in some cases lead to a more secure or
-performant cipher choice, there is some risk of interoperability issues. In the
-past, some SSL clients have listed lower priority ciphers that they did not
-implement correctly. If the server chooses a cipher that the client prefers
-less, it may select a cipher whose client implementation is flawed.
+While server cipher-suite selection may in some cases lead to a more secure or
+performant cipher-suite choice, there is some risk of interoperability issues.
+In the past, some SSL clients have listed lower priority ciphers that they did
+not implement correctly. If the server chooses a cipher that the client prefers
+less, it may select a cipher whose client implementation is flawed. Most
+notably Windows 2003 Microsoft Exchange servers have flawed implementations of
+DES-CBC3-SHA, which OpenSSL considers stronger than RC4-SHA. Enabling server
+cipher-suite selection may create interoperability issues with Windows 2003
+Microsoft Exchange clients.
 
 MMiisscceellllaanneeoouuss sseerrvveerr ccoonnttrroollss
 
@@ -619,11 +668,35 @@ Example:
 
     /etc/postfix/main.cf:
         tls_disable_workarounds = 0xFFFFFFFF
-        tls_disable_workarounds = CVE-2010-4180, LEGACY_SERVER_CONNECT
+        tls_disable_workarounds = CVE-2010-4180
 
-Note: Disabling LEGACY_SERVER_CONNECT is not wise at this time, lots of servers
-are still unpatched and Postfix is not significantly vulnerable to the
-renegotiation issue in the TLS protocol.
+With Postfix >= 2.11, the tls_ssl_options parameter specifies a list or bit-
+mask of OpenSSL options to enable. Specify one or more of the named options
+below, or a hexadecimal bitmask of options found in the ssl.h file
+corresponding to the run-time OpenSSL library. While it may be reasonable to
+turn off all bug workarounds (see above), it is not a good idea to attempt to
+turn on all features.
+
+LLEEGGAACCYY__SSEERRVVEERR__CCOONNNNEECCTT
+    See SSL_CTX_set_options(3).
+NNOO__TTIICCKKEETT
+    See SSL_CTX_set_options(3).
+NNOO__CCOOMMPPRREESSSSIIOONN
+    Disable SSL compression even if supported by the OpenSSL library.
+    Compression is CPU-intensive, and compression before encryption does not
+    always improve security.
+Example:
+
+    /etc/postfix/main.cf:
+        tls_ssl_options = no_ticket, no_compression
+
+You should only enable features via the hexadecimal mask when the need to
+control the feature is critical (to deal with a new vulnerability or a serious
+interoperability problem). Postfix DOES NOT promise backwards compatible
+behavior with respect to the mask bits. A feature enabled via the mask in one
+release may be enabled by other means in a later release, and the mask bit will
+then be ignored. Therefore, use of the hexadecimal mask is only a temporary
+measure until a new Postfix or OpenSSL release provides a better solution.
 
 SSMMTTPP CClliieenntt ssppeecciiffiicc sseettttiinnggss
 
@@ -653,6 +726,10 @@ mmaayy
     Opportunistic TLS.
 eennccrryypptt
     Mandatory TLS encryption.
+ddaannee
+    Opportunistic DANE TLS.
+ddaannee--oonnllyy
+    Mandatory DANE TLS.
 ffiinnggeerrpprriinntt
     Certificate fingerprint verification.
 vveerriiffyy
@@ -805,15 +882,191 @@ not specified consistently.
         [example.net]:msa encrypt protocols=TLSv1 ciphers=high
         [example.net]:submission encrypt protocols=TLSv1 ciphers=high
 
+DDAANNEE TTLLSS aauutthheennttiiccaattiioonn..
+
+The Postfix SMTP client supports two TLS security levels based on RFC6698 DANE
+TLSA records. The opportunistic "dane" level and the mandatory "dane-only"
+level.
+
+The "dane" level is a stronger form of opportunistic TLS that is resistant to
+man in the middle and downgrade attacks when the destination domain uses DNSSEC
+to publish DANE TLSA records for its MX hosts. If a remote SMTP server has
+"usable" (see RFC 6698) DANE TLSA records, the server connection will be
+authenticated. When DANE authentication fails, there is no fallback to
+unauthenticated or plaintext delivery.
+
+If TLSA records are published for a given remote SMTP server (implying TLS
+support), but are all "unusable" due to unsupported parameters or malformed
+data, the Postfix SMTP client will use mandatory unauthenticated TLS.
+Otherwise, when no TLSA records are published, the Postfix SMTP client behavior
+is the same as with may.
+
+TLSA records must be published in DNSSEC validated DNS zones. Any TLSA records
+in DNS zones not protected via DNSSEC are ignored. The Postfix SMTP client will
+not look for TLSA records associated with MX hosts whose "A" or "AAAA" records
+lie in an "insecure" DNS zone. Such lookups have been observed to cause
+interoperability issues with poorly implemented DNS servers, and are in any
+case not expected to ever yield "secure" results, since that would require a
+very unlikely DLV DNS trust anchor configured between the host record and the
+associated "_25._tcp" child TLSA record.
+
+The "dane-only" level is a form of secure-channel TLS based on the DANE PKI. If
+"usable" TLSA records are present these are used to authenticate the remote
+SMTP server. Otherwise, or when server certificate verification fails, delivery
+via the server in question tempfails.
+
+At both security levels, the TLS policy for the destination is obtained via
+TLSA records validated with DNSSEC. For TLSA policy to be in effect, the
+destination domain's containing DNS zone must be signed and the Postfix SMTP
+client's operating system must be configured to send its DNS queries to a
+recursive DNS nameserver that is able to validate the signed records. Each MX
+host's DNS zone needs to also be signed, and needs to publish DANE TLSA (RFC
+6698) records that specify how that MX host's TLS certificate is to be
+verified.
+
+TLSA records do not preempt the normal SMTP MX host selection algorithm, if
+some MX hosts support TLSA and others do not, TLS security will vary from
+delivery to delivery. It is up to the domain owner to configure their MX hosts
+and their DNS sensibly. To configure the Postfix SMTP client for DNSSEC lookups
+see the documentation for the smtp_dns_support_level main.cf parameter. The
+tls_dane_trust_anchor_digest_enable main.cf parameter controls support for
+trust-anchor digest TLSA records. The tls_dane_digests and
+tls_dane_digest_agility parameters control the list of supported digests and
+digest downgrade attack resistance.
+
+DANE for SMTP MTAs deviates in some details from the baseline DANE protocol in
+RFC 6698. Most notably, it is not expected that SMTP MTAs can reasonably
+include every public CA that a remote SMTP server's administrator may believe
+to be well-known. Nor is there an interactive user to "click OK" when
+authentication fails.
+
+Therefore, certificate usages "0" and "1" from RFC 6698 which are intended to
+"constrain" existing PKI trust, are not supported. TLSA records with usage "0"
+are treated as "unusable". TLSA records with usage "1" are instead treated as
+"trust assertions" and mapped to usage "3". Specifically, with certificate
+usage "1", Postfix will not require the remote SMTP server's certificate to be
+trusted with respect to any locally defined public CAs, it is the domain
+owner's responsibility to ensure that the certificate associations in their
+TLSA records are appropriate to authenticate their SMTP servers.
+
+The Postfix SMTP client supports only certificate usages "2" and "3" (with "1"
+treated as though it were "3"). See tls_dane_trust_anchor_digest_enable for
+usage "2" usability considerations. Support for certificate usage "1" is an
+experiment, it may be withdrawn in the future. Server operators SHOULD NOT
+publish TLSA records with usage "1".
+
+When usable TLSA records are obtained for the remote SMTP server the Postfix
+SMTP client sends the SNI TLS extension in its SSL client hello message. This
+may help the remote SMTP server live up to its promise to provide a certificate
+that matches its TLSA records.
+
+For purposes of protocol and cipher selection, the "dane" security level is
+treated like a "mandatory" TLS security level, and weak ciphers and protocols
+are disabled. Since DANE authenticates server certificates the "aNULL" cipher-
+suites are transparently excluded at this level, no need to configure this
+manually. RFC 6698 (DANE) TLS authentication is available with Postfix 2.11 and
+later.
+
+When a DANE TLSA record specifies a trust-anchor (TA) certificate (that is an
+issuing CA), the strategy used to verify the peername of the server certificate
+is unconditionally "nexthop, hostname". Both the nexthop domain and the
+hostname obtained from the DNSSEC-validated MX lookup are safe from forgery and
+the server certificate must contain at least one of these names.
+
+When a DANE TLSA record specifies an end-entity (EE) certificate, (that is the
+actual server certificate), as with the fingerprint security level below, no
+name checks or certificate expiration checks are applied. The server
+certificate (or its public key) either matches the DANE record or not. Server
+administrators should publish such EE records in preference to all other types.
+
+The pre-requisites for DANE support in the Postfix SMTP client are:
+
+  * A compile-time OpenSSL library that supports the TLS SNI extension and
+    "SHA-2" message digests.
+  * A compile-time DNS resolver library that supports DNSSEC. Postfix binaries
+    built on an older system will not support DNSSEC even if deployed on a
+    system with an updated resolver library.
+  * The "smtp_dns_support_level" must be set to "dnssec".
+  * The "smtp_host_lookup" parameter must include "dns".
+  * A DNSSEC-validating recursive resolver (see note below).
+
+The above client pre-requisites do not apply to the Postfix SMTP server. It
+will support DANE provided it supports TLSv1 and its TLSA records are published
+in a DNSSEC signed zone. To receive DANE secured mail for multiple domains, use
+the same hostname to add the server to each domain's MX records. There are no
+plans to implement SNI in the Postfix SMTP server.
+
+Note: The Postfix SMTP client's internal stub DNS resolver is DNSSEC-aware, but
+it does not itself validate DNSSEC records, rather it delegates DNSSEC
+validation to the operating system's configured recursive DNS nameserver. The
+Postfix DNS client relies on a secure channel to the resolver's cache for
+DNSSEC integrity, but does not support TSIG to protect the transmission channel
+between itself and the nameserver. Therefore, it is strongly recommended (DANE
+security guarantee void otherwise) that each MTA run a local DNSSEC-validating
+recursive resolver ("unbound" from nlnetlabs.nl is a reasonable choice)
+listening on the loopback interface, and that the system be configured to use
+only this local nameserver. The local nameserver may forward queries to an
+upstream recursive resolver on another host if desired.
+
+Note: When the operating system's recursive nameserver is not local, enabling
+EDNS0 expanded DNS packet sizes and turning on the DNSSEC "DO" bit in the DNS
+request and/or the new DNSSEC-specific records returned in the nameserver's
+replies may cause problems with older or buggy firewall and DNS server
+implementations. Therefore, Postfix does not enable DNSSEC by default. Since MX
+lookups happen before the security level is determined, DANE support is
+disabled for all destinations unless you set "smtp_dns_support_level = dnssec".
+To enable DNSSEC lookups selectively, define a new dedicated transport with a
+"-o smtp_dns_support_level=dnssec" override in master.cf and route selected
+domains to that transport. If DNSSEC proves to be sufficiently reliable for
+these domains, you can enable it for all destinations by changing the global
+smtp_dns_support_level in main.cf.
+
+EExxaammppllee: "dane" security for selected destinations, with opportunistic TLS by
+default. This is the recommended configuration for early adopters.
+
+  * The "example.com" destination uses DANE, but if TLSA records are not
+    present or are unusable, mail is deferred.
+
+  * The "example.org" destination uses DANE if possible, but if no TLSA records
+    are found opportunistic TLS is used.
+
+    main.cf:
+        indexed = ${default_database_type}:${config_directory}/
+        #
+        # default: Opportunistic TLS with no DNSSEC lookups.
+        #
+        smtp_tls_security_level = may
+        smtp_dns_support_level = enabled
+        #
+        # Per-destination TLS policy
+        #
+        smtp_tls_policy_maps = ${indexed}tls_policy
+        #
+        # default_transport = smtp, but some destinations are special:
+        #
+        transport_maps = ${indexed}transport
+
+    transport:
+        example.com dane
+        example.org dane
+
+    tls_policy:
+        example.com dane-only
+
+    master.cf:
+        dane       unix  -       -       n       -       -       smtp
+          -o smtp_dns_support_level=dnssec
+          -o smtp_tls_security_level=dane
+
 CCeerrttiiffiiccaattee ffiinnggeerrpprriinntt vveerriiffiiccaattiioonn
 
-Certificate fingerprint verification is available with Postfix 2.5 and later.
-At this security level ("smtp_tls_security_level = fingerprint"), no trusted
-certificate authorities are used or required. The certificate trust chain,
-expiration date, ... are not checked. Instead, the
-smtp_tls_fingerprint_cert_match parameter or the "match" attribute in the
-policy table lists the remote SMTP server certificate fingerprint or public key
-fingerprint (Postfix 2.9 and later).
+At the fingerprint security level, no trusted certificate authorities are used
+or required. The certificate trust chain, expiration date, etc., are not
+checked. Instead, the smtp_tls_fingerprint_cert_match parameter or the "match"
+attribute in the policy table lists the remote SMTP server certificate
+fingerprint or public key fingerprint. Certificate fingerprint verification is
+available with Postfix 2.5 and later, public-key fingerprint support is
+available with Postfix 2.9 and later.
 
 If certificate fingerprints are exchanged securely, this is the strongest, and
 least scalable security level. The administrator needs to securely collect the
@@ -858,7 +1111,7 @@ the example above, we show two matching fingerprints:
         smtp_tls_fingerprint_digest = md5
 
     /etc/postfix/tls_policy:
-        example.com	fingerprint
+        example.com fingerprint
             match=3D:95:34:51:24:66:33:B9:D2:40:99:C0:C1:17:0B:D1
             match=EC:3B:2D:B0:5B:B1:FB:6D:20:A3:9D:72:F6:8D:12:35
 
@@ -892,7 +1145,7 @@ use public-key fingerprints, upgrade to Postfix 2.9.6 or later.
 
 MMaannddaattoorryy sseerrvveerr cceerrttiiffiiccaattee vveerriiffiiccaattiioonn
 
-At the "verify" TLS security level, messages are sent only over TLS encrypted
+At the verify TLS security level, messages are sent only over TLS encrypted
 sessions if the remote SMTP server certificate is valid (not expired or
 revoked, and signed by a trusted certificate authority) and where the server
 certificate name matches a known pattern. Mandatory server certificate
@@ -907,6 +1160,17 @@ smtp_tls_CApath), any DNS names in the SubjectAlternativeName certificate
 extension are used to verify the remote SMTP server name. If no DNS names are
 specified, the certificate CommonName is checked. If you want mandatory
 encryption without server certificate verification, see above.
+
+With Postfix >= 2.11 the "smtp_tls_trust_anchor_file" parameter or more
+typically the corresponding per-destination "tafile" attribute optionally
+modifies trust chain verification. If the parameter is not empty the root CAs
+in CAfile and CApath are no longer trusted. Rather, the Postfix SMTP client
+will only trust certificate-chains signed by one of the trust-anchors contained
+in the chosen files. The specified trust-anchor certificates and public keys
+are not subject to expiration, and need not be (self-signed) root CAs. They
+may, if desired, be intermediate certificates. Therefore, these certificates
+also may be found "in the middle" of the trust chain presented by the remote
+SMTP server, and any untrusted issuing parent certificates will be ignored.
 
 Despite the potential for eliminating "man-in-the-middle" and other attacks,
 mandatory certificate trust chain and subject name verification is not viable
@@ -957,6 +1221,17 @@ smtp_tls_CApath), any DNS names in the SubjectAlternativeName certificate
 extension are used to verify the remote SMTP server name. If no DNS names are
 specified, the CommonName is checked. If you want mandatory encryption without
 server certificate verification, see above.
+
+With Postfix >= 2.11 the "smtp_tls_trust_anchor_file" parameter or more
+typically the corresponding per-destination "tafile" attribute optionally
+modifies trust chain verification. If the parameter is not empty the root CAs
+in CAfile and CApath are no longer trusted. Rather, the Postfix SMTP client
+will only trust certificate-chains signed by one of the trust-anchors contained
+in the chosen files. The specified trust-anchor certificates and public keys
+are not subject to expiration, and need not be (self-signed) root CAs. They
+may, if desired, be intermediate certificates. Therefore, these certificates
+also may be found "in the middle" of the trust chain presented by the remote
+SMTP server, and any untrusted issuing parent certificates will be ignored.
 
 Despite the potential for eliminating "man-in-the-middle" and other attacks,
 mandatory secure server certificate verification is not viable as a default
@@ -1044,27 +1319,25 @@ To get additional information about Postfix SMTP client TLS activity you can
 increase the loglevel from 0..4. Each logging level also includes the
 information that is logged at a lower logging level.
 
-     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    |LLeevveell|PPoossttffiixx 22..99 aanndd llaatteerr             |EEaarrlliieerr rreelleeaasseess..               |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |0    |Log only a summary message on TLS |Disable logging of TLS activity.|
-    |     |handshake completion -- no logging|                                |
-    |     |of remote SMTP server certificate |                                |
-    |     |trust-chain verification errors if|                                |
-    |     |server certificate verification is|                                |
-    |     |not required.                     |                                |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |1    |Also log remote SMTP server trust-|Also log TLS handshake and      |
-    |     |chain verification errors and peer|certificate information.        |
-    |     |certificate summary information.  |                                |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |2    |Also log levels during TLS negotiation.                            |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |3    |Also log hexadecimal and ASCII dump of TLS negotiation process.    |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |4    |Also log hexadecimal and ASCII dump of complete transmission after |
-    |     |STARTTLS.                                                          |
-    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |LLeevveell|PPoossttffiixx 22..99 aanndd llaatteerr             |EEaarrlliieerr rreelleeaasseess..              |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |0    |Disable logging of TLS activity.                                  |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |1    |Log only a summary message on TLS |Log the summary message and    |
+    |     |handshake completion -- no logging|unconditionally log trust-chain|
+    |     |of remote SMTP server certificate |verification errors.           |
+    |     |trust-chain verification errors if|                               |
+    |     |server certificate verification is|                               |
+    |     |not required.                     |                               |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |2    |Also log levels during TLS negotiation.                           |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |3    |Also log hexadecimal and ASCII dump of TLS negotiation process.   |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |4    |Also log hexadecimal and ASCII dump of complete transmission after|
+    |     |STARTTLS.                                                         |
+    |_ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
 
 Example:
 
@@ -1210,6 +1483,10 @@ Example:
     /etc/postfix/main.cf:
         smtp_tls_session_cache_timeout = 3600s
 
+As of Postfix 2.11 this setting cannot exceed 100 days. If set <= 0, session
+caching is disabled. If set to a positive value less than 2 minutes, the
+minimum value of 2 minutes is used instead.
+
 CClliieenntt TTLLSS lliimmiittaattiioonnss
 
 The security properties of TLS communication channels are application specific.
@@ -1258,9 +1535,15 @@ security policy.
 On the SMTP client, there are further complications. When delivering mail to a
 given domain, in contrast to HTTPS, one rarely uses the domain name directly as
 the target host of the SMTP session. More typically, one uses MX lookups -
-these are usually unauthenticated - to obtain the domain's SMTP server hostname
-(s). When, as is current practice, the client verifies the insecurely obtained
-MX hostname, it is subject to a DNS man-in-the-middle attack.
+- these are usually unauthenticated -- to obtain the domain's SMTP server
+hostname(s). When, as is current practice, the client verifies the insecurely
+obtained MX hostname, it is subject to a DNS man-in-the-middle attack.
+
+Adoption of DNSSEC and RFC6698 (DANE) may gradually (as domains implement
+DNSSEC and publish TLSA records for their MX hosts) address the DNS man-in-the-
+middle risk and provide scalable key management for SMTP with TLS. Postfix >=
+2.11 supports the new dane and dane-only security levels that take advantage of
+these standards.
 
 If clients instead attempted to verify the recipient domain name, an SMTP
 server for multiple domains would need to list all its email domain names in
@@ -1341,6 +1624,23 @@ eennccrryypptt
     overrides the main.cf smtp_tls_mandatory_ciphers parameter, and the
     optional "exclude" attribute (Postfix >= 2.6) overrides the main.cf
     smtp_tls_mandatory_exclude_ciphers parameter.
+ddaannee
+    Opportunistic DANE TLS. The TLS policy for the destination is obtained via
+    TLSA records in DNSSEC. If no TLSA records are found, the effective
+    security level used is may. If TLSA records are found, but none are usable,
+    the effective security level is encrypt. When usable TLSA records are
+    obtained for the remote SMTP server, SSLv2 is automatically disabled (see
+    smtp_tls_mandatory_protocols), and the server certificate must match the
+    TLSA records. RFC 6698 (DANE) TLS authentication and DNSSEC support is
+    available with Postfix 2.11 and later.
+ddaannee--oonnllyy
+    Mandatory DANE TLS. The TLS policy for the destination is obtained via TLSA
+    records in DNSSEC. If no TLSA records are found, or none are usable, no
+    connection is made to the server. When usable TLSA records are obtained for
+    the remote SMTP server, SSLv2 is automatically disabled (see
+    smtp_tls_mandatory_protocols), and the server certificate must match the
+    TLSA records. RFC 6698 (DANE) TLS authentication and DNSSEC support is
+    available with Postfix 2.11 and later.
 ffiinnggeerrpprriinntt
     Certificate fingerprint verification. Available with Postfix 2.5 and later.
     At this security level, there are no trusted certificate authorities. The
@@ -1360,14 +1660,21 @@ vveerriiffyy
     validated (not expired or revoked, and signed by a trusted certificate
     authority), and if the server certificate name matches the optional "match"
     attribute (or the main.cf smtp_tls_verify_cert_match parameter value when
-    no optional "match" attribute is specified).
+    no optional "match" attribute is specified). With Postfix >= 2.11 the
+    "tafile" attribute optionally modifies trust chain verification in the same
+    manner as the "smtp_tls_trust_anchor_file" parameter. The "tafile"
+    attribute may be specified multiple times to load multiple trust-anchor
+    files.
 sseeccuurree
     Secure certificate verification. Mail is delivered only if the TLS
     handshake succeeds, if the remote SMTP server certificate can be validated
     (not expired or revoked, and signed by a trusted certificate authority),
     and if the server certificate name matches the optional "match" attribute
     (or the main.cf smtp_tls_secure_cert_match parameter value when no optional
-    "match" attribute is specified).
+    "match" attribute is specified). With Postfix >= 2.11 the "tafile"
+    attribute optionally modifies trust chain verification in the same manner
+    as the "smtp_tls_trust_anchor_file" parameter. The "tafile" attribute may
+    be specified multiple times to load multiple trust-anchor files.
 Notes:
 
   * The "match" attribute is especially useful to verify TLS certificates for
@@ -1404,16 +1711,15 @@ Example:
     /etc/postfix/tls_policy:
         example.edu             none
         example.mil             may
-        example.gov             encrypt protocols=SSLv3:TLSv1 ciphers=high
-        example.com             verify
-                match=hostname:dot-nexthop protocols=SSLv3:TLSv1 ciphers=high
+        example.gov             encrypt ciphers=high
+        example.com             verify match=hostname:dot-nexthop ciphers=high
         example.net             secure
         .example.net            secure match=.example.net:example.net
         [mail.example.org]:587  secure match=nexthop
         # Postfix 2.5 and later
         [thumb.example.org]         fingerprint
-        	match=EC:3B:2D:B0:5B:B1:FB:6D:20:A3:9D:72:F6:8D:12:35
-    	match=3D:95:34:51:24:66:33:B9:D2:40:99:C0:C1:17:0B:D1
+            match=EC:3B:2D:B0:5B:B1:FB:6D:20:A3:9D:72:F6:8D:12:35
+            match=3D:95:34:51:24:66:33:B9:D2:40:99:C0:C1:17:0B:D1
         # Postfix 2.6 and later
         example.info            may protocols=!SSLv2 ciphers=medium
     exclude=3DES
@@ -1497,7 +1803,7 @@ Example:
         smtp_tls_exclude_ciphers = aNULL
         # Preferred form with Postfix >= 2.5:
         smtp_tls_mandatory_protocols = !SSLv2
-        # Alternative form.
+        # Legacy form for Postfix < 2.5:
         smtp_tls_mandatory_protocols = SSLv3, TLSv1
         # Also available with Postfix >= 2.6:
         smtp_tls_ciphers = export
@@ -1571,6 +1877,49 @@ Example:
 
     /etc/postfix/main.cf:
         smtp_starttls_timeout = 300s
+
+With Postfix 2.8 and later, the tls_disable_workarounds parameter specifies a
+list or bit-mask of OpenSSL bug work-arounds to disable. This may be necessary
+if one of the work-arounds enabled by default in OpenSSL proves to pose a
+security risk, or introduces an unexpected interoperability issue. Some bug
+work-arounds known to be problematic are disabled in the default value of the
+parameter when linked with an OpenSSL library that could be vulnerable.
+
+Example:
+
+    /etc/postfix/main.cf:
+        tls_disable_workarounds = 0xFFFFFFFF
+        tls_disable_workarounds = CVE-2010-4180, LEGACY_SERVER_CONNECT
+
+Note: Disabling LEGACY_SERVER_CONNECT is not wise at this time, lots of servers
+are still unpatched and Postfix is not significantly vulnerable to the
+renegotiation issue in the TLS protocol.
+
+With Postfix >= 2.11, the tls_ssl_options parameter specifies a list or bit-
+mask of OpenSSL options to enable. Specify one or more of the named options
+below, or a hexadecimal bitmask of options found in the ssl.h file
+corresponding to the run-time OpenSSL library. While it may be reasonable to
+turn off all bug workarounds (see above), it is not a good idea to attempt to
+turn on all features.
+
+A future version of OpenSSL may by default no longer allow connections to
+servers that don't support secure renegotiation. Since the exposure for SMTP is
+minimal, and some SMTP servers may remain unpatched, you can add
+LEGACY_SERVER_CONNECT to the options to restore the more permissive default of
+current OpenSSL releases.
+
+Example:
+
+    /etc/postfix/main.cf:
+        tls_ssl_options = NO_TICKET, NO_COMPRESSION, LEGACY_SERVER_CONNECT
+
+You should only enable features via the hexadecimal mask when the need to
+control the feature is critical (to deal with a new vulnerability or a serious
+interoperability problem). Postfix DOES NOT promise backwards compatible
+behavior with respect to the mask bits. A feature enabled via the mask in one
+release may be enabled by other means in a later release, and the mask bit will
+then be ignored. Therefore, use of the hexadecimal mask is only a temporary
+measure until a new Postfix or OpenSSL release provides a better solution.
 
 TTLLSS mmaannaaggeerr ssppeecciiffiicc sseettttiinnggss
 

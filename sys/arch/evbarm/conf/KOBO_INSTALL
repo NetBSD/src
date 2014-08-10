@@ -1,0 +1,13 @@
+#	$NetBSD: KOBO_INSTALL,v 1.1.2.2 2014/08/10 06:53:54 tls Exp $
+#
+#	KOBO_INSTALL -- KOBO kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/KOBO"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE
+
+no makeoptions	DEBUG
+no config netbsd-ld0

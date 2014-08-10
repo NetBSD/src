@@ -10,8 +10,9 @@ usage() {
 	  -rs          Run on simulator
 	  -rj <board>  Run on board via JTAG
 	  -rh <ip>     Run on board ip
+	  -j <num>     Num jobs to run
 	EOF
-	exit ${0:-1}
+	exit ${1:-1}
 }
 
 : ${MAKE:=make}
@@ -20,11 +21,14 @@ boardjtag=
 run_sim=false
 run_jtag=false
 run_host=false
+jobs=`getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1`
+: $(( jobs += 1 ))
 while [ -n "$1" ] ; do
 	case $1 in
 		-rs) run_sim=true;;
 		-rj) boardjtag=$2; shift; run_jtag=true;;
 		-rh) boardip=$2; shift; run_host=true;;
+		-j)  jobs=$2; shift;;
 		-*)  usage;;
 		*)   break;;
 	esac
@@ -35,6 +39,8 @@ ${run_jtag} || ${run_host} || ${run_sim} || run_sim=true
 if ${run_host} && [ -z "${boardip}" ] ; then
 	usage
 fi
+
+cd "${0%/*}" || exit 1
 
 dorsh() {
 	# rsh sucks and does not pass up its exit status, so we have to:
@@ -85,7 +91,6 @@ dojtag() {
 }
 
 testit() {
-
 	local name=$1 x=$2 y=`echo $2 | sed 's:\.[xX]$::'` out rsh_out addr
 	shift; shift
 	local fail=`grep xfail ${y}`
@@ -145,8 +150,7 @@ pf() {
 [ $# -eq 0 ] && set -- *.[Ss]
 bins_hw=$( (${run_sim} || ${run_jtag}) && printf '%s.x ' "$@")
 if ${run_host} ; then
-	for files in $@
-	do
+	for files in "$@" ; do
 		tmp=`grep -e CYCLES -e TESTSET -e CLI -e STI -e RTX -e RTI -e SEQSTAT $files -l`
 		if [ -z "${tmp}" ] ; then
 			bins_host=`echo "${bins_host} ${files}.X"`
@@ -194,20 +198,41 @@ if ${run_host} ; then
 	rsh -l root $boardip '/bin/dmesg -c' > /dev/null
 fi
 
+SIM="../../../bfin/run"
+if [ ! -x ${SIM} ] ; then
+	SIM="bfin-elf-run"
+fi
+echo "Using sim: ${SIM}"
+
 ret=0
 unexpected_fail=0
 unexpected_pass=0
 expected_pass=0
+pids=()
 for s in "$@" ; do
-	${run_sim}  && testit SIM  ${s}.x bfin-elf-run `sed -n '/^# sim:/s|^[^:]*:||p' ${s}`
+	(
+	out=$(
+	${run_sim}  && testit SIM  ${s}.x ${SIM} `sed -n '/^# sim:/s|^[^:]*:||p' ${s}`
 	${run_jtag} && testit JTAG ${s}.x dojtag
 	${run_host} && testit HOST ${s}.X dorsh
+	)
+	case $out in
+	*PASS*) ;;
+	*) echo "$out" ;;
+	esac
+	) &
+	pids+=( $! )
+	if [[ ${#pids[@]} -gt ${jobs} ]] ; then
+		wait ${pids[0]}
+		pids=( ${pids[@]:1} )
+	fi
 done
+wait
 
 killall -q bfin-gdbproxy
 if [ ${ret} -eq 0 ] ; then
 	rm -f gdbproxy.log
-	${MAKE} -s clean &
+#	${MAKE} -s clean &
 	exit 0
 else
 	echo number of failures ${ret}
@@ -222,4 +247,3 @@ else
 	fi
 	exit 1
 fi
-

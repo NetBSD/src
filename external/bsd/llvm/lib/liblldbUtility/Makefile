@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2014/08/10 07:09:11 tls Exp $
 
 LIB=	lldbUtility
 
@@ -7,6 +7,7 @@ LIB=	lldbUtility
 .PATH: ${LLDB_SRCDIR}/source/Utility
 
 SRCS+=	ARM_DWARF_Registers.cpp \
+	ARM64_DWARF_Registers.cpp \
 	KQueue.cpp \
 	PseudoTerminal.cpp \
 	Range.cpp \

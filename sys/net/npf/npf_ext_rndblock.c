@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_rndblock.c,v 1.3 2013/03/11 17:03:55 christos Exp $	*/
+/*	$NetBSD: npf_ext_rndblock.c,v 1.3.10.1 2014/08/10 06:56:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_rndblock.c,v 1.3 2013/03/11 17:03:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_rndblock.c,v 1.3.10.1 2014/08/10 06:56:16 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/cprng.h>
@@ -96,15 +96,15 @@ npf_ext_rndblock_dtor(npf_rproc_t *rp, void *meta)
 /*
  * npf_ext_rndblock: main routine implementing the extension functionality.
  */
-static void
-npf_ext_rndblock(npf_cache_t *npc, nbuf_t *nbuf, void *meta, int *decision)
+static bool
+npf_ext_rndblock(npf_cache_t *npc, void *meta, int *decision)
 {
 	npf_ext_rndblock_t *rndblock = meta;
 	unsigned long c;
 
 	/* Skip, if already blocking. */
 	if (*decision == NPF_DECISION_BLOCK) {
-		return;
+		return true;
 	}
 
 	/*
@@ -129,6 +129,8 @@ npf_ext_rndblock(npf_cache_t *npc, nbuf_t *nbuf, void *meta, int *decision)
 			*decision = NPF_DECISION_BLOCK;
 		}
 	}
+
+	return true;
 }
 
 /*

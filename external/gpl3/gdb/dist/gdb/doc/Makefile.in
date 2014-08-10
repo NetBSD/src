@@ -1,4 +1,4 @@
-##Copyright (C) 1991-2013 Free Software Foundation, Inc.
+##Copyright (C) 1991-2014 Free Software Foundation, Inc.
 
 # Makefile for GDB documentation.
 # This file is part of GDB.
@@ -26,6 +26,9 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 pdfdir = @pdfdir@
 htmldir = @htmldir@
+mandir = @mandir@
+man1dir = $(mandir)/man1
+man5dir = $(mandir)/man5
 
 SHELL = @SHELL@
 
@@ -34,6 +37,8 @@ LN_S = @LN_S@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
+
+SYSTEM_GDBINIT = @SYSTEM_GDBINIT@
 
 mkinstalldirs = $(SHELL) $(srcdir)/../../mkinstalldirs
 
@@ -74,13 +79,13 @@ SET_TEXINPUTS = \
    TEXINPUTS=${TEXIDIR}:.:$(srcdir):$(READLINE_DIR):$(GDBMI_DIR):$$TEXINPUTS
 
 # Files which should be generated via 'info' and installed by 'install-info'
-INFO_DEPS = gdb.info gdbint.info stabs.info annotate.info
+INFO_DEPS = gdb.info stabs.info annotate.info
 
 # Files which should be generated via 'pdf' and installed by 'install-pdf'
-PDFFILES = gdb.pdf gdbint.pdf stabs.pdf refcard.pdf annotate.pdf
+PDFFILES = gdb.pdf stabs.pdf refcard.pdf annotate.pdf
 # Files which should be generated via 'html' and installed by 'install-html'
-HTMLFILES =  gdb/index.html gdbint/index.html stabs/index.html annotate/index.html
-HTMLFILES_INSTALL = gdb gdbint stabs annotate
+HTMLFILES =  gdb/index.html stabs/index.html annotate/index.html
+HTMLFILES_INSTALL = gdb stabs annotate
 
 # There may be alternate predefined collections of switches to configure
 # the GDB manual.  Normally this is not done in synch with the software
@@ -128,18 +133,6 @@ GDB_DOC_FILES = \
 	$(GDB_DOC_SOURCE_INCLUDES) \
 	$(GDB_DOC_BUILD_INCLUDES)
 
-# Internals Manual
-GDBINT_DOC_SOURCE_INCLUDES = \
-	$(srcdir)/fdl.texi \
-	$(srcdir)/observer.texi
-GDBINT_DOC_BUILD_INCLUDES = \
-	gdb-cfg.texi \
-	GDBvn.texi
-GDBINT_DOC_FILES = \
-	$(srcdir)/gdbint.texinfo \
-	$(GDBINT_DOC_SOURCE_INCLUDES) \
-	$(GDBINT_DOC_BUILD_INCLUDES)
-
 # Stabs manual: All files
 STABS_DOC_SOURCE_INCLUDES = \
 	$(srcdir)/fdl.texi
@@ -160,18 +153,39 @@ ANNOTATE_DOC_FILES = \
 	$(ANNOTATE_DOC_SOURCE_INCLUDES) \
 	$(ANNOTATE_DOC_BUILD_INCLUDES)
 
-#### Host, target, and site specific Makefile fragments come in here.
+# Options to extract the man page from gdb.texinfo
+MANCONF = -Dman
+
+TEXI2POD = perl $(srcdir)/../../etc/texi2pod.pl \
+		$(MAKEINFOFLAGS) $(MAKEINFO_EXTRA_FLAGS)
+
+POD2MAN1 = pod2man --center="GNU Development Tools" \
+		   --release="gdb-`sed q version.subst`" --section=1
+POD2MAN5 = pod2man --center="GNU Development Tools" \
+		   --release="gdb-`sed q version.subst`" --section=5
+
+# List of man pages generated from gdb.texi
+MAN1S = gdb.1 gdbserver.1 gcore.1
+MAN5S = gdbinit.5
+MANS = $(MAN1S) $(MAN5S)
+
+# Host-dependent makefile fragment comes in here.
+@host_makefile_frag@
+# End of host-dependent makefile fragment
+HAVE_NATIVE_GCORE_TARGET = @HAVE_NATIVE_GCORE_TARGET@
+
 ###
 
 all:
 
 info: $(INFO_DEPS)
-dvi: gdb.dvi gdbint.dvi stabs.dvi refcard.dvi annotate.dvi
-ps: gdb.ps gdbint.ps stabs.ps refcard.ps annotate.ps
+dvi: gdb.dvi stabs.dvi refcard.dvi annotate.dvi
+ps: gdb.ps stabs.ps refcard.ps annotate.ps
 html: $(HTMLFILES)
 pdf: $(PDFFILES)
+man: $(MANS)
 all-doc: info dvi ps # pdf
-diststuff: info
+diststuff: info man
 	rm -f gdb-cfg.texi GDBvn.texi
 
 install-info: $(INFO_DEPS)
@@ -242,7 +256,59 @@ install-pdf: $(PDFFILES)
 	  $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(pdfdir)/$$f"; \
 	done
 
-STAGESTUFF = *.info* gdb-all.texi GDBvn.texi *.ps *.dvi *.pdf
+install-man: install-man1 install-man5
+
+install-man1: $(MAN1S)
+	test -z "$(man1dir)" || $(mkinstalldirs) "$(DESTDIR)$(man1dir)"
+	@list='$(MAN1S)'; for p in $$list; do \
+	  if test "x$(HAVE_NATIVE_GCORE_TARGET)$(HAVE_NATIVE_GCORE_HOST)" = x \
+		  -a "$$p" = gcore.1; then \
+	    continue; \
+	  fi; \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=`echo $$p | sed -e 's|^.*/||'`; \
+	  echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(man1dir)/$$f'"; \
+	  $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(man1dir)/$$f"; \
+	done
+
+install-man5: $(MAN5S)
+	test -z "$(man5dir)" || $(mkinstalldirs) "$(DESTDIR)$(man5dir)"
+	@list='$(MAN5S)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=`echo $$p | sed -e 's|^.*/||'`; \
+	  echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(man5dir)/$$f'"; \
+	  $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(man5dir)/$$f"; \
+	done
+
+uninstall-man: uninstall-man1 uninstall-man5
+
+uninstall-man1:
+	@test -n "$(man1dir)" || exit 0; \
+	files=`{ l2='$(MAN1S)'; for i in $$l2; do \
+	  if test "x$(HAVE_NATIVE_GCORE_TARGET)$(HAVE_NATIVE_GCORE_HOST)" = x \
+		  -a "$$i" = gcore.1; then \
+	    continue; \
+	  fi; \
+	  echo "$$i"; \
+	done | \
+	  sed -n '/\.1[a-z]*$$/p'; \
+	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
+	test -z "$$files" || { \
+	  echo " ( cd '$(DESTDIR)$(man1dir)' && rm -f" $$files ")"; \
+	  cd "$(DESTDIR)$(man1dir)" && rm -f $$files; }
+
+uninstall-man5:
+	@test -n "$(man5dir)" || exit 0; \
+	files=`{ l2='$(MAN5S)'; for i in $$l2; do echo "$$i"; done | \
+	  sed -n '/\.5[a-z]*$$/p'; \
+	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^5][0-9a-z]*$$,5,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
+	test -z "$$files" || { \
+	  echo " ( cd '$(DESTDIR)$(man5dir)' && rm -f" $$files ")"; \
+	  cd "$(DESTDIR)$(man5dir)" && rm -f $$files; }
+
+STAGESTUFF = *.info* gdb-all.texi GDBvn.texi *.ps *.dvi *.pdf *.1 *.5
 
 # Copy the object files from a particular stage into a subdirectory.
 stage1: force
@@ -300,9 +366,9 @@ refcard.pdf : refcard.tex $(REFEDITS)
 	mv sedref.pdf refcard.pdf
 	rm -f sedref.log sedref.tex tmp.sed
 
-# File to record current GDB version number (copied from main dir version.in)
-GDBvn.texi : ${gdbdir}/version.in
-	echo "@set GDBVN `sed q $(srcdir)/../version.in`" > ./GDBvn.new
+# File to record current GDB version number.
+GDBvn.texi : version.subst
+	echo "@set GDBVN `sed q version.subst`" > ./GDBvn.new
 	if [ -n "$(PKGVERSION)" ]; then \
 	  echo "@set VERSION_PACKAGE $(PKGVERSION)" >> ./GDBvn.new; \
 	fi
@@ -313,7 +379,14 @@ GDBvn.texi : ${gdbdir}/version.in
 	if test -z "$(READLINE_TEXI_INCFLAG)"; then \
 	  echo "@set SYSTEM_READLINE" >> ./GDBvn.new; \
 	fi
+	if [ -n "$(SYSTEM_GDBINIT)" ]; then \
+	  echo "@set SYSTEM_GDBINIT $(SYSTEM_GDBINIT)" >> ./GDBvn.new; \
+	fi
 	mv GDBvn.new GDBvn.texi
+
+version.subst: $(gdbdir)/version.in $(gdbdir)/../bfd/version.h
+	date=`sed -n -e 's/^.* BFD_VERSION_DATE \(.*\)$$/\1/p' $(gdbdir)/../bfd/version.h`; \
+	sed -e "s/DATE/$$date/" < $(gdbdir)/version.in > version.subst
 
 # Updated atomically
 .PRECIOUS: GDBvn.texi
@@ -445,34 +518,6 @@ gdb.mm: $(GDB_DOC_FILES) links2roff
 gdb/index.html: ${GDB_DOC_FILES}
 	$(MAKEHTML) $(MAKEHTMLFLAGS) $(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) $(srcdir)/gdb.texinfo
 
-# Clean these up before each run.  Avoids a catch 22 with not being
-# able to re-generate these files (to fix a corruption) because these
-# files contain a corruption.
-GDBINT_TEX_TMPS = gdbint.aux gdbint.cp* gdbint.fn* gdbint.ky* \
-	gdbint.log gdbint.pg* gdbint.toc gdbint.tp* gdbint.vr*
-
-# GDB INTERNALS MANUAL: TeX dvi file
-gdbint.dvi: $(GDBINT_DOC_FILES)
-	rm -f $(GDBINT_TEX_TMPS)
-	$(TEXI2DVI) -I $(srcdir) $(srcdir)/gdbint.texinfo
-
-gdbint.ps : gdbint.dvi
-	$(DVIPS) -o $@ $?
-
-gdbint.pdf: $(GDBINT_DOC_FILES)
-	rm -f $(GDBINT_TEX_TMPS)
-	$(TEXI2DVI) --pdf -I $(srcdir) $(srcdir)/gdbint.texinfo
-
-# GDB INTERNALS MANUAL: info file
-
-gdbint.info: $(GDBINT_DOC_FILES)
-	$(MAKEINFO_CMD) -I $(srcdir) -o gdbint.info $(srcdir)/gdbint.texinfo
-
-# GDB INTERNALS MANUAL: HTML file
-
-gdbint/index.html: $(GDBINT_DOC_FILES)
-	$(MAKEHTML) $(MAKEHTMLFLAGS) -I $(srcdir) $(srcdir)/gdbint.texinfo
-
 stabs.info: $(STABS_DOC_FILES)
 	$(MAKEINFO_CMD) -I $(srcdir) -o stabs.info $(srcdir)/stabs.texinfo
 
@@ -523,6 +568,35 @@ annotate.info: $(ANNOTATE_DOC_FILES)
 annotate/index.html: $(ANNOTATE_DOC_FILES)
 	$(MAKEHTML) $(MAKEHTMLFLAGS) -I $(srcdir) $(srcdir)/annotate.texinfo
 
+# Man pages
+gdb.1: $(GDB_DOC_FILES)
+	touch $@
+	-$(TEXI2POD) $(MANCONF) -Dgdb < $(srcdir)/gdb.texinfo > gdb.pod
+	-($(POD2MAN1) gdb.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+	rm -f gdb.pod
+
+gdbserver.1: $(GDB_DOC_FILES)
+	touch $@
+	-$(TEXI2POD) $(MANCONF) -Dgdbserver < $(srcdir)/gdb.texinfo > gdbserver.pod
+	-($(POD2MAN1) gdbserver.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+	rm -f gdbserver.pod
+
+gcore.1: $(GDB_DOC_FILES)
+	touch $@
+	-$(TEXI2POD) $(MANCONF) -Dgcore < $(srcdir)/gdb.texinfo > gcore.pod
+	-($(POD2MAN1) gcore.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+	rm -f gcore.pod
+
+gdbinit.5: $(GDB_DOC_FILES)
+	touch $@
+	-$(TEXI2POD) $(MANCONF) -Dgdbinit < $(srcdir)/gdb.texinfo > gdbinit.pod
+	-($(POD2MAN5) gdbinit.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+	rm -f gdbinit.pod
+
 force:
 
 Makefile: Makefile.in $(host_makefile_frag) ../config.status
@@ -535,10 +609,10 @@ Makefile: Makefile.in $(host_makefile_frag) ../config.status
 mostlyclean:
 	rm -f gdb.mm gdb.ms gdb.me links2roff
 	rm -f $(GDB_TEX_TMPS)
-	rm -f $(GDBINT_TEX_TMPS)
 	rm -f $(STABS_TEX_TMPS)
 	rm -f $(ANNOTATE_TEX_TMPS)
 	rm -f sedref.dvi sedref.tex tmp.sed
+	rm -f version.subst
 
 clean: mostlyclean
 	rm -f gdb-cfg.texi GDBvn.texi
@@ -551,8 +625,8 @@ distclean: clean
 # "clean" or "distclean".  Use maintainer-clean to remove them.
 
 maintainer-clean realclean: distclean
-	rm -f GDBvn.texi *.info* *.dvi *.ps *.html *.pdf
+	rm -f GDBvn.texi *.info* *.dvi *.ps *.html *.pdf $(MANS)
 
-install: install-info
+install: install-info install-man
 
-uninstall: uninstall-info
+uninstall: uninstall-info uninstall-man

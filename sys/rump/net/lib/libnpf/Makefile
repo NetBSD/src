@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/04/04 13:57:33 njoly Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2014/08/10 06:56:52 tls Exp $
 #
 # Public Domain.
 #
@@ -11,9 +11,11 @@ LIB=	rumpnet_npf
 
 SRCS=	npf.c npf_alg.c npf_conf.c npf_ctl.c npf_handler.c
 SRCS+=	npf_bpf.c npf_if.c npf_inet.c npf_mbuf.c npf_nat.c
-SRCS+=	npf_ruleset.c npf_rproc.c npf_sendpkt.c npf_session.c
+SRCS+=	npf_ruleset.c npf_conn.c npf_conndb.c npf_rproc.c 
 SRCS+=	npf_state.c npf_state_tcp.c npf_tableset.c
-SRCS+=	npf_tableset_ptree.c npf_worker.c if_npflog.c
+SRCS+=	npf_tableset_ptree.c npf_sendpkt.c npf_worker.c
+
+SRCS+=	if_npflog.c
 
 SRCS+=	npf_alg_icmp.c
 

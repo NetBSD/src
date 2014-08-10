@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2014/01/16 13:55:46 christos Exp $
+# $NetBSD: Makefile.inc,v 1.10.2.1 2014/08/10 07:06:54 tls Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -23,7 +23,7 @@ CPPFLAGS+=	-DDHCPv6
 CPPFLAGS+= -DISC_PLATFORM_USETHREADS -DHAVE_CONFIG_H
 CPPFLAGS+= -I${DIST} -I${DIST}/includes -I${DIST}/../include
 CPPFLAGS+= -I${BIND} -I${BIND}/includes -I${BIND}/../include
-.for dir in isc dns
+.for dir in isc dns irs
 CPPFLAGS+= -I${BIND}/lib/${dir}/include
 CPPFLAGS+= -I${BIND}/lib/${dir}/unix/include
 CPPFLAGS+= -I${BIND}/lib/${dir}/pthreads/include
@@ -34,7 +34,7 @@ LDADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
 .if defined(PROG) && ${PROG} == "dhclient"
 LDADD+=-Wl,-Bstatic
 .endif
-LDADD+= -ldns -lisc
+LDADD+= -lirs -lisccfg -ldns -lisc
 LDADD+=-lpthread
 .if defined(PROG) && ${PROG} == "dhclient"
 LDADD+=-Wl,-Bdynamic

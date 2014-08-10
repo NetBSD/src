@@ -163,7 +163,7 @@ Here is a common example of how Postfix invokes a database: </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
 </pre>
 </blockquote>
 
@@ -210,7 +210,7 @@ See the <a href="VIRTUAL_README.html">VIRTUAL_README</a> file for how to configu
 <a href="VIRTUAL_README.html#canonical">hosted domains</a>. </p>
 
 <p> You can specify zero or more domain names, "/file/name" patterns
-and/or "<a href="DATABASE_README.html">type:table</a>" lookup tables (such as hash:, btree:, nis:, <a href="ldap_table.5.html">ldap</a>:,
+and/or "<a href="DATABASE_README.html">type:table</a>" lookup tables (such as <a href="DATABASE_README.html#types">hash</a>:, <a href="DATABASE_README.html#types">btree</a>:, nis:, <a href="ldap_table.5.html">ldap</a>:,
 or <a href="mysql_table.5.html">mysql</a>:), separated by whitespace and/or commas.  A "/file/name"
 pattern is replaced by its contents; "<a href="DATABASE_README.html">type:table</a>" requests that a
 table lookup is done and merely tests for existence: the lookup

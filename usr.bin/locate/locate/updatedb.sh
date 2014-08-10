@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.14 2011/07/13 07:58:35 apb Exp $
+#	$NetBSD: updatedb.sh,v 1.14.18.1 2014/08/10 06:58:21 tls Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -61,20 +61,41 @@ SRCHPATHS=
 #    eval "\$command $quotedlist \$filename"
 #
 shell_quote()
-{
+{(
 	local result=''
-	local arg
+	local arg qarg
+	LC_COLLATE=C ; export LC_COLLATE # so [a-zA-Z0-9] works in ASCII
 	for arg in "$@" ; do
-		# Append a space if necessary
-		result="${result}${result:+ }"
-		# Convert each embedded ' to '\'',
-		# then insert ' at the beginning of the first line,
-		# and append ' at the end of the last line.
-		result="${result}$(printf "%s\n" "$arg" | \
-			sed -e "s/'/'\\\\''/g" -e "1s/^/'/" -e "\$s/\$/'/")"
+		case "${arg}" in
+		'')
+			qarg="''"
+			;;
+		*[!-./a-zA-Z0-9]*)
+			# Convert each embedded ' to '\'',
+			# then insert ' at the beginning of the first line,
+			# and append ' at the end of the last line.
+			# Finally, elide unnecessary '' pairs at the
+			# beginning and end of the result and as part of
+			# '\'''\'' sequences that result from multiple
+			# adjacent quotes in he input.
+			qarg="$(printf "%s\n" "$arg" | \
+			    ${SED:-sed} -e "s/'/'\\\\''/g" \
+				-e "1s/^/'/" -e "\$s/\$/'/" \
+				-e "1s/^''//" -e "\$s/''\$//" \
+				-e "s/'''/'/g"
+				)"
+			;;
+		*)
+			# Arg is not the empty string, and does not contain
+			# any unsafe characters.  Leave it unchanged for
+			# readability.
+			qarg="${arg}"
+			;;
+		esac
+		result="${result}${result:+ }${qarg}"
 	done
 	printf "%s\n" "$result"
-}
+)}
 
 # read configuration file
 if [ -f "$CONF" ]; then

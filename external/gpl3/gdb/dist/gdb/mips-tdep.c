@@ -1,6 +1,6 @@
 /* Target-dependent code for the MIPS architecture, for GDB, the GNU Debugger.
 
-   Copyright (C) 1988-2013 Free Software Foundation, Inc.
+   Copyright (C) 1988-2014 Free Software Foundation, Inc.
 
    Contributed by Alessandro Forin(af@cs.cmu.edu) at CMU
    and by Per Bothner(bothner@cs.wisc.edu) at U.Wisconsin.
@@ -21,7 +21,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "frame.h"
 #include "inferior.h"
@@ -343,8 +343,9 @@ make_compact_addr (CORE_ADDR addr)
    "special", i.e. refers to a MIPS16 or microMIPS function, and sets
    one of the "special" bits in a minimal symbol to mark it accordingly.
    The test checks an ELF-private flag that is valid for true function
-   symbols only; in particular synthetic symbols such as for PLT stubs
-   have no ELF-private part at all.
+   symbols only; for synthetic symbols such as for PLT stubs that have
+   no ELF-private part at all the MIPS BFD backend arranges for this
+   information to be carried in the asymbol's udata field instead.
 
    msymbol_is_mips16 and msymbol_is_micromips test the "special" bit
    in a minimal symbol.  */
@@ -353,13 +354,18 @@ static void
 mips_elf_make_msymbol_special (asymbol * sym, struct minimal_symbol *msym)
 {
   elf_symbol_type *elfsym = (elf_symbol_type *) sym;
+  unsigned char st_other;
 
-  if ((sym->flags & BSF_SYNTHETIC) != 0)
+  if ((sym->flags & BSF_SYNTHETIC) == 0)
+    st_other = elfsym->internal_elf_sym.st_other;
+  else if ((sym->flags & BSF_FUNCTION) != 0)
+    st_other = sym->udata.i;
+  else
     return;
 
-  if (ELF_ST_IS_MICROMIPS (elfsym->internal_elf_sym.st_other))
+  if (ELF_ST_IS_MICROMIPS (st_other))
     MSYMBOL_TARGET_FLAG_2 (msym) = 1;
-  else if (ELF_ST_IS_MIPS16 (elfsym->internal_elf_sym.st_other))
+  else if (ELF_ST_IS_MIPS16 (st_other))
     MSYMBOL_TARGET_FLAG_1 (msym) = 1;
 }
 
@@ -787,7 +793,7 @@ static const signed char mips_reg3_to_reg[8] = { 16, 17, 2, 3, 4, 5, 6, 7 };
    time across a 2400 baud serial line.  Allows the user to limit this
    search.  */
 
-static unsigned int heuristic_fence_post = 0;
+static int heuristic_fence_post = 0;
 
 /* Number of bytes of storage in the actual machine representation for
    register N.  NOTE: This defines the pseudo register type so need to
@@ -1115,15 +1121,15 @@ show_mask_address (struct ui_file *file, int from_tty,
 int
 mips_pc_is_mips (CORE_ADDR memaddr)
 {
-  struct minimal_symbol *sym;
+  struct bound_minimal_symbol sym;
 
   /* Flags indicating that this is a MIPS16 or microMIPS function is
      stored by elfread.c in the high bit of the info field.  Use this
      to decide if the function is standard MIPS.  Otherwise if bit 0
      of the address is clear, then this is a standard MIPS function.  */
   sym = lookup_minimal_symbol_by_pc (memaddr);
-  if (sym)
-    return msymbol_is_mips (sym);
+  if (sym.minsym)
+    return msymbol_is_mips (sym.minsym);
   else
     return is_mips_addr (memaddr);
 }
@@ -1133,15 +1139,15 @@ mips_pc_is_mips (CORE_ADDR memaddr)
 int
 mips_pc_is_mips16 (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 {
-  struct minimal_symbol *sym;
+  struct bound_minimal_symbol sym;
 
   /* A flag indicating that this is a MIPS16 function is stored by
      elfread.c in the high bit of the info field.  Use this to decide
      if the function is MIPS16.  Otherwise if bit 0 of the address is
      set, then ELF file flags will tell if this is a MIPS16 function.  */
   sym = lookup_minimal_symbol_by_pc (memaddr);
-  if (sym)
-    return msymbol_is_mips16 (sym);
+  if (sym.minsym)
+    return msymbol_is_mips16 (sym.minsym);
   else
     return is_mips16_addr (gdbarch, memaddr);
 }
@@ -1151,7 +1157,7 @@ mips_pc_is_mips16 (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 int
 mips_pc_is_micromips (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 {
-  struct minimal_symbol *sym;
+  struct bound_minimal_symbol sym;
 
   /* A flag indicating that this is a microMIPS function is stored by
      elfread.c in the high bit of the info field.  Use this to decide
@@ -1159,8 +1165,8 @@ mips_pc_is_micromips (struct gdbarch *gdbarch, CORE_ADDR memaddr)
      is set, then ELF file flags will tell if this is a microMIPS
      function.  */
   sym = lookup_minimal_symbol_by_pc (memaddr);
-  if (sym)
-    return msymbol_is_micromips (sym);
+  if (sym.minsym)
+    return msymbol_is_micromips (sym.minsym);
   else
     return is_micromips_addr (gdbarch, memaddr);
 }
@@ -1171,7 +1177,7 @@ mips_pc_is_micromips (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 static enum mips_isa
 mips_pc_isa (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 {
-  struct minimal_symbol *sym;
+  struct bound_minimal_symbol sym;
 
   /* A flag indicating that this is a MIPS16 or a microMIPS function
      is stored by elfread.c in the high bit of the info field.  Use
@@ -1179,11 +1185,11 @@ mips_pc_isa (struct gdbarch *gdbarch, CORE_ADDR memaddr)
      MIPS.  Otherwise if bit 0 of the address is set, then ELF file
      flags will tell if this is a MIPS16 or a microMIPS function.  */
   sym = lookup_minimal_symbol_by_pc (memaddr);
-  if (sym)
+  if (sym.minsym)
     {
-      if (msymbol_is_micromips (sym))
+      if (msymbol_is_micromips (sym.minsym))
 	return ISA_MICROMIPS;
-      else if (msymbol_is_mips16 (sym))
+      else if (msymbol_is_mips16 (sym.minsym))
 	return ISA_MIPS16;
       else
 	return ISA_MIPS;
@@ -1245,7 +1251,7 @@ static CORE_ADDR
 mips_read_pc (struct regcache *regcache)
 {
   int regnum = gdbarch_pc_regnum (get_regcache_arch (regcache));
-  ULONGEST pc;
+  LONGEST pc;
 
   regcache_cooked_read_signed (regcache, regnum, &pc);
   if (is_compact_addr (pc))
@@ -2036,7 +2042,8 @@ fetch_mips_16 (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   gdb_byte buf[8];
-  pc &= 0xfffffffe;		/* Clear the low order bit.  */
+
+  pc = unmake_compact_addr (pc);	/* Clear the low order bit.  */
   target_read_memory (pc, buf, 2);
   return extract_unsigned_integer (buf, 2, byte_order);
 }
@@ -2236,7 +2243,7 @@ mips16_next_pc (struct frame_info *frame, CORE_ADDR pc)
 /* The mips_next_pc function supports single_step when the remote
    target monitor or stub is not developed enough to do a single_step.
    It works by decoding the current instruction and predicting where a
-   branch will go.  This isnt hard because all the data is available.
+   branch will go.  This isn't hard because all the data is available.
    The MIPS32, MIPS16 and microMIPS variants are quite different.  */
 static CORE_ADDR
 mips_next_pc (struct frame_info *frame, CORE_ADDR pc)
@@ -2905,7 +2912,7 @@ micromips_scan_prologue (struct gdbarch *gdbarch,
 	      break;
 
 	    /* LUI $v1 is used for larger $sp adjustments.  */
-	    /* Discard LUI $gp is used for PIC code.  */
+	    /* Discard LUI $gp used for PIC code.  */
 	    case 0x10: /* POOL32I: bits 010000 */
 	      if (b5s5_op (insn >> 16) == 0xd
 				/* LUI: bits 010000 001101 */
@@ -3582,29 +3589,21 @@ mips_stub_frame_sniffer (const struct frame_unwind *self,
   gdb_byte dummy[4];
   struct obj_section *s;
   CORE_ADDR pc = get_frame_address_in_block (this_frame);
-  struct minimal_symbol *msym;
+  struct bound_minimal_symbol msym;
 
   /* Use the stub unwinder for unreadable code.  */
   if (target_read_memory (get_frame_pc (this_frame), dummy, 4) != 0)
     return 1;
 
-  if (in_plt_section (pc, NULL))
-    return 1;
-
-  /* Binutils for MIPS puts lazy resolution stubs into .MIPS.stubs.  */
-  s = find_pc_section (pc);
-
-  if (s != NULL
-      && strcmp (bfd_get_section_name (s->objfile->obfd, s->the_bfd_section),
-		 ".MIPS.stubs") == 0)
+  if (in_plt_section (pc) || in_mips_stubs_section (pc))
     return 1;
 
   /* Calling a PIC function from a non-PIC function passes through a
      stub.  The stub for foo is named ".pic.foo".  */
   msym = lookup_minimal_symbol_by_pc (pc);
-  if (msym != NULL
-      && SYMBOL_LINKAGE_NAME (msym) != NULL
-      && strncmp (SYMBOL_LINKAGE_NAME (msym), ".pic.", 5) == 0)
+  if (msym.minsym != NULL
+      && SYMBOL_LINKAGE_NAME (msym.minsym) != NULL
+      && strncmp (SYMBOL_LINKAGE_NAME (msym.minsym), ".pic.", 5) == 0)
     return 1;
 
   return 0;
@@ -3944,7 +3943,7 @@ micromips_deal_with_atomic_sequence (struct gdbarch *gdbarch,
 
   /* Effectively inserts the breakpoints.  */
   for (index = 0; index <= last_breakpoint; index++)
-      insert_single_step_breakpoint (gdbarch, aspace, breaks[index]);
+    insert_single_step_breakpoint (gdbarch, aspace, breaks[index]);
 
   return 1;
 }
@@ -4021,7 +4020,7 @@ heuristic_proc_start (struct gdbarch *gdbarch, CORE_ADDR pc)
   if (start_pc == 0)
     return 0;
 
-  if (heuristic_fence_post == UINT_MAX || fence < VM_MIN_ADDRESS)
+  if (heuristic_fence_post == -1 || fence < VM_MIN_ADDRESS)
     fence = VM_MIN_ADDRESS;
 
   instlen = mips_pc_is_mips (pc) ? MIPS_INSN32_SIZE : MIPS_INSN16_SIZE;
@@ -7626,7 +7625,7 @@ mips_skip_pic_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct minimal_symbol *msym;
+  struct bound_minimal_symbol msym;
   int i;
   gdb_byte stub_code[16];
   int32_t stub_words[4];
@@ -7635,18 +7634,18 @@ mips_skip_pic_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
      instructions inserted before foo or a three instruction sequence
      which jumps to foo.  */
   msym = lookup_minimal_symbol_by_pc (pc);
-  if (msym == NULL
-      || SYMBOL_VALUE_ADDRESS (msym) != pc
-      || SYMBOL_LINKAGE_NAME (msym) == NULL
-      || strncmp (SYMBOL_LINKAGE_NAME (msym), ".pic.", 5) != 0)
+  if (msym.minsym == NULL
+      || SYMBOL_VALUE_ADDRESS (msym.minsym) != pc
+      || SYMBOL_LINKAGE_NAME (msym.minsym) == NULL
+      || strncmp (SYMBOL_LINKAGE_NAME (msym.minsym), ".pic.", 5) != 0)
     return 0;
 
   /* A two-instruction header.  */
-  if (MSYMBOL_SIZE (msym) == 8)
+  if (MSYMBOL_SIZE (msym.minsym) == 8)
     return pc + 8;
 
   /* A three-instruction (plus delay slot) trampoline.  */
-  if (MSYMBOL_SIZE (msym) == 16)
+  if (MSYMBOL_SIZE (msym.minsym) == 16)
     {
       if (target_read_memory (pc, stub_code, 16) != 0)
 	return 0;
@@ -7911,7 +7910,7 @@ mips_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   int i, num_regs;
   enum mips_fpu_type fpu_type;
   struct tdesc_arch_data *tdesc_data = NULL;
-  int elf_fpu_type = 0;
+  int elf_fpu_type = Val_GNU_MIPS_ABI_FP_ANY;
   const char **reg_names;
   struct mips_regnum mips_regnum, *regnum;
   enum mips_isa mips_isa;
@@ -8236,17 +8235,17 @@ mips_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   if (!mips_fpu_type_auto)
     fpu_type = mips_fpu_type;
-  else if (elf_fpu_type != 0)
+  else if (elf_fpu_type != Val_GNU_MIPS_ABI_FP_ANY)
     {
       switch (elf_fpu_type)
 	{
-	case 1:
+	case Val_GNU_MIPS_ABI_FP_DOUBLE:
 	  fpu_type = MIPS_FPU_DOUBLE;
 	  break;
-	case 2:
+	case Val_GNU_MIPS_ABI_FP_SINGLE:
 	  fpu_type = MIPS_FPU_SINGLE;
 	  break;
-	case 3:
+	case Val_GNU_MIPS_ABI_FP_SOFT:
 	default:
 	  /* Soft float or unknown.  */
 	  fpu_type = MIPS_FPU_NONE;

@@ -58,7 +58,7 @@ const struct nios2_reg nios2_builtin_regs[] = {
   {"sp", 27},			/* stack pointer */
   {"fp", 28},			/* frame pointer */
   {"ea", 29},			/* exception return address */
-  {"ba", 30},			/* breakpoint return address */
+  {"sstatus", 30},		/* saved processor status */
   {"ra", 31},			/* return address */
 
   /* Alternative names for special registers.  */
@@ -71,7 +71,7 @@ const struct nios2_reg nios2_builtin_regs[] = {
   {"r28", 28},
   {"r29", 29},
   {"r30", 30},
-  {"sstatus", 30},
+  {"ba", 30},			/* breakpoint return address */
   {"r31", 31},
 
   /* Control register names.  */
@@ -86,7 +86,7 @@ const struct nios2_reg nios2_builtin_regs[] = {
   {"pteaddr", 8},
   {"tlbacc", 9},
   {"tlbmisc", 10},
-  {"fstatus", 11},
+  {"eccinj", 11},
   {"badaddr", 12},
   {"config", 13},
   {"mpubase", 14},
@@ -385,7 +385,7 @@ const struct nios2_opcode nios2_builtin_opcodes[] =
    OP_MATCH_SUB, OP_MASK_ROPX | OP_MASK_ROP, 0, no_overflow},
   {"sync", "", "E", 0,
    OP_MATCH_SYNC, OP_MASK_SYNC, 0, no_overflow},
-  {"trap", "", "E", 0,
+  {"trap", "b", "b,E", 1,
    OP_MATCH_TRAP, OP_MASK_TRAP, 0, no_overflow},
   {"eret", "", "E", 0,
    OP_MATCH_ERET, OP_MASK, 0, no_overflow},

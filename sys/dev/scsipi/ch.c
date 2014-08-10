@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.89 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: ch.c,v 1.89.2.1 2014/08/10 06:54:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.89 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.89.2.1 2014/08/10 06:54:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,7 @@ const struct cdevsw ch_cdevsw = {
 	.d_poll = chpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = chkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

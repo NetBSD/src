@@ -40,7 +40,7 @@ static reloc_howto_type elf_howto_table[] =
 {
   HOWTO (R_390_NONE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size (0 = byte, 1 = 2 byte, 2 = 4 byte) */
 	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
@@ -161,6 +161,14 @@ static reloc_howto_type elf_howto_table[] =
 	s390_elf_ldisp_reloc, "R_390_TLS_GOTIE20", FALSE, 0,0x0fffff00, FALSE),
   HOWTO(R_390_IRELATIVE, 0, 2, 32, TRUE, 0, complain_overflow_bitfield,
 	bfd_elf_generic_reloc, "R_390_IRELATIVE", FALSE, 0, 0xffffffff, FALSE),
+  HOWTO(R_390_PC12DBL,   1, 1, 12,  TRUE, 0, complain_overflow_bitfield,
+	bfd_elf_generic_reloc, "R_390_PC12DBL",  FALSE, 0,0x00000fff, TRUE),
+  HOWTO(R_390_PLT12DBL,	 1, 1, 12,  TRUE, 0, complain_overflow_bitfield,
+	bfd_elf_generic_reloc, "R_390_PLT12DBL", FALSE, 0,0x00000fff, TRUE),
+  HOWTO(R_390_PC24DBL,   1, 2, 24,  TRUE, 0, complain_overflow_bitfield,
+	bfd_elf_generic_reloc, "R_390_PC24DBL",  FALSE, 0,0x00ffffff, TRUE),
+  HOWTO(R_390_PLT24DBL,	 1, 2, 24,  TRUE, 0, complain_overflow_bitfield,
+	bfd_elf_generic_reloc, "R_390_PLT24DBL", FALSE, 0,0x00ffffff, TRUE),
 };
 
 /* GNU extension to record C++ vtable hierarchy.  */
@@ -211,10 +219,18 @@ elf_s390_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
       return &elf_howto_table[(int) R_390_GOT16];
     case BFD_RELOC_16_PCREL:
       return &elf_howto_table[(int) R_390_PC16];
+    case BFD_RELOC_390_PC12DBL:
+      return &elf_howto_table[(int) R_390_PC12DBL];
+    case BFD_RELOC_390_PLT12DBL:
+      return &elf_howto_table[(int) R_390_PLT12DBL];
     case BFD_RELOC_390_PC16DBL:
       return &elf_howto_table[(int) R_390_PC16DBL];
     case BFD_RELOC_390_PLT16DBL:
       return &elf_howto_table[(int) R_390_PLT16DBL];
+    case BFD_RELOC_390_PC24DBL:
+      return &elf_howto_table[(int) R_390_PC24DBL];
+    case BFD_RELOC_390_PLT24DBL:
+      return &elf_howto_table[(int) R_390_PLT24DBL];
     case BFD_RELOC_390_PC32DBL:
       return &elf_howto_table[(int) R_390_PC32DBL];
     case BFD_RELOC_390_PLT32DBL:
@@ -1026,6 +1042,10 @@ elf_s390_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       /* Create got section and local_got_refcounts array if they
@@ -1103,7 +1123,9 @@ elf_s390_check_relocs (bfd *abfd,
 	     are done.  */
 	  break;
 
+	case R_390_PLT12DBL:
 	case R_390_PLT16DBL:
+	case R_390_PLT24DBL:
 	case R_390_PLT32DBL:
 	case R_390_PLT32:
 	case R_390_PLTOFF16:
@@ -1238,7 +1260,9 @@ elf_s390_check_relocs (bfd *abfd,
 	case R_390_16:
 	case R_390_32:
 	case R_390_PC16:
+	case R_390_PC12DBL:
 	case R_390_PC16DBL:
+	case R_390_PC24DBL:
 	case R_390_PC32DBL:
 	case R_390_PC32:
 	  if (h != NULL)
@@ -1283,7 +1307,9 @@ elf_s390_check_relocs (bfd *abfd,
 	  if ((info->shared
 	       && (sec->flags & SEC_ALLOC) != 0
 	       && ((ELF32_R_TYPE (rel->r_info) != R_390_PC16
+		    && ELF32_R_TYPE (rel->r_info) != R_390_PC12DBL
 		    && ELF32_R_TYPE (rel->r_info) != R_390_PC16DBL
+		    && ELF32_R_TYPE (rel->r_info) != R_390_PC24DBL
 		    && ELF32_R_TYPE (rel->r_info) != R_390_PC32DBL
 		    && ELF32_R_TYPE (rel->r_info) != R_390_PC32)
 		   || (h != NULL
@@ -1360,7 +1386,9 @@ elf_s390_check_relocs (bfd *abfd,
 
 	      p->count += 1;
 	      if (ELF32_R_TYPE (rel->r_info) == R_390_PC16
+		  || ELF32_R_TYPE (rel->r_info) == R_390_PC12DBL
 		  || ELF32_R_TYPE (rel->r_info) == R_390_PC16DBL
+		  || ELF32_R_TYPE (rel->r_info) == R_390_PC24DBL
 		  || ELF32_R_TYPE (rel->r_info) == R_390_PC32DBL
 		  || ELF32_R_TYPE (rel->r_info) == R_390_PC32)
 		p->pc_count += 1;
@@ -1527,14 +1555,18 @@ elf_s390_gc_sweep_hook (bfd *abfd,
 	case R_390_20:
 	case R_390_32:
 	case R_390_PC16:
+	case R_390_PC12DBL:
 	case R_390_PC16DBL:
+	case R_390_PC24DBL:
 	case R_390_PC32DBL:
 	case R_390_PC32:
 	  if (info->shared)
 	    break;
 	  /* Fall through.  */
 
+	case R_390_PLT12DBL:
 	case R_390_PLT16DBL:
+	case R_390_PLT24DBL:
 	case R_390_PLT32DBL:
 	case R_390_PLT32:
 	case R_390_PLTOFF16:
@@ -2383,11 +2415,12 @@ elf_s390_relocate_section (bfd *output_bfd,
       else
 	{
 	  bfd_boolean warned ATTRIBUTE_UNUSED;
+	  bfd_boolean ignored ATTRIBUTE_UNUSED;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 	}
 
       if (sec != NULL && discarded_section (sec))
@@ -2504,6 +2537,36 @@ elf_s390_relocate_section (bfd *output_bfd,
 				  base_got->contents + off);
 		      h->got.offset |= 1;
 		    }
+
+		  if ((h->def_regular
+		       && info->shared
+		       && SYMBOL_REFERENCES_LOCAL (info, h))
+		      /* lrl rx,sym@GOTENT -> larl rx, sym */
+		      && ((r_type == R_390_GOTENT
+			   && (bfd_get_16 (input_bfd,
+					   contents + rel->r_offset - 2)
+			       & 0xff0f) == 0xc40d)
+			  /* ly rx, sym@GOT(r12) -> larl rx, sym */
+			  || (r_type == R_390_GOT20
+			      && (bfd_get_32 (input_bfd,
+					      contents + rel->r_offset - 2)
+				  & 0xff00f000) == 0xe300c000
+			      && bfd_get_8 (input_bfd,
+					    contents + rel->r_offset + 3) == 0x58)))
+		    {
+		      unsigned short new_insn =
+			(0xc000 | (bfd_get_8 (input_bfd,
+					      contents + rel->r_offset - 1) & 0xf0));
+		      bfd_put_16 (output_bfd, new_insn,
+				  contents + rel->r_offset - 2);
+		      r_type = R_390_PC32DBL;
+		      rel->r_addend = 2;
+		      howto = elf_howto_table + r_type;
+		      relocation = h->root.u.def.value
+			+ h->root.u.def.section->output_section->vma
+			+ h->root.u.def.section->output_offset;
+		      goto do_relocation;
+		    }
 		}
 	      else
 		unresolved_reloc = FALSE;
@@ -2584,7 +2647,9 @@ elf_s390_relocate_section (bfd *output_bfd,
 	  unresolved_reloc = FALSE;
 	  break;
 
+	case R_390_PLT12DBL:
 	case R_390_PLT16DBL:
+	case R_390_PLT24DBL:
 	case R_390_PLT32DBL:
 	case R_390_PLT32:
 	  /* Relocation is to the entry for this symbol in the
@@ -2647,7 +2712,9 @@ elf_s390_relocate_section (bfd *output_bfd,
 	case R_390_16:
 	case R_390_32:
 	case R_390_PC16:
+	case R_390_PC12DBL:
 	case R_390_PC16DBL:
+	case R_390_PC24DBL:
 	case R_390_PC32DBL:
 	case R_390_PC32:
 	  if (h != NULL
@@ -2719,7 +2786,9 @@ elf_s390_relocate_section (bfd *output_bfd,
 		   || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
 		   || h->root.type != bfd_link_hash_undefweak)
 	       && ((r_type != R_390_PC16
+		    && r_type != R_390_PC12DBL
 		    && r_type != R_390_PC16DBL
+		    && r_type != R_390_PC24DBL
 		    && r_type != R_390_PC32DBL
 		    && r_type != R_390_PC32)
 		   || !SYMBOL_CALLS_LOCAL (info, h)))
@@ -2760,7 +2829,9 @@ elf_s390_relocate_section (bfd *output_bfd,
 	      else if (h != NULL
 		       && h->dynindx != -1
 		       && (r_type == R_390_PC16
+			   || r_type == R_390_PC12DBL
 			   || r_type == R_390_PC16DBL
+			   || r_type == R_390_PC24DBL
 			   || r_type == R_390_PC32DBL
 			   || r_type == R_390_PC32
 			   || !info->shared
@@ -3238,6 +3309,13 @@ elf_s390_relocate_section (bfd *output_bfd,
 
     do_relocation:
 
+      /* When applying a 24 bit reloc we need to start one byte
+	 earlier.  Otherwise the 32 bit get/put bfd operations might
+	 access a byte after the actual section.  */
+      if (r_type == R_390_PC24DBL
+	  || r_type == R_390_PLT24DBL)
+	rel->r_offset--;
+
       if (r_type == R_390_20
 	  || r_type == R_390_GOT20
 	  || r_type == R_390_GOTPLT20
@@ -3712,7 +3790,9 @@ elf_s390_finish_dynamic_symbol (bfd *output_bfd,
    dynamic linker, before writing them out.  */
 
 static enum elf_reloc_type_class
-elf_s390_reloc_type_class (const Elf_Internal_Rela *rela)
+elf_s390_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			   const asection *rel_sec ATTRIBUTE_UNUSED,
+			   const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {
@@ -3940,7 +4020,6 @@ elf32_s390_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 #define elf_backend_relocate_section	      elf_s390_relocate_section
 #define elf_backend_size_dynamic_sections     elf_s390_size_dynamic_sections
 #define elf_backend_init_index_section	      _bfd_elf_init_1_index_section
-#define elf_backend_reloc_type_class	      elf_s390_reloc_type_class
 #define elf_backend_grok_prstatus	      elf_s390_grok_prstatus
 #define elf_backend_plt_sym_val		      elf_s390_plt_sym_val
 #define elf_backend_add_symbol_hook           elf_s390_add_symbol_hook

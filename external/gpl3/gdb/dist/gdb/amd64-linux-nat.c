@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86-64.
 
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -29,7 +29,7 @@
 #include "btrace.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "elf/common.h"
 #include <sys/uio.h>
 #include <sys/ptrace.h>
@@ -100,7 +100,9 @@ static int amd64_linux_gregset32_reg_offset[] =
   -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1,
-  ORIG_RAX * 8			/* "orig_eax" */
+  -1, -1, -1, -1,		/* MPX registers BND0 ... BND3.  */
+  -1, -1,			/* MPX registers BNDCFGU, BNDSTATUS.  */
+  ORIG_RAX * 8,			/* "orig_eax" */
 };
 
 
@@ -164,9 +166,9 @@ amd64_linux_fetch_inferior_registers (struct target_ops *ops,
   int tid;
 
   /* GNU/Linux LWP ID's are process ID's.  */
-  tid = TIDGET (inferior_ptid);
+  tid = ptid_get_lwp (inferior_ptid);
   if (tid == 0)
-    tid = PIDGET (inferior_ptid); /* Not a threaded program.  */
+    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
 
   if (regnum == -1 || amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
@@ -219,9 +221,9 @@ amd64_linux_store_inferior_registers (struct target_ops *ops,
   int tid;
 
   /* GNU/Linux LWP ID's are process ID's.  */
-  tid = TIDGET (inferior_ptid);
+  tid = ptid_get_lwp (inferior_ptid);
   if (tid == 0)
-    tid = PIDGET (inferior_ptid); /* Not a threaded program.  */
+    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
 
   if (regnum == -1 || amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
@@ -281,9 +283,9 @@ amd64_linux_dr_get (ptid_t ptid, int regnum)
   int tid;
   unsigned long value;
 
-  tid = TIDGET (ptid);
+  tid = ptid_get_lwp (ptid);
   if (tid == 0)
-    tid = PIDGET (ptid);
+    tid = ptid_get_pid (ptid);
 
   errno = 0;
   value = ptrace (PTRACE_PEEKUSER, tid,
@@ -301,9 +303,9 @@ amd64_linux_dr_set (ptid_t ptid, int regnum, unsigned long value)
 {
   int tid;
 
-  tid = TIDGET (ptid);
+  tid = ptid_get_lwp (ptid);
   if (tid == 0)
-    tid = PIDGET (ptid);
+    tid = ptid_get_pid (ptid);
 
   errno = 0;
   ptrace (PTRACE_POKEUSER, tid,
@@ -1046,9 +1048,9 @@ amd64_linux_read_description (struct target_ops *ops)
   static uint64_t xcr0;
 
   /* GNU/Linux LWP ID's are process ID's.  */
-  tid = TIDGET (inferior_ptid);
+  tid = ptid_get_lwp (inferior_ptid);
   if (tid == 0)
-    tid = PIDGET (inferior_ptid); /* Not a threaded program.  */
+    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
 
   /* Get CS register.  */
   errno = 0;
@@ -1094,18 +1096,41 @@ amd64_linux_read_description (struct target_ops *ops)
     }
 
   /* Check the native XCR0 only if PTRACE_GETREGSET is available.  */
-  if (have_ptrace_getregset
-      && (xcr0 & I386_XSTATE_AVX_MASK) == I386_XSTATE_AVX_MASK)
+  if (have_ptrace_getregset && (xcr0 & I386_XSTATE_ALL_MASK))
     {
-      if (is_64bit)
+      switch (xcr0 & I386_XSTATE_ALL_MASK)
 	{
-	  if (is_x32)
-	    return tdesc_x32_avx_linux;
+	case I386_XSTATE_MPX_MASK:
+	  if (is_64bit)
+	    {
+	      if (is_x32)
+		return tdesc_x32_avx_linux; /* No MPX on x32 using AVX.  */
+	      else
+		return tdesc_amd64_mpx_linux;
+	    }
 	  else
-	    return tdesc_amd64_avx_linux;
+	    return tdesc_i386_mpx_linux;
+	case I386_XSTATE_AVX_MASK:
+	  if (is_64bit)
+	    {
+	      if (is_x32)
+		return tdesc_x32_avx_linux;
+	      else
+		return tdesc_amd64_avx_linux;
+	    }
+	  else
+	    return tdesc_i386_avx_linux;
+	default:
+	  if (is_64bit)
+	    {
+	      if (is_x32)
+		return tdesc_x32_linux;
+	      else
+		return tdesc_amd64_linux;
+	    }
+	  else
+	    return tdesc_i386_linux;
 	}
-      else
-	return tdesc_i386_avx_linux;
     }
   else
     {

@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.14 2014/03/30 15:20:54 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.14.2.1 2014/08/10 06:53:51 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,22 +41,18 @@
 
 // We'll modify va and pa at run time so we can use relocatable addresses.
 #define MMU_INIT(va,pa,n_sec,attr) \
-	.word	(va)|(n_sec)				    ; \
-	.word	(pa)|(attr)				    ; \
+	.word	((va) & 0xffffffff)|(n_sec)		    ; \
+	.word	((pa) & 0xffffffff)|(attr)		    ; \
 
 // Set up a preliminary mapping in the MMU to allow us to run at KERNEL_BASE
 // with caches on.  If we are MULTIPROCESSOR, save the TTB address.
 //
 arm_boot_l1pt_init:
 #if defined(MULTIPROCESSOR)
-#if defined(KERNEL_BASES_EQUAL)
 	movw	r3, #:lower16:cortex_mmuinfo
 	movt	r3, #:upper16:cortex_mmuinfo
-#else
-	adr	r3, arm_boot_l1pt_init
-	movw	r2, #:lower16:cortex_mmuinfo
-	movt	r2, #:upper16:cortex_mmuinfo
-	bfi	r3, r2, #0, #28
+#if !defined(KERNEL_BASES_EQUAL)
+	sub	r3, r3, #KERNEL_BASE_VOFFSET
 #endif
 	str	r0, [r3]
 
@@ -107,7 +103,7 @@ arm_boot_l1pt_init:
 	// Do we need add sharing for this?
 	tst	pa, #(L1_S_C|L1_S_B)	// is this entry cacheable?
 	orrne	pa, pa, attr		// add sharing
-	
+
 4:	cmp	n_sec, #0
 	bne	2b
 	bx	lr			// return
@@ -135,11 +131,11 @@ arm_boot_l1pt_init:
 #define CPU_CONTROL_AFLT_ENABLE_CLR	CPU_CONTROL_AFLT_ENABLE
 #define CPU_CONTROL_AFLT_ENABLE_SET	0
 #else
-#deifne CPU_CONTROL_AFLT_ENABLE_CLR	0
+#define CPU_CONTROL_AFLT_ENABLE_CLR	0
 #define CPU_CONTROL_AFLT_ENABLE_SET	CPU_CONTROL_AFLT_ENABLE
 #endif
 
-// bits to set in the Control Register 
+// bits to set in the Control Register
 //
 #define CPU_CONTROL_SET \
 	(CPU_CONTROL_MMU_ENABLE		|	\
@@ -151,7 +147,7 @@ arm_boot_l1pt_init:
 	 CPU_CONTROL_EX_BEND_SET	|	\
 	 CPU_CONTROL_UNAL_ENABLE)
 
-// bits to clear in the Control Register 
+// bits to clear in the Control Register
 //
 #define CPU_CONTROL_CLR \
 	(CPU_CONTROL_AFLT_ENABLE_CLR)
@@ -160,7 +156,7 @@ arm_cpuinit:
 	// Because the MMU may already be on do a typical sequence to set
 	// the Translation Table Base(s).
 	mov	ip, lr
-	mov	r10, r0			// save TTBR 
+	mov	r10, r0			// save TTBR
 	mov	r1, #0
 
 	mcr     p15, 0, r1, c7, c5, 0	// invalidate I cache
@@ -203,7 +199,7 @@ arm_cpuinit:
 
 	XPUTC(#72)
 #if defined(ARM_MMU_EXTENDED)
-	XPUTC(#49)            
+	XPUTC(#49)
 	mov	r1, #TTBCR_S_N_1	// make sure TTBCR_S_N is 1
 #else
 	XPUTC(#48)
@@ -259,7 +255,7 @@ arm_cpuinit:
 
 	.p2align 2
 
-#if defined(VERBOSE_INIT_ARM) && XPUTC_COM
+#if defined(VERBOSE_INIT_ARM) && defined(XPUTC_COM)
 #define TIMO		0x25000
 #ifndef COM_MULT
 #define COM_MULT	1
@@ -305,7 +301,7 @@ xputc:
 #endif
 
 	mov	r2, #TIMO
-3:	
+3:
 #if COM_MULT == 1
 	ldrb	r1, [r3, #(COM_LSR*COM_MULT)]
 #else
@@ -337,6 +333,7 @@ cortex_init:
         mov	r0, #0
         msr	spsr_sxc, r0			// set SPSR[23:8] to known value
 
+	XPUTC(#64)
 #if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
 	//
 	// If SMP is already enabled, don't do anything.
@@ -360,16 +357,8 @@ cortex_init:
 	isb
 #endif
 
-	XPUTC(#64)
-#if defined(KERNEL_BASES_EQUAL)
-	bl	_C_LABEL(armv7_icache_inv_all)
-#else
-	adr	ip, cortex_init
-	movw	r0, #:lower16:_C_LABEL(armv7_icache_inv_all)
-	movt	r0, #:upper16:_C_LABEL(armv7_icache_inv_all)
-	bfi	ip, r0, #0, #28
-	blx	ip				// toss i-cache
-#endif
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c5, 0		// toss i-cache
 
 #if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA9)
 	//
@@ -400,10 +389,9 @@ cortex_init:
 #if defined(KERNEL_BASES_EQUAL)
 	bl	_C_LABEL(armv7_dcache_wbinv_all)
 #else
-	adr	ip, cortex_init
-	movw	r0, #:lower16:_C_LABEL(armv7_dcache_wbinv_all)
-	movt	r0, #:upper16:_C_LABEL(armv7_dcache_wbinv_all)
-	bfi	ip, r0, #0, #28
+	movw	ip, #:lower16:_C_LABEL(armv7_dcache_wbinv_all)
+	movt	ip, #:upper16:_C_LABEL(armv7_dcache_wbinv_all)
+	sub	ip, ip, #KERNEL_BASE_VOFFSET
 	blx	ip				// writeback & toss d-cache
 #endif
 	XPUTC(#67)
@@ -463,7 +451,7 @@ cortex_init:
 	mcr	p15, 0, r0, c1, c0, 1		// ACTLR write
 	isb
 
-#if defined(MULTIPROCESSOR) && (defined(CPU_CORTEXA5) ||  defined(CPU_CORTEXA9))
+#if defined(MULTIPROCESSOR) && (defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9))
 	//
 	// Step 4b (continued on A5/A9), ACTRL.FW=1)
 	//
@@ -543,14 +531,10 @@ cortex_mpstart:
 	//
 
 	// Get our initial temporary TTB so we can switch to it.
-#if defined(KERNEL_BASES_EQUAL)
 	movw	r7, #:lower16:_C_LABEL(cortex_mmuinfo)
 	movt	r7, #:upper16:_C_LABEL(cortex_mmuinfo)
-#else
-	adr	r7, cortex_mpstart
-	movw	r8, #:lower16:_C_LABEL(cortex_mmuinfo)
-	movt	r8, #:upper16:_C_LABEL(cortex_mmuinfo)
-	bfi	r7, r8, #0, #28
+#if !defined(KERNEL_BASES_EQUAL)
+	sub	r7, r7, #KERNEL_BASE_VOFFSET
 #endif
 	dmb
 	ldr	r0, [r7]			// load saved TTB address
@@ -648,7 +632,7 @@ cortex_mpcontinuation:
 
 	mrc	p15, 0, r1, c2, c0, 2		// TTBCR get
 	orr	r1, r1, #TTBCR_S_PD0		// prevent lookups via TTBR0
-	mrc	p15, 0, r1, c2, c0, 2		// TTBCR set
+	mcr	p15, 0, r1, c2, c0, 2		// TTBCR set
 
 #ifdef MPDEBUG
 	str	pc, [r9]			// we've got this far

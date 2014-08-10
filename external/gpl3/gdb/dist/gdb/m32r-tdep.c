@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas M32R, for GDB.
 
-   Copyright (C) 1996-2013 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include "gdbtypes.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "value.h"
 #include "inferior.h"
 #include "symfile.h"
@@ -667,12 +667,6 @@ m32r_read_pc (struct regcache *regcache)
   return pc;
 }
 
-static void
-m32r_write_pc (struct regcache *regcache, CORE_ADDR val)
-{
-  regcache_cooked_write_unsigned (regcache, M32R_PC_REGNUM, val);
-}
-
 static CORE_ADDR
 m32r_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
 {
@@ -927,10 +921,10 @@ m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   gdbarch = gdbarch_alloc (&info, tdep);
 
   set_gdbarch_read_pc (gdbarch, m32r_read_pc);
-  set_gdbarch_write_pc (gdbarch, m32r_write_pc);
   set_gdbarch_unwind_sp (gdbarch, m32r_unwind_sp);
 
   set_gdbarch_num_regs (gdbarch, M32R_NUM_REGS);
+  set_gdbarch_pc_regnum (gdbarch, M32R_PC_REGNUM);
   set_gdbarch_sp_regnum (gdbarch, M32R_SP_REGNUM);
   set_gdbarch_register_name (gdbarch, m32r_register_name);
   set_gdbarch_register_type (gdbarch, m32r_register_type);

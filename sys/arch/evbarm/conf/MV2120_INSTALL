@@ -1,4 +1,4 @@
-#	$NetBSD: MV2120_INSTALL,v 1.1 2012/02/14 15:09:03 jakllsch Exp $
+#	$NetBSD: MV2120_INSTALL,v 1.1.24.1 2014/08/10 06:53:54 tls Exp $
 #
 #	MV2120_INSTALL -- MV2120 kernel with installation-sized
 #	ramdisk
@@ -8,3 +8,9 @@ include "arch/evbarm/conf/MV2120"
 include "arch/evbarm/conf/INSTALL"
 
 options BOOTHOWTO=RB_SINGLE
+no makeoptions	DEBUG
+no config netbsd-mvgbe0
+no config netbsd-wd0e
+no config netbsd-wd0f
+no config netbsd-wd0g
+no config netbsd-wd0h

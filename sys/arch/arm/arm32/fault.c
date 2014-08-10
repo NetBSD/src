@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.99 2014/04/01 18:00:42 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.99.2.1 2014/08/10 06:53:50 tls Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.99 2014/04/01 18:00:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.99.2.1 2014/08/10 06:53:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.99 2014/04/01 18:00:42 matt Exp $");
 
 #include <arch/arm/arm/disassem.h>
 #include <arm/arm32/machdep.h>
- 
+
 extern char fusubailout[];
 
 #ifdef DEBUG
@@ -318,7 +318,7 @@ data_abort_handler(trapframe_t *tf)
 	 * further down if we have to decode the current instruction.
 	 */
 #ifdef THUMB_CODE
-	/* 
+	/*
 	 * XXX: It would be nice to be able to support Thumb in the kernel
 	 * at some point.
 	 */
@@ -416,7 +416,7 @@ data_abort_handler(trapframe_t *tf)
 	if (CPU_IS_ARMV6_P() || CPU_IS_ARMV7_P()) {
 		ftype = (fsr & FAULT_WRITE) ? VM_PROT_WRITE : VM_PROT_READ;
 	} else if (IS_PERMISSION_FAULT(fsr)) {
-		ftype = VM_PROT_WRITE; 
+		ftype = VM_PROT_WRITE;
 	} else {
 #ifdef THUMB_CODE
 		/* Fast track the ARM case.  */
@@ -446,11 +446,11 @@ data_abort_handler(trapframe_t *tf)
 			    ((insn & 0x0e1000b0) == 0x000000b0) || /* STR[HD]*/
 			    ((insn & 0x0a100000) == 0x08000000) || /* STM/CDT*/
 			    ((insn & 0x0f9000f0) == 0x01800090))   /* STREX[BDH] */
-				ftype = VM_PROT_WRITE; 
+				ftype = VM_PROT_WRITE;
 			else if ((insn & 0x0fb00ff0) == 0x01000090)/* SWP */
-				ftype = VM_PROT_READ | VM_PROT_WRITE; 
+				ftype = VM_PROT_READ | VM_PROT_WRITE;
 			else
-				ftype = VM_PROT_READ; 
+				ftype = VM_PROT_READ;
 		}
 	}
 

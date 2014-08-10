@@ -1,4 +1,4 @@
-#   Copyright 1999-2013 Free Software Foundation, Inc.
+#   Copyright 1999-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,16 +18,14 @@
 # test running programs
 #
 
-set testfile "async"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
-    untested async.exp
+if [get_compiler_info] {
     return -1
 }
 
-if [get_compiler_info] {
+if {[build_executable $testfile.exp $testfile $srcfile debug] == -1} {
+    untested $testfile.exp
     return -1
 }
 

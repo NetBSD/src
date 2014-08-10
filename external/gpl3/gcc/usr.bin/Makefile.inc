@@ -1,15 +1,17 @@
-#	$NetBSD: Makefile.inc,v 1.21 2014/03/09 17:06:30 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.21.2.1 2014/08/10 07:10:56 tls Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
 
 .include <bsd.own.mk>
 
+.sinclude "../../Makefile.gcc_path"
+
 GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 GMP_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
 
 TOP=		${NETBSDSRCDIR}
-DIST=		${TOP}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 
 GCCARCH=	${.CURDIR}/../gcc/arch/${GCC_MACHINE_ARCH}
 
@@ -63,10 +65,12 @@ DATESTAMPSTR=		"\" $(DATESTAMP)\""
 DATESTAMPSTR=		"\"\""
 .endif
 
+.include "${TOP}/tools/gcc/gcc-version.mk"
+
 # XXX pull this out of our configs
-G_BUGURL=<http://www.NetBSD.org/Misc/send-pr.html>
+G_BUGURL=<http://www.NetBSD.org/support/send-pr.html>
 G_BUGURL_s="\"${G_BUGURL}\""
-G_PKGVERSION=(NetBSD nb2 20140304) 
+G_PKGVERSION=(${NETBSD_GCC_VERSION}) 
 G_PKGVERSION_s="\"${G_PKGVERSION} \""
 
 VER_CPPFLAGS=	-DBASEVER="\"${BASEVER}"\" \
@@ -77,6 +81,7 @@ VER_CPPFLAGS=	-DBASEVER="\"${BASEVER}"\" \
 		-DBUGURL=$(G_BUGURL_s)
 
 CPPFLAGS.version.c+=	${VER_CPPFLAGS}
+version.c: ${GCCARCH}/defs.mk ${TOP}/tools/gcc/gcc-version.mk
 
 .include "${GCCARCH}/defs.mk"
 

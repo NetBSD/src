@@ -1,3 +1,17 @@
+2013-10-14  Nick Clifton  <nickc@redhat.com>
+
+	* chew.c (perform): Free next.
+
+2013-04-15  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am ($(MKDOC)): Append $(EXEEXT_FOR_BUILD) to temp file.
+	* Makefile.in: Regenerate.
+
+2013-04-09  Mingjie Xing  <mingjie.xing@gmail.com>
+
+	* bfd.texinfo (typedef bfd, Error reporting, Miscellaneous):
+	Add menu items.
+
 2013-01-07  Patrice Dumas  <pertusus@free.fr>
 
 	* bfd.texinfo: Replace @ with @@ when it is part of the text.

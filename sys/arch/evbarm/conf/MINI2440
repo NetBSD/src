@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.12 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: MINI2440,v 1.12.4.1 2014/08/10 06:53:54 tls Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -103,6 +103,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.

@@ -1,6 +1,6 @@
 # Test `info auxv' and related functionality.
 
-# Copyright (C) 1992-2013 Free Software Foundation, Inc.
+# Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,11 +24,10 @@ if { ! [istarget "*-*-linux*"] && ! [istarget "*-*-solaris*"] } {
 }
 
 
-set testfile "auxv"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-set corefile ${objdir}/${subdir}/${testfile}.corefile
-set gcorefile ${objdir}/${subdir}/${testfile}.gcore
+standard_testfile .c
+
+set corefile ${binfile}.corefile
+set gcorefile ${binfile}.gcore
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
 		  {debug additional_flags=-DUSE_RLIMIT}] != ""
@@ -40,16 +39,13 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
 
 # Use a fresh directory to confine the native core dumps.
 # Make it the working directory for gdb and its child.
-set coredir "${objdir}/${subdir}/coredir.[getpid]"
+set coredir [standard_output_file coredir.[getpid]]
 file mkdir $coredir
 set core_works [expr [isnative] && ! [is_remote target]]
 
 # Run GDB on the test program up to where it will dump core.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set width 0"
 
@@ -61,7 +57,7 @@ if {$core_works} {
 }
 
 if { ![runto_main] } then {
-    gdb_suppress_tests;
+    gdb_suppress_tests
 }
 set print_core_line [gdb_get_line_number "ABORT;"]
 gdb_test "tbreak $print_core_line"

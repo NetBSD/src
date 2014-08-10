@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,34 +35,81 @@
 #include <sys/types.h>
 #include <sys/rwlock.h>
 #include <sys/rbtree.h>
+#include <sys/queue.h>
+
+#include <linux/gfp.h>
 
 /* XXX Stupid expedient algorithm should be replaced by something better.  */
 
 struct idr {
-	kmutex_t idr_lock;
-	rb_tree_t idr_tree;
-	struct idr_node *idr_temp;
+	kmutex_t	idr_lock;
+	rb_tree_t	idr_tree;
 };
 
 /* XXX Make the nm output a little more greppable...  */
 #define	idr_init		linux_idr_init
 #define	idr_destroy		linux_idr_destroy
+#define	idr_is_empty		linux_idr_is_empty
 #define	idr_find		linux_idr_find
 #define	idr_replace		linux_idr_replace
 #define	idr_remove		linux_idr_remove
-#define	idr_remove_all		linux_idr_remove_all
-#define	idr_pre_get		linux_idr_pre_get
-#define	idr_get_new_above	linux_idr_get_new_above
+#define	idr_preload		linux_idr_preload
+#define	idr_alloc		linux_idr_alloc
+#define	idr_preload_end		linux_idr_preload_end
 #define	idr_for_each		linux_idr_for_each
+
+int	linux_idr_module_init(void);
+void	linux_idr_module_fini(void);
 
 void	idr_init(struct idr *);
 void	idr_destroy(struct idr *);
+bool	idr_is_empty(struct idr *);
 void	*idr_find(struct idr *, int);
 void	*idr_replace(struct idr *, void *, int);
 void	idr_remove(struct idr *, int);
-void	idr_remove_all(struct idr *);
-int	idr_pre_get(struct idr *, int);
-int	idr_get_new_above(struct idr *, void *, int, int *);
+void	idr_preload(gfp_t);
+int	idr_alloc(struct idr *, void *, int, int, gfp_t);
+void	idr_preload_end(void);
 int	idr_for_each(struct idr *, int (*)(int, void *, void *), void *);
+
+struct ida {
+	struct idr	ida_idr;
+};
+
+static inline void
+ida_init(struct ida *ida)
+{
+
+	idr_init(&ida->ida_idr);
+}
+
+static inline void
+ida_destroy(struct ida *ida)
+{
+
+	idr_destroy(&ida->ida_idr);
+}
+
+static inline void
+ida_remove(struct ida *ida, int id)
+{
+
+	idr_remove(&ida->ida_idr, id);
+}
+
+static inline int
+ida_simple_get(struct ida *ida, unsigned start, unsigned end, gfp_t gfp)
+{
+	int id;
+
+	KASSERT(start <= INT_MAX);
+	KASSERT(end <= INT_MAX);
+
+	idr_preload(gfp);
+	id = idr_alloc(&ida->ida_idr, NULL, start, end, gfp);
+	idr_preload_end();
+
+	return id;
+}
 
 #endif  /* _LINUX_IDR_H_ */

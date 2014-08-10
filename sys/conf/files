@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1090.2.2 2014/08/09 06:19:50 tls Exp $
+#	$NetBSD: files,v 1.1090.2.3 2014/08/10 06:54:36 tls Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1231,6 +1231,10 @@ file	dev/usb/ehci.c			ehci			needs-flag
 device	xhci: usbus, usbroothub, usb_dma
 file	dev/usb/xhci.c			xhci			needs-flag
 
+# Mentor graphics OTG IP
+device	motg: usbus, usbroothub, usb_dma
+file	dev/usb/motg.c			motg			needs-flag
+
 # SL811HS/T USB controller
 defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
 device	slhci: usbus, usbroothub
@@ -1601,6 +1605,7 @@ file	kern/subr_extent.c
 file	kern/subr_hash.c
 file	kern/subr_humanize.c
 file	kern/subr_iostat.c
+file	kern/subr_ipi.c
 file	kern/subr_kcpuset.c
 file	kern/subr_kmem.c
 file	kern/subr_kobj.c
@@ -1706,7 +1711,7 @@ file	net/bridgestp.c			bridge
 file	net/if_ecosubr.c		eco
 file	net/if_etherip.c		etherip			needs-flag
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
-					    wlan
+					    wlan		needs-flag
 file	net/if_faith.c			faith & (inet | inet6)	needs-flag
 file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag
@@ -1718,7 +1723,7 @@ file	net/if_media.c
 file	net/if_mpls.c			ifmpls			needs-flag
 file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
-file	net/if_stf.c			stf & (inet | inet6)	needs-flag
+file	net/if_stf.c			stf & inet & inet6	needs-flag
 file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
 file	net/if_strip.c			strip			needs-flag
@@ -1730,6 +1735,7 @@ file	net/if_pppoe.c			pppoe			needs-flag
 file	net/pfil.c
 file	net/ppp-deflate.c		ppp & ppp_deflate
 file	net/ppp_tty.c			ppp
+file	net/pktqueue.c
 file	net/net_stats.c
 file	net/radix.c
 file	net/raw_cb.c

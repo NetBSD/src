@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.250 2014/03/29 19:30:12 dholland Exp $
+#	$NetBSD: shlib_version,v 1.250.2.1 2014/08/10 06:51:48 tls Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -40,5 +40,6 @@
 # - consolidate ownership with crt0.o and avoid common symbols
 # - redo stdin/stdout/stderr to not require copy relocations
 # - move gethostbyname to a compat library
+# - remove arc4random(3) API
 major=12
-minor=190
+minor=193

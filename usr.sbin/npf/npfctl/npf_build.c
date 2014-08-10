@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.36 2014/02/13 03:34:40 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.36.2.1 2014/08/10 07:00:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -34,11 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.36 2014/02/13 03:34:40 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.36.2.1 2014/08/10 07:00:01 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <netinet/tcp.h>
 
 #include <stdlib.h>
 #include <inttypes.h>
@@ -267,7 +268,7 @@ npfctl_build_proto(npf_bpf_t *ctx, sa_family_t family, const opt_proto_t *op)
 			assert(npfvar_get_count(popts) == 2);
 			tf = npfvar_get_data(popts, NPFVAR_TCPFLAG, 0);
 			tf_mask = npfvar_get_data(popts, NPFVAR_TCPFLAG, 1);
-			npfctl_bpf_tcpfl(ctx, *tf, *tf_mask);
+			npfctl_bpf_tcpfl(ctx, *tf, *tf_mask, false);
 		}
 		break;
 	case IPPROTO_ICMP:
@@ -292,10 +293,10 @@ static bool
 npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
     const filt_opts_t *fopts)
 {
+	bool noproto, noaddrs, noports, need_tcpudp = false;
 	const addr_port_t *apfrom = &fopts->fo_from;
 	const addr_port_t *apto = &fopts->fo_to;
 	const int proto = op->op_proto;
-	bool noproto, noaddrs, noports;
 	npf_bpf_t *bc;
 	size_t len;
 
@@ -316,7 +317,9 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 		switch (proto) {
 		case IPPROTO_TCP:
 		case IPPROTO_UDP:
+			break;
 		case -1:
+			need_tcpudp = true;
 			break;
 		default:
 			yyerror("invalid filter options for protocol %d", proto);
@@ -328,11 +331,28 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	/* Build layer 4 protocol blocks. */
 	npfctl_build_proto(bc, family, op);
 
+	/*
+	 * If this is a stateful rule and TCP flags are not specified,
+	 * then add "flags S/SAFR" filter for TCP protocol case.
+	 */
+	if ((npf_rule_getattr(rl) & NPF_RULE_STATEFUL) != 0 &&
+	    (proto == -1 || (proto == IPPROTO_TCP && !op->op_opts))) {
+		npfctl_bpf_tcpfl(bc, TH_SYN,
+		    TH_SYN | TH_ACK | TH_FIN | TH_RST, proto == -1);
+	}
+
 	/* Build IP address blocks. */
 	npfctl_build_vars(bc, family, apfrom->ap_netaddr, MATCH_SRC);
 	npfctl_build_vars(bc, family, apto->ap_netaddr, MATCH_DST);
 
 	/* Build port-range blocks. */
+	if (need_tcpudp) {
+		/* TCP/UDP check for the ports. */
+		npfctl_bpf_group(bc);
+		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_TCP);
+		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_UDP);
+		npfctl_bpf_endgroup(bc);
+	}
 	npfctl_build_vars(bc, family, apfrom->ap_portrange, MATCH_SRC);
 	npfctl_build_vars(bc, family, apto->ap_portrange, MATCH_DST);
 

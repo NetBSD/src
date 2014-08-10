@@ -1,7 +1,7 @@
 /* Target-dependent code for the IQ2000 architecture, for GDB, the GNU
    Debugger.
 
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -28,7 +28,7 @@
 #include "gdbtypes.h"
 #include "value.h"
 #include "dis-asm.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "arch-utils.h"
 #include "regcache.h"
 #include "osabi.h"

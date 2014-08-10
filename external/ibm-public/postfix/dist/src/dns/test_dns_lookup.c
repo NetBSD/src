@@ -1,4 +1,4 @@
-/*	$NetBSD: test_dns_lookup.c,v 1.1.1.2 2011/03/02 19:32:10 tron Exp $	*/
+/*	$NetBSD: test_dns_lookup.c,v 1.1.1.2.20.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -45,9 +45,10 @@
 static void print_rr(DNS_RR *rr)
 {
     MAI_HOSTADDR_STR host;
+    size_t  i;
 
     while (rr) {
-	printf("%s: ttl: %9d ", rr->rname, rr->ttl);
+	printf("%s: ad: %u, ttl: %9u ", rr->rname, rr->dnssec_valid, rr->ttl);
 	switch (rr->type) {
 	case T_A:
 #ifdef T_AAAA
@@ -59,6 +60,7 @@ static void print_rr(DNS_RR *rr)
 	    printf("%s: %s\n", dns_strtype(rr->type), host.buf);
 	    break;
 	case T_CNAME:
+	case T_DNAME:
 	case T_MB:
 	case T_MG:
 	case T_MR:
@@ -70,6 +72,22 @@ static void print_rr(DNS_RR *rr)
 	case T_MX:
 	    printf("pref: %d %s: %s\n",
 		   rr->pref, dns_strtype(rr->type), rr->data);
+	    break;
+	case T_TLSA:
+	    if (rr->data_len >= 3) {
+		uint8_t *ip = (uint8_t *) rr->data;
+		uint8_t usage = *ip++;
+		uint8_t selector = *ip++;
+		uint8_t mtype = *ip++;
+
+		printf("%s: %d %d %d ", dns_strtype(rr->type),
+		       usage, selector, mtype);
+		for (i = 3; i < rr->data_len; ++i)
+		    printf("%02x", *ip++);
+		putchar('\n');
+	    } else {
+		printf("%s: truncated record\n", dns_strtype(rr->type));
+	    }
 	    break;
 	default:
 	    msg_fatal("print_rr: don't know how to print type %s",
@@ -86,6 +104,7 @@ int     main(int argc, char **argv)
     char   *name;
     VSTRING *fqdn = vstring_alloc(100);
     VSTRING *why = vstring_alloc(100);
+    int     rcode;
     DNS_RR *rr;
     int     i;
 
@@ -101,10 +120,10 @@ int     main(int argc, char **argv)
     argv_free(types_argv);
     name = argv[2];
     msg_verbose = 1;
-    switch (dns_lookup_v(name, RES_DEBUG, &rr, fqdn, why,
-			 DNS_REQ_FLAG_NONE, types)) {
+    switch (dns_lookup_rv(name, RES_DEBUG | RES_USE_DNSSEC, &rr, fqdn, why,
+			  &rcode, DNS_REQ_FLAG_NONE, types)) {
     default:
-	msg_fatal("%s", vstring_str(why));
+	msg_fatal("%s (rcode=%d)", vstring_str(why), rcode);
     case DNS_OK:
 	printf("%s: fqdn: %s\n", name, vstring_str(fqdn));
 	print_rr(rr);

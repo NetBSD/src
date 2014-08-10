@@ -27,6 +27,14 @@ This page lists the attributes currently supported by Clang.
 }];
 }
 
+def SectionDocs : Documentation {
+  let Category = DocCatVariable;
+  let Content = [{
+The ``section`` attribute allows you to specify a specific section a
+global variable or function should be in after translation.
+  }];
+}
+
 def TLSModelDocs : Documentation {
   let Category = DocCatVariable;
   let Content = [{
@@ -42,20 +50,37 @@ TLS models are mutually exclusive.
   }];
 }
 
+def ThreadDocs : Documentation {
+  let Category = DocCatVariable;
+  let Content = [{
+The ``__declspec(thread)`` attribute declares a variable with thread local
+storage.  It is available under the ``-fms-extensions`` flag for MSVC
+compatibility.  Documentation for the Visual C++ attribute is available on MSDN_.
+
+.. _MSDN: http://msdn.microsoft.com/en-us/library/9w1sdazb.aspx
+
+In Clang, ``__declspec(thread)`` is generally equivalent in functionality to the
+GNU ``__thread`` keyword.  The variable must not have a destructor and must have
+a constant initializer, if any.  The attribute only applies to variables
+declared with static storage duration, such as globals, class static data
+members, and static locals.
+  }];
+}
+
 def CarriesDependencyDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
 The ``carries_dependency`` attribute specifies dependency propagation into and
 out of functions.
 
-When specified on a function or Objective-C method, the ``carries_depedency``
+When specified on a function or Objective-C method, the ``carries_dependency``
 attribute means that the return value carries a dependency out of the function, 
 so that the implementation need not constrain ordering upon return from that
 function. Implementations of the function and its caller may choose to preserve
 dependencies instead of emitting memory ordering instructions such as fences.
 
 Note, this attribute does not change the meaning of the program, but may result
-in generatation of more efficient code.
+in generation of more efficient code.
   }];
 }
 
@@ -346,6 +371,15 @@ of the condition.
   }];
 }
 
+def NoSplitStackDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+The ``no_split_stack`` attribute disables the emission of the split stack
+preamble for a particular function. It has no effect if ``-fsplit-stack``
+is not specified.
+  }];
+}
+
 def ObjCRequiresSuperDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
@@ -577,6 +611,15 @@ The semantics are as follows:
   }];
 }
 
+def PcsDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+On ARM targets, this can attribute can be used to select calling conventions,
+similar to ``stdcall`` on x86. Valid parameter values are "aapcs" and
+"aapcs-vfp".
+  }];
+}
+
 def DocCatConsumed : DocumentationCategory<"Consumed Annotation Checking"> {
   let Content = [{
 Clang supports additional attributes for checking basic resource management
@@ -656,6 +699,8 @@ def NoSanitizeAddressDocs : Documentation {
   // heading to be specified. The most common spelling is sufficient.
   let Heading = "no_sanitize_address (no_address_safety_analysis, gnu::no_address_safety_analysis, gnu::no_sanitize_address)";
   let Content = [{
+.. _langext-address_sanitizer:
+
 Use ``__attribute__((no_sanitize_address))`` on a function declaration to
 specify that address safety instrumentation (e.g. AddressSanitizer) should
 not be applied to that function.
@@ -665,6 +710,8 @@ not be applied to that function.
 def NoSanitizeThreadDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
+.. _langext-thread_sanitizer:
+
 Use ``__attribute__((no_sanitize_thread))`` on a function declaration to
 specify that checks for data races on plain (non-atomic) memory accesses should
 not be inserted by ThreadSanitizer. The function is still instrumented by the
@@ -675,6 +722,8 @@ tool to avoid false positives and provide meaningful stack traces.
 def NoSanitizeMemoryDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
+.. _langext-memory_sanitizer:
+
 Use ``__attribute__((no_sanitize_memory))`` on a function declaration to
 specify that checks for uninitialized memory should not be inserted 
 (e.g. by MemorySanitizer). The function may still be instrumented by the tool
@@ -828,6 +877,15 @@ expression is compared to the type tag.  There are two supported flags:
   }];
 }
 
+def FlattenDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+The ``flatten`` attribute causes calls within the attributed function to
+be inlined unless it is impossible to do so, for example if the body of the
+callee is unavailable or if the callee has the ``noinline`` attribute.
+  }];
+}
+
 def FormatDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
@@ -937,3 +995,19 @@ an error:
   struct S {};
 }];
 }
+
+def OptnoneDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+The ``optnone`` attribute suppresses essentially all optimizations
+on a function or method, regardless of the optimization level applied to
+the compilation unit as a whole.  This is particularly useful when you
+need to debug a particular function, but it is infeasible to build the
+entire application without optimization.  Avoiding optimization on the
+specified function can improve the quality of the debugging information
+for that function.
+
+This attribute is incompatible with the ``always_inline`` attribute.
+  }];
+}
+

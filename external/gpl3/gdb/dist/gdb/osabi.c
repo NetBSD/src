@@ -1,6 +1,6 @@
 /* OS ABI variant handling for GDB.
 
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #include "defs.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "osabi.h"
 #include "arch-utils.h"
@@ -63,7 +63,6 @@ static const char * const gdb_osabi_names[] =
   "Windows CE",
   "DJGPP",
   "Irix",
-  "Interix",
   "HP/UX ELF",
   "HP/UX SOM",
   "QNX Neutrino",

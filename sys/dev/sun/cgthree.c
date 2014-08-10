@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.30 2014/03/16 05:20:29 dholland Exp $ */
+/*	$NetBSD: cgthree.c,v 1.30.2.1 2014/08/10 06:54:58 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.30 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.30.2.1 2014/08/10 06:54:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ const struct cdevsw cgthree_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = cgthreemmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.62 2014/03/26 08:17:59 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.62.2.1 2014/08/10 06:54:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.62 2014/03/26 08:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.62.2.1 2014/08/10 06:54:10 tls Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -176,6 +176,7 @@ const struct cdevsw ite_cdevsw = {
 	.d_poll = itepoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

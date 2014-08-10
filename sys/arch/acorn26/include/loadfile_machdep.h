@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.4 2009/01/14 23:14:48 bjh21 Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.4.38.1 2014/08/10 06:53:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -44,9 +44,14 @@
 #define READ(f, b, c)		boot26_read((f), (void *)LOADADDR(b), (c))
 #define	BCOPY(s, d, c)		boot26_memcpy((void *)LOADADDR(d), (s), (c))
 #define	BZERO(d, c)		boot26_memset((void *)LOADADDR(d), 0, (c))
-#define	WARN(a)			(void)(printf a, \
-				    printf((errno ? ": %s\n" : "\n"), \
-				    strerror(errno)))
+#define	WARN(a)			do { \
+					(void)printf a; \
+					if (errno) \
+						(void)printf(": %s\n", \
+						             strerror(errno)); \
+					else \
+						(void)printf("\n"); \
+				} while(/* CONSTCOND */0)
 #define	PROGRESS(a)		(void) printf a
 #define	ALLOC(a)		alloc(a)
 #define	DEALLOC(a, b)		dealloc(a, b)

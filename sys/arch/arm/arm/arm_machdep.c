@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.40 2014/01/10 18:03:26 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.40.2.1 2014/08/10 06:53:50 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.40 2014/01/10 18:03:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.40.2.1 2014/08/10 06:53:50 tls Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -112,6 +112,9 @@ struct cpu_info cpu_info_store = {
 	.ci_curlwp = &lwp0,
 #ifdef __PROG32
 	.ci_undefsave[2] = (register_t) undefinedinstruction_bounce,
+#if defined(ARM_MMU_EXTENDED) && KERNEL_PID != 0
+	.ci_pmap_asid_cur = KERNEL_PID,
+#endif
 #endif
 };
 
@@ -259,7 +262,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 #endif
 	if (flags & RESCHED_KPREEMPT) {
 #ifdef __HAVE_PREEMPTION
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACITBE);
+		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
 		if (ci == cur_ci) {
 			softint_trigger(SOFTINT_KPREEMPT);
 		} else {

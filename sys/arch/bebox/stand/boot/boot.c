@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.26 2012/12/19 13:53:47 kiyohara Exp $	*/
+/*	$NetBSD: boot.c,v 1.26.10.1 2014/08/10 06:53:53 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -253,4 +253,5 @@ _rtt(void)
 {
 
 	/* XXXX */
+	__unreachable();
 }

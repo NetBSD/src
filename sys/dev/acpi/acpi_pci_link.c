@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.20 2013/10/16 17:31:28 christos Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.20.2.1 2014/08/10 06:54:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.20 2013/10/16 17:31:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.20.2.1 2014/08/10 06:54:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1262,7 +1262,7 @@ acpi_AppendBufferResource(ACPI_BUFFER *buf, ACPI_RESOURCE *res)
 	}
 
 	/* Insert the new resource. */
-	memcpy(rp, res, res->Length + ACPI_RS_SIZE_NO_DATA);
+	memcpy(rp, res, res->Length);
 
 	/* And add the terminator. */
 	rp = ACPI_NEXT_RESOURCE(rp);

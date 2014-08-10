@@ -1,4 +1,4 @@
-# $NetBSD: HAWK,v 1.1 2013/10/02 16:48:26 matt Exp $
+# $NetBSD: HAWK,v 1.1.2.1 2014/08/10 06:53:54 tls Exp $
 #
 #	HAWK -- TI OMAPL138 based Board Kernel
 #
@@ -65,6 +65,7 @@ options 	NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -88,7 +89,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PGALLOC_VERBOSE
 #options 	DEBUG_DMA

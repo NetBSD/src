@@ -1,5 +1,5 @@
 /* Support for printing Modula 2 types for GDB, the GNU debugger.
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@
 #include "typeprint.h"
 #include "cp-abi.h"
 
-#include "gdb_string.h"
+#include <string.h>
 #include <errno.h>
 
 static void m2_print_bounds (struct type *type,

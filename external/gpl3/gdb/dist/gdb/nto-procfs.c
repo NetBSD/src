@@ -1,7 +1,7 @@
 /* Machine independent support for QNX Neutrino /proc (process file system)
    for GDB.  Written by Colin Burgess at QNX Software Systems Limited.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -28,11 +28,11 @@
 #include <sys/procfs.h>
 #include <sys/neutrino.h>
 #include <sys/syspage.h>
-#include "gdb_dirent.h"
+#include <dirent.h>
 #include <sys/netmgr.h>
 
 #include "exceptions.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdbcore.h"
 #include "inferior.h"
 #include "target.h"
@@ -661,7 +661,8 @@ do_attach (ptid_t ptid)
   struct sigevent event;
   char path[PATH_MAX];
 
-  snprintf (path, PATH_MAX - 1, "%s/%d/as", nto_procfs_path, PIDGET (ptid));
+  snprintf (path, PATH_MAX - 1, "%s/%d/as", nto_procfs_path,
+	    ptid_get_pid (ptid));
   ctl_fd = open (path, O_RDWR);
   if (ctl_fd == -1)
     error (_("Couldn't open proc file %s, error %d (%s)"), path, errno,
@@ -679,9 +680,9 @@ do_attach (ptid_t ptid)
 
   if (devctl (ctl_fd, DCMD_PROC_STATUS, &status, sizeof (status), 0) == EOK
       && status.flags & _DEBUG_FLAG_STOPPED)
-    SignalKill (nto_node (), PIDGET (ptid), 0, SIGCONT, 0, 0);
+    SignalKill (nto_node (), ptid_get_pid (ptid), 0, SIGCONT, 0, 0);
   nto_init_solib_absolute_prefix ();
-  return ptid_build (PIDGET (ptid), 0, status.tid);
+  return ptid_build (ptid_get_pid (ptid), 0, status.tid);
 }
 
 /* Ask the user what to do when an interrupt is received.  */
@@ -694,7 +695,7 @@ interrupt_query (void)
 Give up (and stop debugging it)? ")))
     {
       target_mourn_inferior ();
-      deprecated_throw_reason (RETURN_QUIT);
+      quit ();
     }
 
   target_terminal_inferior ();
@@ -789,7 +790,7 @@ procfs_wait (struct target_ops *ops,
 	  {
 	    int waitval = 0;
 
-	    waitpid (PIDGET (inferior_ptid), &waitval, WNOHANG);
+	    waitpid (ptid_get_pid (inferior_ptid), &waitval, WNOHANG);
 	    if (exit_signo)
 	      {
 		/* Abnormal death.  */
@@ -876,7 +877,7 @@ procfs_xfer_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len, int dowrite,
    on signals, etc.  We'd better not have left any breakpoints
    in the program or it'll die when it hits one.  */
 static void
-procfs_detach (struct target_ops *ops, char *args, int from_tty)
+procfs_detach (struct target_ops *ops, const char *args, int from_tty)
 {
   int siggnal = 0;
   int pid;
@@ -894,7 +895,7 @@ procfs_detach (struct target_ops *ops, char *args, int from_tty)
     siggnal = atoi (args);
 
   if (siggnal)
-    SignalKill (nto_node (), PIDGET (inferior_ptid), 0, siggnal, 0, 0);
+    SignalKill (nto_node (), ptid_get_pid (inferior_ptid), 0, siggnal, 0, 0);
 
   close (ctl_fd);
   ctl_fd = -1;
@@ -992,7 +993,7 @@ procfs_resume (struct target_ops *ops,
 	{
 	  if (signal_to_pass != status.info.si_signo)
 	    {
-	      SignalKill (nto_node (), PIDGET (inferior_ptid), 0,
+	      SignalKill (nto_node (), ptid_get_pid (inferior_ptid), 0,
 			  signal_to_pass, 0, 0);
 	      run.flags |= _DEBUG_RUN_CLRFLT | _DEBUG_RUN_CLRSIG;
 	    }
@@ -1016,7 +1017,7 @@ procfs_mourn_inferior (struct target_ops *ops)
 {
   if (!ptid_equal (inferior_ptid, null_ptid))
     {
-      SignalKill (nto_node (), PIDGET (inferior_ptid), 0, SIGKILL, 0, 0);
+      SignalKill (nto_node (), ptid_get_pid (inferior_ptid), 0, SIGKILL, 0, 0);
       close (ctl_fd);
     }
   inferior_ptid = null_ptid;

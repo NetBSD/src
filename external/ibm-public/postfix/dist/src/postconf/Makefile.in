@@ -2,11 +2,11 @@ SHELL	= /bin/sh
 SRCS	= postconf.c postconf_builtin.c postconf_edit.c postconf_main.c \
 	postconf_master.c postconf_misc.c postconf_node.c postconf_other.c \
 	postconf_service.c postconf_unused.c postconf_user.c postconf_dbms.c \
-	postconf_lookup.c
+	postconf_lookup.c postconf_match.c postconf_print.c
 OBJS	= postconf.o postconf_builtin.o postconf_edit.o postconf_main.o \
 	postconf_master.o postconf_misc.o postconf_node.o postconf_other.o \
 	postconf_service.o postconf_unused.o postconf_user.o postconf_dbms.o \
-	postconf_lookup.o
+	postconf_lookup.o postconf_match.o postconf_print.o
 HDRS	= postconf.h
 TESTSRC	=
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
@@ -45,7 +45,9 @@ test:	$(TESTPROG)
 tests: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 \
 	test12 test13 test14 test15 test16 test17 test18 test19 test20 test21 \
 	test22 test23 test24 test25 test26 test27 test28 test29 test30 test4b \
-	test31 test32 test33 test34 test35 test36 test37 test39 test40
+	test31 test32 test33 test34 test35 test36 test37 test39 test40 test41 \
+	test42 test43 test44 test45 test46 test47 test48 test49 test50 test51 \
+	test52 test53 test54 test55 test56
 
 root_tests:
 
@@ -169,7 +171,7 @@ test9:	$(PROG) test9.ref
 	touch main.cf master.cf
 	echo foo inet - n n - 0 spawn >> master.cf
 	echo bar unix - n n - 0 spawn >> master.cf
-	./$(PROG) -c . -M inet >test9.tmp 2>&1
+	./$(PROG) -c . -M '*'/inet >test9.tmp 2>&1
 	diff test9.ref test9.tmp
 	rm -f main.cf master.cf test9.tmp
 
@@ -178,7 +180,7 @@ test10:	$(PROG) test10.ref
 	touch main.cf master.cf
 	echo foo inet - n n - 0 spawn >> master.cf
 	echo bar unix - n n - 0 spawn >> master.cf
-	./$(PROG) -c . -M bar.inet foo.unix >test10.tmp 2>&1
+	./$(PROG) -c . -M bar/inet foo/unix >test10.tmp 2>&1
 	diff test10.ref test10.tmp
 	rm -f main.cf master.cf test10.tmp
 
@@ -513,7 +515,7 @@ test39: $(PROG) test39.ref
 	echo foo unix - n n - 0 other >> master.cf
 	echo bar inet - n n - 0 other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
-	./$(PROG) -Mfc . unix >test39.tmp 2>&1
+	./$(PROG) -Mfc . '*'/unix >test39.tmp 2>&1
 	diff test39.ref test39.tmp
 	rm -f main.cf master.cf test39.tmp
 
@@ -524,9 +526,182 @@ test40: $(PROG) test40.ref
 	echo ' -voaaa=bbb' >> master.cf
 	echo ' -vo ccc=$$aaa' >> master.cf
 	echo ' -v -oddd=$$ccc' >> master.cf
-	./$(PROG) -Mfxc . unix >test40.tmp 2>&1
+	./$(PROG) -Mfxc . '*'/unix >test40.tmp 2>&1
 	diff test40.ref test40.tmp
 	rm -f main.cf master.cf test40.tmp
+
+test41: $(PROG) test41.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar unix - n n - 0 other >> master.cf
+	echo baz unix - n n - 0 other >> master.cf
+	./$(PROG) -Pc . bar/unix/xxx=yyy bar/unix/aaa=bbb >test41.tmp 2>&1
+	./$(PROG) -Mfc. >>test41.tmp 2>&1
+	./$(PROG) -Pc . bar/unix/xxx=YYY bar/unix/aaa=BBB >>test41.tmp 2>&1
+	./$(PROG) -Mfc. >>test41.tmp 2>&1
+	./$(PROG) -Pc . >>test41.tmp 2>&1
+	diff test41.ref test41.tmp
+	rm -f main.cf master.cf test41.tmp
+
+test42: $(PROG) test42.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar unix - n n - 0 other >> master.cf
+	echo baz unix - n n - 0 other >> master.cf
+	./$(PROG) -Pc . bar/unix/xxx=yyy bar/unix/aaa=bbb >test42.tmp 2>&1
+	./$(PROG) -Mfc. >>test42.tmp 2>&1
+	./$(PROG) -Pc . >>test42.tmp 2>&1
+	./$(PROG) -PXc. bar/unix/xxx bar/unix/aaa >>test42.tmp 2>&1
+	./$(PROG) -Mfc. >>test42.tmp 2>&1
+	diff test42.ref test42.tmp
+	rm -f main.cf master.cf test42.tmp
+
+test43: $(PROG) test43.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar unix - n n - 0 other >> master.cf
+	echo baz unix - n n - 0 other >> master.cf
+	./$(PROG) -Fc . bar/unix/chroot=y bar/unix/command='aa -stuffobb=cc dd' >test43.tmp 2>&1
+	./$(PROG) -Mfc. >>test43.tmp 2>&1
+	diff test43.ref test43.tmp
+	rm -f main.cf master.cf test43.tmp
+
+test44: $(PROG) test44.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar unix - n n - 0 other >> master.cf
+	echo baz unix - n n - 0 other >> master.cf
+	./$(PROG) -Mc . bar/unix='xx inet - n n - 0 aa -stuffobb=cc dd' >test44.tmp 2>&1
+	./$(PROG) -Mfc. >>test44.tmp 2>&1
+	diff test44.ref test44.tmp
+	rm -f main.cf master.cf test44.tmp
+
+test45: $(PROG) test45.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar xxxx - n n - 0 other >> master.cf
+	echo baz unix - n n - 0 other >> master.cf
+	./$(PROG) -Mfc. >test45.tmp 2>&1 || true
+	diff test45.ref test45.tmp
+	rm -f main.cf master.cf test45.tmp
+
+test46: $(PROG) test46.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar inet X n n - 0 other >> master.cf
+	echo baz unix - n n - 0 other >> master.cf
+	./$(PROG) -Mfc. >test46.tmp 2>&1 || true
+	diff test46.ref test46.tmp
+	rm -f main.cf master.cf test46.tmp
+
+test47: $(PROG) test47.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar inet - X n - 0 other >> master.cf
+	echo baz unix - n n - 0 other >> master.cf
+	./$(PROG) -Mfc. >test47.tmp 2>&1 || true
+	diff test47.ref test47.tmp
+	rm -f main.cf master.cf test47.tmp
+
+test48: $(PROG) test48.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar inet - n X - 0 other >> master.cf
+	echo baz unix - n n - 0 other >> master.cf
+	./$(PROG) -Mfc. >test48.tmp 2>&1 || true
+	diff test48.ref test48.tmp
+	rm -f main.cf master.cf test48.tmp
+
+test49: $(PROG) test49.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar inet - n n X 0 other >> master.cf
+	echo baz unix - n n - 0 other >> master.cf
+	./$(PROG) -Mfc. >test49.tmp 2>&1 || true
+	diff test49.ref test49.tmp
+	rm -f main.cf master.cf test49.tmp
+
+test50: $(PROG) test50.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar inet - n n - X other >> master.cf
+	echo baz unix - n n - 0 other >> master.cf
+	./$(PROG) -Mfc. >test50.tmp 2>&1 || true
+	diff test50.ref test50.tmp
+	rm -f main.cf master.cf test50.tmp
+
+test51: $(PROG) test51.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n -? 0 other >> master.cf
+	echo bar inet - n n X? 0 other >> master.cf
+	echo baz unix - n n 0? 0 other >> master.cf
+	./$(PROG) -Mfc. >test51.tmp 2>&1 || true
+	diff test51.ref test51.tmp
+	rm -f main.cf master.cf test51.tmp
+
+test52: $(PROG) test52.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar inet - n n 0 0 other >> master.cf
+	echo baz unix - n n 0 0 other >> master.cf
+	./$(PROG) -MXc. bar/inet foo/unix xxx/yyy
+	./$(PROG) -Mfc. >test52.tmp 2>&1 || true
+	diff test52.ref test52.tmp
+	rm -f main.cf master.cf test52.tmp
+
+test53: $(PROG) test53.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar inet - n n 0 0 other >> master.cf
+	echo baz unix - n n 0 0 other >> master.cf
+	./$(PROG) -M#c. bar/inet xxx/yyy
+	diff test53.ref master.cf
+	rm -f main.cf master.cf test53.tmp
+
+test54: $(PROG) test54.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar inet - n n 0 0 other >> master.cf
+	echo baz unix - n n 0 0 other >> master.cf
+	./$(PROG) -M#c. bar/inet foo/unix
+	diff test54.ref master.cf
+	rm -f main.cf master.cf test54.tmp
+
+test55: $(PROG) test55.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar inet - n n 0 0 other >> master.cf
+	echo baz unix - n n 0 0 other >> master.cf
+	./$(PROG) -M#c. bar/inet baz/unix
+	diff test55.ref master.cf
+	rm -f main.cf master.cf test55.tmp
+
+test56: $(PROG) test56.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo bar inet - n n 0 0 other >> master.cf
+	echo " -o first" >> master.cf
+	echo " -o second" >> master.cf
+	echo baz unix - n n 0 0 other >> master.cf
+	./$(PROG) -M#c. bar/inet xxx/yyy
+	diff test56.ref master.cf
+	rm -f main.cf master.cf test56.tmp
 
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck
@@ -567,6 +742,8 @@ postconf.o: ../../include/mail_version.h
 postconf.o: ../../include/msg.h
 postconf.o: ../../include/msg_vstream.h
 postconf.o: ../../include/myflock.h
+postconf.o: ../../include/mymalloc.h
+postconf.o: ../../include/name_code.h
 postconf.o: ../../include/name_mask.h
 postconf.o: ../../include/stringops.h
 postconf.o: ../../include/sys_defs.h
@@ -592,6 +769,7 @@ postconf_builtin.o: ../../include/msg.h
 postconf_builtin.o: ../../include/myflock.h
 postconf_builtin.o: ../../include/mymalloc.h
 postconf_builtin.o: ../../include/mynetworks.h
+postconf_builtin.o: ../../include/name_code.h
 postconf_builtin.o: ../../include/server_acl.h
 postconf_builtin.o: ../../include/stringops.h
 postconf_builtin.o: ../../include/sys_defs.h
@@ -633,6 +811,7 @@ postconf_dbms.o: ../../include/mac_expand.h
 postconf_dbms.o: ../../include/mac_parse.h
 postconf_dbms.o: ../../include/mail_conf.h
 postconf_dbms.o: ../../include/myflock.h
+postconf_dbms.o: ../../include/name_code.h
 postconf_dbms.o: ../../include/split_at.h
 postconf_dbms.o: ../../include/stringops.h
 postconf_dbms.o: ../../include/sys_defs.h
@@ -649,7 +828,9 @@ postconf_edit.o: ../../include/mail_params.h
 postconf_edit.o: ../../include/msg.h
 postconf_edit.o: ../../include/myflock.h
 postconf_edit.o: ../../include/mymalloc.h
+postconf_edit.o: ../../include/name_code.h
 postconf_edit.o: ../../include/readlline.h
+postconf_edit.o: ../../include/split_at.h
 postconf_edit.o: ../../include/stringops.h
 postconf_edit.o: ../../include/sys_defs.h
 postconf_edit.o: ../../include/vbuf.h
@@ -667,6 +848,7 @@ postconf_lookup.o: ../../include/mail_conf.h
 postconf_lookup.o: ../../include/msg.h
 postconf_lookup.o: ../../include/myflock.h
 postconf_lookup.o: ../../include/mymalloc.h
+postconf_lookup.o: ../../include/name_code.h
 postconf_lookup.o: ../../include/stringops.h
 postconf_lookup.o: ../../include/sys_defs.h
 postconf_lookup.o: ../../include/vbuf.h
@@ -684,6 +866,7 @@ postconf_main.o: ../../include/mail_params.h
 postconf_main.o: ../../include/msg.h
 postconf_main.o: ../../include/myflock.h
 postconf_main.o: ../../include/mymalloc.h
+postconf_main.o: ../../include/name_code.h
 postconf_main.o: ../../include/readlline.h
 postconf_main.o: ../../include/stringops.h
 postconf_main.o: ../../include/sys_defs.h
@@ -696,11 +879,13 @@ postconf_master.o: ../../include/argv.h
 postconf_master.o: ../../include/dict.h
 postconf_master.o: ../../include/htable.h
 postconf_master.o: ../../include/mail_params.h
-postconf_master.o: ../../include/match_service.h
+postconf_master.o: ../../include/master_proto.h
 postconf_master.o: ../../include/msg.h
 postconf_master.o: ../../include/myflock.h
 postconf_master.o: ../../include/mymalloc.h
+postconf_master.o: ../../include/name_code.h
 postconf_master.o: ../../include/readlline.h
+postconf_master.o: ../../include/split_at.h
 postconf_master.o: ../../include/stringops.h
 postconf_master.o: ../../include/sys_defs.h
 postconf_master.o: ../../include/vbuf.h
@@ -708,6 +893,20 @@ postconf_master.o: ../../include/vstream.h
 postconf_master.o: ../../include/vstring.h
 postconf_master.o: postconf.h
 postconf_master.o: postconf_master.c
+postconf_match.o: ../../include/argv.h
+postconf_match.o: ../../include/dict.h
+postconf_match.o: ../../include/htable.h
+postconf_match.o: ../../include/msg.h
+postconf_match.o: ../../include/myflock.h
+postconf_match.o: ../../include/mymalloc.h
+postconf_match.o: ../../include/name_code.h
+postconf_match.o: ../../include/split_at.h
+postconf_match.o: ../../include/sys_defs.h
+postconf_match.o: ../../include/vbuf.h
+postconf_match.o: ../../include/vstream.h
+postconf_match.o: ../../include/vstring.h
+postconf_match.o: postconf.h
+postconf_match.o: postconf_match.c
 postconf_misc.o: ../../include/argv.h
 postconf_misc.o: ../../include/dict.h
 postconf_misc.o: ../../include/htable.h
@@ -715,6 +914,7 @@ postconf_misc.o: ../../include/mail_conf.h
 postconf_misc.o: ../../include/mail_params.h
 postconf_misc.o: ../../include/myflock.h
 postconf_misc.o: ../../include/mymalloc.h
+postconf_misc.o: ../../include/name_code.h
 postconf_misc.o: ../../include/safe.h
 postconf_misc.o: ../../include/sys_defs.h
 postconf_misc.o: ../../include/vbuf.h
@@ -728,6 +928,7 @@ postconf_node.o: ../../include/htable.h
 postconf_node.o: ../../include/msg.h
 postconf_node.o: ../../include/myflock.h
 postconf_node.o: ../../include/mymalloc.h
+postconf_node.o: ../../include/name_code.h
 postconf_node.o: ../../include/sys_defs.h
 postconf_node.o: ../../include/vbuf.h
 postconf_node.o: ../../include/vstream.h
@@ -739,6 +940,7 @@ postconf_other.o: ../../include/dict.h
 postconf_other.o: ../../include/htable.h
 postconf_other.o: ../../include/mbox_conf.h
 postconf_other.o: ../../include/myflock.h
+postconf_other.o: ../../include/name_code.h
 postconf_other.o: ../../include/sys_defs.h
 postconf_other.o: ../../include/vbuf.h
 postconf_other.o: ../../include/vstream.h
@@ -746,6 +948,18 @@ postconf_other.o: ../../include/vstring.h
 postconf_other.o: ../../include/xsasl.h
 postconf_other.o: postconf.h
 postconf_other.o: postconf_other.c
+postconf_print.o: ../../include/argv.h
+postconf_print.o: ../../include/dict.h
+postconf_print.o: ../../include/htable.h
+postconf_print.o: ../../include/msg.h
+postconf_print.o: ../../include/myflock.h
+postconf_print.o: ../../include/name_code.h
+postconf_print.o: ../../include/sys_defs.h
+postconf_print.o: ../../include/vbuf.h
+postconf_print.o: ../../include/vstream.h
+postconf_print.o: ../../include/vstring.h
+postconf_print.o: postconf.h
+postconf_print.o: postconf_print.c
 postconf_service.o: ../../include/argv.h
 postconf_service.o: ../../include/dict.h
 postconf_service.o: ../../include/htable.h
@@ -753,6 +967,7 @@ postconf_service.o: ../../include/mail_params.h
 postconf_service.o: ../../include/msg.h
 postconf_service.o: ../../include/myflock.h
 postconf_service.o: ../../include/mymalloc.h
+postconf_service.o: ../../include/name_code.h
 postconf_service.o: ../../include/stringops.h
 postconf_service.o: ../../include/sys_defs.h
 postconf_service.o: ../../include/vbuf.h
@@ -767,6 +982,7 @@ postconf_unused.o: ../../include/mail_conf.h
 postconf_unused.o: ../../include/mail_params.h
 postconf_unused.o: ../../include/msg.h
 postconf_unused.o: ../../include/myflock.h
+postconf_unused.o: ../../include/name_code.h
 postconf_unused.o: ../../include/sys_defs.h
 postconf_unused.o: ../../include/vbuf.h
 postconf_unused.o: ../../include/vstream.h
@@ -783,6 +999,7 @@ postconf_user.o: ../../include/mail_params.h
 postconf_user.o: ../../include/msg.h
 postconf_user.o: ../../include/myflock.h
 postconf_user.o: ../../include/mymalloc.h
+postconf_user.o: ../../include/name_code.h
 postconf_user.o: ../../include/stringops.h
 postconf_user.o: ../../include/sys_defs.h
 postconf_user.o: ../../include/vbuf.h

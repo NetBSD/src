@@ -1,19 +1,21 @@
 .TH LDAPWHOAMI 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" OpenLDAP: pkg/ldap/doc/man/man1/ldapwhoami.1,v 1.10.2.9 2010/04/13 20:22:37 kurt Exp
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP$
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapwhoami \- LDAP who am i? tool
 .SH SYNOPSIS
 .B ldapwhoami
 [\c
+.BR \-V [ V ]]
+[\c
+.BI \-d \ debuglevel\fR]
+[\c
 .BR \-n ]
 [\c
 .BR \-v ]
 [\c
-.BR \-z ]
-[\c
-.BI \-d \ debuglevel\fR]
+.BR \-x ]
 [\c
 .BI \-D \ binddn\fR]
 [\c
@@ -33,17 +35,19 @@ ldapwhoami \- LDAP who am i? tool
 [\c
 .BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
 [\c
+.BI \-o \ opt \fR[= optparam \fR]]
+[\c
 .BI \-O \ security-properties\fR]
 [\c
 .BR \-I ]
 [\c
 .BR \-Q ]
 [\c
+.BR \-N ]
+[\c
 .BI \-U \ authcid\fR]
 [\c
 .BI \-R \ realm\fR]
-[\c
-.BR \-x ]
 [\c
 .BI \-X \ authzid\fR]
 [\c
@@ -59,6 +63,15 @@ opens a connection to an LDAP server, binds, and performs a whoami
 operation.  
 .SH OPTIONS
 .TP
+.BR \-V [ V ]
+Print version info.
+If \fB\-VV\fP is given, only the version information is printed.
+.TP
+.BI \-d \ debuglevel
+Set the LDAP debugging level to \fIdebuglevel\fP.
+.B ldapwhoami
+must be compiled with LDAP_DEBUG defined for this option to have any effect.
+.TP
 .B \-n
 Show what would be done, but don't actually perform the whoami operation.
 Useful for
@@ -66,11 +79,6 @@ debugging in conjunction with \fB\-v\fP.
 .TP
 .B \-v
 Run in verbose mode, with many diagnostics written to standard output.
-.TP
-.BI \-d \ debuglevel
-Set the LDAP debugging level to \fIdebuglevel\fP.
-.B ldapwhoami
-must be compiled with LDAP_DEBUG defined for this option to have any effect.
 .TP
 .B \-x 
 Use simple authentication instead of SASL.
@@ -103,38 +111,48 @@ Deprecated in favor of \fB\-H\fP.
 Specify an alternate TCP port where the ldap server is listening.
 Deprecated in favor of \fB\-H\fP.
 .TP
-.BI \-O \ security-properties
-Specify SASL security properties.
-.TP
 .BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
 .TP
 .BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
 
-Specify general extensions with \fB\-e\fP and search extensions with \fB\-E\fP.
+Specify general extensions with \fB\-e\fP and whoami extensions with \fB\-E\fP.
 \'\fB!\fP\' indicates criticality.
 
 General extensions:
 .nf
-  [!]assert=<filter>   (an RFC 4515 Filter)
-  [!]authzid=<authzid> ("dn:<dn>" or "u:<user>")
+  [!]assert=<filter>    (an RFC 4515 Filter)
+  !authzid=<authzid>    ("dn:<dn>" or "u:<user>")
+  [!]bauthzid           (RFC 3829 authzid control)
+  [!]chaining[=<resolve>[/<cont>]]
   [!]manageDSAit
   [!]noop
   ppolicy
-  [!]postread[=<attrs>]        (a comma-separated attribute list)
-  [!]preread[=<attrs>] (a comma-separated attribute list)
-  abandon, cancel (SIGINT sends abandon/cancel; not really controls)
+  [!]postread[=<attrs>] (a comma-separated attribute list)
+  [!]preread[=<attrs>]  (a comma-separated attribute list)
+  [!]relax
+  sessiontracking
+  abandon,cancel,ignore (SIGINT sends abandon/cancel,
+  or ignores response; if critical, doesn't wait for SIGINT.
+  not really controls)
 .fi
 
-Search extensions:
+WhoAmI extensions:
 .nf
-  [!]domainScope                               (domain scope)
-  [!]mv=<filter>                               (matched values filter)
-  [!]pr=<size>[/prompt|noprompt]       (paged results/prompt)
-  [!]sss=[\-]<attr[:OID]>[/[\-]<attr[:OID]>...]  (server side sorting)
-  [!]subentries[=true|false]           (subentries)
-  [!]sync=ro[/<cookie>]                        (LDAP Sync refreshOnly)
-          rp[/<cookie>][/<slimit>]     (LDAP Sync refreshAndPersist)
+  (none)
 .fi
+.TP
+.BI \-o \ opt \fR[= optparam \fR]
+
+Specify general options.
+
+General options:
+.nf
+  nettimeout=<timeout>  (in seconds, or "none" or "max")
+  ldif-wrap=<width>     (in columns, or "no" for no wrapping)
+.fi
+.TP
+.BI \-O \ security-properties
+Specify SASL security properties.
 .TP
 .B \-I
 Enable SASL Interactive mode.  Always prompt.  Default is to prompt
@@ -142,6 +160,9 @@ only as needed.
 .TP
 .B \-Q
 Enable SASL Quiet mode.  Never prompt.
+.TP
+.B \-N
+Do not use reverse DNS to canonicalize SASL host name.
 .TP
 .BI \-U \ authcid
 Specify the authentication ID for SASL bind. The form of the ID

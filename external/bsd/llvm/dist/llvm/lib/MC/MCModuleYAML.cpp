@@ -19,6 +19,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Object/YAML.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/YAMLTraits.h"
 #include <vector>
@@ -162,12 +163,14 @@ template <> struct ScalarTraits<MCModuleYAML::Operand> {
   static void output(const MCModuleYAML::Operand &, void *,
                      llvm::raw_ostream &);
   static StringRef input(StringRef, void *, MCModuleYAML::Operand &);
+  static bool mustQuote(StringRef) { return false; }
 };
 
 template <> struct ScalarTraits<MCModuleYAML::OpcodeEnum> {
   static void output(const MCModuleYAML::OpcodeEnum &, void *,
                      llvm::raw_ostream &);
   static StringRef input(StringRef, void *, MCModuleYAML::OpcodeEnum &);
+  static bool mustQuote(StringRef) { return false; }
 };
 
 void ScalarEnumerationTraits<MCAtom::AtomKind>::enumeration(
@@ -276,7 +279,7 @@ class MCModule2YAML {
   const MCModule &MCM;
   MCModuleYAML::Module YAMLModule;
   void dumpAtom(const MCAtom *MCA);
-  void dumpFunction(const MCFunction *MCF);
+  void dumpFunction(const MCFunction &MCF);
   void dumpBasicBlock(const MCBasicBlock *MCBB);
 
 public:
@@ -300,7 +303,7 @@ MCModule2YAML::MCModule2YAML(const MCModule &MCM) : MCM(MCM), YAMLModule() {
     dumpAtom(*AI);
   for (MCModule::const_func_iterator FI = MCM.func_begin(), FE = MCM.func_end();
        FI != FE; ++FI)
-    dumpFunction(*FI);
+    dumpFunction(**FI);
 }
 
 void MCModule2YAML::dumpAtom(const MCAtom *MCA) {
@@ -328,22 +331,22 @@ void MCModule2YAML::dumpAtom(const MCAtom *MCA) {
   }
 }
 
-void MCModule2YAML::dumpFunction(const MCFunction *MCF) {
+void MCModule2YAML::dumpFunction(const MCFunction &MCF) {
   YAMLModule.Functions.resize(YAMLModule.Functions.size() + 1);
   MCModuleYAML::Function &F = YAMLModule.Functions.back();
-  F.Name = MCF->getName();
-  for (MCFunction::const_iterator BBI = MCF->begin(), BBE = MCF->end();
+  F.Name = MCF.getName();
+  for (MCFunction::const_iterator BBI = MCF.begin(), BBE = MCF.end();
        BBI != BBE; ++BBI) {
-    const MCBasicBlock *MCBB = *BBI;
+    const MCBasicBlock &MCBB = **BBI;
     F.BasicBlocks.resize(F.BasicBlocks.size() + 1);
     MCModuleYAML::BasicBlock &BB = F.BasicBlocks.back();
-    BB.Address = MCBB->getInsts()->getBeginAddr();
-    for (MCBasicBlock::pred_const_iterator PI = MCBB->pred_begin(),
-                                           PE = MCBB->pred_end();
+    BB.Address = MCBB.getInsts()->getBeginAddr();
+    for (MCBasicBlock::pred_const_iterator PI = MCBB.pred_begin(),
+                                           PE = MCBB.pred_end();
          PI != PE; ++PI)
       BB.Preds.push_back((*PI)->getInsts()->getBeginAddr());
-    for (MCBasicBlock::succ_const_iterator SI = MCBB->succ_begin(),
-                                           SE = MCBB->succ_end();
+    for (MCBasicBlock::succ_const_iterator SI = MCBB.succ_begin(),
+                                           SE = MCBB.succ_end();
          SI != SE; ++SI)
       BB.Succs.push_back((*SI)->getInsts()->getBeginAddr());
   }
@@ -442,7 +445,7 @@ StringRef mcmodule2yaml(raw_ostream &OS, const MCModule &MCM,
   return "";
 }
 
-StringRef yaml2mcmodule(OwningPtr<MCModule> &MCM, StringRef YamlContent,
+StringRef yaml2mcmodule(std::unique_ptr<MCModule> &MCM, StringRef YamlContent,
                         const MCInstrInfo &MII, const MCRegisterInfo &MRI) {
   MCM.reset(new MCModule);
   YAML2MCModule Parser(*MCM);

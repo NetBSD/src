@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.117 2013/11/27 20:27:58 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.117.2.1 2014/08/10 06:58:18 tls Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.117 2013/11/27 20:27:58 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.117.2.1 2014/08/10 06:58:18 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -652,14 +652,13 @@ rprint(register_t ret)
 {
 
 	if (!plain) {
-		(void)printf("%ld", (long)ret);
-		if (!small(ret))
-			(void)printf("/%#lx", (long)ret);
+		output_long(ret, 0);
+		if (!small(ret)) {
+			putchar('/');
+			output_long(ret, 1);
+		}
 	} else {
-		if (decimal || small(ret))
-			(void)printf("%ld", (long)ret);
-		else
-			(void)printf("%#lx", (long)ret);
+		output_long(ret, !(decimal || small(ret)));
 	}
 }
 

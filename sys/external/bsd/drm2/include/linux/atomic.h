@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.3 2014/04/01 15:28:52 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.3.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ atomic_dec_return(atomic_t *atomic)
 static inline int
 atomic_dec_and_test(atomic_t *atomic)
 {
-	return (-1 == (int)atomic_dec_uint_nv(&atomic->a_u.au_uint));
+	return (0 == (int)atomic_dec_uint_nv(&atomic->a_u.au_uint));
 }
 
 static inline void
@@ -138,6 +138,55 @@ static inline int
 atomic_inc_not_zero(atomic_t *atomic)
 {
 	return atomic_add_unless(atomic, 1, 0);
+}
+
+static inline int
+atomic_xchg(atomic_t *atomic, int new)
+{
+	return (int)atomic_swap_uint(&atomic->a_u.au_uint, (unsigned)new);
+}
+
+static inline int
+atomic_cmpxchg(atomic_t *atomic, int old, int new)
+{
+	return (int)atomic_cas_uint(&atomic->a_u.au_uint, (unsigned)old,
+	    (unsigned)new);
+}
+
+struct atomic64 {
+	volatile uint64_t	a_v;
+};
+
+typedef struct atomic64 atomic64_t;
+
+static inline uint64_t
+atomic64_read(const struct atomic64 *a)
+{
+	return a->a_v;
+}
+
+static inline void
+atomic64_set(struct atomic64 *a, uint64_t v)
+{
+	a->a_v = v;
+}
+
+static inline void
+atomic64_add(long long d, struct atomic64 *a)
+{
+	atomic_add_64(&a->a_v, d);
+}
+
+static inline void
+atomic64_sub(long long d, struct atomic64 *a)
+{
+	atomic_add_64(&a->a_v, -d);
+}
+
+static inline uint64_t
+atomic64_xchg(struct atomic64 *a, uint64_t v)
+{
+	return atomic_swap_64(&a->a_v, v);
 }
 
 static inline void
@@ -177,7 +226,7 @@ test_and_set_bit(unsigned int bit, volatile unsigned long *ptr)
 
 	do v = *p; while (atomic_cas_ulong(p, v, (v | mask)) != v);
 
-	return (v & mask);
+	return ((v & mask) != 0);
 }
 
 static inline unsigned long
@@ -190,7 +239,7 @@ test_and_clear_bit(unsigned int bit, volatile unsigned long *ptr)
 
 	do v = *p; while (atomic_cas_ulong(p, v, (v & ~mask)) != v);
 
-	return (v & mask);
+	return ((v & mask) != 0);
 }
 
 static inline unsigned long
@@ -203,7 +252,7 @@ test_and_change_bit(unsigned int bit, volatile unsigned long *ptr)
 
 	do v = *p; while (atomic_cas_ulong(p, v, (v ^ mask)) != v);
 
-	return (v & mask);
+	return ((v & mask) != 0);
 }
 
 #if defined(MULTIPROCESSOR) && !defined(__HAVE_ATOMIC_AS_MEMBAR)

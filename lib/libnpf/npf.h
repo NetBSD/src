@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.25 2014/02/13 03:34:41 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.25.2.1 2014/08/10 06:52:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -74,9 +74,12 @@ typedef void (*nl_table_callback_t)(unsigned, int);
 #define	NPF_MAX_TABLE_ID	(16)
 
 nl_config_t *	npf_config_create(void);
-int		npf_config_submit(nl_config_t *, int);
 void		npf_config_destroy(nl_config_t *);
+
+int		npf_config_submit(nl_config_t *, int);
 nl_config_t *	npf_config_retrieve(int, bool *, bool *);
+nl_config_t *	npf_config_import(const char *);
+int		npf_config_export(const nl_config_t *, const char *);
 int		npf_config_flush(int);
 
 int		npf_ruleset_add(int, const char *, nl_rule_t *, uint64_t *);
@@ -87,6 +90,7 @@ int		npf_ruleset_flush(int, const char *);
 nl_ext_t *	npf_ext_construct(const char *name);
 void		npf_ext_param_u32(nl_ext_t *, const char *, uint32_t);
 void		npf_ext_param_bool(nl_ext_t *, const char *, bool);
+void		npf_ext_param_string(nl_ext_t *, const char *, const char *);
 
 nl_rule_t *	npf_rule_create(const char *, uint32_t, const char *);
 int		npf_rule_setcode(nl_rule_t *, int, const void *, size_t);
@@ -118,9 +122,6 @@ void		npf_table_destroy(nl_table_t *);
 #ifdef _NPF_PRIVATE
 
 #include <ifaddrs.h>
-
-int		npf_sessions_send(int, const char *);
-int		npf_sessions_recv(int, const char *);
 
 nl_rule_t *	npf_rule_iterate(nl_config_t *, unsigned *);
 const char *	npf_rule_getname(nl_rule_t *);

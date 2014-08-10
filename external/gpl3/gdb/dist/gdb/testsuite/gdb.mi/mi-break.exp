@@ -1,4 +1,4 @@
-# Copyright 1999-2013 Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -196,6 +196,18 @@ proc test_error {} {
     mi_gdb_test "-var-update *" \
         "\\^done,changelist=\\\[\\\]" \
         "update varobj for function call"    
+
+    # Try setting breakpoints with garbage after the location.
+
+    # "if" only works in the CLI.  It's not supposed to be accepted by
+    # MI.  The way to specify a condition is with -c.
+    mi_gdb_test "-break-insert \"callme if i < 4\"" \
+        ".*\\^error,msg=\"Garbage 'if i < 4' at end of location\"" \
+        "breakpoint with garbage after location"
+
+    mi_gdb_test "-break-insert -c i==4 \"callme if i < 4\"" \
+        ".*\\^error,msg=\"Garbage 'if i < 4' at end of location\"" \
+        "conditional breakpoint with garbage after location"
 }
 
 proc test_disabled_creation {} {

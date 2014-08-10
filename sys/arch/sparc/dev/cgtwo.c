@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.56 2014/03/16 05:20:25 dholland Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.56.2.1 2014/08/10 06:54:08 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.56 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.56.2.1 2014/08/10 06:54:08 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ const struct cdevsw cgtwo_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = cgtwommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

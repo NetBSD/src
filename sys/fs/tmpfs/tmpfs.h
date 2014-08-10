@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.48 2013/11/23 16:35:32 rmind Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.48.2.1 2014/08/10 06:55:54 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -279,6 +279,7 @@ void		tmpfs_update(vnode_t *, unsigned);
 
 void		tmpfs_mntmem_init(tmpfs_mount_t *, uint64_t);
 void		tmpfs_mntmem_destroy(tmpfs_mount_t *);
+int		tmpfs_mntmem_set(tmpfs_mount_t *, uint64_t);
 
 size_t		tmpfs_mem_info(bool);
 uint64_t	tmpfs_bytes_max(tmpfs_mount_t *);
@@ -304,13 +305,6 @@ bool		tmpfs_strname_neqlen(struct componentname *, struct componentname *);
     KASSERT((node)->tn_vnode == NULL || VOP_ISLOCKED((node)->tn_vnode)); \
     KASSERT((node)->tn_type == VDIR); \
     KASSERT((node)->tn_size % sizeof(tmpfs_dirent_t) == 0);
-
-/*
- * Memory management stuff.
- */
-
-/* Amount of memory pages to reserve for the system. */
-#define	TMPFS_PAGES_RESERVED	(4 * 1024 * 1024 / PAGE_SIZE)
 
 /*
  * Routines to convert VFS structures to tmpfs internal ones.

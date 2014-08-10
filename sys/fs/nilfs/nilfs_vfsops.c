@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.15 2014/03/23 15:21:15 hannken Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.15.2.1 2014/08/10 06:55:54 tls Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.15 2014/03/23 15:21:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.15.2.1 2014/08/10 06:55:54 tls Exp $");
 #endif /* not lint */
 
 
@@ -800,6 +800,8 @@ nilfs_mount(struct mount *mp, const char *path,
 
 	DPRINTF(VFSCALL, ("nilfs_mount called\n"));
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

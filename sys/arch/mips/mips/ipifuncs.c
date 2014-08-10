@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.6 2011/05/02 00:17:35 matt Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.6.28.1 2014/08/10 06:54:02 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,13 +32,14 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6 2011/05/02 00:17:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6.28.1 2014/08/10 06:54:02 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -59,6 +60,7 @@ static const char * const ipi_names[] = {
 	[IPI_SUSPEND]	= "ipi suspend",
 	[IPI_HALT]	= "ipi halt",
 	[IPI_XCALL]	= "ipi xcall",
+	[IPI_GENERIC]	= "ipi generic",
 };
 
 static void
@@ -138,6 +140,10 @@ ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 	if (ipi_mask & __BIT(IPI_XCALL)) {
 		ci->ci_evcnt_per_ipi[IPI_XCALL].ev_count++;
 		xc_ipi_handler();
+	}
+	if (ipi_mask & __BIT(IPI_GENERIC)) {
+		ci->ci_evcnt_per_ipi[IPI_GENERIC].ev_count++;
+		ipi_cpu_handler();
 	}
 }
 

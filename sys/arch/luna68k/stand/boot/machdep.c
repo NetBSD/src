@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2.2.1 2014/08/10 06:54:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -87,10 +87,10 @@ int	*nofault = 0;
 int
 badaddr(volatile void *addr)
 {
-	int i;
 	label_t	faultbuf;
 
 #ifdef lint
+	int i;
 	i = *addr; if (i) return 0;
 #endif
 	nofault = (int *) &faultbuf;
@@ -98,7 +98,7 @@ badaddr(volatile void *addr)
 		nofault = NULL;
 		return 1;
 	}
-	i = *(volatile short *)addr;
+	(void)*(volatile short *)addr;
 	nofault = NULL;
 	return 0;
 }

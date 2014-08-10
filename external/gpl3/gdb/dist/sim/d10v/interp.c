@@ -43,15 +43,15 @@ asection *text;
 bfd_vma text_start;
 bfd_vma text_end;
 
-static long hash PARAMS ((long insn, int format));
-static struct hash_entry *lookup_hash PARAMS ((uint32 ins, int size));
-static void get_operands PARAMS ((struct simops *s, uint32 ins));
-static void do_long PARAMS ((uint32 ins));
-static void do_2_short PARAMS ((uint16 ins1, uint16 ins2, enum _leftright leftright));
-static void do_parallel PARAMS ((uint16 ins1, uint16 ins2));
-static char *add_commas PARAMS ((char *buf, int sizeof_buf, unsigned long value));
-extern void sim_set_profile PARAMS ((int n));
-extern void sim_set_profile_size PARAMS ((int n));
+static long hash (long insn, int format);
+static struct hash_entry *lookup_hash (uint32 ins, int size);
+static void get_operands (struct simops *s, uint32 ins);
+static void do_long (uint32 ins);
+static void do_2_short (uint16 ins1, uint16 ins2, enum _leftright leftright);
+static void do_parallel (uint16 ins1, uint16 ins2);
+static char *add_commas (char *buf, int sizeof_buf, unsigned long value);
+extern void sim_set_profile (int n);
+extern void sim_set_profile_size (int n);
 static INLINE uint8 *map_memory (unsigned phys_addr);
 
 #ifdef NEED_UI_LOOP_HOOK
@@ -62,7 +62,7 @@ static INLINE uint8 *map_memory (unsigned phys_addr);
 static long ui_loop_hook_counter = UI_LOOP_POLL_INTERVAL;
 
 /* Actual hook to call to run through gdb's gui event loop */
-extern int (*deprecated_ui_loop_hook) PARAMS ((int signo));
+extern int (*deprecated_ui_loop_hook) (int signo);
 #endif /* NEED_UI_LOOP_HOOK */
 
 #ifndef INLINE

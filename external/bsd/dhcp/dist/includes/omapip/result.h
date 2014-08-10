@@ -1,5 +1,4 @@
-/*	$NetBSD: result.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $	*/
-
+/*	$NetBSD: result.h,v 1.1.1.1.8.1 2014/08/10 07:06:56 tls Exp $	*/
 /* result.h
  */
 

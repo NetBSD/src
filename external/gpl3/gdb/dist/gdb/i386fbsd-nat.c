@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/i386.
 
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -82,7 +82,6 @@ i386fbsd_resume (struct target_ops *ops,
 
 /* Support for debugging kernel virtual memory images.  */
 
-#include <sys/types.h>
 #include <machine/pcb.h>
 
 #include "bsd-kvm.h"

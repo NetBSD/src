@@ -1,7 +1,7 @@
 /* GNU/Linux/AArch64 specific low level interface, for the remote server for
    GDB.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -32,9 +32,7 @@
 
 /* Defined in auto-generated files.  */
 void init_registers_aarch64 (void);
-
-/* Defined in auto-generated files.  */
-void init_registers_aarch64_without_fpu (void);
+extern const struct target_desc *tdesc_aarch64;
 
 #ifdef HAVE_SYS_REG_H
 #include <sys/reg.h>
@@ -602,11 +600,15 @@ aarch64_linux_set_debug_regs (const struct aarch64_debug_reg_state *state,
   const CORE_ADDR *addr;
   const unsigned int *ctrl;
 
+  memset (&regs, 0, sizeof (regs));
   iov.iov_base = &regs;
-  iov.iov_len = sizeof (regs);
   count = watchpoint ? aarch64_num_wp_regs : aarch64_num_bp_regs;
   addr = watchpoint ? state->dr_addr_wp : state->dr_addr_bp;
   ctrl = watchpoint ? state->dr_ctrl_wp : state->dr_ctrl_bp;
+  if (count == 0)
+    return;
+  iov.iov_len = (offsetof (struct user_hwdebug_state, dbg_regs[count - 1])
+		 + sizeof (regs.dbg_regs [count - 1]));
 
   for (i = 0; i < count; i++)
     {
@@ -1191,7 +1193,7 @@ aarch64_arch_setup (void)
   struct iovec iov;
   struct user_hwdebug_state dreg_state;
 
-  init_registers_aarch64 ();
+  current_process ()->tdesc = tdesc_aarch64;
 
   pid = lwpid_of (get_thread_lwp (current_inferior));
   iov.iov_base = &dreg_state;
@@ -1238,7 +1240,7 @@ aarch64_arch_setup (void)
     }
 }
 
-struct regset_info target_regsets[] =
+static struct regset_info aarch64_regsets[] =
 {
   { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PRSTATUS,
     sizeof (struct user_pt_regs), GENERAL_REGS,
@@ -1250,12 +1252,36 @@ struct regset_info target_regsets[] =
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
+static struct regsets_info aarch64_regsets_info =
+  {
+    aarch64_regsets, /* regsets */
+    0, /* num_regsets */
+    NULL, /* disabled_regsets */
+  };
+
+static struct usrregs_info aarch64_usrregs_info =
+  {
+    AARCH64_NUM_REGS,
+    aarch64_regmap,
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &aarch64_usrregs_info,
+    &aarch64_regsets_info,
+  };
+
+static const struct regs_info *
+aarch64_regs_info (void)
+{
+  return &regs_info;
+}
+
 struct linux_target_ops the_low_target =
 {
   aarch64_arch_setup,
-  AARCH64_NUM_REGS,
-  aarch64_regmap,
-  NULL,
+  aarch64_regs_info,
   aarch64_cannot_fetch_register,
   aarch64_cannot_store_register,
   NULL,
@@ -1277,3 +1303,11 @@ struct linux_target_ops the_low_target =
   aarch64_linux_new_thread,
   aarch64_linux_prepare_to_resume,
 };
+
+void
+initialize_low_arch (void)
+{
+  init_registers_aarch64 ();
+
+  initialize_regsets_info (&aarch64_regsets_info);
+}

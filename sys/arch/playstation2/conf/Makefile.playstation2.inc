@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.playstation2.inc,v 1.6 2014/04/05 11:15:57 martin Exp $
+#	$NetBSD: Makefile.playstation2.inc,v 1.6.2.1 2014/08/10 06:54:04 tls Exp $
 
 .if !defined(EXTERNAL_TOOLCHAIN) || ${EXTERNAL_TOOLCHAIN}==""
 .error please do not run "make" directly, use sh ../../conf/build.playstation2.sh instead
@@ -8,7 +8,7 @@
 # not properly get picked up by mkdep in sub-makes for "make depend" of
 # libkern and friends - XXX fix this
 PREFIX=${EXTERNAL_TOOLCHAIN}
-PLATFORM=mipsel--netbsdelf
+PLATFORM=mipsel--netbsd
 
 CC=${PREFIX}/bin/${PLATFORM}-gcc
 CPP=${PREFIX}/bin/${PLATFORM}-cpp
@@ -21,5 +21,5 @@ SIZE=${PREFIX}/bin/${PLATFORM}-size
 STRIP=${PREFIX}/bin/${PLATFORM}-strip
 
 # Playstation2 uses 128 bit access, which currently requires n32 ABI
-CFLAGS+= -mabi=n32 -march=r5900 -fno-pic
-AFLAGS+= -mabi=n32 -march=r5900 -fno-pic
+CFLAGS+= -mabi=n32 -march=r5900 -fno-pic -msoft-float
+AFLAGS+= -mabi=n32 -march=r5900 -fno-pic -msoft-float

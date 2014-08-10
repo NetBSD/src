@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.17 2014/02/12 23:24:09 dsl Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.17.2.1 2014/08/10 06:54:11 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.17 2014/02/12 23:24:09 dsl Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.17.2.1 2014/08/10 06:54:11 tls Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.17 2014/02/12 23:24:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.17.2.1 2014/08/10 06:54:11 tls Exp $");
 
 #include <sys/types.h>
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.17 2014/02/12 23:24:09 dsl Exp $");
 #include <sys/mutex.h>
 #include <sys/device.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 
@@ -69,6 +70,7 @@ static void xen_ipi_synch_fpu(struct cpu_info *, struct intrframe *);
 static void xen_ipi_ddb(struct cpu_info *, struct intrframe *);
 static void xen_ipi_xcall(struct cpu_info *, struct intrframe *);
 static void xen_ipi_hvcb(struct cpu_info *, struct intrframe *);
+static void xen_ipi_generic(struct cpu_info *, struct intrframe *);
 
 static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 {	/* In order of priority (see: xen/include/intrdefs.h */
@@ -76,7 +78,8 @@ static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 	xen_ipi_synch_fpu,
 	xen_ipi_ddb,
 	xen_ipi_xcall,
-	xen_ipi_hvcb
+	xen_ipi_hvcb,
+	xen_ipi_generic,
 };
 
 static void
@@ -131,7 +134,7 @@ xen_ipi_init(void)
 static inline bool /* helper */
 valid_ipimask(uint32_t ipimask)
 {
-	uint32_t masks =  XEN_IPI_HVCB | XEN_IPI_XCALL |
+	uint32_t masks = XEN_IPI_GENERIC | XEN_IPI_HVCB | XEN_IPI_XCALL |
 		 XEN_IPI_DDB | XEN_IPI_SYNCH_FPU |
 		 XEN_IPI_HALT | XEN_IPI_KICK;
 
@@ -281,6 +284,29 @@ xc_send_ipi(struct cpu_info *ci)
 		}
 	} else {
 		xen_broadcast_ipi(XEN_IPI_XCALL);
+	}
+}
+
+static void
+xen_ipi_generic(struct cpu_info *ci, struct intrframe *intrf)
+{
+	KASSERT(ci != NULL);
+	KASSERT(intrf != NULL);
+
+	ipi_cpu_handler();
+}
+
+void
+cpu_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+	if (ci) {
+		if (0 != xen_send_ipi(ci, XEN_IPI_GENERIC)) {
+			panic("xen_send_ipi(XEN_IPI_GENERIC) failed\n");
+		}
+	} else {
+		xen_broadcast_ipi(XEN_IPI_GENERIC);
 	}
 }
 

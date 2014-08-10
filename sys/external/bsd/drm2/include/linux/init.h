@@ -1,4 +1,4 @@
-/*	$NetBSD: init.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: init.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,7 @@
 
 #ifndef _LINUX_INIT_H_
 #define _LINUX_INIT_H_
+
+#define __init
 
 #endif  /* _LINUX_INIT_H_ */

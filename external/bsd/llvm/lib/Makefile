@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.39 2014/02/14 20:23:56 joerg Exp $
+# $NetBSD: Makefile,v 1.39.2.1 2014/08/10 07:09:08 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,7 @@ SUBDIR=	\
 	libLLVMObjCARC \
 	libLLVMObject \
 	libLLVMOption \
+	libLLVMProfileData \
 	libLLVMScalarOpts \
 	libLLVMSelectionDAG \
 	libLLVMSupport \
@@ -90,10 +91,13 @@ SUBDIR+= \
 	libLLVMRuntimeDyld
 .endif
 
+.if (${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes") || ${MKLLD} == "yes"
+SUBDIR+= \
+	libLLVMDebugInfo
+.endif
 
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
-	libLLVMDebugInfo \
 	libLLVMCppBackend \
 	libLLVMCppBackendInfo \
 	libLLVMHello \
@@ -184,6 +188,7 @@ SUBDIR+= \
 	liblldbInterpreter \
 	liblldbLog \
 	liblldbPluginABIMacOSX_arm \
+	liblldbPluginABIMacOSX_arm64 \
 	liblldbPluginABIMacOSX_i386 \
 	liblldbPluginABISysV_x86_64 \
 	liblldbPluginAppleObjCRuntime \
@@ -193,9 +198,12 @@ SUBDIR+= \
 	liblldbPluginDynamicLoaderPosixDYLD \
 	liblldbPluginDynamicLoaderStatic \
 	liblldbPluginInstructionARM \
+	liblldbPluginInstructionARM64 \
+	liblldbPluginJITLoaderGDB \
 	liblldbPluginObjectContainerBSDArchive \
 	liblldbPluginObjectContainerMachOArchive \
 	liblldbPluginObjectFileELF \
+	liblldbPluginObjectFileJIT \
 	liblldbPluginObjectFileMachO \
 	liblldbPluginObjectFilePECOFF \
 	liblldbPluginPlatformNetBSD \

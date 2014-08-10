@@ -153,7 +153,9 @@ elf32_sparc_final_write_processing (bfd *abfd,
 }
 
 static enum elf_reloc_type_class
-elf32_sparc_reloc_type_class (const Elf_Internal_Rela *rela)
+elf32_sparc_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			      const asection *rel_sec ATTRIBUTE_UNUSED,
+			      const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {
@@ -243,7 +245,6 @@ elf32_sparc_add_symbol_hook (bfd * abfd,
 #define elf_backend_got_header_size 4
 #define elf_backend_rela_normal 1
 
-#define elf_backend_post_process_headers	_bfd_elf_set_osabi
 #define elf_backend_add_symbol_hook		elf32_sparc_add_symbol_hook
 
 #include "elf32-target.h"

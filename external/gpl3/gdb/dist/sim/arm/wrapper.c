@@ -1,5 +1,5 @@
 /* run front end support for arm
-   Copyright (C) 1995-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of ARM SIM.
 
@@ -132,9 +132,9 @@ sim_size (size)
 }
 
 void
-ARMul_ConsolePrint VPARAMS ((ARMul_State * state,
-			     const char * format,
-			     ...))
+ARMul_ConsolePrint (ARMul_State * state,
+		    const char * format,
+		    ...)
 {
   va_list ap;
 
@@ -243,12 +243,18 @@ sim_create_inferior (sd, abfd, argv, env)
   int mach;
   char **arg;
 
-  if (abfd != NULL)
-    ARMul_SetPC (state, bfd_get_start_address (abfd));
-  else
-    ARMul_SetPC (state, 0);	/* ??? */
+  init ();
 
-  mach = bfd_get_mach (abfd);
+  if (abfd != NULL)
+    {
+      ARMul_SetPC (state, bfd_get_start_address (abfd));
+      mach = bfd_get_mach (abfd);
+    }
+  else
+    {
+      ARMul_SetPC (state, 0);	/* ??? */
+      mach = 0;
+    }
 
   switch (mach)
     {
@@ -672,7 +678,7 @@ sim_fetch_register (sd, rn, memory, length)
 
 #ifdef SIM_TARGET_SWITCHES
 
-static void sim_target_parse_arg_array PARAMS ((char **));
+static void sim_target_parse_arg_array (char **);
 
 typedef struct
 {
@@ -945,7 +951,7 @@ sim_set_callbacks (ptr)
 }
 
 char **
-sim_complete_command (SIM_DESC sd, char *text, char *word)
+sim_complete_command (SIM_DESC sd, const char *text, const char *word)
 {
   return NULL;
 }

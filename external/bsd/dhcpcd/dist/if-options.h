@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.1.1.21 2014/03/14 11:27:41 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.1.1.21.2.1 2014/08/10 07:06:59 tls Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,6 +30,7 @@
 #ifndef IF_OPTIONS_H
 #define IF_OPTIONS_H
 
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -79,7 +80,7 @@
 #define DHCPCD_VENDORRAW		(1ULL << 23)
 #define DHCPCD_TIMEOUT_IPV4LL		(1ULL << 24)
 #define DHCPCD_WAITIP			(1ULL << 25)
-#define DHCPCD_WAITUP			(1ULL << 26)
+#define DHCPCD_SLAACPRIVATE		(1ULL << 26)
 #define DHCPCD_CSR_WARNED		(1ULL << 27)
 #define DHCPCD_XID_HWADDR		(1ULL << 28)
 #define DHCPCD_BROADCAST		(1ULL << 29)
@@ -104,39 +105,46 @@
 #define DHCPCD_IAID			(1ULL << 48)
 #define DHCPCD_DHCP			(1ULL << 49)
 #define DHCPCD_DHCP6			(1ULL << 50)
+#define DHCPCD_NOPFXDLG			(1ULL << 51)
+#define DHCPCD_PFXDLGONLY		(1ULL << 52)
+#define DHCPCD_PFXDLGMIX		(1ULL << 53)
 
 extern const struct option cf_options[];
 
 struct if_sla {
 	char ifname[IF_NAMESIZE];
 	uint32_t sla;
-	short prefix_len;
+	uint8_t prefix_len;
 	int8_t sla_set;
 };
 
 struct if_ia {
 	uint8_t iaid[4];
 #ifdef INET6
+	uint16_t ia_type;
+	uint8_t iaid_set;
+	struct in6_addr addr;
+	uint8_t prefix_len;
 	size_t sla_len;
 	struct if_sla *sla;
 #endif
 };
 
 struct vivco {
-	uint16_t len;
+	size_t len;
 	uint8_t *data;
 };
 
 struct if_options {
 	uint8_t iaid[4];
 	int metric;
-	uint8_t requestmask[256 / 8];
-	uint8_t requiremask[256 / 8];
-	uint8_t nomask[256 / 8];
-	uint8_t requestmask6[(UINT16_MAX + 1) / 8];
-	uint8_t requiremask6[(UINT16_MAX + 1) / 8];
-	uint8_t nomask6[(UINT16_MAX + 1) / 8];
-	uint8_t dstmask[256 / 8];
+	uint8_t requestmask[256 / NBBY];
+	uint8_t requiremask[256 / NBBY];
+	uint8_t nomask[256 / NBBY];
+	uint8_t requestmask6[(UINT16_MAX + 1) / NBBY];
+	uint8_t requiremask6[(UINT16_MAX + 1) / NBBY];
+	uint8_t nomask6[(UINT16_MAX + 1) / NBBY];
+	uint8_t dstmask[256 / NBBY];
 	uint32_t leasetime;
 	time_t timeout;
 	time_t reboot;
@@ -153,7 +161,7 @@ struct if_options {
 	char hostname[HOSTNAME_MAX_LEN + 1]; /* We don't store the length */
 	int fqdn;
 	uint8_t vendorclassid[VENDORCLASSID_MAX_LEN + 2];
-	char clientid[CLIENTID_MAX_LEN + 2];
+	uint8_t clientid[CLIENTID_MAX_LEN + 2];
 	uint8_t userclass[USERCLASS_MAX_LEN + 2];
 	uint8_t vendor[VENDOR_MAX_LEN + 2];
 
@@ -165,12 +173,8 @@ struct if_options {
 	in_addr_t *arping;
 	char *fallback;
 
-	uint16_t ia_type;
 	struct if_ia *ia;
 	size_t ia_len;
-#ifdef INET6
-	int dadtransmits;
-#endif
 
 	struct dhcp_opt *dhcp_override;
 	size_t dhcp_override_len;

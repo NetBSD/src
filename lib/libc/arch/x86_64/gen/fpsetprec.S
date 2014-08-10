@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetprec.S,v 1.1 2011/03/26 19:51:42 christos Exp $	*/
+/*	$NetBSD: fpsetprec.S,v 1.1.20.1 2014/08/10 06:51:49 tls Exp $	*/
 
 /*
  * Written by Frank van der Linden at Wasabi Systems for NetBSD.
@@ -37,3 +37,8 @@ ENTRY(fpsetprec)
 
 	fldcw	-4(%rsp)
 	ret
+#ifdef WEAK_ALIAS
+END(_fpsetprec)
+#else
+END(fpsetprec)
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.17 2014/03/26 16:08:45 christos Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.17.2.1 2014/08/10 06:53:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.17 2014/03/26 16:08:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.17.2.1 2014/08/10 06:53:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -179,6 +179,7 @@ const struct cdevsw mlcd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

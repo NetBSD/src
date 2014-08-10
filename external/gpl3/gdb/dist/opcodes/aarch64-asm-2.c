@@ -303,10 +303,10 @@ aarch64_insert_operand (const aarch64_operand *self,
     case 55:
     case 56:
     case 57:
-    case 65:
     case 66:
     case 67:
     case 68:
+    case 69:
       return aarch64_ins_imm (self, info, code, inst);
     case 37:
     case 38:
@@ -324,33 +324,34 @@ aarch64_insert_operand (const aarch64_operand *self,
     case 61:
       return aarch64_ins_fbits (self, info, code, inst);
     case 63:
+    case 64:
       return aarch64_ins_cond (self, info, code, inst);
-    case 69:
-    case 75:
-      return aarch64_ins_addr_simple (self, info, code, inst);
     case 70:
-      return aarch64_ins_addr_regoff (self, info, code, inst);
+    case 76:
+      return aarch64_ins_addr_simple (self, info, code, inst);
     case 71:
+      return aarch64_ins_addr_regoff (self, info, code, inst);
     case 72:
     case 73:
-      return aarch64_ins_addr_simm (self, info, code, inst);
     case 74:
+      return aarch64_ins_addr_simm (self, info, code, inst);
+    case 75:
       return aarch64_ins_addr_uimm12 (self, info, code, inst);
-    case 76:
-      return aarch64_ins_simd_addr_post (self, info, code, inst);
     case 77:
-      return aarch64_ins_sysreg (self, info, code, inst);
+      return aarch64_ins_simd_addr_post (self, info, code, inst);
     case 78:
-      return aarch64_ins_pstatefield (self, info, code, inst);
+      return aarch64_ins_sysreg (self, info, code, inst);
     case 79:
+      return aarch64_ins_pstatefield (self, info, code, inst);
     case 80:
     case 81:
     case 82:
-      return aarch64_ins_sysins_op (self, info, code, inst);
     case 83:
+      return aarch64_ins_sysins_op (self, info, code, inst);
     case 84:
-      return aarch64_ins_barrier (self, info, code, inst);
     case 85:
+      return aarch64_ins_barrier (self, info, code, inst);
+    case 86:
       return aarch64_ins_prfop (self, info, code, inst);
     default: assert (0); abort ();
     }

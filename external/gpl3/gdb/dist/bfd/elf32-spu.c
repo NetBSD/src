@@ -1,7 +1,6 @@
 /* SPU specific support for 32-bit ELF
 
-   Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright 2006-2013 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1143,7 +1142,7 @@ count_stub (struct spu_link_hash_table *htab,
 }
 
 /* Support two sizes of overlay stubs, a slower more compact stub of two
-   intructions, and a faster stub of four instructions.
+   instructions, and a faster stub of four instructions.
    Soft-icache stubs are four or eight words.  */
 
 static unsigned int
@@ -5147,8 +5146,7 @@ spu_elf_plugin (int val)
 /* Set ELF header e_type for plugins.  */
 
 static void
-spu_elf_post_process_headers (bfd *abfd,
-			      struct bfd_link_info *info ATTRIBUTE_UNUSED)
+spu_elf_post_process_headers (bfd *abfd, struct bfd_link_info *info)
 {
   if (spu_plugin)
     {
@@ -5156,6 +5154,8 @@ spu_elf_post_process_headers (bfd *abfd,
 
       i_ehdrp->e_type = ET_DYN;
     }
+
+  _bfd_elf_post_process_headers (abfd, info);
 }
 
 /* We may add an extra PT_LOAD segment for .toe.  We also need extra

@@ -1,11 +1,10 @@
-/*	$NetBSD: dns.c,v 1.4 2013/03/27 00:38:07 christos Exp $	*/
-
+/*	$NetBSD: dns.c,v 1.4.8.1 2014/08/10 07:06:55 tls Exp $	*/
 /* dns.c
 
    Domain Name Service subroutines. */
 
 /*
- * Copyright (c) 2009-2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009-2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
@@ -27,18 +26,17 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * The original software was written for Internet Systems Consortium
- * by Ted Lemon it has since been extensively modified to use the
- * asynchronous DNS routines.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dns.c,v 1.4 2013/03/27 00:38:07 christos Exp $");
+__RCSID("$NetBSD: dns.c,v 1.4.8.1 2014/08/10 07:06:55 tls Exp $");
 
+/*! \file common/dns.c
+ */
 #include "dhcpd.h"
 #include "arpa/nameser.h"
 #include <isc/md5.h>
-
+#include <isc/sha2.h>
 #include <dns/result.h>
 
 /*
@@ -160,9 +158,122 @@ typedef struct dhcp_ddns_rdata {
 } dhcp_ddns_data_t;
 
 #if defined (NSUPDATE)
+#if defined (DNS_ZONE_LOOKUP)
 
-void ddns_interlude(isc_task_t  *, isc_event_t *);
+/*
+ * The structure used to find a nameserver if there wasn't a zone entry.
+ * Currently we assume we won't have many of these outstanding at any
+ * time so we go with a simple linked list.
+ * In use find_zone_start() will fill in the oname with the name
+ * requested by the DDNS code.  zname will point to it and be
+ * advanced as labels are removed.  If the DNS client code returns
+ * a set of name servers eventp and rdataset will be set.  Then
+ * the code will walk through the nameservers in namelist and
+ * find addresses that are stored in addrs and addrs6.
+ */
 
+typedef struct dhcp_ddns_ns {
+	struct dhcp_ddns_ns *next;      
+	struct data_string oname;     /* the original name for DDNS */
+	char *zname;                  /* a pointer into the original name for
+					 the zone we are checking */
+	dns_clientresevent_t *eventp; /* pointer to the event that provided the
+					 namelist, we can't free the eventp
+					 until we free the namelist */
+	dns_name_t *ns_name;          /* current name server we are examining */
+	dns_rdataset_t *rdataset; 
+	dns_rdatatype_t rdtype;       /* type of address we want */
+
+	struct in_addr addrs[DHCP_MAXNS];   /* space for v4 addresses */
+	struct in6_addr addrs6[DHCP_MAXNS]; /* space for v6 addresses */
+	int num_addrs;
+	int num_addrs6;
+	int ttl;
+
+	void *transaction;             /* transaction id for DNS calls */
+} dhcp_ddns_ns_t;
+
+/*
+ * The list of DDNS names for which we are attempting to find a name server.
+ * This list is used for finding the name server, it doesn't include the
+ * information necessary to do the DDNS request after finding a name server.
+ * The code attempts to minimize duplicate requests by examining the list
+ * to see if we are already trying to find a substring of the new request.
+ * For example imagine the first request is "a.b.c.d.e." and the server has
+ * already discarded the first two lables and is trying "c.d.e.".  If the
+ * next request is for "x.y.c.d.e." the code assumes the in progress
+ * request is sufficient and doesn't add a new request for the second name.
+ * If the next request was for "x.y.z.d.e." the code doesn't assume they
+ * will use the same nameserver and starts a second request.
+ * This strategy will not eliminate all duplicates but is simple and
+ * should be sufficient.
+ */
+dhcp_ddns_ns_t *dns_outstanding_ns = NULL;
+
+/*
+ * Routines to manipulate the list of outstanding searches
+ *
+ * add_to_ns_queue() - adds the given control block to the queue
+ *
+ * remove_from_ns_queue() - removes the given control block from
+ * the queue
+ *
+ * find_in_ns_queue() compares the name from the given control
+ * block with the control blocks in the queue.  It returns
+ * success if a matching entry is found.  In order to match
+ * the entry already on the queue must be shorter than the
+ * incoming name must match the ending substring of the name.
+ */
+
+static void
+add_to_ns_queue(dhcp_ddns_ns_t *ns_cb)
+{
+	ns_cb->next = dns_outstanding_ns;
+	dns_outstanding_ns = ns_cb;
+}
+
+
+static void
+remove_from_ns_queue(dhcp_ddns_ns_t *ns_cb)
+{
+	dhcp_ddns_ns_t **foo;
+
+	foo = &dns_outstanding_ns;
+	while (*foo) {
+		if (*foo == ns_cb) {
+			*foo = ns_cb->next;
+			break;
+		}
+		foo = &((*foo)->next);
+	}
+	ns_cb->next = NULL;
+}
+
+static isc_result_t
+find_in_ns_queue(dhcp_ddns_ns_t *ns_cb)
+{
+	dhcp_ddns_ns_t *temp_cb;
+	int in_len, temp_len;
+
+	in_len = strlen(ns_cb->zname);
+
+	for(temp_cb = dns_outstanding_ns;
+	    temp_cb != NULL;
+	    temp_cb = temp_cb->next) {
+		temp_len = strlen(temp_cb->zname);
+		if (temp_len > in_len)
+			continue;
+		if (strcmp(temp_cb->zname,
+			   ns_cb->zname + (in_len - temp_len)) == 0)
+			return(ISC_R_SUCCESS);
+	}
+	return(ISC_R_NOTFOUND);
+}
+
+void cache_found_zone (dhcp_ddns_ns_t *);
+#endif
+
+void ddns_interlude(isc_task_t *, isc_event_t *);
 
 #if defined (TRACING)
 /*
@@ -440,6 +551,8 @@ trace_ddns_init()
 #define ddns_update dns_client_startupdate
 #endif /* TRACING */
 
+#define zone_resolve dns_client_startresolve
+
 /*
  * Code to allocate and free a dddns control block.  This block is used
  * to pass and track the information associated with a DDNS update request.
@@ -551,6 +664,21 @@ void tkey_free (ns_tsig_key **key)
 }
 #endif
 
+static isc_result_t remove_dns_zone (struct dns_zone *zone)
+{
+	struct dns_zone *tz = NULL;
+
+	if (dns_zone_hash) {
+		dns_zone_hash_lookup(&tz, dns_zone_hash, zone->name, 0, MDL);
+		if (tz != NULL) {
+			dns_zone_hash_delete(dns_zone_hash, tz->name, 0, MDL);
+			dns_zone_dereference(&tz, MDL);
+		}
+	}
+
+	return (ISC_R_SUCCESS);
+}
+
 isc_result_t enter_dns_zone (struct dns_zone *zone)
 {
 	struct dns_zone *tz = (struct dns_zone *)0;
@@ -597,7 +725,11 @@ isc_result_t dns_zone_lookup (struct dns_zone **zone, const char *name)
 	}
 	if (!dns_zone_hash_lookup (zone, dns_zone_hash, name, 0, MDL))
 		status = ISC_R_NOTFOUND;
-	else
+	else if ((*zone)->timeout && (*zone)->timeout < cur_time) {
+		dns_zone_hash_delete(dns_zone_hash, (*zone)->name, 0, MDL);
+		dns_zone_dereference(zone, MDL);
+		status = ISC_R_NOTFOUND;
+	} else 
 		status = ISC_R_SUCCESS;
 
 	if (tname)
@@ -657,6 +789,456 @@ int dns_zone_dereference (ptr, file, line)
 }
 
 #if defined (NSUPDATE)
+#if defined (DNS_ZONE_LOOKUP)
+
+/* Helper function to copy the address from an rdataset to 
+ * the nameserver control block.  Mostly to avoid really long
+ * lines in the nested for loops
+ */
+static void
+zone_addr_to_ns(dhcp_ddns_ns_t *ns_cb,
+		dns_rdataset_t *rdataset)
+{
+	dns_rdata_t rdata;
+	dns_rdata_in_a_t a;
+	dns_rdata_in_aaaa_t aaaa;
+	
+	dns_rdata_init(&rdata);
+	dns_rdataset_current(rdataset, &rdata);
+	switch (rdataset->type) {
+	case dns_rdatatype_a:
+		(void) dns_rdata_tostruct(&rdata, &a, NULL);
+		memcpy(&ns_cb->addrs[ns_cb->num_addrs], &a.in_addr, 4);
+		ns_cb->num_addrs++;
+		dns_rdata_freestruct(&a);
+		break;
+	case dns_rdatatype_aaaa:
+		(void) dns_rdata_tostruct(&rdata, &aaaa, NULL);
+		memcpy(&ns_cb->addrs6[ns_cb->num_addrs6], &aaaa.in6_addr, 16);
+		ns_cb->num_addrs6++;
+		dns_rdata_freestruct(&aaaa);
+		break;
+	default:
+		break;
+	}
+
+	if ((ns_cb->ttl == 0) || (ns_cb->ttl > rdataset->ttl))
+		ns_cb->ttl = rdataset->ttl;
+}
+
+/*
+ * The following three routines co-operate to find the addresses of
+ * the nameservers to use for a zone if we don't have a zone statement.
+ * We strongly suggest the use of a zone statement to avoid problmes
+ * and to allow for the use of TSIG and therefore better security, but
+ * include this functionality for those that don't want such statements.
+ *
+ * find_zone_start(ddns_cb, direction)
+ * This is the first of the routines, it is called from the rest of
+ * the ddns code when we have received a request for DDNS for a name
+ * and don't have a zone entry that would cover that name.  The name
+ * is in the ddns_cb as specified by the direction (forward or reverse).
+ * The start function pulls the name out and constructs the name server
+ * block then starts the process by calling the DNS client code.
+ *
+ * find_zone_ns(taskp, eventp)
+ * This is the second step of the process.  The DNS client code will
+ * call this when it has gotten a response or timed out.  If the response
+ * doesn't have a list of nameservers we remove another label from the
+ * zone name and try again.  If the response does include a list of
+ * nameservers we start walking through the list attempting to get
+ * addresses for the nameservers.
+ *
+ * find_zone_addrs(taskp, eventp)
+ * This is the third step of the process.  In find_zone_ns we got
+ * a list of nameserves and started walking through them.  This continues
+ * the walk and if we get back any addresses it adds them to our list.
+ * When we get enough addresses or run out of nameservers we construct
+ * a zone entry and insert it into the zone hash for the rest of the
+ * DDNS code to use.
+ */
+static void
+find_zone_addrs(isc_task_t *taskp,
+		isc_event_t *eventp)
+{
+	dns_clientresevent_t *ddns_event = (dns_clientresevent_t *)eventp;
+	dhcp_ddns_ns_t *ns_cb = (dhcp_ddns_ns_t *)eventp->ev_arg;
+	dns_name_t *ns_name = NULL;
+	dns_rdataset_t *rdataset;
+	isc_result_t result;
+	dns_name_t *name;
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	dns_rdata_ns_t ns;
+	
+
+	/* the transaction is done, get rid of the tag */
+	dns_client_destroyrestrans(&ns_cb->transaction);
+
+	/* If we succeeded we try and extract the addresses, if we can
+	 * and we have enough we are done.  If we didn't succeed or
+	 * we don't have enough addresses afterwards we drop through
+	 * and try the next item on the list.
+	 */
+	if (ddns_event->result == ISC_R_SUCCESS) {
+
+		for (name = ISC_LIST_HEAD(ddns_event->answerlist);
+		     name != NULL;
+		     name = ISC_LIST_NEXT(name, link)) {
+
+			for (rdataset = ISC_LIST_HEAD(name->list);
+			     rdataset != NULL;
+			     rdataset = ISC_LIST_NEXT(rdataset, link)) {
+
+				for (result = dns_rdataset_first(rdataset);
+				     result == ISC_R_SUCCESS;
+				     result = dns_rdataset_next(rdataset)) {
+
+					/* add address to cb */
+					zone_addr_to_ns(ns_cb, rdataset);
+
+					/* We are done if we have
+					 * enough addresses
+					 */
+					if (ns_cb->num_addrs +
+					    ns_cb->num_addrs6 >= DHCP_MAXNS)
+						goto done;
+				}
+			}
+		}
+	}
+
+	/* We need more addresses.
+	 * We restart the loop we were in before.
+	 */
+
+	for (ns_name = ns_cb->ns_name;
+	     ns_name != NULL;
+	     ns_name = ISC_LIST_NEXT(ns_name, link)) {
+
+		if (ns_name == ns_cb->ns_name) {
+			/* first time through, use saved state */
+			rdataset = ns_cb->rdataset;
+		} else {
+			rdataset = ISC_LIST_HEAD(ns_name->list);
+		}
+
+		for (;
+		     rdataset != NULL;
+		     rdataset = ISC_LIST_NEXT(rdataset, link)) {
+			
+			if (rdataset->type != dns_rdatatype_ns)
+				continue;
+			dns_rdata_init(&rdata);
+
+			if (rdataset == ns_cb->rdataset) {
+				/* first time through use the saved state */
+				if (ns_cb->rdtype == dns_rdatatype_a) {
+					ns_cb->rdtype = dns_rdatatype_aaaa;
+				} else {
+					ns_cb->rdtype = dns_rdatatype_a;
+					if (dns_rdataset_next(rdataset) !=
+					    ISC_R_SUCCESS)
+						continue;
+				}
+			} else {
+				if ((!dns_rdataset_isassociated(rdataset)) ||
+				    (dns_rdataset_first(rdataset) != 
+				     ISC_R_SUCCESS))
+					continue;
+			}				
+
+			dns_rdataset_current(rdataset, &rdata);
+			if (dns_rdata_tostruct(&rdata, &ns, NULL) !=
+			    ISC_R_SUCCESS)
+				continue;
+
+			/* Save our current state */
+			ns_cb->ns_name = ns_name;
+			ns_cb->rdataset = rdataset;
+
+			/* And call out to DNS */
+			result = zone_resolve(dhcp_gbl_ctx.dnsclient, &ns.name,
+					      dns_rdataclass_in,
+					      ns_cb->rdtype,
+					      DNS_CLIENTRESOPT_NODNSSEC,
+					      dhcp_gbl_ctx.task,
+					      find_zone_addrs,
+					      (void *)ns_cb,
+					      &ns_cb->transaction);
+
+			/* do we need to clean this? */
+			dns_rdata_freestruct(&ns);
+
+			if (result == ISC_R_SUCCESS)
+				/* we have started the next step, cleanup
+				 * the structures associated with this call
+				 * but leave the cb for the next round
+				 */
+				goto cleanup;
+
+			log_error("find_zone_addrs: unable to continue "
+				  "resolve: %s %s",
+				  ns_cb->zname,
+				  isc_result_totext(result));
+
+			/* The call to start a resolve transaction failed,
+			 * should we try to continue with any other names?
+			 * For now let's not, but let's use whatever we
+			 * may already have.
+			 */
+			goto done;
+		}
+	}
+
+ done:
+	/* we've either gotten our max number of addresses or
+	 * run out of nameservers to try.  Convert the cb into
+	 * a zone and insert it into the zone hash.  Then
+	 * we need to clean up the saved state.
+	 */
+	if ((ns_cb->num_addrs != 0) ||
+	    (ns_cb->num_addrs6 != 0))
+		cache_found_zone(ns_cb);
+
+	dns_client_freeresanswer(dhcp_gbl_ctx.dnsclient,
+				 &ns_cb->eventp->answerlist);
+	isc_event_free((isc_event_t **)&ns_cb->eventp);
+
+	remove_from_ns_queue(ns_cb);
+	data_string_forget(&ns_cb->oname, MDL);
+	dfree(ns_cb, MDL);
+
+ cleanup:
+	/* cleanup any of the new state information */
+
+	dns_client_freeresanswer(dhcp_gbl_ctx.dnsclient,
+				 &ddns_event->answerlist);
+	isc_event_free(&eventp);
+
+	return;
+	 
+}
+
+/*
+ * Routine to continue the process of finding a nameserver via the DNS
+ * This is routine is called when we are still trying to get a list
+ * of nameservers to process.
+ */
+ 
+static void
+find_zone_ns(isc_task_t *taskp,
+	     isc_event_t *eventp)
+{
+	dns_clientresevent_t *ddns_event = (dns_clientresevent_t *)eventp;
+	dhcp_ddns_ns_t *ns_cb = (dhcp_ddns_ns_t *)eventp->ev_arg;
+	dns_fixedname_t zname0;
+	dns_name_t *zname = NULL, *ns_name = NULL;
+	dns_rdataset_t *rdataset;
+	isc_result_t result;
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	dns_rdata_ns_t ns;
+
+	/* the transaction is done, get rid of the tag */
+	dns_client_destroyrestrans(&ns_cb->transaction);
+
+	if (ddns_event->result != ISC_R_SUCCESS) {
+		/* We didn't find any nameservers, try again */
+
+		/* Remove a label and continue */
+		ns_cb->zname = strchr(ns_cb->zname, '.');
+		if ((ns_cb->zname == NULL) ||
+		    (ns_cb->zname[1] == 0)) {
+			/* No more labels, all done */
+			goto cleanup;
+		}
+		ns_cb->zname++;
+
+		/* Create a DNS version of the zone name and call the
+		 * resolver code */
+		if (((result = dhcp_isc_name((unsigned char *)ns_cb->zname,
+					     &zname0, &zname))
+		     != ISC_R_SUCCESS) ||
+		    ((result = zone_resolve(dhcp_gbl_ctx.dnsclient,
+					    zname, dns_rdataclass_in,
+					    dns_rdatatype_ns,
+					    DNS_CLIENTRESOPT_NODNSSEC,
+					    dhcp_gbl_ctx.task,
+					    find_zone_ns,
+					    (void *)ns_cb,
+					    &ns_cb->transaction))
+		     != ISC_R_SUCCESS)) {
+			log_error("find_zone_ns: Unable to build "
+				  "name or start resolve: %s %s",
+				  ns_cb->zname,
+				  isc_result_totext(result));
+			goto cleanup;
+		}
+		
+		/* we have successfully started the next iteration
+		 * of this step, clean up from the call and continue */
+                dns_client_freeresanswer(dhcp_gbl_ctx.dnsclient,
+                                         &ddns_event->answerlist);
+		isc_event_free(&eventp);
+		return;
+	}
+
+	/* We did get a set of nameservers, save the information and
+	 * start trying to get addresses
+	 */
+	ns_cb->eventp = ddns_event;
+	for (ns_name = ISC_LIST_HEAD(ddns_event->answerlist);
+	     ns_name != NULL;
+	     ns_name = ISC_LIST_NEXT(ns_name, link)) {
+
+		for (rdataset = ISC_LIST_HEAD(ns_name->list);
+		     rdataset != NULL;
+		     rdataset = ISC_LIST_NEXT(rdataset, link)) {
+
+			if (rdataset->type != dns_rdatatype_ns)
+				continue;
+
+			if ((!dns_rdataset_isassociated(rdataset)) ||
+			    (dns_rdataset_first(rdataset) != 
+			     ISC_R_SUCCESS))
+				continue;
+
+			dns_rdataset_current(rdataset, &rdata);
+			if (dns_rdata_tostruct(&rdata, &ns, NULL) !=
+			    ISC_R_SUCCESS)
+				continue;
+
+			/* Save our current state */
+			ns_cb->ns_name = ns_name;
+			ns_cb->rdataset = rdataset;
+
+			/* And call out to DNS */
+			result = zone_resolve(dhcp_gbl_ctx.dnsclient, &ns.name,
+					      dns_rdataclass_in,
+					      ns_cb->rdtype,
+					      DNS_CLIENTRESOPT_NODNSSEC,
+					      dhcp_gbl_ctx.task,
+					      find_zone_addrs,
+					      (void *)ns_cb,
+					      &ns_cb->transaction);
+
+			/* do we need to clean this? */
+			dns_rdata_freestruct(&ns);
+
+			if (result == ISC_R_SUCCESS)
+				/* We have successfully started the next step
+				 * we don't cleanup the eventp block as we are
+				 * still using it.
+				 */
+				return;
+
+			log_error("find_zone_ns: unable to continue "
+				  "resolve: %s %s",
+				  ns_cb->zname,
+				  isc_result_totext(result));
+
+			/* The call to start a resolve transaction failed,
+			 * should we try to continue with any other names?
+			 * For now let's not
+			 */
+			goto cleanup;
+		}
+	}
+
+ cleanup:
+	/* When we add a queue to manage the DDNS
+	 * requests we will need to remove any that
+	 * were waiting for this resolution */
+
+	dns_client_freeresanswer(dhcp_gbl_ctx.dnsclient,
+				 &ddns_event->answerlist);
+	isc_event_free(&eventp);
+
+	remove_from_ns_queue(ns_cb);
+
+	data_string_forget(&ns_cb->oname, MDL);
+	dfree(ns_cb, MDL);
+	return;
+	
+}
+
+/*
+ * Start the process of finding nameservers via the DNS because
+ * we don't have a zone entry already.
+ * We construct a control block and fill in the DDNS name.  As
+ * the process continues we shall move the zname pointer to
+ * indicate which labels we are still using.  The rest of
+ * the control block will be filled in as we continue processing.
+ */
+static isc_result_t
+find_zone_start(dhcp_ddns_cb_t *ddns_cb, int direction) 
+{
+	isc_result_t status = ISC_R_NOTFOUND;
+	dhcp_ddns_ns_t *ns_cb;
+	dns_fixedname_t zname0;
+	dns_name_t *zname = NULL;
+
+	/*
+	 * We don't validate np as that was already done in find_cached_zone()
+	 */
+
+	/* Allocate the control block for this request */
+	ns_cb = dmalloc(sizeof(*ns_cb), MDL);
+	if (ns_cb == NULL) {
+		log_error("find_zone_start: unable to allocate cb");
+		return(ISC_R_FAILURE);
+	}
+	ns_cb->rdtype = dns_rdatatype_a;
+
+	/* Copy the data string so the NS lookup is independent of the DDNS */
+	if (direction == FIND_FORWARD) {
+		data_string_copy(&ns_cb->oname,  &ddns_cb->fwd_name, MDL);
+	} else {
+		data_string_copy(&ns_cb->oname,  &ddns_cb->rev_name, MDL);
+	}
+	ns_cb->zname = (char *)ns_cb->oname.data;
+
+	/*
+	 * Check the dns_outstanding_ns queue to see if we are
+	 * already processing something that would cover this name
+	 */
+	if (find_in_ns_queue(ns_cb) == ISC_R_SUCCESS) {
+		data_string_forget(&ns_cb->oname, MDL);
+		dfree(ns_cb, MDL);
+		return (ISC_R_SUCCESS);
+	}
+
+	/* Create a DNS version of the zone name and call the
+	 * resolver code */
+	if (((status = dhcp_isc_name((unsigned char *)ns_cb->zname,
+				     &zname0, &zname))
+	     != ISC_R_SUCCESS) ||
+	    ((status = zone_resolve(dhcp_gbl_ctx.dnsclient,
+				    zname, dns_rdataclass_in,
+				    dns_rdatatype_ns,
+				    DNS_CLIENTRESOPT_NODNSSEC,
+				    dhcp_gbl_ctx.task,
+				    find_zone_ns,
+				    (void *)ns_cb,
+				    &ns_cb->transaction))
+	     != ISC_R_SUCCESS)) {
+		log_error("find_zone_start: Unable to build "
+			  "name or start resolve: %s %s",
+			  ns_cb->zname,
+			  isc_result_totext(status));
+
+		/* We failed to start the process, clean up */
+		data_string_forget(&ns_cb->oname, MDL);
+		dfree(ns_cb, MDL);
+	} else {
+		/* We started the process, attach the control block
+		 * to the queue */
+		add_to_ns_queue(ns_cb);
+	}
+
+	return (status);
+}
+#endif
+
 isc_result_t
 find_cached_zone(dhcp_ddns_cb_t *ddns_cb, int direction) 
 {
@@ -696,10 +1278,13 @@ find_cached_zone(dhcp_ddns_cb_t *ddns_cb, int direction)
 	if (status != ISC_R_SUCCESS)
 		return (status);
 
-	/* Make sure the zone is valid. */
-	if (zone->timeout && zone->timeout < cur_time) {
+	/* Make sure the zone is valid, we've already gotten
+	 * rid of expired dynamic zones.  Check to see if
+	 * we repudiated this zone.  If so give up.
+	 */
+	if ((zone->flags & DNS_ZONE_INACTIVE) != 0) {
 		dns_zone_dereference(&zone, MDL);
-		return (ISC_R_CANCELED);
+		return (ISC_R_FAILURE);
 	}
 
 	/* Make sure the zone name will fit. */
@@ -812,61 +1397,215 @@ void forget_zone (struct dns_zone **zone)
 
 void repudiate_zone (struct dns_zone **zone)
 {
-	/* XXX Currently we're not differentiating between a cached
-	   XXX zone and a zone that's been repudiated, which means
-	   XXX that if we reap cached zones, we blow away repudiated
-	   XXX zones.   This isn't a big problem since we're not yet
-	   XXX caching zones... :'} */
-
 	/* verify that we have a pointer at least */
 	if ((zone == NULL) || (*zone == NULL)) {
 		log_info("Null argument to repudiate zone");
 		return;
 	}
 
-	(*zone) -> timeout = cur_time - 1;
-	dns_zone_dereference (zone, MDL);
+	(*zone)->flags |= DNS_ZONE_INACTIVE;
+	dns_zone_dereference(zone, MDL);
 }
 
-/* Have to use TXT records for now. */
-#define T_DHCID T_TXT
-
-int get_dhcid (struct data_string *id,
-	       int type, const u_int8_t *data, unsigned len)
+#if defined (DNS_ZONE_LOOKUP)
+void cache_found_zone(dhcp_ddns_ns_t *ns_cb)
 {
+	struct dns_zone *zone = NULL;
+	int len, remove_zone = 0;
+
+	/* See if there's already such a zone. */
+	if (dns_zone_lookup(&zone, ns_cb->zname) == ISC_R_SUCCESS) {
+		/* If it's not a dynamic zone, leave it alone. */
+		if (zone->timeout == 0)
+			return;
+
+		/* Remove any old addresses in case they've changed */
+		if (zone->primary)
+			option_cache_dereference(&zone->primary, MDL);
+		if (zone->primary6)
+			option_cache_dereference(&zone->primary6, MDL);
+
+		/* Set the flag to remove the zone from the hash if
+		   we have problems */
+		remove_zone = 1;
+	} else if (dns_zone_allocate(&zone, MDL) == 0) {
+		return;
+	} else {
+		/* We've just allocated the zone, now we need
+		 * to allocate space for the name and addresses
+		 */
+
+		/* allocate space for the name */
+		len = strlen(ns_cb->zname);
+		zone->name = dmalloc(len + 2, MDL);
+		if (zone->name == NULL) {
+			goto cleanup;
+		}
+
+		/* Copy the name and add a trailing '.' if necessary */
+		strcpy(zone->name, ns_cb->zname);
+		if (zone->name[len-1] != '.') {
+			zone->name[len] = '.';
+			zone->name[len+1] = 0;
+		}
+	}
+
+	zone->timeout = cur_time + ns_cb->ttl;
+
+	if (ns_cb->num_addrs != 0) {
+		len = ns_cb->num_addrs * sizeof(struct in_addr);
+		if ((!option_cache_allocate(&zone->primary, MDL)) ||
+		    (!buffer_allocate(&zone->primary->data.buffer,
+				      len, MDL))) {
+			if (remove_zone == 1)
+				remove_dns_zone(zone);
+			goto cleanup;
+		}
+		memcpy(zone->primary->data.buffer->data, ns_cb->addrs, len);
+		zone->primary->data.data = 
+			&zone->primary->data.buffer->data[0];
+		zone->primary->data.len = len;
+	}
+	if (ns_cb->num_addrs6 != 0) {
+		len = ns_cb->num_addrs6 * sizeof(struct in6_addr);
+		if ((!option_cache_allocate(&zone->primary6, MDL)) ||
+		    (!buffer_allocate(&zone->primary6->data.buffer,
+				      len, MDL))) {
+			if (remove_zone == 1)
+				remove_dns_zone(zone);
+			goto cleanup;
+		}
+		memcpy(zone->primary6->data.buffer->data, ns_cb->addrs6, len);
+		zone->primary6->data.data = 
+			&zone->primary6->data.buffer->data[0];
+		zone->primary6->data.len = len;
+	}
+
+	enter_dns_zone(zone);
+
+ cleanup:
+	dns_zone_dereference(&zone, MDL);
+	return;
+}
+#endif
+
+/*!
+ * \brief Create an id for a client
+ *
+ * This function is used to create an id for a client to use with DDNS
+ * This version of the function is for the standard style, RFC 4701
+ *
+ * This function takes information from the type and data fields and
+ * mangles it into a dhcid string which it places in ddns_cb.  It also
+ * sets a field in ddns_cb to specify the class that should be used
+ * when sending the dhcid, in this case it is a DHCID record so we use
+ * dns_rdatatype_dhcid
+ *
+ * The DHCID we construct is:
+ *  2 bytes - identifier type (see 4701 and IANA)
+ *  1 byte  - digest type, currently only SHA256 (1)
+ *  n bytes - digest, length depends on digest type, currently 32 for
+ *            SHA256
+ *
+ * What we base the digest on is up to the calling code for an id type of
+ * 0 - 1 octet htype followed by hlen octets of chaddr from v4 client request
+ * 1 - data octets from a dhcpv4 client's client identifier option
+ * 2 - the client DUID from a v4 or v6 client's client id option
+ * This identifier is concatenated with the fqdn and the result is digested.
+ */
+static int get_std_dhcid(dhcp_ddns_cb_t *ddns_cb,
+		  int type,
+		  const u_int8_t *identifier,
+		  unsigned id_len)
+{
+	struct data_string *id = &ddns_cb->dhcid;
+	isc_sha256_t sha256;
+	unsigned char buf[ISC_SHA256_DIGESTLENGTH];
+	unsigned char fwd_buf[256];
+	unsigned fwd_buflen = 0;
+
+	/* Types can only be 0..(2^16)-1. */
+	if (type < 0 || type > 65535)
+		return (0);
+
+	/* We need to convert the fwd name to wire representation */
+	if (MRns_name_pton((char *)ddns_cb->fwd_name.data, fwd_buf, 256) == -1)
+		return (0);
+	while(fwd_buf[fwd_buflen] != 0) {
+		fwd_buflen += fwd_buf[fwd_buflen] + 1;
+	}
+	fwd_buflen++;
+
+	if (!buffer_allocate(&id->buffer,
+			     ISC_SHA256_DIGESTLENGTH + 2 + 1,
+			     MDL))
+		return (0);
+	id->data = id->buffer->data;
+
+	/* The two first bytes contain the type identifier. */
+	putUShort(id->buffer->data, (unsigned)type);
+
+	/* The next is the digest type, SHA-256 is 1 */
+	putUChar(id->buffer->data + 2, 1u);
+
+	/* Computing the digest */
+	isc_sha256_init(&sha256);
+	isc_sha256_update(&sha256, identifier, id_len);
+	isc_sha256_update(&sha256, fwd_buf, fwd_buflen);
+	isc_sha256_final(buf, &sha256);
+
+	memcpy(id->buffer->data + 3, &buf, ISC_SHA256_DIGESTLENGTH);
+
+	id->len = ISC_SHA256_DIGESTLENGTH + 2 + 1;
+
+	return (1);
+}
+
+/*!
+ *
+ * \brief Create an id for a client
+ *
+ * This function is used to create an id for a client to use with DDNS
+ * This version of the function is for the interim style.  It is retained
+ * to allow users to continue using the interim style but they should
+ * switch to the standard style (which uses get_std_dhcid) for better
+ * interoperability.  
+ *
+ * This function takes information from the type and data fields and
+ * mangles it into a dhcid string which it places in ddns_cb.  It also
+ * sets a field in ddns_cb to specify the class that should be used
+ * when sending the dhcid, in this case it is a txt record so we use
+ * dns_rdata_type_txt
+ *
+ * NOTE WELL: this function has issues with how it calculates the
+ * dhcid, they can't be changed now as that would break the records
+ * already in use.
+ */
+
+static int get_int_dhcid (dhcp_ddns_cb_t *ddns_cb,
+		   int type,
+		   const u_int8_t *data,
+		   unsigned len)
+{
+	struct data_string *id = &ddns_cb->dhcid;
 	unsigned char buf[ISC_MD5_DIGESTLENGTH];
 	isc_md5_t md5;
 	int i;
 
 	/* Types can only be 0..(2^16)-1. */
 	if (type < 0 || type > 65535)
-		return 0;
+		return (0);
 
 	/*
 	 * Hexadecimal MD5 digest plus two byte type, NUL,
 	 * and one byte for length for dns.
 	 */
-	if (!buffer_allocate (&id -> buffer,
-			      (ISC_MD5_DIGESTLENGTH * 2) + 4, MDL))
-		return 0;
-	id -> data = id -> buffer -> data;
+	if (!buffer_allocate(&id -> buffer,
+			     (ISC_MD5_DIGESTLENGTH * 2) + 4, MDL))
+		return (0);
+	id->data = id->buffer->data;
 
 	/*
-	 * DHCP clients and servers should use the following forms of client
-	 * identification, starting with the most preferable, and finishing
-	 * with the least preferable.  If the client does not send any of these
-	 * forms of identification, the DHCP/DDNS interaction is not defined by
-	 * this specification.  The most preferable form of identification is
-	 * the Globally Unique Identifier Option [TBD].  Next is the DHCP
-	 * Client Identifier option.  Last is the client's link-layer address,
-	 * as conveyed in its DHCPREQUEST message.  Implementors should note
-	 * that the link-layer address cannot be used if there are no
-	 * significant bytes in the chaddr field of the DHCP client's request,
-	 * because this does not constitute a unique identifier.
-	 *   -- "Interaction between DHCP and DNS"
-	 *      <draft-ietf-dhc-dhcp-dns-12.txt>
-	 *      M. Stapp, Y. Rekhter
-	 *
 	 * We put the length into the first byte to turn 
 	 * this into a dns text string.  This avoid needing to
 	 * copy the string to add the byte later.
@@ -898,7 +1637,18 @@ int get_dhcid (struct data_string *id,
 	id->buffer->data[id->len] = 0;
 	id->terminated = 1;
 
-	return 1;
+	return (1);
+}
+
+int get_dhcid(dhcp_ddns_cb_t *ddns_cb,
+	      int type,
+	      const u_int8_t *identifier,
+	      unsigned id_len)
+{
+	if (ddns_cb->dhcid_class == dns_rdatatype_dhcid)
+		return get_std_dhcid(ddns_cb, type, identifier, id_len);
+	else 
+		return get_int_dhcid(ddns_cb, type, identifier, id_len);
 }
 
 /*
@@ -1020,12 +1770,12 @@ make_dns_dataset(dns_rdataclass_t  dataclass,
  * For the server the first step will have a request of:
  * The name is not in use
  * Add an A RR
- * Add a DHCID RR (currently txt)
+ * Add a DHCID RR
  *
  * For the client the first step will have a request of:
  * The A RR does not exist
  * Add an A RR
- * Add a DHCID RR (currently txt)
+ * Add a DHCID RR
  */
 
 static isc_result_t
@@ -1057,7 +1807,7 @@ ddns_modify_fwd_add1(dhcp_ddns_cb_t   *ddns_cb,
 	/* Construct the update list */
 	/* Add the A RR */
 	result = make_dns_dataset(dns_rdataclass_in, ddns_cb->address_type,
-				  dataspace, 
+				  dataspace,
 				  (unsigned char *)ddns_cb->address.iabuf,
 				  ddns_cb->address.len, ddns_cb->ttl);
 	if (result != ISC_R_SUCCESS) {
@@ -1067,7 +1817,7 @@ ddns_modify_fwd_add1(dhcp_ddns_cb_t   *ddns_cb,
 	dataspace++;
 
 	/* Add the DHCID RR */
-	result = make_dns_dataset(dns_rdataclass_in, dns_rdatatype_txt,
+	result = make_dns_dataset(dns_rdataclass_in, ddns_cb->dhcid_class,
 				  dataspace, 
 				  (unsigned char *)ddns_cb->dhcid.data,
 				  ddns_cb->dhcid.len, ddns_cb->ttl);
@@ -1113,7 +1863,7 @@ ddns_modify_fwd_add2(dhcp_ddns_cb_t   *ddns_cb,
 		     dns_name_t       *pname,
 		     dns_name_t       *uname)
 {
-	isc_result_t result;
+	isc_result_t result = ISC_R_SUCCESS;
 
 	/*
 	 * If we are doing conflict resolution (unset) we use a prereq list.
@@ -1122,7 +1872,7 @@ ddns_modify_fwd_add2(dhcp_ddns_cb_t   *ddns_cb,
 	if ((ddns_cb->flags & DDNS_CONFLICT_OVERRIDE) == 0) {
 		/* Construct the prereq list */
 		/* The DHCID RR exists and matches the client identity */
-		result = make_dns_dataset(dns_rdataclass_in, dns_rdatatype_txt,
+		result = make_dns_dataset(dns_rdataclass_in, ddns_cb->dhcid_class,
 					  dataspace, 
 					  (unsigned char *)ddns_cb->dhcid.data,
 					  ddns_cb->dhcid.len, 0);
@@ -1135,7 +1885,7 @@ ddns_modify_fwd_add2(dhcp_ddns_cb_t   *ddns_cb,
 		/* Start constructing the update list.
 		 * Conflict detection override: delete DHCID RRs */
 		result = make_dns_dataset(dns_rdataclass_any,
-					  dns_rdatatype_txt,
+					  ddns_cb->dhcid_class,
 					  dataspace, NULL, 0, 0);
 		if (result != ISC_R_SUCCESS) {
 			return(result);
@@ -1144,7 +1894,7 @@ ddns_modify_fwd_add2(dhcp_ddns_cb_t   *ddns_cb,
 		dataspace++;
 
 		/* Add current DHCID RR */
-		result = make_dns_dataset(dns_rdataclass_in, dns_rdatatype_txt,
+		result = make_dns_dataset(dns_rdataclass_in, ddns_cb->dhcid_class,
 					  dataspace, 
 					  (unsigned char *)ddns_cb->dhcid.data,
 					  ddns_cb->dhcid.len, ddns_cb->ttl);
@@ -1206,11 +1956,11 @@ ddns_modify_fwd_rem1(dhcp_ddns_cb_t   *ddns_cb,
 		     dns_name_t       *pname,
 		     dns_name_t       *uname)
 {
-	isc_result_t result;
+	isc_result_t result = ISC_R_SUCCESS;
 
 	/* Consruct the prereq list */
 	/* The DHCID RR exists and matches the client identity */
-	result = make_dns_dataset(dns_rdataclass_in, dns_rdatatype_txt,
+	result = make_dns_dataset(dns_rdataclass_in, ddns_cb->dhcid_class,
 				  dataspace, 
 				  (unsigned char *)ddns_cb->dhcid.data,
 				  ddns_cb->dhcid.len, 0);
@@ -1276,7 +2026,7 @@ ddns_modify_fwd_rem2(dhcp_ddns_cb_t   *ddns_cb,
 
 	/* Construct the update list */
 	/* Delete DHCID RR */
-	result = make_dns_dataset(dns_rdataclass_none, dns_rdatatype_txt,
+	result = make_dns_dataset(dns_rdataclass_none, ddns_cb->dhcid_class,
 				  dataspace,
 				  (unsigned char *)ddns_cb->dhcid.data,
 				  ddns_cb->dhcid.len, 0);
@@ -1427,6 +2177,28 @@ ddns_modify_fwd(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 
 	if (ddns_cb->zone == NULL) {
 		result = find_cached_zone(ddns_cb, FIND_FORWARD);
+#if defined (DNS_ZONE_LOOKUP)
+		if (result == ISC_R_NOTFOUND) {
+			/*
+			 * We didn't find a cached zone, see if we can
+			 * can find a nameserver and create a zone.
+			 */
+			if (find_zone_start(ddns_cb, FIND_FORWARD)
+			    == ISC_R_SUCCESS) {
+				/*
+				 * We have started the process to find a zone
+				 * queue the ddns_cb for processing after we
+				 * create the zone
+				 */
+				/* sar - not yet implemented, currently we just
+				 * arrange for things to get cleaned up
+				 */
+				goto cleanup;
+			}
+		}
+#endif
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
 	}
 
 	/*
@@ -1599,6 +2371,30 @@ ddns_modify_ptr(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 	 * have a pre-existing zone.
 	 */
 	result = find_cached_zone(ddns_cb, FIND_REVERSE);
+
+#if defined (DNS_ZONE_LOOKUP)
+	if (result == ISC_R_NOTFOUND) {
+		/*
+		 * We didn't find a cached zone, see if we can
+		 * can find a nameserver and create a zone.
+		 */
+		if (find_zone_start(ddns_cb, FIND_REVERSE) == ISC_R_SUCCESS) {
+			/*
+			 * We have started the process to find a zone
+			 * queue the ddns_cb for processing after we
+			 * create the zone
+			 */
+			/* sar - not yet implemented, currently we just
+			 * arrange for things to get cleaned up
+			 */
+			goto cleanup;
+		}
+	}
+#endif
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+
+
 	if ((result == ISC_R_SUCCESS) &&
 	    !(ISC_LIST_EMPTY(ddns_cb->zone_server_list))) {
 		/* Set up the zone name for use by DNS */

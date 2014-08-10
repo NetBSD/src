@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.9 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: emac3.c,v 1.9.2.1 2014/08/10 06:54:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,14 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.9 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.9.2.1 2014/08/10 06:54:04 tls Exp $");
 
 #include "debug_playstation2.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <sys/device.h>
 #include <sys/socket.h>
+#include <sys/pmf.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -62,7 +64,7 @@ int	emac3_debug = 0;
 		printf("%s: " fmt, __func__ , ##args) 
 #define	DPRINTFN(n, arg)						\
 	if (emac3_debug > (n))						\
-n		printf("%s: " fmt, __func__ , ##args) 
+		printf("%s: " fmt, __func__ , ##args) 
 #else
 #define STATIC			static
 #define	DPRINTF(arg...)		((void)0)
@@ -151,14 +153,14 @@ emac3_reset(struct emac3_softc *sc)
 }
 
 void
-emac3_enable()
+emac3_enable(void)
 {
 
 	_emac3_reg_write_4(EMAC3_MR0, MR0_TXE | MR0_RXE);
 }
 
 void
-emac3_disable()
+emac3_disable(void)
 {
 	int retry = 10000;
 
@@ -175,21 +177,21 @@ emac3_disable()
 }
 
 void
-emac3_intr_enable()
+emac3_intr_enable(void)
 {
 
 	_emac3_reg_write_4(EMAC3_ISER, ~0);
 }
 
 void
-emac3_intr_disable()
+emac3_intr_disable(void)
 {
 
 	_emac3_reg_write_4(EMAC3_ISER, 0);
 }
 
 void
-emac3_intr_clear()
+emac3_intr_clear(void)
 {
 
 	_emac3_reg_write_4(EMAC3_ISR, _emac3_reg_read_4(EMAC3_ISR));
@@ -207,14 +209,14 @@ emac3_intr(void *arg)
 }
 
 void
-emac3_tx_kick()
+emac3_tx_kick(void)
 {
 	
 	_emac3_reg_write_4(EMAC3_TMR0, TMR0_GNP0);
 }
 
 int
-emac3_tx_done()
+emac3_tx_done(void)
 {
 
 	return (_emac3_reg_read_4(EMAC3_TMR0) & TMR0_GNP0);
@@ -256,7 +258,7 @@ allmulti:
 }
 
 int
-emac3_soft_reset()
+emac3_soft_reset(void)
 {
 	int retry = 10000;
 
@@ -378,7 +380,7 @@ emac3_phy_statchg(struct device *dev)
 }
 
 int
-emac3_phy_ready()
+emac3_phy_ready(void)
 {
 	int retry = 10000;
 

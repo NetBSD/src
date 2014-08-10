@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.24 2013/11/17 14:34:11 alnsn Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2014/08/10 06:53:53 tls Exp $
 
 INCSDIR= /usr/include/bebox
 
 INCS=   bootinfo.h \
 	disklabel.h \
 	intr.h \
-	sljitarch.h \
+	sljit_machdep.h \
 	spkr.h \
 	vmparam.h
 

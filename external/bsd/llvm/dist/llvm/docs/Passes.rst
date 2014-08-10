@@ -302,15 +302,6 @@ standard error in a human-readable form.
 This pass, only available in ``opt``, printsthe SCCs of each function CFG to
 standard error in a human-readable fom.
 
-``-print-dbginfo``: Print debug info in human readable form
------------------------------------------------------------
-
-Pass that prints instructions, and associated debug info:
-
-#. source/line/col information
-#. original variable name
-#. original type name
-
 ``-print-dom-info``: Dominator Info Printer
 -------------------------------------------
 
@@ -549,6 +540,8 @@ instructions that are obviously dead.
 A trivial dead store elimination that only considers basic-block local
 redundant stores.
 
+.. _passes-functionattrs:
+
 ``-functionattrs``: Deduce function attributes
 ----------------------------------------------
 
@@ -657,7 +650,7 @@ program, and is used for a wide variety of program transformations.
 ------------------------------------------------
 
 Combine instructions to form fewer, simple instructions.  This pass does not
-modify the CFG This pass is where algebraic simplification happens.
+modify the CFG. This pass is where algebraic simplification happens.
 
 This pass combines things like:
 
@@ -689,6 +682,13 @@ program:
 #. Multiplies with a constant power-of-two argument are transformed into
    shifts.
 #. … etc.
+
+This pass can also simplify calls to specific well-known function calls (e.g.
+runtime library functions).  For example, a call ``exit(3)`` that occurs within
+the ``main()`` function can be transformed into simply ``return 3``. Whether or
+not library calls are simplified is controlled by the
+:ref:`-functionattrs <passes-functionattrs>` pass and LLVM's knowledge of
+library calls on different targets.
 
 ``-internalize``: Internalize Global Symbols
 --------------------------------------------
@@ -893,33 +893,14 @@ this would require knowledge of the entire call graph of the program including
 any libraries which may not be available in bitcode form); it simply lowers
 every atomic intrinsic.
 
-``-lowerinvoke``: Lower invoke and unwind, for unwindless code generators
--------------------------------------------------------------------------
+``-lowerinvoke``: Lower invokes to calls, for unwindless code generators
+------------------------------------------------------------------------
 
 This transformation is designed for use by code generators which do not yet
-support stack unwinding.  This pass supports two models of exception handling
-lowering, the "cheap" support and the "expensive" support.
-
-"Cheap" exception handling support gives the program the ability to execute any
-program which does not "throw an exception", by turning "``invoke``"
-instructions into calls and by turning "``unwind``" instructions into calls to
-``abort()``.  If the program does dynamically use the "``unwind``" instruction,
-the program will print a message then abort.
-
-"Expensive" exception handling support gives the full exception handling
-support to the program at the cost of making the "``invoke``" instruction
-really expensive.  It basically inserts ``setjmp``/``longjmp`` calls to emulate
-the exception handling as necessary.
-
-Because the "expensive" support slows down programs a lot, and EH is only used
-for a subset of the programs, it must be specifically enabled by the
-``-enable-correct-eh-support`` option.
-
-Note that after this pass runs the CFG is not entirely accurate (exceptional
-control flow edges are not correct anymore) so only very simple things should
-be done after the ``lowerinvoke`` pass has run (like generation of native
-code).  This should not be used as a general purpose "my LLVM-to-LLVM pass
-doesn't support the ``invoke`` instruction yet" lowering pass.
+support stack unwinding.  This pass converts ``invoke`` instructions to
+``call`` instructions, so that any exception-handling ``landingpad`` blocks
+become dead code (which can be removed by running the ``-simplifycfg`` pass
+afterwards).
 
 ``-lowerswitch``: Lower ``SwitchInst``\ s to branches
 -----------------------------------------------------
@@ -1038,14 +1019,6 @@ as:
 
 Note that this pass has a habit of making definitions be dead.  It is a good
 idea to run a :ref:`DCE <passes-dce>` pass sometime after running this pass.
-
-``-simplify-libcalls``: Simplify well-known library calls
----------------------------------------------------------
-
-Applies a variety of small optimizations for calls to specific well-known
-function calls (e.g. runtime library functions).  For example, a call
-``exit(3)`` that occurs within the ``main()`` function can be transformed into
-simply ``return 3``.
 
 .. _passes-simplifycfg:
 

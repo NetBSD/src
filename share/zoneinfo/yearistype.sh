@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: yearistype.sh,v 1.7 2012/07/22 10:40:29 apb Exp $
+#	$NetBSD: yearistype.sh,v 1.7.8.1 2014/08/10 06:53:36 tls Exp $
 #
 
 : 'This file is in the public domain, so clarified as of'
@@ -8,7 +8,7 @@
 
 case $#-$1 in
 	2-|2-0*|2-*[!0-9]*)
-		echo "$0: wild year - $1" >&2
+		echo "$0: wild year: $1" >&2
 		exit 1 ;;
 esac
 
@@ -34,7 +34,7 @@ case $#-$2 in
 			*)				exit 1 ;;
 		esac ;;
 	2-*)
-		echo "$0: wild type - $2" >&2 ;;
+		echo "$0: wild type: $2" >&2 ;;
 esac
 
 echo "$0: usage is $0 year even|odd|uspres|nonpres|nonuspres" >&2

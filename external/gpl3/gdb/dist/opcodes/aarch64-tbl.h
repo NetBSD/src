@@ -1782,13 +1782,13 @@ struct aarch64_opcode aarch64_opcode_table[] =
   /* Conditional select.  */
   {"csel", 0x1a800000, 0x7fe00c00, condsel, 0, CORE, OP4 (Rd, Rn, Rm, COND), QL_CSEL, F_SF},
   {"csinc", 0x1a800400, 0x7fe00c00, condsel, 0, CORE, OP4 (Rd, Rn, Rm, COND), QL_CSEL, F_HAS_ALIAS | F_SF},
-  {"cinc", 0x1a800400, 0x7fe00c00, condsel, OP_CINC, CORE, OP3 (Rd, Rn, COND), QL_CSEL, F_ALIAS | F_SF | F_CONV},
-  {"cset", 0x1a9f07e0, 0x7fff0fe0, condsel, OP_CSET, CORE, OP2 (Rd, COND), QL_DST_R, F_ALIAS | F_P1 | F_SF | F_CONV},
+  {"cinc", 0x1a800400, 0x7fe00c00, condsel, OP_CINC, CORE, OP3 (Rd, Rn, COND1), QL_CSEL, F_ALIAS | F_SF | F_CONV},
+  {"cset", 0x1a9f07e0, 0x7fff0fe0, condsel, OP_CSET, CORE, OP2 (Rd, COND1), QL_DST_R, F_ALIAS | F_P1 | F_SF | F_CONV},
   {"csinv", 0x5a800000, 0x7fe00c00, condsel, 0, CORE, OP4 (Rd, Rn, Rm, COND), QL_CSEL, F_HAS_ALIAS | F_SF},
-  {"cinv", 0x5a800000, 0x7fe00c00, condsel, OP_CINV, CORE, OP3 (Rd, Rn, COND), QL_CSEL, F_ALIAS | F_SF | F_CONV},
-  {"csetm", 0x5a9f03e0, 0x7fff0fe0, condsel, OP_CSETM, CORE, OP2 (Rd, COND), QL_DST_R, F_ALIAS | F_P1 | F_SF | F_CONV},
+  {"cinv", 0x5a800000, 0x7fe00c00, condsel, OP_CINV, CORE, OP3 (Rd, Rn, COND1), QL_CSEL, F_ALIAS | F_SF | F_CONV},
+  {"csetm", 0x5a9f03e0, 0x7fff0fe0, condsel, OP_CSETM, CORE, OP2 (Rd, COND1), QL_DST_R, F_ALIAS | F_P1 | F_SF | F_CONV},
   {"csneg", 0x5a800400, 0x7fe00c00, condsel, 0, CORE, OP4 (Rd, Rn, Rm, COND), QL_CSEL, F_HAS_ALIAS | F_SF},
-  {"cneg", 0x5a800400, 0x7fe00c00, condsel, OP_CNEG, CORE, OP3 (Rd, Rn, COND), QL_CSEL, F_ALIAS | F_SF | F_CONV},
+  {"cneg", 0x5a800400, 0x7fe00c00, condsel, OP_CNEG, CORE, OP3 (Rd, Rn, COND1), QL_CSEL, F_ALIAS | F_SF | F_CONV},
   /* Crypto AES.  */
   {"aese", 0x4e284800, 0xfffffc00, cryptoaes, 0, CRYPTO, OP2 (Vd, Vn), QL_V2SAME16B, 0},
   {"aesd", 0x4e285800, 0xfffffc00, cryptoaes, 0, CRYPTO, OP2 (Vd, Vn), QL_V2SAME16B, 0},
@@ -2235,7 +2235,9 @@ struct aarch64_opcode aarch64_opcode_table[] =
     Y(IMMEDIATE, fbits, "FBITS", 0, F(FLD_scale),			\
       "the number of bits after the binary point in the fixed-point value")\
     X(IMMEDIATE, 0, 0, "IMM_MOV", 0, F(), "an immediate")		\
-    Y(NIL, cond, "COND", 0, F(), "a condition")				\
+    Y(COND, cond, "COND", 0, F(), "a condition")			\
+    Y(COND, cond, "COND1", 0, F(),					\
+      "one of the standard conditions, excluding AL and NV.")		\
     X(ADDRESS, 0, ext_imm, "ADDR_ADRP", OPD_F_SEXT, F(FLD_immhi, FLD_immlo),\
       "21-bit PC-relative address of a 4KB page")			\
     Y(ADDRESS, imm, "ADDR_PCREL14", OPD_F_SEXT | OPD_F_SHIFT_BY_2,	\

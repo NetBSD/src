@@ -1,10 +1,10 @@
-/*	$NetBSD: rww.c,v 1.1.1.3 2010/12/12 15:23:16 adam Exp $	*/
+/*	$NetBSD: rww.c,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
 /* readw.c - deal with read waiters subsystem */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.36.2.7 2010/04/13 20:23:33 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -92,7 +92,7 @@ monitor_subsys_rww_init(
 		Entry			*e;
 		
 		e = monitor_entry_stub( &ms->mss_dn, &ms->mss_ndn, &monitor_rww[i].rdn,
-			mi->mi_oc_monitorCounterObject, mi, NULL, NULL );
+			mi->mi_oc_monitorCounterObject, NULL, NULL );
 		if ( e == NULL ) {
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_subsys_rww_init: "
@@ -157,7 +157,7 @@ monitor_subsys_rww_update(
 {
 	monitor_info_t *mi = (monitor_info_t *)op->o_bd->be_private;
 	Connection	*c;
-	int		connindex;
+	ber_socket_t	connindex;
 	long		nconns, nwritewaiters, nreadwaiters;
 
 	int		i;

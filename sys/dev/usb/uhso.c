@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.13 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: uhso.c,v 1.13.2.1 2014/08/10 06:54:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.13 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.13.2.1 2014/08/10 06:54:59 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -243,6 +243,7 @@ Static const struct uhso_dev uhso_devs[] = {
     { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_ICON401,     UHSOTYPE_CONFIG },
     { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_GTM382,	     UHSOTYPE_CONFIG },
     { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_GE40X4,      UHSOTYPE_CONFIG },
+    { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_GTHSUPAM,    UHSOTYPE_CONFIG },
     { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_ICONEDGE,    UHSOTYPE_DEFAULT },
     { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_MODHSXPA,    UHSOTYPE_ICON321 },
     { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_ICON321,     UHSOTYPE_ICON321 },
@@ -388,6 +389,7 @@ const struct cdevsw uhso_cdevsw = {
 	.d_poll = uhso_tty_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 
@@ -2139,17 +2141,12 @@ uhso_ifnet_input(struct ifnet *ifp, struct mbuf **mb, uint8_t *cp, size_t cc)
 
 		bpf_mtap(ifp, m);
 
-		ifp->if_ipackets++;
-		ifp->if_ibytes += m->m_pkthdr.len;
-
-		if (IF_QFULL(&ipintrq)) {
-			IF_DROP(&ipintrq);
+		if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 			m_freem(m);
 		} else {
-			IF_ENQUEUE(&ipintrq, m);
-			schednetisr(NETISR_IP);
+			ifp->if_ipackets++;
+			ifp->if_ibytes += got;
 		}
-
 		splx(s);
 	}
 }

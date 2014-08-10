@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2013 Free Software Foundation, Inc.
+# Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ if { [skip_python_tests] } { continue }
 
 gdb_test_no_output "python exec (open ('${pyfile}').read ())" ""
 
-gdb_test "Test_Newobj_Events" "New ObjectFile Event tester registered." "Register new objfile event handler"
+gdb_test "test-objfile-events" "Object file events registered."
 
 gdb_breakpoint "main" {temporary}
 
@@ -53,7 +53,7 @@ gdb_test "run" ".*event type: new_objfile.*new objfile name.*" "New objfile noti
 
 gdb_test_no_output "set detach-on-fork off" ""
 
-gdb_test "Test_Events" "Event testers registered."
+gdb_test "test-events" "Event testers registered."
 
 gdb_breakpoint "first"
 gdb_breakpoint "first"

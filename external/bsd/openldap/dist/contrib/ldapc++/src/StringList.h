@@ -1,8 +1,8 @@
-/*	$NetBSD: StringList.h,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: StringList.h,v 1.1.1.2.24.1 2014/08/10 07:09:43 tls Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/StringList.h,v 1.7.6.1 2008/04/14 23:09:26 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

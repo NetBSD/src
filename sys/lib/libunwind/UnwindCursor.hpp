@@ -135,7 +135,6 @@ void UnwindCursor<A, R>::setInfoBasedOnIPRegister(bool isReturnAddress) {
   fInfo.handler = cieInfo.personality;
   fInfo.extra_args = prolog.spExtraArgSize;
   fInfo.unwind_info = fdeInfo.fdeStart;
-  fInfo.unwind_info_size = fdeInfo.fdeLength;
 }
 
 }; // namespace _Unwind

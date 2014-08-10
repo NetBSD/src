@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_endpt.c,v 1.1.1.1 2013/09/25 19:06:33 tron Exp $	*/
+/*	$NetBSD: postscreen_endpt.c,v 1.1.1.1.2.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -181,7 +181,7 @@ typedef struct {
 } PSC_ENDPT_LOOKUP_INFO;
 
 static const PSC_ENDPT_LOOKUP_INFO psc_endpt_lookup_info[] = {
-    DEF_PSC_UPROXY_PROTO, psc_endpt_local_lookup,
+    NOPROXY_PROTO_NAME, psc_endpt_local_lookup,
     HAPROXY_PROTO_NAME, psc_endpt_haproxy_lookup,
     0,
 };

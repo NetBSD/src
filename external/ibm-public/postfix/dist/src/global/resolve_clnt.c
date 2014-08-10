@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_clnt.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: resolve_clnt.c,v 1.1.1.1.26.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -388,8 +388,11 @@ int     main(int argc, char **argv)
 	VSTRING *buffer = vstring_alloc(1);
 
 	while (vstring_fgets_nonl(buffer, VSTREAM_IN)) {
-	    if ((addr = split_at(STR(buffer), ' ')) == 0 || *STR(buffer) == 0)
-		msg_fatal("need as input: class address");
+	    addr = split_at(STR(buffer), ' ');
+	    if (*STR(buffer) == 0)
+		msg_fatal("need as input: class [address]");
+	    if (addr == 0)
+		addr = "";
 	    resolve(STR(buffer), addr, &reply);
 	}
 	vstring_free(buffer);

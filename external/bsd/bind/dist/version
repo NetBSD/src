@@ -1,13 +1,11 @@
-# Id
-# 
 # This file must follow /bin/sh rules.  It is imported directly via
 # configure.
 #
 PRODUCT=BIND
-DESCRIPTION="(Development release)"
+DESCRIPTION=
 MAJORVER=9
 MINORVER=10
 PATCHVER=0
-RELEASETYPE=b
-RELEASEVER=1
-EXTENSIONS=nb1
+RELEASETYPE=-P
+RELEASEVER=2
+EXTENSIONS=

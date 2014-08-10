@@ -1,6 +1,6 @@
 /* Auxiliary vector support for GDB, the GNU debugger.
 
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,7 @@
 #include "gdb_assert.h"
 #include "gdbcore.h"
 #include "observer.h"
+#include "filestuff.h"
 
 #include "auxv.h"
 #include "elf/common.h"
@@ -47,8 +48,8 @@ procfs_xfer_auxv (gdb_byte *readbuf,
   int fd;
   LONGEST n;
 
-  pathname = xstrprintf ("/proc/%d/auxv", PIDGET (inferior_ptid));
-  fd = open (pathname, writebuf != NULL ? O_WRONLY : O_RDONLY);
+  pathname = xstrprintf ("/proc/%d/auxv", ptid_get_pid (inferior_ptid));
+  fd = gdb_open_cloexec (pathname, writebuf != NULL ? O_WRONLY : O_RDONLY, 0);
   xfree (pathname);
   if (fd < 0)
     return -1;

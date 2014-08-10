@@ -1,9 +1,9 @@
-/*	$NetBSD: ppolicy.c,v 1.1.1.4 2010/12/12 15:23:40 adam Exp $	*/
+/*	$NetBSD: ppolicy.c,v 1.1.1.4.24.1 2014/08/10 07:09:51 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.75.2.31 2010/06/10 17:37:40 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2010 The OpenLDAP Foundation.
+ * Copyright 2004-2014 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * All rights reserved.
@@ -589,12 +589,14 @@ static int
 check_password_quality( struct berval *cred, PassPolicy *pp, LDAPPasswordPolicyError *err, Entry *e, char **txt )
 {
 	int rc = LDAP_SUCCESS, ok = LDAP_SUCCESS;
-	char *ptr = cred->bv_val;
+	char *ptr;
 	struct berval sch;
 
 	assert( cred != NULL );
 	assert( pp != NULL );
 	assert( txt != NULL );
+
+	ptr = cred->bv_val;
 
 	*txt = NULL;
 
@@ -1163,6 +1165,11 @@ locked:
 			c.ldctl_iscritical = 1;
 			c.ldctl_oid = LDAP_CONTROL_RELAX;
 		} else {
+			/* If not forwarding, don't update opattrs and don't replicate */
+			if ( SLAP_SINGLE_SHADOW( op->o_bd )) {
+				op2.orm_no_opattrs = 1;
+				op2.o_dont_replicate = 1;
+			}
 			op2.o_bd->bd_info = (BackendInfo *)on->on_info;
 		}
 		rc = op2.o_bd->be_modify( &op2, &r2 );
@@ -1783,7 +1790,10 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 
 	if (be_isroot( op )) goto do_modify;
 
-	if (!pp.pwdAllowUserChange) {
+	/* NOTE: according to draft-behera-ldap-password-policy
+	 * pwdAllowUserChange == FALSE must only prevent pwd changes
+	 * by the user the pwd belongs to (ITS#7021) */
+	if (!pp.pwdAllowUserChange && dn_match(&op->o_req_ndn, &op->o_ndn)) {
 		rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
 		rs->sr_text = "User alteration of password is not allowed";
 		pErr = PP_passwordModNotAllowed;
@@ -1966,23 +1976,26 @@ do_modify:
 		timestamp.bv_len = sizeof(timebuf);
 		slap_timestamp( &now, &timestamp );
 
-		mods = (Modifications *) ch_calloc( sizeof( Modifications ), 1 );
-		mods->sml_desc = ad_pwdChangedTime;
+		mods = NULL;
 		if (pwmop != LDAP_MOD_DELETE) {
+			mods = (Modifications *) ch_calloc( sizeof( Modifications ), 1 );
 			mods->sml_op = LDAP_MOD_REPLACE;
 			mods->sml_numvals = 1;
 			mods->sml_values = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
 			ber_dupbv( &mods->sml_values[0], &timestamp );
 			BER_BVZERO( &mods->sml_values[1] );
 			assert( !BER_BVISNULL( &mods->sml_values[0] ) );
-
-		} else {
+		} else if (attr_find(e->e_attrs, ad_pwdChangedTime )) {
+			mods = (Modifications *) ch_calloc( sizeof( Modifications ), 1 );
 			mods->sml_op = LDAP_MOD_DELETE;
 		}
-		mods->sml_flags = SLAP_MOD_INTERNAL;
-		mods->sml_next = NULL;
-		modtail->sml_next = mods;
-		modtail = mods;
+		if (mods) {
+			mods->sml_desc = ad_pwdChangedTime;
+			mods->sml_flags = SLAP_MOD_INTERNAL;
+			mods->sml_next = NULL;
+			modtail->sml_next = mods;
+			modtail = mods;
+		}
 
 		if (attr_find(e->e_attrs, ad_pwdGraceUseTime )) {
 			mods = (Modifications *) ch_calloc( sizeof( Modifications ), 1 );
@@ -2299,6 +2312,10 @@ ppolicy_close(
 {
 	slap_overinst *on = (slap_overinst *) be->bd_info;
 	pp_info *pi = on->on_bi.bi_private;
+
+#ifdef SLAP_CONFIG_DELETE
+	overlay_unregister_control( be, LDAP_CONTROL_PASSWORDPOLICYREQUEST );
+#endif /* SLAP_CONFIG_DELETE */
 
 	/* Perhaps backover should provide bi_destroy hooks... */
 	ov_count--;

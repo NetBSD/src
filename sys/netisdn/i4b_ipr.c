@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.35 2010/04/05 07:22:50 joerg Exp $
+ *	$Id: i4b_ipr.c,v 1.35.32.1 2014/08/10 06:56:36 tls Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.35 2010/04/05 07:22:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.35.32.1 2014/08/10 06:56:36 tls Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -1074,19 +1074,10 @@ error:
 	}
 #endif /* NBPFILTER > 0  || NBPF > 0 */
 
-	if(IF_QFULL(&ipintrq))
-	{
-		NDBGL4(L4_IPRDBG, "%s: ipintrq full!", sc->sc_if.if_xname);
-
-		IF_DROP(&ipintrq);
+	if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 		sc->sc_if.if_ierrors++;
 		sc->sc_if.if_iqdrops++;
 		m_freem(m);
-	}
-	else
-	{
-		IF_ENQUEUE(&ipintrq, m);
-		schednetisr(NETISR_IP);
 	}
 }
 

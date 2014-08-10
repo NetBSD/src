@@ -102,6 +102,10 @@ SOURCE=..\aclconf.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\dnsconf.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\log.c
 # End Source File
 # Begin Source File
@@ -135,6 +139,10 @@ SOURCE=..\include\isccfg\grammar.h
 # Begin Source File
 
 SOURCE=..\include\isccfg\aclconf.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isccfg\dnsconf.h
 # End Source File
 # Begin Source File
 

@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,6 +71,19 @@ proc test_catch_signal {signame} {
 	gdb_breakpoint ${srcfile}:[gdb_get_line_number "fourth HUP"]
 	gdb_continue_to_breakpoint "fourth HUP"
 	delete_breakpoints
+
+	# Verify an internal signal used by gdb is properly caught.
+	gdb_breakpoint ${srcfile}:[gdb_get_line_number "first INT"]
+	gdb_continue_to_breakpoint "first INT"
+	set test "override SIGINT to catch"
+	gdb_test "handle SIGINT nostop print nopass" \
+	    "SIGINT.*No.*Yes.*No.*" \
+	    "$test" \
+	    "SIGINT is used by the debugger.*Are you sure you want to change it.*y or n.*" \
+	    y
+	gdb_test "catch signal SIGINT" "Catchpoint .*"
+	gdb_test "continue" "Catchpoint .* SIGINT.*"
+        
     }
 }
 

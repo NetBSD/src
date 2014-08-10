@@ -1,4 +1,4 @@
-;       $NetBSD: rumpvfs.ifspec,v 1.8 2012/11/18 18:39:23 pooka Exp $
+;       $NetBSD: rumpvfs.ifspec,v 1.8.10.1 2014/08/10 06:56:51 tls Exp $
 
 NAME|vfs
 PUBHDR|include/rump/rumpvfs_if_pub.h
@@ -25,12 +25,6 @@ int		|vp_getref	|struct vnode *
 void		|vp_rele	|struct vnode *
 
 void		|vp_interlock	|struct vnode *
-
-int		|etfs_register	|const char *, const char *, enum rump_etfs_type
-int		|etfs_register_withsize	|const char *, const char *,	\
-					 enum rump_etfs_type, uint64_t,	\
-					 uint64_t
-int		|etfs_remove	|const char *
 
 void		|freecn		|struct componentname *, int
 int		|namei		|uint32_t, uint32_t, const char *,	\

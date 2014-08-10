@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.1 2013/01/11 12:03:03 tsutsui Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.1.14.1 2014/08/10 06:53:57 tls Exp $	*/
 /*	$OpenBSD: sti_sgc.c,v 1.14 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.1 2013/01/11 12:03:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.1.14.1 2014/08/10 06:53:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,14 +41,18 @@ __KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.1 2013/01/11 12:03:03 tsutsui Exp $");
 #include <dev/ic/stivar.h>
 
 #include <hp300/dev/sgcvar.h>
+#include <hp300/dev/sti_sgcvar.h>
+#include <machine/autoconf.h>
 
-static int sticonslot;
+static int sticonslot = -1;
+static struct sti_rom sticn_rom;
+static struct sti_screen sticn_scr;
+static bus_addr_t sticn_bases[STI_REGION_MAX];
 
 static int sti_sgc_match(device_t, struct cfdata *, void *);
 static void sti_sgc_attach(device_t, device_t, void *);
 
 static int sti_sgc_probe(bus_space_tag_t, int);
-static void sti_sgc_end_attach(device_t);
 
 CFATTACH_DECL_NEW(sti_sgc, sizeof(struct sti_softc),
     sti_sgc_match, sti_sgc_attach, NULL, NULL);
@@ -73,48 +77,68 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 {
 	struct sti_softc *sc = device_private(self);
 	struct sgc_attach_args *saa = aux;
-	bus_space_tag_t iot = saa->saa_iot;
-	bus_space_handle_t ioh, romh;
-	bus_addr_t pa = (bus_addr_t)sgc_slottopa(saa->saa_slot);
+	bus_space_handle_t romh;
+	bus_addr_t base;
 	u_int romend;
 	int i;
 
-	/* XXX: temporalily map before obtain romend. */
-#define STI_ROMSIZE_SAFE	(sizeof(struct sti_dd) * 4)
-	if (bus_space_map(iot, pa, STI_ROMSIZE_SAFE, 0, &ioh)) {
-		aprint_error(": can't map ROM");
-		return;
-	}
-	romend = sti_rom_size(iot, ioh);
-	bus_space_unmap(iot, ioh, STI_ROMSIZE_SAFE);
-
 	sc->sc_dev = self;
-	sc->sc_enable_rom = NULL;
-	sc->sc_disable_rom = NULL;
 
-	if (bus_space_map(iot, pa, romend, 0, &romh)) {
-		aprint_error(": can't map ROM(2)");
-		return;
+	if (saa->saa_slot == sticonslot) {
+		sc->sc_flags |= STI_CONSOLE | STI_ATTACHED;
+		sc->sc_rom = &sticn_rom;
+		sc->sc_scr = &sticn_scr;
+		memcpy(sc->bases, sticn_bases, sizeof(sc->bases));
+
+		sti_describe(sc);
+	} else {
+		base = (bus_addr_t)sgc_slottopa(saa->saa_slot);
+		if (bus_space_map(saa->saa_iot, base, PAGE_SIZE, 0, &romh)) {
+			aprint_error(": can't map ROM");
+			return;
+		}
+		/*
+		 * Compute real PROM size
+		 */
+		romend = sti_rom_size(saa->saa_iot, romh);
+
+		bus_space_unmap(saa->saa_iot, romh, PAGE_SIZE);
+
+		if (bus_space_map(saa->saa_iot, base, romend, 0, &romh)) {
+			aprint_error(": can't map frame buffer");
+			return;
+		}
+
+		sc->bases[0] = romh;
+		for (i = 0; i < STI_REGION_MAX; i++)
+			sc->bases[i] = base;
+
+		if (sti_attach_common(sc, saa->saa_iot, saa->saa_iot, romh,
+		    STI_CODEBASE_ALT) != 0)
+			return;
 	}
-	sc->bases[0] = romh;
-	for (i = 0; i < STI_REGION_MAX; i++)
-		sc->bases[i] = pa;
-	if (saa->saa_slot == sticonslot)
-		sc->sc_flags |= STI_CONSOLE;
-	if (sti_attach_common(sc, iot, iot, romh, STI_CODEBASE_ALT) == 0)
-		config_interrupts(self, sti_sgc_end_attach);
+
+	/*
+	 * Note on 425e sti(4) framebuffer bitmap memory can be accessed at
+	 * (sgc_slottopa(saa->saa_slot) + 0x200000)
+	 * but the mmap function to map bitmap display is not provided yet.
+	 */
+
+	sti_end_attach(sc);
 }
 
 static int
 sti_sgc_probe(bus_space_tag_t iot, int slot)
 {
 	bus_space_handle_t ioh;
-	bus_addr_t pa = (bus_addr_t)sgc_slottopa(slot);
 	int devtype;
 
-	if (bus_space_map(iot, pa, PAGE_SIZE, 0, &ioh))
+	if (bus_space_map(iot, (bus_addr_t)sgc_slottopa(slot),
+	    PAGE_SIZE, 0, &ioh))
 		return 0;
+
 	devtype = bus_space_read_1(iot, ioh, 3);
+
 	bus_space_unmap(iot, ioh, PAGE_SIZE);
 
 	/*
@@ -123,16 +147,46 @@ sti_sgc_probe(bus_space_tag_t iot, int slot)
 	 * point of not even answering bus probes (checked with an
 	 * Harmony/FDDI SGC card).
 	 */
-	if (devtype != STI_DEVTYPE1 &&
-	    devtype != STI_DEVTYPE4)
+	if (devtype != STI_DEVTYPE1 && devtype != STI_DEVTYPE4)
 		return 0;
+
 	return 1;
 }
 
-static void
-sti_sgc_end_attach(device_t self)
+int
+sti_sgc_cnprobe(bus_space_tag_t bst, bus_addr_t addr, int slot)
 {
-	struct sti_softc *sc = device_private(self);
+	void *va;
+	bus_space_handle_t romh;
+	int devtype, rv = 0;
 
-	sti_end_attach(sc);
+	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &romh))
+		return 0;
+
+	va = bus_space_vaddr(bst, romh);
+	if (badaddr(va))
+		goto out;
+
+	devtype = bus_space_read_1(bst, romh, 3);
+	if (devtype == STI_DEVTYPE1 || devtype == STI_DEVTYPE4)
+		rv = 1;
+
+ out:
+	bus_space_unmap(bst, romh, PAGE_SIZE);
+	return rv;
+}
+
+void
+sti_sgc_cnattach(bus_space_tag_t bst, bus_addr_t addr, int slot)
+{
+	int i;
+
+	/* sticn_bases[0] will be fixed in sti_cnattach() */
+	for (i = 0; i < STI_REGION_MAX; i++)
+		sticn_bases[i] = addr;
+
+	sti_cnattach(&sticn_rom, &sticn_scr, bst, sticn_bases,
+	    STI_CODEBASE_ALT);
+
+	sticonslot = slot;
 }

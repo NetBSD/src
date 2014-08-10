@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.407.2.1 2014/04/07 03:37:31 tls Exp $ */
+/*	$NetBSD: wd.c,v 1.407.2.2 2014/08/10 06:54:50 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.407.2.1 2014/04/07 03:37:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.407.2.2 2014/08/10 06:54:50 tls Exp $");
 
 #include "opt_ata.h"
 
@@ -140,6 +140,7 @@ dev_type_ioctl(wdioctl);
 dev_type_strategy(wdstrategy);
 dev_type_dump(wddump);
 dev_type_size(wdsize);
+static dev_type_discard(wddiscard);
 
 const struct bdevsw wd_bdevsw = {
 	.d_open = wdopen,
@@ -148,6 +149,7 @@ const struct bdevsw wd_bdevsw = {
 	.d_ioctl = wdioctl,
 	.d_dump = wddump,
 	.d_psize = wdsize,
+	.d_discard = wddiscard,
 	.d_flag = D_DISK
 };
 
@@ -162,6 +164,7 @@ const struct cdevsw wd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = wddiscard,
 	.d_flag = D_DISK
 };
 
@@ -193,7 +196,7 @@ void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 int   wd_flushcache(struct wd_softc *, int);
-int   wd_trim(struct wd_softc *, int, struct disk_discard_range *);
+int   wd_trim(struct wd_softc *, int, daddr_t, long);
 bool  wd_shutdown(device_t, int);
 
 int   wd_getcache(struct wd_softc *, int *);
@@ -1549,20 +1552,6 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		return 0;
 	    }
 
-	case DIOCGDISCARDPARAMS: {
-		struct disk_discard_params * tp;
-
-		if (!(wd->sc_params.atap_ata_major & WDC_VER_ATA7)
-		    || !(wd->sc_params.support_dsm & ATA_SUPPORT_DSM_TRIM))
-			return ENOTTY;
-		tp = (struct disk_discard_params *)addr;
-		tp->maxsize = 0xffff; /*wd->sc_params.max_dsm_blocks*/
-		aprint_debug_dev(wd->sc_dev, "TRIM maxsize %ld\n", tp->maxsize);
-		return 0;
-	}
-	case DIOCDISCARD:
-		return wd_trim(wd, WDPART(dev), (struct disk_discard_range *)addr);
-
 	default:
 		return ENOTTY;
 	}
@@ -1570,6 +1559,47 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 #ifdef DIAGNOSTIC
 	panic("wdioctl: impossible");
 #endif
+}
+
+static int
+wddiscard(dev_t dev, off_t pos, off_t len)
+{
+	struct wd_softc *wd = device_lookup_private(&wd_cd, WDUNIT(dev));
+	daddr_t bno;
+	long size, done;
+	long maxatonce, amount;
+	int result;
+
+	if (!(wd->sc_params.atap_ata_major & WDC_VER_ATA7)
+	    || !(wd->sc_params.support_dsm & ATA_SUPPORT_DSM_TRIM)) {
+		/* not supported; ignore request */
+		ATADEBUG_PRINT(("wddiscard (unsupported)\n"), DEBUG_FUNCS);
+		return 0;
+	}
+	maxatonce = 0xffff; /*wd->sc_params.max_dsm_blocks*/
+
+	ATADEBUG_PRINT(("wddiscard\n"), DEBUG_FUNCS);
+
+	if ((wd->sc_flags & WDF_LOADED) == 0)
+		return EIO;
+
+	/* round the start up and the end down */
+	bno = (pos + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	size = ((pos + len) >> DEV_BSHIFT) - bno;
+
+	done = 0;
+	while (done < size) {
+	     amount = size - done;
+	     if (amount > maxatonce) {
+		     amount = maxatonce;
+	     }
+	     result = wd_trim(wd, WDPART(dev), bno + done, amount);
+	     if (result) {
+		     return result;
+	     }
+	     done += amount;
+	}
+	return 0;
 }
 
 #ifdef B_FORMAT
@@ -1938,11 +1968,10 @@ wd_flushcache(struct wd_softc *wd, int flags)
 }
 
 int
-wd_trim(struct wd_softc *wd, int part, struct disk_discard_range *tr)
+wd_trim(struct wd_softc *wd, int part, daddr_t bno, long size)
 {
 	struct ata_command ata_c;
 	unsigned char *req;
-	daddr_t bno = tr->bno;
 
 	if (part != RAW_PART)
 		bno += wd->sc_dk.dk_label->d_partitions[part].p_offset;;
@@ -1954,8 +1983,8 @@ wd_trim(struct wd_softc *wd, int part, struct disk_discard_range *tr)
 	req[3] = (bno >> 24) & 0xff;
 	req[4] = (bno >> 32) & 0xff;
 	req[5] = (bno >> 40) & 0xff;
-	req[6] = tr->size & 0xff;
-	req[7] = (tr->size >> 8) & 0xff;
+	req[6] = size & 0xff;
+	req[7] = (size >> 8) & 0xff;
 
 	memset(&ata_c, 0, sizeof(struct ata_command));
 	ata_c.r_command = ATA_DATA_SET_MANAGEMENT;

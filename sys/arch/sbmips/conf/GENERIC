@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.95 2013/06/30 21:38:58 rmind Exp $
+# $NetBSD: GENERIC,v 1.95.4.1 2014/08/10 06:54:07 tls Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.95 $"
+#ident 		"GENERIC-$Revision: 1.95.4.1 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -115,6 +115,10 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

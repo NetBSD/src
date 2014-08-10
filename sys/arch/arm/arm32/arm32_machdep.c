@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.102 2014/03/28 21:39:09 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.102.2.1 2014/08/10 06:53:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.102 2014/03/28 21:39:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.102.2.1 2014/08/10 06:53:50 tls Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.102 2014/03/28 21:39:09 matt Exp
 #include <sys/module.h>
 #include <sys/atomic.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -257,7 +258,6 @@ cpu_startup(void)
 {
 	vaddr_t minaddr;
 	vaddr_t maxaddr;
-	u_int loop;
 	char pbuf[9];
 
 	/*
@@ -284,10 +284,13 @@ cpu_startup(void)
 	 */
 
 	/* msgbufphys was setup during the secondary boot strap */
-	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
-		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * PAGE_SIZE,
-		    msgbufphys + loop * PAGE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, 0);
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)msgbufaddr, NULL)) {
+		for (u_int loop = 0; loop < btoc(MSGBUFSIZE); ++loop) {
+			pmap_kenter_pa((vaddr_t)msgbufaddr + loop * PAGE_SIZE,
+			    msgbufphys + loop * PAGE_SIZE,
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
+		}
+	}
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
@@ -704,17 +707,27 @@ xc_send_ipi(struct cpu_info *ci)
 
 	intr_ipi_send(ci != NULL ? ci->ci_kcpuset : NULL, IPI_XCALL);
 }
+
+void
+cpu_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	intr_ipi_send(ci != NULL ? ci->ci_kcpuset : NULL, IPI_GENERIC);
+}
+
 #endif /* MULTIPROCESSOR */
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
 {
-	if (physical_start <= pa && pa < physical_end) {
-		*vap = KERNEL_BASE + (pa - physical_start);
-		return true;
+	bool rv;
+	vaddr_t va = pmap_direct_mapped_phys(pa, &rv, 0);
+	if (rv) {
+		*vap = va;
 	}
-
-	return false;
+	return rv;
 }
 #endif

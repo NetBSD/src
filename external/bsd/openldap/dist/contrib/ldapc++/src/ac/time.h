@@ -1,9 +1,9 @@
-/*	$NetBSD: time.h,v 1.1.1.3 2010/12/12 15:18:50 adam Exp $	*/
+/*	$NetBSD: time.h,v 1.1.1.3.24.1 2014/08/10 07:09:43 tls Exp $	*/
 
 /* Generic time.h */
-/* OpenLDAP: pkg/ldap/contrib/ldapc++/src/ac/time.h,v 1.7.2.6 2010/04/13 20:22:24 kurt Exp */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2010 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2014 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted only

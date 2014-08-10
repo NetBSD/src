@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.2.2.1 2014/08/10 06:55:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,21 +30,48 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.2.2.1 2014/08/10 06:55:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
-#include <sys/kmem.h>
 #include <sys/rbtree.h>
 
 #include <linux/err.h>
 #include <linux/idr.h>
+#include <linux/slab.h>
 
 struct idr_node {
-	rb_node_t in_rb_node;
-	int in_index;
-	void *in_data;
+	rb_node_t		in_rb_node;
+	int			in_index;
+	void			*in_data;
+	SIMPLEQ_ENTRY(idr_node)	in_list;
 };
+SIMPLEQ_HEAD(idr_head, idr_node);
+
+static struct {
+	kmutex_t	lock;
+	struct idr_head	preloaded_nodes;
+	struct idr_head	discarded_nodes;
+} idr_cache __cacheline_aligned;
+
+int
+linux_idr_module_init(void)
+{
+
+	mutex_init(&idr_cache.lock, MUTEX_DEFAULT, IPL_VM);
+	SIMPLEQ_INIT(&idr_cache.preloaded_nodes);
+	SIMPLEQ_INIT(&idr_cache.discarded_nodes);
+	return 0;
+}
+
+void
+linux_idr_module_fini(void)
+{
+
+	KASSERT(SIMPLEQ_EMPTY(&idr_cache.discarded_nodes));
+	KASSERT(SIMPLEQ_EMPTY(&idr_cache.preloaded_nodes));
+	mutex_destroy(&idr_cache.lock);
+}
 
 static signed int idr_tree_compare_nodes(void *, const void *, const void *);
 static signed int idr_tree_compare_key(void *, const void *, const void *);
@@ -90,22 +117,23 @@ idr_init(struct idr *idr)
 
 	mutex_init(&idr->idr_lock, MUTEX_DEFAULT, IPL_VM);
 	rb_tree_init(&idr->idr_tree, &idr_rb_ops);
-	idr->idr_temp = NULL;
 }
 
 void
 idr_destroy(struct idr *idr)
 {
 
-	if (idr->idr_temp != NULL) {
-		/* XXX Probably shouldn't happen.  */
-		kmem_free(idr->idr_temp, sizeof(*idr->idr_temp));
-		idr->idr_temp = NULL;
-	}
 #if 0				/* XXX No rb_tree_destroy?  */
 	rb_tree_destroy(&idr->idr_tree);
 #endif
 	mutex_destroy(&idr->idr_lock);
+}
+
+bool
+idr_is_empty(struct idr *idr)
+{
+
+	return (RB_TREE_MIN(&idr->idr_tree) == NULL);
 }
 
 void *
@@ -148,82 +176,95 @@ idr_remove(struct idr *idr, int id)
 
 	mutex_spin_enter(&idr->idr_lock);
 	node = rb_tree_find_node(&idr->idr_tree, &id);
-	KASSERT(node != NULL);
+	KASSERTMSG((node != NULL), "idr %p has no entry for id %d", idr, id);
 	rb_tree_remove_node(&idr->idr_tree, node);
 	mutex_spin_exit(&idr->idr_lock);
-	kmem_free(node, sizeof(*node));
+	kfree(node);
 }
 
 void
-idr_remove_all(struct idr *idr)
+idr_preload(gfp_t gfp)
 {
 	struct idr_node *node;
 
-	mutex_spin_enter(&idr->idr_lock);
-	while ((node = RB_TREE_MIN(&idr->idr_tree)) != NULL) {
-		rb_tree_remove_node(&idr->idr_tree, node);
-		mutex_spin_exit(&idr->idr_lock);
-		kmem_free(node, sizeof(*node));
-		mutex_spin_enter(&idr->idr_lock);
-	}
-	mutex_spin_exit(&idr->idr_lock);
+	if (ISSET(gfp, __GFP_WAIT))
+		ASSERT_SLEEPABLE();
+
+	node = kmalloc(sizeof(*node), gfp);
+	if (node == NULL)
+		return;
+
+	mutex_spin_enter(&idr_cache.lock);
+	SIMPLEQ_INSERT_TAIL(&idr_cache.preloaded_nodes, node, in_list);
+	mutex_spin_exit(&idr_cache.lock);
 }
 
 int
-idr_pre_get(struct idr *idr, int flags __unused /* XXX */)
+idr_alloc(struct idr *idr, void *data, int start, int end, gfp_t gfp)
 {
-	struct idr_node *temp = kmem_alloc(sizeof(*temp), KM_SLEEP);
+	int maximum = (end <= 0? INT_MAX : (end - 1));
+	struct idr_node *node, *search, *collision __diagused;
+	int id = start;
 
+	/* Sanity-check inputs.  */
+	if (ISSET(gfp, __GFP_WAIT))
+		ASSERT_SLEEPABLE();
+	if (__predict_false(start < 0))
+		return -EINVAL;
+	if (__predict_false(maximum < start))
+		return -ENOSPC;
+
+	/* Grab a node allocated by idr_preload.  */
+	mutex_spin_enter(&idr_cache.lock);
+	KASSERTMSG(!SIMPLEQ_EMPTY(&idr_cache.preloaded_nodes),
+	    "missing call to idr_preload");
+	node = SIMPLEQ_FIRST(&idr_cache.preloaded_nodes);
+	SIMPLEQ_REMOVE_HEAD(&idr_cache.preloaded_nodes, in_list);
+	mutex_spin_exit(&idr_cache.lock);
+
+	/* Find an id.  */
 	mutex_spin_enter(&idr->idr_lock);
-	if (idr->idr_temp == NULL) {
-		idr->idr_temp = temp;
-		temp = NULL;
-	}
-	mutex_spin_exit(&idr->idr_lock);
-
-	if (temp != NULL)
-		kmem_free(temp, sizeof(*temp));
-
-	return 1;
-}
-
-int
-idr_get_new_above(struct idr *idr, void *data, int min_id, int *id)
-{
-	struct idr_node *node, *search, *collision __unused;
-	int want_id = min_id;
-	int error;
-
-	mutex_spin_enter(&idr->idr_lock);
-
-	node = idr->idr_temp;
-	if (node == NULL) {
-		error = -EAGAIN;
-		goto out;
-	}
-	idr->idr_temp = NULL;
-
-	search = rb_tree_find_node_geq(&idr->idr_tree, &min_id);
-	while ((search != NULL) && (search->in_index == want_id)) {
-		if (want_id == INT_MAX) {
-			error = -ENOSPC;
+	search = rb_tree_find_node_geq(&idr->idr_tree, &start);
+	while ((search != NULL) && (search->in_index == id)) {
+		if (maximum <= id) {
+			id = -ENOSPC;
 			goto out;
 		}
 		search = rb_tree_iterate(&idr->idr_tree, search, RB_DIR_RIGHT);
-		want_id++;
+		id++;
 	}
-
-	node->in_index = want_id;
+	node->in_index = id;
 	node->in_data = data;
-
 	collision = rb_tree_insert_node(&idr->idr_tree, node);
 	KASSERT(collision == node);
-
-	*id = want_id;
-	error = 0;
-
 out:	mutex_spin_exit(&idr->idr_lock);
-	return error;
+
+	if (id < 0) {
+		/* Discard the node on failure.  */
+		mutex_spin_enter(&idr_cache.lock);
+		SIMPLEQ_INSERT_HEAD(&idr_cache.discarded_nodes, node, in_list);
+		mutex_spin_exit(&idr_cache.lock);
+	}
+	return id;
+}
+
+void
+idr_preload_end(void)
+{
+	struct idr_head temp = SIMPLEQ_HEAD_INITIALIZER(temp);
+	struct idr_node *node, *next;
+
+	mutex_spin_enter(&idr_cache.lock);
+	SIMPLEQ_FOREACH_SAFE(node, &idr_cache.discarded_nodes, in_list, next) {
+		SIMPLEQ_REMOVE_HEAD(&idr_cache.discarded_nodes, in_list);
+		SIMPLEQ_INSERT_HEAD(&temp, node, in_list);
+	}
+	mutex_spin_exit(&idr_cache.lock);
+
+	SIMPLEQ_FOREACH_SAFE(node, &temp, in_list, next) {
+		SIMPLEQ_REMOVE_HEAD(&temp, in_list);
+		kfree(node);
+	}
 }
 
 int

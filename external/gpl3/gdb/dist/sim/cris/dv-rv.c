@@ -1,7 +1,7 @@
 /* The remote-virtual-component simulator framework
    for GDB, the GNU Debugger.
 
-   Copyright 2006-2013 Free Software Foundation, Inc.
+   Copyright 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

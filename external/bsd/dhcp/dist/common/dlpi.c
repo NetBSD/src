@@ -1,5 +1,4 @@
-/*	$NetBSD: dlpi.c,v 1.1.1.2 2013/03/27 00:31:34 christos Exp $	*/
-
+/*	$NetBSD: dlpi.c,v 1.1.1.2.8.1 2014/08/10 07:06:55 tls Exp $	*/
 /* dlpi.c
  
    Data Link Provider Interface (DLPI) network interface code. */
@@ -37,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dlpi.c,v 1.1.1.2 2013/03/27 00:31:34 christos Exp $");
+__RCSID("$NetBSD: dlpi.c,v 1.1.1.2.8.1 2014/08/10 07:06:55 tls Exp $");
 
 /*
  * Based largely in part to the existing NIT code in nit.c.
@@ -531,6 +530,7 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 {
 #ifdef USE_DLPI_RAW
 	double hh [32];
+	int fudge;
 #endif
 	double ih [1536 / sizeof (double)];
 	unsigned char *dbuf = (unsigned char *)ih;
@@ -538,7 +538,6 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	unsigned char dstaddr [DLPI_MAXDLADDR];
 	unsigned addrlen;
 	int result;
-	int fudge;
 
 	if (!strcmp (interface -> name, "fallback"))
 		return send_fallback (interface, packet, raw,
@@ -557,8 +556,6 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	fudge = dbuflen % 4; /* IP header must be word-aligned. */
 	memcpy (dbuf + fudge, (unsigned char *)hh, dbuflen);
 	dbuflen += fudge;
-#else
-	fudge = 0;
 #endif
 	assemble_udp_ip_header (interface, dbuf, &dbuflen, from.s_addr,
 				to -> sin_addr.s_addr, to -> sin_port,

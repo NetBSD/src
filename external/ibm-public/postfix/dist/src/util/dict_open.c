@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_open.c,v 1.1.1.6 2013/09/25 19:06:37 tron Exp $	*/
+/*	$NetBSD: dict_open.c,v 1.1.1.6.2.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -46,6 +46,16 @@
 /*	DICT	*(*open) (const char *, int, int);
 /*
 /*	ARGV	*dict_mapnames()
+/*
+/*	int	dict_isjmp(dict)
+/*	DICT	*dict;
+/*
+/*	int	dict_setjmp(dict)
+/*	DICT	*dict;
+/*
+/*	int	dict_longjmp(dict, val)
+/*	DICT	*dict;
+/*	int	val;
 /* DESCRIPTION
 /*	This module implements a low-level interface to multiple
 /*	physical dictionary types.
@@ -82,10 +92,19 @@
 /* .IP DICT_FLAG_LOCK
 /*	With maps where this is appropriate, acquire an exclusive lock
 /*	before writing, and acquire a shared lock before reading.
+/*	Release the lock when the operation completes.
 /* .IP DICT_FLAG_OPEN_LOCK
-/*	With databases that are not multi-writer safe, request that
-/*	dict_open() acquires an exclusive lock, or that it terminates
-/*	with a fatal run-time error.
+/*	The behavior of this flag depends on whether a database
+/*	sets the DICT_FLAG_MULTI_WRITER flag to indicate that it
+/*	is multi-writer safe.
+/*
+/*	With databases that are not multi-writer safe, dict_open()
+/*	acquires a persistent exclusive lock, or it terminates with
+/*	a fatal run-time error.
+/*
+/*	With databases that are multi-writer safe, dict_open()
+/*	downgrades the DICT_FLAG_OPEN_LOCK flag (persistent lock)
+/*	to DICT_FLAG_LOCK (temporary lock).
 /* .IP DICT_FLAG_FOLD_FIX
 /*	With databases whose lookup fields are fixed-case strings,
 /*	fold the search string to lower case before accessing the
@@ -114,6 +133,10 @@
 /* .IP DICT_FLAG_PARANOID
 /*	A combination of all the paranoia flags: DICT_FLAG_NO_REGSUB,
 /*	DICT_FLAG_NO_PROXY and DICT_FLAG_NO_UNAUTH.
+/* .IP DICT_FLAG_BULK_UPDATE
+/*	Enable preliminary code for bulk-mode database updates.
+/*	The caller must create an exception handler with dict_jmp_alloc()
+/*	and must trap exceptions from the database client with dict_setjmp().
 /* .IP DICT_FLAG_DEBUG
 /*	Enable additional logging.
 /* .PP
@@ -171,6 +194,18 @@
 /*
 /*	dict_mapnames() returns a sorted list with the names of all available
 /*	dictionary types.
+/*
+/*	dict_setjmp() saves processing context and makes that context
+/*	available for use with dict_longjmp().  Normally, dict_setjmp()
+/*	returns zero.  A non-zero result means that dict_setjmp()
+/*	returned through a dict_longjmp() call; the result is the
+/*	\fIval\fR argment given to dict_longjmp(). dict_isjmp()
+/*	returns non-zero when dict_setjmp() and dict_longjmp()
+/*	are enabled for a given dictionary.
+/*
+/*	NB: non-local jumps such as dict_longjmp() are not safe for
+/*	jumping out of any routine that manipulates DICT data.
+/*	longjmp() like calls are best avoided in signal handlers.
 /* DIAGNOSTICS
 /*	Fatal error: open error, unsupported dictionary type, attempt to
 /*	update non-writable dictionary.
@@ -231,6 +266,7 @@
 #include <dict_sdbm.h>
 #include <dict_dbm.h>
 #include <dict_db.h>
+#include <dict_lmdb.h>
 #include <dict_nis.h>
 #include <dict_nisplus.h>
 #include <dict_ni.h>
@@ -272,6 +308,9 @@ static const DICT_OPEN_INFO dict_open_info[] = {
 #ifdef HAS_DB
     DICT_TYPE_HASH, dict_hash_open,
     DICT_TYPE_BTREE, dict_btree_open,
+#endif
+#ifdef HAS_LMDB
+    DICT_TYPE_LMDB, dict_lmdb_open,
 #endif
 #ifdef HAS_NIS
     DICT_TYPE_NIS, dict_nis_open,
@@ -353,12 +392,18 @@ DICT   *dict_open3(const char *dict_type, const char *dict_name,
 			    "cannot open %s:%s: %m", dict_type, dict_name));
     if (msg_verbose)
 	msg_info("%s: %s:%s", myname, dict_type, dict_name);
-    /* XXX the choice between wait-for-lock or no-wait is hard-coded. */
-    if (dict_flags & DICT_FLAG_OPEN_LOCK) {
-	if (dict_flags & DICT_FLAG_LOCK)
+    /* XXX The choice between wait-for-lock or no-wait is hard-coded. */
+    if (dict->flags & DICT_FLAG_OPEN_LOCK) {
+	if (dict->flags & DICT_FLAG_LOCK)
 	    msg_panic("%s: attempt to open %s:%s with both \"open\" lock and \"access\" lock",
 		      myname, dict_type, dict_name);
-	if (dict->lock(dict, MYFLOCK_OP_EXCLUSIVE | MYFLOCK_OP_NOWAIT) < 0)
+	/* Multi-writer safe map: downgrade persistent lock to temporary. */
+	if (dict->flags & DICT_FLAG_MULTI_WRITER) {
+	    dict->flags &= ~DICT_FLAG_OPEN_LOCK;
+	    dict->flags |= DICT_FLAG_LOCK;
+	}
+	/* Multi-writer unsafe map: acquire exclusive lock or bust. */
+	else if (dict->lock(dict, MYFLOCK_OP_EXCLUSIVE | MYFLOCK_OP_NOWAIT) < 0)
 	    msg_fatal("%s:%s: unable to get exclusive lock: %m",
 		      dict_type, dict_name);
     }

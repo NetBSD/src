@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.19 2014/02/07 15:29:21 hannken Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.19.2.1 2014/08/10 06:55:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.19 2014/02/07 15:29:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.19.2.1 2014/08/10 06:55:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -79,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.19 2014/02/07 15:29:21 hannken
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
 #include <fs/filecorefs/filecore_node.h>
-
-struct	nchstats filecore_nchstats;
 
 /*
  * Convert a component of a pathname into a pointer to a locked inode.
@@ -193,7 +191,7 @@ filecore_lookup(void *v)
 	} else {
 		i = dp->i_diroff;
 		numdirpasses = 2;
-		filecore_nchstats.ncs_2passes++;
+		namecache_count_2passes();
 	}
 	endsearch = FILECORE_MAXDIRENTS;
 
@@ -251,7 +249,7 @@ notfound:
 
 found:
 	if (numdirpasses == 2)
-		filecore_nchstats.ncs_pass2++;
+		namecache_count_pass2();
 
 	/*
 	 * Found component in pathname.

@@ -1,8 +1,8 @@
 /* modify.cpp - ndb backend modify routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ndb/modify.cpp,v 1.3.2.4 2010/04/13 20:23:35 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -300,6 +300,49 @@ int ndb_modify_internal(
 			}
  			break;
 
+		case SLAP_MOD_SOFTDEL:
+			Debug(LDAP_DEBUG_ARGS,
+				"ndb_modify_internal: softdel %s\n",
+				mod->sm_desc->ad_cname.bv_val, 0, 0);
+ 			mod->sm_op = LDAP_MOD_DELETE;
+
+			rc = modify_delete_values( NA->e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
+
+ 			mod->sm_op = SLAP_MOD_SOFTDEL;
+
+ 			if ( rc == LDAP_NO_SUCH_ATTRIBUTE) {
+ 				rc = LDAP_SUCCESS;
+ 			}
+
+			if( rc != LDAP_SUCCESS ) {
+				Debug(LDAP_DEBUG_ARGS, "ndb_modify_internal: %d %s\n",
+					rc, *text, 0);
+			}
+ 			break;
+
+		case SLAP_MOD_ADD_IF_NOT_PRESENT:
+			Debug(LDAP_DEBUG_ARGS,
+				"ndb_modify_internal: add_if_not_present %s\n",
+				mod->sm_desc->ad_cname.bv_val, 0, 0);
+			if ( attr_find( NA->e->e_attrs, mod->sm_desc ) ) {
+				rc = LDAP_SUCCESS;
+				break;
+			}
+
+ 			mod->sm_op = LDAP_MOD_ADD;
+
+			rc = modify_add_values( NA->e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
+
+ 			mod->sm_op = SLAP_MOD_ADD_IF_NOT_PRESENT;
+
+			if( rc != LDAP_SUCCESS ) {
+				Debug(LDAP_DEBUG_ARGS, "ndb_modify_internal: %d %s\n",
+					rc, *text, 0);
+			}
+ 			break;
+
 		default:
 			Debug(LDAP_DEBUG_ANY, "ndb_modify_internal: invalid op %d\n",
 				mod->sm_op, 0, 0);
@@ -334,6 +377,14 @@ int ndb_modify_internal(
 		return rc;
 	}
 
+	if ( got_oc ) {
+		rc = ndb_entry_put_info( op->o_bd, NA, 1 );
+		if ( rc ) {
+			attrs_free( old );
+			return rc;
+		}
+	}
+
 	/* apply modifications to DB */
 	modai = (NdbAttrInfo **)op->o_tmpalloc( nmods * sizeof(NdbAttrInfo*), op->o_tmpmemctx );
 
@@ -357,7 +408,8 @@ int ndb_modify_internal(
 	}
 	ldap_pvt_thread_rdwr_runlock( &ni->ni_ai_rwlock );
 
-	if ( got_oc || indexed ) {
+	/* If got_oc, this was already done above */
+	if ( indexed && !got_oc) {
 		rc = ndb_entry_put_info( op->o_bd, NA, 1 );
 		if ( rc ) {
 			attrs_free( old );

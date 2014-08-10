@@ -148,6 +148,7 @@ mmix-dis.c
 mmix-opc.c
 moxie-dis.c
 moxie-opc.c
+msp430-decode.c
 msp430-dis.c
 mt-asm.c
 mt-desc.c
@@ -156,6 +157,8 @@ mt-dis.c
 mt-ibld.c
 mt-opc.c
 mt-opc.h
+nios2-dis.c
+nios2-opc.c
 ns32k-dis.c
 openrisc-asm.c
 openrisc-desc.c

@@ -1,4 +1,4 @@
-/* $NetBSD: emdtvreg.h,v 1.1 2011/07/11 18:02:04 jmcneill Exp $ */
+/* $NetBSD: emdtvreg.h,v 1.1.28.1 2014/08/10 06:54:58 tls Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@ struct emdtv_eeprom {
 	uint16_t	boardcfg;
 	uint16_t	string[3];
 	uint8_t		stringidx;
-} __attribute__((__packed__));
+} __packed;
 
 #define EM28XX_I2C_ADDR_EEPROM	0xa0
 

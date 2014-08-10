@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.4 2013/10/07 17:36:40 matt Exp $
+# $Id: IMX23_OLINUXINO,v 1.4.2.1 2014/08/10 06:53:54 tls Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -85,6 +85,7 @@ options		DDB
 options		HZ=100
 options		INET		# IP + ICMP + TCP + UDP
 options		INET6		# IPv6
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 options		COMPAT_60	# NetBSD 6.0 compatibility
 
 makeoptions     DEBUG="-g"      # compile full symbol table

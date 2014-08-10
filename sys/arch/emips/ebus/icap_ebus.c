@@ -1,4 +1,4 @@
-/*	$NetBSD: icap_ebus.c,v 1.5 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: icap_ebus.c,v 1.5.2.1 2014/08/10 06:53:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.5 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.5.2.1 2014/08/10 06:53:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,7 @@ const struct cdevsw icap_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

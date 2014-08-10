@@ -1,5 +1,5 @@
 /* Support for printing Ada types for GDB, the GNU debugger.
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,7 +34,7 @@
 #include "ada-lang.h"
 
 #include <ctype.h>
-#include "gdb_string.h"
+#include <string.h>
 #include <errno.h>
 
 static int print_selected_record_field_types (struct type *, struct type *,

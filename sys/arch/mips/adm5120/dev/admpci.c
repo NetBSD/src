@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.10 2014/03/29 19:28:29 christos Exp $ */
+/* $NetBSD: admpci.c,v 1.10.2.1 2014/08/10 06:54:02 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.10 2014/03/29 19:28:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.10.2.1 2014/08/10 06:54:02 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -182,7 +182,6 @@ admpciattach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args	*ma = (struct mainbus_attach_args *)aux;
 #if NPCI > 0
 	u_long				result;
-	pcitag_t			tag;
 	struct pcibus_attach_args	pba;
 #endif
 	
@@ -226,9 +225,11 @@ admpciattach(device_t parent, device_t self, void *aux)
 	sc->sc_pc.pc_intr_disestablish = admpci_intr_disestablish;
 	sc->sc_pc.pc_conf_interrupt = admpci_conf_interrupt;
 
-	tag = pci_make_tag(&sc->sc_pc, 0, 0, 0);
+#ifdef ADMPCI_DEBUG
+	pcitag_t tag = pci_make_tag(&sc->sc_pc, 0, 0, 0);
 	ADMPCI_DPRINTF("%s: BAR 0x10 0x%08x\n", __func__,
 	    pci_conf_read(&sc->sc_pc, tag, PCI_MAPREG_START));
+#endif
 
 #ifdef PCI_NETBSD_CONFIGURE
 	mem_ex = extent_create("pcimem",

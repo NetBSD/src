@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.58 2014/03/16 05:20:25 dholland Exp $ */
+/* $NetBSD: sci.c,v 1.58.2.1 2014/08/10 06:54:07 tls Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.58 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.58.2.1 2014/08/10 06:54:07 tls Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -258,6 +258,7 @@ const struct cdevsw sci_cdevsw = {
 	.d_poll = scipoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 
@@ -599,7 +600,6 @@ void
 sci_iflush(struct sci_softc *sc)
 {
 	unsigned char err_c;
-	volatile unsigned char c;
 
 	if (((err_c = SHREG_SCSSR)
 	     & (SCSSR_RDRF | SCSSR_ORER | SCSSR_FER | SCSSR_PER)) != 0) {
@@ -609,7 +609,7 @@ sci_iflush(struct sci_softc *sc)
 			return;
 		}
 
-		c = SHREG_SCRDR;
+		(void)SHREG_SCRDR;
 
 		SHREG_SCSSR &= ~SCSSR_RDRF;
 	}

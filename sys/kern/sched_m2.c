@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.31 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.31.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.31 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.31.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include <sys/param.h>
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.31 2014/02/25 18:30:11 pooka Exp $");
 #include <sys/types.h>
 
 /*
- * Priority related defintions.
+ * Priority related definitions.
  */
 #define	PRI_TS_COUNT	(NPRI_USER)
 #define	PRI_RT_COUNT	(PRI_COUNT - PRI_TS_COUNT)
@@ -436,19 +436,19 @@ SYSCTL_SETUP(sysctl_sched_m2_setup, "sysctl sched setup")
 	sysctl_createv(NULL, 0, &node, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_INT, "rtts",
-		SYSCTL_DESCR("Round-robin time quantum (in miliseconds)"),
+		SYSCTL_DESCR("Round-robin time quantum (in milliseconds)"),
 		sysctl_sched_rtts, 0, NULL, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(NULL, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "maxts",
-		SYSCTL_DESCR("Maximal time quantum (in miliseconds)"),
+		SYSCTL_DESCR("Maximal time quantum (in milliseconds)"),
 		sysctl_sched_maxts, 0, &max_ts, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(NULL, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "mints",
-		SYSCTL_DESCR("Minimal time quantum (in miliseconds)"),
+		SYSCTL_DESCR("Minimal time quantum (in milliseconds)"),
 		sysctl_sched_mints, 0, &min_ts, 0,
 		CTL_CREATE, CTL_EOL);
 }

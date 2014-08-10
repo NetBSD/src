@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,8 +47,10 @@
 #define	cancel_work			linux_cancel_work
 #define	cancel_work_sync		linux_cancel_work_sync
 #define	destroy_workqueue		linux_destroy_workqueue
+#define	flush_work			linux_flush_work
 #define	flush_workqueue			linux_flush_workqueue
 #define	queue_delayed_work		linux_queue_delayed_work
+#define	mod_delayed_work		linux_mod_delayed_work
 #define	queue_work			linux_queue_work
 #define	schedule_delayed_work		linux_schedule_delayed_work
 #define	schedule_work			linux_schedule_work
@@ -90,6 +92,9 @@ extern struct workqueue_struct	*system_wq;
 int	linux_workqueue_init(void);
 void	linux_workqueue_fini(void);
 
+#define	create_singlethread_workqueue(name)				      \
+	alloc_ordered_workqueue((name), 0)
+
 struct workqueue_struct *
 	alloc_ordered_workqueue(const char *, int);
 void	destroy_workqueue(struct workqueue_struct *);
@@ -97,14 +102,17 @@ void	flush_workqueue(struct workqueue_struct *);
 void	flush_scheduled_work(void);
 
 void	INIT_WORK(struct work_struct *, void (*)(struct work_struct *));
-void	schedule_work(struct work_struct *);
-void	queue_work(struct workqueue_struct *, struct work_struct *);
+bool	schedule_work(struct work_struct *);
+bool	queue_work(struct workqueue_struct *, struct work_struct *);
 bool	cancel_work_sync(struct work_struct *);
+void	flush_work(struct work_struct *);
 
 void	INIT_DELAYED_WORK(struct delayed_work *,
 	    void (*)(struct work_struct *));
-void	schedule_delayed_work(struct delayed_work *, unsigned long);
-void	queue_delayed_work(struct workqueue_struct *, struct delayed_work *,
+bool	schedule_delayed_work(struct delayed_work *, unsigned long);
+bool	queue_delayed_work(struct workqueue_struct *, struct delayed_work *,
+	    unsigned long ticks);
+bool	mod_delayed_work(struct workqueue_struct *, struct delayed_work *,
 	    unsigned long ticks);
 bool	cancel_delayed_work(struct delayed_work *);
 bool	cancel_delayed_work_sync(struct delayed_work *);

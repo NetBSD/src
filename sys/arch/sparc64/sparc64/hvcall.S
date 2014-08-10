@@ -1,4 +1,4 @@
-/*	$NetBSD: hvcall.S,v 1.3 2013/12/08 14:41:28 palle Exp $ */
+/*	$NetBSD: hvcall.S,v 1.3.2.1 2014/08/10 06:54:09 tls Exp $ */
 /*	$OpenBSD: hvcall.S,v 1.10 2011/06/25 20:45:00 kettenis Exp $	*/
 
 /*
@@ -18,11 +18,8 @@
  */
 
 #include <machine/asm.h>
-
-#define FAST_TRAP	0x80
-#define MMU_MAP_ADDR	0x83
-#define MMU_UNMAP_ADDR	0x84
-#define CORE_TRAP	0xff
+#include <machine/trap.h>
+	
 
 #define MACH_EXIT		0x00
 #define MACH_DESC		0x01
@@ -141,7 +138,7 @@
 
 ENTRY(hv_api_putchar)
 	mov	API_PUTCHAR, %o5
-	ta	CORE_TRAP
+	ta	ST_CORE_TRAP
 	retl
 	 nop
 
@@ -149,7 +146,7 @@ ENTRY(hv_api_get_version)
 	mov	%o2, %o4
 	mov	%o1, %o3
 	mov	API_GET_VERSION, %o5
-	ta	CORE_TRAP
+	ta	ST_CORE_TRAP
 	stx	%o1, [%o3]
 	retl
 	 stx	%o2, [%o4]
@@ -158,44 +155,44 @@ ENTRY(hv_mach_desc)
 	mov	%o1, %o2
 	ldx	[%o2], %o1
 	mov	MACH_DESC, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_cpu_yield)
 	mov	CPU_YIELD, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_cpu_qconf)
 	mov	CPU_QCONF, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_cpu_mondo_send)
 	mov	CPU_MONDO_SEND, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_cpu_myid)
 	mov	%o0, %o2
 	mov	CPU_MYID, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_mmu_tsb_ctx0)
 	mov	MMU_TSB_CTX0, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl	
 	 nop
 
 ENTRY(hv_mmu_tsb_ctxnon0)
 	mov	MMU_TSB_CTXNON0, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl	
 	 nop
 
@@ -206,7 +203,7 @@ ENTRY(hv_mmu_demap_page)
 	clr	%o1
 	clr	%o0
 	mov	MMU_DEMAP_PAGE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl	
 	 nop
 
@@ -216,7 +213,7 @@ ENTRY(hv_mmu_demap_ctx)
 	clr	%o1
 	clr	%o0
 	mov	MMU_DEMAP_CTX, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl	
 	 nop
 
@@ -226,7 +223,7 @@ ENTRY(hv_mmu_demap_all)
 	clr	%o1
 	clr	%o0
 	mov	MMU_DEMAP_CTX, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl	
 	 nop
 
@@ -235,7 +232,7 @@ ENTRY(hv_mmu_map_perm_addr)
 	mov	%o1, %o2
 	clr	%o1
 	mov	MMU_MAP_PERM_ADDR, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
@@ -243,188 +240,188 @@ ENTRY(hv_mmu_unmap_perm_addr)
 	mov	%o1, %o2
 	clr	%o1
 	mov	MMU_UNMAP_PERM_ADDR, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_mmu_map_addr)
-	ta	MMU_MAP_ADDR
+	ta	ST_MMU_MAP_ADDR
 	retl
 	 nop
 
 ENTRY(hv_mmu_unmap_addr)
-	ta	MMU_UNMAP_ADDR
+	ta	ST_MMU_UNMAP_ADDR
 	retl
 	 nop
 
 ENTRY(hv_mem_scrub)
 	mov	MEM_SCRUB, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_mem_sync)
 	mov	MEM_SYNC, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_tod_get)
 	mov	%o0, %o2
 	mov	TOD_GET, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_tod_set)
 	mov	TOD_SET, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_cons_getchar)
 	mov	%o0, %o2
 	mov	CONS_GETCHAR, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_cons_putchar)
 	mov	CONS_PUTCHAR, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_soft_state_set)
 	mov	SOFT_STATE_SET, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_intr_devino_to_sysino)
 	mov	INTR_DEVINO2SYSINO, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_intr_getenabled)
 	mov	%o1, %o2
 	mov	INTR_GETENABLED, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_intr_setenabled)
 	mov	INTR_SETENABLED, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_intr_getstate)
 	mov	%o1, %o2
 	mov	INTR_GETSTATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_intr_setstate)
 	mov	INTR_SETSTATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_intr_gettarget)
 	mov	%o1, %o2
 	mov	INTR_GETTARGET, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_intr_settarget)
 	mov	INTR_SETTARGET, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_vintr_getcookie)
 	mov	VINTR_GETCOOKIE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_vintr_setcookie)
 	mov	VINTR_SETCOOKIE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_vintr_getenabled)
 	mov	VINTR_GETENABLED, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_vintr_setenabled)
 	mov	VINTR_SETENABLED, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_vintr_getstate)
 	mov	VINTR_GETSTATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_vintr_setstate)
 	mov	VINTR_SETSTATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_vintr_gettarget)
 	mov	VINTR_GETTARGET, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_vintr_settarget)
 	mov	VINTR_SETTARGET, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_pci_iommu_map)
 	mov	%o5, %g5
 	mov	PCI_IOMMU_MAP, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%g5]
 
 ENTRY(hv_pci_iommu_demap)
 	mov	PCI_IOMMU_DEMAP, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o3]
 
 ENTRY(hv_pci_iommu_getmap)
 	mov	%o2, %o4
 	mov	PCI_IOMMU_GETMAP, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	stx	%o1, [%o4]
 	retl
 	 stx	%o2, [%o3]
 
 ENTRY(hv_pci_iommu_getbypass)
 	mov	PCI_IOMMU_GETBYPASS, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o3]
 
 ENTRY(hv_pci_config_get)
 	mov	%o5, %g5
 	mov	PCI_CONFIG_GET, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	stx	%o1, [%o4]
 	retl
 	 stx	%o2, [%g5]
@@ -432,129 +429,129 @@ ENTRY(hv_pci_config_get)
 ENTRY(hv_pci_config_put)
 	mov	%o5, %g5
 	mov	PCI_CONFIG_PUT, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%g5]
 
 ENTRY(hv_pci_msiq_conf)
 	mov	PCI_MSIQ_CONF, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_pci_msiq_info)
 	mov	%o2, %o4
 	mov	PCI_MSIQ_INFO, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	stx	%o1, [%o4]
 	retl
 	 stx	%o2, [%o3]
 
 ENTRY(hv_pci_msiq_getvalid)
 	mov	PCI_MSIQ_GETVALID, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_pci_msiq_setvalid)
 	mov	PCI_MSIQ_SETVALID, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_pci_msiq_getstate)
 	mov	PCI_MSIQ_GETSTATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_pci_msiq_setstate)
 	mov	PCI_MSIQ_SETSTATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_pci_msiq_gethead)
 	mov	PCI_MSIQ_GETHEAD, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_pci_msiq_sethead)
 	mov	PCI_MSIQ_SETHEAD, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_pci_msiq_gettail)
 	mov	PCI_MSIQ_GETTAIL, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_pci_msi_getvalid)
 	mov	PCI_MSI_GETVALID, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_pci_msi_setvalid)
 	mov	PCI_MSI_SETVALID, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_pci_msi_getmsiq)
 	mov	PCI_MSI_GETMSIQ, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_pci_msi_setmsiq)
 	mov	PCI_MSI_SETMSIQ, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_pci_msi_getstate)
 	mov	PCI_MSI_GETSTATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_pci_msi_setstate)
 	mov	PCI_MSI_SETSTATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_pci_msg_getmsiq)
 	mov	PCI_MSG_GETMSIQ, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_pci_msg_setmsiq)
 	mov	PCI_MSG_SETMSIQ, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_pci_msg_getstate)
 	mov	PCI_MSG_GETSTATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_pci_msg_setstate)
 	mov	PCI_MSG_SETSTATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_ldc_tx_qconf)
 	mov	LDC_TX_QCONF, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
@@ -562,7 +559,7 @@ ENTRY(hv_ldc_tx_qinfo)
 	mov	%o2, %o4
 	mov	%o1, %o3
 	mov	LDC_TX_QINFO, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	stx	%o1, [%o3]
 	retl
 	 stx	%o2, [%o4]
@@ -572,7 +569,7 @@ ENTRY(hv_ldc_tx_get_state)
 	mov	%o2, %g4
 	mov	%o1, %o4
 	mov	LDC_TX_GET_STATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	stx	%o1, [%o4]
 	stx	%o2, [%g4]
 	retl
@@ -580,13 +577,13 @@ ENTRY(hv_ldc_tx_get_state)
 
 ENTRY(hv_ldc_tx_set_qtail)
 	mov	LDC_TX_SET_QTAIL, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_ldc_rx_qconf)
 	mov	LDC_RX_QCONF, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
@@ -594,7 +591,7 @@ ENTRY(hv_ldc_rx_qinfo)
 	mov	%o2, %o4
 	mov	%o1, %o3
 	mov	LDC_RX_QINFO, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	stx	%o1, [%o3]
 	retl
 	 stx	%o2, [%o4]
@@ -604,7 +601,7 @@ ENTRY(hv_ldc_rx_get_state)
 	mov	%o2, %g4
 	mov	%o1, %o4
 	mov	LDC_RX_GET_STATE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	stx	%o1, [%o4]
 	stx	%o2, [%g4]
 	retl
@@ -612,13 +609,13 @@ ENTRY(hv_ldc_rx_get_state)
 
 ENTRY(hv_ldc_rx_set_qhead)
 	mov	LDC_RX_SET_QHEAD, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
 ENTRY(hv_ldc_set_map_table)
 	mov	LDC_SET_MAP_TABLE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
@@ -626,7 +623,7 @@ ENTRY(hv_ldc_get_map_table)
 	mov	%o2, %o4
 	mov	%o1, %o3
 	mov	LDC_GET_MAP_TABLE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	stx	%o1, [%o3]
 	retl
 	 stx	%o2, [%o4]
@@ -634,14 +631,14 @@ ENTRY(hv_ldc_get_map_table)
 ENTRY(hv_ldc_copy)
 	mov	%o5, %g5
 	mov	LDC_COPY, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%g5]
 
 ENTRY(hv_ldc_mapin)
 	mov	%o2, %o4
 	mov	LDC_MAPIN, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	stx	%o1, [%o4]
 	retl
 	 stx	%o2, [%o3]
@@ -649,13 +646,13 @@ ENTRY(hv_ldc_mapin)
 ENTRY(hv_ldc_unmap)
 	mov	%o1, %o2
 	mov	LDC_UNMAP, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_rng_get_diag_control)
 	mov	RNG_GET_DIAG_CONTROL, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 nop
 
@@ -663,26 +660,26 @@ ENTRY(hv_rng_ctl_read)
 	mov	%o2, %o4
 	mov	%o1, %o3
 	mov	RNG_CTL_READ, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	stx	%o1, [%o3]
 	retl
 	 stx	%o2, [%o4]
 
 ENTRY(hv_rng_ctl_write)
 	mov	RNG_CTL_WRITE, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o3]
 
 ENTRY(hv_rng_data_read_diag)
 	mov	RNG_DATA_READ_DIAG, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
 
 ENTRY(hv_rng_data_read)
 	mov	%o1, %o2
 	mov	RNG_DATA_READ, %o5
-	ta	FAST_TRAP
+	ta	ST_FAST_TRAP
 	retl
 	 stx	%o1, [%o2]

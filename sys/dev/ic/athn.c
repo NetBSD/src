@@ -1,5 +1,5 @@
-/*	$NetBSD: athn.c,v 1.8 2014/02/23 15:29:12 christos Exp $	*/
-/*	$OpenBSD: athn.c,v 1.75 2013/01/14 09:50:31 jsing Exp $	*/
+/*	$NetBSD: athn.c,v 1.8.2.1 2014/08/10 06:54:52 tls Exp $	*/
+/*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.8 2014/02/23 15:29:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.8.2.1 2014/08/10 06:54:52 tls Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -1260,7 +1260,7 @@ athn_calib_to(void *arg)
 	/* Do periodic (every 4 minutes) PA calibration. */
 	if (AR_SREV_9285_11_OR_LATER(sc) &&
 	    !AR_SREV_9380_10_OR_LATER(sc) &&
-	    ticks >= sc->sc_pa_calib_ticks + 240 * hz) {
+	    (ticks - (sc->sc_pa_calib_ticks + 240 * hz)) >= 0) {
 		sc->sc_pa_calib_ticks = ticks;
 		if (AR_SREV_9271(sc))
 			ar9271_pa_calib(sc);

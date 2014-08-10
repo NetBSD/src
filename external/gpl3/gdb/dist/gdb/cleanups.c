@@ -1,6 +1,6 @@
 /* Cleanup routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -261,6 +261,10 @@ save_final_cleanups (void)
 static void
 restore_my_cleanups (struct cleanup **pmy_chain, struct cleanup *chain)
 {
+  if (*pmy_chain != SENTINEL_CLEANUP)
+    internal_warning (__FILE__, __LINE__,
+		      _("restore_my_cleanups has found a stale cleanup"));
+
   *pmy_chain = chain;
 }
 

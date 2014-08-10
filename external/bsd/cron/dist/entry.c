@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.4 2010/07/15 20:03:28 christos Exp $	*/
+/*	$NetBSD: entry.c,v 1.4.24.1 2014/08/10 07:06:51 tls Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 1.17 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.4 2010/07/15 20:03:28 christos Exp $");
+__RCSID("$NetBSD: entry.c,v 1.4.24.1 2014/08/10 07:06:51 tls Exp $");
 #endif
 #endif
 
@@ -478,7 +478,6 @@ get_range(bitstr_t *bits, int low, int high, const char * const names[],
 		ch = get_char(file);
 		if (ch == EOF)
 			return (EOF);
-	} else if (ch == '?') {
 	} else if (ch == '?') {
 		qmark = TRUE;
 		ch = get_char(file);

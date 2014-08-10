@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.75 2013/06/30 21:38:57 rmind Exp $
+#	$NetBSD: IPAQ,v 1.75.4.1 2014/08/10 06:53:58 tls Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -68,6 +68,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.22 2014/03/18 18:20:42 riastradh Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.22.2.1 2014/08/10 06:54:59 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -25,9 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.22 2014/03/18 18:20:42 riastradh Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -63,6 +60,8 @@ struct genfb_ops {
 	int (*genfb_ioctl)(void *, void *, u_long, void *, int, struct lwp *);
 	paddr_t	(*genfb_mmap)(void *, void *, off_t, int);
 	int (*genfb_borrow)(void *, bus_addr_t, bus_space_handle_t *);
+	int (*genfb_enable_polling)(void *);
+	int (*genfb_disable_polling)(void *);
 };
 
 struct genfb_colormap_callback {

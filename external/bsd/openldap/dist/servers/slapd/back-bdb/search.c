@@ -1,10 +1,10 @@
-/*	$NetBSD: search.c,v 1.1.1.3 2010/12/12 15:23:00 adam Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
 /* search.c - search operation */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.246.2.28 2010/04/15 20:15:19 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -186,7 +186,7 @@ static int search_aliases(
 	BDB_IDL_ZERO( aliases );
 	rs->sr_err = bdb_filter_candidates( op, txn, &af, aliases,
 		curscop, visited );
-	if (rs->sr_err != LDAP_SUCCESS) {
+	if (rs->sr_err != LDAP_SUCCESS || BDB_IDL_IS_ZERO( aliases )) {
 		return rs->sr_err;
 	}
 	oldsubs[0] = 1;
@@ -310,6 +310,36 @@ sameido:
 		e = ei->bei_e;
 	}
 	return rs->sr_err;
+}
+
+/* Get the next ID from the DB. Used if the candidate list is
+ * a range and simple iteration hits missing entryIDs
+ */
+static int
+bdb_get_nextid(struct bdb_info *bdb, DB_TXN *ltid, ID *cursor)
+{
+	DBC *curs;
+	DBT key, data;
+	ID id, nid;
+	int rc;
+
+	id = *cursor + 1;
+	BDB_ID2DISK( id, &nid );
+	rc = bdb->bi_id2entry->bdi_db->cursor(
+		bdb->bi_id2entry->bdi_db, ltid, &curs, bdb->bi_db_opflags );
+	if ( rc )
+		return rc;
+	key.data = &nid;
+	key.size = key.ulen = sizeof(ID);
+	key.flags = DB_DBT_USERMEM;
+	data.flags = DB_DBT_USERMEM | DB_DBT_PARTIAL;
+	data.dlen = data.ulen = 0;
+	rc = curs->c_get( curs, &key, &data, DB_SET_RANGE );
+	curs->c_close( curs );
+	if ( rc )
+		return rc;
+	BDB_DISK2ID( &nid, cursor );
+	return 0;
 }
 
 int
@@ -719,6 +749,7 @@ fetch_entry_retry:
 				ltid->flags &= ~TXN_DEADLOCK;
 				goto fetch_entry_retry;
 			}
+txnfail:
 			opinfo->boi_err = rs->sr_err;
 			send_ldap_error( op, rs, LDAP_BUSY, "ldap server busy" );
 			goto done;
@@ -745,12 +776,31 @@ fetch_entry_retry:
 					LDAP_XSTRING(bdb_search)
 					": candidate %ld not found\n",
 					(long) id, 0, 0 );
+			} else {
+				/* get the next ID from the DB */
+id_retry:
+				rs->sr_err = bdb_get_nextid( bdb, ltid, &cursor );
+				if ( rs->sr_err == DB_NOTFOUND ) {
+					break;
+				} else if ( rs->sr_err == DB_LOCK_DEADLOCK ) {
+					if ( opinfo )
+						goto txnfail;
+					ltid->flags &= ~TXN_DEADLOCK;
+					goto id_retry;
+				} else if ( rs->sr_err == DB_LOCK_NOTGRANTED ) {
+					goto id_retry;
+				}
+				if ( rs->sr_err ) {
+					rs->sr_err = LDAP_OTHER;
+					rs->sr_text = "internal error in get_nextid";
+					send_ldap_result( op, rs );
+					goto done;
+				}
+				cursor--;
 			}
 
 			goto loop_continue;
 		}
-
-		rs->sr_entry = e;
 
 		if ( is_entry_subentry( e ) ) {
 			if( op->oq_search.rs_scope != LDAP_SCOPE_BASE ) {
@@ -883,6 +933,7 @@ fetch_entry_retry:
 			blis.bli_lock = lock;
 			blis.bli_flag = BLI_DONTFREE;
 
+			rs->sr_entry = e;
 			rs->sr_flags = REP_ENTRY_MUSTRELEASE;
 
 			send_search_reference( op, rs );
@@ -914,7 +965,7 @@ fetch_entry_retry:
 		}
 
 		/* if it matches the filter and scope, send it */
-		rs->sr_err = test_filter( op, rs->sr_entry, op->oq_search.rs_filter );
+		rs->sr_err = test_filter( op, e, op->oq_search.rs_filter );
 
 		if ( rs->sr_err == LDAP_COMPARE_TRUE ) {
 			/* check size limit */
@@ -958,9 +1009,13 @@ fetch_entry_retry:
 				rs->sr_attrs = op->oq_search.rs_attrs;
 				rs->sr_operational_attrs = NULL;
 				rs->sr_ctrls = NULL;
+				rs->sr_entry = e;
+				RS_ASSERT( e->e_private != NULL );
 				rs->sr_flags = REP_ENTRY_MUSTRELEASE;
 				rs->sr_err = LDAP_SUCCESS;
 				rs->sr_err = send_search_entry( op, rs );
+				rs->sr_attrs = NULL;
+				rs->sr_entry = NULL;
 
 				/* send_search_entry will usually free it.
 				 * an overlay might leave its own copy here;
@@ -978,7 +1033,6 @@ fetch_entry_retry:
 							OpExtra, oe_next );
 					}
 				}
-				rs->sr_entry = NULL;
 				e = NULL;
 
 				switch ( rs->sr_err ) {
@@ -986,6 +1040,9 @@ fetch_entry_retry:
 					break;
 				default:		/* entry not sent */
 					break;
+				case LDAP_BUSY:
+					send_ldap_result( op, rs );
+					goto done;
 				case LDAP_UNAVAILABLE:
 				case LDAP_SIZELIMIT_EXCEEDED:
 					if ( rs->sr_err == LDAP_SIZELIMIT_EXCEEDED ) {
@@ -1014,6 +1071,7 @@ loop_continue:
 			slap_zn_runlock(bdb->bi_cache.c_zctx, e);
 #endif
 			bdb_cache_return_entry_r( bdb, e , &lock );
+			RS_ASSERT( rs->sr_entry == NULL );
 			e = NULL;
 			rs->sr_entry = NULL;
 		}
@@ -1200,6 +1258,8 @@ static int search_candidates(
 
 	if( op->ors_deref & LDAP_DEREF_SEARCHING ) {
 		rc = search_aliases( op, rs, e, txn, ids, scopes, stack );
+		if ( BDB_IDL_IS_ZERO( ids ) && rc == LDAP_SUCCESS )
+			rc = bdb_dn2idl( op, txn, &e->e_nname, BEI(e), ids, stack );
 	} else {
 		rc = bdb_dn2idl( op, txn, &e->e_nname, BEI(e), ids, stack );
 	}
@@ -1328,4 +1388,3 @@ send_paged_response(
 done:
 	(void) ber_free_buf( ber );
 }
-

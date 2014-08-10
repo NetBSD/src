@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.173 2014/01/16 21:02:30 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.173.2.1 2014/08/10 06:51:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -175,6 +175,8 @@
 #define asctime_r		_asctime_r
 #define asprintf		_asprintf
 #define asprintf_l		_asprintf_l
+#define asysctl			_asysctl
+#define asysctlbyname		_asysctlbyname
 #define atoll			_atoll
 #define authnone_create		_authnone_create
 #define authunix_create		_authunix_create

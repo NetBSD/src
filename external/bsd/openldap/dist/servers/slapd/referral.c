@@ -1,10 +1,10 @@
-/*	$NetBSD: referral.c,v 1.1.1.3 2010/12/12 15:22:37 adam Exp $	*/
+/*	$NetBSD: referral.c,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* referral.c - muck with referrals */
-/* OpenLDAP: pkg/ldap/servers/slapd/referral.c,v 1.28.2.7 2010/04/13 20:23:18 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

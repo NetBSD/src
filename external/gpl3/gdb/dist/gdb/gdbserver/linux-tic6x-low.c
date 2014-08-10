@@ -1,6 +1,6 @@
 /* Target dependent code for GDB on TI C6x systems.
 
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Andrew Jenner <andrew@codesourcery.com>
    Contributed by Yao Qi <yao@codesourcery.com>
 
@@ -38,10 +38,15 @@
 
 /* Defined in auto-generated file tic6x-c64xp-linux.c.  */
 void init_registers_tic6x_c64xp_linux (void);
+extern const struct target_desc *tdesc_tic6x_c64xp_linux;
+
 /* Defined in auto-generated file tic6x-c64x-linux.c.  */
 void init_registers_tic6x_c64x_linux (void);
+extern const struct target_desc *tdesc_tic6x_c64x_linux;
+
 /* Defined in auto-generated file tic62x-c6xp-linux.c.  */
 void init_registers_tic6x_c62x_linux (void);
+extern const struct target_desc *tdesc_tic6x_c62x_linux;
 
 union tic6x_register
 {
@@ -167,11 +172,15 @@ extern struct linux_target_ops the_low_target;
 static int *tic6x_regmap;
 static unsigned int tic6x_breakpoint;
 
-static void
-tic6x_arch_setup (void)
+/* Forward definition.  */
+static struct usrregs_info tic6x_usrregs_info;
+
+static const struct target_desc *
+tic6x_read_description (void)
 {
   register unsigned int csr asm ("B2");
   unsigned int cpuid;
+  const struct target_desc *tdesc;
 
   /* Determine the CPU we're running on to find the register order.  */
   __asm__ ("MVC .S2 CSR,%0" : "=r" (csr) :);
@@ -182,29 +191,30 @@ tic6x_arch_setup (void)
     case 0x02: /* C67x */
       tic6x_regmap = tic6x_regmap_c62x;
       tic6x_breakpoint = 0x0000a122;  /* BNOP .S2 0,5 */
-      init_registers_tic6x_c62x_linux ();
+      tdesc = tdesc_tic6x_c62x_linux;
       break;
     case 0x03: /* C67x+ */
       tic6x_regmap = tic6x_regmap_c64x;
       tic6x_breakpoint = 0x0000a122;  /* BNOP .S2 0,5 */
-      init_registers_tic6x_c64x_linux ();
+      tdesc = tdesc_tic6x_c64x_linux;
       break;
     case 0x0c: /* C64x */
       tic6x_regmap = tic6x_regmap_c64x;
       tic6x_breakpoint = 0x0000a122;  /* BNOP .S2 0,5 */
-      init_registers_tic6x_c64x_linux ();
+      tdesc = tdesc_tic6x_c64x_linux;
       break;
     case 0x10: /* C64x+ */
     case 0x14: /* C674x */
     case 0x15: /* C66x */
       tic6x_regmap = tic6x_regmap_c64xp;
       tic6x_breakpoint = 0x56454314;  /* illegal opcode */
-      init_registers_tic6x_c64xp_linux ();
+      tdesc = tdesc_tic6x_c64xp_linux;
       break;
     default:
       error ("Unknown CPU ID 0x%02x", cpuid);
     }
-  the_low_target.regmap = tic6x_regmap;
+  tic6x_usrregs_info.regmap = tic6x_regmap;
+  return tdesc;
 }
 
 static int
@@ -311,17 +321,47 @@ tic6x_store_gregset (struct regcache *regcache, const void *buf)
       tic6x_supply_register (regcache, i, regset + tic6x_regmap[i]);
 }
 
-struct regset_info target_regsets[] = {
+static struct regset_info tic6x_regsets[] = {
   { PTRACE_GETREGS, PTRACE_SETREGS, 0, TIC6X_NUM_REGS * 4, GENERAL_REGS,
     tic6x_fill_gregset, tic6x_store_gregset },
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
+static void
+tic6x_arch_setup (void)
+{
+  current_process ()->tdesc = tic6x_read_description ();
+}
+
+static struct regsets_info tic6x_regsets_info =
+  {
+    tic6x_regsets, /* regsets */
+    0, /* num_regsets */
+    NULL, /* disabled_regsets */
+  };
+
+static struct usrregs_info tic6x_usrregs_info =
+  {
+    TIC6X_NUM_REGS,
+    NULL, /* Set in tic6x_read_description.  */
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &tic6x_usrregs_info,
+    &tic6x_regsets_info
+  };
+
+static const struct regs_info *
+tic6x_regs_info (void)
+{
+  return &regs_info;
+}
+
 struct linux_target_ops the_low_target = {
   tic6x_arch_setup,
-  TIC6X_NUM_REGS,
-  0,
-  NULL,
+  tic6x_regs_info,
   tic6x_cannot_fetch_register,
   tic6x_cannot_store_register,
   NULL, /* fetch_register */
@@ -333,3 +373,14 @@ struct linux_target_ops the_low_target = {
   0,
   tic6x_breakpoint_at,
 };
+
+void
+initialize_low_arch (void)
+{
+  /* Initialize the Linux target descriptions.  */
+  init_registers_tic6x_c64xp_linux ();
+  init_registers_tic6x_c64x_linux ();
+  init_registers_tic6x_c62x_linux ();
+
+  initialize_regsets_info (&tic6x_regsets_info);
+}

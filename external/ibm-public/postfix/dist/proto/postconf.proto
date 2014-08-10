@@ -583,7 +583,7 @@ Enable the rewriting of the form "user%domain" to "user@domain".
 This is enabled by default.
 </p>
 
-<p> Note: with Postfix version 2.2, message header address rewriting
+<p> Note: as of Postfix version 2.2, message header address rewriting
 happens only when one of the following conditions is true: </p>
  
 <ul>
@@ -1609,7 +1609,9 @@ execution_directory_expansion_filter parameter.  </p>
 
 <dt><b>$recipient_delimiter</b></dt>
 
-<dd>The system-wide recipient address extension delimiter. </dd>
+<dd>The address extension delimiter that was found in the recipient
+address (Postfix 2.11 and later), or the system-wide recipient
+address extension delimiter (Postfix 2.10 and earlier). </dd>
 
 <dt><b>${name?value}</b></dt>
 
@@ -1670,7 +1672,9 @@ forward_expansion_filter parameter.  </p>
 
 <dt><b>$recipient_delimiter</b></dt>
 
-<dd>The system-wide recipient address extension delimiter. </dd>
+<dd>The address extension delimiter that was found in the recipient
+address (Postfix 2.11 and later), or the system-wide recipient
+address extension delimiter (Postfix 2.10 and earlier). </dd>
 
 <dt><b>${name?value}</b></dt>
 
@@ -1971,8 +1975,9 @@ IPV6_V6ONLY support (RFC 3493). </p>
 Postfix will do DNS type AAAA record lookups. </p>
 
 <p> When both IPv4 and IPv6 support are enabled, the Postfix SMTP
-client will attempt to connect via IPv6 before attempting to use
-IPv4.  </p>
+client will choose the protocol as specified with the
+smtp_address_preference parameter. Postfix versions before 2.8
+attempt to connect via IPv6 before attempting to use IPv4.  </p>
 
 <p>
 Examples:
@@ -2404,7 +2409,9 @@ The following $name expansions are done on luser_relay:
 
 <dt><b>$recipient_delimiter</b></dt>
 
-<dd>The system-wide recipient address extension delimiter. </dd>
+<dd>The address extension delimiter that was found in the recipient
+address (Postfix 2.11 and later), or the system-wide recipient
+address extension delimiter (Postfix 2.10 and earlier). </dd>
 
 <dt><b>$shell</b></dt>
 
@@ -2829,6 +2836,17 @@ The default time unit is d (days).
 
 <p>
 Specify 0 when mail delivery should be tried only once.
+</p>
+
+%PARAM lmdb_map_size 16777216
+
+<p>
+The initial OpenLDAP LMDB database size limit in bytes.  Each time
+a database becomes full, its size limit is doubled.
+</p>
+
+<p>
+This feature is available in Postfix 2.11 and later.
 </p>
 
 %PARAM message_size_limit 10240000
@@ -3484,22 +3502,58 @@ Example:
 recipient_canonical_maps = hash:/etc/postfix/recipient_canonical
 </pre>
 
-%PARAM recipient_delimiter 
+%PARAM recipient_delimiter
 
-<p>
-The separator between user names and address extensions (user+foo).
-See canonical(5), local(8), relocated(5) and virtual(5) for the
-effects this has on aliases, canonical, virtual, relocated and
-on .forward file lookups.  Basically, the software tries user+foo
-and .forward+foo before trying user and .forward.
+<p> The set of characters that can separate a user name from its
+extension (example: user+foo), or a .forward file name from its
+extension (example: .forward+foo).  Basically, the software tries
+user+foo and .forward+foo before trying user and .forward.  This
+implementation recognizes one delimiter character and one extension
+per email address or .forward file name. </p>
+
+<p> When the recipient_delimiter set contains multiple characters
+(Postfix 2.11 and later), a user name or .forward file name is
+separated from its extension by the first character that matches
+the recipient_delimiter set. </p>
+
+<p> See canonical(5), local(8), relocated(5) and virtual(5) for the
+effects of recipient_delimiter on lookups in aliases, canonical,
+virtual, and relocated maps, and see the propagate_unmatched_extensions
+parameter for propagating an extension from one email address to
+another.  </p>
+
+<p> When used in command_execution_directory, forward_path, or
+luser_relay, ${recipient_delimiter} is replaced with the actual
+recipient delimiter that was found in the recipient email address
+(Postfix 2.11 and later), or it is replaced with the main.cf
+recipient_delimiter parameter value (Postfix 2.10 and earlier).
 </p>
 
+<p> The recipient_delimiter is not applied to the mailer-daemon
+address, the postmaster address, or the double-bounce address. With
+the default "owner_request_special = yes" setting, the recipient_delimiter
+is also not applied to addresses with the special "owner-" prefix
+or the special "-request" suffix. </p>
+
 <p>
-Example:
+Examples:
 </p>
+  
+<pre>
+# Handle Postfix-style extensions.
+recipient_delimiter = +
+</pre>
 
 <pre>
-recipient_delimiter = +
+# Handle both Postfix and qmail extensions (Postfix 2.11 and later).
+recipient_delimiter = +-
+</pre>
+
+<pre>
+# Use .forward for mail without address extension, and for mail with
+# an unrecognized address extension.
+forward_path = $home/.forward${recipient_delimiter}${extension},
+    $home/.forward
 </pre>
 
 %PARAM reject_code 554
@@ -3859,15 +3913,6 @@ not specify larger values without permission from the remote sites.
 
 <p> This feature is available in Postfix 2.2 and later. </p>
 
-%PARAM smtp_connection_cache_reuse_limit 10
-
-<p> When SMTP connection caching is enabled, the number of times that
-an SMTP session may be reused before it is closed. 
-</p>
-
-<p> This feature is available in Postfix 2.2. In Postfix 2.3 it is
-replaced by $smtp_connection_reuse_time_limit.</p>
-
 %PARAM smtp_connection_reuse_time_limit 300s
 
 <p> The amount of time during which Postfix will use an SMTP
@@ -4167,9 +4212,10 @@ The default time unit is s (seconds).
 %PARAM smtp_host_lookup dns
 
 <p>
-What mechanisms the Postfix SMTP client uses to look up a host's IP
-address.  This parameter is ignored when DNS lookups are disabled
-(see: disable_dns_lookups).
+What mechanisms the Postfix SMTP client uses to look up a host's
+IP address.  This parameter is ignored when DNS lookups are disabled
+(see: disable_dns_lookups and smtp_dns_support_level).  The "dns"
+mechanism is always tried before "native" if both are listed.
 </p>
 
 <p>
@@ -4477,15 +4523,13 @@ with a
 %PARAM smtp_skip_5xx_greeting yes
 
 <p>
-Skip remote SMTP servers that greet with a 5XX status code (go away,
-do
-not try again later).
+Skip remote SMTP servers that greet with a 5XX status code.
 </p>
 
 <p> By default, the Postfix SMTP client moves on the next mail
 exchanger. Specify "smtp_skip_5xx_greeting = no" if Postfix should
-bounce the mail immediately. The default setting is incorrect, but
-it is what a lot of people expect to happen.  </p>
+bounce the mail immediately. Caution: the latter behavior appears
+to contradict RFC 2821. </p>
 
 %PARAM smtp_skip_quit_response yes
 
@@ -4934,6 +4978,16 @@ the unverified reverse client hostname, and execute the corresponding
 action.  Note: a result of "OK" is not allowed for safety reasons.
 Instead, use DUNNO in order to exclude specific hosts from blacklists.
 This feature is available in Postfix 2.7 and later.  </dd>
+
+<dt><b><a name="check_sasl_access">check_sasl_access</a> <i><a href="DATABASE_README.html">type:table</a></i></b></dt>
+
+<dd> Use the remote SMTP client SASL user name as lookup key for
+the specified access(5) database. The lookup key has the form
+"username@domainname" when the smtpd_sasl_local_domain parameter
+value is non-empty.  Unlike the check_client_access feature,
+check_sasl_access does not perform matches of parent domains or IP
+subnet ranges.  This feature is available with Postfix version 2.11
+and later. </dd>
 
 <dt><b><a name="permit_inet_interfaces">permit_inet_interfaces</a></b></dt>
 
@@ -5491,7 +5545,8 @@ for rejected requests (default: 501).</dd>
 <dt><b><a name="reject_non_fqdn_helo_hostname">reject_non_fqdn_helo_hostname</a></b> (with Postfix &lt; 2.3: reject_non_fqdn_hostname)</dt>
 
 <dd>Reject the request when the HELO or EHLO hostname is not in
-fully-qualified domain form, as required by the RFC. Note: specify
+fully-qualified domain or address literal form, as required by the
+RFC. Note: specify
 "smtpd_helo_required = yes" to fully enforce this restriction
 (without "smtpd_helo_required = yes", a client can simply skip
 reject_non_fqdn_helo_hostname by not sending HELO or EHLO).  <br>
@@ -5500,7 +5555,7 @@ rejected requests (default: 504).</dd>
 
 <dt><b><a name="reject_rhsbl_helo">reject_rhsbl_helo <i>rbl_domain=d.d.d.d</i></a></b></dt>
 
-<dd>Reject the request when the HELO or EHLO hostname hostname is
+<dd>Reject the request when the HELO or EHLO hostname is
 listed with the A record "<i>d.d.d.d</i>" under <i>rbl_domain</i>
 (Postfix version 2.1 and later only).  Each "<i>d</i>" is a number,
 or a pattern inside "[]" that contains one or more ";"-separated
@@ -5870,7 +5925,7 @@ change into 550 when you are confident that it is safe to do so).
 numerical response code when an address probe failed due to a
 temporary problem (default: 450). <br> The
 unverified_recipient_tempfail_action parameter specifies the action
-after addres probe failure due to a temporary problem (default:
+after address probe failure due to a temporary problem (default:
 defer_if_permit).  <br>  This feature is available in Postfix 2.1
 and later.  </dd>
 
@@ -6253,6 +6308,12 @@ feature is available in Postfix 2.1 and later.  </dd>
 authenticated clients only. This feature is available in
 Postfix version 2.1 and later. </dd>
 
+<dt><b><a name="reject_known_sender_login_mismatch">reject_known_sender_login_mismatch</a></b></dt>
+
+<dd>Apply the reject_sender_login_mismatch restriction only to MAIL
+FROM addresses that are known in $smtpd_sender_login_maps.  This
+feature is available in Postfix version 2.11 and later. </dd>
+
 <dt><b><a name="reject_non_fqdn_sender">reject_non_fqdn_sender</a></b></dt>
 
 <dd>Reject the request when the MAIL FROM address is not in
@@ -6319,7 +6380,7 @@ unverified_sender_reject_code parameter specifies the numerical
 response code when an address is known to bounce (default: 450,
 change into 550 when you are confident that it is safe to do so).
 <br>The unverified_sender_defer_code specifies the numerical response
-code when an address address probe failed due to a temporary problem
+code when an address probe failed due to a temporary problem
 (default: 450).  <br> The unverified_sender_tempfail_action parameter
 specifies the action after address probe failure due to a temporary
 problem (default: defer_if_permit).  <br> This feature is available
@@ -6812,7 +6873,7 @@ set up your XAUTHORITY environment variable before starting Postfix.
 
 <p>
 Note: the command is subject to $name expansion, before it is
-passed to the default commmand interpreter. Specify "$$" to
+passed to the default command interpreter. Specify "$$" to
 produce a single "$" character.
 </p>
 
@@ -7303,7 +7364,9 @@ See also: delay_notice_recipient, notify_classes.
 <p>
 Disable DNS lookups in the Postfix SMTP and LMTP clients. When
 disabled, hosts are looked up with the getaddrinfo() system
-library routine which normally also looks in /etc/hosts.
+library routine which normally also looks in /etc/hosts.  As of
+Postfix 2.11, this parameter is deprecated; use smtp_dns_support_level
+instead.
 </p>
 
 <p>
@@ -9064,15 +9127,13 @@ a lower logging level.  </p>
 
 <dl compact>
 
-<dt> </dt> <dd> 0 Log only a summary message on TLS handshake completion
-&mdash; no logging of remote SMTP client certificate trust-chain verification 
-errors
-if client certificate verification is not required. With Postfix 2.8
-and earlier, disable logging of TLS activity. </dd>
+<dt> </dt> <dd> 0 Disable logging of TLS activity. </dd>
 
-<dt> </dt> <dd> 1 Also log trust-chain verification errors and peer
-certificate name and issuer. With Postfix 2.8 and earlier, log TLS
-handshake and certificate information. </dd>
+<dt> </dt> <dd> 1 Log only a summary message on TLS handshake completion
+&mdash; no logging of client certificate trust-chain verification errors
+if client certificate verification is not required.  With Postfix 2.8 and
+earlier, log the summary message, peer certificate summary information
+and unconditionally log trust-chain verification errors.  </dd>
 
 <dt> </dt> <dd> 2 Also log levels during TLS negotiation. </dd>
 
@@ -9231,7 +9292,16 @@ $smtpd_tls_session_cache_database, this parameter is implemented in the
 tlsmgr(8) daemon and therefore per-smtpd-instance master.cf overrides
 are not possible. </p>
 
-<p> This feature is available in Postfix 2.2 and later.  </p>
+<p> As of Postfix 2.11 this setting cannot exceed 100 days.  If set
+&le; 0, session caching is disabled, not just via the database, but
+also via RFC 5077 TLS session tickets, which don't require server-side
+storage.  If set to a positive value less than 2 minutes, the minimum
+value of 2 minutes is used instead.  TLS session tickets require
+an OpenSSL library (at least version 0.9.8h) that provides full
+support for this TLS extension. </p>
+
+<p> This feature is available in Postfix 2.2 and later, and updated
+for TLS session ticket support in Postfix 2.11. </p>
 
 %PARAM relay_clientcerts
 
@@ -9283,27 +9353,38 @@ Postfix 2.3 and later; use smtpd_tls_mandatory_ciphers instead. </p>
 %PARAM smtpd_tls_dh1024_param_file
 
 <p> File with DH parameters that the Postfix SMTP server should
-use with EDH ciphers. </p>
+use with non-export EDH ciphers. </p>
 
 <p> Instead of using the exact same parameter sets as distributed
 with other TLS packages, it is more secure to generate your own
-set of parameters with something like the following command:  </p>
+set of parameters with something like the following commands:  </p>
 
 <blockquote>
 <pre>
-openssl gendh -out /etc/postfix/dh_1024.pem -2 1024
+openssl dhparam -out /etc/postfix/dh512.pem 512
+openssl dhparam -out /etc/postfix/dh1024.pem 1024
+openssl dhparam -out /etc/postfix/dh2048.pem 2048
 </pre>
 </blockquote>
 
-<p> Your actual source for entropy may differ. Some systems have
-/dev/random; on other system you may consider using the "Entropy
-Gathering Daemon EGD", available at http://egd.sourceforge.net/
-</p>
+<p> It is safe to share the same DH parameters between multiple
+Postfix instances.  If you prefer, you can generate separate
+parameters for each instance.  </p>
+
+<p> If you want to take maximal advantage of ciphers that offer <a
+href="FORWARD_SECRECY_README.html#dfn_fs">forward secrecy</a> see
+the <a href="FORWARD_SECRECY_README.html#quick-start">Getting
+started</a> section of <a
+href="FORWARD_SECRECY_README.html">FORWARD_SECRECY_README</a>.  The
+full document conveniently presents all information about Postfix
+"perfect" forward secrecy support in one place: what forward secrecy
+is, how to tweak settings, and what you can expect to see when
+Postfix uses ciphers with forward secrecy.  </p>
 
 <p> Example: </p>
 
 <pre>
-smtpd_tls_dh1024_param_file = /etc/postfix/dh_1024.pem
+smtpd_tls_dh1024_param_file = /etc/postfix/dh2048.pem
 </pre>
 
 <p>This feature is available with Postfix version 2.2.</p>
@@ -9311,7 +9392,7 @@ smtpd_tls_dh1024_param_file = /etc/postfix/dh_1024.pem
 %PARAM smtpd_tls_dh512_param_file
 
 <p> File with DH parameters that the Postfix SMTP server should
-use with EDH ciphers. </p>
+use with export-grade EDH ciphers. </p>
 
 <p> See also the discussion under the smtpd_tls_dh1024_param_file
 configuration parameter.  </p>
@@ -9468,14 +9549,13 @@ a lower logging level.  </p>
 
 <dl compact>
 
-<dt> </dt> <dd> 0 Log only a summary message on TLS handshake completion
+<dt> </dt> <dd> 0 Disable logging of TLS activity. </dd>
+
+<dt> </dt> <dd> 1 Log only a summary message on TLS handshake completion
 &mdash; no logging of remote SMTP server certificate trust-chain
 verification errors if server certificate verification is not required.
-With Postfix 2.8 and earlier, disable logging of TLS activity.  </dd>
-
-<dt> </dt> <dd> 1 Also log remote SMTP server trust-chain verification
-errors and peer certificate summary information. With Postfix 2.8
-and earlier, log TLS handshake and certificate information.  </dd>
+With Postfix 2.8 and earlier, log the summary message and unconditionally
+log trust-chain verification errors.  </dd>
 
 <dt> </dt> <dd> 2 Also log levels during TLS negotiation.  </dd>
 
@@ -9532,6 +9612,10 @@ every $smtp_tls_session_cache_timeout seconds. As with
 $smtp_tls_session_cache_database, this parameter is implemented in the
 tlsmgr(8) daemon and therefore per-smtp-instance master.cf overrides
 are not possible. </p>
+
+<p> As of Postfix 2.11 this setting cannot exceed 100 days.  If set
+&le; 0, session caching is disabled.  If set to a positive value
+less than 2 minutes, the minimum value of 2 minutes is used instead.  </p>
 
 <p> This feature is available in Postfix 2.2 and later.  </p>
 
@@ -10313,6 +10397,15 @@ configuration file or rendezvous point. </p>
 <p> This feature is available in Postfix 2.3 and later. In earlier
 releases it was called <b>smtpd_sasl_application_name</b>. </p>
 
+%PARAM smtpd_sasl_service smtp
+
+<p> The service name that is passed to the SASL plug-in that is
+selected with <b>smtpd_sasl_type</b> and <b>smtpd_sasl_path</b>.
+</p>
+
+<p> This feature is available in Postfix 2.11 and later. Prior
+versions behave as if "<b>smtp</b>" is specified. </p>
+
 %PARAM cyrus_sasl_config_path
 
 <p> Search path for Cyrus SASL application configuration files,
@@ -10392,13 +10485,18 @@ substitutions in regular expression maps. </p>
 
 %PARAM smtp_cname_overrides_servername version dependent
 
-<p> Allow DNS CNAME records to override the servername that the
-Postfix SMTP client uses for logging, SASL password lookup, TLS
+<p> When the remote SMTP servername is a DNS CNAME, replace the
+servername with the result from CNAME expansion for the purpose of
+logging, SASL password lookup, TLS
 policy decisions, or TLS certificate verification. The value "no"
 hardens Postfix smtp_tls_per_site hostname-based policies against
 false hostname information in DNS CNAME records, and makes SASL
 password file lookups more predictable. This is the default setting
 as of Postfix 2.3. </p>
+
+<p> When DNS CNAME records are validated with secure DNS lookups
+(smtp_dns_support_level = dnssec), they are always allowed to
+override the above servername (Postfix 2.11 and later). </p>
 
 <p> This feature is available in Postfix 2.2.9 and later. </p>
 
@@ -10561,10 +10659,10 @@ security are: </p>
 
 <dl>
 
-<dt><b>none</b></dt>         
+<dt><b><a href="TLS_README.html#client_tls_none">none</a></b></dt>
 <dd>No TLS. No additional attributes are supported at this level. </dd>
 
-<dt><b>may</b></dt>
+<dt><b><a href="TLS_README.html#client_tls_may">may</a></b></dt>
 <dd>Opportunistic TLS. Since sending in the clear is acceptable,
 demanding stronger than default TLS security merely reduces
 inter-operability. The optional "ciphers", "exclude" and "protocols"
@@ -10575,7 +10673,8 @@ handshakes fail, Postfix retries the connection with TLS disabled.
 This allows mail delivery to sites with non-interoperable TLS
 implementations.</dd>
 
-<dt><b>encrypt</b></dt> <dd>Mandatory TLS encryption. At this level
+<dt><b><a href="TLS_README.html#client_tls_encrypt">encrypt</a></b></dt>
+<dd>Mandatory TLS encryption. At this level
 and higher, the optional "protocols" attribute overrides the main.cf
 smtp_tls_mandatory_protocols parameter, the optional "ciphers" attribute
 overrides the main.cf smtp_tls_mandatory_ciphers parameter, and the
@@ -10584,7 +10683,29 @@ smtp_tls_mandatory_exclude_ciphers parameter. In the policy table,
 multiple protocols or excluded ciphers must be separated by colons,
 as attribute values may not contain whitespace or commas. </dd>
 
-<dt><b>fingerprint</b></dt> <dd>Certificate fingerprint
+<dt><b><a href="TLS_README.html#client_tls_dane">dane</a></b></dt>
+<dd>Opportunistic DANE TLS.  The TLS policy for the destination is
+obtained via TLSA records in DNSSEC.  If no TLSA records are found,
+the effective security level used is <a
+href="TLS_README.html#client_tls_may">may</a>.  If TLSA records are
+found, but none are usable, the effective security level is <a
+href="TLS_README.html#client_tls_encrypt">encrypt</a>.  When usable
+TLSA records are obtained for the remote SMTP server, the
+server certificate must match the TLSA records.  RFC 6698 (DANE)
+TLS authentication and DNSSEC support is available with Postfix
+2.11 and later.  </dd>
+
+<dt><b><a href="TLS_README.html#client_tls_dane">dane-only</a></b></dt>
+<dd>Mandatory DANE TLS.  The TLS policy for the destination is
+obtained via TLSA records in DNSSEC.  If no TLSA records are found,
+or none are usable, no connection is made to the server.  When
+usable TLSA records are obtained for the remote SMTP server, the
+server certificate must match the TLSA records.  RFC 6698 (DANE) TLS
+authentication and DNSSEC support is available with Postfix 2.11
+and later.  </dd>
+
+<dt><b><a href="TLS_README.html#client_tls_fingerprint">fingerprint</a></b></dt>
+<dd>Certificate fingerprint
 verification. Available with Postfix 2.5 and later. At this security
 level, there are no trusted certificate authorities. The certificate
 trust chain, expiration date, ... are not checked. Instead,
@@ -10599,7 +10720,8 @@ match attributes can be employed. The ":" character is not used as a
 delimiter as it occurs between each pair of fingerprint (hexadecimal)
 digits. </dd>
 
-<dt><b>verify</b></dt> <dd>Mandatory TLS verification.  At this security
+<dt><b><a href="TLS_README.html#client_tls_verify">verify</a></b></dt>
+<dd>Mandatory TLS verification.  At this security
 level, DNS MX lookups are trusted to be secure enough, and the name
 verified in the server certificate is usually obtained indirectly via
 unauthenticated DNS MX lookups.  The optional "match" attribute overrides
@@ -10608,7 +10730,8 @@ multiple match patterns and strategies must be separated by colons.
 In practice explicit control over matching is more common with the
 "secure" policy, described below. </dd>
 
-<dt><b>secure</b></dt> <dd>Secure-channel TLS. At this security level, DNS
+<dt><b><a href="TLS_README.html#client_tls_secure">secure</a></b></dt>
+<dd>Secure-channel TLS. At this security level, DNS
 MX lookups, though potentially used to determine the candidate next-hop
 gateway IP addresses, are <b>not</b> trusted to be secure enough for TLS
 peername verification. Instead, the default name verified in the server
@@ -10670,19 +10793,46 @@ whitespace, commas or colons. In the policy table "protocols" attribute
 empty value means allow all protocols. The valid protocol names, (see
 <b>SSL_get_version(3)</b>), are "SSLv2", "SSLv3" and "TLSv1". </p>
 
-<p> Note: As of OpenSSL 1.0.1 two new protocols are defined, "TLSv1.1"
-and "TLSv1.2". If an older Postfix version is linked against OpenSSL
-1.0.1 or later, these, or any other new protocol versions, are
-unconditionally enabled. </p>
-
-<p> With Postfix &ge; 2.5 the parameter syntax is expanded to support
-protocol exclusions. One can now explicitly exclude SSLv2 by setting
-"smtp_tls_mandatory_protocols = !SSLv2". To exclude both SSLv2 and
-SSLv3 set "smtp_tls_mandatory_protocols = !SSLv2, !SSLv3". Listing
+<p> With Postfix &ge; 2.5 the parameter syntax was expanded to support
+protocol exclusions. One can explicitly exclude "SSLv2" by setting
+"smtp_tls_mandatory_protocols = !SSLv2". To exclude both "SSLv2" and
+"SSLv3" set "smtp_tls_mandatory_protocols = !SSLv2, !SSLv3". Listing
 the protocols to include, rather than protocols to exclude, is
 supported, but not recommended. The exclusion form more closely
-matches the behavior when the OpenSSL library is newer than Postfix.
+matches the underlying OpenSSL interface semantics.
 </p>
+
+<p> The range of protocols advertised by an SSL/TLS client must be
+contiguous.  When a protocol version is enabled, disabling any
+higher version implicitly disables all versions above that higher
+version.  Thus, for example: </p>
+<blockquote>
+<pre>
+smtp_tls_mandatory_protocols = !SSLv2, !TLSv1
+</pre>
+</blockquote>
+<p> also disables any protocols version higher than TLSv1 leaving
+only "SSLv3" enabled.  </p>
+
+<p> Note: As of OpenSSL 1.0.1 two new protocols are defined, "TLSv1.1"
+and "TLSv1.2". When Postfix &le; 2.5 is linked against OpenSSL 1.0.1
+or later, these, or any other new protocol versions, cannot be
+disabled except by also disabling "TLSv1" (typically leaving just
+"SSLv3").  The latest patch levels of Postfix &ge; 2.6, and all
+versions of Postfix &ge; 2.10 can explicitly disable support for
+"TLSv1.1" or "TLSv1.2". </p>
+
+<p> At the <a href="TLS_README.html#client_tls_dane">dane</a> and
+<a href="TLS_README.html#client_tls_dane">dane-only</a> security
+levels, when usable TLSA records are obtained for the remote SMTP
+server, the Postfix SMTP client is obligated to include the SNI TLS
+extension in its SSL client hello message.  This may help the remote
+SMTP server live up to its promise to provide a certificate that
+matches its TLSA records.  Since TLS extensions require TLS 1.0 or
+later, the Postfix SMTP client must disable "SSLv2" and "SSLv3" when
+SNI is required.  If you use "dane" or "dane-only" do not disable
+TLSv1, except perhaps via the policy table for destinations which
+you are sure will support "TLSv1.1" or "TLSv1.2".  </p>
 
 <p> Since SSL version 2 has known protocol weaknesses and is now
 deprecated, the default setting excludes "SSLv2".  This means that by
@@ -10695,9 +10845,9 @@ TLS_README for more information about security levels. </p>
 <p> Example: </p>
 
 <pre>
-# Preferred form with Postfix &ge; 2.5:
+# Preferred syntax with Postfix &ge; 2.5:
 smtp_tls_mandatory_protocols = !SSLv2, !SSLv3
-# Alternative form.
+# Legacy syntax:
 smtp_tls_mandatory_protocols = TLSv1
 </pre>
 
@@ -10783,8 +10933,7 @@ example.com     verify  match=hostname:nexthop
 %PARAM smtp_tls_secure_cert_match nexthop, dot-nexthop
 
 <p> How the Postfix SMTP client verifies the server certificate
-peername for the
-"secure" TLS security level. In a "secure" TLS policy table
+peername for the "secure" TLS security level. In a "secure" TLS policy table
 ($smtp_tls_policy_maps) entry the optional "match" attribute
 overrides this main.cf setting. </p>
 
@@ -10852,25 +11001,26 @@ configuration parameter. See there for details. </p>
 %PARAM smtpd_tls_mandatory_protocols !SSLv2
 
 <p> The SSL/TLS protocols accepted by the Postfix SMTP server with
-mandatory TLS encryption. If the list is empty, the server supports all
-available SSL/TLS protocol versions.  A non-empty value is a list
-of protocol
-names separated by whitespace, commas or colons. The supported protocol
-names are "SSLv2", "SSLv3" and "TLSv1", and are not case sensitive. </p>
+mandatory TLS encryption. If the list is empty, the server supports
+all available SSL/TLS protocol versions.  A non-empty value is a
+list of protocol names separated by whitespace, commas or colons.
+The supported protocol names are "SSLv2", "SSLv3" and "TLSv1", and
+are not case sensitive. </p>
 
-<p> Note: As of OpenSSL 1.0.1 two new protocols are defined, "TLSv1.1"
-and "TLSv1.2". If an older Postfix version is linked against OpenSSL
-1.0.1 or later, these, or any other new protocol versions, are
-unconditionally enabled. </p>
-
-<p> With Postfix &ge; 2.5 the parameter syntax is expanded to support
-protocol exclusions. One can now explicitly exclude SSLv2 by setting
-"smtpd_tls_mandatory_protocols = !SSLv2". To exclude both SSLv2 and
-SSLv3 set "smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3". Listing
+<p> With Postfix &ge; 2.5 the parameter syntax was expanded to support
+protocol exclusions. One can explicitly exclude "SSLv2" by setting
+"smtpd_tls_mandatory_protocols = !SSLv2". To exclude both "SSLv2" and
+"SSLv3" set "smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3". Listing
 the protocols to include, rather than protocols to exclude, is
 supported, but not recommended. The exclusion form more closely
-matches the behavior when the OpenSSL library is newer than Postfix.
-</p>
+matches the underlying OpenSSL interface semantics.  </p>
+
+<p> Note: As of OpenSSL 1.0.1 two new protocols are defined, "TLSv1.1"
+and "TLSv1.2". When Postfix &le; 2.5 is linked against OpenSSL 1.0.1
+or later, these, or any other new protocol versions, cannot be
+disabled.  The latest patch levels of Postfix &ge; 2.6, and all
+versions of Postfix &ge; 2.10 can disable support for "TLSv1.1" or
+"TLSv1.2". </p>
 
 <p> Since SSL version 2 has known protocol weaknesses and is now
 deprecated, the default setting excludes "SSLv2".  This means that
@@ -10880,9 +11030,10 @@ level. </p>
 <p> Example: </p>
 
 <pre>
-smtpd_tls_mandatory_protocols = TLSv1
-# Alternative form with Postfix &ge; 2.5:
+# Preferred syntax with Postfix &ge; 2.5:
 smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3
+# Legacy syntax:
+smtpd_tls_mandatory_protocols = TLSv1
 </pre>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
@@ -10898,10 +11049,11 @@ parameters smtp_use_tls, smtp_enforce_tls, and smtp_tls_enforce_peername.
 
 <dl>
 
-<dt><b>none</b></dt> <dd> TLS will not be used unless enabled for specific
+<dt><b><a href="TLS_README.html#client_tls_none">none</a></b></dt>
+<dd> No TLS. TLS will not be used unless enabled for specific
 destinations via smtp_tls_policy_maps. </dd>
 
-<dt><b>may</b></dt>
+<dt><b><a href="TLS_README.html#client_tls_may">may</a></b></dt>
 <dd> Opportunistic TLS. Use TLS if this is supported by the remote
 SMTP server, otherwise use plaintext. Since
 sending in the clear is acceptable, demanding stronger than default TLS
@@ -10915,7 +11067,8 @@ When TLS handshakes fail, the connection is retried with TLS disabled.
 This allows mail delivery to sites with non-interoperable TLS
 implementations. </dd>
 
-<dt><b>encrypt</b></dt> <dd>Mandatory TLS encryption. Since a minimum
+<dt><b><a href="TLS_README.html#client_tls_encrypt">encrypt</a></b></dt>
+<dd>Mandatory TLS encryption. Since a minimum
 level of security is intended, it is reasonable to be specific about
 sufficiently secure protocol versions and ciphers. At this security level
 and higher, the main.cf parameters smtp_tls_mandatory_protocols and
@@ -10924,17 +11077,51 @@ cipher grade which the administrator considers secure enough for
 mandatory encrypted sessions. This security level is not an appropriate
 default for systems delivering mail to the Internet. </dd>
 
-<dt><b>fingerprint</b></dt> <dd>Certificate fingerprint
-verification. Available with Postfix 2.5 and later. At this security
-level, there are no trusted certificate authorities. The certificate
-trust chain, expiration date, ... are not checked. Instead, the
-<b>smtp_tls_fingerprint_cert_match</b> parameter lists the certificate
-fingerprint or public key fingerprint (Postfix 2.9 and later) of
-the valid server certificate. The digest
-algorithm used to calculate the fingerprint is selected by the
-<b>smtp_tls_fingerprint_digest</b> parameter. </dd>
+<dt><b><a href="TLS_README.html#client_tls_dane">dane</a></b></dt>
+<dd>Opportunistic DANE TLS.  At this security level, the TLS policy
+for the destination is obtained via DNSSEC.  For TLSA policy to be
+in effect, the destination domain's containing DNS zone must be
+signed and the Postfix SMTP client's operating system must be
+configured to send its DNS queries to a recursive DNS nameserver
+that is able to validate the signed records.  Each MX host's DNS
+zone should also be signed, and should publish DANE TLSA (RFC 6698)
+records that specify how that MX host's TLS certificate is to be
+verified.  TLSA records do not preempt the normal SMTP MX host
+selection algorithm, if some MX hosts support TLSA and others do
+not, TLS security will vary from delivery to delivery.  It is up
+to the domain owner to configure their MX hosts and their DNS
+sensibly.  To configure the Postfix SMTP client for DNSSEC lookups
+see the documentation for the smtp_dns_support_level main.cf
+parameter.  When DNSSEC-validated TLSA records are not found the
+effective tls security level is "may".  When TLSA records are found,
+but are all unusable the effective security level is "encrypt".  For
+purposes of protocol and cipher selection, the "dane" security level
+is treated like a "mandatory" TLS security level, and weak ciphers
+and protocols are disabled.  Since DANE authenticates server
+certificates the "aNULL" cipher-suites are transparently excluded
+at this level, no need to configure this manually.  RFC 6698 (DANE)
+TLS authentication is available with Postfix 2.11 and later.  </dd>
 
-<dt><b>verify</b></dt> <dd>Mandatory TLS verification. At this security
+<dt><b><a href="TLS_README.html#client_tls_dane">dane-only</a></b></dt>
+<dd>Mandatory DANE TLS.  This is just like "dane" above, but DANE
+TLSA authentication is required.  There is no fallback to "may" or
+"encrypt" when TLSA records are missing or unusable.  RFC 6698
+(DANE) TLS authentication is available with Postfix 2.11 and later.
+</dd>
+
+<dt><b><a href="TLS_README.html#client_tls_fingerprint">fingerprint</a></b></dt>
+<dd>Certificate fingerprint verification.
+At this security level, there are no trusted certificate authorities.
+The certificate trust chain, expiration date, etc., are
+not checked. Instead, the <b>smtp_tls_fingerprint_cert_match</b>
+parameter lists the certificate fingerprint or public key fingerprint
+(Postfix 2.9 and later) of the valid server certificate. The digest
+algorithm used to calculate the fingerprint is selected by the
+<b>smtp_tls_fingerprint_digest</b> parameter. Available with Postfix
+2.5 and later.  </dd>
+
+<dt><b><a href="TLS_README.html#client_tls_verify">verify</a></b></dt>
+<dd>Mandatory TLS verification. At this security
 level, DNS MX lookups are trusted to be secure enough, and the name
 verified in the server certificate is usually obtained indirectly
 via unauthenticated DNS MX lookups. The smtp_tls_verify_cert_match
@@ -10943,7 +11130,8 @@ control over matching is more common at the "secure" level, described
 below. This security level is not an appropriate default for systems
 delivering mail to the Internet. </dd>
 
-<dt><b>secure</b></dt> <dd>Secure-channel TLS.  At this security level,
+<dt><b><a href="TLS_README.html#client_tls_secure">secure</a></b></dt>
+<dd>Secure-channel TLS.  At this security level,
 DNS MX lookups, though potentially used to determine the candidate
 next-hop gateway IP addresses, are <b>not</b> trusted to be secure enough
 for TLS peername verification. Instead, the default name verified in
@@ -11969,22 +12157,34 @@ separator is colon. An empty value means allow all protocols. The valid
 protocol names, (see <b>SSL_get_version(3)</b>), are "SSLv2", "SSLv3"
 and "TLSv1". </p>
 
+<p> The range of protocols advertised by an SSL/TLS client must be
+contiguous.  When a protocol version is enabled, disabling any
+higher version implicitly disables all versions above that higher
+version.  Thus, for example: </p>
+<blockquote>
+<pre>
+smtp_tls_mandatory_protocols = !SSLv2, !TLSv1
+</pre>
+</blockquote>
+<p> also disables any protocols version higher than TLSv1 leaving
+only "SSLv3" enabled.  </p>
+
 <p> Note: As of OpenSSL 1.0.1 two new protocols are defined, "TLSv1.1"
-and "TLSv1.2". If an older Postfix version is linked against OpenSSL
-1.0.1 or later, these, or any other new protocol versions, are
-unconditionally enabled. </p>
+and "TLSv1.2". The latest patch levels of Postfix &ge; 2.6, and all
+versions of Postfix &ge; 2.10 can explicitly disable support for
+"TLSv1.1" or "TLSv1.2"</p>
 
 <p> To include a protocol list its name, to exclude it, prefix the name
 with a "!" character. To exclude SSLv2 even for opportunistic TLS set
 "smtp_tls_protocols = !SSLv2". To exclude both "SSLv2" and "SSLv3" set
 "smtp_tls_protocols = !SSLv2, !SSLv3". Explicitly listing the protocols to
 include, rather than protocols to exclude, is supported, but not
-recommended.  The exclusion form more closely matches the behavior
-when the OpenSSL library is newer than Postfix.  </p>
+recommended.  The exclusion form more closely matches the underlying
+OpenSSL interface semantics. </p>
 
 <p> Example: </p>
 <pre>
-# TLSv1 only!
+# TLSv1 or better:
 smtp_tls_protocols = !SSLv2, !SSLv3
 </pre>
 
@@ -11993,28 +12193,25 @@ smtp_tls_protocols = !SSLv2, !SSLv3
 %PARAM smtpd_tls_protocols
 
 <p> List of TLS protocols that the Postfix SMTP server will exclude
-or include with opportunistic TLS encryption. This parameter SHOULD be
-left at its default empty value, allowing all protocols to be used with
-opportunistic TLS. </p>
-
-<p> In main.cf the values are separated by whitespace, commas or
-colons. An empty value means allow all protocols. The valid protocol
-names, (see <b>SSL_get_version(3)</b>), are "SSLv2", "SSLv3" and
-"TLSv1". In smtp_tls_policy_maps table entries, "protocols" attribute
-values are separated by a colon. </p>
+or include with opportunistic TLS encryption. This parameter SHOULD
+be left at its default empty value, allowing all protocols to be
+used with opportunistic TLS.  A non-empty value is a list of protocol
+names separated by whitespace, commas or colons.  The supported
+protocol names are "SSLv2", "SSLv3" and "TLSv1", and are not case
+sensitive. </p>
 
 <p> Note: As of OpenSSL 1.0.1 two new protocols are defined, "TLSv1.1"
-and "TLSv1.2". If an older Postfix version is linked against OpenSSL
-1.0.1 or later, these, or any other new protocol versions, are
-unconditionally enabled. </p>
+and "TLSv1.2". The latest patch levels of Postfix &ge; 2.6, and all
+versions of Postfix &ge; 2.10 can disable support for "TLSv1.1" or
+"TLSv1.2". </p>
 
 <p> To include a protocol list its name, to exclude it, prefix the name
 with a "!" character. To exclude SSLv2 even for opportunistic TLS set
 "smtpd_tls_protocols = !SSLv2". To exclude both "SSLv2" and "SSLv3" set
 "smtpd_tls_protocols = !SSLv2, !SSLv3". Explicitly listing the protocols to
 include, rather than protocols to exclude, is supported, but not
-recommended.  The exclusion form more closely matches the behavior
-when the OpenSSL library is newer than Postfix.  </p>
+recommended.  The exclusion form more closely matches the underlying
+OpenSSL interface semantics. </p>
 
 <p> Example: </p>
 <pre>
@@ -12094,11 +12291,14 @@ strong" means approximately 128-bit security based on best known
 attacks. The selected curve must be implemented by OpenSSL (as
 reported by ecparam(1) with the "-list_curves" option) and be one
 of the curves listed in Section 5.1.1 of RFC 4492. You should not
-generally change this setting. </p>
+generally change this setting.  Remote SMTP client implementations
+must support this curve for EECDH key exchange to take place.  It
+is unwise to choose an "exotic" curve supported by only a small subset
+of clients.  </p>
 
-<p> This default curve is specified in NSA "Suite B" Cryptography
-(see http://www.nsa.gov/ia/industry/crypto_suite_b.cfm) for
-information classified as SECRET. </p>
+<p> The default "strong" curve is rated in NSA <a
+href="http://www.nsa.gov/ia/programs/suiteb_cryptography/">Suite
+B</a> for information classified up to SECRET.  </p>
 
 <p> Note: elliptic curve names are poorly standardized; different
 standards groups are assigning different names to the same underlying
@@ -12106,8 +12306,19 @@ curves.  The curve with the X9.62 name "prime256v1" is also known
 under the SECG name "secp256r1", but OpenSSL does not recognize the
 latter name. </p>
 
+<p> If you want to take maximal advantage of ciphers that offer <a
+href="FORWARD_SECRECY_README.html#dfn_fs">forward secrecy</a> see
+the <a href="FORWARD_SECRECY_README.html#quick-start">Getting
+started</a> section of <a
+href="FORWARD_SECRECY_README.html">FORWARD_SECRECY_README</a>.  The
+full document conveniently presents all information about Postfix
+"perfect" forward secrecy support in one place: what forward secrecy
+is, how to tweak settings, and what you can expect to see when
+Postfix uses ciphers with forward secrecy.  </p>
+
 <p> This feature is available in Postfix 2.6 and later, when it is
-compiled and linked with OpenSSL 1.0.0 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later on platforms where
+EC algorithms have not been disabled by the vendor. </p>
 
 %PARAM tls_eecdh_ultra_curve secp384r1
 
@@ -12122,12 +12333,23 @@ curve must be implemented by OpenSSL (as reported by ecparam(1) with the
 "-list_curves" option) and be one of the curves listed in Section 5.1.1
 of RFC 4492. You should not generally change this setting. </p>
 
-<p> This default "ultra" curve is specified in NSA "Suite B" Cryptography
-(see http://www.nsa.gov/ia/industry/crypto_suite_b.cfm) for information
-classified as TOP SECRET. </p>
+<p> This default "ultra" curve is rated in NSA <a
+href="http://www.nsa.gov/ia/programs/suiteb_cryptography/">Suite
+B</a> for information classified up to TOP SECRET. </p>
+
+<p> If you want to take maximal advantage of ciphers that offer <a
+href="FORWARD_SECRECY_README.html#dfn_fs">forward secrecy</a> see
+the <a href="FORWARD_SECRECY_README.html#quick-start">Getting
+started</a> section of <a
+href="FORWARD_SECRECY_README.html">FORWARD_SECRECY_README</a>.  The
+full document conveniently presents all information about Postfix
+"perfect" forward secrecy support in one place: what forward secrecy
+is, how to tweak settings, and what you can expect to see when
+Postfix uses ciphers with forward secrecy.  </p>
 
 <p> This feature is available in Postfix 2.6 and later, when it is
-compiled and linked with OpenSSL 1.0.0 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later on platforms where
+EC algorithms have not been disabled by the vendor. </p>
 
 %PARAM smtpd_tls_eecdh_grade see "postconf -d" output
 
@@ -12156,8 +12378,19 @@ users. </dd>
 
 </dl>
 
+<p> If you want to take maximal advantage of ciphers that offer <a
+href="FORWARD_SECRECY_README.html#dfn_fs">forward secrecy</a> see
+the <a href="FORWARD_SECRECY_README.html#quick-start">Getting
+started</a> section of <a
+href="FORWARD_SECRECY_README.html">FORWARD_SECRECY_README</a>.  The
+full document conveniently presents all information about Postfix
+"perfect" forward secrecy support in one place: what forward secrecy
+is, how to tweak settings, and what you can expect to see when
+Postfix uses ciphers with forward secrecy.  </p>
+
 <p> This feature is available in Postfix 2.6 and later, when it is
-compiled and linked with OpenSSL 1.0.0 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later on platforms
+where EC algorithms have not been disabled by the vendor. </p>
 
 %PARAM smtpd_tls_eccert_file
 
@@ -12832,7 +13065,7 @@ This service is normally implemented by the proxymap(8) daemon.
 
 <p> Selectively disable master(8) listener ports by service type
 or by service name and type.  Specify a list of service types
-("inet", "unix", "fifo", or "pass") or "name.type" tuples, where
+("inet", "unix", "fifo", or "pass") or "name/type" tuples, where
 "name" is the first field of a master.cf entry and "type" is a
 service type. As with other Postfix matchlists, a search stops at
 the first match.  Specify "!pattern" to exclude a service from the
@@ -12845,14 +13078,15 @@ is intentional. </p>
 <p> Examples: </p>
 
 <pre>
+# With Postfix 2.6..2.10 use '.' instead of '/'.
 # Turn on all master(8) listener ports (the default).
 master_service_disable =
 # Turn off only the main SMTP listener port.
-master_service_disable = smtp.inet
+master_service_disable = smtp/inet
 # Turn off all TCP/IP listener ports.
 master_service_disable = inet
 # Turn off all TCP/IP listener ports except "foo".
-master_service_disable = !foo.inet, inet
+master_service_disable = !foo/inet, inet
 </pre>
 
 <p> This feature is available in Postfix 2.6 and later. </p>
@@ -13718,6 +13952,21 @@ parameter. </p>
 
 <p> This feature is available in Postfix 2.8.  </p>
 
+%PARAM postscreen_dnsbl_whitelist_threshold 0
+
+<p> Allow a remote SMTP client to skip "before" and "after 220
+greeting" protocol tests, based on its combined DNSBL score as
+defined with the postscreen_dnsbl_sites parameter.  </p>
+
+<p> Specify a negative value to enable this feature. When a client
+passes the postscreen_dnsbl_whitelist_threshold without having
+failed other tests, all pending or disabled tests are flagged as
+completed with a time-to-live value equal to postscreen_dnsbl_ttl.
+When a test was already completed, its time-to-live value is updated
+if it was less than postscreen_dnsbl_ttl. </p>
+
+<p> This feature is available in Postfix 2.11.  </p>
+
 %PARAM postscreen_command_count_limit 20
 
 <p> The limit on the total number of commands per SMTP session for
@@ -14092,7 +14341,11 @@ or performant cipher choice, there is some risk of interoperability
 issues. In the past, some SSL clients have listed lower priority ciphers
 that they did not implement correctly. If the server chooses a cipher
 that the client prefers less, it may select a cipher whose client
-implementation is flawed. </p>
+implementation is flawed. Most notably Windows 2003 Microsoft
+Exchange servers have flawed implementations of DES-CBC3-SHA, which
+OpenSSL considers stronger than RC4-SHA.  Enabling server cipher-suite
+selection may create interoperability issues with Windows 2003
+Microsoft Exchange clients.  </p>
 
 <p> This feature is available in Postfix 2.8 and later, in combination
 with OpenSSL 0.9.7 and later. </p>
@@ -14325,16 +14578,16 @@ private DSA key.  See smtpd_tls_dcert_file for further details.
 %PARAM tlsproxy_tls_dh1024_param_file $smtpd_tls_dh1024_param_file
 
 <p> File with DH parameters that the Postfix tlsproxy(8) server
-should use with EDH ciphers. See smtpd_tls_dh1024_param_file for
-further details. </p>
+should use with non-export EDH ciphers. See smtpd_tls_dh1024_param_file
+for further details. </p>
 
 <p> This feature is available in Postfix 2.8 and later. </p>
 
 %PARAM tlsproxy_tls_dh512_param_file $smtpd_tls_dh512_param_file
 
 <p> File with DH parameters that the Postfix tlsproxy(8) server
-should use with EDH ciphers. See smtpd_tls_dh512_param_file for
-further details.  </p>
+should use with export-grade EDH ciphers. See smtpd_tls_dh512_param_file
+for further details.  </p>
 
 <p> This feature is available in Postfix 2.8 and later. </p>
 
@@ -14460,10 +14713,10 @@ smtpd_tls_security_level for further details. </p>
 
 %PARAM tlsproxy_tls_session_cache_timeout $smtpd_tls_session_cache_timeout
 
-<p> The expiration time of Postfix tlsproxy(8) server TLS session
-cache information. A cache cleanup is performed periodically every
-$smtpd_tls_session_cache_timeout seconds. See
-smtpd_tls_session_cache_timeout for further details. </p>
+<p> Obsolete expiration time of Postfix tlsproxy(8) server TLS session
+cache information. Since the cache is shared with smtpd(8) and managed
+by tlsmgr(8), there is only one expiration time for the SMTP server cache
+shared by all three services, namely smtpd_tls_session_cache_timeout. </p>
 
 <p> This feature is available in Postfix 2.8 and later. </p>
 
@@ -14599,7 +14852,8 @@ service performs plaintext &lt;=&gt; TLS ciphertext conversion. <p>
 
 %PARAM smtpd_per_record_deadline normal: no, overload: yes
 
-<p> Change the behavior of the smtpd_timeout time limit, from a
+<p> Change the behavior of the smtpd_timeout and smtpd_starttls_timeout
+time limits, from a
 time limit per read or write system call, to a time limit to send
 or receive a complete record (an SMTP command line, SMTP response
 line, SMTP message content line, or TLS protocol message).  This
@@ -14736,8 +14990,8 @@ easier queue migration (there is no need to run "postsuper" to
 change queue file names that don't match their message file inode
 number).  </p>
 
-<p> Note: see below for how to prepare long queue file names
-for migration to Postfix &le; 2.8. </p>
+<p> Note: see below for how to convert long queue file names to
+Postfix &le; 2.8. </p>
 
 <p> Changing the parameter value to "yes" has the following effects:
 </p>
@@ -14904,7 +15158,7 @@ limited to 13 over the lifetime of a daemon process. </p>
 
 <p> This feature is available in Postfix 2.9 and later.  </p>
 
-%PARAM smtpd_log_access_permit_actions empty
+%PARAM smtpd_log_access_permit_actions
 
 <p> Enable logging of the named "permit" actions in SMTP server
 access lists (by default, the SMTP server logs "reject" actions but
@@ -14935,3 +15189,424 @@ from the list. </p>
 </pre>
 
 <p> This feature is available in Postfix 2.10 and later.  </p>
+
+%PARAM smtp_dns_support_level
+
+<p> Level of DNS support in the Postfix SMTP client.  With
+"smtp_dns_support_level" left at its empty default value, the legacy
+"disable_dns_lookups" parameter controls whether DNS is enabled in
+the Postfix SMTP client, otherwise the legacy parameter is ignored.
+</p>
+
+<p> Specify one of the following: </p>
+
+<dl>
+
+<dt><b>disabled</b></dt>
+
+<dd>Disable DNS lookups.  No MX lookups are performed and hostname
+to address lookups are unconditionally "native".  This setting is
+not appropriate for hosts that deliver mail to the public Internet.
+Some obsolete how-to documents recommend disabling DNS lookups in
+some configurations with content_filters.  This is no longer required
+and strongly discouraged.  </dd>
+
+<dt><b>enabled</b></dt>
+
+<dd>Enable DNS lookups.  Nexthop destination domains not enclosed
+in "[]" will be subject to MX lookups.  If "dns" and "native" are
+included in the "smtp_host_lookup" parameter value, DNS will be
+queried first to resolve MX-host A records, followed by "native"
+lookups if no answer is found in DNS.  </dd>
+
+<dt><b>dnssec</b></dt>
+
+<dd>Enable <a href="https://tools.ietf.org/html/rfc4033">DNSSEC</a>
+lookups.  The "dnssec" setting differs from the "enabled" setting
+above in the following ways: <ul> <li>Any MX lookups will set
+RES_USE_DNSSEC and RES_USE_EDNS0 to request DNSSEC-validated
+responses. If the MX response is DNSSEC-validated the corresponding
+hostnames are considered validated.  <li> The address lookups of
+validated hostnames are also validated, (provided of course
+"smtp_host_lookup" includes "dns", see below).  <li>Temporary
+failures in DNSSEC-enabled hostname-to-address resolution block any
+"native" lookups.  Additional "native" lookups only happen when
+DNSSEC lookups hard-fail (NODATA or NXDOMAIN).  </ul> </dd>
+
+</dl>
+
+<p> The Postfix SMTP client considers non-MX "[nexthop]" and
+"[nexthop]:port" destinations equivalent to statically-validated
+MX records of the form "nexthop.  IN MX 0 nexthop."  Therefore,
+with "dnssec" support turned on, validated hostname-to-address
+lookups apply to the nexthop domain of any "[nexthop]" or
+"[nexthop]:port" destination.  This is also true for LMTP "inet:host"
+and "inet:host:port" destinations, as LMTP hostnames are never
+subject to MX lookups.  </p>
+
+<p>The "dnssec" setting is recommended only if you plan to use the
+<a href="TLS_README.html#client_tls_dane">dane</a> or <a
+href="TLS_README.html#client_tls_dane">dane-only</a> TLS security
+level, otherwise enabling DNSSEC support in Postfix offers no
+additional security.  Postfix DNSSEC support relies on an upstream
+recursive nameserver that validates DNSSEC signatures.  Such a DNS
+server will always filter out forged DNS responses, even when Postfix
+itself is not configured to use DNSSEC. </p>
+
+<p> When using Postfix DANE support the "smtp_host_lookup" parameter
+should include "dns", as <a
+href="https://tools.ietf.org/html/rfc6698">DANE</a> is not applicable
+to hosts resolved via "native" lookups.  </p>
+
+<p> As mentioned above, Postfix is not a validating <a
+href="https://tools.ietf.org/html/rfc4035#section-4.9">stub
+resolver</a>; it relies on the system's configured DNSSEC-validating
+<a href="https://tools.ietf.org/html/rfc4035#section-3.2">recursive
+nameserver</a> to perform all DNSSEC validation.  Since this
+nameserver's DNSSEC-validated responses will be fully trusted, it
+is strongly recommended that the MTA host have a local DNSSEC-validating
+recursive caching nameserver listening on a loopback address, and
+be configured to use only this nameserver for all lookups.  Otherwise,
+Postfix may remain subject to man-in-the-middle attacks that forge
+responses from the recursive nameserver</p>
+
+<p>DNSSEC support requires a version of Postfix compiled against a
+reasonably-modern DNS resolver(3) library that implements the
+RES_USE_DNSSEC and RES_USE_EDNS0 resolver options. </p>
+
+<p> This feature is available in Postfix 2.11 and later.  </p>
+
+%PARAM lmtp_dns_support_level
+
+<p> The LMTP-specific version of the smtp_dns_support_level
+configuration parameter.  See there for details.  </p>
+
+<p> This feature is available in Postfix 2.11 and later.  </p>
+
+%PARAM smtp_tls_trust_anchor_file
+
+<p> Zero or more PEM-format files with trust-anchor certificates
+and/or public keys.  If the parameter is not empty the root CAs in
+CAfile and CApath are no longer trusted.  Rather, the Postfix SMTP
+client will only trust certificate-chains signed by one of the
+trust-anchors contained in the chosen files.  The specified
+trust-anchor certificates and public keys are not subject to
+expiration, and need not be (self-signed) root CAs.  They may, if
+desired, be intermediate certificates. Therefore, these certificates
+also may be found "in the middle" of the trust chain presented by
+the remote SMTP server, and any untrusted issuing parent certificates
+will be ignored.  Specify a list of pathnames separated by comma
+or whitespace.  </p>
+
+<p>  Whether specified in main.cf, or on a per-destination basis,
+the trust-anchor PEM file must be accessible to the Postfix SMTP
+client in the chroot jail if applicable.  The trust-anchor file
+should contain only certificates and public keys, no private key
+material, and must be readable by the non-privileged $mail_owner
+user.  This allows destinations to be bound to a set of specific
+CAs or public keys without trusting the same CAs for all destinations.
+</p>
+
+<p> The main.cf parameter supports single-purpose Postfix installations
+that send mail to a fixed set of SMTP peers.  At most sites, if
+trust-anchor files are used at all, they will be specified on a
+per-destination basis via the "tafile" attribute of the "verify"
+and "secure" levels in smtp_tls_policy_maps.  </p>
+
+<p> The underlying mechanism is in support of RFC 6698 (DANE TLSA),
+which defines mechanisms for a client to securely determine server
+TLS certificates via DNS.  </p>
+
+<p> If you want your trust anchors to be public keys, with OpenSSL
+you can extract a single PEM public key from a PEM X.509 file
+containing a single certificate, as follows: </p>
+
+<blockquote>
+<pre>
+$ openssl x509 -in cert.pem -out ta-key.pem -noout -pubkey
+</pre>
+</blockquote>
+
+<p> This feature is available in Postfix 2.11 and later.  </p>
+
+%PARAM lmtp_tls_trust_anchor_file
+
+<p> The LMTP-specific version of the smtp_tls_trust_anchor_file
+configuration parameter.  See there for details.  </p>
+
+<p> This feature is available in Postfix 2.11 and later.  </p>
+
+%PARAM tls_dane_trust_anchor_digest_enable yes
+
+<p> RFC 6698 trust-anchor digest support in the Postfix TLS library.
+Enable support for RFC 6698 (DANE TLSA) DNS records that contain
+digests of trust-anchors with certificate usage "2".  In this case
+the certificate usage logically requires the server administrator
+to configure the server to include the trust-anchor certificate in
+the server's SSL certificate chain.  If enough domains mess this
+up, you can disable support for these TLSA records, but you'll no
+longer have secure connections that get it right and only publish
+trust anchor records.  </p>
+
+<p> At the <a href="TLS_README.html#client_tls_dane">dane</a>
+security level, when a TLSA RRset includes only unusable associations,
+the Postfix SMTP client will automatically switch the connection
+to the <a href="TLS_README.html#client_tls_encrypt">encrypt</a>
+security level.  At the <a
+href="TLS_README.html#client_tls_dane">dane-only</a> security level,
+the server in question is skipped and delivery is deferred if no
+secure servers are found.  </p>
+
+<p> The tls_dane_digests parameter controls the list of digest
+algorithms that are supported in TLSA records.  The tls_dane_digest_agility
+parameter controls digest algorithm downgrade attack resistance.
+</p>
+
+<p> This feature is available in Postfix 2.11 and later.  </p>
+
+%PARAM tls_wildcard_matches_multiple_labels yes
+
+<p> Match multiple DNS labels with "*" in wildcard certificates.
+</p>
+
+<p> Some mail service providers prepend the customer domain name
+to a base domain for which they have a wildcard TLS certificate.
+For example, the MX records for example.com hosted by example.net
+may be: </p>
+
+<blockquote>
+<pre>
+example.com. IN MX 0 example.com.mx1.example.net.
+example.com. IN MX 0 example.com.mx2.example.net.
+</pre>
+</blockquote>
+
+<p> and the TLS certificate may be for "*.example.net". The "*"
+then corresponds with multiple labels in the mail server domain
+name.  While multi-label wildcards are not widely supported, and
+are not blessed by any standard, there is little to be gained by
+disallowing their use in this context.  </p>
+
+<p> Notes: <p>
+
+<ul>
+
+<li> <p> In a certificate name, the "*" is special only when it is
+used as the first label. </p>
+
+<li> <p> While Postfix (2.11 or later) can match "*" with multiple
+domain name labels, other implementations likely will not.  </p>
+
+<li> <p> Earlier Postfix implementations behave as if
+"tls_wildcard_matches_multiple_labels = no". </p>
+
+</ul>
+
+<p> This feature is available in Postfix 2.11 and later.  </p>
+
+%PARAM tls_ssl_options
+
+<p> List or bit-mask of OpenSSL options to enable. </p>
+
+<p> The OpenSSL toolkit provides a set of options that applications
+can enable to tune the OpenSSL behavior.  Some of these work around
+bugs in other implementations and are on by default.  You can use
+the tls_disable_workarounds parameter to selectively disable some
+or all of the bug work-arounds, making OpenSSL more strict at the
+cost of non-interoperability with SSL clients or servers that exhibit
+the bugs.  </p>
+
+<p> Other options are off by default, and typically enable or disable
+features rather than bug work-arounds.  These may be turned on (with
+care) via the tls_ssl_options parameter.  The value is a white-space
+or comma separated list of named options chosen from the list below.
+The names are not case-sensitive, you can use lower-case if you
+prefer.  The upper case values below match the corresponding macro
+name in the ssl.h header file with the SSL_OP_ prefix removed.  It
+is possible that your OpenSSL version includes new options added
+after your Postfix source code was last updated, in that case you
+can only enable one of these via the hexadecimal syntax below.  </p>
+
+<p> You should only enable features via the hexadecimal mask when
+the need to control the feature is critical (to deal with a new
+vulnerability or a serious interoperability problem).  Postfix DOES
+NOT promise backwards compatible behavior with respect to the mask
+bits.  A feature enabled via the mask in one release may be enabled
+by other means in a later release, and the mask bit will then be
+ignored.  Therefore, use of the hexadecimal mask is only a temporary
+measure until a new Postfix or OpenSSL release provides a better
+solution.  </p>
+
+<p> If the value of the parameter is a hexadecimal long integer
+starting with "0x", the options corresponding to the bits specified
+in its value are enabled (see openssl/ssl.h and SSL_CTX_set_options(3)).
+You can only enable options not already controlled by other Postfix
+settings.  For example, you cannot disable protocols or enable
+server cipher preference.  Do not attempt to turn all features by
+specifying 0xFFFFFFFF, this is unlikely to be a good idea.  </p>
+
+<dl>
+
+<dt><b>LEGACY_SERVER_CONNECT</b></dt> <dd>See SSL_CTX_set_options(3).</dd>
+
+<dt><b>NO_TICKET</b></dt> <dd>See SSL_CTX_set_options(3).</dd>
+
+<dt><b>NO_COMPRESSION</b></dt> <dd>Disable SSL compression even if
+supported by the OpenSSL library.  Compression is CPU-intensive,
+and compression before encryption does not always improve security.  </dd>
+
+</dl>
+
+<p> This feature is available in Postfix 2.11 and later.  </p>
+
+%PARAM tlsmgr_service_name tlsmgr
+
+<p> The name of the tlsmgr(8) service entry in master.cf. This
+service maintains TLS session caches and other information in support
+of TLS. </p>
+
+<p> This feature is available in Postfix 2.11 and later. </p>
+
+%PARAM lmtp_connection_reuse_count_limit 0
+
+<p> The LMTP-specific version of the smtp_connection_reuse_count_limit
+configuration parameter.  See there for details. </p>
+
+<p> This feature is available in Postfix 2.11 and later. </p>
+
+%PARAM smtp_connection_reuse_count_limit 0
+
+<p> When SMTP connection caching is enabled, the number of times
+that an SMTP session may be reused before it is closed, or zero (no
+limit).  With a reuse count limit of N, a connection is used up to
+N+1 times.  </p>
+
+<p> NOTE: This feature is unsafe. When a high-volume destination
+has multiple inbound MTAs, then the slowest inbound MTA will attract
+the most connections to that destination.  This limitation does not
+exist with the smtp_connection_reuse_time_limit feature. </p>
+
+<p> This feature is available in Postfix 2.11. </p>
+
+%PARAM lmtp_tls_force_insecure_host_tlsa_lookup no
+
+<p> The LMTP-specific version of the smtp_tls_force_insecure_host_tlsa_lookup
+configuration parameter.  See there for details. </p>
+
+<p> This feature is available in Postfix 2.11 and later. </p>
+
+%PARAM smtp_tls_force_insecure_host_tlsa_lookup no
+
+<p> Lookup the associated DANE TLSA RRset even when a hostname is
+not an alias and its address records lie in an unsigned zone.  This
+is unlikely to ever yield DNSSEC validated results, since child
+zones of unsigned zones are also unsigned in the absence of DLV or
+locally configured non-root trust-anchors.  We anticipate that such
+mechanisms will not be used for just the "_tcp" subdomain of a host.
+Suppressing the TLSA RRset lookup reduces latency and avoids potential
+interoperability problems with nameservers for unsigned zones that
+are not prepared to handle the new TLSA RRset.  </p>
+
+<p> This feature is available in Postfix 2.11. </p>
+
+%PARAM tls_dane_digest_agility on
+
+<p> Configure DANE TLSA digest algorithm agility.  When digest
+algorithm agility is enabled, and the server and client support a
+common strong digest algorithm, TLSA records with weaker digest
+algorithms are ignored.  </p>
+
+<p> Specify one of the following: </p>
+
+<dl>
+
+<dt><b>off</b></dt>
+<dd> DANE verification examines each well-formed record in the TLSA
+RRset whose matching type is either "0" (no hash used) or is one of
+the digest algorithms listed in $tls_dane_digests.  This setting
+is not recommended.  </dd>
+
+<dt><b>on</b></dt>
+<dd> From each group of well-formed TLSA RRs a non-zero digest
+matching type with the same certificate usage and selector, DANE
+verification examines only those records whose matching type has
+the highest precedence (appear earliest in $tls_dane_digests).
+</dd>
+
+<dt><b>maybe</b></dt>
+<dd> For compatibility with digest algorithm agility, each certificate
+or public key whose digest is included in a DANE TLSA RRset, SHOULD
+be published with the same set of digest matching type values as
+any other with the same usage and selector.  Therefore, compatible
+TLSA RRsets will contain an identical count of well-formed RRs with
+each non-zero digest matching type for any fixed combination of
+usage and selector.  When this constraint is violated, or any of
+the digest records are malformed, digest algorithm agility will
+disabled.  Otherwise, digest algorithm agility is enabled.   </dd>
+
+</dl>
+
+<p> Digest algorithm agility ensures that the strongest digest
+supported by both the Postfix SMTP client and the remote server is
+used, and weaker digests are ignored.  This supports non-disruptive
+deprecation of outdated digest algorithms. </p>
+
+<p> To ensure compatibility with digest algorithm agility during
+key rotation, when a certificate or public key is being replaced
+with another, and both are published during the transition, both
+the old and the new certificate MUST be specified with the same set
+of digests.  One can change the list of digest algorithms later,
+once old keys are retired.  At any given time, change either the
+list of digests without changing the list of certificates or public
+keys or the list of certificates or public keys without changing
+the list of digests.  Full value matching type "0" records are not
+subject to this constraint, but are discouraged due to the size of
+the resulting DNS records.  </p>
+
+<p> It is expected that this algorithm agility mechanism will be
+published in a standards track RFC for SMTP with DANE, and also in
+an eventual update to RFC 6698. </p>
+
+<p> This feature is available in Postfix 2.11 and later. </p>
+
+%PARAM tls_dane_digests sha512 sha256
+
+<p> RFC 6698 TLSA resource-record "matching type" digest algorithms
+in descending preference order.  All the specified algorithms must
+be supported by the underlying OpenSSL library, otherwise the Postfix
+SMTP client will not support DANE TLSA security.  </p>
+
+<p> Specify a list of digest names separated by commas and/or
+whitespace.  Each digest name may be followed by an optional
+"=&lt;number&gt;" suffix.  For example, "sha512" may instead be specified
+as "sha512=2" and "sha256" may instead be specified as "sha256=1".
+The optional number must match the <a
+href="https://www.iana.org/assignments/dane-parameters/dane-parameters.xhtml#matching-types"
+>IANA</a> assigned TLSA matching type number the algorithm in question.
+Postfix will check this constraint for the algorithms it knows about.
+Additional matching type algorithms registered with IANA can be added
+with explicit numbers provided they are supported by OpenSSL. </p>
+
+<p> Invalid list elements are logged with a warning and disable DANE
+support.  TLSA RRs that specify digests not included in the list are
+ignored with a warning. </p>
+
+<p> Note: It is unwise to omit sha256 from the digest list.  This
+digest algorithm is the only mandatory to implement digest algorithm
+in RFC 6698, and many servers are expected publish TLSA records
+with just sha256 digests.  Unless one of the standard digests is
+seriously compromised and servers have had ample time to update their
+TLSA records you should not omit any standard digests, just arrange
+them in order from strongest to weakest.  </p>
+
+<p> When for a particular combination of "certificate usage" and
+"selector" the TLSA RRset contains records with more than one digest
+matching type, the tls_dane_digest_agility parameter determines
+whether all the RRs are used, or only those with the most preferred
+digest matching type.  </p>
+
+<p> The tls_dane_trust_anchor_digest_enable parameter controls
+whether any digest TLSA records are acceptable in usage "2" (trust
+anchor assertion) TLSA records. </p>
+
+<p> This feature is available in Postfix 2.11 and later. </p>

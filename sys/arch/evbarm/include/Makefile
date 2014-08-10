@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.20 2013/05/02 03:56:40 matt Exp $
+#	$NetBSD: Makefile,v 1.20.8.1 2014/08/10 06:53:55 tls Exp $
 
 INCSDIR=	/usr/include/evbarm
 
-INCS=
+INCS=		sljit_machdep.h
 
 .include "../../arm/include/Makefile.common"

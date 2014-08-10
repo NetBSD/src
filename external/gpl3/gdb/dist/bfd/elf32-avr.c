@@ -1,7 +1,5 @@
 /* AVR-specific support for 32-bit ELF
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright 1999-2013 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1216,12 +1214,12 @@ elf32_avr_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned;
+	  bfd_boolean unresolved_reloc, warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 
 	  name = h->root.root.string;
 	}
@@ -2138,6 +2136,7 @@ elf32_avr_relax_section (bfd *abfd,
 			  irel->r_offset + insn_size;
                         Elf_Internal_Sym *isym, *isymend;
                         unsigned int sec_shndx;
+			struct bfd_section *isec;
 
                         sec_shndx =
 			  _bfd_elf_section_from_bfd_section (abfd, sec);
@@ -2188,80 +2187,85 @@ elf32_avr_relax_section (bfd *abfd,
 				}
 			    }
 			}
+
 			/* Now we check for relocations pointing to ret.  */
-			{
-			  Elf_Internal_Rela *rel;
-			  Elf_Internal_Rela *relend;
+			for (isec = abfd->sections; isec && deleting_ret_is_safe; isec = isec->next)
+			  {
+			    Elf_Internal_Rela *rel;
+			    Elf_Internal_Rela *relend;
+              
+			    rel = elf_section_data (isec)->relocs;
+			    if (rel == NULL)
+			      rel = _bfd_elf_link_read_relocs (abfd, isec, NULL, NULL, TRUE);
 
-			  relend = elf_section_data (sec)->relocs
-			    + sec->reloc_count;
+			    relend = rel + isec->reloc_count;
 
-			  for (rel = elf_section_data (sec)->relocs;
-			       rel < relend; rel++)
-			    {
-			      bfd_vma reloc_target = 0;
+			    for (; rel && rel < relend; rel++)
+			      {
+				bfd_vma reloc_target = 0;
 
-			      /* Read this BFD's local symbols if we haven't
-				 done so already.  */
-			      if (isymbuf == NULL && symtab_hdr->sh_info != 0)
-				{
-				  isymbuf = (Elf_Internal_Sym *)
-				    symtab_hdr->contents;
-				  if (isymbuf == NULL)
-				    isymbuf = bfd_elf_get_elf_syms
-				      (abfd,
-				       symtab_hdr,
-				       symtab_hdr->sh_info, 0,
-				       NULL, NULL, NULL);
-				  if (isymbuf == NULL)
+				/* Read this BFD's local symbols if we haven't
+				   done so already.  */
+				if (isymbuf == NULL && symtab_hdr->sh_info != 0)
+				  {
+				    isymbuf = (Elf_Internal_Sym *)
+				      symtab_hdr->contents;
+				    if (isymbuf == NULL)
+				      isymbuf = bfd_elf_get_elf_syms
+					(abfd,
+					 symtab_hdr,
+					 symtab_hdr->sh_info, 0,
+					 NULL, NULL, NULL);
+				    if (isymbuf == NULL)
+				      break;
+				  }
+
+				/* Get the value of the symbol referred to
+				   by the reloc.  */
+				if (ELF32_R_SYM (rel->r_info)
+				    < symtab_hdr->sh_info)
+				  {
+				    /* A local symbol.  */
+				    asection *sym_sec;
+
+				    isym = isymbuf
+				      + ELF32_R_SYM (rel->r_info);
+				    sym_sec = bfd_section_from_elf_index
+				      (abfd, isym->st_shndx);
+				    symval = isym->st_value;
+
+				    /* If the reloc is absolute, it will not
+				       have a symbol or section associated
+				       with it.  */
+
+				    if (sym_sec)
+				      {
+					symval +=
+					  sym_sec->output_section->vma
+					  + sym_sec->output_offset;
+					reloc_target = symval + rel->r_addend;
+				      }
+				    else
+				      {
+					reloc_target = symval + rel->r_addend;
+					/* Reference symbol is absolute.  */
+				      }
+				  }
+				/* else ... reference symbol is extern.  */
+
+				if (address_of_ret == reloc_target)
+				  {
+				    deleting_ret_is_safe = 0;
+				    if (debug_relax)
+				      printf ("ret from "
+					      "rjmp/jmp ret sequence at address"
+					      " 0x%x could not be deleted. ret"
+					      " is target of a relocation.\n",
+					      (int) address_of_ret);
 				    break;
-				}
-
-			      /* Get the value of the symbol referred to
-				 by the reloc.  */
-			      if (ELF32_R_SYM (rel->r_info)
-				  < symtab_hdr->sh_info)
-				{
-				  /* A local symbol.  */
-				  asection *sym_sec;
-
-				  isym = isymbuf
-				    + ELF32_R_SYM (rel->r_info);
-				  sym_sec = bfd_section_from_elf_index
-				    (abfd, isym->st_shndx);
-				  symval = isym->st_value;
-
-				  /* If the reloc is absolute, it will not
-				     have a symbol or section associated
-				     with it.  */
-
-				  if (sym_sec)
-				    {
-				      symval +=
-					sym_sec->output_section->vma
-					+ sym_sec->output_offset;
-				      reloc_target = symval + rel->r_addend;
-				    }
-				  else
-				    {
-				      reloc_target = symval + rel->r_addend;
-				      /* Reference symbol is absolute.  */
-				    }
-				}
-			      /* else ... reference symbol is extern.  */
-
-			      if (address_of_ret == reloc_target)
-				{
-				  deleting_ret_is_safe = 0;
-				  if (debug_relax)
-				    printf ("ret from "
-					    "rjmp/jmp ret sequence at address"
-					    " 0x%x could not be deleted. ret"
-					    " is target of a relocation.\n",
-					    (int) address_of_ret);
-				}
-			    }
-			}
+				  }
+			      }
+			  }
 
 			if (deleting_ret_is_safe)
 			  {
@@ -2282,7 +2286,6 @@ elf32_avr_relax_section (bfd *abfd,
 			    break;
 			  }
                       }
-
                   }
               }
             break;

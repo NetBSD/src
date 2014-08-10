@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.10 2014/03/16 05:20:26 dholland Exp $ */
+/*	$NetBSD: bio.c,v 1.10.2.1 2014/08/10 06:54:50 tls Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.10 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.10.2.1 2014/08/10 06:54:50 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -78,6 +78,7 @@ const struct cdevsw bio_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

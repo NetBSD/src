@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.24 2009/10/19 18:41:13 bouyer Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.24.36.1 2014/08/10 06:54:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -55,14 +55,14 @@
  */
 
 /*
- * Driver for generic ten-bit (1000BASE-SX) interfaces, built in to
+ * Driver for generic ten-bit (1000BASE-SX) interfaces, built into
  * many Gigabit Ethernet chips.
  *
  * All we have to do here is correctly report speed and duplex.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.24 2009/10/19 18:41:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.24.36.1 2014/08/10 06:54:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,14 +130,26 @@ gentbiattach(device_t parent, device_t self, void *aux)
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	int oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	int model = MII_MODEL(ma->mii_id2);
+	int rev = MII_REV(ma->mii_id2);
+	const char *descr;
 
-	aprint_naive(": Media interface\n");
-	aprint_normal(": Generic ten-bit interface, rev. %d\n",
-	    MII_REV(ma->mii_id2));
+	if ((descr = mii_get_descr(oui, model)) != NULL)
+		aprint_normal(": %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
+		    descr, oui, model, rev);
+	else
+		aprint_normal(": OUI 0x%06x, model 0x%04x, rev. %d\n",
+		    oui, model, rev);
+
+	aprint_naive(": Generic ten-bit interface\n");
 
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_mpd_oui = oui;
+	sc->mii_mpd_model = model;
+	sc->mii_mpd_rev = rev;
 	sc->mii_funcs = &gentbi_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
@@ -249,7 +261,7 @@ gentbi_status(struct mii_softc *sc)
 
 	if (bmcr & BMCR_AUTOEN) {
 		/*
-		 * The media status bits are only valid of autonegotiation
+		 * The media status bits are only valid if autonegotiation
 		 * has completed (or it's disabled).
 		 */
 		if ((bmsr & BMSR_ACOMP) == 0) {
@@ -269,6 +281,8 @@ gentbi_status(struct mii_softc *sc)
 		    (anlpar & ANLPAR_X_FD) != 0)
 			mii->mii_media_active |=
 			    IFM_FDX | mii_phy_flowstatus(sc);
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

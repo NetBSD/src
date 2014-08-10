@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.10 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: tpm.c,v 1.10.2.1 2014/08/10 06:54:52 tls Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
  * Copyright (c) 2009, 2010 Hans-Jörg Höxer
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.10 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.10.2.1 2014/08/10 06:54:52 tls Exp $");
 
 #if 0
 #define	TPM_DEBUG 
@@ -88,6 +88,7 @@ const struct cdevsw tpm_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 }; 
 

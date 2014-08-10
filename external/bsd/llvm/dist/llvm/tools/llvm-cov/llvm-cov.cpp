@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -27,22 +26,30 @@ using namespace llvm;
 static cl::opt<std::string> SourceFile(cl::Positional, cl::Required,
                                        cl::desc("SOURCEFILE"));
 
-static cl::opt<bool> AllBlocks("a", cl::init(false),
+static cl::opt<bool> AllBlocks("a", cl::Grouping, cl::init(false),
                                cl::desc("Display all basic blocks"));
 static cl::alias AllBlocksA("all-blocks", cl::aliasopt(AllBlocks));
 
-static cl::opt<bool> BranchProb("b", cl::init(false),
+static cl::opt<bool> BranchProb("b", cl::Grouping, cl::init(false),
                                 cl::desc("Display branch probabilities"));
 static cl::alias BranchProbA("branch-probabilities", cl::aliasopt(BranchProb));
 
-static cl::opt<bool> BranchCount("c", cl::init(false),
+static cl::opt<bool> BranchCount("c", cl::Grouping, cl::init(false),
                                  cl::desc("Display branch counts instead "
                                            "of percentages (requires -b)"));
 static cl::alias BranchCountA("branch-counts", cl::aliasopt(BranchCount));
 
-static cl::opt<bool> FuncSummary("f", cl::init(false),
+static cl::opt<bool> LongNames("l", cl::Grouping, cl::init(false),
+                               cl::desc("Prefix filenames with the main file"));
+static cl::alias LongNamesA("long-file-names", cl::aliasopt(LongNames));
+
+static cl::opt<bool> FuncSummary("f", cl::Grouping, cl::init(false),
                                  cl::desc("Show coverage for each function"));
 static cl::alias FuncSummaryA("function-summaries", cl::aliasopt(FuncSummary));
+
+static cl::opt<bool> NoOutput("n", cl::Grouping, cl::init(false),
+                              cl::desc("Do not output any .gcov files"));
+static cl::alias NoOutputA("no-output", cl::aliasopt(NoOutput));
 
 static cl::opt<std::string>
 ObjectDir("o", cl::value_desc("DIR|FILE"), cl::init(""),
@@ -50,11 +57,11 @@ ObjectDir("o", cl::value_desc("DIR|FILE"), cl::init(""),
 static cl::alias ObjectDirA("object-directory", cl::aliasopt(ObjectDir));
 static cl::alias ObjectDirB("object-file", cl::aliasopt(ObjectDir));
 
-static cl::opt<bool> PreservePaths("p", cl::init(false),
+static cl::opt<bool> PreservePaths("p", cl::Grouping, cl::init(false),
                                    cl::desc("Preserve path components"));
 static cl::alias PreservePathsA("preserve-paths", cl::aliasopt(PreservePaths));
 
-static cl::opt<bool> UncondBranch("u", cl::init(false),
+static cl::opt<bool> UncondBranch("u", cl::Grouping, cl::init(false),
                                   cl::desc("Display unconditional branch info "
                                            "(requires -b)"));
 static cl::alias UncondBranchA("unconditional-branches",
@@ -96,7 +103,7 @@ int main(int argc, char **argv) {
 
   GCOVFile GF;
 
-  OwningPtr<MemoryBuffer> GCNO_Buff;
+  std::unique_ptr<MemoryBuffer> GCNO_Buff;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCNO, GCNO_Buff)) {
     errs() << InputGCNO << ": " << ec.message() << "\n";
     return 1;
@@ -107,7 +114,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  OwningPtr<MemoryBuffer> GCDA_Buff;
+  std::unique_ptr<MemoryBuffer> GCDA_Buff;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCDA, GCDA_Buff)) {
     if (ec != errc::no_such_file_or_directory) {
       errs() << InputGCDA << ": " << ec.message() << "\n";
@@ -127,9 +134,9 @@ int main(int argc, char **argv) {
     GF.dump();
 
   GCOVOptions Options(AllBlocks, BranchProb, BranchCount, FuncSummary,
-                      PreservePaths, UncondBranch);
+                      PreservePaths, UncondBranch, LongNames, NoOutput);
   FileInfo FI(Options);
   GF.collectLineCounts(FI);
-  FI.print(InputGCNO, InputGCDA);
+  FI.print(SourceFile, InputGCNO, InputGCDA);
   return 0;
 }

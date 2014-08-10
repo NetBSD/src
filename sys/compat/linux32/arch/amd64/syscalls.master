@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.65 2013/11/18 19:23:27 christos Exp $
+	$NetBSD: syscalls.master,v 1.65.2.1 2014/08/10 06:54:33 tls Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -328,10 +328,10 @@
 		    netbsd32_size_t sigsetsize); }
 180	STD	{ netbsd32_ssize_t|linux32_sys||pread(int fd, \
 		    netbsd32_voidp buf, netbsd32_size_t nbyte, \
-		    linux32_off_t offset); }
+		    netbsd32_off_t offset); }
 181	STD	{ netbsd32_ssize_t|linux32_sys||pwrite(int fd, \
 		    netbsd32_voidp buf, netbsd32_size_t nbyte, \
-		    linux32_off_t offset); }
+		    netbsd32_off_t offset); }
 182	STD	{ int|linux32_sys||chown16(netbsd32_charp path, \
 		    linux32_uid16_t uid, linux32_gid16_t gid); }
 183	NOARGS	{ int|netbsd32||__getcwd(netbsd32_charp bufp, \
@@ -472,7 +472,8 @@
 269	STD	{ int|linux32_sys||fstatfs64(int fd, \
 		    netbsd32_size_t sz, linux32_statfs64p sp); }
 270	STD	{ int|linux32_sys||tgkill(int tgid, int tid, int sig); }
-271	UNIMPL	utimes
+271	NOARGS	{ int|compat_50_netbsd32||utimes(netbsd32_charp path, \
+		    netbsd32_timeval50p_t tptr); }
 272	STD	{ int|linux32_sys||fadvise64_64(int fd, uint32_t offlo, \
 		    uint32_t offhi, uint32_t lenlo, uint32_t lenhi, int advice); }
 273	UNIMPL	vserver

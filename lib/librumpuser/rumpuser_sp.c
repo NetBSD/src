@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.63 2014/02/28 13:55:36 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.63.2.1 2014/08/10 06:52:26 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.63 2014/02/28 13:55:36 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.63.2.1 2014/08/10 06:52:26 tls Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -957,6 +957,7 @@ schedulework(struct spclient *spc, enum sbatype sba_type)
 struct spservarg {
 	int sps_sock;
 	connecthook_fn sps_connhook;
+	struct lwp *sps_l;
 };
 
 static void
@@ -983,7 +984,7 @@ handlereq(struct spclient *spc)
 			comm[commlen] = '\0';
 
 			if ((error = lwproc_rfork(spc,
-			    RUMP_RFCFDG, comm)) != 0) {
+			    RUMP_RFFDG, comm)) != 0) {
 				shutdown(spc->spc_fd, SHUT_RDWR);
 			}
 
@@ -1193,6 +1194,8 @@ spserver(void *arg)
 	int rv;
 	unsigned int nfds, maxidx;
 
+	lwproc_switch(sarg->sps_l);
+
 	for (idx = 0; idx < MAXCLI; idx++) {
 		pfdlist[idx].fd = -1;
 		pfdlist[idx].events = POLLIN;
@@ -1317,6 +1320,7 @@ rumpuser_sp_init(const char *url,
 	pthread_t pt;
 	struct spservarg *sarg;
 	struct sockaddr *sap;
+	struct lwp *calllwp;
 	char *p;
 	unsigned idx = 0; /* XXXgcc */
 	int error, s;
@@ -1361,13 +1365,28 @@ rumpuser_sp_init(const char *url,
 		fprintf(stderr, "rump_sp: server bind failed\n");
 		goto out;
 	}
-
 	if (listen(s, MAXCLI) == -1) {
 		error = errno;
 		fprintf(stderr, "rump_sp: server listen failed\n");
 		goto out;
 	}
 
+	/*
+	 * Create a context that the client threads run off of.
+	 * We fork a dedicated context so as to ensure that all
+	 * client threads get the same set of fd's.  We fork off
+	 * of whatever context the caller is running in (most likely
+	 * an implicit thread, i.e. proc 1) and do not
+	 * close fd's.  The assumption is that people who
+	 * write servers (i.e. "kernels") know what they're doing.
+	 */
+	calllwp = lwproc_curlwp();
+	if ((error = lwproc_rfork(NULL, RUMP_RFFDG, "spserver")) != 0) {
+		fprintf(stderr, "rump_sp: rfork failed");
+		goto out;
+	}
+	sarg->sps_l = lwproc_curlwp();
+	lwproc_switch(calllwp);
 	if ((error = pthread_create(&pt, NULL, spserver, sarg)) != 0) {
 		fprintf(stderr, "rump_sp: cannot create wrkr thread\n");
 		goto out;
@@ -1389,8 +1408,8 @@ rumpuser_sp_fini(void *arg)
 	}
 
 	/*
-	 * stuff response into the socket, since this process is just
-	 * about to exit
+	 * stuff response into the socket, since the rump kernel container
+	 * is just about to exit
 	 */
 	if (spc && spc->spc_syscallreq)
 		send_syscall_resp(spc, spc->spc_syscallreq, 0, retval);
@@ -1399,4 +1418,9 @@ rumpuser_sp_fini(void *arg)
 		shutdown(spclist[0].spc_fd, SHUT_RDWR);
 		spfini = 1;
 	}
+
+	/*
+	 * could release thread, but don't bother, since the container
+	 * will be stone dead in a moment.
+	 */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2014/03/25 18:35:32 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.6.2.1 2014/08/10 06:54:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -108,7 +108,7 @@ command_boot(int argc, char *argv[])
 	return(CMD_ERROR);
 
     /* Call the exec handler from the loader matching the kernel */
-    command_seterr("%s", strerror(file_formats[fp->f_loader]->l_exec(fp));
+    command_seterr("%s", strerror(file_formats[fp->f_loader]->l_exec(fp)));
     return(CMD_ERROR);
 }
 

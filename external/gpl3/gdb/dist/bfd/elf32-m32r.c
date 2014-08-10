@@ -1,6 +1,5 @@
 /* M32R-specific support for 32-bit ELF.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+   Copyright 1996-2013 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1390,7 +1389,8 @@ m32r_elf_add_symbol_hook (bfd *abfd,
 						  flags);
 	  if (s == NULL)
 	    return FALSE;
-	  bfd_set_section_alignment (abfd, s, 2);
+	  if (! bfd_set_section_alignment (abfd, s, 2))
+	    return FALSE;
 	}
 
       bh = bfd_link_hash_lookup (info->hash, "_SDA_BASE_",
@@ -3746,6 +3746,10 @@ m32r_elf_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       /* Some relocs require a global offset table.  */
@@ -3981,7 +3985,9 @@ static const struct bfd_elf_special_section m32r_elf_special_sections[] =
 };
 
 static enum elf_reloc_type_class
-m32r_elf_reloc_type_class (const Elf_Internal_Rela *rela)
+m32r_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			   const asection *rel_sec ATTRIBUTE_UNUSED,
+			   const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {

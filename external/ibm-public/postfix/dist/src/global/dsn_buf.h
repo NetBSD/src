@@ -1,4 +1,4 @@
-/*	$NetBSD: dsn_buf.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dsn_buf.h,v 1.1.1.1.26.1 2014/08/10 07:12:48 tls Exp $	*/
 
 #ifndef _DSN_BUF_H_INCLUDED_
 #define _DSN_BUF_H_INCLUDED_
@@ -53,6 +53,7 @@ typedef struct {
 
 extern DSN_BUF *dsb_create(void);
 extern DSN_BUF *PRINTFLIKE(8, 9) dsb_update(DSN_BUF *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,...);
+extern DSN_BUF *vdsb_simple(DSN_BUF *, const char *, const char *, va_list);
 extern DSN_BUF *PRINTFLIKE(3, 4) dsb_simple(DSN_BUF *, const char *, const char *,...);
 extern DSN_BUF *PRINTFLIKE(4, 5) dsb_unix(DSN_BUF *, const char *, const char *, const char *,...);
 extern DSN_BUF *dsb_formal(DSN_BUF *, const char *, const char *, const char *, const char *, const char *, const char *);

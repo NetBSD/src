@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.1.1.4 2014/03/14 11:27:36 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.1.1.4.2.1 2014/08/10 07:06:59 tls Exp $");
 
 /*
  * DO NOT EDIT
@@ -21,7 +21,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
@@ -252,8 +252,10 @@ const char * const dhcpcd_embedded_conf[] = {
 "define6 26 index embed prefix",
 "embed uint32 pltime",
 "embed uint32 vltime",
+"embed byte length",
 "embed ip6address prefix",
 "encap 13 option",
+"encap 67 option",
 "define6 27 array ip6address nis_servers",
 "define6 28 array ip6address nisp_servers",
 "define6 29 domain nis_domain_name",
@@ -307,6 +309,9 @@ const char * const dhcpcd_embedded_conf[] = {
 "embed byte minor",
 "define6 63 binhex geoloc",
 "define6 64 domain aftr_name",
+"define6 67 embed pd_exclude",
+"embed byte prefix_len",
+"embed binhex subnetID",
 "define6 69 encap mip6_idinf",
 "encap 71 option",
 "encap 72 option",

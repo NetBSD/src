@@ -1,5 +1,5 @@
-/*	Id: ccconfig.h,v 1.10 2011/06/04 19:27:26 plunky Exp 	*/	
-/*	$NetBSD: ccconfig.h,v 1.1.1.4 2011/09/01 12:47:17 plunky Exp $	*/
+/*	Id: ccconfig.h,v 1.12 2014/03/31 20:00:30 plunky Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.4.20.1 2014/08/10 07:10:08 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -13,8 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -35,10 +33,6 @@
 /* common cpp predefines */
 #define	CPPADD	{ "-D__OpenBSD__", "-D__ELF__", NULL, }
 #define	DYNLINKER { "-dynamic-linker", "/usr/libexec/ld.so", NULL }
-#define CRT0FILE "/usr/lib/crt0.o"
-#define CRT0FILE_PROFILE "/usr/lib/gcrt0.o"
-#define STARTFILES { "/usr/lib/crtbegin.o", NULL }
-#define	ENDFILES { "/usr/lib/crtend.o", NULL }
 
 #ifdef LANG_F77
 #define F77LIBLIST { "-L/usr/local/lib", "-lF77", "-lI77", "-lm", "-lc", NULL };
@@ -54,6 +48,9 @@
 #define CPPMDADD { "-D__powerpc__", NULL }
 #elif defined(mach_sparc64)
 #define CPPMDADD { "-D__sparc64__", NULL }
+#elif defined(mach_m68k)
+#define CPPMDADD { "-D__mc68000__", "-D__mc68020__", "-D__m68k__", NULL }
+#define STARTLABEL "_start"
 #else
 #error defines for arch missing
 #endif

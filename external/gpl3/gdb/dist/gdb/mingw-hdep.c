@@ -1,6 +1,6 @@
 /* Host support routines for MinGW, for GDB, the GNU debugger.
 
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 
 #include "gdb_assert.h"
 #include "gdb_select.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "readline/readline.h"
 
 #include <windows.h>

@@ -26,10 +26,10 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	-I. -Iinclude ${ISC_INCLUDES}
+CINCLUDES =	-I. -Iinclude ${ISC_INCLUDES} @ISC_OPENSSL_INC@
 CDEFINES =	-DTESTS="\"${top_builddir}/lib/isc/tests/\""
 
-ISCLIBS =	../libisc.@A@ @DNS_CRYPTO_LIBS@
+ISCLIBS =	../libisc.@A@ @ISC_OPENSSL_LIBS@
 ISCDEPLIBS =	../libisc.@A@
 
 LIBS =		@LIBS@ @ATFLIBS@

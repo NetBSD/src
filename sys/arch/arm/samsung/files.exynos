@@ -1,0 +1,88 @@
+#	$NetBSD: files.exynos,v 1.7.4.2 2014/08/10 06:53:52 tls Exp $
+#
+# Configuration info for Samsung Exynos SoC ARM Peripherals
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+defflag	opt_cpuoptions.h			ARM_TRUSTZONE_FIRMWARE
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+
+file	arch/arm/samsung/exynos_soc.c
+file	arch/arm/samsung/exynos_space.c
+file	arch/arm/samsung/exynos_dma.c
+file	arch/arm/samsung/exynos_smc.S		arm_trustzone_firmware
+
+file	arch/arm/arm/bus_space_a4x.S		exyo
+
+# Console parameters
+defparam opt_exynos.h				CONADDR
+defparam opt_exynos.h				CONSPEED
+defparam opt_exynos.h				CONMODE
+
+# Memory size in megabytes
+defparam opt_exynos.h				MEMSIZE
+defparam opt_exynos.h				EXYNOS_WDT_DEFAULT_PERIOD
+defflag opt_exynos.h				EXYNOS_CONSOLE_EARLY
+
+#
+defflag opt_exynos.h				EXYNOS4: CPU_CORTEXA9
+defflag opt_exynos.h				EXYNOS4120: EXYNOS4
+defflag opt_exynos.h				EXYNOS4212: EXYNOS4
+defflag opt_exynos.h				EXYNOS4412: EXYNOS4
+defflag opt_exynos.h				EXYNOS4412P: EXYNOS4
+defflag opt_exynos.h				EXYNOS5: CPU_CORTEXA15
+defflag opt_exynos.h				EXYNOS5250: EXYNOS5
+defflag opt_exynos.h				EXYNOS5260: EXYNOS5
+defflag opt_exynos.h				EXYNOS5410: EXYNOS5
+defflag opt_exynos.h				EXYNOS5420: EXYNOS5
+defflag opt_exynos.h				EXYNOS5440: EXYNOS5
+defflag opt_exynos.h				EXYNOS5422: EXYNOS5
+
+# SoC I/O attach point
+device exyo { [port=-1], [intr=-1] } : bus_space_generic
+attach exyo at mainbus with exyo_io
+file	arch/arm/samsung/exynos_io.c	exyo_io
+file	arch/arm/samsung/exynos4_loc.c	exyo_io & exynos4
+file	arch/arm/samsung/exynos5_loc.c	exyo_io & exynos5
+
+# Multi Core timer
+device	mct { } : bus_space_generic
+attach	mct at exyo with exyo_mct
+file	arch/arm/samsung/mct.c		exyo_mct
+
+# Watchdog
+device	exyowdt : sysmon_wdog
+attach	exyowdt at exyo with exynos_wdt
+file	arch/arm/samsung/exynos_wdt.c	exynos_wdt | exyo_io needs-flag
+
+# UARTs
+device	sscom { } : bus_space_generic
+attach	sscom at exyo with exynos_sscom
+file	arch/arm/samsung/sscom.c	sscom needs-flag
+file	arch/arm/samsung/exynos_sscom.c	exynos_sscom 
+defflag opt_sscom.h     SSCOM0CONSOLE SSCOM1CONSOLE
+defparam opt_sscom.h    SSCOM_FREQ 
+
+# GPIO
+device	exyogpio : gpiobus
+attach	exyogpio at exyo with exynos_gpio
+file	arch/arm/samsung/exynos_gpio.c		exynos_gpio | exyo_io needs-flag
+
+# USB2 Host Controller (EHCI/OHCI)
+device	exyousb { }
+attach	exyousb at exyo with exyo_usb
+attach	ohci at exyousb with ohci_exyousb
+attach	ehci at exyousb with ehci_exyousb
+file	arch/arm/samsung/exynos_usb.c		exyo_usb
+
+# I2C support, bitbanging trough GPIO
+device	exyoiic: i2cbus, i2c_bitbang
+attach	exyoiic at exyo with exynos_iic
+file	arch/arm/samsung/exynos_i2c.c		exynos_iic | exyo_io needs-flag
+

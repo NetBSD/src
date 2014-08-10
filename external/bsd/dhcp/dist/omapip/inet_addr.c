@@ -1,5 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.1.1.2 2013/03/27 00:31:40 christos Exp $	*/
-
+/*	$NetBSD: inet_addr.c,v 1.1.1.2.8.1 2014/08/10 07:06:56 tls Exp $	*/
 /*	NetBSD: inet_addr.c,v 1.6 1996/02/02 15:22:23 mrg Exp 	*/
 
 /*
@@ -14,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,8 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inet_addr.c,v 1.1.1.2 2013/03/27 00:31:40 christos Exp $");
-
+__RCSID("$NetBSD: inet_addr.c,v 1.1.1.2.8.1 2014/08/10 07:06:56 tls Exp $");
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0

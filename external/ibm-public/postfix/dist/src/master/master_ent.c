@@ -1,4 +1,4 @@
-/*	$NetBSD: master_ent.c,v 1.1.1.4 2013/01/02 18:59:01 tron Exp $	*/
+/*	$NetBSD: master_ent.c,v 1.1.1.4.6.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -296,7 +296,7 @@ MASTER_SERV *get_master_ent()
 	    continue;
 	name = cp;
 	transport = get_str_ent(&bufp, "transport type", (char *) 0);
-	vstring_sprintf(junk, "%s.%s", name, transport);
+	vstring_sprintf(junk, "%s/%s", name, transport);
 	if (match_service_match(master_disable, vstring_str(junk)) == 0)
 	    break;
     }

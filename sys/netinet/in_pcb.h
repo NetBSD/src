@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.51 2013/06/27 19:38:16 christos Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.51.6.1 2014/08/10 06:56:25 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -158,8 +158,6 @@ void	in_setpeeraddr(struct inpcb *, struct mbuf *);
 void	in_setsockaddr(struct inpcb *, struct mbuf *);
 struct rtentry *
 	in_pcbrtentry(struct inpcb *);
-extern struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
-	struct route *, int, struct ip_moptions *, int *);
 #endif
 
 #endif /* !_NETINET_IN_PCB_H_ */

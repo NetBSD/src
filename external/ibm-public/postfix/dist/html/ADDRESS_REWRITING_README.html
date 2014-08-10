@@ -434,7 +434,7 @@ from remote SMTP clients only if the client matches the
 <a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> parameter, or if the
 <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> configuration parameter specifies a
 non-empty value. To get the behavior before Postfix 2.2, specify
-"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = static:all".  </p> </dd>
+"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = <a href="DATABASE_README.html#types">static</a>:all".  </p> </dd>
 
 <dt>Rewrite "site!user" to "user@site" </dt>
 
@@ -448,7 +448,7 @@ from remote SMTP clients only if the client matches the
 <a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> parameter, or if the
 <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> configuration parameter specifies a
 non-empty value. To get the behavior before Postfix 2.2, specify
-"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = static:all".  </p> </dd>
+"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = <a href="DATABASE_README.html#types">static</a>:all".  </p> </dd>
 
 <dt>Rewrite "user%domain" to "user@domain"</dt>
 
@@ -461,7 +461,7 @@ from remote SMTP clients only if the client matches the
 <a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> parameter, or if the
 <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> configuration parameter specifies a
 non-empty value. To get the behavior before Postfix 2.2, specify
-"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = static:all".  </p> </dd>
+"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = <a href="DATABASE_README.html#types">static</a>:all".  </p> </dd>
 
 <dt>
 
@@ -478,7 +478,7 @@ from remote SMTP clients only if the client matches the
 domain name specified with the <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a>
 configuration parameter, if one is specified. To get the behavior
 before Postfix 2.2, specify "<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> =
-static:all". </p>
+<a href="DATABASE_README.html#types">static</a>:all". </p>
 
 <p> If your machine is not the main machine for $<a href="postconf.5.html#myorigin">myorigin</a> and you
 wish to have some users delivered locally without going via that
@@ -502,7 +502,7 @@ from remote SMTP clients only if the client matches the
 domain name specified with the <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a>
 configuration parameter, if one is specified. To get the behavior
 before Postfix 2.2, specify "<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> =
-static:all". </p>
+<a href="DATABASE_README.html#types">static</a>:all". </p>
 
 <p> Some will argue that rewriting "host" to "host.domain"
 is bad. That is why it can be turned off. Others like the convenience
@@ -519,7 +519,7 @@ from remote SMTP clients only if the client matches the
 <a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> parameter, or if the
 <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> configuration parameter specifies a
 non-empty value. To get the behavior before Postfix 2.2, specify
-"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = static:all".  </p> </dd>
+"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = <a href="DATABASE_README.html#types">static</a>:all".  </p> </dd>
 
 </dl>
 
@@ -537,7 +537,7 @@ from remote SMTP clients only if the client matches the
 <a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> parameter, or if the
 <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> configuration parameter specifies a
 non-empty value. To get the behavior before Postfix 2.2, specify
-"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = static:all".  </p>
+"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = <a href="DATABASE_README.html#types">static</a>:all".  </p>
 
 <p> Address rewriting is 
 done for local and remote addresses.  The mapping is useful to
@@ -554,14 +554,14 @@ more lookup tables, separated by whitespace or commas. </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#canonical_maps">canonical_maps</a> = hash:/etc/postfix/canonical
+    <a href="postconf.5.html#canonical_maps">canonical_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/canonical
 
 /etc/postfix/canonical:
     wietse        Wietse.Venema
 </pre>
 </blockquote>
 
-<p> For static mappings as shown above, lookup tables such as hash:,
+<p> For static mappings as shown above, lookup tables such as <a href="DATABASE_README.html#types">hash</a>:,
 <a href="ldap_table.5.html">ldap</a>:, <a href="mysql_table.5.html">mysql</a>:  or <a href="pgsql_table.5.html">pgsql</a>: are sufficient. For dynamic mappings you
 can use regular expression tables. This requires that you become
 intimately familiar with the ideas expressed in <a href="regexp_table.5.html">regexp_table(5)</a>,
@@ -576,8 +576,8 @@ applied only to sender addresses or to recipient addresses. </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#sender_canonical_maps">sender_canonical_maps</a> = hash:/etc/postfix/sender_canonical
-    <a href="postconf.5.html#recipient_canonical_maps">recipient_canonical_maps</a> = hash:/etc/postfix/recipient_canonical
+    <a href="postconf.5.html#sender_canonical_maps">sender_canonical_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sender_canonical
+    <a href="postconf.5.html#recipient_canonical_maps">recipient_canonical_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/recipient_canonical
 </pre>
 </blockquote>
 
@@ -621,7 +621,7 @@ from remote SMTP clients only if the client matches the
 <a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> parameter, or if the
 <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> configuration parameter specifies a
 non-empty value. To get the behavior before Postfix 2.2, specify
-"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = static:all".  </p>
+"<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> = <a href="DATABASE_README.html#types">static</a>:all".  </p>
 
 <p> Address masquerading is disabled by default, and is implemented
 by the <a href="cleanup.8.html">cleanup(8)</a> server. To enable, edit the <a href="postconf.5.html#masquerade_domains">masquerade_domains</a>
@@ -783,7 +783,7 @@ commas. </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
 
 /etc/postfix/virtual:
     Wietse.Venema        wietse
@@ -794,7 +794,7 @@ commas. </p>
 iteration of virtual aliasing, but are not subjected to canonical
 mapping, in order to avoid loops. </p>
 
-<p> For static mappings as shown above, lookup tables such as hash:,
+<p> For static mappings as shown above, lookup tables such as <a href="DATABASE_README.html#types">hash</a>:,
 <a href="ldap_table.5.html">ldap</a>:, <a href="mysql_table.5.html">mysql</a>: or <a href="pgsql_table.5.html">pgsql</a>: are sufficient. For dynamic mappings you
 can use regular expression tables. This requires that you become
 intimately familiar with the ideas expressed in <a href="regexp_table.5.html">regexp_table(5)</a>,
@@ -931,7 +931,7 @@ one or more lookup tables, separated by whitespace or commas. </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
 </pre>
 </blockquote>
 
@@ -958,7 +958,7 @@ one or more lookup tables, separated by whitespace or commas. </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#relocated_maps">relocated_maps</a> = hash:/etc/postfix/relocated
+    <a href="postconf.5.html#relocated_maps">relocated_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/relocated
 
 /etc/postfix/relocated:
     username@example.com      otheruser@elsewhere.tld
@@ -992,12 +992,12 @@ local machine. </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = hash:/etc/postfix/generic
+    <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/generic
 
 /etc/postfix/generic:
-    his@localdomain.local		hisaccount@hisisp.example
-    her@localdomain.local		heraccount@herisp.example
-    @localdomain.local			hisaccount+local@hisisp.example
+    his@localdomain.local               hisaccount@hisisp.example
+    her@localdomain.local               heraccount@herisp.example
+    @localdomain.local                  hisaccount+local@hisisp.example
 </pre>
 </blockquote>
 
@@ -1025,8 +1025,8 @@ one of the following: </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#alias_maps">alias_maps</a> = hash:/etc/aliases
-    <a href="postconf.5.html#alias_maps">alias_maps</a> = dbm:/etc/aliases, nis:mail.aliases
+    <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/aliases
+    <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="DATABASE_README.html#types">dbm</a>:/etc/aliases, nis:mail.aliases
 </pre>
 </blockquote>
 
@@ -1037,9 +1037,9 @@ Usually it is one of the following: </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#alias_database">alias_database</a> = hash:/etc/aliases (4.4BSD, LINUX)
-    <a href="postconf.5.html#alias_database">alias_database</a> = dbm:/etc/aliases (4.3BSD, SYSV&lt;4)
-    <a href="postconf.5.html#alias_database">alias_database</a> = dbm:/etc/mail/aliases (SYSV4)
+    <a href="postconf.5.html#alias_database">alias_database</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/aliases (4.4BSD, LINUX)
+    <a href="postconf.5.html#alias_database">alias_database</a> = <a href="DATABASE_README.html#types">dbm</a>:/etc/aliases (4.3BSD, SYSV&lt;4)
+    <a href="postconf.5.html#alias_database">alias_database</a> = <a href="DATABASE_README.html#types">dbm</a>:/etc/mail/aliases (SYSV4)
 </pre>
 </blockquote>
 

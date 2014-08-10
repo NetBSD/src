@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_dbm.c,v 1.1.1.3 2013/01/02 18:59:12 tron Exp $	*/
+/*	$NetBSD: dict_dbm.c,v 1.1.1.3.6.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -416,8 +416,18 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
     DICT_DBM *dict_dbm;
     struct stat st;
     DBM    *dbm;
-    char   *dbm_path;
+    char   *dbm_path = 0;
     int     lock_fd;
+
+    /*
+     * Let the optimizer worry about eliminating redundant code.
+     */
+#define DICT_DBM_OPEN_RETURN(d) { \
+	DICT *__d = (d); \
+	if (dbm_path != 0) \
+	    myfree(dbm_path); \
+	return (__d); \
+    } while (0)
 
     /*
      * Note: DICT_FLAG_LOCK is used only by programs that do fine-grained (in
@@ -429,8 +439,10 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
     if (dict_flags & DICT_FLAG_LOCK) {
 	dbm_path = concatenate(path, ".dir", (char *) 0);
 	if ((lock_fd = open(dbm_path, open_flags, 0644)) < 0)
-	    return (dict_surrogate(DICT_TYPE_DBM, path, open_flags, dict_flags,
-				   "open database %s: %m", dbm_path));
+	    DICT_DBM_OPEN_RETURN(dict_surrogate(DICT_TYPE_DBM, path,
+						open_flags, dict_flags,
+						"open database %s: %m",
+						dbm_path));
 	if (myflock(lock_fd, INTERNAL_LOCK, MYFLOCK_OP_SHARED) < 0)
 	    msg_fatal("shared-lock database %s for open: %m", dbm_path);
     }
@@ -439,8 +451,10 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
      * XXX SunOS 5.x has no const in dbm_open() prototype.
      */
     if ((dbm = dbm_open((char *) path, open_flags, 0644)) == 0)
-	return (dict_surrogate(DICT_TYPE_DBM, path, open_flags, dict_flags,
-			       "open database %s.{dir,pag}: %m", path));
+	DICT_DBM_OPEN_RETURN(dict_surrogate(DICT_TYPE_DBM, path,
+					    open_flags, dict_flags,
+					    "open database %s.{dir,pag}: %m",
+					    path));
 
     if (dict_flags & DICT_FLAG_LOCK) {
 	if (myflock(lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
@@ -485,10 +499,7 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
     dict_dbm->key_buf = 0;
     dict_dbm->val_buf = 0;
 
-    if ((dict_flags & DICT_FLAG_LOCK))
-	myfree(dbm_path);
-
-    return (DICT_DEBUG (&dict_dbm->dict));
+    DICT_DBM_OPEN_RETURN(DICT_DEBUG (&dict_dbm->dict));
 }
 
 #endif

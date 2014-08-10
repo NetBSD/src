@@ -1,5 +1,5 @@
 /* MIPS Simulator definition.
-   Copyright (C) 1997-2013 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -475,7 +475,7 @@ struct _sim_cpu {
 
 /* MIPS specific simulator watch config */
 
-void watch_options_install PARAMS ((SIM_DESC sd));
+void watch_options_install (SIM_DESC sd);
 
 struct swatch {
   sim_event *pc;
@@ -693,10 +693,10 @@ void signal_exception (SIM_DESC sd, sim_cpu *cpu, address_word cia, int exceptio
 /* XXX FIXME: For now, assume that FPU (cp1) is always usable.  */
 #define COP_Usable(coproc_num)		(coproc_num == 1)
 
-void cop_lw  PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, int coproc_num, int coproc_reg, unsigned int memword));
-void cop_ld  PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, int coproc_num, int coproc_reg, uword64 memword));
-unsigned int cop_sw PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, int coproc_num, int coproc_reg));
-uword64 cop_sd PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, int coproc_num, int coproc_reg));
+void cop_lw  (SIM_DESC sd, sim_cpu *cpu, address_word cia, int coproc_num, int coproc_reg, unsigned int memword);
+void cop_ld  (SIM_DESC sd, sim_cpu *cpu, address_word cia, int coproc_num, int coproc_reg, uword64 memword);
+unsigned int cop_sw (SIM_DESC sd, sim_cpu *cpu, address_word cia, int coproc_num, int coproc_reg);
+uword64 cop_sd (SIM_DESC sd, sim_cpu *cpu, address_word cia, int coproc_num, int coproc_reg);
 
 #define COP_LW(coproc_num,coproc_reg,memword) \
 cop_lw (SD, CPU, cia, coproc_num, coproc_reg, memword)
@@ -708,7 +708,7 @@ cop_sw (SD, CPU, cia, coproc_num, coproc_reg)
 cop_sd (SD, CPU, cia, coproc_num, coproc_reg)
 
 
-void decode_coproc PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, unsigned int instruction));
+void decode_coproc (SIM_DESC sd, sim_cpu *cpu, address_word cia, unsigned int instruction);
 #define DecodeCoproc(instruction) \
 decode_coproc (SD, CPU, cia, (instruction))
 
@@ -940,27 +940,27 @@ unsigned64 mdmx_shuffle (SIM_STATE, int, unsigned64, unsigned64);
 #define PSIZE (WITH_TARGET_ADDRESS_BITSIZE)
 
 
-INLINE_SIM_MAIN (int) address_translation PARAMS ((SIM_DESC sd, sim_cpu *, address_word cia, address_word vAddr, int IorD, int LorS, address_word *pAddr, int *CCA, int raw));
+INLINE_SIM_MAIN (int) address_translation (SIM_DESC sd, sim_cpu *, address_word cia, address_word vAddr, int IorD, int LorS, address_word *pAddr, int *CCA, int raw);
 #define AddressTranslation(vAddr,IorD,LorS,pAddr,CCA,host,raw) \
 address_translation (SD, CPU, cia, vAddr, IorD, LorS, pAddr, CCA, raw)
 
-INLINE_SIM_MAIN (void) load_memory PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, uword64* memvalp, uword64* memval1p, int CCA, unsigned int AccessLength, address_word pAddr, address_word vAddr, int IorD));
+INLINE_SIM_MAIN (void) load_memory (SIM_DESC sd, sim_cpu *cpu, address_word cia, uword64* memvalp, uword64* memval1p, int CCA, unsigned int AccessLength, address_word pAddr, address_word vAddr, int IorD);
 #define LoadMemory(memvalp,memval1p,CCA,AccessLength,pAddr,vAddr,IorD,raw) \
 load_memory (SD, CPU, cia, memvalp, memval1p, CCA, AccessLength, pAddr, vAddr, IorD)
 
-INLINE_SIM_MAIN (void) store_memory PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, int CCA, unsigned int AccessLength, uword64 MemElem, uword64 MemElem1, address_word pAddr, address_word vAddr));
+INLINE_SIM_MAIN (void) store_memory (SIM_DESC sd, sim_cpu *cpu, address_word cia, int CCA, unsigned int AccessLength, uword64 MemElem, uword64 MemElem1, address_word pAddr, address_word vAddr);
 #define StoreMemory(CCA,AccessLength,MemElem,MemElem1,pAddr,vAddr,raw) \
 store_memory (SD, CPU, cia, CCA, AccessLength, MemElem, MemElem1, pAddr, vAddr)
 
-INLINE_SIM_MAIN (void) cache_op PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, int op, address_word pAddr, address_word vAddr, unsigned int instruction));
+INLINE_SIM_MAIN (void) cache_op (SIM_DESC sd, sim_cpu *cpu, address_word cia, int op, address_word pAddr, address_word vAddr, unsigned int instruction);
 #define CacheOp(op,pAddr,vAddr,instruction) \
 cache_op (SD, CPU, cia, op, pAddr, vAddr, instruction)
 
-INLINE_SIM_MAIN (void) sync_operation PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, int stype));
+INLINE_SIM_MAIN (void) sync_operation (SIM_DESC sd, sim_cpu *cpu, address_word cia, int stype);
 #define SyncOperation(stype) \
 sync_operation (SD, CPU, cia, (stype))
 
-INLINE_SIM_MAIN (void) prefetch PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, int CCA, address_word pAddr, address_word vAddr, int DATA, int hint));
+INLINE_SIM_MAIN (void) prefetch (SIM_DESC sd, sim_cpu *cpu, address_word cia, int CCA, address_word pAddr, address_word vAddr, int DATA, int hint);
 #define Prefetch(CCA,pAddr,vAddr,DATA,hint) \
 prefetch (SD, CPU, cia, CCA, pAddr, vAddr, DATA, hint)
 
@@ -969,23 +969,23 @@ void unpredictable_action (sim_cpu *cpu, address_word cia);
 #define Unpredictable()		unpredictable (SD_)
 #define UnpredictableResult()	/* For now, do nothing.  */
 
-INLINE_SIM_MAIN (unsigned32) ifetch32 PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, address_word vaddr));
+INLINE_SIM_MAIN (unsigned32) ifetch32 (SIM_DESC sd, sim_cpu *cpu, address_word cia, address_word vaddr);
 #define IMEM32(CIA) ifetch32 (SD, CPU, (CIA), (CIA))
-INLINE_SIM_MAIN (unsigned16) ifetch16 PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia, address_word vaddr));
+INLINE_SIM_MAIN (unsigned16) ifetch16 (SIM_DESC sd, sim_cpu *cpu, address_word cia, address_word vaddr);
 #define IMEM16(CIA) ifetch16 (SD, CPU, (CIA), ((CIA) & ~1))
 #define IMEM16_IMMED(CIA,NR) ifetch16 (SD, CPU, (CIA), ((CIA) & ~1) + 2 * (NR))
 
-void dotrace PARAMS ((SIM_DESC sd, sim_cpu *cpu, FILE *tracefh, int type, SIM_ADDR address, int width, char *comment, ...));
+void dotrace (SIM_DESC sd, sim_cpu *cpu, FILE *tracefh, int type, SIM_ADDR address, int width, char *comment, ...);
 extern FILE *tracefh;
 
 extern int DSPLO_REGNUM[4];
 extern int DSPHI_REGNUM[4];
 
-INLINE_SIM_MAIN (void) pending_tick PARAMS ((SIM_DESC sd, sim_cpu *cpu, address_word cia));
+INLINE_SIM_MAIN (void) pending_tick (SIM_DESC sd, sim_cpu *cpu, address_word cia);
 extern SIM_CORE_SIGNAL_FN mips_core_signal;
 
-char* pr_addr PARAMS ((SIM_ADDR addr));
-char* pr_uword64 PARAMS ((uword64 addr));
+char* pr_addr (SIM_ADDR addr);
+char* pr_uword64 (uword64 addr);
 
 
 #define GPR_CLEAR(N) do { GPR_SET((N),0); } while (0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.53 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: gencons.c,v 1.53.2.1 2014/08/10 06:54:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.53 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.53.2.1 2014/08/10 06:54:10 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -97,6 +97,7 @@ const struct cdevsw gen_cdevsw = {
 	.d_poll = gencnpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

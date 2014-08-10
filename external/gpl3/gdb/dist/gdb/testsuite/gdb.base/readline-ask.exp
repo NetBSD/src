@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2013 Free Software Foundation, Inc.
+# Copyright (C) 2011-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set testfile readline-ask
-set executable ${testfile}.x
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${executable}
+standard_testfile .c
 set inputrc ${srcdir}/${subdir}/${testfile}.inputrc
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {debug}] != "" } {
@@ -26,7 +23,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {debug}] 
 
 # INPUTRC gets reset for the next testfile.
 setenv INPUTRC $inputrc
-clean_restart ${executable}
+clean_restart ${binfile}
 
 gdb_test_no_output "set width 50"
 gdb_test_no_output "set height 3"

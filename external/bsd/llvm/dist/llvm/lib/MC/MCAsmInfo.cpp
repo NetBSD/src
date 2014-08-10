@@ -41,6 +41,7 @@ MCAsmInfo::MCAsmInfo() {
   LabelSuffix = ":";
   DebugLabelSuffix = ":";
   PrivateGlobalPrefix = "L";
+  LinkerPrivateGlobalPrefix = "";
   InlineAsmStart = "APP";
   InlineAsmEnd = "NO_APP";
   Code16Directive = ".code16";
@@ -60,8 +61,8 @@ MCAsmInfo::MCAsmInfo() {
   UsesELFSectionDirectiveForBSS = false;
   AlignmentIsInBytes = true;
   TextAlignFillValue = 0;
-  GPRel64Directive = 0;
-  GPRel32Directive = 0;
+  GPRel64Directive = nullptr;
+  GPRel32Directive = nullptr;
   GlobalDirective = "\t.globl\t";
   HasSetDirective = true;
   HasAggressiveSymbolFolding = true;
@@ -71,7 +72,7 @@ MCAsmInfo::MCAsmInfo() {
   HasSingleParameterDotFile = true;
   HasIdentDirective = false;
   HasNoDeadStrip = false;
-  WeakRefDirective = 0;
+  WeakRefDirective = nullptr;
   HasWeakDefDirective = false;
   HasWeakDefCanBeHiddenDirective = false;
   HasLinkOnceDirective = false;
@@ -100,6 +101,8 @@ MCAsmInfo::MCAsmInfo() {
   //   architecture basis.
   //   - The target subclasses for AArch64, ARM, and X86  handle these cases
   UseIntegratedAssembler = false;
+
+  CompressDebugSections = false;
 }
 
 MCAsmInfo::~MCAsmInfo() {

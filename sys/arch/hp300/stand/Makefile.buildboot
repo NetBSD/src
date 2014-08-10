@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.33 2014/01/12 15:26:29 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.33.2.1 2014/08/10 06:53:58 tls Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -59,6 +59,7 @@ COMMONSOURCE=		srt0.S autoconf.c clock.c conf.c cons.c devopen.c \
 DRIVERSOURCE=		apci.c ct.c dca.c dcm.c dnkbd.c fhpib.c hil.c \
 			hpib.c if_le.c ite.c ite_dumb.c ite_dv.c ite_gb.c \
 			ite_hy.c ite_rb.c ite_subr.c ite_tc.c ite_tvrx.c \
+			ite_sti.c \
 			kbd.c kbdconf.c nhpib.c rd.c scsi.c sd.c
 
 .include <bsd.own.mk>

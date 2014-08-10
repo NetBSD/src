@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2013 Free Software Foundation, Inc.
+# Copyright (C) 2011-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,14 +30,14 @@ proc default_prompt_gdb_start { } {
     global gdb_prompt
     global gdb_prompt_fail
     global timeout
-    global gdb_spawn_id;
+    global gdb_spawn_id
 
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 
     verbose "Spawning $GDB $INTERNAL_GDBFLAGS $GDBFLAGS"
 
     if [info exists gdb_spawn_id] {
-	return 0;
+	return 0
     }
 
     if ![is_remote host] {
@@ -46,10 +46,10 @@ proc default_prompt_gdb_start { } {
 	    exit 1
 	}
     }
-    set res [remote_spawn host "$GDB $INTERNAL_GDBFLAGS $GDBFLAGS [host_info gdb_opts]"];
+    set res [remote_spawn host "$GDB $INTERNAL_GDBFLAGS $GDBFLAGS [host_info gdb_opts]"]
     if { $res < 0 || $res == "" } {
 	perror "Spawning $GDB failed."
-	return 1;
+	return 1
     }
     gdb_expect 360 {
 	-re ".*$gdb_prompt_fail.*$gdb_prompt_fail.*" {
@@ -74,12 +74,12 @@ proc default_prompt_gdb_start { } {
 	}
 	timeout	{
 	    perror "(timeout) GDB never initialized after 10 seconds."
-	    remote_close host;
+	    remote_close host
 	    return -1
 	}
     }
-    set gdb_spawn_id -1;
-    return 0;
+    set gdb_spawn_id -1
+    return 0
 }
 
 #

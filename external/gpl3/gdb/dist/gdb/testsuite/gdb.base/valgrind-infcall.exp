@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,17 +18,14 @@ if [is_remote target] {
     return 0
 }
 
-set test valgrind-infcall
-set srcfile $test.c
-set executable $test
-set binfile ${objdir}/${subdir}/${executable}
-if {[build_executable $test.exp $executable $srcfile {debug}] == -1} {
+standard_testfile .c
+if {[build_executable $testfile.exp $testfile $srcfile {debug}] == -1} {
     return -1
 }
 
 set test "spawn valgrind"
 set cmd "valgrind --vgdb-error=0 $binfile"
-set res [remote_spawn host $cmd];
+set res [remote_spawn host $cmd]
 if { $res < 0 || $res == "" } {
     verbose -log "Spawning $cmd failed."
     unsupported $test
@@ -84,7 +81,7 @@ unset gdb_spawn_id
 set board [host_info name]
 unset_board_info fileid
 
-clean_restart $executable
+clean_restart $testfile
 
 gdb_test "$vgdbcmd" " in \\.?_start .*" "target remote for vgdb"
 

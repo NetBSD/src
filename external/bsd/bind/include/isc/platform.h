@@ -323,6 +323,11 @@
 #define ISC_PLATFORM_OPENSSLAES 1
 
 /*
+ * Define if AES support is wanted
+ */
+#define ISC_PLATFORM_WANTAES 1
+
+/*
  * Defines for the noreturn attribute.
  */
 #define ISC_PLATFORM_NORETURN_PRE

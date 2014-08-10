@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.15 2011/08/31 13:32:41 joerg Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.15.18.1 2014/08/10 07:00:12 tls Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,9 +33,10 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.15 2011/08/31 13:32:41 joerg Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.15.18.1 2014/08/10 07:00:12 tls Exp $");
 #endif
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,7 +61,7 @@ static const char *class_str[] = {
 static void	sched_set(pid_t, lwpid_t, int, struct sched_param *, cpuset_t *);
 static void	thread_info(pid_t, lwpid_t);
 static cpuset_t	*makecpuset(char *);
-static char	*showcpuset(cpuset_t *);
+static void	printcpuset(cpuset_t *);
 __dead static void	usage(void);
 
 static u_int	ncpu;
@@ -205,7 +206,6 @@ thread_info(pid_t pid, lwpid_t lid)
 {
 	struct sched_param sp;
 	cpuset_t *cpuset;
-	char *cpus;
 	int error, policy;
 
 	cpuset = cpuset_create();
@@ -224,9 +224,9 @@ thread_info(pid_t pid, lwpid_t lid)
 	printf("  Priority:         %d\n", sp.sched_priority);
 	printf("  Class:            %s\n", class_str[policy]);
 
-	cpus = showcpuset(cpuset);
-	printf("  Affinity (CPUs):  %s\n", cpus);
-	free(cpus);
+	printf("  Affinity (CPUs):  ");
+	printcpuset(cpuset);
+	printf("\n");
 
 	cpuset_destroy(cpuset);
 }
@@ -280,31 +280,26 @@ makecpuset(char *str)
 	return cpuset;
 }
 
-static char *
-showcpuset(cpuset_t *cpuset)
+static void
+printcpuset(cpuset_t *cpuset)
 {
-	char *buf;
-	size_t size;
 	unsigned int i;
+	bool seen;
 
-	size = 3 * ncpu;	/* XXX */
-	buf = malloc(size + 1);
-	if (buf == NULL)
-		err(EXIT_FAILURE, "malloc");
-	memset(buf, '\0', size + 1);
-
-	for (i = 0; i < ncpu; i++)
-		if (cpuset_isset(i, cpuset))
-			snprintf(buf, size, "%s%d,", buf, i);
-
-	i = strlen(buf);
-	if (i != 0) {
-		buf[i - 1] = '\0';
-	} else {
-		strncpy(buf, "<none>", size);
+	seen = false;
+	for (i = 0; i < ncpu; i++) {
+		if (cpuset_isset(i, cpuset)) {
+			if (seen) {
+				putchar(',');
+			}
+			printf("%d", i);
+			seen = true;
+		}
 	}
 
-	return buf;
+	if (!seen) {
+		printf("<none>");
+	}
 }
 
 static void

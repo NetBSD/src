@@ -1,4 +1,4 @@
-#   Copyright 1988-2013 Free Software Foundation, Inc.
+#   Copyright 1988-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ gdb_test "call" "The history is empty..*" "call"
 gdb_test "catch" "Catch requires an event name..*" "catch"
 
 #test cd
-gdb_test "cd" "Working directory \[^\r\n\]*\\."
+gdb_test "cd" "Working directory \[^\r\n\]*\(\r\n \\(canonically \[^\r\n\]*\\)\)?\\."
 
 #test clear
 gdb_test "clear" "No source file specified..*" "clear"
@@ -521,6 +521,9 @@ gdb_test "set height" "Argument required .integer to set it to.*" "set height"
 gdb_test_no_output "set history expansion" "set history expansion"
 #test set history filename
 gdb_test "set history filename" "Argument required .filename to set it to.*" "set history filename"
+# Make sure the history ends up in the right place.
+gdb_test_no_output "set history filename [standard_output_file .gdb_history]" \
+    "set the history filename"
 #test set history save
 gdb_test_no_output "set history save" "set history save"
 #test set history size
@@ -604,6 +607,7 @@ set show_conv_list \
 	{$_sdata = void} \
 	{$_siginfo = void} \
 	{$_thread = 0} \
+	{$_exception = <error: No frame selected>} \
 	{$_probe_argc = <error: No frame selected>} \
 	{$_probe_arg0 = <error: No frame selected>} \
 	{$_probe_arg1 = <error: No frame selected>} \
@@ -617,6 +621,7 @@ set show_conv_list \
 	{$_probe_arg9 = <error: No frame selected>} \
 	{$_probe_arg10 = <error: No frame selected>} \
 	{$_probe_arg11 = <error: No frame selected>} \
+	{$_isvoid = <internal function _isvoid>} \
     }
 if ![skip_python_tests] {
     append show_conv_list \
@@ -663,7 +668,7 @@ gdb_test "show paths" "Executable and object file path:.*" "show paths"
 #test show print address
 gdb_test "show print address" "Printing of addresses is on." "show print address"
 #test show print array
-gdb_test "show print array" "Prettyprinting of arrays is on." "show print array"
+gdb_test "show print array" "Pretty formatting of arrays is on." "show print array"
 #test show print asm-demangle
 gdb_test "show print asm-demangle" "Demangling of C\[+\]+/ObjC names in disassembly listings is on." "show print asm-demangle"
 #test show print demangle
@@ -673,7 +678,7 @@ gdb_test "show print elements" "Limit on string chars or array elements to print
 #test show print object
 gdb_test "show print object" "Printing of object's derived type based on vtable info is on." "show print object"
 #test show print pretty
-gdb_test "show print pretty" "Prettyprinting of structures is on." "show print pretty"
+gdb_test "show print pretty" "Pretty formatting of structures is on." "show print pretty"
 #test show print sevenbit-strings
 gdb_test "show print sevenbit-strings" "Printing of 8-bit characters in strings as .nnn is on." "show print sevenbit-strings"
 #test show print union
@@ -724,6 +729,8 @@ gdb_test_multiple "show" "show" {
 	}
     }
 }
+#history saving should stay disabled
+gdb_test_no_output "set history save off" "set history save off"
 #test stepi "si" abbreviation
 gdb_test  "si" "The program is not being run." "stepi \"si\" abbreviation"
 #test stepi

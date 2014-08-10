@@ -51,7 +51,6 @@
 //  note that we saved 2 registers here almostly "for free".
 // ===---------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "global-merge"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -69,6 +68,8 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "global-merge"
 
 static cl::opt<bool>
 EnableGlobalMerge("global-merge", cl::Hidden,
@@ -107,36 +108,23 @@ namespace {
 
   public:
     static char ID;             // Pass identification, replacement for typeid.
-    explicit GlobalMerge(const TargetMachine *TM = 0)
+    explicit GlobalMerge(const TargetMachine *TM = nullptr)
       : FunctionPass(ID), TM(TM) {
       initializeGlobalMergePass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool doInitialization(Module &M);
-    virtual bool runOnFunction(Function &F);
-    virtual bool doFinalization(Module &M);
+    bool doInitialization(Module &M) override;
+    bool runOnFunction(Function &F) override;
+    bool doFinalization(Module &M) override;
 
-    const char *getPassName() const {
+    const char *getPassName() const override {
       return "Merge internal globals";
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       FunctionPass::getAnalysisUsage(AU);
     }
-
-    struct GlobalCmp {
-      const DataLayout *DL;
-
-      GlobalCmp(const DataLayout *DL) : DL(DL) { }
-
-      bool operator()(const GlobalVariable *GV1, const GlobalVariable *GV2) {
-        Type *Ty1 = cast<PointerType>(GV1->getType())->getElementType();
-        Type *Ty2 = cast<PointerType>(GV2->getType())->getElementType();
-
-        return (DL->getTypeAllocSize(Ty1) < DL->getTypeAllocSize(Ty2));
-      }
-    };
   };
 } // end anonymous namespace
 
@@ -156,7 +144,13 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
 
   // FIXME: Find better heuristics
-  std::stable_sort(Globals.begin(), Globals.end(), GlobalCmp(DL));
+  std::stable_sort(Globals.begin(), Globals.end(),
+                   [DL](const GlobalVariable *GV1, const GlobalVariable *GV2) {
+    Type *Ty1 = cast<PointerType>(GV1->getType())->getElementType();
+    Type *Ty2 = cast<PointerType>(GV2->getType())->getElementType();
+
+    return (DL->getTypeAllocSize(Ty1) < DL->getTypeAllocSize(Ty2));
+  });
 
   Type *Int32Ty = Type::getInt32Ty(M.getContext());
 
@@ -180,7 +174,8 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
     GlobalVariable *MergedGV = new GlobalVariable(M, MergedTy, isConst,
                                                   GlobalValue::InternalLinkage,
                                                   MergedInit, "_MergedGlobals",
-                                                  0, GlobalVariable::NotThreadLocal,
+                                                  nullptr,
+                                                  GlobalVariable::NotThreadLocal,
                                                   AddrSpace);
     for (size_t k = i; k < j; ++k) {
       Constant *Idx[2] = {
@@ -219,7 +214,7 @@ void GlobalMerge::setMustKeepGlobalVariables(Module &M) {
        ++IFn) {
     for (Function::iterator IBB = IFn->begin(), IEndBB = IFn->end();
          IBB != IEndBB; ++IBB) {
-      // Follow the inwoke link to find the landing pad instruction
+      // Follow the invoke link to find the landing pad instruction
       const InvokeInst *II = dyn_cast<InvokeInst>(IBB->getTerminator());
       if (!II) continue;
 

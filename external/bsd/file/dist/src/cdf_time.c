@@ -1,5 +1,4 @@
-/*	$NetBSD: cdf_time.c,v 1.5 2013/01/03 23:05:38 christos Exp $	*/
-
+/*	$NetBSD: cdf_time.c,v 1.5.8.1 2014/08/10 07:07:11 tls Exp $	*/
 /*-
  * Copyright (c) 2008 Christos Zoulas
  * All rights reserved.
@@ -30,9 +29,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf_time.c,v 1.12 2012/05/15 17:14:36 christos Exp $")
+FILE_RCSID("@(#)$File: cdf_time.c,v 1.15 2014/05/14 23:15:42 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf_time.c,v 1.5 2013/01/03 23:05:38 christos Exp $");
+__RCSID("$NetBSD: cdf_time.c,v 1.5.8.1 2014/08/10 07:07:11 tls Exp $");
 #endif
 #endif
 
@@ -123,7 +122,7 @@ cdf_timestamp_to_timespec(struct timespec *ts, cdf_timestamp_t t)
 	tm.tm_hour = (int)(t % 24);
 	t /= 24;
 
-	// XXX: Approx
+	/* XXX: Approx */
 	tm.tm_year = (int)(CDF_BASE_YEAR + (t / 365));
 
 	rdays = cdf_getdays(tm.tm_year);
@@ -177,12 +176,13 @@ cdf_ctime(const time_t *sec, char *buf)
 	char *ptr = ctime_r(sec, buf);
 	if (ptr != NULL)
 		return buf;
-	(void)snprintf(buf, 26, "*Bad* 0x%16.16llx\n", (long long)*sec);
+	(void)snprintf(buf, 26, "*Bad* 0x%16.16" INT64_T_FORMAT "x\n",
+	    (long long)*sec);
 	return buf;
 }
 
 
-#ifdef TEST
+#ifdef TEST_TIME
 int
 main(int argc, char *argv[])
 {

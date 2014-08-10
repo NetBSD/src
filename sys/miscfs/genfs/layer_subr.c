@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.35 2014/02/10 11:23:14 hannken Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.35.2.1 2014/08/10 06:56:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.35 2014/02/10 11:23:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.35.2.1 2014/08/10 06:56:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.35 2014/02/10 11:23:14 hannken Exp 
 #include <sys/kmem.h>
 #include <sys/malloc.h>
 
-#include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 
@@ -110,156 +109,18 @@ layerfs_done(void)
 }
 
 /*
- * layer_node_find: find and return alias for lower vnode or NULL.
- *
- * => Return alias vnode referenced. if already exists.
- * => The layermp's hashlock must be held on entry, we will unlock on success.
- */
-struct vnode *
-layer_node_find(struct mount *mp, struct vnode *lowervp)
-{
-	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
-	struct layer_node_hashhead *hd;
-	struct layer_node *a;
-	struct vnode *vp;
-	int error;
-
-	/*
-	 * Find hash bucket and search the (two-way) linked list looking
-	 * for a layerfs node structure which is referencing the lower vnode.
-	 * If found, the increment the layer_node reference count, but NOT
-	 * the lower vnode's reference counter.
-	 */
-	KASSERT(mutex_owned(&lmp->layerm_hashlock));
-	hd = LAYER_NHASH(lmp, lowervp);
-loop:
-	LIST_FOREACH(a, hd, layer_hash) {
-		if (a->layer_lowervp != lowervp) {
-			continue;
-		}
-		vp = LAYERTOV(a);
-		if (vp->v_mount != mp) {
-			continue;
-		}
-		mutex_enter(vp->v_interlock);
-		mutex_exit(&lmp->layerm_hashlock);
-		error = vget(vp, 0);
-		if (error) {
-			mutex_enter(&lmp->layerm_hashlock);
-			goto loop;
-		}
-		return vp;
-	}
-	return NULL;
-}
-
-/*
- * layer_node_alloc: make a new layerfs vnode.
- *
- * => vp is the alias vnode, lowervp is the lower vnode.
- * => We will hold a reference to lowervp.
- */
-int
-layer_node_alloc(struct mount *mp, struct vnode *lowervp, struct vnode **vpp)
-{
-	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
-	struct layer_node_hashhead *hd;
-	struct layer_node *xp;
-	struct vnode *vp, *nvp;
-	int error;
-
-	/* Get a new vnode and share its interlock with underlying vnode. */
-	error = getnewvnode(lmp->layerm_tag, mp, lmp->layerm_vnodeop_p,
-	    lowervp->v_interlock, &vp);
-	if (error) {
-		return error;
-	}
-	vp->v_type = lowervp->v_type;
-	mutex_enter(vp->v_interlock);
-	vp->v_iflag |= VI_LAYER;
-	mutex_exit(vp->v_interlock);
-
-	xp = kmem_alloc(lmp->layerm_size, KM_SLEEP);
-	if (xp == NULL) {
-		ungetnewvnode(vp);
-		return ENOMEM;
-	}
-	if (vp->v_type == VBLK || vp->v_type == VCHR) {
-		spec_node_init(vp, lowervp->v_rdev);
-	}
-
-	/*
-	 * Before inserting the node into the hash, check if other thread
-	 * did not race with us.  If so - return that node, destroy ours.
-	 */
-	mutex_enter(&lmp->layerm_hashlock);
-	if ((nvp = layer_node_find(mp, lowervp)) != NULL) {
-		ungetnewvnode(vp);
-		kmem_free(xp, lmp->layerm_size);
-		*vpp = nvp;
-		return 0;
-	}
-
-	vp->v_data = xp;
-	vp->v_vflag = (vp->v_vflag & ~VV_MPSAFE) |
-	    (lowervp->v_vflag & VV_MPSAFE);
-	xp->layer_vnode = vp;
-	xp->layer_lowervp = lowervp;
-	xp->layer_flags = 0;
-
-	/*
-	 * Insert the new node into the hash.
-	 * Add a reference to the lower node.
-	 */
-	vref(lowervp);
-	hd = LAYER_NHASH(lmp, lowervp);
-	LIST_INSERT_HEAD(hd, xp, layer_hash);
-	uvm_vnp_setsize(vp, 0);
-	mutex_exit(&lmp->layerm_hashlock);
-
-	*vpp = vp;
-	return 0;
-}
-
-/*
  * layer_node_create: try to find an existing layerfs vnode refering to it,
  * otherwise make a new vnode which contains a reference to the lower vnode.
- *
- * => Caller should lock the lower node.
  */
 int
 layer_node_create(struct mount *mp, struct vnode *lowervp, struct vnode **nvpp)
 {
+	int error;
 	struct vnode *aliasvp;
-	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
 
-	mutex_enter(&lmp->layerm_hashlock);
-	aliasvp = layer_node_find(mp, lowervp);
-	if (aliasvp != NULL) {
-		/*
-		 * Note: layer_node_find() has taken another reference to
-		 * the alias vnode and moved the lock holding to aliasvp.
-		 */
-#ifdef LAYERFS_DIAGNOSTIC
-		if (layerfs_debug)
-			vprint("layer_node_create: exists", aliasvp);
-#endif
-	} else {
-		int error;
-
-		mutex_exit(&lmp->layerm_hashlock);
-		/*
-		 * Get a new vnode.  Make it to reference the layer_node.
-		 * Note: aliasvp will be return with the reference held.
-		 */
-		error = (lmp->layerm_alloc)(mp, lowervp, &aliasvp);
-		if (error)
-			return error;
-#ifdef LAYERFS_DIAGNOSTIC
-		if (layerfs_debug)
-			printf("layer_node_create: create new alias vnode\n");
-#endif
-	}
+	error = vcache_get(mp, &lowervp, sizeof(lowervp), &aliasvp);
+	if (error)
+		return error;
 
 	/*
 	 * Now that we acquired a reference on the upper vnode, release one

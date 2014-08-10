@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_alloc.c,v 1.1.1.3 2013/09/25 19:06:36 tron Exp $	*/
+/*	$NetBSD: dict_alloc.c,v 1.1.1.3.2.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -15,6 +15,9 @@
 /*
 /*	void	dict_free(dict)
 /*	DICT	*ptr;
+/*
+/*	void	dict_jmp_alloc(dict)
+/*	DICT	*ptr;
 /* DESCRIPTION
 /*	dict_alloc() allocates memory for a dictionary structure of
 /*	\fIsize\fR bytes, initializes all generic dictionary
@@ -27,7 +30,8 @@
 /*
 /*	One exception is the default lock function.  When the
 /*	dictionary provides a file handle for locking, the default
-/*	lock function returns the result from myflock(), otherwise
+/*	lock function returns the result from myflock with the
+/*	locking method specified in the lock_type member, otherwise
 /*	it returns 0. Presently, the lock function is used only to
 /*	implement the DICT_FLAG_OPEN_LOCK feature (lock the database
 /*	exclusively after it is opened) for databases that are not
@@ -36,6 +40,9 @@
 /*	dict_free() releases memory and cleans up after dict_alloc().
 /*	It is up to the caller to dispose of any memory that was allocated
 /*	by the caller.
+/*
+/*	dict_jmp_alloc() implements preliminary support for exception
+/*	handling. This will eventually be built into dict_alloc().
 /*
 /*	Arguments:
 /* .IP dict_type
@@ -111,12 +118,12 @@ static int dict_default_sequence(DICT *dict, int unused_function,
 static int dict_default_lock(DICT *dict, int operation)
 {
     if (dict->lock_fd >= 0) {
-	return (myflock(dict->lock_fd, INTERNAL_LOCK, operation));
+	return (myflock(dict->lock_fd, dict->lock_type, operation));
     } else {
 	return (0);
     }
 }
- 
+
 /* dict_default_close - trap unimplemented operation */
 
 static void dict_default_close(DICT *dict)
@@ -140,6 +147,7 @@ DICT   *dict_alloc(const char *dict_type, const char *dict_name, ssize_t size)
     dict->sequence = dict_default_sequence;
     dict->close = dict_default_close;
     dict->lock = dict_default_lock;
+    dict->lock_type = INTERNAL_LOCK;
     dict->lock_fd = -1;
     dict->stat_fd = -1;
     dict->mtime = 0;
@@ -147,6 +155,7 @@ DICT   *dict_alloc(const char *dict_type, const char *dict_name, ssize_t size)
     dict->owner.status = DICT_OWNER_UNKNOWN;
     dict->owner.uid = ~0;
     dict->error = DICT_ERR_NONE;
+    dict->jbuf = 0;
     return dict;
 }
 
@@ -156,5 +165,20 @@ void    dict_free(DICT *dict)
 {
     myfree(dict->type);
     myfree(dict->name);
+    if (dict->jbuf)
+	myfree((char *) dict->jbuf);
     myfree((char *) dict);
+}
+
+ /*
+  * TODO: add a dict_flags() argument to dict_alloc() and handle jump buffer
+  * allocation there.
+  */
+
+/* dict_jmp_alloc - enable exception handling */
+
+void    dict_jmp_alloc(DICT *dict)
+{
+    if (dict->jbuf == 0)
+	dict->jbuf = (DICT_JMP_BUF *) mymalloc(sizeof(DICT_JMP_BUF));
 }

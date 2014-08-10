@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcpd.leases.5,v 1.1.1.2 2013/03/24 22:50:41 christos Exp $
+.\"	$NetBSD: dhcpd.leases.5,v 1.1.1.2.8.1 2014/08/10 07:06:56 tls Exp $
 .\"
 .\"	dhcpd.leases.5
 .\"
-.\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -23,14 +23,7 @@
 .\"   <info@isc.org>
 .\"   https://www.isc.org/
 .\"
-.\" This software has been written for Internet Systems Consortium
-.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
-.\" To learn more about Internet Systems Consortium, see
-.\" ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
-.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
-.\" ``http://www.nominum.com''.
-.\"
-.\" Id: dhcpd.leases.5,v 1.14.24.3 2011/09/19 00:24:22 sar Exp 
+.\" Id: dhcpd.leases.5,v 1.17 2011/09/19 00:24:50 sar Exp 
 .\"
 .TH dhcpd.leases 5
 .SH NAME
@@ -217,7 +210,7 @@ manual page.
 .B The \fIddns-text\fB variable
 .PP
 The \fIddns-text\fR variable is used to record the value of the
-client's TXT identification record when the interim ddns update
+client's TXT identification record when the interim DDNS update
 style has been used to update the DNS for a particular lease.
 .PP
 .B The \fIddns-fwd-name\fB variable
@@ -229,9 +222,9 @@ update the client's PTR record.
 .PP
 .B The \fIddns-client-fqdn\fB variable
 .PP
-If the server is configured to use the interim ddns update style, and
-is also configured to allow clients to update their own fqdns, and the
-client did in fact update its own fqdn, then the
+If the server is configured to use the interim DDNS update style, and
+is also configured to allow clients to update their own FQDNs, and the
+client did in fact update its own FQDN, then the
 \fIddns-client-fqdn\fR variable records the name that the client has
 indicated it is using.   This is the name that the server will have
 used to update the client's PTR record in this case.
@@ -286,8 +279,6 @@ possible: \fBunknown-state\fR, \fBpartner-down\fR, \fBnormal\fR,
 dhcpd(8), dhcp-options(5), dhcp-eval(5), dhcpd.conf(5), RFC2132, RFC2131.
 .SH AUTHOR
 .B dhcpd(8)
-was written by Ted Lemon
-under a contract with Vixie Labs.   Funding
-for this project was provided by Internet Systems Consortium.
+is maintained by ISC.
 Information about Internet Systems Consortium can be found at:
 .B https://www.isc.org/

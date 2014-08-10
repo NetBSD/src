@@ -1,4 +1,4 @@
-/*	$NetBSD: luapmf.c,v 1.3 2013/12/16 23:35:48 lneto Exp $ */
+/*	$NetBSD: luapmf.c,v 1.3.2.1 2014/08/10 06:56:10 tls Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -82,9 +82,8 @@ get_platform(lua_State *L)
 }
 
 static int
-luaopen_pmf(void *ls)
+luaopen_pmf(lua_State *L)
 {
-	lua_State *L = (lua_State *)ls;
 	const luaL_Reg pmf_lib[ ] = {
 		{ "system_shutdown",	system_shutdown },
 		{ "set_platform",	set_platform },
@@ -92,7 +91,7 @@ luaopen_pmf(void *ls)
 		{ NULL, NULL }
 	};
 
-	luaL_register(L, "pmf", pmf_lib);
+	luaL_newlib(L, pmf_lib);
 
 	/* some integer values */
 	lua_pushinteger(L, PMFE_DISPLAY_ON);
@@ -151,10 +150,10 @@ luapmf_modcmd(modcmd_t cmd, void *opaque)
 	int error;
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = lua_mod_register("pmf", luaopen_pmf);
+		error = klua_mod_register("pmf", luaopen_pmf);
 		break;
 	case MODULE_CMD_FINI:
-		error = lua_mod_unregister("pmf");
+		error = klua_mod_unregister("pmf");
 		break;
 	default:
 		error = ENOTTY;

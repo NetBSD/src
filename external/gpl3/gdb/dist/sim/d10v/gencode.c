@@ -5,9 +5,9 @@
 #include "ansidecl.h"
 #include "opcode/d10v.h"
 
-static void write_header PARAMS ((void));
-static void write_opcodes PARAMS ((void));
-static void write_template PARAMS ((void));
+static void write_header (void);
+static void write_opcodes (void);
+static void write_template (void);
 
 int
 main (argc, argv)
@@ -31,7 +31,7 @@ write_header ()
 
   for (opcode = (struct d10v_opcode *)d10v_opcodes; opcode->name; opcode++)
     if (opcode->format != OPCODE_FAKE)
-      printf("void OP_%X PARAMS ((void));\t\t/* %s */\n",opcode->opcode, opcode->name);
+      printf("void OP_%X (void);\t\t/* %s */\n",opcode->opcode, opcode->name);
 }
 
 

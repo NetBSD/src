@@ -1,24 +1,24 @@
-/*	$NetBSD: postconf_service.c,v 1.1.1.1 2013/01/02 18:59:03 tron Exp $	*/
+/*	$NetBSD: postconf_service.c,v 1.1.1.1.10.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
 /*	postconf_service 3
 /* SUMMARY
-/*	service-defined parameter name support
+/*	service-defined main.cf parameter name support
 /* SYNOPSIS
 /*	#include <postconf.h>
 /*
-/*	void	register_service_parameters()
+/*	void    pcf_register_service_parameters()
 /* DESCRIPTION
 /*	Service-defined parameter names are created by appending
 /*	postfix-defined suffixes to master.cf service names. All
 /*	service-defined parameters have default values that are
 /*	defined by a built-in parameter.
 /*
-/*	register_service_parameters() adds the service-defined parameters
-/*	to the global name space. This function must be called after
-/*	the built-in parameters are added to the global name space,
-/*	and after the master.cf file is read.
+/*	pcf_register_service_parameters() adds the service-defined
+/*	parameters to the global name space. This function must be
+/*	called after the built-in parameters are added to the global
+/*	name space, and after the master.cf file is read.
 /* DIAGNOSTICS
 /*	Problems are reported to the standard error stream.
 /* LICENSE
@@ -74,24 +74,25 @@
 typedef struct {
     const char *name;
     const char *value;
-} PC_STRING_NV;
+} PCF_STRING_NV;
 
 #define STR(x) vstring_str(x)
 
-/* convert_service_parameter - get service parameter string value */
+/* pcf_convert_service_parameter - get service parameter string value */
 
-static const char *convert_service_parameter(char *ptr)
+static const char *pcf_convert_service_parameter(char *ptr)
 {
-    return (STR(vstring_sprintf(param_string_buf, "$%s", ptr)));
+    return (STR(vstring_sprintf(pcf_param_string_buf, "$%s", ptr)));
 }
 
-/* register_service_parameter - add one service parameter name and default */
+/* pcf_register_service_parameter - add service parameter name and default */
 
-static void register_service_parameter(const char *service, const char *suffix,
-				               const char *defparam)
+static void pcf_register_service_parameter(const char *service,
+					           const char *suffix,
+					           const char *defparam)
 {
     char   *name = concatenate(service, suffix, (char *) 0);
-    PC_PARAM_NODE *node;
+    PCF_PARAM_NODE *node;
 
     /*
      * Skip service parameter names that have built-in definitions. This
@@ -102,21 +103,21 @@ static void register_service_parameter(const char *service, const char *suffix,
      * service parameters with their own default value. We don't change the
      * default but we correct the parameter class.
      */
-    if ((node = PC_PARAM_TABLE_FIND(param_table, name)) != 0) {
-	PC_PARAM_CLASS_OVERRIDE(node, PC_PARAM_FLAG_SERVICE);
+    if ((node = PCF_PARAM_TABLE_FIND(pcf_param_table, name)) != 0) {
+	PCF_PARAM_CLASS_OVERRIDE(node, PCF_PARAM_FLAG_SERVICE);
     } else {
-	PC_PARAM_TABLE_ENTER(param_table, name, PC_PARAM_FLAG_SERVICE,
-			     (char *) defparam, convert_service_parameter);
+	PCF_PARAM_TABLE_ENTER(pcf_param_table, name, PCF_PARAM_FLAG_SERVICE,
+			  (char *) defparam, pcf_convert_service_parameter);
     }
     myfree(name);
 }
 
-/* register_service_parameters - add all service parameters with defaults */
+/* pcf_register_service_parameters - add all service parameters with defaults */
 
-void    register_service_parameters(void)
+void    pcf_register_service_parameters(void)
 {
-    const char *myname = "register_service_parameters";
-    static const PC_STRING_NV pipe_params[] = {
+    const char *myname = "pcf_register_service_parameters";
+    static const PCF_STRING_NV pipe_params[] = {
 	/* suffix, default parameter name */
 	_MAXTIME, VAR_COMMAND_MAXTIME,
 #define service_params (pipe_params + 1)
@@ -137,16 +138,16 @@ void    register_service_parameters(void)
 	_DEST_RATE_DELAY, VAR_DEST_RATE_DELAY,
 	0,
     };
-    static const PC_STRING_NV spawn_params[] = {
+    static const PCF_STRING_NV spawn_params[] = {
 	/* suffix, default parameter name */
 	_MAXTIME, VAR_COMMAND_MAXTIME,
 	0,
     };
     typedef struct {
 	const char *progname;
-	const PC_STRING_NV *params;
-    } PC_SERVICE_DEF;
-    static const PC_SERVICE_DEF service_defs[] = {
+	const PCF_STRING_NV *params;
+    } PCF_SERVICE_DEF;
+    static const PCF_SERVICE_DEF service_defs[] = {
 	MAIL_PROGRAM_LOCAL, service_params,
 	MAIL_PROGRAM_ERROR, service_params,
 	MAIL_PROGRAM_VIRTUAL, service_params,
@@ -156,26 +157,26 @@ void    register_service_parameters(void)
 	MAIL_PROGRAM_SPAWN, spawn_params,
 	0,
     };
-    const PC_STRING_NV *sp;
+    const PCF_STRING_NV *sp;
     const char *progname;
     const char *service;
-    PC_MASTER_ENT *masterp;
+    PCF_MASTER_ENT *masterp;
     ARGV   *argv;
-    const PC_SERVICE_DEF *sd;
+    const PCF_SERVICE_DEF *sd;
 
     /*
      * Sanity checks.
      */
-    if (param_table == 0)
+    if (pcf_param_table == 0)
 	msg_panic("%s: global parameter table is not initialized", myname);
-    if (master_table == 0)
+    if (pcf_master_table == 0)
 	msg_panic("%s: master table is not initialized", myname);
 
     /*
      * Extract service names from master.cf and generate service parameter
      * information.
      */
-    for (masterp = master_table; (argv = masterp->argv) != 0; masterp++) {
+    for (masterp = pcf_master_table; (argv = masterp->argv) != 0; masterp++) {
 
 	/*
 	 * Add service parameters for message delivery transports or spawn
@@ -186,7 +187,7 @@ void    register_service_parameters(void)
 	    if (strcmp(sd->progname, progname) == 0) {
 		service = argv->argv[0];
 		for (sp = sd->params; sp->name; sp++)
-		    register_service_parameter(service, sp->name, sp->value);
+		    pcf_register_service_parameter(service, sp->name, sp->value);
 		break;
 	    }
 	}

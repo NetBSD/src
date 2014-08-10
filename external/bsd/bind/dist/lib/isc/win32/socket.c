@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.7 2014/03/01 03:24:40 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.7.2.1 2014/08/10 07:06:44 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -52,6 +52,7 @@
 #include <fcntl.h>
 #include <process.h>
 
+#include <isc/app.h>
 #include <isc/buffer.h>
 #include <isc/bufferlist.h>
 #include <isc/condition.h>
@@ -3958,7 +3959,7 @@ _socktype(isc_sockettype_t type) {
 		return ("not-initialized");
 }
 
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
 int
 isc_socketmgr_renderxml(isc_socketmgr_t *mgr, xmlTextWriterPtr writer)
 {
@@ -4068,4 +4069,25 @@ error:
 }
 #endif /* HAVE_LIBXML2 */
 
-#include "../socket_api.c"
+/*
+ * Replace ../socket_api.c
+ */
+
+isc_result_t
+isc__socket_register(void) {
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_socketmgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
+			  isc_socketmgr_t **managerp)
+{
+	isc_result_t result;
+
+	result = isc_socketmgr_create(mctx, managerp);
+
+	if (result == ISC_R_SUCCESS)
+		isc_appctx_setsocketmgr(actx, *managerp);
+
+	return (result);
+}

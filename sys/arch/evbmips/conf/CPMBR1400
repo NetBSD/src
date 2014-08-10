@@ -1,13 +1,17 @@
+#	$NetBSD: CPMBR1400,v 1.15.2.1 2014/08/10 06:53:56 tls Exp $
+
 include		"arch/evbmips/conf/std.rasoc"
 
 options 	SYMTAB_SPACE=450000		# size for embedded symbol table
 
-#options 	RA_CONSOLE_EARLY
+#options 	RALINK_CONSOLE_EARLY
 options 	RT3883
 #options 	SLICKROCK
 options 	RALINK_ETH_NUM_SW_PARTITIONS=5
 options 	CONSPEED=57600
 #options 	SYSCALL_DEBUG
+no makeoptions	NEED_UBOOTIMAGE
+makeoptions	NEED_UBOOTIMAGE="bsentry"
 
 maxusers	8
 
@@ -134,6 +138,10 @@ options 	MROUTING	# IP multicast routing
 #options 	ALTQ_RED	# Random Early Detection
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

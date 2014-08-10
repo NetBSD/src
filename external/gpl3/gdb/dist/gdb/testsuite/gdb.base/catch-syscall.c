@@ -8,17 +8,40 @@
    September, 2008 */
 
 #include <unistd.h>
+#include <sys/syscall.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+
+/* These are the syscalls numbers used by the test.  */
+
+static int close_syscall = SYS_close;
+static int chroot_syscall = SYS_chroot;
+/* GDB had a bug where it couldn't catch syscall number 0 (PR 16297).
+   In most GNU/Linux architectures, syscall number 0 is
+   restart_syscall, which can't be called from userspace.  However,
+   the "read" syscall is zero on x86_64.  */
+static int read_syscall = SYS_read;
+static int pipe_syscall = SYS_pipe;
+static int write_syscall = SYS_write;
+static int exit_group_syscall = SYS_exit_group;
 
 int
 main (void)
 {
+	int fd[2];
+	char buf1[2] = "a";
+	char buf2[2];
+
 	/* A close() with a wrong argument.  We are only
 	   interested in the syscall.  */
 	close (-1);
 
 	chroot (".");
+
+	pipe (fd);
+
+	write (fd[1], buf1, sizeof (buf1));
+	read (fd[0], buf2, sizeof (buf2));
 
 	/* The last syscall.  Do not change this.  */
 	_exit (0);

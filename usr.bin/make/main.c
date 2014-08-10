@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.226 2014/02/07 17:23:35 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.226.2.1 2014/08/10 06:58:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.226 2014/02/07 17:23:35 pooka Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.226.2.1 2014/08/10 06:58:27 tls Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.226 2014/02/07 17:23:35 pooka Exp $");
+__RCSID("$NetBSD: main.c,v 1.226.2.1 2014/08/10 06:58:27 tls Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -99,14 +99,14 @@ __RCSID("$NetBSD: main.c,v 1.226 2014/02/07 17:23:35 pooka Exp $");
  *
  *	Error			Print a tagged error message. The global
  *				MAKE variable must have been defined. This
- *				takes a format string and two optional
- *				arguments for it.
+ *				takes a format string and optional arguments
+ *				for it.
  *
  *	Fatal			Print an error message and exit. Also takes
- *				a format string and two arguments.
+ *				a format string and arguments for it.
  *
  *	Punt			Aborts all jobs and exits with a message. Also
- *				takes a format string and two arguments.
+ *				takes a format string and arguments for it.
  *
  *	Finish			Finish things up by printing the number of
  *				errors which occurred, as passed to it, and

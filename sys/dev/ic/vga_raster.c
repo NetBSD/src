@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.37 2013/04/14 16:37:32 christos Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.37.8.1 2014/08/10 06:54:52 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,8 +56,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.37 2013/04/14 16:37:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.37.8.1 2014/08/10 06:54:52 tls Exp $");
 
+#include "opt_vga.h"
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
 #include <sys/param.h>
@@ -569,8 +570,13 @@ vga_cndetach(void)
 	vh = &vc->hdl;
 
 	if (vgaconsole) {
+		wsdisplay_cndetach();
+
 		bus_space_unmap(vh->vh_iot, vh->vh_ioh_vga, 0x10);
 		bus_space_unmap(vh->vh_iot, vh->vh_ioh_6845, 0x10);
+
+		vga_console_attached = 0;
+		vgaconsole = 0;
 
 		return 1;
 	}
@@ -1044,9 +1050,6 @@ vga_set_mode(struct vga_handle *vh, struct vga_moderegs *regs)
 static void
 vga_raster_cursor_init(struct vgascreen *scr, int existing)
 {
-	struct vga_handle *vh = scr->hdl;
-	bus_space_tag_t memt;
-	bus_space_handle_t memh;
 	int off;
 
 	if (existing) {
@@ -1054,8 +1057,6 @@ vga_raster_cursor_init(struct vgascreen *scr, int existing)
 		 * This is the first screen. At this point, scr->active is
 		 * false, so we can't use vga_raster_cursor() to do this.
 		 */
-		memt = vh->vh_memt;
-		memh = vh->vh_memh;
 		off = (scr->cursorrow * scr->type->ncols + scr->cursorcol) +
 		    scr->dispoffset / 8;
 
@@ -1199,7 +1200,7 @@ _vga_raster_putchar(void *id, int row, int col, u_int c, long attr,
 	int i;
 	int rasoff, rasoff2;
 	int fheight = scr->type->fontheight;
-	volatile u_int8_t dummy, pattern;
+	volatile u_int8_t pattern;
 	u_int8_t fgcolor, bgcolor;
 
 	rasoff = scr->dispoffset + row * scr->type->ncols * fheight + col;
@@ -1228,7 +1229,7 @@ _vga_raster_putchar(void *id, int row, int col, u_int c, long attr,
 			pattern = ((u_int8_t *)fs->font->data)[c * fheight + i];
 			/* When pattern is 0, skip output for speed-up. */
 			if (pattern != 0) {
-				dummy = bus_space_read_1(memt, memh, rasoff2);
+				bus_space_read_1(memt, memh, rasoff2);
 				bus_space_write_1(memt, memh, rasoff2, pattern);
 			}
 			rasoff2 += scr->type->ncols;
@@ -1249,14 +1250,14 @@ _vga_raster_putchar(void *id, int row, int col, u_int c, long attr,
 			pattern = ((u_int8_t *)fs->font->data)
 			    [(c * fheight + i) * 2];
 			if (pattern != 0) {
-				dummy = bus_space_read_1(memt, memh, rasoff2);
+				bus_space_read_1(memt, memh, rasoff2);
 				bus_space_write_1(memt, memh, rasoff2, pattern);
 			}
 			pattern = ((u_int8_t *)fs->font->data)
 			    [(c * fheight + i) * 2 + 1];
 			if (pattern != 0) {
 				rasoff2++;
-				dummy = bus_space_read_1(memt, memh, rasoff2);
+				bus_space_read_1(memt, memh, rasoff2);
 				bus_space_write_1(memt, memh, rasoff2, pattern);
 				rasoff2--;
 			}

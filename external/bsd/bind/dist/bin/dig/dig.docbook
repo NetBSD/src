@@ -18,11 +18,10 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dig.docbook,v 1.51 2011/11/04 11:02:50 jreed Exp  -->
 <refentry id="man.dig">
 
   <refentryinfo>
-    <date>June 30, 2000</date>
+    <date>February 19, 2014</date>
   </refentryinfo>
 
   <refmeta>
@@ -71,6 +70,7 @@
       <arg><option>-p <replaceable class="parameter">port#</replaceable></option></arg>
       <arg><option>-q <replaceable class="parameter">name</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">type</replaceable></option></arg>
+      <arg><option>-v</option></arg>
       <arg><option>-x <replaceable class="parameter">addr</replaceable></option></arg>
       <arg><option>-y <replaceable class="parameter"><optional>hmac:</optional>name:key</replaceable></option></arg>
       <arg><option>-4</option></arg>
@@ -284,6 +284,11 @@
       The <option>-q</option> option sets the query name to 
       <parameter>name</parameter>.  This is useful to distinguish the
       <parameter>name</parameter> from other arguments.
+    </para>
+
+    <para>
+      The <option>-v</option> causes <command>dig</command> to
+      print the version number and exit.
     </para>
 
     <para>

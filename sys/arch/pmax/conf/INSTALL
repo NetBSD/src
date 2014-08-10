@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.70 2013/04/27 18:19:48 christos Exp $
+# 	$NetBSD: INSTALL,v 1.70.8.1 2014/08/10 06:54:04 tls Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -60,6 +60,10 @@ options 	WAPBL			# File system journaling support
 # Networking options
 options 	INET			# Internet protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 
 # Workstation console options

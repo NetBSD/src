@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-back-monitor.h,v 1.1.1.3 2010/12/12 15:23:16 adam Exp $	*/
+/*	$NetBSD: proto-back-monitor.h,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/proto-back-monitor.h,v 1.33.2.8 2010/04/13 20:23:33 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -79,6 +79,12 @@ extern int
 monitor_cache_destroy LDAP_P((
 	monitor_info_t		*mi ));
 
+extern int
+monitor_back_release(
+	Operation *op,
+	Entry *e,
+	int rw );
+
 /*
  * connections
  */
@@ -120,18 +126,19 @@ monitor_entry_test_flags LDAP_P((
 	monitor_entry_t		*mp,
 	int			cond ));
 extern monitor_entry_t *
-monitor_entrypriv_create LDAP_P((
+monitor_back_entrypriv_create LDAP_P((
 	void ));
-
 extern Entry *
-monitor_entry_stub LDAP_P((
+monitor_back_entry_stub LDAP_P((
 	struct berval	*pdn,
 	struct berval	*pndn,
 	struct berval	*rdn,
 	ObjectClass		*oc,
-	monitor_info_t	*mi,
 	struct berval	*create,
-	struct berval	*modify));
+	struct berval	*modify ));
+
+#define monitor_entrypriv_create monitor_back_entrypriv_create
+#define monitor_entry_stub monitor_back_entry_stub
 
 /*
  * init
@@ -141,6 +148,9 @@ monitor_subsys_is_opened LDAP_P((
 	void ));
 extern int
 monitor_back_register_subsys LDAP_P((
+	monitor_subsys_t	*ms ));
+extern int
+monitor_back_register_subsys_late LDAP_P((
 	monitor_subsys_t	*ms ));
 extern int
 monitor_back_register_backend LDAP_P((

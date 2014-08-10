@@ -1,4 +1,4 @@
-# Copyright 2013 Free Software Foundation, Inc.
+# Copyright 2013-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+load_lib gdb-python.exp
 standard_testfile
 
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
@@ -26,6 +26,14 @@ if ![runto_main] {
    return -1
 }
 
+# Test python/15461.  Invalid architectures should not trigger an
+# internal GDB assert.
+gdb_py_test_silent_cmd "python empty = gdb.Architecture()" "get empty arch" 0
+gdb_test "python print(empty.name())" ".*Architecture is invalid.*" \
+    "Test empty architecture.name does not trigger an assert"
+gdb_test "python print(empty.disassemble())" ".*Architecture is invalid.*" \
+    "Test empty architecture.disassemble does not trigger an assert"
+
 gdb_py_test_silent_cmd "python frame = gdb.selected_frame()" "get frame" 0
 gdb_py_test_silent_cmd "python arch = frame.architecture()" "get arch" 0
 gdb_py_test_silent_cmd "python pc = frame.pc()" "get pc" 0
@@ -38,17 +46,17 @@ gdb_py_test_silent_cmd "python insn_list3 = arch.disassemble(pc, count=1)" \
 gdb_py_test_silent_cmd "python insn_list4 = arch.disassemble(pc)" \
   "disassemble no end no count" 0
 
-gdb_test "python print len(insn_list1)" "1" "test number of instructions 1"
-gdb_test "python print len(insn_list2)" "1" "test number of instructions 2"
-gdb_test "python print len(insn_list3)" "1" "test number of instructions 3"
-gdb_test "python print len(insn_list4)" "1" "test number of instructions 4"
+gdb_test "python print (len(insn_list1))" "1" "test number of instructions 1"
+gdb_test "python print (len(insn_list2))" "1" "test number of instructions 2"
+gdb_test "python print (len(insn_list3))" "1" "test number of instructions 3"
+gdb_test "python print (len(insn_list4))" "1" "test number of instructions 4"
 
 gdb_py_test_silent_cmd "python insn = insn_list1\[0\]" "get instruction" 0
 
-gdb_test "python print \"addr\" in insn" "True" "test key addr"
-gdb_test "python print \"asm\" in insn" "True" "test key asm"
-gdb_test "python print \"length\" in insn" "True" "test key length"
+gdb_test "python print (\"addr\" in insn)" "True" "test key addr"
+gdb_test "python print (\"asm\" in insn)" "True" "test key asm"
+gdb_test "python print (\"length\" in insn)" "True" "test key length"
 
 # Negative test
 gdb_test "python arch.disassemble(0, 0)" ".*gdb\.MemoryError.*" \
-  "test exception"
+  "test bad memory access"

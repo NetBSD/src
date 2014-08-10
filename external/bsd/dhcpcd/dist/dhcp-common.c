@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.1.1.5 2014/03/01 11:00:41 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.1.1.5.2.1 2014/08/10 07:06:59 tls Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -42,10 +42,11 @@
 #include "common.h"
 #include "dhcp-common.h"
 #include "dhcp.h"
-#include "platform.h"
+#include "if.h"
+#include "ipv6.h"
 
 struct dhcp_opt *
-vivso_find(uint16_t iana_en, const void *arg)
+vivso_find(uint32_t iana_en, const void *arg)
 {
 	const struct interface *ifp;
 	size_t i;
@@ -66,23 +67,29 @@ vivso_find(uint16_t iana_en, const void *arg)
 }
 
 size_t
-dhcp_vendor(char *str, size_t str_len)
+dhcp_vendor(char *str, size_t len)
 {
 	struct utsname utn;
 	char *p;
+	int l;
 
 	if (uname(&utn) != 0)
-		return snprintf(str, str_len, "%s-%s", PACKAGE, VERSION);
+		return (size_t)snprintf(str, len, "%s-%s",
+		    PACKAGE, VERSION);
 	p = str;
-	p += snprintf(str, str_len,
+	l = snprintf(p, len,
 	    "%s-%s:%s-%s:%s", PACKAGE, VERSION,
 	    utn.sysname, utn.release, utn.machine);
-	p += hardware_platform(p, str_len - (p - str));
-	return p - str;
+	p += l;
+	len -= (size_t)l;
+	l = if_machinearch(p, len);
+	p += l;
+	return (size_t)(p - str);
 }
 
 int
 make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
+    const struct dhcp_opt *odopts, size_t odopts_len,
     uint8_t *mask, const char *opts, int add)
 {
 	char *token, *o, *p, *t;
@@ -91,43 +98,57 @@ make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
 	unsigned int n;
 	size_t i;
 
-	o = p = strdup(opts);
 	if (opts == NULL)
 		return -1;
+	o = p = strdup(opts);
 	while ((token = strsep(&p, ", "))) {
 		if (*token == '\0')
 			continue;
-		for (i = 0, opt = dopts; i < dopts_len; i++, opt++) {
-			match = 0;
+		match = 0;
+		for (i = 0, opt = odopts; i < odopts_len; i++, opt++) {
 			if (strcmp(opt->var, token) == 0)
 				match = 1;
 			else {
 				errno = 0;
-				n = strtol(token, &t, 0);
+				n = (unsigned int)strtol(token, &t, 0);
 				if (errno == 0 && !*t)
 					if (opt->option == n)
 						match = 1;
 			}
-			if (match) {
-				if (add == 2 && !(opt->type & ADDRIPV4)) {
-					free(o);
-					errno = EINVAL;
-					return -1;
-				}
-				if (add == 1 || add == 2)
-					add_option_mask(mask,
-					    opt->option);
-				else
-					del_option_mask(mask,
-					    opt->option);
+			if (match)
 				break;
+		}
+		if (match == 0) {
+			for (i = 0, opt = dopts; i < dopts_len; i++, opt++) {
+				if (strcmp(opt->var, token) == 0)
+				        match = 1;
+				else {
+					errno = 0;
+					n = (unsigned int)strtol(token, &t, 0);
+					if (errno == 0 && !*t)
+						if (opt->option == n)
+							match = 1;
+				}
+				if (match)
+					break;
 			}
 		}
-		if (!opt->option) {
+		if (!match || !opt->option) {
 			free(o);
 			errno = ENOENT;
 			return -1;
 		}
+		if (add == 2 && !(opt->type & ADDRIPV4)) {
+			free(o);
+			errno = EINVAL;
+			return -1;
+		}
+		if (add == 1 || add == 2)
+			add_option_mask(mask,
+			    opt->option);
+		else
+			del_option_mask(mask,
+			    opt->option);
 	}
 	free(o);
 	return 0;
@@ -163,7 +184,7 @@ encode_rfc1035(const char *src, uint8_t *dst)
 				break;
 			has_dot = 1;
 			if (dst) {
-				*lp = p - lp - 1;
+				*lp = (uint8_t)(p - lp - 1);
 				if (*lp == '\0')
 					return len;
 				lp = p++;
@@ -174,7 +195,7 @@ encode_rfc1035(const char *src, uint8_t *dst)
 	}
 
 	if (dst) {
-		*lp = p - lp - 1;
+		*lp = (uint8_t)(p - lp - 1);
 		if (has_dot)
 			*p++ = '\0';
 	}
@@ -190,25 +211,28 @@ encode_rfc1035(const char *src, uint8_t *dst)
  * terminating zero) or zero on error. out may be NULL
  * to just determine output length. */
 ssize_t
-decode_rfc3397(char *out, ssize_t len, int pl, const uint8_t *p)
+decode_rfc3397(char *out, size_t len, const uint8_t *p, size_t pl)
 {
 	const char *start;
-	ssize_t start_len;
-	const uint8_t *r, *q = p;
-	int count = 0, l, hops;
+	size_t start_len, l, count;
+	const uint8_t *r, *q = p, *e;
+	int hops;
 	uint8_t ltype;
 
+	count = 0;
 	start = out;
 	start_len = len;
-	while (q - p < pl) {
+	q = p;
+	e = p + pl;
+	while (q < e) {
 		r = NULL;
 		hops = 0;
 		/* Check we are inside our length again in-case
 		 * the name isn't fully qualified (ie, not terminated) */
-		while (q - p < pl && (l = *q++)) {
+		while (q < e && (l = (size_t)*q++)) {
 			ltype = l & 0xc0;
 			if (ltype == 0x80 || ltype == 0x40)
-				return 0;
+				return -1;
 			else if (ltype == 0xc0) { /* pointer */
 				l = (l & 0x3f) << 8;
 				l |= *q++;
@@ -216,16 +240,20 @@ decode_rfc3397(char *out, ssize_t len, int pl, const uint8_t *p)
 				if (!r)
 					r = q;
 				hops++;
-				if (hops > 255)
-					return 0;
+				if (hops > 255) {
+					errno = ERANGE;
+					return -1;
+				}
 				q = p + l;
-				if (q - p >= pl)
-					return 0;
+				if (q >= e) {
+					errno = ERANGE;
+					return -1;
+				}
 			} else {
 				/* straightforward name segment, add with '.' */
 				count += l + 1;
 				if (out) {
-					if ((ssize_t)l + 1 > len) {
+					if (l + 1 > len) {
 						errno = ENOBUFS;
 						return -1;
 					}
@@ -253,11 +281,11 @@ decode_rfc3397(char *out, ssize_t len, int pl, const uint8_t *p)
 			*out = '\0';
 	}
 
-	return count;
+	return (ssize_t)count;
 }
 
 ssize_t
-print_string(char *s, ssize_t len, int dl, const uint8_t *data)
+print_string(char *s, size_t len, const uint8_t *data, size_t dl)
 {
 	uint8_t c;
 	const uint8_t *e, *p;
@@ -282,7 +310,7 @@ print_string(char *s, ssize_t len, int dl, const uint8_t *data)
 					return -1;
 				}
 				r = snprintf(s, len, "\\%03o", c);
-				len -= r;
+				len -= (size_t)r;
 				bytes += r;
 				s += r;
 			} else
@@ -309,7 +337,7 @@ print_string(char *s, ssize_t len, int dl, const uint8_t *data)
 			break;
 		}
 		if (s) {
-			*s++ = c;
+			*s++ = (char)c;
 			len--;
 		}
 		bytes++;
@@ -338,7 +366,7 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 		if (opt->len) {
 			if ((size_t)opt->len > dl)
 				return 0;
-			return opt->len;
+			return (size_t)opt->len;
 		}
 		return dl;
 	}
@@ -376,7 +404,7 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 #endif
 
 ssize_t
-print_option(char *s, ssize_t len, int type, int dl, const uint8_t *data,
+print_option(char *s, size_t len, int type, const uint8_t *data, size_t dl,
     PO_IFNAME const char *ifname)
 {
 	const uint8_t *e, *t;
@@ -385,45 +413,46 @@ print_option(char *s, ssize_t len, int type, int dl, const uint8_t *data,
 	uint32_t u32;
 	int32_t s32;
 	struct in_addr addr;
-	ssize_t bytes = 0;
-	ssize_t l;
+	ssize_t bytes = 0, sl;
+	size_t l;
 	char *tmp;
 
 	if (type & RFC3397) {
-		l = decode_rfc3397(NULL, 0, dl, data);
-		if (l < 1)
-			return l;
+		sl = decode_rfc3397(NULL, 0, data, dl);
+		if (sl == 0 || sl == -1)
+			return sl;
+		l = (size_t)sl;
 		tmp = malloc(l);
 		if (tmp == NULL)
 			return -1;
-		decode_rfc3397(tmp, l, dl, data);
-		l = print_string(s, len, l - 1, (uint8_t *)tmp);
+		decode_rfc3397(tmp, l, data, dl);
+		sl = print_string(s, len, (uint8_t *)tmp, l - 1);
 		free(tmp);
-		return l;
+		return sl;
 	}
 
 #ifdef INET
 	if (type & RFC3361) {
-		if ((tmp = decode_rfc3361(dl, data)) == NULL)
+		if ((tmp = decode_rfc3361(data, dl)) == NULL)
 			return -1;
 		l = strlen(tmp);
-		l = print_string(s, len, l, (uint8_t *)tmp);
+		sl = print_string(s, len, (uint8_t *)tmp, l);
 		free(tmp);
-		return l;
+		return sl;
 	}
 
 	if (type & RFC3442)
-		return decode_rfc3442(s, len, dl, data);
+		return decode_rfc3442(s, len, data, dl);
 
 	if (type & RFC5969)
-		return decode_rfc5969(s, len, dl, data);
+		return decode_rfc5969(s, len, data, dl);
 #endif
 
 	if (type & STRING) {
 		/* Some DHCP servers return NULL strings */
 		if (*data == '\0')
 			return 0;
-		return print_string(s, len, dl, data);
+		return print_string(s, len, data, dl);
 	}
 
 	if (type & FLAG) {
@@ -460,12 +489,12 @@ print_option(char *s, ssize_t len, int type, int dl, const uint8_t *data,
 			while (data < e) {
 				if (l)
 					l++; /* space */
-				dl = ipv6_printaddr(NULL, 0, data, ifname);
-				if (dl != -1)
-					l += dl;
+				sl = ipv6_printaddr(NULL, 0, data, ifname);
+				if (sl != -1)
+					l += (size_t)sl;
 				data += 16;
 			}
-			return l + 1;
+			return (ssize_t)(l + 1);
 		}
 #endif
 		else if (type & BINHEX) {
@@ -474,7 +503,7 @@ print_option(char *s, ssize_t len, int type, int dl, const uint8_t *data,
 			errno = EINVAL;
 			return -1;
 		}
-		return (l + 1) * dl;
+		return (ssize_t)((l + 1) * dl);
 	}
 
 	t = data;
@@ -486,51 +515,53 @@ print_option(char *s, ssize_t len, int type, int dl, const uint8_t *data,
 			len--;
 		}
 		if (type & UINT8) {
-			l = snprintf(s, len, "%u", *data);
+			sl = snprintf(s, len, "%u", *data);
 			data++;
 		} else if (type & UINT16) {
 			memcpy(&u16, data, sizeof(u16));
 			u16 = ntohs(u16);
-			l = snprintf(s, len, "%u", u16);
+			sl = snprintf(s, len, "%u", u16);
 			data += sizeof(u16);
 		} else if (type & SINT16) {
-			memcpy(&s16, data, sizeof(s16));
-			s16 = ntohs(s16);
-			l = snprintf(s, len, "%d", s16);
-			data += sizeof(s16);
+			memcpy(&u16, data, sizeof(u16));
+			s16 = (int16_t)ntohs(u16);
+			sl = snprintf(s, len, "%d", s16);
+			data += sizeof(u16);
 		} else if (type & UINT32) {
 			memcpy(&u32, data, sizeof(u32));
 			u32 = ntohl(u32);
-			l = snprintf(s, len, "%u", u32);
+			sl = snprintf(s, len, "%u", u32);
 			data += sizeof(u32);
 		} else if (type & SINT32) {
-			memcpy(&s32, data, sizeof(s32));
-			s32 = ntohl(s32);
-			l = snprintf(s, len, "%d", s32);
-			data += sizeof(s32);
+			memcpy(&u32, data, sizeof(u32));
+			s32 = (int32_t)ntohl(u32);
+			sl = snprintf(s, len, "%d", s32);
+			data += sizeof(u32);
 		} else if (type & ADDRIPV4) {
 			memcpy(&addr.s_addr, data, sizeof(addr.s_addr));
-			l = snprintf(s, len, "%s", inet_ntoa(addr));
+			sl = snprintf(s, len, "%s", inet_ntoa(addr));
 			data += sizeof(addr.s_addr);
 		}
 #ifdef INET6
 		else if (type & ADDRIPV6) {
-			dl = ipv6_printaddr(s, len, data, ifname);
-			if (dl != -1)
-				l = dl;
+			ssize_t r;
+
+			r = ipv6_printaddr(s, len, data, ifname);
+			if (r != -1)
+				sl = r;
 			else
-				l = 0;
+				sl = 0;
 			data += 16;
 		}
 #endif
 		else if (type & BINHEX) {
-			l = snprintf(s, len, "%.2x", data[0]);
+			sl = snprintf(s, len, "%.2x", data[0]);
 			data++;
 		} else
-			l = 0;
-		len -= l;
-		bytes += l;
-		s += l;
+			sl = 0;
+		len -= (size_t)sl;
+		bytes += sl;
+		s += sl;
 	}
 
 	return bytes;
@@ -538,7 +569,7 @@ print_option(char *s, ssize_t len, int type, int dl, const uint8_t *data,
 
 static size_t
 dhcp_envoption1(char **env, const char *prefix,
-    const struct dhcp_opt *opt, int vname, const uint8_t *od, int ol,
+    const struct dhcp_opt *opt, int vname, const uint8_t *od, size_t ol,
     const char *ifname)
 {
 	ssize_t len;
@@ -547,7 +578,7 @@ dhcp_envoption1(char **env, const char *prefix,
 
 	if (opt->len && opt->len < ol)
 		ol = opt->len;
-	len = print_option(NULL, 0, opt->type, ol, od, ifname);
+	len = print_option(NULL, 0, opt->type, od, ol, ifname);
 	if (len < 0)
 		return 0;
 	if (vname)
@@ -556,7 +587,7 @@ dhcp_envoption1(char **env, const char *prefix,
 		e = 0;
 	if (prefix)
 		e += strlen(prefix);
-	e += len + 4;
+	e += (size_t)len + 4;
 	if (env == NULL)
 		return e;
 	v = val = *env = malloc(e);
@@ -569,21 +600,20 @@ dhcp_envoption1(char **env, const char *prefix,
 	else
 		v += snprintf(val, e, "%s=", prefix);
 	if (len != 0)
-		print_option(v, len, opt->type, ol, od, ifname);
+		print_option(v, (size_t)len, opt->type, od, ol, ifname);
 	return e;
 }
 
-ssize_t
+size_t
 dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
     const char *ifname, struct dhcp_opt *opt,
     const uint8_t *(*dgetopt)(struct dhcpcd_ctx *,
-    unsigned int *, unsigned int *, unsigned int *,
-    const uint8_t *, unsigned int, struct dhcp_opt **),
-    const uint8_t *od, int ol)
+    size_t *, unsigned int *, size_t *,
+    const uint8_t *, size_t, struct dhcp_opt **),
+    const uint8_t *od, size_t ol)
 {
-	ssize_t e, n;
-	size_t i;
-	unsigned int eoc, eos, eol;
+	size_t e, i, n, eos, eol;
+	unsigned int eoc;
 	const uint8_t *eod;
 	int ov;
 	struct dhcp_opt *eopt, *oopt;

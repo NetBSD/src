@@ -1,4 +1,4 @@
-/*	$NetBSD: imxsdmareg.h,v 1.1 2010/11/13 07:11:03 bsh Exp $	*/
+/*	$NetBSD: imxsdmareg.h,v 1.1.36.1 2014/08/10 06:53:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2009  Genetec Corporation.  All rights reserved.
@@ -29,7 +29,9 @@
 #ifndef	_IMXSDMAREG_H
 #define	_IMXSDMAREG_H
 
-#define	SDMA_SIZE	0x100
+#include "opt_imx.h"
+
+#define	SDMA_SIZE	0x2c0
 
 /* SDMA Controller */
 #define	SDMA_N_CHANNELS	32
@@ -97,7 +99,13 @@
 #define	SDMA_CHN0ADDR	0x005c	/* Channel 0 Boot address */
 #define	SDMA_XTRIG_CONF1  0x0070	/* Cross-Triger Evennts Config */
 #define	SDMA_XTRIG_CONF2  0x0074
+#if defined(IMX31)
 #define	SDMA_CHNENBL(n)	(0x80+(n)*4)	/* Channel Enable RAM */
+#elif defined(IMX51)
+#define	SDMA_OTB	0x0078
+#define	SDMA_PRF_CNT(n) (0x07c+(n)*4)
+#define	SDMA_CHNENBL(n)	(0x200+(n)*4)	/* Channel Enable RAM */
+#endif
 #define	SDMA_CHNPRI(n)	(0x100+(n)*4)	/* Channel Priority */
 
 

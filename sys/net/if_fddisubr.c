@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.84 2013/03/01 18:25:56 joerg Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.84.10.1 2014/08/10 06:56:15 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.84 2013/03/01 18:25:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.84.10.1 2014/08/10 06:56:15 tls Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -459,10 +459,17 @@ bad:
 static void
 fddi_input(struct ifnet *ifp, struct mbuf *m)
 {
-#if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
-	struct ifqueue *inq;
+#if defined(INET) || defined(INET6)
+	pktqueue_t *pktq = NULL;
+#endif
+#if defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
+	struct ifqueue *inq = NULL;
+#endif
+#if defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
+	int isr = 0;
 	int s;
 #endif
+
 	struct llc *l;
 	struct fddi_header *fh;
 
@@ -517,7 +524,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		 	ntohs(l->llc_snap_ether_type) == ETHERTYPE_ATALK) {
 		    inq = &atintrq2;
 		    m_adj( m, sizeof( struct llc ));
-		    schednetisr(NETISR_ATALK);
+		    isr = NETISR_ATALK;
 		    break;
 		}
 
@@ -547,14 +554,15 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			if (ipflow_fastforward(m))
 				return;
 #endif
-			schednetisr(NETISR_IP);
-			inq = &ipintrq;
+			pktq = ip_pktq;
 			break;
 
 		case ETHERTYPE_ARP:
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
-			schednetisr(NETISR_ARP);
+#if defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
+			isr = NETISR_ARP;
 			inq = &arpintrq;
+#endif
 			break;
 #else
 			arpinput(ifp, m);
@@ -563,7 +571,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #ifdef IPX
 		case ETHERTYPE_IPX:
-			schednetisr(NETISR_IPX);
+			isr = NETISR_IPX;
 			inq = &ipxintrq;
 			break;
 #endif
@@ -573,20 +581,19 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			if (ip6flow_fastforward(&m))
 				return;
 #endif
-			schednetisr(NETISR_IPV6);
-			inq = &ip6intrq;
+			pktq = ip6_pktq;
 			break;
 
 #endif
 #ifdef DECNET
 		case ETHERTYPE_DECNET:
-			schednetisr(NETISR_DECNET);
+			isr = NETISR_DECNET;
 			inq = &decnetintrq;
 			break;
 #endif
 #ifdef NETATALK
 		case ETHERTYPE_ATALK:
-	                schednetisr(NETISR_ATALK);
+	                isr = NETISR_ATALK;
 			inq = &atintrq1;
 			break;
 	        case ETHERTYPE_AARP:
@@ -611,13 +618,26 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-#if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
+#if defined(INET) || defined(INET6)
+	if (__predict_true(pktq)) {
+		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			m_freem(m);
+		}
+		return;
+	}
+#endif
+#if defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
+	if (!inq) {
+		m_freem(m);
+	}
 	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);
-	} else
+	} else {
 		IF_ENQUEUE(inq, m);
+		schednetisr(isr);
+	}
 	splx(s);
 #endif
 }

@@ -13,8 +13,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
-
 ###
 ### Common Makefile rules for BIND 9.
 ###
@@ -124,7 +122,7 @@ BUILD_LIBS = @BUILD_LIBS@
 .SUFFIXES:
 .SUFFIXES: .c .@O@
 
-ALWAYS_INCLUDES = -I${top_builddir}
+ALWAYS_INCLUDES = -I${top_builddir} -I${top_srcdir}
 ALWAYS_DEFINES = @ALWAYS_DEFINES@
 ALWAYS_WARNINGS =
 
@@ -357,15 +355,6 @@ ALWAYS_MAKE_SYMTABLE =	@ALWAYS_MAKE_SYMTABLE@
 
 .docbook.8:
 	${XSLTPROC} -o $@ ${top_srcdir}/doc/xsl/isc-manpage.xsl $<
-
-###
-### Python executable
-###
-.SUFFIXES: .py
-.py:
-	cp -f $< $@
-	chmod +x $@
-
 
 ###
 ### Python executable

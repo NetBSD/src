@@ -37,7 +37,7 @@ for NM in '' -2 -given -disabled -passthru -no-op -nodata -nxdomain -cname -wild
 done
 
 # sign the root and a zone in ns2
-test -e $RANDFILE || $GENRANDOM 400 $RANDFILE
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 # $1=directory, $2=domain name, $3=input zone file, $4=output file
 signzone () {

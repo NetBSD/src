@@ -1,10 +1,10 @@
-/*	$NetBSD: thread.c,v 1.1.1.3 2010/12/12 15:23:16 adam Exp $	*/
+/*	$NetBSD: thread.c,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
 /* thread.c - deal with thread subsystem */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/thread.c,v 1.38.2.9 2010/04/13 20:23:34 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -141,7 +141,7 @@ monitor_subsys_thread_init(
 		 */
 		e = monitor_entry_stub( &ms->mss_dn, &ms->mss_ndn,
 			&mt[ i ].rdn,
-			mi->mi_oc_monitoredObject, mi, NULL, NULL );
+			mi->mi_oc_monitoredObject, NULL, NULL );
 		if ( e == NULL ) {
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_subsys_thread_init: "

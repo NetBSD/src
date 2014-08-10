@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.23 2011/07/01 18:48:36 dyoung Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.23.26.1 2014/08/10 06:54:08 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.23 2011/07/01 18:48:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.23.26.1 2014/08/10 06:54:08 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,13 +53,15 @@ CFATTACH_DECL_NEW(lpt_ebus, sizeof(struct lpt_softc),
     lpt_ebus_match, lpt_ebus_attach, NULL, NULL);
 
 #define	ROM_LPT_NAME	"ecpp"
+#define	ROM_LPT_NAME2	"parallel"
 
 int
 lpt_ebus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
-	if (strcmp(ea->ea_name, ROM_LPT_NAME) == 0)
+	if (strcmp(ea->ea_name, ROM_LPT_NAME) == 0
+	    || strcmp(ea->ea_name, ROM_LPT_NAME2) == 0)
 		return (1);
 
 	return (0);

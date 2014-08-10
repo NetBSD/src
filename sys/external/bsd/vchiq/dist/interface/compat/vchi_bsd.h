@@ -44,6 +44,8 @@
 #include <sys/rwlock.h>
 #include <sys/callout.h>
 
+#include <linux/completion.h>
+
 /*
  * Copy from/to user API
  */
@@ -176,28 +178,6 @@ void mod_timer(struct timer_list *t, unsigned long expires);
 void add_timer(struct timer_list *t);
 int del_timer(struct timer_list *t);
 int del_timer_sync(struct timer_list *t);
-
-/*
- * Completion API
- */
-struct completion {
-	kcondvar_t cv;
-	kmutex_t lock;
-	int done;
-};
-
-void init_completion(struct completion *c);
-void destroy_completion(struct completion *c);
-int try_wait_for_completion(struct completion *);
-int wait_for_completion_interruptible(struct completion *);
-int wait_for_completion_interruptible_timeout(struct completion *, unsigned long ticks);
-int wait_for_completion_killable(struct completion *);
-void wait_for_completion(struct completion *c);
-int wait_for_completion_timeout(struct completion *c, unsigned long timeout);
-void complete(struct completion *c);
-void complete_all(struct completion *c);
-
-#define	INIT_COMPLETION(x)	do {(x).done = 0;} while(0)
 
 /*
  * Semaphore API

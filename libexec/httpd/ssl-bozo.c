@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.16 2014/01/02 08:21:38 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.16.2.1 2014/08/10 06:52:40 tls Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -30,7 +30,7 @@
  *
  */
 
-/* this code implements SSL for bozohttpd */
+/* this code implements SSL and backend IO for bozohttpd */
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -58,26 +58,13 @@ typedef struct sslinfo_t {
 } sslinfo_t;
 
 /*
- * bozo_ssl_err
- *
- * bozo_ssl_err works just like bozo_err except in addition to printing
- * the error provided by the caller at the point of error it pops and
- * prints all errors from the SSL error queue.
+ * bozo_clear_ssl_queue:  print the contents of the SSL error queue
  */
-BOZO_PRINTFLIKE(3, 4) BOZO_DEAD static void
-bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
+static void
+bozo_clear_ssl_queue(bozohttpd_t *httpd)
 {
-        va_list ap;
+	unsigned long sslcode = ERR_get_error();
 
-        va_start(ap, fmt);
-        if (httpd->logstderr || isatty(STDERR_FILENO)) {
-                vfprintf(stderr, fmt, ap);
-                fputs("\n", stderr);
-        } else
-                vsyslog(LOG_ERR, fmt, ap);
-        va_end(ap);
-
-	unsigned int sslcode = ERR_get_error();
 	do {
 		static const char sslfmt[] = "SSL Error: %s:%s:%s";
 
@@ -93,20 +80,77 @@ bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
 			    ERR_reason_error_string(sslcode));
 		}
 	} while (0 != (sslcode = ERR_get_error()));
+}
+
+/*
+ * bozo_ssl_warn works just like bozo_warn, plus the SSL error queue
+ */
+BOZO_PRINTFLIKE(2, 3) static void
+bozo_ssl_warn(bozohttpd_t *httpd, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (httpd->logstderr || isatty(STDERR_FILENO)) {
+		vfprintf(stderr, fmt, ap);
+		fputs("\n", stderr);
+	} else
+		vsyslog(LOG_ERR, fmt, ap);
+	va_end(ap);
+
+	bozo_clear_ssl_queue(httpd);
+}
+
+
+/*
+ * bozo_ssl_err works just like bozo_err, plus the SSL error queue
+ */
+BOZO_PRINTFLIKE(3, 4) BOZO_DEAD static void
+bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (httpd->logstderr || isatty(STDERR_FILENO)) {
+		vfprintf(stderr, fmt, ap);
+		fputs("\n", stderr);
+	} else
+		vsyslog(LOG_ERR, fmt, ap);
+	va_end(ap);
+
+	bozo_clear_ssl_queue(httpd);
 	exit(code);
+}
+
+/*
+ * bozo_check_error_queue:  print warnings if the error isn't expected
+ */
+static void
+bozo_check_error_queue(bozohttpd_t *httpd, const char *tag, int ret)
+{
+	if (ret > 0)
+		return;
+
+	const sslinfo_t *sslinfo = httpd->sslinfo;
+	const int sslerr = SSL_get_error(sslinfo->bozossl, ret);
+
+	if (sslerr != SSL_ERROR_ZERO_RETURN &&
+	    sslerr != SSL_ERROR_SYSCALL &&
+	    sslerr != SSL_ERROR_NONE)
+		bozo_ssl_warn(httpd, "%s: SSL_ERROR %d", tag, sslerr);
 }
 
 static BOZO_PRINTFLIKE(2, 0) int
 bozo_ssl_printf(bozohttpd_t *httpd, const char * fmt, va_list ap)
 {
-	sslinfo_t	*sslinfo;
-	char		*buf;
-	int		 nbytes;
+	char	*buf;
+	int	 nbytes;
 
-	sslinfo = httpd->sslinfo;
-	/* XXX we need more elegant/proper handling of SSL_write return */
-	if ((nbytes = vasprintf(&buf, fmt, ap)) != -1) 
-		SSL_write(sslinfo->bozossl, buf, nbytes);
+	if ((nbytes = vasprintf(&buf, fmt, ap)) != -1)  {
+		const sslinfo_t *sslinfo = httpd->sslinfo;
+		int ret = SSL_write(sslinfo->bozossl, buf, nbytes);
+		bozo_check_error_queue(httpd, "write", ret);
+	}
 
 	free(buf);
 
@@ -116,53 +160,34 @@ bozo_ssl_printf(bozohttpd_t *httpd, const char * fmt, va_list ap)
 static ssize_t
 bozo_ssl_read(bozohttpd_t *httpd, int fd, void *buf, size_t nbytes)
 {
-	sslinfo_t	*sslinfo;
-	ssize_t		 rbytes;
+	const sslinfo_t *sslinfo = httpd->sslinfo;
+	int	ret;
 
 	USE_ARG(fd);
-	sslinfo = httpd->sslinfo;
-	/* XXX we need elegant/proper handling of SSL_read return */
-	rbytes = (ssize_t)SSL_read(sslinfo->bozossl, buf, (int)nbytes);
-	if (rbytes < 1) {
-		if (SSL_get_error(sslinfo->bozossl, rbytes) ==
-				SSL_ERROR_WANT_READ)
-			bozo_warn(httpd, "SSL_ERROR_WANT_READ");
-		else
-			bozo_warn(httpd, "SSL_ERROR OTHER");
-	}
+	ret = SSL_read(sslinfo->bozossl, buf, (int)nbytes);
+	bozo_check_error_queue(httpd, "read", ret);
 
-	return rbytes;
+	return (ssize_t)ret;
 }
 
 static ssize_t
 bozo_ssl_write(bozohttpd_t *httpd, int fd, const void *buf, size_t nbytes)
 {
-	sslinfo_t	*sslinfo;
-	ssize_t		 wbytes;
+	const sslinfo_t *sslinfo = httpd->sslinfo;
+	int	ret;
 
 	USE_ARG(fd);
-	sslinfo = httpd->sslinfo;
-	/* XXX we need elegant/proper handling of SSL_write return */
-	wbytes = (ssize_t)SSL_write(sslinfo->bozossl, buf, (int)nbytes);
+	ret = SSL_write(sslinfo->bozossl, buf, (int)nbytes);
+	bozo_check_error_queue(httpd, "write", ret);
 
-	return wbytes;
-}
-
-static int
-bozo_ssl_flush(bozohttpd_t *httpd, FILE *fp)
-{
-	USE_ARG(httpd);
-	USE_ARG(fp);
-	/* nothing to see here, move right along */
-	return 0;
+	return (ssize_t)ret;
 }
 
 void
 bozo_ssl_init(bozohttpd_t *httpd)
 {
-	sslinfo_t	*sslinfo;
+	sslinfo_t *sslinfo = httpd->sslinfo;
 
-	sslinfo = httpd->sslinfo;
 	if (sslinfo == NULL || !sslinfo->certificate_file)
 		return;
 	SSL_library_init();
@@ -171,7 +196,6 @@ bozo_ssl_init(bozohttpd_t *httpd)
 	sslinfo->ssl_method = SSLv23_server_method();
 	sslinfo->ssl_context = SSL_CTX_new(sslinfo->ssl_method);
 
-	/* XXX we need to learn how to check the SSL stack for more info */
 	if (NULL == sslinfo->ssl_context)
 		bozo_ssl_err(httpd, EXIT_FAILURE,
 		    "SSL context creation failed");
@@ -194,26 +218,35 @@ bozo_ssl_init(bozohttpd_t *httpd)
 		    "Check private key failed");
 }
 
-void
+/*
+ * returns non-zero for failure
+ */
+int
 bozo_ssl_accept(bozohttpd_t *httpd)
 {
-	sslinfo_t	*sslinfo;
+	sslinfo_t *sslinfo = httpd->sslinfo;
 
-	sslinfo = httpd->sslinfo;
-	if (sslinfo != NULL && sslinfo->ssl_context) {
-		sslinfo->bozossl = SSL_new(sslinfo->ssl_context);
-		SSL_set_rfd(sslinfo->bozossl, 0);
-		SSL_set_wfd(sslinfo->bozossl, 1);
-		SSL_accept(sslinfo->bozossl);
-	}
+	if (sslinfo == NULL || !sslinfo->ssl_context)
+		return 0;
+
+	sslinfo->bozossl = SSL_new(sslinfo->ssl_context);
+	if (sslinfo->bozossl == NULL)
+		bozo_err(httpd, 1, "SSL_new failed");
+
+	SSL_set_rfd(sslinfo->bozossl, 0);
+	SSL_set_wfd(sslinfo->bozossl, 1);
+
+	const int ret = SSL_accept(sslinfo->bozossl);
+	bozo_check_error_queue(httpd, "accept", ret);
+
+	return ret != 1;
 }
 
 void
 bozo_ssl_destroy(bozohttpd_t *httpd)
 {
-	sslinfo_t	*sslinfo;
+	const sslinfo_t *sslinfo = httpd->sslinfo;
 
-	sslinfo = httpd->sslinfo;
 	if (sslinfo && sslinfo->bozossl)
 		SSL_free(sslinfo->bozossl);
 }
@@ -221,13 +254,12 @@ bozo_ssl_destroy(bozohttpd_t *httpd)
 void
 bozo_ssl_set_opts(bozohttpd_t *httpd, const char *cert, const char *priv)
 {
-	sslinfo_t	*sslinfo;
+	sslinfo_t *sslinfo = httpd->sslinfo;
 
-	if ((sslinfo = httpd->sslinfo) == NULL) {
+	if (sslinfo == NULL) {
 		sslinfo = bozomalloc(httpd, sizeof(*sslinfo));
-		if (sslinfo == NULL) {
+		if (sslinfo == NULL)
 			bozo_err(httpd, 1, "sslinfo allocation failed");
-		}
 		httpd->sslinfo = sslinfo;
 	}
 	sslinfo->certificate_file = strdup(cert);
@@ -235,9 +267,8 @@ bozo_ssl_set_opts(bozohttpd_t *httpd, const char *cert, const char *priv)
 	debug((httpd, DEBUG_NORMAL, "using cert/priv files: %s & %s",
 		sslinfo->certificate_file,
 		sslinfo->privatekey_file));
-	if (!httpd->bindport) {
+	if (!httpd->bindport)
 		httpd->bindport = strdup("https");
-	}
 }
 
 #endif /* NO_SSL_SUPPORT */
@@ -250,13 +281,11 @@ bozo_printf(bozohttpd_t *httpd, const char *fmt, ...)
 
 	va_start(args, fmt);
 #ifndef NO_SSL_SUPPORT
-	if (httpd->sslinfo) {
+	if (httpd->sslinfo)
 		cc = bozo_ssl_printf(httpd, fmt, args);
-		va_end(args);
-		return cc;
-	}
+	else
 #endif
-	cc = vprintf(fmt, args);
+		cc = vprintf(fmt, args);
 	va_end(args);
 	return cc;
 }
@@ -265,9 +294,8 @@ ssize_t
 bozo_read(bozohttpd_t *httpd, int fd, void *buf, size_t len)
 {
 #ifndef NO_SSL_SUPPORT
-	if (httpd->sslinfo) {
+	if (httpd->sslinfo)
 		return bozo_ssl_read(httpd, fd, buf, len);
-	}
 #endif
 	return read(fd, buf, len);
 }
@@ -276,9 +304,8 @@ ssize_t
 bozo_write(bozohttpd_t *httpd, int fd, const void *buf, size_t len)
 {
 #ifndef NO_SSL_SUPPORT
-	if (httpd->sslinfo) {
+	if (httpd->sslinfo)
 		return bozo_ssl_write(httpd, fd, buf, len);
-	}
 #endif
 	return write(fd, buf, len);
 }
@@ -287,9 +314,8 @@ int
 bozo_flush(bozohttpd_t *httpd, FILE *fp)
 {
 #ifndef NO_SSL_SUPPORT
-	if (httpd->sslinfo) {
-		return bozo_ssl_flush(httpd, fp);
-	}
+	if (httpd->sslinfo)
+		return 0;
 #endif
 	return fflush(fp);
 }

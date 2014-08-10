@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.11 2011/02/12 05:09:15 tsutsui Exp $
+$NetBSD: version,v 1.11.28.1 2014/08/10 06:53:58 tls Exp $
 
 1.1:	Initial version
 1.2:	Added support for HP-IB cartridge tapes
@@ -11,3 +11,4 @@ $NetBSD: version,v 1.11 2011/02/12 05:09:15 tsutsui Exp $
 1.9:	Change boot messages to replace build date and maker with kernrev.
 1.10:	Pull OpenBSD's ite driver reorganization.
 1.11:	Add support for framebuffers on HP362 and HP382.
+1.12:	Add and fix support for HP425e mcclock, sti framebuffer, apci and dnkbd.

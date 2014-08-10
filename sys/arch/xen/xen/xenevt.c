@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.40 2014/03/16 05:20:26 dholland Exp $      */
+/*      $NetBSD: xenevt.c,v 1.40.2.1 2014/08/10 06:54:11 tls Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.40 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.40.2.1 2014/08/10 06:54:11 tls Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -98,6 +98,7 @@ const struct cdevsw xenevt_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = xenevtmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

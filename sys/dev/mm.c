@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.18 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: mm.c,v 1.18.2.1 2014/08/10 06:54:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.18 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.18.2.1 2014/08/10 06:54:50 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -73,6 +73,7 @@ const struct cdevsw mem_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = mm_mmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_MPSAFE
 };
 
@@ -88,6 +89,7 @@ const struct cdevsw mem_ultrix_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = mm_mmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_MPSAFE
 };
 #endif

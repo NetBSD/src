@@ -1,12 +1,13 @@
 #
-# $NetBSD: SMALL030,v 1.16 2012/10/17 14:48:09 apb Exp $
+# $NetBSD: SMALL030,v 1.16.10.1 2014/08/10 06:53:52 tls Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.96 2011/12/17 12:44:12 he Exp $
+#		NetBSD: GENERIC.in,v 1.106 2014/07/05 09:28:48 tsutsui Exp $
 include "arch/atari/conf/std.atari"
+makeoptions COPTS="-Os" # optimize for space
 maxusers 16
 options HZ=64 # Set the clock-rate (48/64/96)
 options INSECURE # disable kernel security levels

@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD.
 
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include "gdbthread.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 #include <sys/types.h>
 #include <sys/procfs.h>
 #include <sys/sysctl.h>
@@ -39,7 +39,7 @@
 char *
 fbsd_pid_to_exec_file (int pid)
 {
-  size_t len = MAXPATHLEN;
+  size_t len = PATH_MAX;
   char *buf = xcalloc (len, sizeof (char));
   char *path;
 
@@ -55,7 +55,7 @@ fbsd_pid_to_exec_file (int pid)
 #endif
 
   path = xstrprintf ("/proc/%d/file", pid);
-  if (readlink (path, buf, MAXPATHLEN - 1) == -1)
+  if (readlink (path, buf, PATH_MAX - 1) == -1)
     {
       xfree (buf);
       buf = NULL;

@@ -1,5 +1,181 @@
 News for the tz database
 
+Release 2014e - 2014-06-12 21:53:52 -0700
+
+  Changes affecting near-future time stamps
+
+    Egypt's 2014 Ramadan-based transitions are June 26 and July 31 at 24:00.
+    (Thanks to Imed Chihi.)  Guess that from 2015 on Egypt will temporarily
+    switch to standard time at 24:00 the last Thursday before Ramadan, and
+    back to DST at 00:00 the first Friday after Ramadan.
+
+    Similarly, Morocco's are June 28 at 03:00 and August 2 at 02:00.  (Thanks
+    to Milamber Space Network.)  Guess that from 2015 on Morocco will
+    temporarily switch to standard time at 03:00 the last Saturday before
+    Ramadan, and back to DST at 02:00 the first Saturday after Ramadan.
+
+  Changes affecting past time stamps
+
+    The abbreviation "MSM" (Moscow Midsummer Time) is now used instead of
+    "MSD" for Moscow's double daylight time in summer 1921.  Also, a typo
+    "VLASST" has been repaired to be "VLAST" for Vladivostok summer time
+    in 1991.  (Thanks to Hank W. for reporting the problems.)
+
+  Changes affecting commentary
+
+    tz-link.htm now cites RFC 7265 for jCal, mentions PTP and the
+    draft CalDAV extension, updates URLs for TSP, TZInfo, IATA, and
+    removes stale pointers to World Time Explorer and WORLDTIME.
+
+
+Release 2014d - 2014-05-27 21:34:40 -0700
+
+  Changes affecting code
+
+    zic no longer generates files containing time stamps before the Big Bang.
+    This works around GNOME bug 730332
+    <https://bugzilla.gnome.org/show_bug.cgi?id=730332>.
+    (Thanks to Leonardo Chiquitto for reporting the bug, and to
+    Arthur David Olson and James Cloos for suggesting improvements to the fix.)
+
+  Changes affecting documentation
+
+    tz-link.htm now mentions GNOME.
+
+
+Release 2014c - 2014-05-13 07:44:13 -0700
+
+  Changes affecting near-future time stamps
+
+    Egypt observes DST starting 2014-05-15 at 24:00.
+    (Thanks to Ahmad El-Dardiry and Gunther Vermier.)
+    Details have not been announced, except that DST will not be observed
+    during Ramadan.  Guess that DST will stop during the same Ramadan dates as
+    Morocco, and that Egypt's future spring and fall transitions will be the
+    same as 2010 when it last observed DST, namely April's last Friday at
+    00:00 to September's last Thursday at 23:00 standard time.  Also, guess
+    that Ramadan transitions will be at 00:00 standard time.
+
+  Changes affecting code
+
+    zic now generates transitions for minimum time values, eliminating guesswork
+    when handling low-valued time stamps.  (Thanks to Arthur David Olson.)
+
+    Port to Cygwin sans glibc.  (Thanks to Arthur David Olson.)
+
+  Changes affecting commentary and documentation
+
+    Remove now-confusing comment about Jordan.  (Thanks to Oleksii Nochovnyi.)
+
+
+Release 2014b - 2014-03-24 21:28:50 -0700
+
+  Changes affecting near-future time stamps
+
+    Crimea switches to Moscow time on 2014-03-30 at 02:00 local time.
+    (Thanks to Alexander Krivenyshev.)  Move its zone.tab entry from UA to RU.
+
+    New entry for Troll station, Antarctica.  (Thanks to Paul-Inge Flakstad and
+    Bengt-Inge Larsson.)  This is currently an approximation; a better version
+    will require the zic and localtime fixes mentioned below, and the plan is
+    to wait for a while until at least the zic fixes propagate.
+
+  Changes affecting code
+
+    'zic' and 'localtime' no longer reject locations needing four transitions
+    per year for the forseeable future.  (Thanks to Andrew Main (Zefram).)
+    Also, 'zic' avoids some unlikely failures due to integer overflow.
+
+  Changes affecting build procedure
+
+    'make check' now detects Rule lines defined but never used.
+    The NZAQ rules, an instance of this problem, have been removed.
+
+  Changes affecting commentary and documentation
+
+    Fix Tuesday/Thursday typo in description of time in Israel.
+    (Thanks to Bert Katz via Pavel Kharitonov and Mike Frysinger.)
+
+    Microsoft Windows 8.1 doesn't support tz database names.  (Thanks
+    to Donald MacQueen.)  Instead, the Microsoft Windows Store app
+    library supports them.
+
+    Add comments about Johnston Island time in the 1960s.
+    (Thanks to Lyle McElhaney.)
+
+    Morocco's 2014 DST start will be as predicted.
+    (Thanks to Sebastien Willemijns.)
+
+
+Release 2014a - 2014-03-07 23:30:29 -0800
+
+  Changes affecting near-future time stamps
+
+    Turkey begins DST on 2014-03-31, not 03-30.  (Thanks to Faruk Pasin for
+    the heads-up, and to Tim Parenti for simplifying the update.)
+
+  Changes affecting past time stamps
+
+    Fiji ended DST on 2014-01-19 at 02:00, not the previously-scheduled 03:00.
+    (Thanks to Steffen Thorsen.)
+
+    Ukraine switched from Moscow to Eastern European time on 1990-07-01
+    (not 1992-01-01), and observed DST during the entire next winter.
+    (Thanks to Vladimir in Moscow via Alois Treindl.)
+
+    In 1988 Israel observed DST from 04-10 to 09-04, not 04-09 to 09-03.
+    (Thanks to Avigdor Finkelstein.)
+
+  Changes affecting code
+
+    A uninitialized-storage bug in 'localtime' has been fixed.
+    (Thanks to Logan Chien.)
+
+  Changes affecting the build procedure
+
+    The settings for 'make check_web' now default to Ubuntu 13.10.
+
+  Changes affecting commentary and documentation
+
+    The boundary of the US Pacific time zone is given more accurately.
+    (Thanks to Alan Mintz.)
+
+    Chile's 2014 DST will be as predicted.  (Thanks to Jose Miguel Garrido.)
+
+    Paraguay's 2014 DST will be as predicted.  (Thanks to Carlos Raul Perasso.)
+
+    Better descriptions of countries with same time zone history as
+    Trinidad and Tobago since 1970.  (Thanks to Alan Barrett for suggestion.)
+
+    Several changes affect tz-link.htm, the main web page.
+
+      Mention Time.is (thanks to Even Scharning) and WX-now (thanks to
+      David Braverman).
+
+      Mention xCal (Internet RFC 6321) and jCal.
+
+      Microsoft has some support for tz database names.
+
+      CLDR data is available in both XML and JSON form.
+
+      Mention Maggiolo's map of solar vs standard time.
+      (Thanks to Arthur David Olson.)
+
+      Mention TZ4Net.  (Thanks to Matt Johnson.)
+
+      Mention the timezone-olson Haskell package.
+
+      Mention zeitverschiebung.net.  (Thanks to Martin Jaeger.)
+
+      Remove moribund links to daylight-savings-time.info and to
+      Simple Timer + Clocks.
+
+      Update two links.  (Thanks to Oscar van Vlijmen.)
+
+      Fix some formatting glitches, e.g., remove random newlines from
+      abbr elements' title attributes.
+
+
 Release 2013i - 2013-12-17 07:25:23 -0800
 
   Changes affecting near-future time stamps:
@@ -28,6 +204,7 @@ Release 2013i - 2013-12-17 07:25:23 -0800
     civil time was generally not solar time in those years.
 
     tz-link.htm now mentions Noda Time.  (Thanks to Matt Johnson.)
+
 
 Release 2013h - 2013-10-25 15:32:32 -0700
 

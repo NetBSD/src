@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.44 2014/03/16 05:20:24 dholland Exp $	*/
+/*	$NetBSD: ppi.c,v 1.44.2.1 2014/08/10 06:53:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.44 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.44.2.1 2014/08/10 06:53:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,7 @@ const struct cdevsw ppi_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

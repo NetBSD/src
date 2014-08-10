@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp.8,v 1.1.1.6 2013/09/25 19:06:26 tron Exp $
+.\"	$NetBSD: smtp.8,v 1.1.1.6.2.1 2014/08/10 07:12:47 tls Exp $
 .\"
 .TH SMTP 8 
 .ad
@@ -73,7 +73,7 @@ Connect to the local UNIX-domain server that is bound to the specified
 \fIpathname\fR. If the process runs chrooted, an absolute pathname
 is interpreted relative to the Postfix queue directory.
 .IP \fBinet\fR:\fIhostname\fR
-.IP \fBinet\fB:\fIhostname\fR:\fIport\fR
+.IP \fBinet\fR:\fIhostname\fR:\fIport\fR
 .IP \fBinet\fR:[\fIaddress\fR]
 .IP \fBinet\fR:[\fIaddress\fR]:\fIport\fR
 Connect to the specified TCP port on the specified local or
@@ -193,9 +193,7 @@ by RFC 5321.
 A mechanism to transform replies from remote SMTP servers one
 line at a time.
 .IP "\fBsmtp_skip_5xx_greeting (yes)\fR"
-Skip remote SMTP servers that greet with a 5XX status code (go away,
-do
-not try again later).
+Skip remote SMTP servers that greet with a 5XX status code.
 .IP "\fBsmtp_skip_quit_response (yes)\fR"
 Do not wait for the response to the SMTP QUIT command.
 .PP
@@ -273,6 +271,10 @@ line, SMTP message content line, or TLS protocol message).
 .IP "\fBsmtp_send_dummy_mail_auth (no)\fR"
 Whether or not to append the "AUTH=<>" option to the MAIL
 FROM command in SASL-authenticated SMTP sessions.
+.PP
+Available in Postfix version 2.11 and later:
+.IP "\fBsmtp_dns_support_level (empty)\fR"
+Level of DNS support in the Postfix SMTP client.
 .SH "MIME PROCESSING CONTROLS"
 .na
 .nf
@@ -408,8 +410,7 @@ mandatory TLS encryption.
 The verification depth for remote SMTP server certificates.
 .IP "\fBsmtp_tls_secure_cert_match (nexthop, dot-nexthop)\fR"
 How the Postfix SMTP client verifies the server certificate
-peername for the
-"secure" TLS security level.
+peername for the "secure" TLS security level.
 .IP "\fBsmtp_tls_session_cache_database (empty)\fR"
 Name of the file containing the optional Postfix SMTP client
 TLS session cache.
@@ -472,6 +473,18 @@ HELO, MAIL, RCPT, DATA commands to a Postfix SMTP client TLS session.
 Available in Postfix version 2.8 and later:
 .IP "\fBtls_disable_workarounds (see 'postconf -d' output)\fR"
 List or bit-mask of OpenSSL bug work-arounds to disable.
+.PP
+Available in Postfix version 2.11 and later:
+.IP "\fBsmtp_tls_trust_anchor_file (empty)\fR"
+Zero or more PEM-format files with trust-anchor certificates
+and/or public keys.
+.IP "\fBsmtp_tls_force_insecure_host_tlsa_lookup (no)\fR"
+Lookup the associated DANE TLSA RRset even when a hostname is
+not an alias and its address records lie in an unsigned zone.
+.IP "\fBtls_dane_trust_anchor_digest_enable (yes)\fR"
+RFC 6698 trust-anchor digest support in the Postfix TLS library.
+.IP "\fBtlsmgr_service_name (tlsmgr)\fR"
+The name of the \fBtlsmgr\fR(8) service entry in master.cf.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -581,6 +594,12 @@ Change the behavior of the smtp_*_timeout time limits, from a
 time limit per read or write system call, to a time limit to send
 or receive a complete record (an SMTP command line, SMTP response
 line, SMTP message content line, or TLS protocol message).
+.PP
+Available in Postfix version 2.11 and later:
+.IP "\fBsmtp_connection_reuse_count_limit (0)\fR"
+When SMTP connection caching is enabled, the number of times
+that an SMTP session may be reused before it is closed, or zero (no
+limit).
 .SH "TROUBLE SHOOTING CONTROLS"
 .na
 .nf
@@ -666,8 +685,8 @@ The hostname to send in the SMTP EHLO or HELO command.
 .IP "\fBlmtp_lhlo_name ($myhostname)\fR"
 The hostname to send in the LMTP LHLO command.
 .IP "\fBsmtp_host_lookup (dns)\fR"
-What mechanisms the Postfix SMTP client uses to look up a host's IP
-address.
+What mechanisms the Postfix SMTP client uses to look up a host's
+IP address.
 .IP "\fBsmtp_randomize_addresses (yes)\fR"
 Randomize the order of equal-preference MX host addresses.
 .IP "\fBsyslog_facility (mail)\fR"

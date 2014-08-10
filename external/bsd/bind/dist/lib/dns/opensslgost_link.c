@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslgost_link.c,v 1.7 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: opensslgost_link.c,v 1.7.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2010-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#ifdef HAVE_OPENSSL_GOST
+#if defined(OPENSSL) && defined(HAVE_OPENSSL_GOST)
 
 #include <isc/entropy.h>
 #include <isc/mem.h>
@@ -180,7 +180,7 @@ opensslgost_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	status = EVP_VerifyFinal(evp_md_ctx, sig->base, sig->length, pkey);
 	switch (status) {
 	case 1:
-	return (ISC_R_SUCCESS);
+		return (ISC_R_SUCCESS);
 	case 0:
 		return (dst__openssl_toresult(DST_R_VERIFYFAILURE));
 	default:
@@ -595,8 +595,8 @@ dst__opensslgost_init(dst_func_t **funcp) {
 				"ENGINE_register_pkey_asn1_meths",
 				DST_R_OPENSSLFAILURE));
 	if (ENGINE_ctrl_cmd_string(e,
-				    "CRYPT_PARAMS",
-				    "id-Gost28147-89-CryptoPro-A-ParamSet",
+				   "CRYPT_PARAMS",
+				   "id-Gost28147-89-CryptoPro-A-ParamSet",
 				   0) <= 0)
 		DST_RET(dst__openssl_toresult2("ENGINE_ctrl_cmd_string",
 					       DST_R_OPENSSLFAILURE));

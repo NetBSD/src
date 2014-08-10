@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.4 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: if_43.c,v 1.4.30.1 2014/08/10 06:54:32 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.4 2011/01/19 10:21:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.4.30.1 2014/08/10 06:54:32 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -256,8 +256,7 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 		cmd = SIOCGIFNETMASK;
 	}
 
-	error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-	    (struct mbuf *)cmd, (struct mbuf *)ifr, (struct mbuf *)ifp, l);
+	error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so, cmd, ifr, ifp);
 
 	switch (ocmd) {
 	case OOSIOCGIFADDR:

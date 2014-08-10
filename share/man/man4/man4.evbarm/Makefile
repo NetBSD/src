@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2013/01/06 18:30:10 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.5.6.1 2014/08/10 06:53:25 tls Exp $
 
-MAN=	cpsw.4 epgpio.4 intro.4 iopaau.4 iopwdog.4
+MAN=	bcmgpio.4 cpsw.4 epgpio.4 intro.4 iopaau.4 iopwdog.4
 
 MANSUBDIR=/evbarm
 

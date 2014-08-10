@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi-plugin.h,v 1.1.1.3 2010/12/12 15:21:26 adam Exp $	*/
+/*	$NetBSD: slapi-plugin.h,v 1.1.1.3.24.1 2014/08/10 07:09:46 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/include/slapi-plugin.h,v 1.52.2.7 2010/04/13 20:22:50 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002,2003 IBM Corporation.
  * All rights reserved.
  *
@@ -401,6 +401,8 @@ void slapi_seq_internal_set_pb( Slapi_PBlock *pb, char *ibase, int type,
 /* connection related routines */
 int slapi_is_connection_ssl(Slapi_PBlock *pPB, int *isSSL);
 int slapi_get_client_port(Slapi_PBlock *pPB, int *fromPort);
+int slapi_get_client_ip(Slapi_PBlock *pb, char **clientIP);
+void slapi_free_client_ip(char **clientIP);
 
 /* computed attributes */
 typedef struct _computed_attr_context computed_attr_context;

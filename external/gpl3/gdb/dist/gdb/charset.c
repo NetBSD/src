@@ -1,6 +1,6 @@
 /* Character set conversion support for GDB.
 
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,7 @@
 #include "gdb_vecs.h"
 
 #include <stddef.h>
-#include "gdb_string.h"
+#include <string.h>
 #include <ctype.h>
 
 #ifdef USE_WIN32API

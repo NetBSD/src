@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.1.1.8 2013/09/25 19:06:35 tron Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.1.1.8.2.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -1338,7 +1338,7 @@ static int permit_tls_clientcerts(SMTPD_STATE *state, int permit_all_certs)
 	int     i;
 	char   *prints[2];
 
-	prints[0] = state->tls_context->peer_fingerprint;
+	prints[0] = state->tls_context->peer_cert_fprint;
 	prints[1] = state->tls_context->peer_pkey_fprint;
 
 	/* After lookup error, leave relay_ccerts->error at non-zero value. */
@@ -2796,7 +2796,7 @@ static int check_ccert_access(SMTPD_STATE *state, const char *table,
 	int     i;
 	char   *prints[2];
 
-	prints[0] = state->tls_context->peer_fingerprint;
+	prints[0] = state->tls_context->peer_cert_fprint;
 	prints[1] = state->tls_context->peer_pkey_fprint;
 
 	for (i = 0; i < 2; ++i) {
@@ -2824,6 +2824,26 @@ static int check_ccert_access(SMTPD_STATE *state, const char *table,
 #endif
     return (result);
 }
+
+/* check_sasl_access - access by SASL user name */
+
+#ifdef USE_SASL_AUTH
+
+static int check_sasl_access(SMTPD_STATE *state, const char *table,
+			             const char *def_acl)
+{
+    int     result;
+    int     unused_found;
+    char   *sane_username = printable(mystrdup(state->sasl_username), '_');
+
+    result = check_access(state, table, state->sasl_username,
+			  DICT_FLAG_NONE, &unused_found, sane_username,
+			  SMTPD_NAME_SASL_USER, def_acl);
+    myfree(sane_username);
+    return (result);
+}
+
+#endif
 
 /* check_mail_access - OK/FAIL based on mail address lookup */
 
@@ -2868,7 +2888,7 @@ static int check_mail_access(SMTPD_STATE *state, const char *table,
     if (*var_rcpt_delim == 0) {
 	bare_addr = 0;
     } else {
-	bare_addr = strip_addr(addr, (char **) 0, *var_rcpt_delim);
+	bare_addr = strip_addr(addr, (char **) 0, var_rcpt_delim);
     }
 
 #define CHECK_MAIL_ACCESS_RETURN(x) \
@@ -3463,7 +3483,7 @@ static int reject_maps_rbl(SMTPD_STATE *state)
 
 /* reject_auth_sender_login_mismatch - logged in client must own sender address */
 
-static int reject_auth_sender_login_mismatch(SMTPD_STATE *state, const char *sender)
+static int reject_auth_sender_login_mismatch(SMTPD_STATE *state, const char *sender, int allow_unknown_sender)
 {
     const RESOLVE_REPLY *reply;
     const char *owners;
@@ -3471,6 +3491,9 @@ static int reject_auth_sender_login_mismatch(SMTPD_STATE *state, const char *sen
     char   *cp;
     char   *name;
     int     found = 0;
+
+#define ALLOW_UNKNOWN_SENDER	1
+#define FORBID_UNKNOWN_SENDER	0
 
     /*
      * Reject if the client is logged in and does not own the sender address.
@@ -3489,7 +3512,8 @@ static int reject_auth_sender_login_mismatch(SMTPD_STATE *state, const char *sen
 		}
 	    }
 	    myfree(saved_owners);
-	}
+	} else if (allow_unknown_sender)
+	    return (SMTPD_CHECK_DUNNO);
 	if (!found)
 	    return (smtpd_check_reject(state, MAIL_ERROR_POLICY, 553, "5.7.1",
 		      "<%s>: Sender address rejected: not owned by user %s",
@@ -3616,8 +3640,8 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
      * When directly checking the fingerprint, it is OK if the issuing CA is
      * not trusted.
      */
-			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_FINGERPRINT,
-		     IF_ENCRYPTED(state->tls_context->peer_fingerprint, ""),
+			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_CERT_FPRINT,
+		     IF_ENCRYPTED(state->tls_context->peer_cert_fprint, ""),
 			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_PKEY_FPRINT,
 		     IF_ENCRYPTED(state->tls_context->peer_pkey_fprint, ""),
 			  ATTR_TYPE_STR, MAIL_ATTR_CRYPTO_PROTOCOL,
@@ -3880,6 +3904,14 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 	    }
 	} else if (is_map_command(state, name, CHECK_CCERT_ACL, &cpp)) {
 	    status = check_ccert_access(state, *cpp, def_acl);
+#ifdef USE_SASL_AUTH
+	} else if (is_map_command(state, name, CHECK_SASL_ACL, &cpp)) {
+	    if (var_smtpd_sasl_enable) {
+		if (state->sasl_username && state->sasl_username[0])
+		    status = check_sasl_access(state, *cpp, def_acl);
+	    } else
+#endif
+		msg_warn("restriction `%s' ignored: no SASL support", name);
 	} else if (is_map_command(state, name, CHECK_CLIENT_NS_ACL, &cpp)) {
 	    if (strcasecmp(state->name, "unknown") != 0) {
 		status = check_server_access(state, *cpp, state->name,
@@ -4019,7 +4051,21 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 #ifdef USE_SASL_AUTH
 	    if (var_smtpd_sasl_enable) {
 		if (state->sender && *state->sender)
-		    status = reject_auth_sender_login_mismatch(state, state->sender);
+		    status = reject_auth_sender_login_mismatch(state,
+				      state->sender, FORBID_UNKNOWN_SENDER);
+	    } else
+#endif
+		msg_warn("restriction `%s' ignored: no SASL support", name);
+	} else if (strcasecmp(name, REJECT_KNOWN_SENDER_LOGIN_MISMATCH) == 0) {
+#ifdef USE_SASL_AUTH
+	    if (var_smtpd_sasl_enable) {
+		if (state->sender && *state->sender) {
+		    if (state->sasl_username)
+			status = reject_auth_sender_login_mismatch(state,
+				       state->sender, ALLOW_UNKNOWN_SENDER);
+		    else
+			status = reject_unauth_sender_login_mismatch(state, state->sender);
+		}
 	    } else
 #endif
 		msg_warn("restriction `%s' ignored: no SASL support", name);
@@ -5000,11 +5046,14 @@ int     smtpd_input_transp_mask;
 char   *var_client_checks = "";
 char   *var_helo_checks = "";
 char   *var_mail_checks = "";
+char   *var_relay_checks = "";
 char   *var_rcpt_checks = "";
 char   *var_etrn_checks = "";
 char   *var_data_checks = "";
 char   *var_eod_checks = "";
 char   *var_relay_domains = "";
+char   *var_smtpd_uproxy_proto = "";
+int     var_smtpd_uproxy_tmout = 0;
 
 #ifdef USE_TLS
 char   *var_relay_ccerts = "";
@@ -5251,6 +5300,7 @@ static const REST_TABLE rest_table[] = {
     "client_restrictions", &client_restrctions,
     "helo_restrictions", &helo_restrctions,
     "sender_restrictions", &mail_restrctions,
+    "relay_restrictions", &relay_restrctions,
     "recipient_restrictions", &rcpt_restrctions,
     "etrn_restrictions", &etrn_restrctions,
     0,
@@ -5691,14 +5741,14 @@ int     main(int argc, char **argv)
 			(TLS_SESS_STATE *) mymalloc(sizeof(*state.tls_context));
 		    memset((char *) state.tls_context, 0,
 			   sizeof(*state.tls_context));
-		    state.tls_context->peer_fingerprint =
+		    state.tls_context->peer_cert_fprint =
 			state.tls_context->peer_pkey_fprint = 0;
 		}
 		state.tls_context->peer_status |= TLS_CERT_FLAG_PRESENT;
-		UPDATE_STRING(state.tls_context->peer_fingerprint,
+		UPDATE_STRING(state.tls_context->peer_cert_fprint,
 			      args->argv[1]);
 		state.tls_context->peer_pkey_fprint =
-		    state.tls_context->peer_fingerprint;
+		    state.tls_context->peer_cert_fprint;
 		resp = "OK";
 		break;
 #endif
@@ -5740,7 +5790,7 @@ int     main(int argc, char **argv)
     FREE_STRING(state.helo_name);
     FREE_STRING(state.sender);
     if (state.tls_context) {
-	FREE_STRING(state.tls_context->peer_fingerprint);
+	FREE_STRING(state.tls_context->peer_cert_fprint);
 	myfree((char *) state.tls_context);
     }
     exit(0);

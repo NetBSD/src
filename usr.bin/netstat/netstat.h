@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.48 2013/11/23 22:01:12 christos Exp $	*/
+/*	$NetBSD: netstat.h,v 1.48.2.1 2014/08/10 06:58:32 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,57 +67,59 @@ int	use_sysctl;	/* use sysctl instead of kmem */
 int	force_sysctl;	/* force use of sysctl (or exit) - for testing */
 
 
-int	kread __P((u_long addr, char *buf, int size));
-const char *plural __P((int));
-const char *plurales __P((int));
-int	get_hardticks __P((void));
+int	kread(u_long addr, char *buf, int size);
+const char *plural(int);
+const char *plurales(int);
+int	get_hardticks(void);
 
-void	protopr __P((u_long, const char *));
-void	tcp_stats __P((u_long, const char *));
-void	tcp_dump __P((u_long, const char *, u_long));
-void	udp_stats __P((u_long, const char *));
-void	ip_stats __P((u_long, const char *));
-void	icmp_stats __P((u_long, const char *));
-void	igmp_stats __P((u_long, const char *));
-void	pim_stats __P((u_long, const char *));
-void	arp_stats __P((u_long, const char *));
-void	carp_stats __P((u_long, const char *));
-void	pfsync_stats __P((u_long, const char*));
+void	protopr(u_long, const char *);
+void	tcp_stats(u_long, const char *);
+void	tcp_dump(u_long, const char *, u_long);
+void	udp_stats(u_long, const char *);
+void	ip_stats(u_long, const char *);
+void	icmp_stats(u_long, const char *);
+void	igmp_stats(u_long, const char *);
+void	pim_stats(u_long, const char *);
+void	arp_stats(u_long, const char *);
+void	carp_stats(u_long, const char *);
+void	pfsync_stats(u_long, const char*);
 #ifdef IPSEC
-void	fast_ipsec_stats __P((u_long, const char *));
+void	fast_ipsec_stats(u_long, const char *);
 #endif
 
 #ifdef INET6
 struct sockaddr_in6;
 struct in6_addr;
-void	ip6protopr __P((u_long, const char *));
-void	tcp6_stats __P((u_long, const char *));
-void	tcp6_dump __P((u_long, const char *, u_long));
-void	udp6_stats __P((u_long, const char *));
-void	ip6_stats __P((u_long, const char *));
-void	ip6_ifstats __P((const char *));
-void	icmp6_stats __P((u_long, const char *));
-void	icmp6_ifstats __P((const char *));
-void	pim6_stats __P((u_long, const char *));
-void	rip6_stats __P((u_long, const char *));
-void	mroute6pr __P((u_long, u_long, u_long));
-void	mrt6_stats __P((u_long, u_long));
-char	*routename6 __P((struct sockaddr_in6 *));
+void	ip6protopr(u_long, const char *);
+void	tcp6_stats(u_long, const char *);
+void	tcp6_dump(u_long, const char *, u_long);
+void	udp6_stats(u_long, const char *);
+void	ip6_stats(u_long, const char *);
+void	ip6_ifstats(const char *);
+void	icmp6_stats(u_long, const char *);
+void	icmp6_ifstats(const char *);
+void	pim6_stats(u_long, const char *);
+void	rip6_stats(u_long, const char *);
+void	mroute6pr(u_long, u_long, u_long);
+void	mrt6_stats(u_long, u_long);
+char	*routename6(struct sockaddr_in6 *);
 #endif /*INET6*/
 
 #ifdef IPSEC
-void	pfkey_stats __P((u_long, const char *));
+void	pfkey_stats(u_long, const char *);
 #endif
 
 void	mbpr(u_long, u_long, u_long, u_long, u_long);
 
-void	hostpr __P((u_long, u_long));
-void	impstats __P((u_long, u_long));
+void	hostpr(u_long, u_long);
+void	impstats(u_long, u_long);
 
-void	pr_rthdr __P((int, int));
-void	pr_family __P((int));
-void	rt_stats __P((u_long));
-char	*ns_phost __P((struct sockaddr *));
+void	pr_rthdr(int, int);
+void	pr_family(int);
+struct rt_metrics;
+void	pr_rtrmx(struct rt_metrics *);
+void	rt_stats(u_long);
+char	*ns_phost(struct sockaddr *);
 
 void	p_rttables(int);
 void	p_flags(int, const char *);
@@ -129,30 +131,31 @@ char	*routename4(in_addr_t);
 char	*netname(struct sockaddr *, struct sockaddr *);
 char	*netname4(in_addr_t, in_addr_t);
 
-/* char	*routename __P((u_int32_t)); */
-/* char	*netname __P((u_int32_t, u_int32_t)); */
+/* char	*routename(u_int32_t); */
+/* char	*netname(u_int32_t, u_int32_t); */
 #ifdef INET6
-char	*netname6 __P((struct sockaddr_in6 *, struct sockaddr_in6 *));
+char	*netname6(struct sockaddr_in6 *, struct sockaddr_in6 *);
 #endif 
-const char *atalk_print __P((const struct sockaddr *, int));
-const char *atalk_print2 __P((const struct sockaddr *, const struct sockaddr *,
-    int));
-char	*ns_print __P((struct sockaddr *));
+const char *atalk_print(const struct sockaddr *, int);
+const char *atalk_print2(const struct sockaddr *, const struct sockaddr *,
+    int);
+char	*ns_print(struct sockaddr *);
 
-void	nsprotopr __P((u_long, const char *));
-void	spp_stats __P((u_long, const char *));
-void	idp_stats __P((u_long, const char *));
-void	nserr_stats __P((u_long, const char *));
+void	nsprotopr(u_long, const char *);
+void	spp_stats(u_long, const char *);
+void	idp_stats(u_long, const char *);
+void	nserr_stats(u_long, const char *);
 
-void	atalkprotopr __P((u_long, const char *));
-void	ddp_stats __P((u_long, const char *));
+void	atalkprotopr(u_long, const char *);
+void	ddp_stats(u_long, const char *);
 
-void	intpr __P((int, u_long, void (*) __P((const char *))));
+void	intpr(int, u_long, void (*)(const char *));
 
-void	unixpr __P((u_long));
+void	unixpr(u_long);
 
-void	mroutepr __P((u_long, u_long, u_long, u_long));
-void	mrt_stats __P((u_long, u_long));
+void	routepr(u_long);
+void	mroutepr(u_long, u_long, u_long, u_long);
+void	mrt_stats(u_long, u_long);
 
 void	bpf_stats(void);
 void	bpf_dump(const char *);

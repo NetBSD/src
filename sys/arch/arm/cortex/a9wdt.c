@@ -1,4 +1,4 @@
-/*	$NetBSD: a9wdt.c,v 1.1 2012/09/01 00:03:14 matt Exp $	*/
+/*	$NetBSD: a9wdt.c,v 1.1.18.1 2014/08/10 06:53:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.1 2012/09/01 00:03:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.1.18.1 2014/08/10 06:53:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -172,7 +172,7 @@ a9wdt_setmode(struct sysmon_wdog *smw)
 	    | __SHIFTIN(sc->sc_wdog_prescaler - 1, TMR_CTL_PRESCALER);
 
 	a9wdt_wdog_write(sc, TMR_LOAD, sc->sc_wdog_load);
-	a9wdt_wdog_write(sc, TMR_CTL, sc->sc_wdog_load);
+	a9wdt_wdog_write(sc, TMR_CTL, sc->sc_wdog_ctl);
 
 	aprint_debug_dev(sc->sc_dev, "setmode enable\n");
 	return 0;

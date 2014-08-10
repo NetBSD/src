@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.21 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: proc.h,v 1.21.20.1 2014/08/10 06:53:49 tls Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -61,7 +61,6 @@ struct mdlwp {
  * 	C99 API's, the use of the MDLWP_FP_C bits is defined variously in
  * 	ieeefp.h and fpu.h.
  */
-#define	MDLWP_FPUSED	0x00000001	/* LWP used the FPU */
 #define	MDLWP_FP_C	0x007ffffe	/* Extended FP_C Quadword bits */
 #define	MDLWP_FPACTIVE	__BIT(63)	/* FPU is active on LWP's PCU CPU */
 
@@ -73,11 +72,5 @@ struct mdproc {
 					/* this process's syscall vector */
 	void	(*md_syscall)(struct lwp *, uint64_t, struct trapframe *);
 };
-
-#ifdef _KERNEL
-#define	fpu_used_p(l)		(((l)->l_md.md_flags & MDLWP_FPUSED) != 0)
-#define	fpu_mark_used(l)	((void)((l)->l_md.md_flags |= MDLWP_FPUSED))
-#endif
-
 
 #endif /* !_ALPHA_PROC_H_ */
