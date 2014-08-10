@@ -1,12 +1,12 @@
-# $NetBSD: Makefile,v 1.25 2014/06/16 12:54:43 joerg Exp $
+# $NetBSD: Makefile,v 1.26 2014/08/10 11:30:51 martin Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libm
 
-.if ${MACHINE} == "sparc" || ${MACHINE} == "i386" \
-	|| ${MACHINE} == "amd64" || ${MACHINE_CPU} == "arm"	\
-	|| ${MACHINE} == "sparc64"
+.if ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm" \
+    || ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" \
+    || ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-DHAVE_FENV_H
 .endif
 
