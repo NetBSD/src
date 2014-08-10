@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/03/04 21:05:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/08/10 17:34:20 joerg Exp $
 
 PROG_CXX=	llvm-profdata
 NOMAN=		yes
@@ -10,6 +10,7 @@ NOMAN=		yes
 SRCS=	llvm-profdata.cpp
 
 LLVM_LIBS+= \
+	ProfileData \
 	IR \
 	Support
 

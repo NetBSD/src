@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/05/30 18:28:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2014/08/10 17:35:08 joerg Exp $
 
 LIB=	lldbUtility
 
@@ -14,6 +14,7 @@ SRCS+=	ARM_DWARF_Registers.cpp \
 	SharingPtr.cpp \
 	StringExtractor.cpp \
 	StringExtractorGDBRemote.cpp \
+	StringLexer.cpp \
 	TimeSpecTimeout.cpp
 
 .if defined(HOSTLIB)
