@@ -1,32 +1,32 @@
-#	$NetBSD: bsd.eabi.mk,v 1.3 2014/08/10 23:26:25 matt Exp $
+#	$NetBSD: bsd.eabihf.mk,v 1.1 2014/08/10 23:26:25 matt Exp $
 
 .if !defined(MLIBDIR)
 
-MLIBDIR=		eabi
+MLIBDIR=		eabihf
 
-EARM_COMPAT_FLAGS=	-mfloat-abi=soft
+EARM_COMPAT_FLAGS=	-mfloat-abi=hard
 EARM_COMPAT_FLAGS+=	-mabi=aapcs-linux
-MKSOFTFLOAT=yes
+MKSOFTFLOAT=no
 
 .if ${MACHINE_ARCH} == "aarch64eb"
 EARM_COMPAT_FLAGS+=	-target armeb--netbsdelf-gnueabi
 EARM_COMPAT_FLAGS+=	-mcpu=cortex-a53
-ARM_MACHINE_ARCH=	earmv7eb
+ARM_MACHINE_ARCH=	earmv7hfeb
 LDFLAGS+=		-Wl,--be8
-ARM_LD=			-m armelfb_nbsd_eabi --be8
+ARM_LD=			-m armelfb_nbsd_eabihf --be8
 .elif ${MACHINE_ARCH} == "aarch64"
 EARM_COMPAT_FLAGS+=	-target arm--netbsdelf-gnueabi
 EARM_COMPAT_FLAGS+=	-mcpu=cortex-a53
-ARM_MACHINE_ARCH=	earmv7
-ARM_LD=			-m armelf_nbsd_eabi
+ARM_MACHINE_ARCH=	earmv7hf
+ARM_LD=			-m armelf_nbsd_eabihf
 .elif !empty(MACHINE_ARCH:M*eb)
 EARM_COMPAT_FLAGS+=	-target armeb--netbsdelf-gnueabi
-ARM_MACHINE_ARCH=	earmeb
-ARM_LD=			-m armelfb_nbsd_eabi
+ARM_MACHINE_ARCH=	earmhfeb
+ARM_LD=			-m armelfb_nbsd_eabihf
 .else
 EARM_COMPAT_FLAGS+=	-target arm--netbsdelf-gnueabi
-ARM_MACHINE_ARCH=	earm
-ARM_LD=			-m armelf_nbsd_eabi
+ARM_MACHINE_ARCH=	earmhf
+ARM_LD=			-m armelf_nbsd_eabihf
 .endif
 
 EARM_COMPAT_FLAGS+=	-B ${TOOLDIR}/aarch64--netbsd/bin 
@@ -38,7 +38,7 @@ LIBM_MACHINE_ARCH=	${ARM_MACHINE_ARCH}
 COMMON_MACHINE_ARCH=	${ARM_MACHINE_ARCH}
 KVM_MACHINE_ARCH=	${ARM_MACHINE_ARCH}
 PTHREAD_MACHINE_ARCH=	${ARM_MACHINE_ARCH}
-BFD_MACHINE_ARCH=	earm
+BFD_MACHINE_ARCH=	earmhf
 CSU_MACHINE_ARCH=	${ARM_MACHINE_ARCH}
 GOMP_MACHINE_ARCH=	${ARM_MACHINE_ARCH}
 
