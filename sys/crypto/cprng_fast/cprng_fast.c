@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.2 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.3 2014/08/10 22:35:32 justin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.2 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.3 2014/08/10 22:35:32 justin Exp $");
 
 #include <sys/types.h>
 #include <sys/bitops.h>
@@ -206,7 +206,7 @@ __CTASSERT(sizeof ((struct cprng_fast *)0)->key == CPRNG_FAST_SEED_BYTES);
 static void	cprng_fast_schedule_reseed(struct cprng_fast *);
 static void	cprng_fast_intr(void *);
 
-static void	cprng_fast_seed(struct cprng_fast *, const void *);
+static inline void	cprng_fast_seed(struct cprng_fast *, const void *);
 static void	cprng_fast_buf(struct cprng_fast *, void *, unsigned);
 
 static void	cprng_fast_buf_short(void *, size_t);
