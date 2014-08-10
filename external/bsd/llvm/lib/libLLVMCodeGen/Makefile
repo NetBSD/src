@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2014/05/30 18:28:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.29 2014/08/10 17:34:21 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -29,11 +29,13 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	GCMetadata.cpp \
 	GCMetadataPrinter.cpp \
 	GCStrategy.cpp \
+	GlobalMerge.cpp \
 	IfConversion.cpp \
 	InlineSpiller.cpp \
 	InterferenceCache.cpp \
 	IntrinsicLowering.cpp \
 	JITCodeEmitter.cpp \
+	JumpInstrTables.cpp \
 	LLVMTargetMachine.cpp \
 	LatencyPriorityQueue.cpp \
 	LexicalScopes.cpp \
@@ -55,6 +57,8 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineCodeEmitter.cpp \
 	MachineCopyPropagation.cpp \
 	MachineCSE.cpp \
+	MachineCombiner.cpp \
+	MachineDominanceFrontier.cpp \
 	MachineDominators.cpp \
 	MachineFunction.cpp \
 	MachineFunctionAnalysis.cpp \
@@ -68,6 +72,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineModuleInfoImpls.cpp \
 	MachinePassRegistry.cpp \
 	MachinePostDominators.cpp \
+	MachineRegionInfo.cpp \
 	MachineRegisterInfo.cpp \
 	MachineSSAUpdater.cpp \
 	MachineScheduler.cpp \

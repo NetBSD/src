@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/05/30 18:28:13 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2014/08/10 17:34:20 joerg Exp $
 
 PROG_CXX=	llvm-readobj
 NOMAN=		yes
@@ -9,6 +9,7 @@ NOMAN=		yes
 
 SRCS=	llvm-readobj.cpp \
 	ARMAttributeParser.cpp \
+	ARMWinEHPrinter.cpp \
 	COFFDumper.cpp \
 	ELFDumper.cpp \
 	Error.cpp \
@@ -24,9 +25,10 @@ LLVM_LIBS+= \
 	PowerPCTargetInfo \
 	SparcTargetInfo \
 	X86TargetInfo \
-	MC \
-	BitReader \
 	Object \
+	MC \
+	MCParser \
+	BitReader \
 	IR \
 	Support
 
