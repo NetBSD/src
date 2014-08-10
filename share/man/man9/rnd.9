@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.23 2014/08/10 16:44:32 tls Exp $
+.\"	$NetBSD: rnd.9,v 1.24 2014/08/10 17:17:04 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 17, 2011
+.Dd August 10, 2014
 .Dt RND 9
 .Os
 .Sh NAME
@@ -112,19 +112,12 @@ the pool estimate)
 towards the pool estimate).
 For many devices,
 .Dv RND_FLAG_DEFAULT
-(
-.Dv RND_FLAG_COLLECT_VALUE
-|
-.Dv RND_FLAG_COLLECT_TIME
-|
-.Dv RND_FLAG_ESTIMATE_TIME
-) is the best choice.
+.Dv ( RND_FLAG_COLLECT_VALUE | RND_FLAG_COLLECT_TIME | RND_FLAG_ESTIMATE_TIME )
+is the best choice.
 Note that devices of type
 .Dv RND_TYPE_NET
 default to
-.Dv RND_FLAG_COLLECT_VALUE
-|
-.Dv RND_FLAG_COLLECT_TIME
+.Dv RND_FLAG_COLLECT_VALUE | RND_FLAG_COLLECT_TIME
 (no entropy counted).
 .Pp
 .It Fn rnd_detach_source "krndsource_t *rnd_source"
@@ -237,7 +230,8 @@ src/sys/kern/kern_rndq.c.
 The random device was introduced in
 .Nx 1.3 .
 .Sh AUTHORS
-This implementation was written by Michael Graff \*[Lt]explorer@flame.org\*[Gt]
+This implementation was written by
+.An Michael Graff Aq Mt explorer@flame.org
 using ideas and algorithms gathered from many sources, including
 the driver written by Ted Ts'o.
 .Sh BUGS
