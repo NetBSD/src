@@ -1,4 +1,4 @@
-$NetBSD: TODO.clang,v 1.12 2014/07/06 00:21:24 joerg Exp $
+$NetBSD: TODO.clang,v 1.13 2014/08/10 19:12:08 joerg Exp $
 
 Hacks for the clang integration
 -------------------------------
@@ -11,3 +11,6 @@ GNU as.
 
 src/external/gpl3/gcc/usr.bin/backend forces tree.c to be compiled with -O0.
 g++ otherwise on trivial input.
+
+src/external/mit/xorg/lib/pixman uses -fno-integrated-as on ARM for the
+macro (ab)use.
