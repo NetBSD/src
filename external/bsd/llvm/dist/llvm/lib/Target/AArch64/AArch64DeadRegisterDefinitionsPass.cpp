@@ -14,11 +14,12 @@
 #include "AArch64.h"
 #include "AArch64RegisterInfo.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "aarch64-dead-defs"
@@ -119,7 +120,7 @@ bool AArch64DeadRegisterDefinitions::processMachineBasicBlock(
 // Scan the function for instructions that have a dead definition of a
 // register. Replace that register with the zero register when possible.
 bool AArch64DeadRegisterDefinitions::runOnMachineFunction(MachineFunction &MF) {
-  TRI = MF.getTarget().getRegisterInfo();
+  TRI = MF.getSubtarget().getRegisterInfo();
   bool Changed = false;
   DEBUG(dbgs() << "***** AArch64DeadRegisterDefinitions *****\n");
 

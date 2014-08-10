@@ -203,6 +203,7 @@ def SDTFma : SDTypeProfile<1, 3, [SDTCisSameAs<0,1>,
                            SDTCisSameAs<1,2>, SDTCisSameAs<1,3>]>;
 
 def X86PAlignr : SDNode<"X86ISD::PALIGNR", SDTShuff3OpI>;
+def X86VAlign  : SDNode<"X86ISD::VALIGN", SDTShuff3OpI>;
 
 def X86PShufd  : SDNode<"X86ISD::PSHUFD", SDTShuff2OpI>;
 def X86PShufhw : SDNode<"X86ISD::PSHUFHW", SDTShuff2OpI>;
@@ -223,6 +224,10 @@ def X86Movhlps : SDNode<"X86ISD::MOVHLPS", SDTShuff2Op>;
 
 def X86Movlps : SDNode<"X86ISD::MOVLPS", SDTShuff2Op>;
 def X86Movlpd : SDNode<"X86ISD::MOVLPD", SDTShuff2Op>;
+
+def SDTPack : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>, SDTCisSameAs<2, 1>]>;
+def X86Packss : SDNode<"X86ISD::PACKSS", SDTPack>;
+def X86Packus : SDNode<"X86ISD::PACKUS", SDTPack>;
 
 def X86Unpckl : SDNode<"X86ISD::UNPCKL", SDTShuff2Op>;
 def X86Unpckh : SDNode<"X86ISD::UNPCKH", SDTShuff2Op>;
@@ -307,6 +312,8 @@ def loadv4i64    : PatFrag<(ops node:$ptr), (v4i64 (load node:$ptr))>;
 // 512-bit load pattern fragments
 def loadv16f32   : PatFrag<(ops node:$ptr), (v16f32 (load node:$ptr))>;
 def loadv8f64    : PatFrag<(ops node:$ptr), (v8f64 (load node:$ptr))>;
+def loadv64i8    : PatFrag<(ops node:$ptr), (v64i8 (load node:$ptr))>;
+def loadv32i16   : PatFrag<(ops node:$ptr), (v32i16 (load node:$ptr))>;
 def loadv16i32   : PatFrag<(ops node:$ptr), (v16i32 (load node:$ptr))>;
 def loadv8i64    : PatFrag<(ops node:$ptr), (v8i64 (load node:$ptr))>;
 

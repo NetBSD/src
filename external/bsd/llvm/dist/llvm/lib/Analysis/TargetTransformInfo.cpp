@@ -230,6 +230,11 @@ unsigned TargetTransformInfo::getReductionCost(unsigned Opcode, Type *Ty,
   return PrevTTI->getReductionCost(Opcode, Ty, IsPairwise);
 }
 
+unsigned TargetTransformInfo::getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys)
+  const {
+  return PrevTTI->getCostOfKeepingLiveOverCall(Tys);
+}
+
 namespace {
 
 struct NoTTI final : ImmutablePass, TargetTransformInfo {
@@ -385,6 +390,7 @@ struct NoTTI final : ImmutablePass, TargetTransformInfo {
       // FIXME: This is wrong for libc intrinsics.
       return TCC_Basic;
 
+    case Intrinsic::assume:
     case Intrinsic::dbg_declare:
     case Intrinsic::dbg_value:
     case Intrinsic::invariant_start:
@@ -612,6 +618,11 @@ struct NoTTI final : ImmutablePass, TargetTransformInfo {
   unsigned getReductionCost(unsigned, Type *, bool) const override {
     return 1;
   }
+
+  unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const override {
+    return 0;
+  }
+
 };
 
 } // end anonymous namespace
