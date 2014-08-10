@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/03/04 21:05:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2014/08/10 17:34:20 joerg Exp $
 
 PROG_CXX=	opt
 NOMAN=		yes
@@ -49,7 +49,10 @@ LLVM_LIBS+= \
 	X86TargetInfo \
 	X86Utils \
 	X86AsmPrinter \
+	MCDisassembler \
+	AsmPrinter \
 	Object \
+	MCParser \
 	SelectionDAG \
 	CodeGen \
 	Vectorize \
@@ -63,6 +66,9 @@ LLVM_LIBS+= \
 	ipa \
 	IR \
 	Support
+
+LDADD+=	-lz
+DPADD+=	${LIBZ}
 
 .include "${.PARSEDIR}/../../link.mk"
 

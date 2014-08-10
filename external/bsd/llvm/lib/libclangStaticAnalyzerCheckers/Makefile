@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2014/01/15 22:21:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.24 2014/08/10 17:35:06 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -62,6 +62,7 @@ SRCS+=	AllocationDiagnostics.cpp \
 	StackAddrEscapeChecker.cpp \
 	StreamChecker.cpp \
 	TaintTesterChecker.cpp \
+	TestAfterDivZeroChecker.cpp \
 	TraversalChecker.cpp \
 	UndefBranchChecker.cpp \
 	UndefCapturedBlockVarChecker.cpp \
