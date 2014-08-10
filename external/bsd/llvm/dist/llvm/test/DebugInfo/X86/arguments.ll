@@ -19,10 +19,12 @@
 ; CHECK: DW_AT_MIPS_linkage_name{{.*}}"_Z4func3fooS_"
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_formal_parameter
-; CHECK-NEXT: DW_AT_name{{.*}}"f"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}"f"
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_formal_parameter
-; CHECK-NEXT: DW_AT_name{{.*}}"g"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}"g"
 
 %struct.foo = type { i32 }
 
@@ -47,7 +49,7 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!24}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/scratch/scratch.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/scratch/scratch.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"scratch.cpp", metadata !"/usr/local/google/home/blaikie/dev/scratch"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4}

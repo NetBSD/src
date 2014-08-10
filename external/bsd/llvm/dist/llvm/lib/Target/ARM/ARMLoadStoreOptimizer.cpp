@@ -505,7 +505,7 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
 
   // Exception: If the base register is in the input reglist, Thumb1 LDM is
   // non-writeback. Check for this.
-  if (Opcode == ARM::tLDRi && isThumb1)
+  if (Opcode == ARM::tLDMIA && isThumb1)
     for (unsigned I = 0; I < NumRegs; ++I)
       if (Base == Regs[I].first) {
         Writeback = false;
@@ -519,17 +519,17 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
       // Update tLDMIA with writeback if necessary.
       Opcode = ARM::tLDMIA_UPD;
 
-    // The base isn't dead after a merged instruction with writeback. Update
-    // future uses of the base with the added offset (if possible), or reset
-    // the base register as necessary.
-    if (!BaseKill)
-      UpdateBaseRegUses(MBB, MBBI, dl, Base, NumRegs, Pred, PredReg);
-
     MIB = BuildMI(MBB, MBBI, dl, TII->get(Opcode));
 
     // Thumb1: we might need to set base writeback when building the MI.
     MIB.addReg(Base, getDefRegState(true))
        .addReg(Base, getKillRegState(BaseKill));
+
+    // The base isn't dead after a merged instruction with writeback. Update
+    // future uses of the base with the added offset (if possible), or reset
+    // the base register as necessary.
+    if (!BaseKill)
+      UpdateBaseRegUses(MBB, MBBI, dl, Base, NumRegs, Pred, PredReg);
   } else {
     // No writeback, simply build the MachineInstr.
     MIB = BuildMI(MBB, MBBI, dl, TII->get(Opcode));
@@ -1725,14 +1725,20 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
 
 bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   const TargetMachine &TM = Fn.getTarget();
-  TL = TM.getTargetLowering();
+  TL = TM.getSubtargetImpl()->getTargetLowering();
   AFI = Fn.getInfo<ARMFunctionInfo>();
-  TII = TM.getInstrInfo();
-  TRI = TM.getRegisterInfo();
+  TII = TM.getSubtargetImpl()->getInstrInfo();
+  TRI = TM.getSubtargetImpl()->getRegisterInfo();
   STI = &TM.getSubtarget<ARMSubtarget>();
   RS = new RegScavenger();
   isThumb2 = AFI->isThumb2Function();
   isThumb1 = AFI->isThumbFunction() && !isThumb2;
+
+  // FIXME: Temporarily disabling for Thumb-1 due to miscompiles
+  if (isThumb1) {
+    delete RS;
+    return false;
+  }
 
   bool Modified = false;
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
@@ -1787,9 +1793,9 @@ namespace {
 }
 
 bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
-  TD  = Fn.getTarget().getDataLayout();
-  TII = Fn.getTarget().getInstrInfo();
-  TRI = Fn.getTarget().getRegisterInfo();
+  TD = Fn.getSubtarget().getDataLayout();
+  TII = Fn.getSubtarget().getInstrInfo();
+  TRI = Fn.getSubtarget().getRegisterInfo();
   STI = &Fn.getTarget().getSubtarget<ARMSubtarget>();
   MRI = &Fn.getRegInfo();
   MF  = &Fn;

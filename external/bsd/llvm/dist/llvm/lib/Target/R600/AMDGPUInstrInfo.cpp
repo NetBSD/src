@@ -30,8 +30,8 @@ using namespace llvm;
 // Pin the vtable to this file.
 void AMDGPUInstrInfo::anchor() {}
 
-AMDGPUInstrInfo::AMDGPUInstrInfo(TargetMachine &tm)
-  : AMDGPUGenInstrInfo(-1,-1), RI(tm), TM(tm) { }
+AMDGPUInstrInfo::AMDGPUInstrInfo(const AMDGPUSubtarget &st)
+  : AMDGPUGenInstrInfo(-1,-1), RI(st), ST(st) { }
 
 const AMDGPURegisterInfo &AMDGPUInstrInfo::getRegisterInfo() const {
   return RI;
@@ -147,7 +147,6 @@ bool AMDGPUInstrInfo::expandPostRAPseudo (MachineBasicBlock::iterator MI) const 
   } else if (isRegisterStore(*MI)) {
     int ValOpIdx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
                                               AMDGPU::OpName::val);
-    AMDGPU::getNamedOperandIdx(MI->getOpcode(), AMDGPU::OpName::dst);
     unsigned RegIndex = MI->getOperand(RegOpIdx).getImm();
     unsigned Channel = MI->getOperand(ChanOpIdx).getImm();
     unsigned Address = calculateIndirectAddress(RegIndex, Channel);
@@ -215,15 +214,30 @@ AMDGPUInstrInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
   return 0;
 }
 
-bool AMDGPUInstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
-                                             int64_t Offset1, int64_t Offset2,
-                                             unsigned NumLoads) const {
-  assert(Offset2 > Offset1
-         && "Second offset should be larger than first offset!");
-  // If we have less than 16 loads in a row, and the offsets are within 16,
-  // then schedule together.
-  // TODO: Make the loads schedule near if it fits in a cacheline
-  return (NumLoads < 16 && (Offset2 - Offset1) < 16);
+bool AMDGPUInstrInfo::enableClusterLoads() const {
+  return true;
+}
+
+// FIXME: This behaves strangely. If, for example, you have 32 load + stores,
+// the first 16 loads will be interleaved with the stores, and the next 16 will
+// be clustered as expected. It should really split into 2 16 store batches.
+//
+// Loads are clustered until this returns false, rather than trying to schedule
+// groups of stores. This also means we have to deal with saying different
+// address space loads should be clustered, and ones which might cause bank
+// conflicts.
+//
+// This might be deprecated so it might not be worth that much effort to fix.
+bool AMDGPUInstrInfo::shouldScheduleLoadsNear(SDNode *Load0, SDNode *Load1,
+                                              int64_t Offset0, int64_t Offset1,
+                                              unsigned NumLoads) const {
+  assert(Offset1 > Offset0 &&
+         "Second offset should be larger than first offset!");
+  // If we have less than 16 loads in a row, and the offsets are within 64
+  // bytes, then schedule together.
+
+  // A cacheline is 64 bytes (for global memory).
+  return (NumLoads <= 16 && (Offset1 - Offset0) < 64);
 }
 
 bool
@@ -320,31 +334,12 @@ int AMDGPUInstrInfo::getIndirectIndexEnd(const MachineFunction &MF) const {
     return -1;
   }
 
-  Offset = TM.getFrameLowering()->getFrameIndexOffset(MF, -1);
+  Offset = MF.getTarget()
+               .getSubtargetImpl()
+               ->getFrameLowering()
+               ->getFrameIndexOffset(MF, -1);
 
   return getIndirectIndexBegin(MF) + Offset;
-}
-
-
-void AMDGPUInstrInfo::convertToISA(MachineInstr & MI, MachineFunction &MF,
-    DebugLoc DL) const {
-  MachineRegisterInfo &MRI = MF.getRegInfo();
-  const AMDGPURegisterInfo & RI = getRegisterInfo();
-
-  for (unsigned i = 0; i < MI.getNumOperands(); i++) {
-    MachineOperand &MO = MI.getOperand(i);
-    // Convert dst regclass to one that is supported by the ISA
-    if (MO.isReg() && MO.isDef()) {
-      if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
-        const TargetRegisterClass * oldRegClass = MRI.getRegClass(MO.getReg());
-        const TargetRegisterClass * newRegClass = RI.getISARegClass(oldRegClass);
-
-        assert(newRegClass);
-
-        MRI.setRegClass(MO.getReg(), newRegClass);
-      }
-    }
-  }
 }
 
 int AMDGPUInstrInfo::getMaskedMIMGOp(uint16_t Opcode, unsigned Channels) const {

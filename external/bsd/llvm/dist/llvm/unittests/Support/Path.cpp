@@ -8,24 +8,30 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 
+#ifdef LLVM_ON_WIN32
+#include <winerror.h>
+#endif
+
 using namespace llvm;
 using namespace llvm::sys;
 
-#define ASSERT_NO_ERROR(x) \
-  if (error_code ASSERT_NO_ERROR_ec = x) { \
-    SmallString<128> MessageStorage; \
-    raw_svector_ostream Message(MessageStorage); \
-    Message << #x ": did not return errc::success.\n" \
-            << "error number: " << ASSERT_NO_ERROR_ec.value() << "\n" \
-            << "error message: " << ASSERT_NO_ERROR_ec.message() << "\n"; \
-    GTEST_FATAL_FAILURE_(MessageStorage.c_str()); \
-  } else {}
+#define ASSERT_NO_ERROR(x)                                                     \
+  if (std::error_code ASSERT_NO_ERROR_ec = x) {                                \
+    SmallString<128> MessageStorage;                                           \
+    raw_svector_ostream Message(MessageStorage);                               \
+    Message << #x ": did not return errc::success.\n"                          \
+            << "error number: " << ASSERT_NO_ERROR_ec.value() << "\n"          \
+            << "error message: " << ASSERT_NO_ERROR_ec.message() << "\n";      \
+    GTEST_FATAL_FAILURE_(MessageStorage.c_str());                              \
+  } else {                                                                     \
+  }
 
 namespace {
 
@@ -85,6 +91,7 @@ TEST(Support, Path) {
   paths.push_back("c:\\foo/");
   paths.push_back("c:/foo\\bar");
 
+  SmallVector<StringRef, 5> ComponentStack;
   for (SmallVector<StringRef, 40>::const_iterator i = paths.begin(),
                                                   e = paths.end();
                                                   i != e;
@@ -94,18 +101,17 @@ TEST(Support, Path) {
                                    ci != ce;
                                    ++ci) {
       ASSERT_FALSE(ci->empty());
+      ComponentStack.push_back(*ci);
     }
 
-#if 0 // Valgrind is whining about this.
-    outs() << "    Reverse Iteration: [";
     for (sys::path::reverse_iterator ci = sys::path::rbegin(*i),
                                      ce = sys::path::rend(*i);
                                      ci != ce;
                                      ++ci) {
-      outs() << *ci << ',';
+      ASSERT_TRUE(*ci == ComponentStack.back());
+      ComponentStack.pop_back();
     }
-    outs() << "]\n";
-#endif
+    ASSERT_TRUE(ComponentStack.empty());
 
     path::has_root_path(*i);
     path::root_path(*i);
@@ -135,7 +141,7 @@ TEST(Support, Path) {
     StringRef filename(temp_store.begin(), temp_store.size()), stem, ext;
     stem = path::stem(filename);
     ext  = path::extension(filename);
-    EXPECT_EQ(*(--sys::path::end(filename)), (stem + ext).str());
+    EXPECT_EQ(*sys::path::rbegin(filename), (stem + ext).str());
 
     path::native(*i, temp_store);
   }
@@ -221,7 +227,7 @@ TEST(Support, AbsolutePathIteratorEnd) {
 #endif
 
   for (StringRef Path : Paths) {
-    StringRef LastComponent = *--path::end(Path);
+    StringRef LastComponent = *path::rbegin(Path);
     EXPECT_EQ(".", LastComponent);
   }
 
@@ -233,7 +239,7 @@ TEST(Support, AbsolutePathIteratorEnd) {
 #endif
 
   for (StringRef Path : RootPaths) {
-    StringRef LastComponent = *--path::end(Path);
+    StringRef LastComponent = *path::rbegin(Path);
     EXPECT_EQ(1u, LastComponent.size());
     EXPECT_TRUE(path::is_separator(LastComponent[0]));
   }
@@ -352,7 +358,7 @@ TEST_F(FileSystemTest, TempFiles) {
   ASSERT_EQ(fs::remove(Twine(TempPath2), false),
             errc::no_such_file_or_directory);
 
-  error_code EC = fs::status(TempPath2.c_str(), B);
+  std::error_code EC = fs::status(TempPath2.c_str(), B);
   EXPECT_EQ(EC, errc::no_such_file_or_directory);
   EXPECT_EQ(B.type(), fs::file_type::file_not_found);
 
@@ -393,7 +399,7 @@ TEST_F(FileSystemTest, TempFiles) {
     "abcdefghijklmnopqrstuvwxyz3abcdefghijklmnopqrstuvwxyz2"
     "abcdefghijklmnopqrstuvwxyz1abcdefghijklmnopqrstuvwxyz0";
   EXPECT_EQ(fs::createUniqueFile(Twine(Path270), FileDescriptor, TempPath),
-            windows_error::path_not_found);
+            errc::no_such_file_or_directory);
 #endif
 }
 
@@ -406,7 +412,7 @@ TEST_F(FileSystemTest, CreateDir) {
 }
 
 TEST_F(FileSystemTest, DirectoryIteration) {
-  error_code ec;
+  std::error_code ec;
   for (fs::directory_iterator i(".", ec), e; i != e; i.increment(ec))
     ASSERT_NO_ERROR(ec);
 
@@ -535,9 +541,6 @@ TEST_F(FileSystemTest, Magic) {
     StringRef magic(i->magic_str, i->magic_str_len);
     file << magic;
     file.close();
-    bool res = false;
-    ASSERT_NO_ERROR(fs::has_magic(file_pathname.c_str(), magic, res));
-    EXPECT_TRUE(res);
     EXPECT_EQ(i->magic, fs::identify_magic(magic));
     ASSERT_NO_ERROR(fs::remove(Twine(file_pathname)));
   }
@@ -555,9 +558,9 @@ TEST_F(FileSystemTest, CarriageReturn) {
     File << '\n';
   }
   {
-    std::unique_ptr<MemoryBuffer> Buf;
-    MemoryBuffer::getFile(FilePathname.c_str(), Buf);
-    EXPECT_EQ(Buf->getBuffer(), "\r\n");
+    auto Buf = MemoryBuffer::getFile(FilePathname.c_str());
+    EXPECT_TRUE((bool)Buf);
+    EXPECT_EQ(Buf.get()->getBuffer(), "\r\n");
   }
 
   {
@@ -566,9 +569,9 @@ TEST_F(FileSystemTest, CarriageReturn) {
     File << '\n';
   }
   {
-    std::unique_ptr<MemoryBuffer> Buf;
-    MemoryBuffer::getFile(FilePathname.c_str(), Buf);
-    EXPECT_EQ(Buf->getBuffer(), "\n");
+    auto Buf = MemoryBuffer::getFile(FilePathname.c_str());
+    EXPECT_TRUE((bool)Buf);
+    EXPECT_EQ(Buf.get()->getBuffer(), "\n");
   }
   ASSERT_NO_ERROR(fs::remove(Twine(FilePathname)));
 }
@@ -581,7 +584,7 @@ TEST_F(FileSystemTest, FileMapping) {
   ASSERT_NO_ERROR(
       fs::createTemporaryFile("prefix", "temp", FileDescriptor, TempPath));
   // Map in temp file and add some content
-  error_code EC;
+  std::error_code EC;
   StringRef Val("hello there");
   {
     fs::mapped_file_region mfr(FileDescriptor,
@@ -637,22 +640,22 @@ TEST(Support, NormalizePath) {
   SmallString<64> Path5("\\a");
   SmallString<64> Path6("a\\");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path1));
+  path::native(Path1);
   EXPECT_PATH_IS(Path1, "a", "a");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path2));
-  EXPECT_PATH_IS(Path2, "a/b", "a/b");
+  path::native(Path2);
+  EXPECT_PATH_IS(Path2, "a\\b", "a/b");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path3));
+  path::native(Path3);
   EXPECT_PATH_IS(Path3, "a\\b", "a/b");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path4));
+  path::native(Path4);
   EXPECT_PATH_IS(Path4, "a\\\\b", "a\\\\b");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path5));
+  path::native(Path5);
   EXPECT_PATH_IS(Path5, "\\a", "/a");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path6));
+  path::native(Path6);
   EXPECT_PATH_IS(Path6, "a\\", "a/");
 
 #undef EXPECT_PATH_IS
