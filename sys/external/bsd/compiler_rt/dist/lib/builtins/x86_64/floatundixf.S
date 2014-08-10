@@ -7,16 +7,23 @@
 
 #ifdef __x86_64__
 
-#ifndef __ELF__
-.const
+#if defined(__APPLE__)
+	.const
+#elif defined(__ELF__)
+	.section .rodata
+#else
+	.section .rdata,"rd"
 #endif
-.balign 4
-twop64: .quad 0x43f0000000000000
+
+	.balign 16
+twop64:
+	.quad 0x43f0000000000000
 
 #define REL_ADDR(_a)	(_a)(%rip)
 
-.text
-.balign 4
+	.text
+
+	.balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatundixf)
 	movq	%rdi,	 -8(%rsp)
 	fildq	-8(%rsp)
@@ -35,12 +42,20 @@ END_COMPILERRT_FUNCTION(__floatundixf)
 
 #ifdef __x86_64__
 
-.const
-.balign 4
-twop52: .quad 0x4330000000000000
+#if defined(__APPLE__)
+	.const
+#elif defined(__ELF__)
+	.rdata
+#else
+	.section .rdata,"rd"
+#endif
+	.balign 4
+twop52:
+	.quad 0x4330000000000000
 twop84_plus_twop52_neg:
-		.quad 0xc530000000100000
-twop84: .quad 0x4530000000000000
+	.quad 0xc530000000100000
+twop84:
+	.quad 0x4530000000000000
 
 #define REL_ADDR(_a)	(_a)(%rip)
 
