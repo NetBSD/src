@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.454.2.3 2014/08/10 06:55:58 tls Exp $	*/
+/*	$NetBSD: init_main.c,v 1.454.2.4 2014/08/10 08:10:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.454.2.3 2014/08/10 06:55:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.454.2.4 2014/08/10 08:10:31 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.454.2.3 2014/08/10 06:55:58 tls Exp 
 #include "opt_compat_netbsd.h"
 #include "opt_wapbl.h"
 #include "opt_ptrace.h"
+#include "opt_rnd_printf.h"
 
 #include "drvctl.h"
 #include "ksyms.h"
@@ -529,8 +530,10 @@ main(void)
 	/* Enable deferred processing of RNG samples */
 	rnd_init_softint();
 
+#ifdef RND_PRINTF
 	/* Enable periodic injection of console output into entropy pool */
 	kprintf_init_callout();
+#endif
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
