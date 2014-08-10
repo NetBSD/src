@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.31 2014/04/16 18:55:18 maxv Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.32 2014/08/10 08:53:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.31 2014/04/16 18:55:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.32 2014/08/10 08:53:22 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -139,7 +139,7 @@ MODULE(MODULE_CLASS_VFS, hfs, NULL);
 
 MALLOC_JUSTDEFINE(M_HFSMNT, "hfs mount", "hfs mount structures");
 
-extern kmutex_t hfs_hashlock;
+struct pool hfs_node_pool;
 
 const struct vnodeopv_desc * const hfs_vnodeopv_descs[] = {
 	&hfs_vnodeop_opv_desc,
@@ -159,6 +159,7 @@ struct vfsops hfs_vfsops = {
 	.vfs_statvfs = hfs_statvfs,
 	.vfs_sync = hfs_sync,
 	.vfs_vget = hfs_vget,
+	.vfs_loadvnode = hfs_loadvnode,
 	.vfs_fhtovp = hfs_fhtovp,
 	.vfs_vptofh = hfs_vptofh,
 	.vfs_init = hfs_init,
@@ -507,7 +508,18 @@ hfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 int
 hfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
-    return hfs_vget_internal(mp, ino, HFS_DATAFORK, vpp);
+	int error;
+
+	error = hfs_vget_internal(mp, ino, HFS_DATAFORK, vpp);
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+	return 0;
 }
 
 /*
@@ -517,93 +529,60 @@ int
 hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
     struct vnode **vpp)
 {
+	struct hfsnode_key key;
+
+	memset(&key, 0, sizeof(key));
+	key.hnk_cnid = (hfs_cnid_t)ino;
+	key.hnk_fork = (fork != HFS_RSRCFORK ? HFS_DATAFORK : HFS_RSRCFORK);
+
+	return vcache_get(mp, &key, sizeof(key), vpp);
+}
+
+int
+hfs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
 	struct hfsmount *hmp;
 	struct hfsnode *hnode;
-	struct vnode *vp;
+	struct hfsnode_key hfskey;
 	hfs_callback_args cbargs;
-	hfs_cnid_t cnid;
 	hfs_catalog_keyed_record_t rec;
-	hfs_catalog_key_t key; /* the search key used to find this file on disk */
+	hfs_catalog_key_t cat_key; /* the search key used to find this file on disk */
 	dev_t dev;
-	int error;
 
 #ifdef HFS_DEBUG	
-	printf("vfsop = hfs_vget()\n");
+	printf("vfsop = hfs_loadvnode()\n");
 #endif /* HFS_DEBUG */
 
-	hnode = NULL;
-	vp = NULL;
+	KASSERT(key_len == sizeof(hfskey));
+	memcpy(&hfskey, key, key_len);
+
 	hmp = VFSTOHFS(mp);
 	dev = hmp->hm_dev;
-	cnid = (hfs_cnid_t)ino;
 
-	if (fork != HFS_RSRCFORK)
-	    fork = HFS_DATAFORK;
-
- retry:
-	/* Check if this vnode has already been allocated. If so, just return it. */
-	if ((*vpp = hfs_nhashget(dev, cnid, fork, LK_EXCLUSIVE)) != NULL)
-		return 0;
-
-	/* Allocate a new vnode/inode. */
-	error = getnewvnode(VT_HFS, mp, hfs_vnodeop_p, NULL, &vp);
-	if (error) {
-		goto error;
-	}
-	hnode = malloc(sizeof(struct hfsnode), M_TEMP,
-		M_WAITOK | M_ZERO);
-
-	/*
-	 * If someone beat us to it while sleeping in getnewvnode(),
-	 * push back the freshly allocated vnode we don't need, and return.
-	 */
-	mutex_enter(&hfs_hashlock);
-	if (hfs_nhashget(dev, cnid, fork, 0) != NULL) {
-		mutex_exit(&hfs_hashlock);
-		ungetnewvnode(vp);
-		free(hnode, M_TEMP);
-		goto retry;
-	}
-
-	vp->v_vflag |= VV_LOCKSWORK;	
-	vp->v_data = hnode;
-	genfs_node_init(vp, &hfs_genfsops);
-	
+	hnode = pool_get(&hfs_node_pool, PR_WAITOK);
+	memset(hnode, 0, sizeof(*hnode));
 	hnode->h_vnode = vp;
 	hnode->h_hmp = hmp;
 	hnode->dummy = 0x1337BABE;
-	
-	/*
-	 * We need to put this vnode into the hash chain and lock it so that other
-	 * requests for this inode will block if they arrive while we are sleeping
-	 * waiting for old data structures to be purged or for the contents of the
-	 * disk portion of this inode to be read. The hash chain requires the node's
-	 * device and cnid to be known. Since this information was passed in the
-	 * arguments, fill in the appropriate hfsnode fields without reading having
-	 * to read the disk.
-	 */
 	hnode->h_dev = dev;
-	hnode->h_rec.u.cnid = cnid;
-	hnode->h_fork = fork;
-
-	hfs_nhashinsert(hnode);
-	mutex_exit(&hfs_hashlock);
-
+	hnode->h_rec.u.cnid = hfskey.hnk_cnid;
+	hnode->h_fork = hfskey.hnk_fork;
+	hnode->h_key = hfskey;
 
 	/*
 	 * Read catalog record from disk.
 	 */
 	hfslib_init_cbargs(&cbargs);
 	
-	if (hfslib_find_catalog_record_with_cnid(&hmp->hm_vol, cnid,
-		&rec, &key, &cbargs) != 0) {
-		vput(vp);
-		error = EBADF;
-		goto error;
+	if (hfslib_find_catalog_record_with_cnid(&hmp->hm_vol, hfskey.hnk_cnid,
+		&rec, &cat_key, &cbargs) != 0) {
+		pool_put(&hfs_node_pool, hnode);
+		return EBADF;
 	}
 		
 	memcpy(&hnode->h_rec, &rec, sizeof(hnode->h_rec));
-	hnode->h_parent = key.parent_cnid;
+	hnode->h_parent = cat_key.parent_cnid;
 
 	/* XXX Eventually need to add an "ignore permissions" mount option */
 
@@ -613,9 +592,14 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	 */
 	/* DATE AND TIME */
 
+	vp->v_tag = VT_HFS;
+	vp->v_op = hfs_vnodeop_p;
+	vp->v_vflag |= VV_LOCKSWORK;	
+	vp->v_data = hnode;
+	genfs_node_init(vp, &hfs_genfsops);
+
 	/*
 	 * Initialize the vnode from the hfsnode, check for aliases.
-	 * Note that the underlying vnode may change.
 	 */
 	hfs_vinit(mp, hfs_specop_p, hfs_fifoop_p, &vp);
 
@@ -634,13 +618,8 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	else
 		uvm_vnp_setsize(vp, 0); /* no directly reading directories */
 		
-	*vpp = vp;
-	
+	*new_key = &hnode->h_key;
 	return 0;
-
-error:
-	*vpp = NULL;
-	return error;
 }
 
 int
@@ -675,6 +654,8 @@ hfs_init(void)
 #endif /* HFS_DEBUG */
 
 	malloc_type_attach(M_HFSMNT);
+	pool_init(&hfs_node_pool, sizeof(struct hfsnode), 0, 0, 0, "hfsndpl",
+	    &pool_allocator_nointr, IPL_NONE);
 
 	callbacks.error = hfs_libcb_error;
 	callbacks.allocmem = hfs_libcb_malloc;
@@ -684,7 +665,6 @@ hfs_init(void)
 	callbacks.closevol = hfs_libcb_closedev;
 	callbacks.read = hfs_libcb_read;
 
-	hfs_nhashinit();
 	hfslib_init(&callbacks);
 }
 
@@ -709,8 +689,9 @@ hfs_done(void)
 
 	malloc_type_detach(M_HFSMNT);
 
+	pool_destroy(&hfs_node_pool);
+
 	hfslib_done();
-	hfs_nhashdone();
 }
 
 int
