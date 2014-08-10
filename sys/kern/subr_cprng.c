@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.23 2014/01/17 02:12:48 pooka Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.24 2014/08/10 16:44:36 tls Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.23 2014/01/17 02:12:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.24 2014/08/10 16:44:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.23 2014/01/17 02:12:48 pooka Exp $"
 #include <sys/kmem.h>
 #include <sys/lwp.h>
 #include <sys/once.h>
+#include <sys/percpu.h>
 #include <sys/poll.h>		/* XXX POLLIN/POLLOUT/&c. */
 #include <sys/select.h>
 #include <sys/systm.h>
@@ -103,10 +104,11 @@ cprng_counter(void)
 		return cpu_counter32();
 #endif
 	if (__predict_false(cold)) {
+		static int ctr;
 		/* microtime unsafe if clock not running yet */
-		return 0;
+		return ctr++;
 	}
-	microtime(&tv);
+	getmicrotime(&tv);
 	return (tv.tv_sec * 1000000 + tv.tv_usec);
 }
 
@@ -114,6 +116,7 @@ struct cprng_strong {
 	char		cs_name[16];
 	int		cs_flags;
 	kmutex_t	cs_lock;
+	percpu_t	*cs_percpu;
 	kcondvar_t	cs_cv;
 	struct selinfo	cs_selq;
 	struct rndsink	*cs_rndsink;
@@ -532,8 +535,16 @@ sysctl_kern_urnd(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.arandom node. Picks a random number
- * for you.
+ * sysctl helper routine for kern.arandom node.  Fills the supplied
+ * structure with random data for you.
+ *
+ * This node was originally declared as type "int" but its implementation
+ * in OpenBSD, whence it came, would happily return up to 8K of data if
+ * requested.  Evidently this was used to key RC4 in userspace.
+ *
+ * In NetBSD, the libc stack-smash-protection code reads 64 bytes
+ * from here at every program startup.  So though it would be nice
+ * to make this node return only 32 or 64 bits, we can't.  Too bad!
  */
 static int
 sysctl_kern_arnd(SYSCTLFN_ARGS)
@@ -542,31 +553,19 @@ sysctl_kern_arnd(SYSCTLFN_ARGS)
 	void *v;
 	struct sysctlnode node = *rnode;
 
-	if (*oldlenp == 0)
+	switch (*oldlenp) {
+	    case 0:
 		return 0;
-	/*
-	 * This code used to allow sucking 8192 bytes at a time out
-	 * of the kernel arc4random generator.  Evidently there is some
-	 * very old OpenBSD application code that may try to do this.
-	 *
-	 * Note that this node is documented as type "INT" -- 4 or 8
-	 * bytes, not 8192.
-	 *
-	 * We continue to support this abuse of the "len" pointer here
-	 * but only 256 bytes at a time, as, anecdotally, the actual
-	 * application use here was to generate RC4 keys in userspace.
-	 *
-	 * Support for such large requests will probably be removed
-	 * entirely in the future.
-	 */
-	if (*oldlenp > 256)
-		return E2BIG;
-
-	v = kmem_alloc(*oldlenp, KM_SLEEP);
-	cprng_fast(v, *oldlenp);
-	node.sysctl_data = v;
-	node.sysctl_size = *oldlenp;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	kmem_free(v, *oldlenp);
-	return error;
+	    default:
+		if (*oldlenp > 256) {
+			return E2BIG;
+		}
+		v = kmem_alloc(*oldlenp, KM_SLEEP);
+		cprng_fast(v, *oldlenp);
+		node.sysctl_data = v;
+		node.sysctl_size = *oldlenp;
+		error = sysctl_lookup(SYSCTLFN_CALL(&node));
+		kmem_free(v, *oldlenp);
+		return error;
+	}
 }

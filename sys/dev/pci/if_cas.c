@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.21 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.22 2014/08/10 16:44:36 tls Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.21 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.22 2014/08/10 16:44:36 tls Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -612,7 +612,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	ether_ifattach(ifp, enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "interrupts");

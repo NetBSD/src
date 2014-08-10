@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.139 2013/05/10 14:55:08 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.140 2014/08/10 16:44:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.139 2013/05/10 14:55:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.140 2014/08/10 16:44:35 tls Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -862,7 +862,7 @@ re_attach(struct rtk_softc *sc)
 	ether_ifattach(ifp, eaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	if (pmf_device_register(sc->sc_dev, NULL, NULL))
 		pmf_class_network_register(sc->sc_dev, ifp);

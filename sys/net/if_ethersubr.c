@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.203 2014/07/28 14:24:48 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.204 2014/08/10 16:44:36 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.203 2014/07/28 14:24:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.204 2014/08/10 16:44:36 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.203 2014/07/28 14:24:48 ozaki-r E
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/device.h>
+#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -582,6 +583,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	uint16_t etype;
 	struct ether_header *eh;
 	size_t ehlen;
+	static int earlypkts;
 	int isr = 0;
 #if defined (LLC) || defined(NETATALK)
 	struct llc *l;
@@ -598,6 +600,11 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
 	ehlen = sizeof(*eh);
+
+	if(__predict_false(earlypkts < 100 || !rnd_initial_entropy)) {
+		rnd_add_data(NULL, eh, ehlen, 0);
+		earlypkts++;
+	}
 
 	/*
 	 * Determine if the packet is within its size limits.

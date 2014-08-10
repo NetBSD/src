@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.10 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.11 2014/08/10 16:44:36 tls Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.10 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.11 2014/08/10 16:44:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
         rnd_attach_source(&sc->rnd_source, device_xname(self),
-            RND_TYPE_NET, 0);
+            RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	if (sysctl_createv(&sc->vte_clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, device_xname(sc->vte_dev),
