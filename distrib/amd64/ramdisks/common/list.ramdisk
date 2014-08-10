@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.18 2012/08/15 16:48:41 riz Exp $
+#	$NetBSD: list.ramdisk,v 1.19 2014/08/10 20:07:41 riz Exp $
 
 SRCDIRS	external/bsd/less/bin
 SRCDIRS	bin sbin usr.bin usr.sbin libexec
@@ -51,8 +51,8 @@ PROG	usr/bin/sed
 # PROG	usr/bin/less	usr/bin/more
 # PROG	usr/bin/more	usr/bin/less
 
-# sysinst doesn't use installboot
-# PROG	usr/sbin/installboot
+# sysinst doesn't use installboot (yet)
+PROG	usr/sbin/installboot
 
 PROG	usr/sbin/chroot
 
