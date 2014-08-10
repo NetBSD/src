@@ -1,8 +1,4 @@
-<<<<<<< CHANGES
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1961 $>
-=======
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1961 $>
->>>>>>> 1.1910.2.1
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1962 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -478,3 +474,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		       _arc4random() with new cprng_fast implemenation
 		       from riastradh@ using per-cpu instances of chacha8.
 		       [tls 20140810]
+	openssl: update to 1.0.1i [spz 20130810]
