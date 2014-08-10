@@ -1,0 +1,198 @@
+# $NetBSD: genassym.cf,v 1.1 2014/08/10 05:47:37 matt Exp $
+#-
+# Copyright (c) 2014 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Matt Thomas of 3am Software Foundry.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#-
+
+include <sys/param.h>
+include <sys/systm.h>
+include <sys/bitops.h>
+include <sys/cpu.h>
+include <sys/mbuf.h>
+include <sys/proc.h>
+include <sys/resourcevar.h>
+include <sys/device.h>
+include <sys/signal.h>
+include <netinet/in.h>
+include <netinet/in_systm.h>
+include <netinet/ip.h>
+include <netinet/ip6.h>
+include <netinet/ip_var.h>
+
+include <uvm/uvm_extern.h>
+
+include <aarch64/locore.h>
+include <aarch64/vmparam.h>
+
+if defined(_KERNEL_OPT)
+include "opt_multiprocessor.h"
+include "opt_compat_netbsd.h"
+include "opt_execfmt.h"
+endif
+
+define	__HAVE_FAST_SOFTINTS	1
+
+#ifdef __HAVE_PIC_FAST_SOFTINTS
+#define	__HAVE_PIC_FAST_SOFTINTS	1
+#endif
+
+define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
+define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
+
+#define	PV_PA			offsetof(pv_addr_t, pv_pa)
+#define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
+#define	DOMAIN_CLIENT		DOMAIN_CLIENT
+#define	L1_S_PROTO_generic	L1_S_PROTO_generic
+#define	L1_S_PROTO_armv7	L1_S_PROTO_armv7
+#define	L1_S_PROTO_xscale	L1_S_PROTO_xscale
+#if ARM_NMMUS == 1
+#define	L1_S_PROTO		L1_S_PROTO
+#endif
+#define	L1_S_FRAME		L1_S_FRAME
+#define	L1_S_SHIFT		L1_S_SHIFT
+#define	L1_S_SIZE		L1_S_SIZE
+#define	L1_S_B			L1_S_B
+#define	L1_S_C			L1_S_C
+#define	L1_S_V6_S		L1_S_V6_S
+#define	L1_S_AP_KR		L1_S_AP(AP_KR)
+#define	L1_S_AP_KRW		L1_S_AP(AP_KRW)
+#define	L1_S_APv7_KRW		L1_S_AP(AP7_KRW)
+#define	L1_TABLE_SIZE		L1_TABLE_SIZE
+#define	L1_TYPE_S		L1_TYPE_S
+#define	L1_S_DOM_KERNEL		L1_S_DOM(PMAP_DOMAIN_KERNEL)
+#define	L2_S_SIZE		L2_S_SIZE
+
+#define	L1_C_PROTO_generic	L1_C_PROTO_generic
+
+#define	L2_S_PROTO_generic	L2_S_PROTO_generic
+#define	L2_S_SHIFT		L2_S_SHIFT
+#define	L2_S_SIZE		L2_S_SIZE
+#define	L2_C			L2_C
+#define	L2_AP_KRW		L2_AP(AP_KRW)
+
+define	EFAULT			EFAULT
+
+define	PAGE_MASK		PAGE_MASK
+define	PAGE_SIZE		PAGE_SIZE
+define	UPAGES			UPAGES
+define	PGSHIFT			PGSHIFT
+
+# Important offsets into the lwp and proc structs & associated constants
+define	L_PCB			offsetof(struct lwp, l_addr)
+define	L_CPU			offsetof(struct lwp, l_cpu)
+define	L_PRIORITY		offsetof(struct lwp, l_priority)
+define	L_WCHAN			offsetof(struct lwp, l_wchan)
+define	L_STAT			offsetof(struct lwp, l_stat)
+define	L_PROC			offsetof(struct lwp, l_proc)
+define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
+define	L_PRIVATE		offsetof(struct lwp, l_private)
+define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
+define	L_MD_UTF		offsetof(struct lwp, l_md.md_utf)
+define	L_MD_KTF		offsetof(struct lwp, l_md.md_ktf)
+define	L_MD_CPACR		offsetof(struct lwp, l_md.md_cpacr)
+define	L_MD_ONFAULT		offsetof(struct lwp, l_md.md_onfault)
+
+define	P_RASLIST		offsetof(struct proc, p_raslist)
+define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
+
+define	VM_MAP			offsetof(struct vmspace, vm_map)
+define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
+
+#define	PR_BASE			offsetof(struct uprof, pr_base)
+#define	PR_SIZE			offsetof(struct uprof, pr_size)
+#define	PR_OFF			offsetof(struct uprof, pr_off)
+#define	PR_SCALE		offsetof(struct uprof, pr_scale)
+
+define	SIGTRAP			SIGTRAP
+define	SIGEMT			SIGEMT
+
+define	TF_X0			offsetof(struct trapframe, tf_reg[0])
+define	TF_X1			offsetof(struct trapframe, tf_reg[1])
+define	TF_X2			offsetof(struct trapframe, tf_reg[2])
+define	TF_X3			offsetof(struct trapframe, tf_reg[3])
+define	TF_X4			offsetof(struct trapframe, tf_reg[4])
+define	TF_X5			offsetof(struct trapframe, tf_reg[5])
+define	TF_X6			offsetof(struct trapframe, tf_reg[6])
+define	TF_X7			offsetof(struct trapframe, tf_reg[7])
+define	TF_X8			offsetof(struct trapframe, tf_reg[8])
+define	TF_X9			offsetof(struct trapframe, tf_reg[9])
+define	TF_X10			offsetof(struct trapframe, tf_reg[10])
+define	TF_X11			offsetof(struct trapframe, tf_reg[11])
+define	TF_X12			offsetof(struct trapframe, tf_reg[12])
+define	TF_X13			offsetof(struct trapframe, tf_reg[13])
+define	TF_X14			offsetof(struct trapframe, tf_reg[14])
+define	TF_X15			offsetof(struct trapframe, tf_reg[15])
+define	TF_X16			offsetof(struct trapframe, tf_reg[16])
+define	TF_X17			offsetof(struct trapframe, tf_reg[17])
+define	TF_X18			offsetof(struct trapframe, tf_reg[18])
+define	TF_X19			offsetof(struct trapframe, tf_reg[19])
+define	TF_X20			offsetof(struct trapframe, tf_reg[20])
+define	TF_X21			offsetof(struct trapframe, tf_reg[21])
+define	TF_X22			offsetof(struct trapframe, tf_reg[22])
+define	TF_X23			offsetof(struct trapframe, tf_reg[23])
+define	TF_X24			offsetof(struct trapframe, tf_reg[24])
+define	TF_X25			offsetof(struct trapframe, tf_reg[25])
+define	TF_X26			offsetof(struct trapframe, tf_reg[26])
+define	TF_X27			offsetof(struct trapframe, tf_reg[27])
+define	TF_X28			offsetof(struct trapframe, tf_reg[28])
+define	TF_X29			offsetof(struct trapframe, tf_reg[29])
+define	TF_X30			offsetof(struct trapframe, tf_reg[30])
+define	TF_SP			offsetof(struct trapframe, tf_sp)
+define	TF_PC			offsetof(struct trapframe, tf_pc)
+define	TF_SPSR			offsetof(struct trapframe, tf_spsr)
+define	TF_TPIDR		offsetof(struct trapframe, tf_tpidr)
+define	TF_ESR			offsetof(struct trapframe, tf_esr)
+define	TF_FAR			offsetof(struct trapframe, tf_far)
+define	TF_CHAIN		offsetof(struct trapframe, tf_chain)
+define	TF_SIZE			roundup(sizeof(struct trapframe), 16)
+
+
+define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
+define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
+define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
+define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
+define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
+define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
+define	CI_SOFTINTS		offsetof(struct cpu_info, ci_data.cpu_softints)
+define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
+define	CI_CC_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
+define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
+define	CI_CC_NSOFT		offsetof(struct cpu_info, ci_data.cpu_nsoft)
+
+define	V_RESCHED_KPREEMPT	ilog2(RESCHED_KPREEMPT)
+
+define	SPSR_M_EL1T		SPSR_M_EL1T
+define	DAIF_I			DAIF_I
+define	DAIF_F			DAIF_F
+
+# Constants required for in_cksum() and friends.
+define	M_LEN			offsetof(struct mbuf, m_len)
+define	M_DATA			offsetof(struct mbuf, m_data)
+define	M_NEXT			offsetof(struct mbuf, m_next)
+define	IP_SRC			offsetof(struct ip, ip_src)
+define	IP_DST			offsetof(struct ip, ip_dst)
