@@ -1,4 +1,8 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1960 $>
+<<<<<<< CHANGES
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1961 $>
+=======
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1961 $>
+>>>>>>> 1.1910.2.1
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -465,3 +469,12 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	ekermit(1): Add BSD-licenced ekermit, and remove GPL-licenced
 		gkermit. [apb 20140808]
 	rescue(8): Add /rescue/ekermit. [apb 20140809]
+	rnd(4): Suck in much more entropy early in boot and thereafter:
+		autoconf timings, all sysctl settings (including hostname),
+		contents of early network packets, environmental sensor
+		values generically rather than as per-driver special cases.
+		[tls 20140810]
+	cprng_fast(9): Replace slow/broken mutex-protected kernel
+		       _arc4random() with new cprng_fast implemenation
+		       from riastradh@ using per-cpu instances of chacha8.
+		       [tls 20140810]
