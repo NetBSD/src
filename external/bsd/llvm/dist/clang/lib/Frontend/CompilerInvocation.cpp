@@ -20,6 +20,7 @@
 #include "clang/Serialization/ASTReader.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
@@ -33,10 +34,10 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
-#include "llvm/Support/system_error.h"
 #include <atomic>
 #include <memory>
 #include <sys/stat.h>
+#include <system_error>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -110,25 +111,21 @@ static unsigned getOptimizationLevelSize(ArgList &Args) {
   return 0;
 }
 
-static void addWarningArgs(ArgList &Args, std::vector<std::string> &Warnings) {
-  for (arg_iterator I = Args.filtered_begin(OPT_W_Group),
-         E = Args.filtered_end(); I != E; ++I) {
-    Arg *A = *I;
-    // If the argument is a pure flag, add its name (minus the "W" at the beginning)
-    // to the warning list. Else, add its value (for the OPT_W case).
+static void addDiagnosticArgs(ArgList &Args, OptSpecifier Group,
+                              OptSpecifier GroupWithValue,
+                              std::vector<std::string> &Diagnostics) {
+  for (Arg *A : Args.filtered(Group)) {
     if (A->getOption().getKind() == Option::FlagClass) {
-      Warnings.push_back(A->getOption().getName().substr(1));
+      // The argument is a pure flag (such as OPT_Wall or OPT_Wdeprecated). Add
+      // its name (minus the "W" or "R" at the beginning) to the warning list.
+      Diagnostics.push_back(A->getOption().getName().drop_front(1));
+    } else if (A->getOption().matches(GroupWithValue)) {
+      // This is -Wfoo= or -Rfoo=, where foo is the name of the diagnostic group.
+      Diagnostics.push_back(A->getOption().getName().drop_front(1).rtrim("=-"));
     } else {
-      for (unsigned Idx = 0, End = A->getNumValues();
-           Idx < End; ++Idx) {
-        StringRef V = A->getValue(Idx);
-        // "-Wl," and such are not warning options.
-        // FIXME: Should be handled by putting these in separate flags.
-        if (V.startswith("l,") || V.startswith("a,") || V.startswith("p,"))
-          continue;
-
-        Warnings.push_back(V);
-      }
+      // Otherwise, add its value (for OPT_W_Joined and similar).
+      for (const char *Arg : A->getValues())
+        Diagnostics.push_back(Arg);
     }
   }
 }
@@ -402,6 +399,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.SampleProfileFile = Args.getLastArgValue(OPT_fprofile_sample_use_EQ);
   Opts.ProfileInstrGenerate = Args.hasArg(OPT_fprofile_instr_generate);
   Opts.InstrProfileInput = Args.getLastArgValue(OPT_fprofile_instr_use_EQ);
+  Opts.CoverageMapping = Args.hasArg(OPT_fcoverage_mapping);
+  Opts.DumpCoverageMapping = Args.hasArg(OPT_dump_coverage_mapping);
   Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);
   Opts.ObjCAutoRefCountExceptions = Args.hasArg(OPT_fobjc_arc_exceptions);
   Opts.CUDAIsDevice = Args.hasArg(OPT_fcuda_is_device);
@@ -549,29 +548,30 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   }
 
   Opts.DependentLibraries = Args.getAllArgValues(OPT_dependent_lib);
+  bool NeedLocTracking = false;
 
   if (Arg *A = Args.getLastArg(OPT_Rpass_EQ)) {
-    StringRef Val = A->getValue();
-    std::string RegexError;
-    Opts.OptimizationRemarkPattern = std::make_shared<llvm::Regex>(Val);
-    if (!Opts.OptimizationRemarkPattern->isValid(RegexError)) {
-      Diags.Report(diag::err_drv_optimization_remark_pattern)
-          << RegexError << A->getAsString(Args);
-      Opts.OptimizationRemarkPattern.reset();
-    }
-  }
-
-  if (Arg *A = Args.getLastArg(OPT_Rpass_EQ))
     Opts.OptimizationRemarkPattern =
         GenerateOptimizationRemarkRegex(Diags, Args, A);
+    NeedLocTracking = true;
+  }
 
-  if (Arg *A = Args.getLastArg(OPT_Rpass_missed_EQ))
+  if (Arg *A = Args.getLastArg(OPT_Rpass_missed_EQ)) {
     Opts.OptimizationRemarkMissedPattern =
         GenerateOptimizationRemarkRegex(Diags, Args, A);
+    NeedLocTracking = true;
+  }
 
-  if (Arg *A = Args.getLastArg(OPT_Rpass_analysis_EQ))
+  if (Arg *A = Args.getLastArg(OPT_Rpass_analysis_EQ)) {
     Opts.OptimizationRemarkAnalysisPattern =
         GenerateOptimizationRemarkRegex(Diags, Args, A);
+    NeedLocTracking = true;
+  }
+
+  // If the user requested one of the flags in the -Rpass family, make sure
+  // that the backend tracks source location information.
+  if (NeedLocTracking && Opts.getDebugInfo() == CodeGenOptions::NoDebugInfo)
+    Opts.setDebugInfo(CodeGenOptions::LocTrackingOnly);
 
   return Success;
 }
@@ -589,6 +589,8 @@ static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
   Opts.AddMissingHeaderDeps = Args.hasArg(OPT_MG);
   Opts.PrintShowIncludes = Args.hasArg(OPT_show_includes);
   Opts.DOTOutputFile = Args.getLastArgValue(OPT_dependency_dot);
+  Opts.ModuleDependencyOutputDir =
+      Args.getLastArgValue(OPT_module_dependency_dir);
 }
 
 bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
@@ -695,7 +697,8 @@ bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
       << Opts.TabStop << DiagnosticOptions::DefaultTabStop;
   }
   Opts.MessageLength = getLastArgIntValue(Args, OPT_fmessage_length, 0, Diags);
-  addWarningArgs(Args, Opts.Warnings);
+  addDiagnosticArgs(Args, OPT_W_Group, OPT_W_value_Group, Opts.Warnings);
+  addDiagnosticArgs(Args, OPT_R_Group, OPT_R_value_Group, Opts.Remarks);
 
   return Success;
 }
@@ -1135,6 +1138,7 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
   Opts.CPlusPlus = Std.isCPlusPlus();
   Opts.CPlusPlus11 = Std.isCPlusPlus11();
   Opts.CPlusPlus1y = Std.isCPlusPlus1y();
+  Opts.CPlusPlus1z = Std.isCPlusPlus1z();
   Opts.Digraphs = Std.hasDigraphs();
   Opts.GNUMode = Std.isGNUMode();
   Opts.GNUInline = !Std.isC99();
@@ -1175,7 +1179,8 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
 
   // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
   // is specified, or -std is set to a conforming mode.
-  Opts.Trigraphs = !Opts.GNUMode;
+  // Trigraphs are disabled by default in c++1z onwards.
+  Opts.Trigraphs = !Opts.GNUMode && !Opts.CPlusPlus1z;
 
   Opts.DollarIdents = !Opts.AsmPreprocessor;
 
@@ -1199,6 +1204,43 @@ static Visibility parseVisibility(Arg *arg, ArgList &args,
   diags.Report(diag::err_drv_invalid_value)
     << arg->getAsString(args) << value;
   return DefaultVisibility;
+}
+
+static unsigned parseMSCVersion(ArgList &Args, DiagnosticsEngine &Diags) {
+  auto Arg = Args.getLastArg(OPT_fms_compatibility_version);
+  if (!Arg)
+    return 0;
+
+  // The MSC versioning scheme involves four versioning components:
+  //  - Major
+  //  - Minor
+  //  - Build
+  //  - Patch
+  //
+  // We accept either the old style (_MSC_VER) value, or a _MSC_FULL_VER value.
+  // Additionally, the value may be provided in the form of a more readable
+  // MM.mm.bbbbb.pp version.
+  //
+  // Unfortunately, due to the bit-width limitations, we cannot currently encode
+  // the value for the patch level.
+
+  unsigned VC[4] = {0};
+  StringRef Value = Arg->getValue();
+  SmallVector<StringRef, 4> Components;
+
+  Value.split(Components, ".", llvm::array_lengthof(VC));
+  for (unsigned CI = 0,
+                CE = std::min(Components.size(), llvm::array_lengthof(VC));
+       CI < CE; ++CI) {
+    if (Components[CI].getAsInteger(10, VC[CI])) {
+      Diags.Report(diag::err_drv_invalid_value)
+        << Arg->getAsString(Args) << Value;
+      return 0;
+    }
+  }
+
+  // FIXME we cannot encode the patch level
+  return VC[0] * 10000000 + VC[1] * 100000 + VC[2];
 }
 
 static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
@@ -1370,7 +1412,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.MSVCCompat = Args.hasArg(OPT_fms_compatibility);
   Opts.MicrosoftExt = Opts.MSVCCompat || Args.hasArg(OPT_fms_extensions);
   Opts.AsmBlocks = Args.hasArg(OPT_fasm_blocks) || Opts.MicrosoftExt;
-  Opts.MSCVersion = getLastArgIntValue(Args, OPT_fmsc_version, 0, Diags);
+  Opts.MSCompatibilityVersion = parseMSCVersion(Args, Diags);
   Opts.VtorDispMode = getLastArgIntValue(Args, OPT_vtordisp_mode_EQ, 1, Diags);
   Opts.Borland = Args.hasArg(OPT_fborland_extensions);
   Opts.WritableStrings = Args.hasArg(OPT_fwritable_strings);
@@ -1387,6 +1429,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.TraditionalCPP = Args.hasArg(OPT_traditional_cpp);
 
   Opts.RTTI = !Args.hasArg(OPT_fno_rtti);
+  Opts.RTTIData = Opts.RTTI && !Args.hasArg(OPT_fno_rtti_data);
   Opts.Blocks = Args.hasArg(OPT_fblocks);
   Opts.BlocksRuntimeOptional = Args.hasArg(OPT_fblocks_runtime_optional);
   Opts.Modules = Args.hasArg(OPT_fmodules);
@@ -1431,6 +1474,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     Args.hasArg(OPT_fencode_extended_block_signature);
   Opts.EmitAllDecls = Args.hasArg(OPT_femit_all_decls);
   Opts.PackStruct = getLastArgIntValue(Args, OPT_fpack_struct_EQ, 0, Diags);
+  Opts.MaxTypeAlign = getLastArgIntValue(Args, OPT_fmax_type_align_EQ, 0, Diags);
   Opts.PICLevel = getLastArgIntValue(Args, OPT_pic_level, 0, Diags);
   Opts.PIELevel = getLastArgIntValue(Args, OPT_pie_level, 0, Diags);
   Opts.Static = Args.hasArg(OPT_static_define);
@@ -1451,6 +1495,14 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.DebuggerObjCLiteral = Args.hasArg(OPT_fdebugger_objc_literal);
   Opts.ApplePragmaPack = Args.hasArg(OPT_fapple_pragma_pack);
   Opts.CurrentModule = Args.getLastArgValue(OPT_fmodule_name);
+  Opts.ImplementationOfModule =
+      Args.getLastArgValue(OPT_fmodule_implementation_of);
+
+  if (!Opts.CurrentModule.empty() && !Opts.ImplementationOfModule.empty() &&
+      Opts.CurrentModule != Opts.ImplementationOfModule) {
+    Diags.Report(diag::err_conflicting_module_names)
+        << Opts.CurrentModule << Opts.ImplementationOfModule;
+  }
 
   if (Arg *A = Args.getLastArg(OPT_faddress_space_map_mangling_EQ)) {
     switch (llvm::StringSwitch<unsigned>(A->getValue())
@@ -1896,14 +1948,16 @@ std::string CompilerInvocation::getModuleHash() const {
   //   $sysroot/System/Library/CoreServices/SystemVersion.plist
   // as part of the module hash.
   if (!hsOpts.Sysroot.empty()) {
-    std::unique_ptr<llvm::MemoryBuffer> buffer;
     SmallString<128> systemVersionFile;
     systemVersionFile += hsOpts.Sysroot;
     llvm::sys::path::append(systemVersionFile, "System");
     llvm::sys::path::append(systemVersionFile, "Library");
     llvm::sys::path::append(systemVersionFile, "CoreServices");
     llvm::sys::path::append(systemVersionFile, "SystemVersion.plist");
-    if (!llvm::MemoryBuffer::getFile(systemVersionFile.str(), buffer)) {
+
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
+        llvm::MemoryBuffer::getFile(systemVersionFile.str());
+    if (buffer) {
       code = hash_combine(code, buffer.get()->getBuffer());
 
       struct stat statBuf;
@@ -1970,15 +2024,16 @@ createVFSFromCompilerInvocation(const CompilerInvocation &CI,
     Overlay(new vfs::OverlayFileSystem(vfs::getRealFileSystem()));
   // earlier vfs files are on the bottom
   for (const std::string &File : CI.getHeaderSearchOpts().VFSOverlayFiles) {
-    std::unique_ptr<llvm::MemoryBuffer> Buffer;
-    if (llvm::errc::success != llvm::MemoryBuffer::getFile(File, Buffer)) {
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
+        llvm::MemoryBuffer::getFile(File);
+    if (!Buffer) {
       Diags.Report(diag::err_missing_vfs_overlay_file) << File;
       return IntrusiveRefCntPtr<vfs::FileSystem>();
     }
 
     IntrusiveRefCntPtr<vfs::FileSystem> FS =
-        vfs::getVFSFromYAML(Buffer.release(), /*DiagHandler*/nullptr);
-    if (!FS.getPtr()) {
+        vfs::getVFSFromYAML(Buffer->release(), /*DiagHandler*/ nullptr);
+    if (!FS.get()) {
       Diags.Report(diag::err_invalid_vfs_overlay) << File;
       return IntrusiveRefCntPtr<vfs::FileSystem>();
     }
