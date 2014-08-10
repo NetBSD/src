@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.139 2014/08/10 05:57:31 matt Exp $
+#	$NetBSD: Makefile,v 1.140 2014/08/10 11:50:15 bad Exp $
 
 .include <bsd.own.mk>
 
@@ -143,14 +143,7 @@ SUBDIR+=	tprof_amdpmi
 SUBDIR+=	vmt
 .endif
 
-.if ${MACHINE_ARCH} == "alpha" || \
-    !empty(MACHINE_ARCH:Mearm*) || !empty(MACHINE_ARCH:Marm*) || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "ia64" || \
-    ${MACHINE_ARCH} == "hppa" || \
-    !empty(MACHINE_ARCH:Mmips*) || \
-    ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64" || \
+.if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	ubsec		# Builds on architectures with PCI bus
 .endif
