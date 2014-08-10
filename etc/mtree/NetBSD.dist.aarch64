@@ -1,24 +1,35 @@
-# $NetBSD: NetBSD.dist.aarch64,v 1.1 2014/08/10 05:47:36 matt Exp $
+# $NetBSD: NetBSD.dist.aarch64,v 1.2 2014/08/10 23:31:41 matt Exp $
 
 ./lib/eabi
-./lib/oabi
 ./lib/eabi/npf
+./lib/eabihf
+./lib/eabihf/npf
+./lib/oabi
 ./lib/oabi/npf
 ./usr/lib/eabi
 ./usr/lib/eabi/i18n
 ./usr/lib/eabi/lua
-./usr/lib/eabi/lua/5.1
+./usr/lib/eabi/lua/5.3
 ./usr/lib/eabi/security
+./usr/lib/eabihf
+./usr/lib/eabihf/i18n
+./usr/lib/eabihf/lua
+./usr/lib/eabihf/lua/5.3
+./usr/lib/eabihf/security
 ./usr/lib/oabi
 ./usr/lib/oabi/i18n
 ./usr/lib/oabi/lua
-./usr/lib/oabi/lua/5.1
+./usr/lib/oabi/lua/5.3
 ./usr/lib/oabi/security
 ./usr/libdata/debug/lib/eabi
 ./usr/libdata/debug/lib/eabi/npf
+./usr/libdata/debug/lib/eabihf
+./usr/libdata/debug/lib/eabihf/npf
 ./usr/libdata/debug/lib/oabi
 ./usr/libdata/debug/lib/oabi/npf
 ./usr/libdata/debug/usr/lib/eabi
 ./usr/libdata/debug/usr/lib/eabi/i18n
+./usr/libdata/debug/usr/lib/eabihf
+./usr/libdata/debug/usr/lib/eabihf/i18n
 ./usr/libdata/debug/usr/lib/oabi
 ./usr/libdata/debug/usr/lib/oabi/i18n
