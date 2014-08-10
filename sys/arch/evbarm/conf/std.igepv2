@@ -1,4 +1,4 @@
-#	$NetBSD: std.igepv2,v 1.6 2013/11/01 18:41:06 skrll Exp $
+#	$NetBSD: std.igepv2,v 1.7 2014/08/10 23:46:09 chs Exp $
 #
 # standard NetBSD/evbarm for IGEPV2 options
 
@@ -12,6 +12,9 @@ options 	CORTEX_PMC
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	ARM_HAS_VBAR
+options 	FPU_VFP
 options 	TPIDRPRW_IS_CURCPU
 options 	KERNEL_BASE_EXT=0x80000000
 
