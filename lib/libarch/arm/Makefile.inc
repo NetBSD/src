@@ -1,8 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.1 2002/03/30 06:24:34 thorpej Exp $
+# $NetBSD: Makefile.inc,v 1.2 2014/08/10 23:25:50 matt Exp $
 
 .include <bsd.own.mk>
 
-.if (${MACHINE_CPU} == "arm")
+LIBC_MACHINE_CPU?=	${MACHINE_CPU}
+
+.if (${LIBC_MACHINE_CPU} == "arm")
 SRCS+=	arm_sync_icache.c arm_drain_writebuf.c
 .endif
 
