@@ -24,10 +24,10 @@ optimized code generation for the following:
 
 * Proper semantics for Java-style memory, for both ``volatile`` and regular
   shared variables. (`Java Specification
-  <http://java.sun.com/docs/books/jls/third_edition/html/memory.html>`_)
+  <http://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html>`_)
 
 * gcc-compatible ``__sync_*`` builtins. (`Description
-  <http://gcc.gnu.org/onlinedocs/gcc/Atomic-Builtins.html>`_)
+  <https://gcc.gnu.org/onlinedocs/gcc/_005f_005fsync-Builtins.html>`_)
 
 * Other scenarios with atomic semantics, including ``static`` variables with
   non-trivial constructors in C++.
@@ -110,8 +110,7 @@ where threads and signals are involved.
 
 ``cmpxchg`` and ``atomicrmw`` are essentially like an atomic load followed by an
 atomic store (where the store is conditional for ``cmpxchg``), but no other
-memory operation can happen on any thread between the load and store.  Note that
-LLVM's cmpxchg does not provide quite as many options as the C++0x version.
+memory operation can happen on any thread between the load and store.
 
 A ``fence`` provides Acquire and/or Release ordering which is not part of
 another operation; it is normally used along with Monotonic memory operations.
@@ -430,10 +429,9 @@ other ``atomicrmw`` operations generate a loop with ``LOCK CMPXCHG``.  Depending
 on the users of the result, some ``atomicrmw`` operations can be translated into
 operations like ``LOCK AND``, but that does not work in general.
 
-On ARM, MIPS, and many other RISC architectures, Acquire, Release, and
-SequentiallyConsistent semantics require barrier instructions for every such
+On ARM (before v8), MIPS, and many other RISC architectures, Acquire, Release,
+and SequentiallyConsistent semantics require barrier instructions for every such
 operation. Loads and stores generate normal instructions.  ``cmpxchg`` and
 ``atomicrmw`` can be represented using a loop with LL/SC-style instructions
 which take some sort of exclusive lock on a cache line (``LDREX`` and ``STREX``
-on ARM, etc.). At the moment, the IR does not provide any way to represent a
-weak ``cmpxchg`` which would not require a loop.
+on ARM, etc.).

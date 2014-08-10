@@ -77,11 +77,17 @@ unsigned Argument::getArgNo() const {
 }
 
 /// hasNonNullAttr - Return true if this argument has the nonnull attribute on
-/// it in its containing function.
+/// it in its containing function. Also returns true if at least one byte is
+/// known to be dereferenceable and the pointer is in addrspace(0).
 bool Argument::hasNonNullAttr() const {
   if (!getType()->isPointerTy()) return false;
-  return getParent()->getAttributes().
-    hasAttribute(getArgNo()+1, Attribute::NonNull);
+  if (getParent()->getAttributes().
+        hasAttribute(getArgNo()+1, Attribute::NonNull))
+    return true;
+  else if (getDereferenceableBytes() > 0 &&
+           getType()->getPointerAddressSpace() == 0)
+    return true;
+  return false;
 }
 
 /// hasByValAttr - Return true if this argument has the byval attribute on it
@@ -111,6 +117,12 @@ unsigned Argument::getParamAlignment() const {
   assert(getType()->isPointerTy() && "Only pointers have alignments");
   return getParent()->getParamAlignment(getArgNo()+1);
 
+}
+
+uint64_t Argument::getDereferenceableBytes() const {
+  assert(getType()->isPointerTy() &&
+         "Only pointers have dereferenceable bytes");
+  return getParent()->getDereferenceableBytes(getArgNo()+1);
 }
 
 /// hasNestAttr - Return true if this argument has the nest attribute on
@@ -152,6 +164,20 @@ bool Argument::hasStructRetAttr() const {
 bool Argument::hasReturnedAttr() const {
   return getParent()->getAttributes().
     hasAttribute(getArgNo()+1, Attribute::Returned);
+}
+
+/// hasZExtAttr - Return true if this argument has the zext attribute on it in
+/// its containing function.
+bool Argument::hasZExtAttr() const {
+  return getParent()->getAttributes().
+    hasAttribute(getArgNo()+1, Attribute::ZExt);
+}
+
+/// hasSExtAttr Return true if this argument has the sext attribute on it in its
+/// containing function.
+bool Argument::hasSExtAttr() const {
+  return getParent()->getAttributes().
+    hasAttribute(getArgNo()+1, Attribute::SExt);
 }
 
 /// Return true if this argument has the readonly or readnone attribute on it
@@ -734,6 +760,11 @@ Function *Intrinsic::getDeclaration(Module *M, ID id, ArrayRef<Type*> Tys) {
 #define GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 #include "llvm/IR/Intrinsics.gen"
 #undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
+
+// This defines the "Intrinsic::getIntrinsicForMSBuiltin()" method.
+#define GET_LLVM_INTRINSIC_FOR_MS_BUILTIN
+#include "llvm/IR/Intrinsics.gen"
+#undef GET_LLVM_INTRINSIC_FOR_MS_BUILTIN
 
 /// hasAddressTaken - returns true if there are any uses of this function
 /// other than direct calls or invokes to it.

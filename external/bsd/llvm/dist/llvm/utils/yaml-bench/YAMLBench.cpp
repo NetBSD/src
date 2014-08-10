@@ -21,7 +21,7 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 using namespace llvm;
 
@@ -188,17 +188,19 @@ static std::string createJSONText(size_t MemoryMB, unsigned ValueSize) {
 int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv);
   if (Input.getNumOccurrences()) {
-    std::unique_ptr<MemoryBuffer> Buf;
-    if (MemoryBuffer::getFileOrSTDIN(Input, Buf))
+    ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr =
+        MemoryBuffer::getFileOrSTDIN(Input);
+    if (!BufOrErr)
       return 1;
+    MemoryBuffer &Buf = *BufOrErr.get();
 
     llvm::SourceMgr sm;
     if (DumpTokens) {
-      yaml::dumpTokens(Buf->getBuffer(), outs());
+      yaml::dumpTokens(Buf.getBuffer(), outs());
     }
 
     if (DumpCanonical) {
-      yaml::Stream stream(Buf->getBuffer(), sm);
+      yaml::Stream stream(Buf.getBuffer(), sm);
       dumpStream(stream);
     }
   }

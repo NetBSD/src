@@ -16,6 +16,7 @@
 
 #include "llvm/Support/Debug.h"
 #include "AMDGPU.h"
+#include "AMDGPUSubtarget.h"
 #include "R600InstrInfo.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineDominators.h"
@@ -148,10 +149,11 @@ private:
 public:
   // Ctor.
   R600PacketizerList(MachineFunction &MF, MachineLoopInfo &MLI,
-                        MachineDominatorTree &MDT)
-  : VLIWPacketizerList(MF, MLI, MDT, true),
-    TII (static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo())),
-    TRI(TII->getRegisterInfo()) {
+                     MachineDominatorTree &MDT)
+      : VLIWPacketizerList(MF, MLI, MDT, true),
+        TII(static_cast<const R600InstrInfo *>(
+            MF.getSubtarget().getInstrInfo())),
+        TRI(TII->getRegisterInfo()) {
     VLIW5 = !MF.getTarget().getSubtarget<AMDGPUSubtarget>().hasCaymanISA();
   }
 
@@ -327,7 +329,7 @@ public:
 };
 
 bool R600Packetizer::runOnMachineFunction(MachineFunction &Fn) {
-  const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
+  const TargetInstrInfo *TII = Fn.getSubtarget().getInstrInfo();
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
 

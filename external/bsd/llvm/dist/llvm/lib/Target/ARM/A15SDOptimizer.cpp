@@ -34,6 +34,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <set>
 
 using namespace llvm;
@@ -321,8 +322,7 @@ unsigned A15SDOptimizer::optimizeSDPattern(MachineInstr *MI) {
       return optimizeAllLanesPattern(MI, MI->getOperand(0).getReg());
   }
 
-  assert(0 && "Unhandled update pattern!");
-  return 0;
+  llvm_unreachable("Unhandled update pattern!");
 }
 
 // Return true if this MachineInstr inserts a scalar (SPR) value into
@@ -677,8 +677,8 @@ bool A15SDOptimizer::runOnInstruction(MachineInstr *MI) {
 }
 
 bool A15SDOptimizer::runOnMachineFunction(MachineFunction &Fn) {
-  TII = static_cast<const ARMBaseInstrInfo*>(Fn.getTarget().getInstrInfo());
-  TRI = Fn.getTarget().getRegisterInfo();
+  TII = static_cast<const ARMBaseInstrInfo *>(Fn.getSubtarget().getInstrInfo());
+  TRI = Fn.getSubtarget().getRegisterInfo();
   MRI = &Fn.getRegInfo();
   bool Modified = false;
 
