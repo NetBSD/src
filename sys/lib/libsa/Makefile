@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.83 2014/06/28 09:16:18 rtr Exp $
+#	$NetBSD: Makefile,v 1.84 2014/08/10 07:40:49 isaki Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -23,7 +23,7 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 .PATH.c: ${SADIR} ${.PARSEDIR}/../../../common/lib/libc/string
 
 # stand routines
-SRCS+=	alloc.c errno.c exit.c files.c \
+SRCS+=	alloc.c atoi.c errno.c exit.c files.c \
 	getfile.c gets.c globals.c \
 	panic.c printf.c qsort.c snprintf.c strerror.c \
 	subr_prf.c twiddle.c checkpasswd.c
