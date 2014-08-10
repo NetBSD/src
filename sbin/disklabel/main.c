@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 2014/08/10 05:57:31 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.41 2014/08/10 06:48:51 apb Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.40 2014/08/10 05:57:31 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.41 2014/08/10 06:48:51 apb Exp $");
 #endif
 #endif	/* not lint */
 
@@ -258,7 +258,7 @@ static const struct disklabel_params {
 
 	{ "prep",	1, 1,   0,  8, 2, 0, BIG_ENDIAN },	/* powerpc */
 
-	{ "dreadmcast",	1, 1,   0, 16, 2, 0, LITTLE_ENDIAN },	/* sh3 */
+	{ "dreamcast",	1, 1,   0, 16, 2, 0, LITTLE_ENDIAN },	/* sh3 */
 	{ "evbarm64",	1, 1,   0, 16, 2, 0, 0 },		/* aarch64 */
 	{ "evbsh3",	1, 1,   0, 16, 2, 0, 0 },		/* sh3 */
 	{ "evbcf",	1, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* coldfire */
