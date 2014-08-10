@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.78 2014/03/26 18:02:24 christos Exp $	*/
+/*	$NetBSD: stand.h,v 1.79 2014/08/10 07:40:49 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -318,5 +318,7 @@ int	fnmatch(const char *, const char *);
 /* XXX: These should be removed eventually. */
 void	bcopy(const void *, void *, size_t);
 void	bzero(void *, size_t);
+
+int	atoi(const char *);
 
 #endif /* _LIBSA_STAND_H_ */
