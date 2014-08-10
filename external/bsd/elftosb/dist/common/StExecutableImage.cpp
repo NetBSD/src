@@ -399,7 +399,7 @@ void StExecutableImage::mergeRegions(MemoryRegion & inOldRegion, MemoryRegion & 
 //! Used when we remove a region from the region list by value. Because this
 //! operator compares the #m_data member, it will only return true for either an
 //! exact copy or a reference to the original.
-bool StExecutableImage::MemoryRegion::operator == (const MemoryRegion & other)
+bool StExecutableImage::MemoryRegion::operator == (const MemoryRegion & other) const
 {
    return (m_type == other.m_type) && (m_address == other.m_address) && (m_length == other.m_length) && (m_flags == other.m_flags) && (m_data == other.m_data);
 }
