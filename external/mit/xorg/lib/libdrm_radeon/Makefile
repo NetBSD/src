@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.5 2014/03/17 08:01:18 mrg Exp $
+#      $NetBSD: Makefile,v 1.5.2.1 2014/08/10 06:50:57 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ SRCS=	radeon_bo.c \
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 -I${X11SRCDIR.drm}
 
-COPTS.radeon_cs_gem.c+=	-Wno-error	# XXX
+CWARNFLAGS.clang+=	-Wno-pointer-sign -Wno-parentheses-equality
 
 LIBDPLIBS=	drm	${.CURDIR}/../libdrm
 

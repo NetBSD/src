@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.151 2014/04/02 01:22:11 riastradh Exp $
+#	 $NetBSD: mi,v 1.151.2.1 2014/08/10 06:48:35 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5658,6 +5658,12 @@
 ./usr/X11R7/include/fontconfig/fcfreetype.h		-unknown-	xorg
 ./usr/X11R7/include/fontconfig/fcprivate.h		-unknown-	xorg
 ./usr/X11R7/include/fontconfig/fontconfig.h		-unknown-	xorg
+./usr/X11R7/include/freetype2/config/ftconfig.h		-unknown-	xorg
+./usr/X11R7/include/freetype2/config/ftheader.h		-unknown-	xorg
+./usr/X11R7/include/freetype2/config/ftmodule.h		-unknown-	xorg
+./usr/X11R7/include/freetype2/config/ftoption.h		-unknown-	xorg
+./usr/X11R7/include/freetype2/config/ftstdlib.h		-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/config/ftconfig.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/config/ftheader.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/config/ftmodule.h	-unknown-	obsolete
@@ -5736,12 +5742,6 @@
 ./usr/X11R7/include/freetype2/freetype/tttables.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/tttags.h		-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/ttunpat.h	-unknown-	obsolete
-./usr/X11R7/include/freetype2/config/ftconfig.h		-unknown-	xorg
-./usr/X11R7/include/freetype2/config/ftheader.h		-unknown-	xorg
-./usr/X11R7/include/freetype2/config/ftmodule.h		-unknown-	xorg
-./usr/X11R7/include/freetype2/config/ftoption.h		-unknown-	xorg
-./usr/X11R7/include/freetype2/config/ftstdlib.h		-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/ftadvanc.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/ftautoh.h			-unknown-	xorg
 ./usr/X11R7/include/freetype2/ftbbox.h			-unknown-	xorg

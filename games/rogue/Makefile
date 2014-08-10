@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2013/08/11 03:44:27 dholland Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2014/08/10 06:51:12 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	rogue
@@ -12,9 +12,7 @@ HIDEGAME=hidegame
 SETGIDGAME=yes
 MAN=	rogue.6
 
-.if make(install)
 SUBDIR+=USD.doc
-.endif
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

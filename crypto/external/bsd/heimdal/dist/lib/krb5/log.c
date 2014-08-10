@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2011/04/13 18:15:35 elric Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.1.22.1 2014/08/10 06:47:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
@@ -503,7 +503,7 @@ _krb5_debug(krb5_context context,
 
     if (context == NULL || context->debug_dest == NULL)
 	return;
-	
+
     va_start(ap, fmt);
     krb5_vlog(context, context->debug_dest, level, fmt, ap);
     va_end(ap);

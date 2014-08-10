@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.powerpc64,v 1.1 2014/03/07 04:18:06 matt Exp $
+#	$NetBSD: NetBSD.dist.powerpc64,v 1.1.2.1 2014/08/10 06:49:17 tls Exp $
 
 ./lib/powerpc
 ./lib/powerpc/npf
@@ -7,7 +7,7 @@
 ./usr/lib/powerpc
 ./usr/lib/powerpc/i18n
 ./usr/lib/powerpc/lua
-./usr/lib/powerpc/lua/5.1
+./usr/lib/powerpc/lua/5.3
 ./usr/lib/powerpc/security
 ./usr/libdata/debug/lib/powerpc
 ./usr/libdata/debug/lib/powerpc/npf

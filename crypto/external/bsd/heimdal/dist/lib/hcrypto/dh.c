@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: dh.c,v 1.1.1.1.22.1 2014/08/10 06:47:29 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -541,8 +541,10 @@ i2d_DHparams(DH *dh, unsigned char **pp)
 	free_DHParameter(&data);
 	if (ret)
 	    return -1;
-	if (len != size)
+	if (len != size) {
 	    abort();
+            return -1;
+        }
 
 	memcpy(*pp, p, size);
 	free(p);

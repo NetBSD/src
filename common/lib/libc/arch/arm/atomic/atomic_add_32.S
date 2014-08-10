@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_32.S,v 1.7 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_add_32.S,v 1.7.2.1 2014/08/10 06:47:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ ATOMIC_OP_ALIAS(atomic_add_int,_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_long,_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_ptr,_atomic_add_32)
 CRT_ALIAS(__sync_fetch_and_add_4,_atomic_add_32)
+CRT_ALIAS(__atomic_fetch_add_4,_atomic_add_32)
 STRONG_ALIAS(_atomic_add_int,_atomic_add_32)
 STRONG_ALIAS(_atomic_add_long,_atomic_add_32)
 STRONG_ALIAS(_atomic_add_ptr,_atomic_add_32)
@@ -66,6 +67,7 @@ ATOMIC_OP_ALIAS(atomic_sub_int,_atomic_sub_32)
 ATOMIC_OP_ALIAS(atomic_sub_long,_atomic_sub_32)
 ATOMIC_OP_ALIAS(atomic_sub_ptr,_atomic_sub_32)
 CRT_ALIAS(__sync_fetch_and_sub_4,_atomic_sub_32)
+CRT_ALIAS(__atomic_fetch_sub_4,_atomic_sub_32)
 STRONG_ALIAS(_atomic_sub_int,_atomic_sub_32)
 STRONG_ALIAS(_atomic_sub_long,_atomic_sub_32)
 STRONG_ALIAS(_atomic_sub_ptr,_atomic_sub_32)

@@ -1,4 +1,4 @@
-#$NetBSD: md.evbmips,v 1.3 2014/01/24 01:09:59 christos Exp $
+#$NetBSD: md.evbmips,v 1.3.2.1 2014/08/10 06:48:35 tls Exp $
 ./usr/lib/64/i18n/libBIG5_g.a	comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/i18n/libDECHanyu_g.a	comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/i18n/libEUCTW_g.a	comp-c-debuglib	compat,debuglib,arch64
@@ -63,6 +63,7 @@
 ./usr/lib/64/libiberty_g.a	comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/libintl_g.a	comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/libipsec_g.a	comp-c-debuglib	compat,debuglib,arch64
+./usr/lib/64/libirs_g.a		comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/libisc_g.a		comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/libisccc_g.a	comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/libisccfg_g.a	comp-c-debuglib	compat,debuglib,arch64
@@ -202,6 +203,7 @@
 ./usr/lib/o32/libiberty_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libintl_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libipsec_g.a	comp-c-debuglib compat,debuglib,arch64
+./usr/lib/o32/libirs_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libisc_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libisccc_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libisccfg_g.a	comp-c-debuglib compat,debuglib,arch64

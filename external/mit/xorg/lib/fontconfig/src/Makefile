@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2014/03/23 20:40:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2014/08/10 06:50:57 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -125,7 +125,7 @@ PKGCONFIG=	fontconfig
 PKGCONFIG_SED_FLAGS= \
 	-e "s,@sysconfdir@,${X11ETCDIR},; \
 	    s,@localstatedir@,/var,; \
-	    s,@baseconfigdir@,/etc/fonts,; \
+	    s,@BASECONFIGDIR@,/etc/fonts,; \
 	    s,@fc_cachedir@,${FONTCONFIG_PATH},"
 
 # XXX

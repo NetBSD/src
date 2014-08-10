@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.sparc64,v 1.8 2013/11/06 00:53:03 mrg Exp $
+#	$NetBSD: NetBSD.dist.sparc64,v 1.8.2.1 2014/08/10 06:49:17 tls Exp $
 
 ./lib/sparc
 ./lib/sparc/npf
@@ -7,7 +7,7 @@
 ./usr/lib/sparc
 ./usr/lib/sparc/i18n
 ./usr/lib/sparc/lua
-./usr/lib/sparc/lua/5.1
+./usr/lib/sparc/lua/5.3
 ./usr/lib/sparc/security
 ./usr/libdata/debug/lib/sparc
 ./usr/libdata/debug/lib/sparc/npf

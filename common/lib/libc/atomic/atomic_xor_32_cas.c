@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor_32_cas.c,v 1.1 2014/02/21 10:52:50 martin Exp $	*/
+/*	$NetBSD: atomic_xor_32_cas.c,v 1.1.2.1 2014/08/10 06:47:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,3 +59,5 @@ xor_and_fetch_4(volatile uint32_t *addr, uint32_t val, ...)
 	} while (atomic_cas_32(addr, old, new) != old);
 	return new;
 }
+
+__strong_alias(__atomic_fetch_xor_4,__sync_fetch_and_xor_4)

@@ -1,4 +1,9 @@
-/* $NetBSD: explicit_memset.c,v 1.3 2013/08/28 17:47:07 riastradh Exp $ */
+/* $NetBSD: explicit_memset.c,v 1.3.2.1 2014/08/10 06:47:06 tls Exp $ */
+
+/*
+ * Written by Matthias Drochner <drochner@NetBSD.org>.
+ * Public domain.
+ */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include "namespace.h"

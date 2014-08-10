@@ -1,4 +1,4 @@
-/*	$NetBSD: copy_ccache.c,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $	*/
+/*	$NetBSD: copy_ccache.c,v 1.1.1.1.22.1 2014/08/10 06:47:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2001, 2003 Kungliga Tekniska Högskolan
@@ -102,7 +102,7 @@ _gsskrb5_krb5_import_cred(OM_uint32 *minor_status,
 	    *minor_status = kret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	if (keytab_principal) {
 	    krb5_boolean match;
 

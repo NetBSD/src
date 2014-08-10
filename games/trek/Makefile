@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2011/08/16 11:28:18 christos Exp $
+#	$NetBSD: Makefile,v 1.14.18.1 2014/08/10 06:51:17 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	trek
@@ -15,9 +15,7 @@ DPADD=	${LIBM}
 LDADD=	-lm
 HIDEGAME=hidegame
 
-.if make(install)
 SUBDIR+=USD.doc
-.endif
 
 COPTS.getpar.c += -Wno-format-nonliteral
 

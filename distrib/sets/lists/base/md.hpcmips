@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.10 2008/11/29 17:57:33 tsutsui Exp $
+# $NetBSD: md.hpcmips,v 1.10.26.1 2014/08/10 06:48:34 tls Exp $
 ./usr/sbin/apm					base-sysutil-bin
 ./usr/sbin/apmd					base-sysutil-bin
 ./usr/sbin/tpctl				base-sysutil-bin

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_64.S,v 1.8 2014/03/04 16:15:28 matt Exp $	*/
+/*	$NetBSD: atomic_swap_64.S,v 1.8.2.1 2014/08/10 06:47:05 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -51,6 +51,7 @@ ENTRY_NP(_atomic_swap_64)
 END(_atomic_swap_64)
 ATOMIC_OP_ALIAS(atomic_swap_64,_atomic_swap_64)
 CRT_ALIAS(__sync_lock_test_and_set_8,_atomic_swap_64)
+CRT_ALIAS(__atomic_exchange_8,_atomic_swap_64)
 
 #if (!defined(_KERNEL) || defined(_RUMPKERNEL)) && !defined(_STANDALONE)
 ENTRY_NP(__sync_lock_release_8)

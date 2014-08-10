@@ -147,6 +147,20 @@ static mntopts_t zfs_mntopts = {
 	mntopts
 };
 
+static bool
+zfs_sync_selector(void *cl, struct vnode *vp)
+{
+	znode_t *zp;
+
+	/*
+	 * Skip the vnode/inode if inaccessible, or if the
+	 * atime is clean.
+	 */
+	zp = VTOZ(vp);
+	return zp != NULL && vp->v_type != VNON && zp->z_atime_dirty != 0
+	    && !zp->z_unlinked;
+}
+
 /*ARGSUSED*/
 int
 zfs_sync(vfs_t *vfsp, int flag, cred_t *cr)
@@ -174,22 +188,14 @@ zfs_sync(vfs_t *vfsp, int flag, cred_t *cr)
 	 * BSD VFS, so we do it in batch here.
 	 */
 	vfs_vnode_iterator_init(vfsp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
+	while ((vp = vfs_vnode_iterator_next(marker, zfs_sync_selector, NULL)))
+	{
 		error = vn_lock(vp, LK_EXCLUSIVE);
 		if (error) {
 			vrele(vp);
 			continue;
 		}
-		/*
-		 * Skip the vnode/inode if inaccessible, or if the
-		 * atime is clean.
-		 */
 		zp = VTOZ(vp);
-		if (zp == NULL || vp->v_type == VNON ||
-		   zp->z_atime_dirty == 0 || zp->z_unlinked) {
-			vput(vp);
-			continue;
-		}
 		tx = dmu_tx_create(zfsvfs->z_os);
 		dmu_tx_hold_bonus(tx, zp->z_id);
 		error = dmu_tx_assign(tx, TXG_WAIT);
@@ -1596,6 +1602,9 @@ zfs_mount(vfs_t *vfsp, const char *path, void *data, size_t *data_len)
 	if (mvp->v_type != VDIR)
 		return (ENOTDIR);
 
+	if (uap == NULL)
+		return (EINVAL);
+
 	mutex_enter(mvp->v_interlock);
 	if ((uap->flags & MS_REMOUNT) == 0 &&
 	    (uap->flags & MS_OVERLAY) == 0 &&
@@ -1959,6 +1968,9 @@ zfs_umount(vfs_t *vfsp, int fflag)
 		}
 	}
 #endif
+	ret = vflush(vfsp, NULL, (ISSET(fflag, MS_FORCE)? FORCECLOSE : 0));
+	if (ret != 0)
+		return ret;
 	vfsp->vfs_flag |= VFS_UNMOUNTED;
 
 	VERIFY(zfsvfs_teardown(zfsvfs, B_TRUE) == 0);
@@ -1988,13 +2000,6 @@ zfs_umount(vfs_t *vfsp, int fflag)
 	if (zfsvfs->z_ctldir != NULL)
 		zfsctl_destroy(zfsvfs);
 
-	if (fflag & MS_FORCE)
-		flags |= FORCECLOSE;
-	
-	ret = vflush(vfsp, NULL, 0);
-	if (ret != 0)
-		return ret;
-	
 	return (0);
 }
 

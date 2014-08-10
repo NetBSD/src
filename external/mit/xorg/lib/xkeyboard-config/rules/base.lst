@@ -311,6 +311,7 @@
   qwerty          ara: Arabic (qwerty)
   qwerty_digits   ara: Arabic (qwerty/digits)
   buckwalter      ara: Arabic (Buckwalter)
+  plisi-d1        al: Albanian (Plisi D1)
   phonetic        am: Armenian (phonetic)
   phonetic-alt    am: Armenian (alternative phonetic)
   eastern         am: Armenian (eastern)
@@ -344,7 +345,7 @@
   kan-kagapa      in: Kannada (KaGaPa phonetic)
   mal             in: Malayalam
   mal_lalitha     in: Malayalam (Lalitha)
-  mal_enhanced    in: Malayalam (enhanced Inscript with Rupee Sign)
+  mal_enhanced    in: Malayalam (enhanced Inscript, with rupee sign)
   ori             in: Oriya
   tam_unicode     in: Tamil (Unicode)
   tam_keyboard_with_numerals in: Tamil (keyboard with numerals)
@@ -361,9 +362,9 @@
   hin-kagapa      in: Hindi (KaGaPa phonetic)
   san-kagapa      in: Sanskrit (KaGaPa phonetic)
   mar-kagapa      in: Marathi (KaGaPa phonetic)
-  eng             in: English (India, with RupeeSign)
-  alternatequotes ba: Bosnian (use guillemets for quotes)
-  unicode         ba: Bosnian (use Bosnian digraphs)
+  eng             in: English (India, with rupee sign)
+  alternatequotes ba: Bosnian (with guillemets for quotes)
+  unicode         ba: Bosnian (with Bosnian digraphs)
   unicodeus       ba: Bosnian (US keyboard with Bosnian digraphs)
   us              ba: Bosnian (US keyboard with Bosnian letters)
   nodeadkeys      br: Portuguese (Brazil, eliminate dead keys)
@@ -394,8 +395,8 @@
   tib             cn: Tibetan
   tib_asciinum    cn: Tibetan (with ASCII numerals)
   ug              cn: Uyghur
-  alternatequotes hr: Croatian (use guillemets for quotes)
-  unicode         hr: Croatian (use Croatian digraphs)
+  alternatequotes hr: Croatian (with guillemets for quotes)
+  unicode         hr: Croatian (with Croatian digraphs)
   unicodeus       hr: Croatian (US keyboard with Croatian digraphs)
   us              hr: Croatian (US keyboard with Croatian letters)
   bksl            cz: Czech (with &lt;\|&gt; key)
@@ -404,6 +405,7 @@
   ucw             cz: Czech (UCW layout, accented letters only)
   dvorak-ucw      cz: Czech (US Dvorak with CZ UCW support)
   nodeadkeys      dk: Danish (eliminate dead keys)
+  winkeys         dk: Danish (Winkeys)
   mac             dk: Danish (Macintosh)
   mac_nodeadkeys  dk: Danish (Macintosh, eliminate dead keys)
   dvorak          dk: Danish (Dvorak)
@@ -413,7 +415,7 @@
   nodeadkeys      ee: Estonian (eliminate dead keys)
   dvorak          ee: Estonian (Dvorak)
   us              ee: Estonian (US keyboard with Estonian letters)
-  pes_keypad      ir: Persian (with Persian Keypad)
+  pes_keypad      ir: Persian (with Persian keypad)
   ku              ir: Kurdish (Iran, Latin Q)
   ku_f            ir: Kurdish (Iran, F)
   ku_alt          ir: Kurdish (Iran, Latin Alt-Q)
@@ -425,6 +427,7 @@
   nodeadkeys      fo: Faroese (eliminate dead keys)
   classic         fi: Finnish (classic)
   nodeadkeys      fi: Finnish (classic, eliminate dead keys)
+  winkeys         fi: Finnish (Winkeys)
   smi             fi: Northern Saami (Finland)
   mac             fi: Finnish (Macintosh)
   nodeadkeys      fr: French (eliminate dead keys)
@@ -469,6 +472,7 @@
   dsb             de: Lower Sorbian
   dsb_qwertz      de: Lower Sorbian (qwertz)
   qwerty          de: German (qwerty)
+  tr              de: Turkish (Germany)
   ru              de: Russian (Germany, phonetic)
   legacy          de: German (legacy)
   simple          gr: Greek (simple)
@@ -502,6 +506,7 @@
   phonetic        il: Hebrew (phonetic)
   biblical        il: Hebrew (Biblical, Tiro)
   nodeadkeys      it: Italian (eliminate dead keys)
+  winkeys         it: Italian (Winkeys)
   mac             it: Italian (Macintosh)
   us              it: Italian (US keyboard with Italian letters)
   geo             it: Georgian (Italy)
@@ -530,7 +535,7 @@
   ergonomic       lv: Latvian (ergonomic, ŪGJRMV)
   adapted         lv: Latvian (adapted)
   cyrillic        me: Montenegrin (Cyrillic)
-  cyrillicyz      me: Montenegrin (Cyrillic, Z and ZHE swapped)
+  cyrillicyz      me: Montenegrin (Cyrillic, ZE and ZHE swapped)
   latinunicode    me: Montenegrin (Latin Unicode)
   latinyz         me: Montenegrin (Latin qwerty)
   latinunicodeyz  me: Montenegrin (Latin Unicode qwerty)
@@ -539,6 +544,7 @@
   nodeadkeys      mk: Macedonian (eliminate dead keys)
   us              mt: Maltese (with US layout)
   nodeadkeys      no: Norwegian (eliminate dead keys)
+  winkeys         no: Norwegian (Winkeys)
   dvorak          no: Norwegian (Dvorak)
   smi             no: Northern Saami (Norway)
   smi_nodeadkeys  no: Northern Saami (Norway, eliminate dead keys)
@@ -585,7 +591,7 @@
   srp             ru: Serbian (Russia)
   bak             ru: Bashkirian
   chm             ru: Mari
-  yz              rs: Serbian (Cyrillic, Z and ZHE swapped)
+  yz              rs: Serbian (Cyrillic, ZE and ZHE swapped)
   latin           rs: Serbian (Latin)
   latinunicode    rs: Serbian (Latin Unicode)
   latinyz         rs: Serbian (Latin qwerty)
@@ -593,12 +599,13 @@
   alternatequotes rs: Serbian (Cyrillic with guillemets)
   latinalternatequotes rs: Serbian (Latin with guillemets)
   rue             rs: Pannonian Rusyn
-  alternatequotes si: Slovenian (use guillemets for quotes)
+  alternatequotes si: Slovenian (with guillemets for quotes)
   us              si: Slovenian (US keyboard with Slovenian letters)
   bksl            sk: Slovak (extended Backslash)
   qwerty          sk: Slovak (qwerty)
   qwerty_bksl     sk: Slovak (qwerty, extended Backslash)
   nodeadkeys      es: Spanish (eliminate dead keys)
+  winkeys         es: Spanish (Winkeys)
   deadtilde       es: Spanish (include dead tilde)
   sundeadkeys     es: Spanish (Sun dead keys)
   dvorak          es: Spanish (Dvorak)
@@ -718,6 +725,7 @@
   grp:alt_space_toggle Alt+Space
   grp:menu_toggle      Menu
   grp:lwin_toggle      Left Win
+  grp:win_space_toggle Win Key+Space
   grp:rwin_toggle      Right Win
   grp:lshift_toggle    Left Shift
   grp:rshift_toggle    Right Shift
@@ -800,7 +808,7 @@
   altwin:ctrl_alt_win  Ctrl is mapped to Alt keys, Alt is mapped to Win keys
   altwin:meta_win      Meta is mapped to Win keys
   altwin:left_meta_win Meta is mapped to Left Win
-  altwin:hyper_win     Hyper is mapped to Win-keys
+  altwin:hyper_win     Hyper is mapped to Win keys
   altwin:alt_super_win Alt is mapped to Right Win, Super to Menu
   altwin:swap_alt_win  Alt is swapped with Win
   Compose key          Position of Compose key
@@ -836,7 +844,7 @@
   shift:both_shiftlock Both Shift keys together toggle ShiftLock
   keypad:pointerkeys   Shift + NumLock toggles PointerKeys
   grab:break_actions   Allow breaking grabs with keyboard actions (warning: security risk)
-  grab:debug_actions   Allow grab and window tree logging
+  grab:debug           Allow grab and window tree logging
   currencysign         Adding currency signs to certain keys
   eurosign:e           Euro on E
   eurosign:2           Euro on 2

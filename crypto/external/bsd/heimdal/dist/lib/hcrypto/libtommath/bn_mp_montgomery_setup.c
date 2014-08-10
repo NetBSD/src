@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_montgomery_setup.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_montgomery_setup.c,v 1.1.1.1.22.1 2014/08/10 06:47:29 tls Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_MONTGOMERY_SETUP_C
@@ -56,6 +56,6 @@ mp_montgomery_setup (mp_int * n, mp_digit * rho)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_montgomery_setup.c,v */
-/* Revision: 1.5 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_montgomery_setup.c,v  */
+/* Revision: 1.5  */
+/* Date: 2006/12/28 01:25:13  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor_32.S,v 1.2 2014/03/04 16:15:28 matt Exp $	*/
+/*	$NetBSD: atomic_xor_32.S,v 1.2.2.1 2014/08/10 06:47:05 tls Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -51,6 +51,7 @@ ATOMIC_OP_ALIAS(atomic_xor_32,_atomic_xor_32)
 ATOMIC_OP_ALIAS(atomic_xor_uint,_atomic_xor_32)
 ATOMIC_OP_ALIAS(atomic_xor_ulong,_atomic_xor_32)
 CRT_ALIAS(__sync_fetch_and_xor_4,_atomic_xor_32)
+CRT_ALIAS(__atomic_fetch_xor_4,_atomic_xor_32)
 STRONG_ALIAS(_atomic_xor_uint,_atomic_xor_32)
 STRONG_ALIAS(_atomic_xor_ulong,_atomic_xor_32)
 

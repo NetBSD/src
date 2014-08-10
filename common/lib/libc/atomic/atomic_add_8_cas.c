@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_8_cas.c,v 1.2 2014/02/21 15:51:07 martin Exp $	*/
+/*	$NetBSD: atomic_add_8_cas.c,v 1.2.2.1 2014/08/10 06:47:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -61,3 +61,5 @@ add_and_fetch_1(volatile uint8_t *addr, uint8_t val, ...)
 	} while (atomic_cas_8(addr, old, new) != old);
 	return new;
 }
+
+__strong_alias(__atomic_fetch_add_1,__sync_fetch_and_add_1)

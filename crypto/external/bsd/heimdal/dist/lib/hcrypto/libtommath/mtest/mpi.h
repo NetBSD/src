@@ -1,4 +1,4 @@
-/*	$NetBSD: mpi.h,v 1.1.1.2 2011/04/14 14:08:52 elric Exp $	*/
+/*	$NetBSD: mpi.h,v 1.1.1.2.22.1 2014/08/10 06:47:29 tls Exp $	*/
 
 /*
     mpi.h
@@ -228,6 +228,6 @@ const  char  *mp_strerror(mp_err ec);
 
 #endif /* end _H_MPI_ */
 
-/* Source: /cvs/libtom/libtommath/mtest/mpi.h,v */
-/* Revision: 1.2 */
-/* Date: 2005/05/05 14:38:47 */
+/* Source: /cvs/libtom/libtommath/mtest/mpi.h,v  */
+/* Revision: 1.2  */
+/* Date: 2005/05/05 14:38:47  */

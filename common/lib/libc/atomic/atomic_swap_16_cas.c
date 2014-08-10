@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_16_cas.c,v 1.2 2014/02/21 15:51:07 martin Exp $	*/
+/*	$NetBSD: atomic_swap_16_cas.c,v 1.2.2.1 2014/08/10 06:47:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -48,3 +48,5 @@ atomic_swap_16(volatile uint16_t *addr, uint16_t new)
 
 	return old;
 }
+
+crt_alias(__atomic_exchange_2,__sync_lock_test_and_set_2)

@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.6 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: ad.powerpc,v 1.6.2.1 2014/08/10 06:48:35 tls Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasn1_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
@@ -43,6 +43,7 @@
 ./usr/lib/powerpc/libhx509_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
 ./usr/lib/powerpc/libintl_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libipsec_g.a			comp-c-debuglib		compat,arch64,debuglib
+./usr/lib/powerpc/libirs_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libisc_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libisccc_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libisccfg_g.a			comp-c-debuglib		compat,arch64,debuglib
@@ -113,13 +114,13 @@
 ./usr/lib/powerpc/libwrap_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/liby_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libz_g.a			comp-c-debuglib		compat,arch64,debuglib
-./usr/libdata/debug/usr/bin/elf2aout.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/psim.debug		comp-debug-debug	debug,gdb
 ./usr/libdata/debug/lib/powerpc/npf/ext_log.so.0.0.debug	comp-npf-debug		compat,arch64,debug
 ./usr/libdata/debug/lib/powerpc/npf/ext_normalize.so.0.0.debug	comp-npf-debug		compat,arch64,debug
 ./usr/libdata/debug/lib/powerpc/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		compat,arch64,debug
 ./usr/libdata/debug/libexec/ld.elf_so-powerpc.debug	comp-sys-debug		compat,arch64,debug
+./usr/libdata/debug/usr/bin/elf2aout.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/psim.debug		comp-debug-debug	debug,gdb
 ./usr/libdata/debug/usr/lib/powerpc/i18n/libBIG5.so.5.0.debug		comp-i18n-shlib		compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/i18n/libDECHanyu.so.5.0.debug		comp-i18n-shlib		compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/i18n/libEUC.so.5.0.debug		comp-i18n-shlib		compat,arch64,debug,pic
@@ -153,7 +154,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libbluetooth.so.4.2.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libbsdmalloc.so.0.0.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libbz2.so.1.1.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libc.so.12.190.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libc.so.12.193.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libcom_err.so.7.0.debug	comp-compat-shlib	compat,arch64,debug,pic,kerberos
 ./usr/libdata/debug/usr/lib/powerpc/libcrypt.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libcrypto.so.8.2.debug		comp-compat-shlib	compat,arch64,debug,pic,crypto
@@ -187,7 +188,9 @@
 ./usr/libdata/debug/usr/lib/powerpc/libipsec.so.3.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libisc.so.8.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libisccc.so.8.0.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libisccfg.so.8.0.debug		comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libisccfg.so.8.0.debug		comp-compat-shlib	compat,arch64,debug,pic,obsolete
+./usr/libdata/debug/usr/lib/powerpc/libisccfg.so.8.1.debug		comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libirs.so.8.0.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libiscsi.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic,iscsi
 ./usr/libdata/debug/usr/lib/powerpc/libisns.so.0.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libkadm5clnt.so.13.0.debug	 comp-compat-shlib	 compat,arch64,debug,pic,kerberos
@@ -196,10 +199,10 @@
 ./usr/libdata/debug/usr/lib/powerpc/libkdc.so.2.0.debug	comp-compat-shlib	compat,arch64,debug,pic,kerberos
 ./usr/libdata/debug/usr/lib/powerpc/libkrb5.so.26.0.debug		 comp-compat-shlib	 compat,arch64,debug,pic,kerberos
 ./usr/libdata/debug/usr/lib/powerpc/libkvm.so.6.0.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/liblber.so.3.2.debug			comp-compat-shlib	compat,arch64,debug,pic,ldap
-./usr/libdata/debug/usr/lib/powerpc/libldap.so.4.2.debug			comp-compat-shlib	compat,arch64,debug,pic,ldap
-./usr/libdata/debug/usr/lib/powerpc/libldap_r.so.4.2.debug		comp-compat-shlib	compat,arch64,debug,pic,ldap
-./usr/libdata/debug/usr/lib/powerpc/liblua.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/liblber.so.3.3.debug			comp-compat-shlib	compat,arch64,debug,pic,ldap
+./usr/libdata/debug/usr/lib/powerpc/libldap.so.4.3.debug			comp-compat-shlib	compat,arch64,debug,pic,ldap
+./usr/libdata/debug/usr/lib/powerpc/libldap_r.so.4.3.debug		comp-compat-shlib	compat,arch64,debug,pic,ldap
+./usr/libdata/debug/usr/lib/powerpc/liblua.so.5.3.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/liblutok.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic,kyua
 ./usr/libdata/debug/usr/lib/powerpc/liblwres.so.8.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/liblzf.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic
@@ -215,11 +218,11 @@
 ./usr/libdata/debug/usr/lib/powerpc/libobjc.so.3.0.debug			comp-compat-shlib	gcc=45,compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libobjc.so.4.0.debug			comp-compat-shlib	gcc=48,compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libopcodes.so.6.0.debug		comp-compat-shlib	compat,arch64,debug,pic,binutils
-./usr/libdata/debug/usr/lib/powerpc/libossaudio.so.1.0.debug		comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libossaudio.so.1.1.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libp2k.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic,rump
 ./usr/libdata/debug/usr/lib/powerpc/libpam.so.4.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libpcap.so.5.0.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libpci.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libpci.so.2.1.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libperfuse.so.0.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libposix.so.0.1.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libppath.so.0.0.debug	comp-compat-shlib	compat,arch64,debug,pic

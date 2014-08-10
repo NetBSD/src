@@ -1,4 +1,4 @@
-/*	$NetBSD: display_name.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: display_name.c,v 1.1.1.1.22.1 2014/08/10 06:47:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -52,7 +52,7 @@ _gss_ntlm_display_name
 	ntlm_name n = (ntlm_name)input_name;
 	char *str = NULL;
 	int len;
-	
+
 	output_name_buffer->length = 0;
 	output_name_buffer->value = NULL;
 

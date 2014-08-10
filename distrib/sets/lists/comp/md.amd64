@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.217 2014/03/29 20:22:16 adam Exp $
+# $NetBSD: md.amd64,v 1.217.2.1 2014/08/10 06:48:34 tls Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -58,7 +58,8 @@
 ./usr/include/amd64/segments.h			comp-c-include
 ./usr/include/amd64/setjmp.h			comp-c-include
 ./usr/include/amd64/signal.h			comp-c-include
-./usr/include/amd64/sljitarch.h			comp-c-include
+./usr/include/amd64/sljitarch.h			comp-obsolete		obsolete
+./usr/include/amd64/sljit_machdep.h		comp-c-include
 ./usr/include/amd64/specialreg.h		comp-c-include
 ./usr/include/amd64/stdarg.h			comp-obsolete		obsolete
 ./usr/include/amd64/sysarch.h			comp-c-include
@@ -69,79 +70,6 @@
 ./usr/include/amd64/varargs.h			comp-obsolete		obsolete
 ./usr/include/amd64/vmparam.h			comp-c-include
 ./usr/include/amd64/wchar_limits.h		comp-c-include
-./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/bmiintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/emmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/fma4intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/immintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/lzcntintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/mm3dnow.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/mm_malloc.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/mmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/nmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/pmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/popcntintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/smmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/tmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/wmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/x86intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.0/xmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/__wmmintrin_aes.h	comp-obsolete		obsolete
-./usr/include/clang-3.2/__wmmintrin_pclmul.h	comp-obsolete		obsolete
-./usr/include/clang-3.2/ammintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/avx2intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/avxintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/bmi2intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/bmiintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/emmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/f16cintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/fma4intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/fmaintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/immintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/lzcntintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/mm3dnow.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/mm_malloc.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/mmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/nmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/pmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/popcntintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/rtmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/smmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/tmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/wmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/x86intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/xmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/xopintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/__wmmintrin_aes.h	comp-obsolete		obsolete
-./usr/include/clang-3.3/__wmmintrin_pclmul.h	comp-obsolete		obsolete
-./usr/include/clang-3.3/ammintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/avx2intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/avxintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/bmi2intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/bmiintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/emmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/f16cintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/fma4intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/fmaintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/immintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/lzcntintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/mm3dnow.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/mm_malloc.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/mmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/nmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/pmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/popcntintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/prfchwintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/rdseedintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/rtmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/smmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/tmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/wmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/x86intrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/xmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/xopintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -183,6 +111,7 @@
 ./usr/include/clang-3.5/f16cintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/fma4intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/fmaintrin.h		comp-c-include		llvm
+./usr/include/clang-3.5/ia32intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/immintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/lzcntintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/mm3dnow.h		comp-c-include		llvm
@@ -203,9 +132,9 @@
 ./usr/include/clang-3.5/xmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/xopintrin.h		comp-c-include		llvm
 ./usr/include/emmintrin.h			comp-obsolete		obsolete
-./usr/include/g++/bits/i386			comp-c-include		gcccmds,compat
+./usr/include/g++/bits/i386			comp-c-include		compat
 ./usr/include/g++/bits/i386/c++config.h		comp-c-include		gcccmds,gcc=48,compat
-./usr/include/g++/bits/x86_64			comp-c-include		gcccmds,compat
+./usr/include/g++/bits/x86_64			comp-c-include		compat
 ./usr/include/g++/bits/x86_64/c++config.h	comp-c-include		gcccmds,gcc=48,compat
 ./usr/include/gcc-4.1/emmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/emmintrin.h		comp-obsolete		gcc=45,obsolete
@@ -284,7 +213,6 @@
 ./usr/include/gcc-4.8/xsaveintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/xsaveoptintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/xtestintrin.h		comp-c-include		gcccmds,gcc=48
-
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/ansi.h			comp-c-include
 ./usr/include/i386/aout_machdep.h		comp-c-include
@@ -343,7 +271,8 @@
 ./usr/include/i386/segments.h			comp-c-include
 ./usr/include/i386/setjmp.h			comp-c-include
 ./usr/include/i386/signal.h			comp-c-include
-./usr/include/i386/sljitarch.h			comp-c-include
+./usr/include/i386/sljitarch.h			comp-obsolete		obsolete
+./usr/include/i386/sljit_machdep.h		comp-c-include
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
 ./usr/include/i386/stdarg.h			comp-obsolete		obsolete
@@ -717,12 +646,12 @@
 ./usr/lib/i386/libgnumalloc_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libgnumalloc_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/i386/libgomp.a			comp-sys-shlib		compat,gcc=45
-./usr/lib/i386/libgomp.so			comp-sys-shlib		compat,pic,gcc=45
-./usr/lib/i386/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
-./usr/lib/i386/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,picinstall
 ./usr/lib/i386/libgomp.a			comp-sys-shlib		compat,gcc=48
+./usr/lib/i386/libgomp.so			comp-sys-shlib		compat,pic,gcc=45
 ./usr/lib/i386/libgomp.so			comp-sys-shlib		compat,pic,gcc=48
+./usr/lib/i386/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
 ./usr/lib/i386/libgomp_p.a			comp-c-proflib		compat,profile,gcc=48
+./usr/lib/i386/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,picinstall
 ./usr/lib/i386/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=48,picinstall
 ./usr/lib/i386/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/i386/libgssapi.so			comp-sys-shlib		compat,pic,kerberos
@@ -759,6 +688,10 @@
 ./usr/lib/i386/libipsec.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libipsec_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libipsec_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/i386/libirs.a				comp-c-lib		compat
+./usr/lib/i386/libirs.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libirs_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libirs_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/i386/libisc.a				comp-c-lib		compat
 ./usr/lib/i386/libisc.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libisc_p.a			comp-c-proflib		compat,profile

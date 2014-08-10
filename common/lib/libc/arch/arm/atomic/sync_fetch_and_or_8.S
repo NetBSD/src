@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_fetch_and_or_8.S,v 1.2 2013/11/30 21:09:11 joerg Exp $	*/
+/*	$NetBSD: sync_fetch_and_or_8.S,v 1.2.2.1 2014/08/10 06:47:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -54,5 +54,7 @@ ENTRY_NP(__sync_fetch_and_or_8)
 	pop	{r4-r7}
 	RET				/* return old value */
 END(__sync_fetch_and_or_8)
+
+CRT_ALIAS(__atomic_fetch_or_8,__sync_fetch_and_or_8)
 
 #endif /* _ARM_ARCH_6 */

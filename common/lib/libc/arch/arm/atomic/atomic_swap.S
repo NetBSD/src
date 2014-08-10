@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.10 2014/03/04 16:15:28 matt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.10.2.1 2014/08/10 06:47:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ulong,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ptr,_atomic_swap_32)
 CRT_ALIAS(__sync_lock_test_and_set_4,_atomic_swap_32)
+CRT_ALIAS(__atomic_exchange_4,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_ulong,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_32)
@@ -115,6 +116,7 @@ ATOMIC_OP_ALIAS(atomic_swap_8,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_char,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_uchar,_atomic_swap_8)
 CRT_ALIAS(__sync_lock_test_and_set_1,_atomic_swap_8)
+CRT_ALIAS(__atomic_exchange_1,_atomic_swap_8)
 STRONG_ALIAS(_atomic_swap_char,_atomic_swap_8)
 STRONG_ALIAS(_atomic_swap_uchar,_atomic_swap_8)
 

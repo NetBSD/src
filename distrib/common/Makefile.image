@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.33 2014/01/27 08:18:07 apb Exp $
+#	$NetBSD: Makefile.image,v 1.33.2.1 2014/08/10 06:47:57 tls Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -38,6 +38,7 @@ WORKBUILT?=	work.built
 
 PARSELISTENV+=	TARGETDIR=${.OBJDIR}/${WORKDIR:Q}
 
+GZIP_FLAGS= -9 ${GZIP_N_FLAG}
 
 .if !target(${WORKBUILT})					# {
 ${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
@@ -103,7 +104,7 @@ fsimage: ${IMAGE}
 ${IMAGE}.gz: ${IMAGE}
 	${_MKTARGET_CREATE}
 	-rm -f ${.TARGET}
-	${TOOL_GZIP} -9nc ${.ALLSRC} > ${.TARGET}
+	${TOOL_GZIP} ${GZIP_FLAGS} -c ${.ALLSRC} > ${.TARGET}
 
 realall: ${IMAGE}
 
@@ -121,7 +122,9 @@ CLEANFILES+=	${IMAGE} ${IMAGE}.gz ${IMAGE}.tmp
 ${IMAGETAR}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	${_MKTARGET_CREATE}
 	( cd ${WORKDIR}; \
-	  GZIP=-9n ${TOOL_PAX} -ON ${NETBSDSRCDIR}/etc -wdzM <${.OBJDIR}/${WORKSPEC} \
+	  GZIP=${GZIP_FLAGS:Q} \
+	  ${TOOL_PAX} --use-compress-program=${TOOL_GZIP:Q} \
+	      -ON ${NETBSDSRCDIR}/etc -wdM <${.OBJDIR}/${WORKSPEC} \
 	) > ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
 

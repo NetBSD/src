@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_32.S,v 1.7 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_and_32.S,v 1.7.2.1 2014/08/10 06:47:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@ ATOMIC_OP_ALIAS(atomic_and_32,_atomic_and_32)
 ATOMIC_OP_ALIAS(atomic_and_uint,_atomic_and_32)
 ATOMIC_OP_ALIAS(atomic_and_ulong,_atomic_and_32)
 CRT_ALIAS(__sync_fetch_and_and_4,_atomic_and_32)
+CRT_ALIAS(__atomic_fetch_and_4,_atomic_and_32)
 STRONG_ALIAS(_atomic_and_uint,_atomic_and_32)
 STRONG_ALIAS(_atomic_and_ulong,_atomic_and_32)
 

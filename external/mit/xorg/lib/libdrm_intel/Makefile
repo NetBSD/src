@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.8 2014/03/17 08:01:18 mrg Exp $
+#      $NetBSD: Makefile,v 1.8.2.1 2014/08/10 06:50:57 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 -I${X11SRCDIR.drm}
 
 LIBDPLIBS=	drm	${.CURDIR}/../libdrm
+LIBDPLIBS+=	pciaccess	${.CURDIR}/../libpciaccess
 
 PKGCONFIG=	libdrm_intel
 PKGDIST=	drm

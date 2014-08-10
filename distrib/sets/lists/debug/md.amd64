@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.50 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: md.amd64,v 1.50.2.1 2014/08/10 06:48:35 tls Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -74,6 +74,7 @@
 ./usr/lib/i386/libiberty_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libintl_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libipsec_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/i386/libirs_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libisc_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libisccc_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libisccfg_g.a			comp-c-debuglib		compat,debuglib
@@ -198,8 +199,8 @@
 ./usr/libdata/debug/usr/lib/i386/libbluetooth.so.4.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbsdmalloc.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbz2.so.1.1.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libc.so.12.190.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libc++.so.1.0.debug	comp-compat-shlib	compat,pic,debug,libcxx
+./usr/libdata/debug/usr/lib/i386/libc.so.12.193.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libcrypt.so.1.0.debug	comp-compat-shlib	compat,pic,debug
@@ -237,12 +238,14 @@
 ./usr/libdata/debug/usr/lib/i386/libi386.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libintl.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libipsec.so.3.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libirs.so.8.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libisc.so.6.0.debug	comp-compat-shlib	compat,pic,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libisc.so.8.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libisccc.so.6.0.debug	comp-compat-shlib	compat,pic,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libisccc.so.8.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libisccfg.so.6.0.debug	comp-compat-shlib	compat,pic,debug,obsolete
-./usr/libdata/debug/usr/lib/i386/libisccfg.so.8.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libisccfg.so.8.0.debug	comp-compat-shlib	compat,pic,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libisccfg.so.8.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libiscsi.so.2.0.debug	comp-compat-shlib	compat,pic,debug,iscsi
 ./usr/libdata/debug/usr/lib/i386/libisns.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libkadm5clnt.so.12.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
@@ -255,10 +258,10 @@
 ./usr/libdata/debug/usr/lib/i386/libkrb5.so.24.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libkrb5.so.26.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libkvm.so.6.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/liblber.so.3.2.debug	comp-compat-shlib	compat,pic,ldap,debug
-./usr/libdata/debug/usr/lib/i386/libldap.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
-./usr/libdata/debug/usr/lib/i386/libldap_r.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
-./usr/libdata/debug/usr/lib/i386/liblua.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/liblber.so.3.3.debug	comp-compat-shlib	compat,pic,ldap,debug
+./usr/libdata/debug/usr/lib/i386/libldap.so.4.3.debug	comp-compat-shlib	compat,pic,ldap,debug
+./usr/libdata/debug/usr/lib/i386/libldap_r.so.4.3.debug	comp-compat-shlib	compat,pic,ldap,debug
+./usr/libdata/debug/usr/lib/i386/liblua.so.5.3.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblutok.so.1.0.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/i386/liblutok.so.2.0.debug	comp-compat-shlib	compat,pic,debug,kyua
 ./usr/libdata/debug/usr/lib/i386/liblwres.so.6.0.debug	comp-compat-shlib	compat,pic,debug,obsolete
@@ -278,11 +281,11 @@
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	comp-compat-shlib	gcc=45,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.4.0.debug	comp-compat-shlib	gcc=48,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libopcodes.so.6.0.debug	comp-compat-shlib	compat,pic,binutils,debug
-./usr/libdata/debug/usr/lib/i386/libossaudio.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libossaudio.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libp2k.so.2.0.debug	comp-compat-shlib	compat,pic,debug,rump
 ./usr/libdata/debug/usr/lib/i386/libpam.so.4.0.debug	comp-compat-shlib	compat,pic,pam,debug
 ./usr/libdata/debug/usr/lib/i386/libpcap.so.5.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libpci.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libpci.so.2.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libposix.so.0.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libppath.so.0.0.debug	comp-compat-shlib	compat,pic,debug

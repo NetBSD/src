@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2013/12/04 00:49:18 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.5.2.1 2014/08/10 06:50:49 tls Exp $
 
 SRCS+= \
 	random.c \
@@ -174,6 +174,24 @@ C_SRCS_LIST= \
 	sbpi1_div_r_sec.c	mpn/generic/sbpi1_div_sec.c \
 	andn_n.c		mpn/generic/logops_n.c \
 
+.if (defined(CPUFLAGS) && !empty(CPUFLAGS:M-mabi=64))
+GMP_LIMB_BITS=64
+C_SRCS_LIST= \
+	xor_n.c			mpn/generic/logops_n.c \
+	sb_div_r_sec.c		mpn/generic/sb_div_sec.c \
+	nand_n.c		mpn/generic/logops_n.c \
+	nior_n.c		mpn/generic/logops_n.c \
+	hamdist.c		mpn/generic/popham.c \
+	popcount.c		mpn/generic/popham.c \
+	sbpi1_div_qr_sec.c	mpn/generic/sbpi1_div_sec.c \
+	and_n.c			mpn/generic/logops_n.c \
+	ior_n.c			mpn/generic/logops_n.c \
+	sb_div_qr_sec.c		mpn/generic/sb_div_sec.c \
+	xnor_n.c		mpn/generic/logops_n.c \
+	iorn_n.c		mpn/generic/logops_n.c \
+	sbpi1_div_r_sec.c	mpn/generic/sbpi1_div_sec.c \
+	andn_n.c		mpn/generic/logops_n.c \
+
 ASM_SRCS_LIST= \
 	sqr_diagonal.asm	mpn/mips64/sqr_diagonal.asm \
 	add_n.asm		mpn/mips64/add_n.asm \
@@ -185,10 +203,35 @@ ASM_SRCS_LIST= \
 	addmul_1.asm		mpn/mips64/addmul_1.asm \
 	sub_n.asm		mpn/mips64/sub_n.asm \
 
-.if (defined(CPUFLAGS) && !empty(CPUFLAGS:M-mabi=64))
-GMP_LIMB_BITS=64
 .else
 GMP_LIMB_BITS=32
+C_SRCS_LIST= \
+	xor_n.c			mpn/generic/logops_n.c \
+	sb_div_r_sec.c		mpn/generic/sb_div_sec.c \
+	nand_n.c		mpn/generic/logops_n.c \
+	nior_n.c		mpn/generic/logops_n.c \
+	hamdist.c		mpn/generic/popham.c \
+	popcount.c		mpn/generic/popham.c \
+	sbpi1_div_qr_sec.c	mpn/generic/sbpi1_div_sec.c \
+	and_n.c			mpn/generic/logops_n.c \
+	ior_n.c			mpn/generic/logops_n.c \
+	sb_div_qr_sec.c		mpn/generic/sb_div_sec.c \
+	xnor_n.c		mpn/generic/logops_n.c \
+	iorn_n.c		mpn/generic/logops_n.c \
+	sbpi1_div_r_sec.c	mpn/generic/sbpi1_div_sec.c \
+	andn_n.c		mpn/generic/logops_n.c \
+	addn_n.c		mpn/generic/add_n.c \
+	submul_1.c		mpn/generic/submul_1.c \
+	lshift.c		mpn/generic/lshift.c \
+	mul_1.c			mpn/generic/mul_1.c \
+	rshift.c		mpn/generic/rshift.c \
+	sub_n.c			mpn/generic/sub_n.c \
+	addmul_1.c		mpn/generic/addmul_1.c \
+
+ASM_SRCS_LIST= 
+
 .endif
+
+COPTS+=		-Wno-error
 
 COPTS+=		-Wno-error

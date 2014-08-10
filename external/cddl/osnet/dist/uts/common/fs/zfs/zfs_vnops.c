@@ -215,6 +215,7 @@ zfs_close(vnode_t *vp, int flag, int count, offset_t offset, cred_t *cr,
 	    zp->z_phys->zp_size > 0)
 		VERIFY(fs_vscan(vp, cr, 1) == 0);
 
+	ZFS_EXIT(zfsvfs);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.62 2014/03/30 16:00:48 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.62.2.1 2014/08/10 06:49:05 tls Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -91,6 +91,8 @@ EVBARM_BOARDS.armv7hf+=		OMAP5EVM
 #EVBARM_BOARDS.armv7+=		OVERO
 EVBARM_BOARDS.armv7+=		PANDABOARD
 EVBARM_BOARDS.armv7hf+= 	PANDABOARD
+EVBARM_BOARDS.armv7+=		KOBO
+EVBARM_BOARDS.armv7hf+= 	KOBO
 .endif
 
 IMAGE.rel=	${RELEASEDIR}/${RELEASEMACHINEDIR}

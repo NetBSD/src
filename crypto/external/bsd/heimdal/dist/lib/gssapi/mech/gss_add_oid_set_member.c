@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_add_oid_set_member.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_add_oid_set_member.c,v 1.1.1.1.22.1 2014/08/10 06:47:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001, 2003 Kungliga Tekniska Högskolan
@@ -49,7 +49,7 @@
  *
  * @returns a gss_error code, see gss_display_status() about printing
  *          the error code.
- *	  
+ *
  * @ingroup gssapi
  */
 

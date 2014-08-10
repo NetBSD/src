@@ -1,4 +1,4 @@
-/*	$NetBSD: acquire.c,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $	*/
+/*	$NetBSD: acquire.c,v 1.1.1.1.22.1 2014/08/10 06:47:27 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -69,7 +69,7 @@ kcm_ccache_acquire(krb5_context context,
 		ccache->name);
 	return KRB5_FCC_INTERNAL;
     }
-	
+
     HEIMDAL_MUTEX_lock(&ccache->mutex);
 
     /* Fake up an internal ccache */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tommath_class.h,v 1.1.1.1 2011/04/13 18:14:57 elric Exp $	*/
+/*	$NetBSD: tommath_class.h,v 1.1.1.1.22.1 2014/08/10 06:47:29 tls Exp $	*/
 
 #if !(defined(LTM1) && defined(LTM2) && defined(LTM3))
 #if defined(LTM2)
@@ -997,6 +997,6 @@
 #define LTM_LAST
 #endif
 
-/* Source: /cvs/libtom/libtommath/tommath_class.h,v */
-/* Revision: 1.3 */
-/* Date: 2005/07/28 11:59:32 */
+/* Source: /cvs/libtom/libtommath/tommath_class.h,v  */
+/* Revision: 1.3  */
+/* Date: 2005/07/28 11:59:32  */

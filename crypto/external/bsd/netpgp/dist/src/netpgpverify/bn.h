@@ -100,8 +100,10 @@ BIGNUM *BN_bin2bn(const uint8_t */*buf*/, int /*size*/, BIGNUM */*bn*/);
 int BN_bn2bin(const BIGNUM */*a*/, unsigned char */*b*/);
 char *BN_bn2hex(const BIGNUM */*a*/);
 char *BN_bn2dec(const BIGNUM */*a*/);
+char *BN_bn2radix(const BIGNUM */*a*/, unsigned /*radix*/);
 int BN_hex2bn(BIGNUM **/*a*/, const char */*str*/);
 int BN_dec2bn(BIGNUM **/*a*/, const char */*str*/);
+int BN_radix2bn(BIGNUM **/*a*/, const char */*str*/, unsigned /*radix*/);
 #ifndef _KERNEL
 int BN_print_fp(FILE */*fp*/, const BIGNUM */*a*/);
 #endif
@@ -111,6 +113,7 @@ int BN_sub(BIGNUM */*r*/, const BIGNUM */*a*/, const BIGNUM */*b*/);
 int BN_mul(BIGNUM */*r*/, const BIGNUM */*a*/, const BIGNUM */*b*/, BN_CTX */*ctx*/);
 int BN_div(BIGNUM */*q*/, BIGNUM */*r*/, const BIGNUM */*a*/, const BIGNUM */*b*/, BN_CTX */*ctx*/);
 void BN_swap(BIGNUM */*a*/, BIGNUM */*b*/);
+int BN_bitop(BIGNUM */*r*/, const BIGNUM */*a*/, char /*op*/, const BIGNUM */*b*/);
 int BN_lshift(BIGNUM */*r*/, const BIGNUM */*a*/, int /*n*/);
 int BN_lshift1(BIGNUM */*r*/, BIGNUM */*a*/);
 int BN_rshift(BIGNUM */*r*/, const BIGNUM */*a*/, int /*n*/);
@@ -125,6 +128,9 @@ int BN_mod_exp(BIGNUM */*r*/, BIGNUM */*a*/, BIGNUM */*p*/, BIGNUM */*m*/, BN_CT
 BIGNUM *BN_mod_inverse(BIGNUM */*ret*/, BIGNUM */*a*/, const BIGNUM */*n*/, BN_CTX */*ctx*/);
 int BN_mod_mul(BIGNUM */*ret*/, BIGNUM */*a*/, BIGNUM */*b*/, const BIGNUM */*m*/, BN_CTX */*ctx*/);
 int BN_mod_sub(BIGNUM */*r*/, BIGNUM */*a*/, BIGNUM */*b*/, const BIGNUM */*m*/, BN_CTX */*ctx*/);
+
+int BN_raise(BIGNUM */*res*/, BIGNUM */*a*/, BIGNUM */*b*/);
+int BN_factorial(BIGNUM */*fact*/, BIGNUM */*f*/);
 
 BN_CTX *BN_CTX_new(void);
 BIGNUM *BN_CTX_get(BN_CTX */*ctx*/);

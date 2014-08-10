@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add.S,v 1.9 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_add.S,v 1.9.2.1 2014/08/10 06:47:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -122,3 +122,7 @@ ENTRY(__sync_fetch_and_add_1)
 	bne	1b
 	rts
 END(__sync_fetch_and_add_1)
+
+CRT_ALIAS(__atomic_fetch_add_1,__sync_fetch_and_add_1)
+CRT_ALIAS(__atomic_fetch_add_2,__sync_fetch_and_add_2)
+CRT_ALIAS(__atomic_fetch_add_4,__sync_fetch_and_add_4)

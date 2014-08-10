@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.83 2014/02/01 17:01:35 nakayama Exp $
+# $NetBSD: md.sparc,v 1.83.2.1 2014/08/10 06:48:34 tls Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/visintrin.h		comp-c-include		gcccmds,gcc=48
@@ -59,7 +59,8 @@
 ./usr/include/sparc/rwlock.h			comp-c-include
 ./usr/include/sparc/setjmp.h			comp-c-include
 ./usr/include/sparc/signal.h			comp-c-include
-./usr/include/sparc/sljitarch.h			comp-c-include
+./usr/include/sparc/sljitarch.h			comp-obsolete		obsolete
+./usr/include/sparc/sljit_machdep.h		comp-c-include
 ./usr/include/sparc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/sparc/sxreg.h			comp-c-include
 ./usr/include/sparc/tctrl.h			comp-c-include
@@ -131,7 +132,8 @@
 ./usr/include/sparc64/rwlock.h			comp-c-include
 ./usr/include/sparc64/setjmp.h			comp-c-include
 ./usr/include/sparc64/signal.h			comp-c-include
-./usr/include/sparc64/sljitarch.h		comp-c-include
+./usr/include/sparc64/sljitarch.h		comp-obsolete		obsolete
+./usr/include/sparc64/sljit_machdep.h		comp-c-include
 ./usr/include/sparc64/stdarg.h			comp-obsolete		obsolete
 ./usr/include/sparc64/svr4_machdep.h		comp-c-include
 ./usr/include/sparc64/trap.h			comp-c-include

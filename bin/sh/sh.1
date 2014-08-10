@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.112 2014/01/20 14:05:51 roy Exp $
+.\"	$NetBSD: sh.1,v 1.112.2.1 2014/08/10 06:41:18 tls Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd January 20, 2014
+.Dd June 1, 2014
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1192,10 +1192,24 @@ be built in for efficiency (e.g.
 .Xr test 1 ,
 etc).
 .Bl -tag -width 5n
-.It :
+.It : [ Ar arg ... ]
 A null command that returns a 0 (true) exit value.
+Any arguments are ignored.
 .It \&. file
-The commands in the specified file are read and executed by the shell.
+The dot command reads and executes the commands from the specified
+.Ar file
+in the current shell environment.
+The file does not need to be executable and is looked up from the directories
+listed in the
+.Ev PATH
+variable if it does not contain a directory separator
+.Pq Sq / .
+The return command can be used for a premature return from the sourced file.
+.Pp
+The POSIX standard is unclear on how loop control keywords (break
+and continue) behave across a dot command boundary.
+This implementation allows them to control loops surrounding the dot command,
+but obviously such behavior should not be relied on.
 .It alias Op Ar name Ns Op Ar "=string ..."
 If
 .Ar name=string
@@ -1632,6 +1646,21 @@ With the
 .Fl p
 option specified the output will be formatted suitably for non-interactive use.
 .Pp
+.It return [ Ar n ]
+Stop executing the current function or a dot command with return value of
+.Ar n
+or the value of the last executed command, if not specified.
+For portability,
+.Ar n
+should be in the range from 0 to 255.
+.Pp
+The POSIX standard says that the results of
+.Sq return
+outside a function or a dot command are unspecified.
+This implementation treats such a return as a no-op with a return value of 0
+(success, true).
+Use the exit command instead, if you want to return from a script or exit
+your shell.
 .It set Oo { Fl options | Cm +options | Cm \-- } Oc Ar arg ...
 The
 .Ic set

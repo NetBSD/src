@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.103 2014/02/08 19:45:51 jmmv Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.103.2.1 2014/08/10 06:49:17 tls Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -75,6 +75,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/c063
 ./usr/libdata/debug/usr/tests/lib/libc/db
 ./usr/libdata/debug/usr/tests/lib/libc/gen
+./usr/libdata/debug/usr/tests/lib/libc/gen/execve
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn
 ./usr/libdata/debug/usr/tests/lib/libc/hash
 ./usr/libdata/debug/usr/tests/lib/libc/locale
@@ -127,6 +128,7 @@
 ./usr/libdata/debug/usr/tests/net
 ./usr/libdata/debug/usr/tests/net/bpf
 ./usr/libdata/debug/usr/tests/net/bpfilter
+./usr/libdata/debug/usr/tests/net/bpfjit
 ./usr/libdata/debug/usr/tests/net/carp
 ./usr/libdata/debug/usr/tests/net/fdpass
 ./usr/libdata/debug/usr/tests/net/icmp
@@ -165,6 +167,8 @@
 ./usr/tests/bin/ps
 ./usr/tests/bin/sleep
 ./usr/tests/bin/sh
+./usr/tests/bin/sh/dotcmd
+./usr/tests/bin/sh/dotcmd/out
 ./usr/tests/bin/tar
 ./usr/tests/crypto
 ./usr/tests/crypto/libcrypto
@@ -177,6 +181,7 @@
 ./usr/tests/dev/scsipi
 ./usr/tests/dev/sysmon
 ./usr/tests/fs
+./usr/tests/fs/cd9660
 ./usr/tests/fs/ffs
 ./usr/tests/fs/fifofs
 ./usr/tests/fs/hfs
@@ -236,6 +241,7 @@
 ./usr/tests/lib/libc/c063
 ./usr/tests/lib/libc/db
 ./usr/tests/lib/libc/gen
+./usr/tests/lib/libc/gen/execve
 ./usr/tests/lib/libc/gen/posix_spawn
 ./usr/tests/lib/libc/hash
 ./usr/tests/lib/libc/hash/data
@@ -296,6 +302,7 @@
 ./usr/tests/net
 ./usr/tests/net/bpf
 ./usr/tests/net/bpfilter
+./usr/tests/net/bpfjit
 ./usr/tests/net/carp
 ./usr/tests/net/fdpass
 ./usr/tests/net/icmp

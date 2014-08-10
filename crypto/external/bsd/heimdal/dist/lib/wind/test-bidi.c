@@ -1,4 +1,4 @@
-/*	$NetBSD: test-bidi.c,v 1.1.1.1 2011/04/13 18:16:00 elric Exp $	*/
+/*	$NetBSD: test-bidi.c,v 1.1.1.1.22.1 2014/08/10 06:47:31 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -70,7 +70,7 @@ main(void)
 	    ++failures;
 	}
     }
-	
+
     for (i = 0; i < sizeof(failing_cases)/sizeof(failing_cases[0]); ++i) {
 	const struct test *t = &failing_cases[i];
 	if (!_wind_stringprep_testbidi(t->vals, t->len, WIND_PROFILE_NAME)) {

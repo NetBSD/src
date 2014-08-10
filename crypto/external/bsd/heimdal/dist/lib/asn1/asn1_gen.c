@@ -1,4 +1,4 @@
-/*	$NetBSD: asn1_gen.c,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $	*/
+/*	$NetBSD: asn1_gen.c,v 1.1.1.1.22.1 2014/08/10 06:47:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -42,7 +42,7 @@
 #include <krb5/hex.h>
 #include <err.h>
 
-__RCSID("$NetBSD: asn1_gen.c,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $");
+__RCSID("NetBSD");
 
 static int
 doit(const char *fn)

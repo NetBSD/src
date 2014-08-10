@@ -1,19 +1,29 @@
-#	$NetBSD: libmesa.mk,v 1.7 2011/03/13 04:48:53 mrg Exp $
+#	$NetBSD: libmesa.mk,v 1.7.20.1 2014/08/10 06:50:57 tls Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
-INCLUDES.all=	. glapi main
+INCLUDES.all=	mapi mesa mesa/main
+
+# The source file lists derived from src/mesa/sources.mak and
+# src/mapi/glapi/sources.mak.  Please keep the organization in line
+# with those files.
 
 # Main sources
-PATHS.main=	main
-INCLUDES.main=	shader
+PATHS.main=	mesa/main
+INCLUDES.main=	glsl
 SRCS.main= \
+	api_exec_es1.c \
+	api_exec_es2.c
+
+SRCS.main+= \
 	api_arrayelt.c \
 	api_exec.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
 	accum.c \
+	arbprogram.c \
+	atifragshader.c \
 	attrib.c \
 	arrayobj.c \
 	blend.c \
@@ -32,6 +42,7 @@ SRCS.main= \
 	dlist.c \
 	dlopen.c \
 	drawpix.c \
+	drawtex.c \
 	enable.c \
 	enums.c \
 	MESAeval.c \
@@ -56,41 +67,53 @@ SRCS.main= \
 	mipmap.c \
 	mm.c \
 	multisample.c \
+	nvprogram.c \
+	pack.c \
+	pbo.c \
 	MESApixel.c \
 	MESApixelstore.c \
+	pixeltransfer.c \
 	points.c \
 	polygon.c \
 	queryobj.c \
+	querymatrix.c \
 	rastpos.c \
-	rbadaptors.c \
 	readpix.c \
 	remap.c \
 	renderbuffer.c \
+	samplerobj.c \
 	scissor.c \
-	shaders.c \
+	shaderapi.c \
+	shaderobj.c \
 	shared.c \
 	state.c \
 	stencil.c \
 	syncobj.c \
 	texcompress.c \
+	texcompress_rgtc.c \
 	texcompress_s3tc.c \
 	texcompress_fxt1.c \
 	texenv.c \
-	texenvprogram.c \
 	texfetch.c \
 	texformat.c \
 	texgen.c \
 	texgetimage.c \
 	teximage.c \
 	texobj.c \
+	texpal.c \
 	texparam.c \
-	texrender.c \
 	texstate.c \
 	texstore.c \
+	texturebarrier.c \
+	transformfeedback.c \
+	uniforms.c \
 	varray.c \
 	version.c \
 	viewport.c \
 	vtxfmt.c
+
+SRCS.main+= \
+	ff_fragment_shader.cpp
 
 # XXX  avoid source name clashes with glx
 .PATH:		${X11SRCDIR.MesaLib}/src/mesa/main
@@ -98,17 +121,8 @@ BUILDSYMLINKS=	${X11SRCDIR.MesaLib}/src/mesa/main/pixel.c MESApixel.c \
 		${X11SRCDIR.MesaLib}/src/mesa/main/pixelstore.c MESApixelstore.c \
 		${X11SRCDIR.MesaLib}/src/mesa/main/eval.c MESAeval.c
 
-# GL API sources
-PATHS.glapi=	glapi main
-SRCS.glapi= \
-	glapi.c \
-	glapi_dispatch.c \
-	glapi_getproc.c \
-	glapi_nop.c \
-	glthread.c
-
 # Math sources
-PATHS.math=	math
+PATHS.math=	mesa/math
 SRCS.math= \
 	m_debug_clip.c \
 	m_debug_norm.c \
@@ -122,8 +136,7 @@ SRCS.math+= \
 	m_xform.c
 
 # Software raster sources
-PATHS.swrast=		swrast swrast_setup
-INCLUDES.swrast=	shader
+PATHS.swrast=		mesa/swrast
 SRCS.swrast= \
 	s_aaline.c \
 	s_aatriangle.c \
@@ -150,18 +163,18 @@ SRCS.swrast= \
 	s_stencil.c \
 	s_texcombine.c \
 	s_texfilter.c \
+	s_texrender.c \
 	s_triangle.c \
 	s_zoom.c
 
 # swrast_setup
-.PATH:	${X11SRCDIR.MesaLib}/src/mesa/swrast_setup
+PATHS.ss=	mesa/swrast_setup
 SRCS.ss= \
 	ss_context.c \
 	ss_triangle.c 
 
 # TNL sources
-PATHS.tnl=	tnl
-INCLUDES.tnl=	shader
+PATHS.tnl=	mesa/tnl
 SRCS.tnl= \
 	t_context.c \
 	t_pipeline.c \
@@ -172,7 +185,6 @@ SRCS.tnl= \
 	t_vb_texgen.c \
 	t_vb_texmat.c \
 	t_vb_vertex.c \
-	t_vb_cull.c \
 	t_vb_fog.c \
 	t_vb_light.c \
 	t_vb_normals.c \
@@ -183,7 +195,7 @@ SRCS.tnl= \
 	t_vertex_generic.c 
 
 # VBO sources
-PATHS.vbo=	vbo
+PATHS.vbo=	mesa/vbo
 SRCS.vbo= \
 	vbo_context.c \
 	vbo_exec.c \
@@ -200,21 +212,15 @@ SRCS.vbo= \
 	vbo_save_draw.c \
 	vbo_save_loopback.c 
 
-COPTS.vbo_save_draw.c=	-Wno-error
-
 # statetracker
 
-# Shader sources
-PATHS.shader=		shader
-INCLUDES.shader=	shader/slang
-SRCS.shader= \
+# Program sources
+PATHS.program=		mesa/program
+SRCS.program= \
 	arbprogparse.c \
-	arbprogram.c \
-	atifragshader.c \
 	hash_table.c \
 	lex.yy.c \
 	nvfragparse.c \
-	nvprogram.c \
 	nvvertparse.c \
 	program.c \
 	program_parse.tab.c \
@@ -230,33 +236,14 @@ SRCS.shader= \
 	prog_statevars.c \
 	prog_uniform.c \
 	programopt.c \
-	symbol_table.c \
-	shader_api.c
+	register_allocate.c \
+	symbol_table.c
 
-# Shader language sources
-PATHS.slang=	shader/slang
-INCLUDES.slang=	shader
-SRCS.slang= \
-	slang_builtin.c	\
-	slang_codegen.c	\
-	slang_compile.c	\
-	slang_compile_function.c	\
-	slang_compile_operation.c	\
-	slang_compile_struct.c	\
-	slang_compile_variable.c	\
-	slang_emit.c	\
-	slang_ir.c	\
-	slang_label.c	\
-	slang_link.c	\
-	slang_log.c	\
-	slang_mem.c	\
-	slang_print.c	\
-	slang_simplify.c	\
-	slang_storage.c	\
-	slang_typeinfo.c	\
-	slang_vartable.c	\
-	slang_utility.c
+SRCS.program+= \
+	ir_to_mesa.cpp \
+	sampler.cpp
 
+# Unused parts of mesa/sources.mak.
 .if 0
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
@@ -287,53 +274,65 @@ X86_SOURCES =			\
 	x86/sse_normal.S	\
 	x86/read_rgba_span_x86.S
 
-X86_API =			\
-	x86/glapi_x86.S
-
 X86-64_SOURCES =		\
 	x86-64/xform4.S
-
-X86-64_API =			\
-	x86-64/glapi_x86-64.S
 
 SPARC_SOURCES =			\
 	sparc/clip.S		\
 	sparc/norm.S		\
 	sparc/xform.S
-
-SPARC_API =			\
-	sparc/glapi_sparc.S
 .endif
 
 # Common driver sources
-PATHS.common=	drivers/common
-INCLUDES.common=	shader
+PATHS.common=	mesa/drivers/common
 SRCS.common= \
 	driverfuncs.c	\
 	meta.c
 
 # OSMesa driver sources
-PATHS.osmesa=	drivers/osmesa
-INCLUDES.osmesa=	shader
+PATHS.osmesa=	mesa/drivers/osmesa
 SRCS.osmesa= \
 	osmesa.c
+
+# GLAPI sources
+PATHS.glapi=	mapi/glapi
+SRCS.glapi = \
+	glapi_dispatch.c \
+	glapi_entrypoint.c \
+	glapi_gentable.c \
+	glapi_getproc.c \
+	glapi_nop.c \
+	glthread.c \
+	glapi.c
+
+# Unused parts of mapi/glapi/sources.mak.
+.if 0
+X86_API =		\
+	glapi_x86.S
+
+X86-64_API =		\
+	glapi_x86-64.S
+
+SPARC_API =		\
+	glapi_sparc.S
+.endif
 
 .for _mod_ in ${MESA_SRC_MODULES}
 
 SRCS+=	${SRCS.${_mod_}}
 
 . for _path_ in ${PATHS.${_mod_}}
-.PATH:	${X11SRCDIR.MesaLib}/src/mesa/${_path_}
+.PATH:	${X11SRCDIR.MesaLib}/src/${_path_}
 . endfor
 
 . for _path_ in ${INCLUDES.${_mod_}}
-CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/${_path_}
+CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/${_path_}
 . endfor
 
 .endfor
 
 .for _path_ in ${INCLUDES.all}
-CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/${_path_}
+CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/${_path_}
 .endfor
 
 LIBDPLIBS=	m	${NETBSDSRCDIR}/lib/libm
@@ -342,49 +341,8 @@ LIBDPLIBS=	m	${NETBSDSRCDIR}/lib/libm
 .include "../../tools/glsl/Makefile.glsl"
 
 CPPFLAGS+=	-I.
+CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/include
 
-# XXXX
-HEADERS.slang=	library/slang_120_core_gc.h \
-		library/slang_builtin_120_common_gc.h \
-		library/slang_builtin_120_fragment_gc.h \
-		library/slang_common_builtin_gc.h \
-		library/slang_core_gc.h \
-		library/slang_fragment_builtin_gc.h \
-		library/slang_vertex_builtin_gc.h
-${SRCS.slang}: ${HEADERS.slang}
-
-library/slang_120_core_gc.h: slang_120_core.gc
-	-@mkdir -p library
-	$(GLSL) fragment $> library/slang_120_core_gc.h
-
-library/slang_builtin_120_common_gc.h: slang_builtin_120_common.gc
-	-@mkdir -p library
-	$(GLSL) fragment $> library/slang_builtin_120_common_gc.h
-
-library/slang_builtin_120_fragment_gc.h: slang_builtin_120_fragment.gc
-	-@mkdir -p library
-	$(GLSL) fragment $> library/slang_builtin_120_fragment_gc.h
-
-library/slang_common_builtin_gc.h: slang_common_builtin.gc
-	-@mkdir -p library
-	$(GLSL) fragment $> library/slang_common_builtin_gc.h
-
-library/slang_core_gc.h: slang_core.gc
-	-@mkdir -p library
-	$(GLSL) fragment $> library/slang_core_gc.h
-
-library/slang_fragment_builtin_gc.h: slang_fragment_builtin.gc
-	-@mkdir -p library
-	$(GLSL) fragment $> library/slang_fragment_builtin_gc.h
-
-library/slang_vertex_builtin_gc.h: slang_vertex_builtin.gc
-	-@mkdir -p library
-	$(GLSL) vertex $> library/slang_vertex_builtin_gc.h
-
-.PATH: ${X11SRCDIR.MesaLib}/src/mesa/shader/slang/library
-
-CLEANFILES+=	${HEADERS.slang}
 cleandir:     cleanmesa
 cleanmesa: .PHONY
 	-@if [ -d library ]; then rmdir library; fi
-

@@ -1,4 +1,5 @@
-# $NetBSD: md.amd64,v 1.36 2014/01/02 12:54:36 tho Exp $
+# $NetBSD: md.amd64,v 1.36.2.1 2014/08/10 06:48:35 tls Exp $
+#./usr/libdata/lint/llib-lIntelXvMC.ln			-unknown-	lint,xorg
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -88,7 +89,6 @@
 ./usr/X11R7/lib/libdrm_intel_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/pkgconfig/libdrm_intel.pc		-unknown-	xorg
 ./usr/libdata/lint/llib-lI810XvMC.ln			-unknown-	lint,xorg
-./usr/libdata/lint/llib-lIntelXvMC.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lchromeXvMC.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lchromeXvMCPro.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-ldrm_intel.ln			-unknown-	lint,xorg

@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.8 2013/12/12 18:01:14 matt Exp $")
+RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.8.2.1 2014/08/10 06:47:05 tls Exp $")
 
 /*
  * typedef struct { unsigned long long quo, rem } ulldiv_t;
@@ -39,7 +39,9 @@ RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.8 2013/12/12 18:01:14 matt Exp $")
 
 ENTRY(__aeabi_uldivmod)
 #ifdef __ARM_EABI__
+# if !defined(__ARM_DWARF_EH__)
 	.fnstart
+#endif
 	.cfi_startproc
 #endif
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -61,7 +63,9 @@ ENTRY(__aeabi_uldivmod)
 
 	push	{r4,lr}
 #ifdef __ARM_EABI__
+# if !defined(__ARM_DWARF_EH__)
 	.save	{r4,lr}
+# endif
 	.cfi_def_cfa_offset 8
 	.cfi_offset 14, -4
 	.cfi_offset 4, -8
@@ -94,7 +98,9 @@ ENTRY(__aeabi_uldivmod)
 .Ldivbyzero:
 	push	{r0-r1,r4,lr}
 #ifdef __ARM_EABI__
+# if !defined(__ARM_DWARF_EH__)
 	.save	{r0-r1,r4,lr}
+# endif
 	.cfi_def_cfa_offset 16
 	.cfi_offset 14, -4
 	.cfi_offset 4, -8
@@ -111,6 +117,8 @@ ENTRY(__aeabi_uldivmod)
 #endif
 #ifdef __ARM_EABI__
 	.cfi_endproc
+# if !defined(__ARM_DWARF_EH__)
 	.fnend
+# endif
 #endif
 END(__aeabi_uldivmod)
