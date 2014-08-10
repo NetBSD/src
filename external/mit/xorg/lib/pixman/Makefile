@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2014/07/12 04:32:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.30 2014/08/10 14:10:37 jmcneill Exp $
 
 NOLINT=	1	# defined
 
@@ -60,7 +60,7 @@ MKDEPFLAGS+=		-mmmx
 SRCS+=	pixman-sse2.c pixman-ssse3.c
 COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
 COPTS.pixman-ssse3.c=	-msse3 -mssse3 -fvisibility=hidden
-CPPFLAGS+=		-DUSE_SSE2 -DUSE_SSE3
+CPPFLAGS+=		-DUSE_SSE2 -DUSE_SSSE3
 MKDEPFLAGS+=		-msse2 -mssse3 -mssse3 -fvisibility=hidden
 .endif
 
