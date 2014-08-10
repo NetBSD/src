@@ -5,9 +5,14 @@ typedef const void * CFTypeRef;
 CFTypeRef CFBridgingRetain(id X);
 id CFBridgingRelease(CFTypeRef);
 @protocol NSCopying @end
-@interface NSDictionary
+@interface NSObject
++ (id)alloc;
+@end
+
+@interface NSDictionary : NSObject
 + (id)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
 - (void)setObject:(id)object forKeyedSubscript:(id)key;
+- (instancetype)initWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
 @end
 @class NSFastEnumerationState;
 @protocol NSFastEnumeration
@@ -16,8 +21,9 @@ id CFBridgingRelease(CFTypeRef);
 @interface NSNumber 
 + (NSNumber *)numberWithInt:(int)value;
 @end
-@interface NSArray <NSFastEnumeration>
+@interface NSArray : NSObject <NSFastEnumeration>
 + (id)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
+- (id)initWithObjects:(const id [])objects count:(NSUInteger)cnt;
 @end
 
 void test0(void (*fn)(int), int val) {
@@ -285,7 +291,7 @@ void test11(id op, void *vp) {
   b = (nil == vp);
 
   b = (vp == op); // expected-error {{implicit conversion of Objective-C pointer type 'id' to C pointer type 'void *' requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use CFBridgingRetain call}}
-  b = (op == vp); // expected-error {{implicit conversion of C pointer type 'void *' to Objective-C pointer type 'id' requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use CFBridgingRelease call}}
+  b = (op == vp);
 }
 
 void test12(id collection) {
@@ -742,16 +748,16 @@ void _NSCalcBeze(NSColor* color, NSColor* bezelColors[]); // expected-error {{mu
 void rdar12569201(id key, id value) {
     // Declarations.
     __weak id x = @"foo"; // no-warning
-    __weak id y = @{ key : value }; // expected-warning {{assigning dictionary literal to a weak variable; object will be released after assignment}}
-    __weak id z = @[ value ]; // expected-warning {{assigning array literal to a weak variable; object will be released after assignment}}
+    __weak id y = @{ key : value }; // expected-warning {{assigning retained object to weak variable; object will be released after assignment}}
+    __weak id z = @[ value ]; // expected-warning {{assigning retained object to weak variable; object will be released after assignment}}
     __weak id b = ^() {}; // expected-warning {{assigning block literal to a weak variable; object will be released after assignment}}
     __weak id n = @42; // expected-warning {{assigning numeric literal to a weak variable; object will be released after assignment}}
     __weak id e = @(42); // expected-warning {{assigning numeric literal to a weak variable; object will be released after assignment}}
     __weak id m = @(41 + 1); // expected-warning {{assigning boxed expression to a weak variable; object will be released after assignment}}
     
     // Assignments.
-    y = @{ key : value }; // expected-warning {{assigning dictionary literal to a weak variable; object will be released after assignment}}
-    z = @[ value ]; // expected-warning {{assigning array literal to a weak variable; object will be released after assignment}}
+    y = @{ key : value }; // expected-warning {{assigning retained object to weak variable; object will be released after assignment}}
+    z = @[ value ]; // expected-warning {{assigning retained object to weak variable; object will be released after assignment}}
     b = ^() {}; // expected-warning {{assigning block literal to a weak variable; object will be released after assignment}}
     n = @42; // expected-warning {{assigning numeric literal to a weak variable; object will be released after assignment}}
     e = @(42); // expected-warning {{assigning numeric literal to a weak variable; object will be released after assignment}}
@@ -781,4 +787,20 @@ void foo(NSArray *array) {
     for (string in @[@"blah", @"more blah", string]) { // expected-error {{selector element of type 'NSString *const __strong' cannot be a constant l-value}}
     }
   }
+}
+
+// rdar://16627903
+extern void abort();
+#define TKAssertEqual(a, b) do{\
+    __typeof(a) a_res = (a);\
+    __typeof(b) b_res = (b);\
+    if ((a_res) != (b_res)) {\
+        abort();\
+    }\
+}while(0)
+
+int garf() {
+  id object;
+  TKAssertEqual(object, nil);
+  TKAssertEqual(object, (id)nil);
 }

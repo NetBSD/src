@@ -133,6 +133,13 @@ the configuration (without a prefix: ``Auto``).
   If ``true``, ``while (true) continue;`` can be put on a
   single line.
 
+**AlwaysBreakAfterDefinitionReturnType** (``bool``)
+  If ``true``, always break after function definition return types.
+
+  More truthfully called 'break before the identifier following the type
+  in a function definition'. PenaltyReturnTypeOnItsOwnLine becomes
+  irrelevant.
+
 **AlwaysBreakBeforeMultilineStrings** (``bool``)
   If ``true``, always break before multiline string literals.
 
@@ -158,7 +165,7 @@ the configuration (without a prefix: ``Auto``).
     Like ``Attach``, but break before braces on function, namespace and
     class definitions.
   * ``BS_Stroustrup`` (in configuration: ``Stroustrup``)
-    Like ``Attach``, but break before function definitions.
+    Like ``Attach``, but break before function definitions, and 'else'.
   * ``BS_Allman`` (in configuration: ``Allman``)
     Always break before braces.
   * ``BS_GNU`` (in configuration: ``GNU``)
@@ -211,9 +218,12 @@ the configuration (without a prefix: ``Auto``).
   the parentheses of a function call with that name. If there is no name,
   a zero-length name is assumed.
 
-**DerivePointerBinding** (``bool``)
-  If ``true``, analyze the formatted file for the most common binding
-  and use ``PointerBindsToType`` only as fallback.
+**DerivePointerAlignment** (``bool``)
+  If ``true``, analyze the formatted file for the most common
+  alignment of ``&`` and ``*``. ``PointerAlignment`` is then used only as fallback.
+
+**DisableFormat** (``bool``)
+  Disables formatting at all.
 
 **ExperimentalAutoDetectBinPacking** (``bool``)
   If ``true``, clang-format detects whether function calls and
@@ -245,12 +255,12 @@ the configuration (without a prefix: ``Auto``).
   When ``false``, use the same indentation level as for the switch statement.
   Switch statement body is always indented one level more than case labels.
 
-**IndentFunctionDeclarationAfterType** (``bool``)
-  If ``true``, indent when breaking function declarations which
-  are not also definitions after the type.
-
 **IndentWidth** (``unsigned``)
   The number of columns to use for indentation.
+
+**IndentWrappedFunctionNames** (``bool``)
+  Indent if a function definition or declaration is wrapped after the
+  type.
 
 **KeepEmptyLinesAtTheStartOfBlocks** (``bool``)
   If true, empty lines at the start of blocks are kept.
@@ -314,8 +324,18 @@ the configuration (without a prefix: ``Auto``).
   Penalty for putting the return type of a function onto its own
   line.
 
-**PointerBindsToType** (``bool``)
-  Set whether & and * bind to the type as opposed to the variable.
+**PointerAlignment** (``PointerAlignmentStyle``)
+  Pointer and reference alignment style.
+
+  Possible values:
+
+  * ``PAS_Left`` (in configuration: ``Left``)
+    Align pointer to the left.
+  * ``PAS_Right`` (in configuration: ``Right``)
+    Align pointer to the right.
+  * ``PAS_Middle`` (in configuration: ``Middle``)
+    Align pointer in the middle.
+
 
 **SpaceBeforeAssignmentOperators** (``bool``)
   If ``false``, spaces will be removed before assignment operators.

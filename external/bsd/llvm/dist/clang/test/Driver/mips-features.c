@@ -1,5 +1,15 @@
 // Check handling MIPS specific features options.
 //
+// -mabicalls
+// RUN: %clang -target mips-linux-gnu -### -c %s -mno-abicalls -mabicalls 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MABICALLS %s
+// CHECK-MABICALLS: "-target-feature" "-noabicalls"
+//
+// -mno-abicalls
+// RUN: %clang -target mips-linux-gnu -### -c %s -mabicalls -mno-abicalls 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MNOABICALLS %s
+// CHECK-MNOABICALLS: "-target-feature" "+noabicalls"
+//
 // -mips16
 // RUN: %clang -target mips-linux-gnu -### -c %s \
 // RUN:     -mno-mips16 -mips16 2>&1 \
@@ -59,6 +69,28 @@
 // RUN:     -mmsa -mno-msa 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NOMMSA %s
 // CHECK-NOMMSA: "-target-feature" "-msa"
+//
+// -modd-spreg
+// RUN: %clang -target mips-linux-gnu -### -c %s -mno-odd-spreg -modd-spreg 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MODDSPREG %s
+// CHECK-MODDSPREG: "-target-feature" "-nooddspreg"
+//
+// -mno-odd-spreg
+// RUN: %clang -target mips-linux-gnu -### -c %s -modd-spreg -mno-odd-spreg 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NOMODDSPREG %s
+// CHECK-NOMODDSPREG: "-target-feature" "+nooddspreg"
+//
+// -mfpxx
+// RUN: %clang -target mips-linux-gnu -### -c %s -mfpxx 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MFPXX %s
+// CHECK-MFPXX: "-target-feature" "+fpxx"
+// CHECK-MFPXX: "-target-feature" "+nooddspreg"
+//
+// -mfpxx -modd-spreg
+// RUN: %clang -target mips-linux-gnu -### -c %s -mfpxx -modd-spreg 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MFPXX-ODDSPREG %s
+// CHECK-MFPXX-ODDSPREG: "-target-feature" "+fpxx"
+// CHECK-MFPXX-ODDSPREG: "-target-feature" "-nooddspreg"
 //
 // -mfp64
 // RUN: %clang -target mips-linux-gnu -### -c %s \

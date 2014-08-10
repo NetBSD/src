@@ -122,14 +122,13 @@ class ScopedLineState {
 public:
   ScopedLineState(UnwrappedLineParser &Parser,
                   bool SwitchToPreprocessorLines = false)
-      : Parser(Parser) {
-    OriginalLines = Parser.CurrentLines;
+      : Parser(Parser), OriginalLines(Parser.CurrentLines) {
     if (SwitchToPreprocessorLines)
       Parser.CurrentLines = &Parser.PreprocessorDirectives;
     else if (!Parser.Line->Tokens.empty())
       Parser.CurrentLines = &Parser.Line->Tokens.back().Children;
-    PreBlockLine = Parser.Line.release();
-    Parser.Line.reset(new UnwrappedLine());
+    PreBlockLine = std::move(Parser.Line);
+    Parser.Line = llvm::make_unique<UnwrappedLine>();
     Parser.Line->Level = PreBlockLine->Level;
     Parser.Line->InPPDirective = PreBlockLine->InPPDirective;
   }
@@ -139,7 +138,7 @@ public:
       Parser.addUnwrappedLine();
     }
     assert(Parser.Line->Tokens.empty());
-    Parser.Line.reset(PreBlockLine);
+    Parser.Line = std::move(PreBlockLine);
     if (Parser.CurrentLines == &Parser.PreprocessorDirectives)
       Parser.MustBreakBeforeNextToken = true;
     Parser.CurrentLines = OriginalLines;
@@ -148,7 +147,7 @@ public:
 private:
   UnwrappedLineParser &Parser;
 
-  UnwrappedLine *PreBlockLine;
+  std::unique_ptr<UnwrappedLine> PreBlockLine;
   SmallVectorImpl<UnwrappedLine> *OriginalLines;
 };
 
@@ -354,7 +353,7 @@ void UnwrappedLineParser::calculateBraceTypes() {
             ProbablyBracedList =
                 NextTok->isOneOf(tok::comma, tok::semi, tok::period, tok::colon,
                                  tok::r_paren, tok::r_square, tok::l_brace,
-                                 tok::l_paren) ||
+                                 tok::l_paren, tok::ellipsis) ||
                 (NextTok->isBinaryOperator() && !NextIsObjCMethod);
           }
           if (ProbablyBracedList) {
@@ -770,7 +769,10 @@ void UnwrappedLineParser::parseStructuralElement() {
       return;
     case tok::identifier: {
       StringRef Text = FormatTok->TokenText;
-      if (Style.Language == FormatStyle::LK_JavaScript && Text == "function") {
+      // Parse function literal unless 'function' is the first token in a line
+      // in which case this should be treated as a free-standing function.
+      if (Style.Language == FormatStyle::LK_JavaScript && Text == "function" &&
+          Line->Tokens.size() > 0) {
         tryToParseJSFunction();
         break;
       }
@@ -891,6 +893,8 @@ bool UnwrappedLineParser::tryToParseLambdaIntroducer() {
     if (!FormatTok->isOneOf(tok::identifier, tok::kw_this))
       return false;
     nextToken();
+    if (FormatTok->is(tok::ellipsis))
+      nextToken();
     if (FormatTok->is(tok::comma)) {
       nextToken();
     } else if (FormatTok->is(tok::r_square)) {
@@ -905,6 +909,11 @@ bool UnwrappedLineParser::tryToParseLambdaIntroducer() {
 
 void UnwrappedLineParser::tryToParseJSFunction() {
   nextToken();
+
+  // Consume function name.
+  if (FormatTok->is(tok::identifier))
+      nextToken();
+
   if (FormatTok->isNot(tok::l_paren))
     return;
   nextToken();
@@ -1070,6 +1079,8 @@ void UnwrappedLineParser::parseIfThenElse() {
     --Line->Level;
   }
   if (FormatTok->Tok.is(tok::kw_else)) {
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Stroustrup)
+      addUnwrappedLine();
     nextToken();
     if (FormatTok->Tok.is(tok::l_brace)) {
       CompoundStatementIndenter Indenter(this, Style, Line->Level);
@@ -1317,10 +1328,8 @@ void UnwrappedLineParser::parseEnum() {
 
 void UnwrappedLineParser::parseRecord() {
   nextToken();
-  if (FormatTok->Tok.is(tok::identifier) ||
-      FormatTok->Tok.is(tok::kw___attribute) ||
-      FormatTok->Tok.is(tok::kw___declspec) ||
-      FormatTok->Tok.is(tok::kw_alignas)) {
+  if (FormatTok->isOneOf(tok::identifier, tok::coloncolon, tok::kw___attribute,
+                         tok::kw___declspec, tok::kw_alignas)) {
     nextToken();
     // We can have macros or attributes in between 'class' and the class name.
     if (FormatTok->Tok.is(tok::l_paren)) {

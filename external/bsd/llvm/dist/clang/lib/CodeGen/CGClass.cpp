@@ -711,7 +711,9 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
     return;
   }
 
-  Stmt *Body = Ctor->getBody();
+  const FunctionDecl *Definition = 0;
+  Stmt *Body = Ctor->getBody(Definition);
+  assert(Definition == Ctor && "emitting wrong constructor body");
 
   // Enter the function-try-block before the constructor prologue if
   // applicable.
@@ -1425,8 +1427,8 @@ namespace {
 /// in reverse order of their construction.
 void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
                                         CXXDtorType DtorType) {
-  assert(!DD->isTrivial() &&
-         "Should not emit dtor epilogue for trivial dtor!");
+  assert((!DD->isTrivial() || DD->hasAttr<DLLExportAttr>()) &&
+         "Should not emit dtor epilogue for non-exported trivial dtor!");
 
   // The deleting-destructor phase just needs to call the appropriate
   // operator delete that Sema picked up.
@@ -2179,7 +2181,7 @@ void CodeGenFunction::EmitLambdaDelegatingInvokeBody(const CXXMethodDecl *MD) {
     FunctionTemplateDecl *CallOpTemplate = CallOp->getDescribedFunctionTemplate();
     void *InsertPos = nullptr;
     FunctionDecl *CorrespondingCallOpSpecialization = 
-        CallOpTemplate->findSpecialization(TAL->data(), TAL->size(), InsertPos); 
+        CallOpTemplate->findSpecialization(TAL->asArray(), InsertPos);
     assert(CorrespondingCallOpSpecialization);
     CallOp = cast<CXXMethodDecl>(CorrespondingCallOpSpecialization);
   }

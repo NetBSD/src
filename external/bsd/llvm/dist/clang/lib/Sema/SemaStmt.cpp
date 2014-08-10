@@ -253,9 +253,15 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
       return;
     }
     const ObjCMethodDecl *MD = ME->getMethodDecl();
-    if (MD && MD->hasAttr<WarnUnusedResultAttr>()) {
-      Diag(Loc, diag::warn_unused_result) << R1 << R2;
-      return;
+    if (MD) {
+      if (MD->hasAttr<WarnUnusedResultAttr>()) {
+        Diag(Loc, diag::warn_unused_result) << R1 << R2;
+        return;
+      }
+      if (MD->isPropertyAccessor()) {
+        Diag(Loc, diag::warn_unused_property_expr);
+        return;
+      }
     }
   } else if (const PseudoObjectExpr *POE = dyn_cast<PseudoObjectExpr>(E)) {
     const Expr *Source = POE->getSyntacticForm();
@@ -475,47 +481,6 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
                               thenStmt, ElseLoc, elseStmt);
 }
 
-/// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
-/// the specified width and sign.  If an overflow occurs, detect it and emit
-/// the specified diagnostic.
-void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
-                                              unsigned NewWidth, bool NewSign,
-                                              SourceLocation Loc,
-                                              unsigned DiagID) {
-  // Perform a conversion to the promoted condition type if needed.
-  if (NewWidth > Val.getBitWidth()) {
-    // If this is an extension, just do it.
-    Val = Val.extend(NewWidth);
-    Val.setIsSigned(NewSign);
-
-    // If the input was signed and negative and the output is
-    // unsigned, don't bother to warn: this is implementation-defined
-    // behavior.
-    // FIXME: Introduce a second, default-ignored warning for this case?
-  } else if (NewWidth < Val.getBitWidth()) {
-    // If this is a truncation, check for overflow.
-    llvm::APSInt ConvVal(Val);
-    ConvVal = ConvVal.trunc(NewWidth);
-    ConvVal.setIsSigned(NewSign);
-    ConvVal = ConvVal.extend(Val.getBitWidth());
-    ConvVal.setIsSigned(Val.isSigned());
-    if (ConvVal != Val)
-      Diag(Loc, DiagID) << Val.toString(10) << ConvVal.toString(10);
-
-    // Regardless of whether a diagnostic was emitted, really do the
-    // truncation.
-    Val = Val.trunc(NewWidth);
-    Val.setIsSigned(NewSign);
-  } else if (NewSign != Val.isSigned()) {
-    // Convert the sign to match the sign of the condition.  This can cause
-    // overflow as well: unsigned(INTMIN)
-    // We don't diagnose this overflow, because it is implementation-defined
-    // behavior.
-    // FIXME: Introduce a second, default-ignored warning for this case?
-    Val.setIsSigned(NewSign);
-  }
-}
-
 namespace {
   struct CaseCompareFunctor {
     bool operator()(const std::pair<llvm::APSInt, CaseStmt*> &LHS,
@@ -665,11 +630,28 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
 }
 
 static void AdjustAPSInt(llvm::APSInt &Val, unsigned BitWidth, bool IsSigned) {
-  if (Val.getBitWidth() < BitWidth)
-    Val = Val.extend(BitWidth);
-  else if (Val.getBitWidth() > BitWidth)
-    Val = Val.trunc(BitWidth);
+  Val = Val.extOrTrunc(BitWidth);
   Val.setIsSigned(IsSigned);
+}
+
+/// Check the specified case value is in range for the given unpromoted switch
+/// type.
+static void checkCaseValue(Sema &S, SourceLocation Loc, const llvm::APSInt &Val,
+                           unsigned UnpromotedWidth, bool UnpromotedSign) {
+  // If the case value was signed and negative and the switch expression is
+  // unsigned, don't bother to warn: this is implementation-defined behavior.
+  // FIXME: Introduce a second, default-ignored warning for this case?
+  if (UnpromotedWidth < Val.getBitWidth()) {
+    llvm::APSInt ConvVal(Val);
+    AdjustAPSInt(ConvVal, UnpromotedWidth, UnpromotedSign);
+    AdjustAPSInt(ConvVal, Val.getBitWidth(), Val.isSigned());
+    // FIXME: Use different diagnostics for overflow  in conversion to promoted
+    // type versus "switch expression cannot have this value". Use proper
+    // IntRange checking rather than just looking at the unpromoted type here.
+    if (ConvVal != Val)
+      S.Diag(Loc, diag::warn_case_value_overflow) << Val.toString(10)
+                                                  << ConvVal.toString(10);
+  }
 }
 
 /// Returns true if we should emit a diagnostic about this case expression not
@@ -738,13 +720,20 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     }
   }
 
-  // Get the bitwidth of the switched-on value before promotions.  We must
+  // Get the bitwidth of the switched-on value after promotions. We must
   // convert the integer case values to this width before comparison.
   bool HasDependentValue
     = CondExpr->isTypeDependent() || CondExpr->isValueDependent();
-  unsigned CondWidth
+  unsigned CondWidth = HasDependentValue ? 0 : Context.getIntWidth(CondType);
+  bool CondIsSigned = CondType->isSignedIntegerOrEnumerationType();
+
+  // Get the width and signedness that the condition might actually have, for
+  // warning purposes.
+  // FIXME: Grab an IntRange for the condition rather than using the unpromoted
+  // type.
+  unsigned CondWidthBeforePromotion
     = HasDependentValue ? 0 : Context.getIntWidth(CondTypeBeforePromotion);
-  bool CondIsSigned
+  bool CondIsSignedBeforePromotion
     = CondTypeBeforePromotion->isSignedIntegerOrEnumerationType();
 
   // Accumulate all of the case values in a vector so that we can sort them
@@ -810,15 +799,13 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         Lo = ImpCastExprToType(Lo, CondType, CK_IntegralCast).get();
       }
 
-      // Convert the value to the same width/sign as the condition had prior to
-      // integral promotions.
-      //
-      // FIXME: This causes us to reject valid code:
-      //   switch ((char)c) { case 256: case 0: return 0; }
-      // Here we claim there is a duplicated condition value, but there is not.
-      ConvertIntegerToTypeWarnOnOverflow(LoVal, CondWidth, CondIsSigned,
-                                         Lo->getLocStart(),
-                                         diag::warn_case_value_overflow);
+      // Check the unconverted value is within the range of possible values of
+      // the switch expression.
+      checkCaseValue(*this, Lo->getLocStart(), LoVal,
+                     CondWidthBeforePromotion, CondIsSignedBeforePromotion);
+
+      // Convert the value to the same width/sign as the condition.
+      AdjustAPSInt(LoVal, CondWidth, CondIsSigned);
 
       CS->setLHS(Lo);
 
@@ -841,9 +828,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     llvm::APSInt ConstantCondValue;
     bool HasConstantCond = false;
     if (!HasDependentValue && !TheDefaultStmt) {
-      HasConstantCond
-        = CondExprBeforePromotion->EvaluateAsInt(ConstantCondValue, Context,
-                                                 Expr::SE_AllowSideEffects);
+      HasConstantCond = CondExpr->EvaluateAsInt(ConstantCondValue, Context,
+                                                Expr::SE_AllowSideEffects);
       assert(!HasConstantCond ||
              (ConstantCondValue.getBitWidth() == CondWidth &&
               ConstantCondValue.isSigned() == CondIsSigned));
@@ -929,10 +915,13 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
           Hi = ImpCastExprToType(Hi, CondType, CK_IntegralCast).get();
         }
 
+        // Check the unconverted value is within the range of possible values of
+        // the switch expression.
+        checkCaseValue(*this, Hi->getLocStart(), HiVal,
+                       CondWidthBeforePromotion, CondIsSignedBeforePromotion);
+
         // Convert the value to the same width/sign as the condition.
-        ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned,
-                                           Hi->getLocStart(),
-                                           diag::warn_case_value_overflow);
+        AdjustAPSInt(HiVal, CondWidth, CondIsSigned);
 
         CR->setRHS(Hi);
 
@@ -1157,9 +1146,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 void
 Sema::DiagnoseAssignmentEnum(QualType DstType, QualType SrcType,
                              Expr *SrcExpr) {
-  if (Diags.getDiagnosticLevel(diag::warn_not_in_enum_assignment,
-                               SrcExpr->getExprLoc()) ==
-      DiagnosticsEngine::Ignored)
+  if (Diags.isIgnored(diag::warn_not_in_enum_assignment, SrcExpr->getExprLoc()))
     return;
 
   if (const EnumType *ET = DstType->getAs<EnumType>())
@@ -1406,9 +1393,8 @@ namespace {
     // Condition is empty
     if (!Second) return;
 
-    if (S.Diags.getDiagnosticLevel(diag::warn_variables_not_in_loop_body,
-                                   Second->getLocStart())
-        == DiagnosticsEngine::Ignored)
+    if (S.Diags.isIgnored(diag::warn_variables_not_in_loop_body,
+                          Second->getLocStart()))
       return;
 
     PartialDiagnostic PDiag = S.PDiag(diag::warn_variables_not_in_loop_body);
@@ -1535,9 +1521,8 @@ namespace {
     // Return when there is nothing to check.
     if (!Body || !Third) return;
 
-    if (S.Diags.getDiagnosticLevel(diag::warn_redundant_loop_iteration,
-                                   Third->getLocStart())
-        == DiagnosticsEngine::Ignored)
+    if (S.Diags.isIgnored(diag::warn_redundant_loop_iteration,
+                          Third->getLocStart()))
       return;
 
     // Get the last statement from the loop body.
@@ -1938,7 +1923,7 @@ Sema::ActOnCXXForRangeStmt(SourceLocation ForLoc,
 
   // Claim the type doesn't contain auto: we've already done the checking.
   DeclGroupPtrTy RangeGroup =
-      BuildDeclaratorGroup(llvm::MutableArrayRef<Decl *>((Decl **)&RangeVar, 1),
+      BuildDeclaratorGroup(MutableArrayRef<Decl *>((Decl **)&RangeVar, 1),
                            /*TypeMayContainAuto=*/ false);
   StmtResult RangeDecl = ActOnDeclStmt(RangeGroup, RangeLoc, RangeLoc);
   if (RangeDecl.isInvalid()) {
@@ -2255,7 +2240,7 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
     Decl *BeginEndDecls[] = { BeginVar, EndVar };
     // Claim the type doesn't contain auto: we've already done the checking.
     DeclGroupPtrTy BeginEndGroup =
-        BuildDeclaratorGroup(llvm::MutableArrayRef<Decl *>(BeginEndDecls, 2),
+        BuildDeclaratorGroup(MutableArrayRef<Decl *>(BeginEndDecls, 2),
                              /*TypeMayContainAuto=*/ false);
     BeginEndDecl = ActOnDeclStmt(BeginEndGroup, ColonLoc, ColonLoc);
 
@@ -2417,6 +2402,9 @@ Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
     // C99 6.8.6.3p1: A break shall appear only in or as a switch/loop body.
     return StmtError(Diag(BreakLoc, diag::err_break_not_in_loop_or_switch));
   }
+  if (S->isOpenMPLoopScope())
+    return StmtError(Diag(BreakLoc, diag::err_omp_loop_cannot_use_stmt)
+                     << "break");
 
   return new (Context) BreakStmt(BreakLoc);
 }
@@ -3188,6 +3176,9 @@ StmtResult Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
       !getSourceManager().isInSystemHeader(TryLoc))
       Diag(TryLoc, diag::err_exceptions_disabled) << "try";
 
+  if (getCurScope() && getCurScope()->isOpenMPSimdDirectiveScope())
+    Diag(TryLoc, diag::err_omp_simd_region_cannot_use_stmt) << "try";
+
   const unsigned NumHandlers = Handlers.size();
   assert(NumHandlers > 0 &&
          "The parser shouldn't call this if there are no handlers.");
@@ -3273,6 +3264,17 @@ Sema::ActOnSEHFinallyBlock(SourceLocation Loc,
                            Stmt *Block) {
   assert(Block);
   return SEHFinallyStmt::Create(Context,Loc,Block);
+}
+
+StmtResult
+Sema::ActOnSEHLeaveStmt(SourceLocation Loc, Scope *CurScope) {
+  Scope *SEHTryParent = CurScope;
+  while (SEHTryParent && !SEHTryParent->isSEHTryScope())
+    SEHTryParent = SEHTryParent->getParent();
+  if (!SEHTryParent)
+    return StmtError(Diag(Loc, diag::err_ms___leave_not_in___try));
+
+  return new (Context) SEHLeaveStmt(Loc);
 }
 
 StmtResult Sema::BuildMSDependentExistsStmt(SourceLocation KeywordLoc,

@@ -41,7 +41,7 @@ static int skipArgs(const char *Flag) {
     .Cases("-internal-externc-isystem", "-iprefix", "-iwithprefix", true)
     .Cases("-iwithprefixbefore", "-isysroot", "-isystem", "-iquote", true)
     .Cases("-resource-dir", "-serialize-diagnostic-file", true)
-    .Case("-dwarf-debug-flags", true)
+    .Cases("-dwarf-debug-flags", "-ivfsoverlay", true)
     .Default(false);
 
   // Match found.
@@ -95,7 +95,9 @@ static void PrintArg(raw_ostream &OS, const char *Arg, bool Quote) {
 
 void Command::Print(raw_ostream &OS, const char *Terminator, bool Quote,
                     bool CrashReport) const {
-  OS << " \"" << Executable << '"';
+  // Always quote the exe.
+  OS << ' ';
+  PrintArg(OS, Executable, /*Quote=*/true);
 
   for (size_t i = 0, e = Arguments.size(); i < e; ++i) {
     const char *const Arg = Arguments[i];

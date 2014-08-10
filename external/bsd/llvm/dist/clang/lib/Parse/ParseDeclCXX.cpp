@@ -689,22 +689,32 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
     return nullptr;
   }
 
-  if (ExpectAndConsume(tok::comma)) {
-    SkipUntil(tok::semi);
-    return nullptr;
-  }
+  ExprResult AssertMessage;
+  if (Tok.is(tok::r_paren)) {
+    Diag(Tok, getLangOpts().CPlusPlus1z
+                  ? diag::warn_cxx1y_compat_static_assert_no_message
+                  : diag::ext_static_assert_no_message)
+      << (getLangOpts().CPlusPlus1z
+              ? FixItHint()
+              : FixItHint::CreateInsertion(Tok.getLocation(), ", \"\""));
+  } else {
+    if (ExpectAndConsume(tok::comma)) {
+      SkipUntil(tok::semi);
+      return nullptr;
+    }
 
-  if (!isTokenStringLiteral()) {
-    Diag(Tok, diag::err_expected_string_literal)
-      << /*Source='static_assert'*/1;
-    SkipMalformedDecl();
-    return nullptr;
-  }
+    if (!isTokenStringLiteral()) {
+      Diag(Tok, diag::err_expected_string_literal)
+        << /*Source='static_assert'*/1;
+      SkipMalformedDecl();
+      return nullptr;
+    }
 
-  ExprResult AssertMessage(ParseStringLiteralExpression());
-  if (AssertMessage.isInvalid()) {
-    SkipMalformedDecl();
-    return nullptr;
+    AssertMessage = ParseStringLiteralExpression();
+    if (AssertMessage.isInvalid()) {
+      SkipMalformedDecl();
+      return nullptr;
+    }
   }
 
   T.consumeClose();
@@ -1229,7 +1239,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec &SS = DS.getTypeSpecScope();
   if (getLangOpts().CPlusPlus) {
-    // "FOO : BAR" is not a potential typo for "FOO::BAR".
+    // "FOO : BAR" is not a potential typo for "FOO::BAR".  In this context it
+    // is a base-specifier-list.
     ColonProtectionRAIIObject X(*this);
 
     if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(), EnteringContext))
@@ -1916,14 +1927,8 @@ void Parser::ParseCXXMemberDeclaratorBeforeInitializer(
   //   declarator pure-specifier[opt]
   //   declarator brace-or-equal-initializer[opt]
   //   identifier[opt] ':' constant-expression
-  if (Tok.isNot(tok::colon)) {
-    // Don't parse FOO:BAR as if it were a typo for FOO::BAR, in this context it
-    // is a bitfield.
-    // FIXME: This should only apply when parsing the id-expression (see
-    // PR18587).
-    ColonProtectionRAIIObject X(*this);
+  if (Tok.isNot(tok::colon))
     ParseDeclarator(DeclaratorInfo);
-  }
 
   if (!DeclaratorInfo.isFunctionDeclarator() && TryConsumeToken(tok::colon)) {
     BitfieldSize = ParseConstantExpression();
@@ -1948,10 +1953,19 @@ void Parser::ParseCXXMemberDeclaratorBeforeInitializer(
 
   // For compatibility with code written to older Clang, also accept a
   // virt-specifier *after* the GNU attributes.
-  // FIXME: If we saw any attributes that are known to GCC followed by a
-  // virt-specifier, issue a GCC-compat warning.
-  if (BitfieldSize.isUnset() && VS.isUnset())
+  if (BitfieldSize.isUnset() && VS.isUnset()) {
     ParseOptionalCXX11VirtSpecifierSeq(VS, getCurrentClass().IsInterface);
+    if (!VS.isUnset()) {
+      // If we saw any GNU-style attributes that are known to GCC followed by a
+      // virt-specifier, issue a GCC-compat warning.
+      const AttributeList *Attr = DeclaratorInfo.getAttributes();
+      while (Attr) {
+        if (Attr->isKnownToGCC() && !Attr->isCXX11Attribute())
+          Diag(Attr->getLoc(), diag::warn_gcc_attribute_location);
+        Attr = Attr->getNext();
+      }
+    }
+  }
 }
 
 /// ParseCXXClassMemberDeclaration - Parse a C++ class member declaration.
@@ -2005,6 +2019,14 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     return;
   }
 
+  // Turn on colon protection early, while parsing declspec, although there is
+  // nothing to protect there. It prevents from false errors if error recovery
+  // incorrectly determines where the declspec ends, as in the example:
+  //   struct A { enum class B { C }; };
+  //   const int C = 4;
+  //   struct D { A::B : C; };
+  ColonProtectionRAIIObject X(*this);
+
   // Access declarations.
   bool MalformedTypeSpec = false;
   if (!TemplateInfo.Kind &&
@@ -2053,9 +2075,10 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     }
   }
 
-  // static_assert-declaration
-  if (Tok.is(tok::kw_static_assert) || Tok.is(tok::kw__Static_assert)) {
-    // FIXME: Check for templates
+  // static_assert-declaration. A templated static_assert declaration is
+  // diagnosed in Parser::ParseSingleDeclarationAfterTemplate.
+  if (!TemplateInfo.Kind &&
+      (Tok.is(tok::kw_static_assert) || Tok.is(tok::kw__Static_assert))) {
     SourceLocation DeclEnd;
     ParseStaticAssertDeclaration(DeclEnd);
     return;
@@ -2118,13 +2141,11 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   if (MalformedTypeSpec)
     DS.SetTypeSpecError();
 
-  {
-    // Don't parse FOO:BAR as if it were a typo for FOO::BAR, in this context it
-    // is a bitfield.
-    ColonProtectionRAIIObject X(*this);
-    ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class,
-                               &CommonLateParsedAttrs);
-  }
+  ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class,
+                             &CommonLateParsedAttrs);
+
+  // Turn off colon protection that was set for declspec.
+  X.restore();
 
   // If we had a free-standing type definition with a missing semicolon, we
   // may get this far before the problem becomes obvious.
@@ -2466,7 +2487,7 @@ ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
             << 1 /* delete */;
         else
           Diag(ConsumeToken(), diag::err_deleted_non_function);
-        return ExprResult();
+        return ExprError();
       }
     } else if (Tok.is(tok::kw_default)) {
       if (IsFunction)
@@ -2474,7 +2495,7 @@ ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
           << 0 /* default */;
       else
         Diag(ConsumeToken(), diag::err_default_special_members);
-      return ExprResult();
+      return ExprError();
     }
 
   }
@@ -3390,12 +3411,22 @@ void Parser::ParseCXX11Attributes(ParsedAttributesWithRange &attrs,
 }
 
 void Parser::DiagnoseAndSkipCXX11Attributes() {
-  if (!isCXX11AttributeSpecifier())
-    return;
-
   // Start and end location of an attribute or an attribute list.
   SourceLocation StartLoc = Tok.getLocation();
+  SourceLocation EndLoc = SkipCXX11Attributes();
+
+  if (EndLoc.isValid()) {
+    SourceRange Range(StartLoc, EndLoc);
+    Diag(StartLoc, diag::err_attributes_not_allowed)
+      << Range;
+  }
+}
+
+SourceLocation Parser::SkipCXX11Attributes() {
   SourceLocation EndLoc;
+
+  if (!isCXX11AttributeSpecifier())
+    return EndLoc;
 
   do {
     if (Tok.is(tok::l_square)) {
@@ -3413,11 +3444,7 @@ void Parser::DiagnoseAndSkipCXX11Attributes() {
     }
   } while (isCXX11AttributeSpecifier());
 
-  if (EndLoc.isValid()) {
-    SourceRange Range(StartLoc, EndLoc);
-    Diag(StartLoc, diag::err_attributes_not_allowed)
-      << Range;
-  }
+  return EndLoc;
 }
 
 /// ParseMicrosoftAttributes - Parse a Microsoft attribute [Attr]

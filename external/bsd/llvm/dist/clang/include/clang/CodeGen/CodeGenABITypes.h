@@ -39,6 +39,7 @@ class CXXRecordDecl;
 class CodeGenOptions;
 class DiagnosticsEngine;
 class ObjCMethodDecl;
+class CoverageSourceInfo;
 
 namespace CodeGen {
 class CGFunctionInfo;
@@ -47,7 +48,8 @@ class CodeGenModule;
 class CodeGenABITypes
 {
 public:
-  CodeGenABITypes(ASTContext &C, llvm::Module &M, const llvm::DataLayout &TD);
+  CodeGenABITypes(ASTContext &C, llvm::Module &M, const llvm::DataLayout &TD,
+                  CoverageSourceInfo *CoverageInfo = nullptr);
   ~CodeGenABITypes();
 
   /// These methods all forward to methods in the private implementation class
@@ -63,9 +65,9 @@ public:
   const CGFunctionInfo &arrangeCXXMethodType(const CXXRecordDecl *RD,
                                              const FunctionProtoType *FTP);
   const CGFunctionInfo &arrangeFreeFunctionCall(CanQualType returnType,
-                                         llvm::ArrayRef<CanQualType> argTypes,
-                                         FunctionType::ExtInfo info,
-                                         RequiredArgs args);
+                                                ArrayRef<CanQualType> argTypes,
+                                                FunctionType::ExtInfo info,
+                                                RequiredArgs args);
 
 private:
   /// Default CodeGenOptions object used to initialize the
