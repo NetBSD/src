@@ -237,6 +237,85 @@ private:
 };
 
 enum {
+  DWARF_AARCH64_X0 = 0,
+  DWARF_AARCH64_X30 = 30,
+  DWARF_AARCH64_SP = 31,
+  DWARF_AARCH64_ELR_MODE = 33,
+  DWARF_AARCH64_V0 = 64,
+  DWARF_AARCH64_V31 = 95,
+
+  REGNO_AARCH64_X0 = 0,
+  REGNO_AARCH64_X30 = 30,
+  REGNO_AARCH64_SP = 31,
+  REGNO_AARCH64_ELR_MODE = 32,
+  REGNO_AARCH64_V0 = 33,
+  REGNO_AARCH64_V31 = 64,
+};
+
+class Registers_aarch64 {
+public:
+  enum {
+    LAST_RESTORE_REG = REGNO_AARCH64_V31,
+    LAST_REGISTER = REGNO_AARCH64_V31,
+    RETURN_OFFSET = 0,
+  };
+
+  __dso_hidden Registers_aarch64();
+
+  static int dwarf2regno(int num) {
+    if (num >= DWARF_AARCH64_X0 && num <= DWARF_AARCH64_X30)
+      return REGNO_AARCH64_X0 + (num - DWARF_AARCH64_X0);
+    if (num == DWARF_AARCH64_SP)
+      return REGNO_AARCH64_SP;
+    if (num == DWARF_AARCH64_ELR_MODE)
+      return REGNO_AARCH64_ELR_MODE;
+    if (num >= DWARF_AARCH64_V0 && num <= DWARF_AARCH64_V31)
+      return REGNO_AARCH64_V0 + (num - DWARF_AARCH64_V0);
+    return LAST_REGISTER + 1;
+  }
+
+  bool validRegister(int num) const {
+    return num >= 0 && num <= LAST_RESTORE_REG;
+  }
+
+  uint64_t getRegister(int num) const {
+    assert(validRegister(num));
+    return reg[num];
+  }
+
+  void setRegister(int num, uint64_t value) {
+    assert(validRegister(num));
+    reg[num] = value;
+  }
+
+  uint64_t getIP() const { return reg[REGNO_AARCH64_X30]; }
+
+  void setIP(uint64_t value) { reg[REGNO_AARCH64_X30] = value; }
+
+  uint64_t getSP() const { return reg[REGNO_AARCH64_SP]; }
+
+  void setSP(uint64_t value) { reg[REGNO_AARCH64_SP] = value; }
+
+  bool validFloatVectorRegister(int num) const {
+    return (num >= REGNO_AARCH64_V0 && num <= REGNO_AARCH64_V31);
+  }
+
+  void copyFloatVectorRegister(int num, uint64_t addr_) {
+    const void *addr = reinterpret_cast<const void *>(addr_);
+    memcpy(vecreg + (num - REGNO_AARCH64_V0), addr, sizeof(vecreg[0]));
+  }
+
+  __dso_hidden void jumpto() const __dead;
+
+private:
+  struct vecreg_t {
+    uint64_t low, high;
+  };
+  uint64_t reg[REGNO_AARCH64_ELR_MODE + 1];
+  vecreg_t vecreg[32];
+};
+
+enum {
   DWARF_ARM32_R0 = 0,
   DWARF_ARM32_R15 = 15,
   DWARF_ARM32_SPSR = 128,
@@ -951,6 +1030,8 @@ typedef Registers_x86 NativeUnwindRegisters;
 typedef Registers_x86_64 NativeUnwindRegisters;
 #elif __powerpc__
 typedef Registers_ppc32 NativeUnwindRegisters;
+#elif __aarch64__
+typedef Registers_aarch64 NativeUnwindRegisters;
 #elif __arm__
 typedef Registers_arm32 NativeUnwindRegisters;
 #elif __vax__

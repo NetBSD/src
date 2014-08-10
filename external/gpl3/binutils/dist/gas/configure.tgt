@@ -100,6 +100,7 @@ generic_target=${cpu_type}-$vendor-$os
 case ${generic_target} in
   aarch64*-*-elf)			fmt=elf;;
   aarch64*-*-linux*)			fmt=elf em=linux ;;
+  aarch64*-*-netbsd*)			fmt=elf em=nbsd ;;
 
   alpha-*-*vms*)			fmt=evax ;;
   alpha-*-osf*)				fmt=ecoff ;;
