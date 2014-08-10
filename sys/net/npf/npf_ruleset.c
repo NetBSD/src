@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.35 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.36 2014/08/10 19:09:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.35 2014/07/23 01:25:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.36 2014/08/10 19:09:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -83,7 +83,7 @@ struct npf_rule {
 	int			r_type;
 	bpfjit_func_t		r_jcode;
 	void *			r_code;
-	size_t			r_clen;
+	u_int			r_clen;
 
 	/* NAT policy (optional), rule procedure and subset. */
 	npf_natpolicy_t *	r_natp;
@@ -105,17 +105,17 @@ struct npf_rule {
 		npf_rule_t *		r_parent;
 	} /* C11 */;
 
-	/* Rule ID and the original dictionary. */
+	/* Rule ID, name and the optional key. */
 	uint64_t		r_id;
-	prop_dictionary_t	r_dict;
-
-	/* Rule name and all-list entry. */
 	char			r_name[NPF_RULE_MAXNAMELEN];
-	LIST_ENTRY(npf_rule)	r_aentry;
-
-	/* Key (optional). */
 	uint8_t			r_key[NPF_RULE_MAXKEYLEN];
+
+	/* All-list entry and the auxiliary info. */
+	LIST_ENTRY(npf_rule)	r_aentry;
+	prop_data_t		r_info;
 };
+
+static int	npf_rule_export(const npf_rule_t *, prop_dictionary_t);
 
 /*
  * Private attributes - must be in the NPF_RULE_PRIVMASK range.
@@ -319,36 +319,43 @@ npf_ruleset_remkey(npf_ruleset_t *rlset, const char *rname,
 prop_dictionary_t
 npf_ruleset_list(npf_ruleset_t *rlset, const char *rname)
 {
-	prop_dictionary_t rldict;
+	prop_dictionary_t rgdict;
 	prop_array_t rules;
 	npf_rule_t *rg, *rl;
+
+	KASSERT(npf_config_locked_p());
 
 	if ((rg = npf_ruleset_lookup(rlset, rname)) == NULL) {
 		return NULL;
 	}
-	if ((rldict = prop_dictionary_create()) == NULL) {
+	if ((rgdict = prop_dictionary_create()) == NULL) {
 		return NULL;
 	}
 	if ((rules = prop_array_create()) == NULL) {
-		prop_object_release(rldict);
+		prop_object_release(rgdict);
 		return NULL;
 	}
 
 	TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
+		prop_dictionary_t rldict;
+
+		rldict = prop_dictionary_create();
 		KASSERT(rl->r_parent == rg);
-		if (rl->r_dict && !prop_array_add(rules, rl->r_dict)) {
+
+		if (npf_rule_export(rl, rldict) ||
+		    !prop_array_add(rules, rldict)) {
 			prop_object_release(rldict);
 			prop_object_release(rules);
 			return NULL;
 		}
 	}
 
-	if (!prop_dictionary_set(rldict, "rules", rules)) {
-		prop_object_release(rldict);
-		rldict = NULL;
+	if (!prop_dictionary_set(rgdict, "rules", rules)) {
+		prop_object_release(rgdict);
+		rgdict = NULL;
 	}
 	prop_object_release(rules);
-	return rldict;
+	return rgdict;
 }
 
 int
@@ -365,6 +372,35 @@ npf_ruleset_flush(npf_ruleset_t *rlset, const char *rname)
 		LIST_INSERT_HEAD(&rlset->rs_gc, rl, r_aentry);
 	}
 	return 0;
+}
+
+int
+npf_ruleset_export(const npf_ruleset_t *rlset, prop_array_t rules)
+{
+	const npf_rule_t *rl;
+	int error = 0;
+
+	KASSERT(npf_config_locked_p());
+
+	LIST_FOREACH(rl, &rlset->rs_all, r_aentry) {
+		const npf_natpolicy_t *natp = rl->r_natp;
+		prop_dictionary_t rldict;
+
+		rldict = prop_dictionary_create();
+		if ((error = npf_rule_export(rl, rldict)) != 0) {
+			prop_object_release(rldict);
+			break;
+		}
+		if (natp && (error = npf_nat_policyexport(natp, rldict)) != 0) {
+			prop_object_release(rldict);
+			break;
+		}
+		if (!prop_array_add(rules, rldict)) {
+			prop_object_release(rldict);
+			return ENOMEM;
+		}
+	}
+	return error;
 }
 
 void
@@ -538,6 +574,7 @@ npf_rule_alloc(prop_dictionary_t rldict)
 {
 	npf_rule_t *rl;
 	const char *rname;
+	prop_data_t d;
 
 	/* Allocate a rule structure. */
 	rl = kmem_zalloc(sizeof(npf_rule_t), KM_SLEEP);
@@ -552,11 +589,11 @@ npf_rule_alloc(prop_dictionary_t rldict)
 	}
 
 	/* Attributes, priority and interface ID (optional). */
-	prop_dictionary_get_uint32(rldict, "attributes", &rl->r_attr);
-	prop_dictionary_get_int32(rldict, "priority", &rl->r_priority);
+	prop_dictionary_get_uint32(rldict, "attr", &rl->r_attr);
+	prop_dictionary_get_int32(rldict, "prio", &rl->r_priority);
 	rl->r_attr &= ~NPF_RULE_PRIVMASK;
 
-	if (prop_dictionary_get_cstring_nocopy(rldict, "interface", &rname)) {
+	if (prop_dictionary_get_cstring_nocopy(rldict, "ifname", &rname)) {
 		if ((rl->r_ifid = npf_ifmap_register(rname)) == 0) {
 			kmem_free(rl, sizeof(npf_rule_t));
 			return NULL;
@@ -581,11 +618,42 @@ npf_rule_alloc(prop_dictionary_t rldict)
 		memcpy(rl->r_key, key, len);
 	}
 
-	if (NPF_DYNAMIC_RULE_P(rl->r_attr)) {
-		rl->r_dict = prop_dictionary_copy(rldict);
+	if ((d = prop_dictionary_get(rldict, "info")) != NULL) {
+		rl->r_info = prop_data_copy(d);
+	}
+	return rl;
+}
+
+static int
+npf_rule_export(const npf_rule_t *rl, prop_dictionary_t rldict)
+{
+	prop_data_t d;
+
+	prop_dictionary_set_uint32(rldict, "attr", rl->r_attr);
+	prop_dictionary_set_int32(rldict, "prio", rl->r_priority);
+	prop_dictionary_set_uint32(rldict, "skip-to", rl->r_skip_to);
+
+	prop_dictionary_set_int32(rldict, "code-type", rl->r_type);
+	if (rl->r_code) {
+		d = prop_data_create_data(rl->r_code, rl->r_clen);
+		prop_dictionary_set_and_rel(rldict, "code", d);
 	}
 
-	return rl;
+	if (rl->r_ifid) {
+		const char *ifname = npf_ifmap_getname(rl->r_ifid);
+		prop_dictionary_set_cstring(rldict, "ifname", ifname);
+	}
+	prop_dictionary_set_uint64(rldict, "id", rl->r_id);
+
+	if (rl->r_name[0]) {
+		prop_dictionary_set_cstring(rldict, "name", rl->r_name);
+	}
+	if (NPF_DYNAMIC_RULE_P(rl->r_attr)) {
+		d = prop_data_create_data(rl->r_key, NPF_RULE_MAXKEYLEN);
+		prop_dictionary_set_and_rel(rldict, "key", d);
+	}
+	prop_dictionary_set(rldict, "info", rl->r_info);
+	return 0;
 }
 
 /*
@@ -599,13 +667,10 @@ npf_rule_setcode(npf_rule_t *rl, const int type, void *code, size_t size)
 {
 	KASSERT(type == NPF_CODE_BPF);
 
-	if ((rl->r_jcode = npf_bpf_compile(code, size)) == NULL) {
-		rl->r_code = code;
-		rl->r_clen = size;
-	} else {
-		rl->r_code = NULL;
-	}
 	rl->r_type = type;
+	rl->r_code = code;
+	rl->r_clen = size;
+	rl->r_jcode = npf_bpf_compile(code, size);
 }
 
 /*
@@ -643,9 +708,8 @@ npf_rule_free(npf_rule_t *rl)
 		/* Free JIT code. */
 		bpf_jit_freecode(rl->r_jcode);
 	}
-	if (rl->r_dict) {
-		/* Destroy the dictionary. */
-		prop_object_release(rl->r_dict);
+	if (rl->r_info) {
+		prop_object_release(rl->r_info);
 	}
 	kmem_free(rl, sizeof(npf_rule_t));
 }
@@ -711,9 +775,8 @@ npf_rule_inspect(const npf_rule_t *rl, bpf_args_t *bc_args,
 	}
 
 	/* Any code? */
-	if (rl->r_jcode == rl->r_code) {
+	if (!rl->r_code) {
 		KASSERT(rl->r_jcode == NULL);
-		KASSERT(rl->r_code == NULL);
 		return true;
 	}
 	KASSERT(rl->r_type == NPF_CODE_BPF);
