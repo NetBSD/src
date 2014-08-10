@@ -6,8 +6,8 @@
 ;
 ; rdar://problem/16015314
 ;
+; CHECK:  DW_AT_location [DW_FORM_block1]       (<0x03> 54 93 04 )
 ; CHECK:  DW_AT_name [DW_FORM_strp]{{.*}} "a"
-; CHECK:    DW_AT_location [DW_FORM_block1]       (<0x03> 54 93 04 )
 ;
 ; struct bar {
 ;   int a;
@@ -78,7 +78,7 @@ attributes #4 = { nounwind }
 !llvm.module.flags = !{!22, !23}
 !llvm.ident = !{!24}
 
-!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.5 ", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [subregisters.c] [DW_LANG_C99]
+!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.5 ", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [subregisters.c] [DW_LANG_C99]
 !1 = metadata !{metadata !"subregisters.c", metadata !""}
 !2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !17}

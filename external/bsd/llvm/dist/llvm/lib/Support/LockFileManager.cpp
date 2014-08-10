@@ -9,6 +9,7 @@
 #include "llvm/Support/LockFileManager.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
@@ -32,15 +33,17 @@ Optional<std::pair<std::string, int> >
 LockFileManager::readLockFile(StringRef LockFileName) {
   // Read the owning host and PID out of the lock file. If it appears that the
   // owning process is dead, the lock file is invalid.
-  std::unique_ptr<MemoryBuffer> MB;
-  if (MemoryBuffer::getFile(LockFileName, MB)) {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MBOrErr =
+      MemoryBuffer::getFile(LockFileName);
+  if (!MBOrErr) {
     sys::fs::remove(LockFileName);
     return None;
   }
+  MemoryBuffer &MB = *MBOrErr.get();
 
   StringRef Hostname;
   StringRef PIDStr;
-  std::tie(Hostname, PIDStr) = getToken(MB->getBuffer(), " ");
+  std::tie(Hostname, PIDStr) = getToken(MB.getBuffer(), " ");
   PIDStr = PIDStr.substr(PIDStr.find_first_not_of(" "));
   int PID;
   if (!PIDStr.getAsInteger(10, PID)) {
@@ -71,7 +74,7 @@ bool LockFileManager::processStillExecuting(StringRef Hostname, int PID) {
 LockFileManager::LockFileManager(StringRef FileName)
 {
   this->FileName = FileName;
-  if (error_code EC = sys::fs::make_absolute(this->FileName)) {
+  if (std::error_code EC = sys::fs::make_absolute(this->FileName)) {
     Error = EC;
     return;
   }
@@ -87,10 +90,8 @@ LockFileManager::LockFileManager(StringRef FileName)
   UniqueLockFileName = LockFileName;
   UniqueLockFileName += "-%%%%%%%%";
   int UniqueLockFileID;
-  if (error_code EC
-        = sys::fs::createUniqueFile(UniqueLockFileName.str(),
-                                    UniqueLockFileID,
-                                    UniqueLockFileName)) {
+  if (std::error_code EC = sys::fs::createUniqueFile(
+          UniqueLockFileName.str(), UniqueLockFileID, UniqueLockFileName)) {
     Error = EC;
     return;
   }
@@ -122,9 +123,9 @@ LockFileManager::LockFileManager(StringRef FileName)
 
   while (1) {
     // Create a link from the lock file name. If this succeeds, we're done.
-    error_code EC =
+    std::error_code EC =
         sys::fs::create_link(UniqueLockFileName.str(), LockFileName.str());
-    if (EC == errc::success)
+    if (!EC)
       return;
 
     if (EC != errc::file_exists) {

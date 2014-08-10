@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64.h"
-#include "AArch64MachineFunctionInfo.h"
 #include "AArch64MCInstLower.h"
+#include "AArch64MachineFunctionInfo.h"
 #include "AArch64RegisterInfo.h"
 #include "AArch64Subtarget.h"
 #include "InstPrinter/AArch64InstPrinter.h"
@@ -23,8 +23,8 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
+#include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
@@ -145,7 +145,7 @@ void AArch64AsmPrinter::EmitEndOfAsmFile(Module &M) {
     MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
     if (!Stubs.empty()) {
       OutStreamer.SwitchSection(TLOFELF.getDataRelSection());
-      const DataLayout *TD = TM.getDataLayout();
+      const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
 
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
         OutStreamer.EmitLabel(Stubs[i].first);
@@ -211,7 +211,7 @@ void AArch64AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNum,
   const MachineOperand &MO = MI->getOperand(OpNum);
   switch (MO.getType()) {
   default:
-    assert(0 && "<unknown operand type>");
+    llvm_unreachable("<unknown operand type>");
   case MachineOperand::MO_Register: {
     unsigned Reg = MO.getReg();
     assert(TargetRegisterInfo::isPhysicalRegister(Reg));
@@ -252,8 +252,8 @@ bool AArch64AsmPrinter::printAsmRegInClass(const MachineOperand &MO,
                                            const TargetRegisterClass *RC,
                                            bool isVector, raw_ostream &O) {
   assert(MO.isReg() && "Should only get here with a register!");
-  const AArch64RegisterInfo *RI =
-      static_cast<const AArch64RegisterInfo *>(TM.getRegisterInfo());
+  const AArch64RegisterInfo *RI = static_cast<const AArch64RegisterInfo *>(
+      TM.getSubtargetImpl()->getRegisterInfo());
   unsigned Reg = MO.getReg();
   unsigned RegToPrint = RC->getRegister(RI->getEncodingValue(Reg));
   assert(RI->regsOverlap(RegToPrint, Reg));
@@ -518,7 +518,5 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 extern "C" void LLVMInitializeAArch64AsmPrinter() {
   RegisterAsmPrinter<AArch64AsmPrinter> X(TheAArch64leTarget);
   RegisterAsmPrinter<AArch64AsmPrinter> Y(TheAArch64beTarget);
-
-  RegisterAsmPrinter<AArch64AsmPrinter> Z(TheARM64leTarget);
-  RegisterAsmPrinter<AArch64AsmPrinter> W(TheARM64beTarget);
+  RegisterAsmPrinter<AArch64AsmPrinter> Z(TheARM64Target);
 }

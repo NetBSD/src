@@ -56,7 +56,9 @@ class VLIWResourceModel {
 public:
 VLIWResourceModel(const TargetMachine &TM, const TargetSchedModel *SM) :
     SchedModel(SM), TotalPackets(0) {
-    ResourcesModel = TM.getInstrInfo()->CreateTargetScheduleState(&TM, nullptr);
+  ResourcesModel =
+      TM.getSubtargetImpl()->getInstrInfo()->CreateTargetScheduleState(&TM,
+                                                                       nullptr);
 
     // This hard requirement could be relaxed,
     // but for now do not let it proceed.
@@ -100,7 +102,7 @@ public:
   /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.
   virtual void schedule() override;
-  /// Perform platform specific DAG postprocessing.
+  /// Perform platform-specific DAG postprocessing.
   void postprocessDAG();
 };
 

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=x86-64 -mcpu=core2 -mattr=+sse2 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mcpu=core2 -mattr=+sse2 -x86-experimental-vector-widening-legalization | FileCheck %s --check-prefix=CHECK-WIDE
 
 
 define double @test1(double %A) {
@@ -9,14 +10,19 @@ define double @test1(double %A) {
 }
 ; FIXME: Ideally we should be able to fold the entire body of @test1 into a
 ; single paddd instruction. At the moment we produce the sequence 
-; pshufd+paddq+pshufd.
-
+; pshufd+paddq+pshufd. This is fixed with the widening legalization.
+;
 ; CHECK-LABEL: test1
 ; CHECK-NOT: movsd
 ; CHECK: pshufd
-; CHECK-NEXT: paddq
+; CHECK-NEXT: paddd
 ; CHECK-NEXT: pshufd
 ; CHECK-NEXT: ret
+;
+; CHECK-WIDE-LABEL: test1
+; CHECK-WIDE-NOT: movsd
+; CHECK-WIDE: paddd
+; CHECK-WIDE-NEXT: ret
 
 
 define double @test2(double %A, double %B) {
@@ -26,17 +32,15 @@ define double @test2(double %A, double %B) {
   %3 = bitcast <2 x i32> %add to double
   ret double %3
 }
-; FIXME: Ideally we should be able to fold the entire body of @test2 into a
-; single 'paddd %xmm1, %xmm0' instruction. At the moment we produce the
-; sequence pshufd+pshufd+paddq+pshufd.
-
 ; CHECK-LABEL: test2
 ; CHECK-NOT: movsd
-; CHECK: pshufd
-; CHECK-NEXT: pshufd
-; CHECK-NEXT: paddq
-; CHECK-NEXT: pshufd
+; CHECK: paddd
 ; CHECK-NEXT: ret
+;
+; CHECK-WIDE-LABEL: test2
+; CHECK-WIDE-NOT: movsd
+; CHECK-WIDE: paddd
+; CHECK-WIDE-NEXT: ret
 
 
 define i64 @test3(i64 %A) {
@@ -50,6 +54,12 @@ define i64 @test3(i64 %A) {
 ; CHECK: addps
 ; CHECK-NOT: pshufd
 ; CHECK: ret
+;
+; CHECK-WIDE-LABEL: test3
+; CHECK-WIDE-NOT: pshufd
+; CHECK-WIDE: addps
+; CHECK-WIDE-NOT: pshufd
+; CHECK-WIDE: ret
 
 
 define i64 @test4(i64 %A) {
@@ -58,14 +68,21 @@ define i64 @test4(i64 %A) {
   %2 = bitcast <2 x i32> %add to i64
   ret i64 %2
 }
-; FIXME: At the moment we still produce the sequence pshufd+paddq+pshufd.
-; Ideally, we should fold that sequence into a single paddd.
-
+; FIXME: At the moment we still produce the sequence pshufd+paddd+pshufd.
+; Ideally, we should fold that sequence into a single paddd. This is fixed with
+; the widening legalization.
+;
 ; CHECK-LABEL: test4
 ; CHECK: pshufd
-; CHECK-NEXT: paddq
+; CHECK-NEXT: paddd
 ; CHECK-NEXT: pshufd
 ; CHECK: ret
+;
+; CHECK-WIDE-LABEL: test4
+; CHECK-WIDE: movd %{{rdi|rcx}},
+; CHECK-WIDE-NEXT: paddd
+; CHECK-WIDE-NEXT: movd {{.*}}, %rax
+; CHECK-WIDE: ret
 
 
 define double @test5(double %A) {
@@ -77,6 +94,10 @@ define double @test5(double %A) {
 ; CHECK-LABEL: test5
 ; CHECK: addps
 ; CHECK-NEXT: ret
+;
+; CHECK-WIDE-LABEL: test5
+; CHECK-WIDE: addps
+; CHECK-WIDE-NEXT: ret
 
 
 define double @test6(double %A) {
@@ -86,14 +107,20 @@ define double @test6(double %A) {
   ret double %2
 }
 ; FIXME: Ideally we should be able to fold the entire body of @test6 into a
-; single paddw instruction.
-
+; single paddw instruction. This is fixed with the widening legalization.
+;
 ; CHECK-LABEL: test6
 ; CHECK-NOT: movsd
 ; CHECK: punpcklwd
-; CHECK-NEXT: paddd
+; CHECK-NEXT: paddw
 ; CHECK-NEXT: pshufb
 ; CHECK-NEXT: ret
+;
+; CHECK-WIDE-LABEL: test6
+; CHECK-WIDE-NOT: mov
+; CHECK-WIDE-NOT: punpcklwd
+; CHECK-WIDE: paddw
+; CHECK-WIDE-NEXT: ret
 
 
 define double @test7(double %A, double %B) {
@@ -103,17 +130,17 @@ define double @test7(double %A, double %B) {
   %3 = bitcast <4 x i16> %add to double
   ret double %3
 }
-; FIXME: Ideally we should be able to fold the entire body of @test7 into a
-; single 'paddw %xmm1, %xmm0' instruction. At the moment we produce the
-; sequence pshufd+pshufd+paddd+pshufd.
-
 ; CHECK-LABEL: test7
 ; CHECK-NOT: movsd
-; CHECK: punpcklwd
-; CHECK-NEXT: punpcklwd
-; CHECK-NEXT: paddd
-; CHECK-NEXT: pshufb
+; CHECK-NOT: punpcklwd
+; CHECK: paddw
 ; CHECK-NEXT: ret
+;
+; CHECK-WIDE-LABEL: test7
+; CHECK-WIDE-NOT: movsd
+; CHECK-WIDE-NOT: punpcklwd
+; CHECK-WIDE: paddw
+; CHECK-WIDE-NEXT: ret
 
 
 define double @test8(double %A) {
@@ -124,14 +151,20 @@ define double @test8(double %A) {
 }
 ; FIXME: Ideally we should be able to fold the entire body of @test8 into a
 ; single paddb instruction. At the moment we produce the sequence 
-; pshufd+paddw+pshufd.
-
+; pshufd+paddw+pshufd. This is fixed with the widening legalization.
+;
 ; CHECK-LABEL: test8
 ; CHECK-NOT: movsd
 ; CHECK: punpcklbw
-; CHECK-NEXT: paddw
+; CHECK-NEXT: paddb
 ; CHECK-NEXT: pshufb
 ; CHECK-NEXT: ret
+;
+; CHECK-WIDE-LABEL: test8
+; CHECK-WIDE-NOT: movsd
+; CHECK-WIDE-NOT: punpcklbw
+; CHECK-WIDE: paddb
+; CHECK-WIDE-NEXT: ret
 
 
 define double @test9(double %A, double %B) {
@@ -141,15 +174,15 @@ define double @test9(double %A, double %B) {
   %3 = bitcast <8 x i8> %add to double
   ret double %3
 }
-; FIXME: Ideally we should be able to fold the entire body of @test9 into a
-; single 'paddb %xmm1, %xmm0' instruction. At the moment we produce the
-; sequence pshufd+pshufd+paddw+pshufd.
-
 ; CHECK-LABEL: test9
 ; CHECK-NOT: movsd
-; CHECK: punpcklbw
-; CHECK-NEXT: punpcklbw
-; CHECK-NEXT: paddw
-; CHECK-NEXT: pshufb
+; CHECK-NOT: punpcklbw
+; CHECK: paddb
 ; CHECK-NEXT: ret
+;
+; CHECK-WIDE-LABEL: test9
+; CHECK-WIDE-NOT: movsd
+; CHECK-WIDE-NOT: punpcklbw
+; CHECK-WIDE: paddb
+; CHECK-WIDE-NEXT: ret
 

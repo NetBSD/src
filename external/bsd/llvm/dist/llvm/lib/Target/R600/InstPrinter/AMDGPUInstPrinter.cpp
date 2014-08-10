@@ -40,6 +40,50 @@ void AMDGPUInstPrinter::printU32ImmOperand(const MCInst *MI, unsigned OpNo,
   O << formatHex(MI->getOperand(OpNo).getImm() & 0xffffffff);
 }
 
+void AMDGPUInstPrinter::printOffen(const MCInst *MI, unsigned OpNo,
+                                   raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " offen";
+}
+
+void AMDGPUInstPrinter::printIdxen(const MCInst *MI, unsigned OpNo,
+                                   raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " idxen";
+}
+
+void AMDGPUInstPrinter::printAddr64(const MCInst *MI, unsigned OpNo,
+                                    raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " addr64";
+}
+
+void AMDGPUInstPrinter::printMBUFOffset(const MCInst *MI, unsigned OpNo,
+                                        raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm()) {
+    O << " offset:";
+    printU16ImmOperand(MI, OpNo, O);
+  }
+}
+
+void AMDGPUInstPrinter::printGLC(const MCInst *MI, unsigned OpNo,
+                                 raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " glc";
+}
+
+void AMDGPUInstPrinter::printSLC(const MCInst *MI, unsigned OpNo,
+                                 raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " slc";
+}
+
+void AMDGPUInstPrinter::printTFE(const MCInst *MI, unsigned OpNo,
+                                 raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " tfe";
+}
+
 void AMDGPUInstPrinter::printRegOperand(unsigned reg, raw_ostream &O) {
   switch (reg) {
   case AMDGPU::VCC:
@@ -99,9 +143,9 @@ void AMDGPUInstPrinter::printRegOperand(unsigned reg, raw_ostream &O) {
     return;
   }
 
-  // The low 8 bits encoding value is the register index, for both VGPRs and
-  // SGPRs.
-  unsigned RegIdx = MRI.getEncodingValue(reg) & ((1 << 8)  - 1);
+  // The low 8 bits of the encoding value is the register index, for both VGPRs
+  // and SGPRs.
+  unsigned RegIdx = MRI.getEncodingValue(reg) & ((1 << 8) - 1);
   if (NumRegs == 1) {
     O << Type << RegIdx;
     return;
@@ -216,13 +260,8 @@ void AMDGPUInstPrinter::printClamp(const MCInst *MI, unsigned OpNo,
 
 void AMDGPUInstPrinter::printLiteral(const MCInst *MI, unsigned OpNo,
                                      raw_ostream &O) {
-  union Literal {
-    float f;
-    int32_t i;
-  } L;
-
-  L.i = MI->getOperand(OpNo).getImm();
-  O << L.i << "(" << L.f << ")";
+  int32_t Imm = MI->getOperand(OpNo).getImm();
+  O << Imm << '(' << BitsToFloat(Imm) << ')';
 }
 
 void AMDGPUInstPrinter::printLast(const MCInst *MI, unsigned OpNo,

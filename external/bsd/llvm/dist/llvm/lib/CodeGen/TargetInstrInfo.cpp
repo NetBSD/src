@@ -290,13 +290,15 @@ bool TargetInstrInfo::getStackSlotRange(const TargetRegisterClass *RC,
     Offset = 0;
     return true;
   }
-  unsigned BitSize = TM->getRegisterInfo()->getSubRegIdxSize(SubIdx);
+  unsigned BitSize =
+      TM->getSubtargetImpl()->getRegisterInfo()->getSubRegIdxSize(SubIdx);
   // Convert bit size to byte size to be consistent with
   // MCRegisterClass::getSize().
   if (BitSize % 8)
     return false;
 
-  int BitOffset = TM->getRegisterInfo()->getSubRegIdxOffset(SubIdx);
+  int BitOffset =
+      TM->getSubtargetImpl()->getRegisterInfo()->getSubRegIdxOffset(SubIdx);
   if (BitOffset < 0 || BitOffset % 8)
     return false;
 
@@ -305,7 +307,7 @@ bool TargetInstrInfo::getStackSlotRange(const TargetRegisterClass *RC,
 
   assert(RC->getSize() >= (Offset + Size) && "bad subregister range");
 
-  if (!TM->getDataLayout()->isLittleEndian()) {
+  if (!TM->getSubtargetImpl()->getDataLayout()->isLittleEndian()) {
     Offset = RC->getSize() - (Offset + Size);
   }
   return true;
@@ -498,7 +500,7 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
 
   const MachineOperand &MO = MI->getOperand(1-Ops[0]);
   MachineBasicBlock::iterator Pos = MI;
-  const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
 
   if (Flags == MachineMemOperand::MOStore)
     storeRegToStackSlot(*MBB, Pos, MO.getReg(), MO.isKill(), FI, RC, TRI);
@@ -562,8 +564,6 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
                                          AliasAnalysis *AA) const {
   const MachineFunction &MF = *MI->getParent()->getParent();
   const MachineRegisterInfo &MRI = MF.getRegInfo();
-  const TargetMachine &TM = MF.getTarget();
-  const TargetInstrInfo &TII = *TM.getInstrInfo();
 
   // Remat clients assume operand 0 is the defined register.
   if (!MI->getNumOperands() || !MI->getOperand(0).isReg())
@@ -582,7 +582,7 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
   // redundant with subsequent checks, but it's target-independent,
   // simple, and a common case.
   int FrameIdx = 0;
-  if (TII.isLoadFromStackSlot(MI, FrameIdx) &&
+  if (isLoadFromStackSlot(MI, FrameIdx) &&
       MF.getFrameInfo()->isImmutableObjectIndex(FrameIdx))
     return true;
 
@@ -655,8 +655,8 @@ bool TargetInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
   // saves compile time, because it doesn't require every single
   // stack slot reference to depend on the instruction that does the
   // modification.
-  const TargetLowering &TLI = *MF.getTarget().getTargetLowering();
-  const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
+  const TargetLowering &TLI = *MF.getSubtarget().getTargetLowering();
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   if (MI->modifiesRegister(TLI.getStackPointerRegisterToSaveRestore(), TRI))
     return true;
 
@@ -671,7 +671,7 @@ bool TargetInstrInfo::usePreRAHazardRecognizer() const {
 
 // Default implementation of CreateTargetRAHazardRecognizer.
 ScheduleHazardRecognizer *TargetInstrInfo::
-CreateTargetHazardRecognizer(const TargetMachine *TM,
+CreateTargetHazardRecognizer(const TargetSubtargetInfo *STI,
                              const ScheduleDAG *DAG) const {
   // Dummy hazard recognizer allows all instructions to issue.
   return new ScheduleHazardRecognizer();

@@ -22,22 +22,19 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
 
 #define DEBUG_TYPE "post-RA-sched"
 
-CriticalAntiDepBreaker::
-CriticalAntiDepBreaker(MachineFunction& MFi, const RegisterClassInfo &RCI) :
-  AntiDepBreaker(), MF(MFi),
-  MRI(MF.getRegInfo()),
-  TII(MF.getTarget().getInstrInfo()),
-  TRI(MF.getTarget().getRegisterInfo()),
-  RegClassInfo(RCI),
-  Classes(TRI->getNumRegs(), nullptr),
-  KillIndices(TRI->getNumRegs(), 0),
-  DefIndices(TRI->getNumRegs(), 0),
-  KeepRegs(TRI->getNumRegs(), false) {}
+CriticalAntiDepBreaker::CriticalAntiDepBreaker(MachineFunction &MFi,
+                                               const RegisterClassInfo &RCI)
+    : AntiDepBreaker(), MF(MFi), MRI(MF.getRegInfo()),
+      TII(MF.getSubtarget().getInstrInfo()),
+      TRI(MF.getSubtarget().getRegisterInfo()), RegClassInfo(RCI),
+      Classes(TRI->getNumRegs(), nullptr), KillIndices(TRI->getNumRegs(), 0),
+      DefIndices(TRI->getNumRegs(), 0), KeepRegs(TRI->getNumRegs(), false) {}
 
 CriticalAntiDepBreaker::~CriticalAntiDepBreaker() {
 }
@@ -146,8 +143,8 @@ static const SDep *CriticalPathStep(const SUnit *SU) {
 
 void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
   // It's not safe to change register allocation for source operands of
-  // that have special allocation requirements. Also assume all registers
-  // used in a call must not be changed (ABI).
+  // instructions that have special allocation requirements. Also assume all
+  // registers used in a call must not be changed (ABI).
   // FIXME: The issue with predicated instruction is more complex. We are being
   // conservative here because the kill markers cannot be trusted after
   // if-conversion:
@@ -200,6 +197,28 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
     if (Classes[Reg] != reinterpret_cast<TargetRegisterClass *>(-1))
       RegRefs.insert(std::make_pair(Reg, &MO));
 
+    // If this reg is tied and live (Classes[Reg] is set to -1), we can't change
+    // it or any of its sub or super regs. We need to use KeepRegs to mark the
+    // reg because not all uses of the same reg within an instruction are
+    // necessarily tagged as tied.
+    // Example: an x86 "xor %eax, %eax" will have one source operand tied to the
+    // def register but not the second (see PR20020 for details).
+    // FIXME: can this check be relaxed to account for undef uses
+    // of a register? In the above 'xor' example, the uses of %eax are undef, so
+    // earlier instructions could still replace %eax even though the 'xor'
+    // itself can't be changed.
+    if (MI->isRegTiedToUseOperand(i) &&
+        Classes[Reg] == reinterpret_cast<TargetRegisterClass *>(-1)) {
+      for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
+           SubRegs.isValid(); ++SubRegs) {
+        KeepRegs.set(*SubRegs);
+      }
+      for (MCSuperRegIterator SuperRegs(Reg, TRI);
+           SuperRegs.isValid(); ++SuperRegs) {
+        KeepRegs.set(*SuperRegs);
+      }
+    }
+
     if (MO.isUse() && Special) {
       if (!KeepRegs.test(Reg)) {
         for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
@@ -236,20 +255,17 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
       unsigned Reg = MO.getReg();
       if (Reg == 0) continue;
       if (!MO.isDef()) continue;
+
+      // If we've already marked this reg as unchangeable, carry on.
+      if (KeepRegs.test(Reg)) continue;
+      
       // Ignore two-addr defs.
       if (MI->isRegTiedToUseOperand(i)) continue;
 
-      DefIndices[Reg] = Count;
-      KillIndices[Reg] = ~0u;
-      assert(((KillIndices[Reg] == ~0u) !=
-              (DefIndices[Reg] == ~0u)) &&
-             "Kill and Def maps aren't consistent for Reg!");
-      KeepRegs.reset(Reg);
-      Classes[Reg] = nullptr;
-      RegRefs.erase(Reg);
-      // Repeat, for all subregs.
-      for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
-        unsigned SubregReg = *SubRegs;
+      // For the reg itself and all subregs: update the def to current;
+      // reset the kill state, any restrictions, and references.
+      for (MCSubRegIterator SRI(Reg, TRI, true); SRI.isValid(); ++SRI) {
+        unsigned SubregReg = *SRI;
         DefIndices[SubregReg] = Count;
         KillIndices[SubregReg] = ~0u;
         KeepRegs.reset(SubregReg);
@@ -282,15 +298,8 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
     RegRefs.insert(std::make_pair(Reg, &MO));
 
     // It wasn't previously live but now it is, this is a kill.
-    if (KillIndices[Reg] == ~0u) {
-      KillIndices[Reg] = Count;
-      DefIndices[Reg] = ~0u;
-          assert(((KillIndices[Reg] == ~0u) !=
-                  (DefIndices[Reg] == ~0u)) &&
-               "Kill and Def maps aren't consistent for Reg!");
-    }
-    // Repeat, for all aliases.
-    for (MCRegAliasIterator AI(Reg, TRI, false); AI.isValid(); ++AI) {
+    // Repeat for all aliases.
+    for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI) {
       unsigned AliasReg = *AI;
       if (KillIndices[AliasReg] == ~0u) {
         KillIndices[AliasReg] = Count;
@@ -309,7 +318,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
 // the two-address instruction also defines NewReg, as may happen with
 // pre/postincrement loads. In this case, both the use and def operands are in
 // RegRefs because the def is inserted by PrescanInstruction and not erased
-// during ScanInstruction. So checking for an instructions with definitions of
+// during ScanInstruction. So checking for an instruction with definitions of
 // both NewReg and AntiDepReg covers it.
 bool
 CriticalAntiDepBreaker::isNewRegClobberedByRefs(RegRefIter RegRefBegin,
@@ -325,7 +334,7 @@ CriticalAntiDepBreaker::isNewRegClobberedByRefs(RegRefIter RegRefBegin,
     if (RefOper->isDef() && RefOper->isEarlyClobber())
       return true;
 
-    // Handle cases in which this instructions defines NewReg.
+    // Handle cases in which this instruction defines NewReg.
     MachineInstr *MI = RefOper->getParent();
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &CheckOper = MI->getOperand(i);
@@ -343,11 +352,11 @@ CriticalAntiDepBreaker::isNewRegClobberedByRefs(RegRefIter RegRefBegin,
         return true;
 
       // Don't allow an instruction using AntiDepReg to be earlyclobbered by
-      // NewReg
+      // NewReg.
       if (CheckOper.isEarlyClobber())
         return true;
 
-      // Don't allow inline asm to define NewReg at all. Who know what it's
+      // Don't allow inline asm to define NewReg at all. Who knows what it's
       // doing with it.
       if (MI->isInlineAsm())
         return true;
@@ -494,8 +503,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
   // as we go to help determine which registers are available.
   unsigned Broken = 0;
   unsigned Count = InsertPosIndex - 1;
-  for (MachineBasicBlock::iterator I = End, E = Begin;
-       I != E; --Count) {
+  for (MachineBasicBlock::iterator I = End, E = Begin; I != E; --Count) {
     MachineInstr *MI = --I;
     if (MI->isDebugValue())
       continue;
@@ -526,7 +534,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
             // Don't break anti-dependencies on non-allocatable registers.
             AntiDepReg = 0;
           else if (KeepRegs.test(AntiDepReg))
-            // Don't break anti-dependencies if an use down below requires
+            // Don't break anti-dependencies if a use down below requires
             // this exact register.
             AntiDepReg = 0;
           else {
@@ -564,8 +572,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
     // If MI's defs have a special allocation requirement, don't allow
     // any def registers to be changed. Also assume all registers
     // defined in a call must not be changed (ABI).
-    if (MI->isCall() || MI->hasExtraDefRegAllocReq() ||
-        TII->isPredicated(MI))
+    if (MI->isCall() || MI->hasExtraDefRegAllocReq() || TII->isPredicated(MI))
       // If this instruction's defs have special allocation requirement, don't
       // break this anti-dependency.
       AntiDepReg = 0;

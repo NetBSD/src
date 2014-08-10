@@ -15,26 +15,15 @@
 #define AArch64TARGETMACHINE_H
 
 #include "AArch64InstrInfo.h"
-#include "AArch64ISelLowering.h"
 #include "AArch64Subtarget.h"
-#include "AArch64FrameLowering.h"
-#include "AArch64SelectionDAGInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/MC/MCStreamer.h"
 
 namespace llvm {
 
 class AArch64TargetMachine : public LLVMTargetMachine {
 protected:
   AArch64Subtarget Subtarget;
-
-private:
-  const DataLayout DL;
-  AArch64InstrInfo InstrInfo;
-  AArch64TargetLowering TLInfo;
-  AArch64FrameLowering FrameLowering;
-  AArch64SelectionDAGInfo TSInfo;
 
 public:
   AArch64TargetMachine(const Target &T, StringRef TT, StringRef CPU,
@@ -44,20 +33,6 @@ public:
 
   const AArch64Subtarget *getSubtargetImpl() const override {
     return &Subtarget;
-  }
-  const AArch64TargetLowering *getTargetLowering() const override {
-    return &TLInfo;
-  }
-  const DataLayout *getDataLayout() const override { return &DL; }
-  const AArch64FrameLowering *getFrameLowering() const override {
-    return &FrameLowering;
-  }
-  const AArch64InstrInfo *getInstrInfo() const override { return &InstrInfo; }
-  const AArch64RegisterInfo *getRegisterInfo() const override {
-    return &InstrInfo.getRegisterInfo();
-  }
-  const AArch64SelectionDAGInfo *getSelectionDAGInfo() const override {
-    return &TSInfo;
   }
 
   // Pass Pipeline Configuration

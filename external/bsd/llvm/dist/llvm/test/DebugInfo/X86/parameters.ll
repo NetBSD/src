@@ -23,13 +23,15 @@
 ; }
 
 ; CHECK: debug_info contents
-; CHECK: DW_AT_name{{.*}} = "f"
 ; 0x74 is DW_OP_breg4, showing that the parameter is accessed indirectly
 ; (with a zero offset) from the register parameter
 ; CHECK: DW_AT_location{{.*}}(<0x0{{.}}> 74 00
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}} = "f"
 
-; CHECK: DW_AT_name{{.*}} = "g"
 ; CHECK: DW_AT_location{{.*}}([[G_LOC:0x[0-9]*]])
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}} = "g"
 ; CHECK: debug_loc contents
 ; CHECK-NEXT: [[G_LOC]]: Beginning
 ; CHECK-NEXT:               Ending
@@ -80,7 +82,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!21, !33}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp/pass.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/tmp/pass.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"pass.cpp", metadata !"/tmp"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !17}

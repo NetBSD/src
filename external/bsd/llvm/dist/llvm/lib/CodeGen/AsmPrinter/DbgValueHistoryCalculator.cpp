@@ -11,10 +11,12 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <algorithm>
 #include <map>
+#include <set>
 
 #define DEBUG_TYPE "dwarfdebug"
 
@@ -35,7 +37,7 @@ void DbgValueHistoryMap::startInstrRange(const MDNode *Var,
                                          const MachineInstr &MI) {
   // Instruction range should start with a DBG_VALUE instruction for the
   // variable.
-  assert(MI.isDebugValue() && MI.getDebugVariable() == Var);
+  assert(MI.isDebugValue() && getEntireVariable(MI.getDebugVariable()) == Var);
   auto &Ranges = VarInstrRanges[Var];
   if (!Ranges.empty() && Ranges.back().second == nullptr &&
       Ranges.back().first->isIdenticalTo(&MI)) {
@@ -110,50 +112,88 @@ static void clobberRegisterUses(RegDescribedVarsMap &RegVars, unsigned RegNo,
   RegVars.erase(I);
 }
 
-// \brief Terminate location ranges for all variables, described by registers
-// clobbered by @MI.
-static void clobberRegisterUses(RegDescribedVarsMap &RegVars,
-                                const MachineInstr &MI,
-                                const TargetRegisterInfo *TRI,
-                                DbgValueHistoryMap &HistMap) {
+// \brief Collect all registers clobbered by @MI and apply the functor
+// @Func to their RegNo.
+// @Func should be a functor with a void(unsigned) signature. We're
+// not using std::function here for performance reasons. It has a
+// small but measurable impact. By using a functor instead of a
+// std::set& here, we can avoid the overhead of constructing
+// temporaries in calculateDbgValueHistory, which has a significant
+// performance impact.
+template<typename Callable>
+static void applyToClobberedRegisters(const MachineInstr &MI,
+                                      const TargetRegisterInfo *TRI,
+                                      Callable Func) {
   for (const MachineOperand &MO : MI.operands()) {
     if (!MO.isReg() || !MO.isDef() || !MO.getReg())
       continue;
-    for (MCRegAliasIterator AI(MO.getReg(), TRI, true); AI.isValid();
-         ++AI) {
-      unsigned RegNo = *AI;
-      clobberRegisterUses(RegVars, RegNo, HistMap, MI);
-    }
+    for (MCRegAliasIterator AI(MO.getReg(), TRI, true); AI.isValid(); ++AI)
+      Func(*AI);
   }
 }
 
-// \brief Terminate the location range for all register-described variables
-// by inserting @ClobberingInstr to their history.
-static void clobberAllRegistersUses(RegDescribedVarsMap &RegVars,
-                                    DbgValueHistoryMap &HistMap,
-                                    const MachineInstr &ClobberingInstr) {
-  for (const auto &I : RegVars)
-    for (const auto &Var : I.second)
-      HistMap.endInstrRange(Var, ClobberingInstr);
-  RegVars.clear();
+// \brief Returns the first instruction in @MBB which corresponds to
+// the function epilogue, or nullptr if @MBB doesn't contain an epilogue.
+static const MachineInstr *getFirstEpilogueInst(const MachineBasicBlock &MBB) {
+  auto LastMI = MBB.getLastNonDebugInstr();
+  if (LastMI == MBB.end() || !LastMI->isReturn())
+    return nullptr;
+  // Assume that epilogue starts with instruction having the same debug location
+  // as the return instruction.
+  DebugLoc LastLoc = LastMI->getDebugLoc();
+  auto Res = LastMI;
+  for (MachineBasicBlock::const_reverse_iterator I(std::next(LastMI)); I != MBB.rend();
+       ++I) {
+    if (I->getDebugLoc() != LastLoc)
+      return Res;
+    Res = std::prev(I.base());
+  }
+  // If all instructions have the same debug location, assume whole MBB is
+  // an epilogue.
+  return MBB.begin();
+}
+
+// \brief Collect registers that are modified in the function body (their
+// contents is changed outside of the prologue and epilogue).
+static void collectChangingRegs(const MachineFunction *MF,
+                                const TargetRegisterInfo *TRI,
+                                std::set<unsigned> &Regs) {
+  for (const auto &MBB : *MF) {
+    auto FirstEpilogueInst = getFirstEpilogueInst(MBB);
+
+    for (const auto &MI : MBB) {
+      if (&MI == FirstEpilogueInst)
+        break;
+      if (!MI.getFlag(MachineInstr::FrameSetup))
+        applyToClobberedRegisters(MI, TRI, [&](unsigned r) { Regs.insert(r); });
+    }
+  }
 }
 
 void calculateDbgValueHistory(const MachineFunction *MF,
                               const TargetRegisterInfo *TRI,
                               DbgValueHistoryMap &Result) {
-  RegDescribedVarsMap RegVars;
+  std::set<unsigned> ChangingRegs;
+  collectChangingRegs(MF, TRI, ChangingRegs);
 
+  RegDescribedVarsMap RegVars;
   for (const auto &MBB : *MF) {
     for (const auto &MI : MBB) {
       if (!MI.isDebugValue()) {
         // Not a DBG_VALUE instruction. It may clobber registers which describe
         // some variables.
-        clobberRegisterUses(RegVars, MI, TRI, Result);
+        applyToClobberedRegisters(MI, TRI, [&](unsigned RegNo) {
+          if (ChangingRegs.count(RegNo))
+            clobberRegisterUses(RegVars, RegNo, Result, MI);
+        });
         continue;
       }
 
       assert(MI.getNumOperands() > 1 && "Invalid DBG_VALUE instruction!");
-      const MDNode *Var = MI.getDebugVariable();
+      // Use the base variable (without any DW_OP_piece expressions)
+      // as index into History. The full variables including the
+      // piece expressions are attached to the MI.
+      DIVariable Var = getEntireVariable(MI.getDebugVariable());
 
       if (unsigned PrevReg = Result.getRegisterForVar(Var))
         dropRegDescribedVar(RegVars, PrevReg, Var);
@@ -167,8 +207,10 @@ void calculateDbgValueHistory(const MachineFunction *MF,
     // Make sure locations for register-described variables are valid only
     // until the end of the basic block (unless it's the last basic block, in
     // which case let their liveness run off to the end of the function).
-    if (!MBB.empty() &&  &MBB != &MF->back())
-      clobberAllRegistersUses(RegVars, Result, MBB.back());
+    if (!MBB.empty() &&  &MBB != &MF->back()) {
+      for (unsigned RegNo : ChangingRegs)
+        clobberRegisterUses(RegVars, RegNo, Result, MBB.back());
+    }
   }
 }
 

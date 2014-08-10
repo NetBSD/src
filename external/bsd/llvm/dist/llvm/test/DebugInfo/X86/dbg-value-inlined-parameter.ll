@@ -7,19 +7,22 @@
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK:   DW_AT_abstract_origin {{.*}}{[[ABS:.*]]}
-; FIXME: An out of line definition preceeding an inline usage doesn't properly
-; reference abstract variables.
 ; CHECK:   DW_TAG_formal_parameter
-; CHECK-NEXT:     DW_AT_name {{.*}} "sp"
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_abstract_origin {{.*}}{[[ABS_SP:.*]]}
 ; CHECK:   DW_TAG_formal_parameter
-; CHECK-NEXT:     DW_AT_name {{.*}} "nums"
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_abstract_origin {{.*}}{[[ABS_NUMS:.*]]}
 
 ; CHECK: [[ABS]]: DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_name {{.*}} "foo"
-; CHECK: [[ABS_SP:.*]]:   DW_TAG_formal_parameter
-; CHECK-NEXT:     DW_AT_name {{.*}} "sp"
-; CHECK: [[ABS_NUMS:.*]]:  DW_TAG_formal_parameter
-; CHECK-NEXT:     DW_AT_name {{.*}} "nums"
+; CHECK: [[ABS_SP]]:   DW_TAG_formal_parameter
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_name {{.*}} "sp"
+; CHECK: [[ABS_NUMS]]:  DW_TAG_formal_parameter
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_name {{.*}} "nums"
 
 ;CHECK: DW_TAG_inlined_subroutine
 ;CHECK-NEXT: DW_AT_abstract_origin {{.*}}{[[ABS]]}
@@ -30,9 +33,10 @@
 
 ;CHECK: DW_TAG_formal_parameter
 ;FIXME: Linux shouldn't drop this parameter either...
-;DARWIN-NEXT:   DW_AT_abstract_origin {{.*}}{[[ABS_SP]]}
+;CHECK-NOT: DW_TAG
+;DARWIN:   DW_AT_abstract_origin {{.*}}{[[ABS_SP]]}
 ;DARWIN: DW_TAG_formal_parameter
-;CHECK-NEXT: DW_AT_abstract_origin {{.*}}{[[ABS_NUMS]]}
+;CHECK: DW_AT_abstract_origin {{.*}}{[[ABS_NUMS]]}
 ;CHECK-NOT: DW_TAG_formal_parameter
 
 %struct.S1 = type { float*, i32 }
@@ -72,7 +76,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !0 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"foo", metadata !"foo", metadata !"", i32 8, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 (%struct.S1*, i32)* @foo, null, null, metadata !41, i32 8} ; [ DW_TAG_subprogram ] [line 8] [def] [foo]
 !1 = metadata !{i32 786473, metadata !42} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, metadata !42, i32 12, metadata !"clang version 2.9 (trunk 125693)", i1 true, metadata !"", i32 0, metadata !8, metadata !8, metadata !39, metadata !40,  metadata !44, null} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 786449, metadata !42, i32 12, metadata !"clang version 2.9 (trunk 125693)", i1 true, metadata !"", i32 0, metadata !8, metadata !8, metadata !39, metadata !40,  metadata !44, null, i32 1} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !42, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]

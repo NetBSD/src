@@ -82,9 +82,8 @@ using namespace llvm;
 //
 //===----------------------------------------------------------------------===//
 
-const MipsFrameLowering *MipsFrameLowering::create(MipsTargetMachine &TM,
-                                                   const MipsSubtarget &ST) {
-  if (TM.getSubtargetImpl()->inMips16Mode())
+const MipsFrameLowering *MipsFrameLowering::create(const MipsSubtarget &ST) {
+  if (ST.inMips16Mode())
     return llvm::createMips16FrameLowering(ST);
 
   return llvm::createMipsSEFrameLowering(ST);
@@ -101,7 +100,7 @@ bool MipsFrameLowering::hasFP(const MachineFunction &MF) const {
 
 uint64_t MipsFrameLowering::estimateStackSize(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetRegisterInfo &TRI = *MF.getTarget().getRegisterInfo();
+  const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
 
   int64_t Offset = 0;
 

@@ -25,7 +25,6 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
-#include "llvm/MC/MCWin64EH.h"
 #include "llvm/MC/MCWinCOFFStreamer.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
@@ -80,10 +79,6 @@ void MCWinCOFFStreamer::InitSections() {
 void MCWinCOFFStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   MCObjectStreamer::EmitLabel(Symbol);
-}
-
-void MCWinCOFFStreamer::EmitDebugLabel(MCSymbol *Symbol) {
-  EmitLabel(Symbol);
 }
 
 void MCWinCOFFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
@@ -242,7 +237,7 @@ void MCWinCOFFStreamer::EmitIdent(StringRef IdentString) {
   llvm_unreachable("not implemented");
 }
 
-void MCWinCOFFStreamer::EmitWin64EHHandlerData() {
+void MCWinCOFFStreamer::EmitWinEHHandlerData() {
   llvm_unreachable("not implemented");
 }
 

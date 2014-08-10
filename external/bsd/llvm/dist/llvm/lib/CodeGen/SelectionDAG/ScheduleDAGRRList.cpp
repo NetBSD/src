@@ -32,6 +32,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <climits>
 using namespace llvm;
 
@@ -170,7 +171,9 @@ public:
     if (DisableSchedCycles || !NeedLatency)
       HazardRec = new ScheduleHazardRecognizer();
     else
-      HazardRec = tm.getInstrInfo()->CreateTargetHazardRecognizer(&tm, this);
+      HazardRec =
+          tm.getSubtargetImpl()->getInstrInfo()->CreateTargetHazardRecognizer(
+              tm.getSubtargetImpl(), this);
   }
 
   ~ScheduleDAGRRList() {
@@ -1372,7 +1375,7 @@ SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
       Interferences.push_back(CurSU);
     }
     else {
-      assert(CurSU->isPending && "Intereferences are pending");
+      assert(CurSU->isPending && "Interferences are pending");
       // Update the interference with current live regs.
       LRegsPair.first->second = LRegs;
     }
@@ -2977,8 +2980,8 @@ llvm::ScheduleDAGSDNodes *
 llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
                                  CodeGenOpt::Level OptLevel) {
   const TargetMachine &TM = IS->TM;
-  const TargetInstrInfo *TII = TM.getInstrInfo();
-  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  const TargetInstrInfo *TII = TM.getSubtargetImpl()->getInstrInfo();
+  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
 
   BURegReductionPriorityQueue *PQ =
     new BURegReductionPriorityQueue(*IS->MF, false, false, TII, TRI, nullptr);
@@ -2991,8 +2994,8 @@ llvm::ScheduleDAGSDNodes *
 llvm::createSourceListDAGScheduler(SelectionDAGISel *IS,
                                    CodeGenOpt::Level OptLevel) {
   const TargetMachine &TM = IS->TM;
-  const TargetInstrInfo *TII = TM.getInstrInfo();
-  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  const TargetInstrInfo *TII = TM.getSubtargetImpl()->getInstrInfo();
+  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
 
   SrcRegReductionPriorityQueue *PQ =
     new SrcRegReductionPriorityQueue(*IS->MF, false, true, TII, TRI, nullptr);
@@ -3005,8 +3008,8 @@ llvm::ScheduleDAGSDNodes *
 llvm::createHybridListDAGScheduler(SelectionDAGISel *IS,
                                    CodeGenOpt::Level OptLevel) {
   const TargetMachine &TM = IS->TM;
-  const TargetInstrInfo *TII = TM.getInstrInfo();
-  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  const TargetInstrInfo *TII = TM.getSubtargetImpl()->getInstrInfo();
+  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
   const TargetLowering *TLI = IS->getTargetLowering();
 
   HybridBURRPriorityQueue *PQ =
@@ -3021,8 +3024,8 @@ llvm::ScheduleDAGSDNodes *
 llvm::createILPListDAGScheduler(SelectionDAGISel *IS,
                                 CodeGenOpt::Level OptLevel) {
   const TargetMachine &TM = IS->TM;
-  const TargetInstrInfo *TII = TM.getInstrInfo();
-  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  const TargetInstrInfo *TII = TM.getSubtargetImpl()->getInstrInfo();
+  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
   const TargetLowering *TLI = IS->getTargetLowering();
 
   ILPBURRPriorityQueue *PQ =

@@ -52,7 +52,9 @@ public:
     MD_fpmath = 3,  // "fpmath"
     MD_range = 4, // "range"
     MD_tbaa_struct = 5, // "tbaa.struct"
-    MD_invariant_load = 6 // "invariant.load"
+    MD_invariant_load = 6, // "invariant.load"
+    MD_alias_scope = 7, // "alias.scope"
+    MD_noalias = 8 // "noalias"
   };
 
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
@@ -112,14 +114,16 @@ public:
   /// setDiagnosticContext.
   void *getDiagnosticContext() const;
 
-  /// diagnose - Report a message to the currently installed diagnostic handler.
+  /// \brief Report a message to the currently installed diagnostic handler.
+  ///
   /// This function returns, in particular in the case of error reporting
-  /// (DI.Severity == RS_Error), so the caller should leave the compilation
+  /// (DI.Severity == \a DS_Error), so the caller should leave the compilation
   /// process in a self-consistent state, even though the generated code
   /// need not be correct.
-  /// The diagnostic message will be implicitly prefixed with a severity
-  /// keyword according to \p DI.getSeverity(), i.e., "error: "
-  /// for RS_Error, "warning: " for RS_Warning, and "note: " for RS_Note.
+  ///
+  /// The diagnostic message will be implicitly prefixed with a severity keyword
+  /// according to \p DI.getSeverity(), i.e., "error: " for \a DS_Error,
+  /// "warning: " for \a DS_Warning, and "note: " for \a DS_Note.
   void diagnose(const DiagnosticInfo &DI);
 
   /// \brief Registers a yield callback with the given context.

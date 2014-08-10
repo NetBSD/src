@@ -38,10 +38,10 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <cctype>
 #include <map>
+#include <system_error>
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -271,7 +271,8 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
   case bitc::USELIST_BLOCK_ID:
     switch(CodeID) {
     default:return nullptr;
-    case bitc::USELIST_CODE_ENTRY:   return "USELIST_CODE_ENTRY";
+    case bitc::USELIST_CODE_DEFAULT: return "USELIST_CODE_DEFAULT";
+    case bitc::USELIST_CODE_BB:      return "USELIST_CODE_BB";
     }
   }
 }
@@ -478,17 +479,17 @@ static void PrintSize(uint64_t Bits) {
 /// AnalyzeBitcode - Analyze the bitcode file specified by InputFilename.
 static int AnalyzeBitcode() {
   // Read the input file.
-  std::unique_ptr<MemoryBuffer> MemBuf;
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MemBufOrErr =
+      MemoryBuffer::getFileOrSTDIN(InputFilename);
+  if (std::error_code EC = MemBufOrErr.getError())
+    return Error("Error reading '" + InputFilename + "': " + EC.message());
+  MemoryBuffer &MemBuf = *MemBufOrErr.get();
 
-  if (error_code ec =
-        MemoryBuffer::getFileOrSTDIN(InputFilename, MemBuf))
-    return Error("Error reading '" + InputFilename + "': " + ec.message());
-
-  if (MemBuf->getBufferSize() & 3)
+  if (MemBuf.getBufferSize() & 3)
     return Error("Bitcode stream should be a multiple of 4 bytes in length");
 
-  const unsigned char *BufPtr = (const unsigned char *)MemBuf->getBufferStart();
-  const unsigned char *EndBufPtr = BufPtr+MemBuf->getBufferSize();
+  const unsigned char *BufPtr = (const unsigned char *)MemBuf.getBufferStart();
+  const unsigned char *EndBufPtr = BufPtr+MemBuf.getBufferSize();
 
   // If we have a wrapper header, parse it and ignore the non-bc file contents.
   // The magic number is 0x0B17C0DE stored in little endian.

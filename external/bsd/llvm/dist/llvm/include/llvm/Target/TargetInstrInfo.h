@@ -15,9 +15,12 @@
 #define LLVM_TARGET_TARGETINSTRINFO_H
 
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineCombinerPattern.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
 
@@ -29,6 +32,7 @@ class MachineRegisterInfo;
 class MDNode;
 class MCInst;
 class MCSchedModel;
+class MCSymbolRefExpr;
 class SDNode;
 class ScheduleHazardRecognizer;
 class SelectionDAG;
@@ -36,6 +40,7 @@ class ScheduleDAG;
 class TargetRegisterClass;
 class TargetRegisterInfo;
 class BranchProbability;
+class TargetSubtargetInfo;
 
 template<class T> class SmallVectorImpl;
 
@@ -198,6 +203,15 @@ public:
                                  unsigned &Size, unsigned &Offset,
                                  const TargetMachine *TM) const;
 
+  /// isAsCheapAsAMove - Return true if the instruction is as cheap as a move
+  /// instruction.
+  ///
+  /// Targets for different archs need to override this, and different
+  /// micro-architectures can also be finely tuned inside.
+  virtual bool isAsCheapAsAMove(const MachineInstr *MI) const {
+    return MI->isAsCheapAsAMove();
+  }
+
   /// reMaterialize - Re-issue the specified 'original' instruction at the
   /// specific location targeting a new destination register.
   /// The register in Orig->getOperand(0).getReg() will be substituted by
@@ -320,6 +334,20 @@ public:
   /// used by the tail merging pass.
   virtual void ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
                                        MachineBasicBlock *NewDest) const;
+
+  /// getUnconditionalBranch - Get an instruction that performs an unconditional
+  /// branch to the given symbol.
+  virtual void
+  getUnconditionalBranch(MCInst &MI,
+                         const MCSymbolRefExpr *BranchTarget) const {
+    llvm_unreachable("Target didn't implement "
+                     "TargetInstrInfo::getUnconditionalBranch!");
+  }
+
+  /// getTrap - Get a machine trap instruction
+  virtual void getTrap(MCInst &MI) const {
+    llvm_unreachable("Target didn't implement TargetInstrInfo::getTrap!");
+  }
 
   /// isLegalToSplitMBBAt - Return true if it's legal to split the given basic
   /// block at the specified instruction (i.e. instruction would be the start
@@ -547,6 +575,42 @@ public:
                                   const SmallVectorImpl<unsigned> &Ops,
                                   MachineInstr* LoadMI) const;
 
+  /// hasPattern - return true when there is potentially a faster code sequence
+  /// for an instruction chain ending in \p Root. All potential pattern are
+  /// returned in the \p Pattern vector. Pattern should be sorted in priority
+  /// order since the pattern evaluator stops checking as soon as it finds a
+  /// faster sequence.
+  /// \param Root - Instruction that could be combined with one of its operands
+  /// \param Pattern - Vector of possible combination pattern
+
+  virtual bool hasPattern(
+      MachineInstr &Root,
+      SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Pattern) const {
+    return false;
+  }
+
+  /// genAlternativeCodeSequence - when hasPattern() finds a pattern this
+  /// function generates the instructions that could replace the original code
+  /// sequence. The client has to decide whether the actual replacementment is
+  /// beneficial or not.
+  /// \param Root - Instruction that could be combined with one of its operands
+  /// \param P - Combination pattern for Root
+  /// \param InsInstrs - Vector of new instructions that implement P
+  /// \param DelInstrs - Old instructions, including Root, that could be replaced
+  /// by InsInstr
+  /// \param InstrIdxForVirtReg - map of virtual register to instruction in
+  /// InsInstr that defines it
+  virtual void genAlternativeCodeSequence(
+      MachineInstr &Root, MachineCombinerPattern::MC_PATTERN P,
+      SmallVectorImpl<MachineInstr *> &InsInstrs,
+      SmallVectorImpl<MachineInstr *> &DelInstrs,
+      DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const {
+    return;
+  }
+
+  /// useMachineCombiner - return true when a target supports MachineCombiner
+  virtual bool useMachineCombiner(void) const { return false; }
+
 protected:
   /// foldMemoryOperandImpl - Target-dependent implementation for
   /// foldMemoryOperand. Target-independent code in foldMemoryOperand will
@@ -728,7 +792,7 @@ public:
   /// use for this target when scheduling the machine instructions before
   /// register allocation.
   virtual ScheduleHazardRecognizer*
-  CreateTargetHazardRecognizer(const TargetMachine *TM,
+  CreateTargetHazardRecognizer(const TargetSubtargetInfo *STI,
                                const ScheduleDAG *DAG) const;
 
   /// CreateTargetMIHazardRecognizer - Allocate and return a hazard recognizer

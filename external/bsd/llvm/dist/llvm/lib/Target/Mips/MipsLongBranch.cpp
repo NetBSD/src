@@ -15,6 +15,7 @@
 
 #include "Mips.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
+#include "MCTargetDesc/MipsMCNaCl.h"
 #include "MipsTargetMachine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -64,7 +65,8 @@ namespace {
       : MachineFunctionPass(ID), TM(tm),
         IsPIC(TM.getRelocationModel() == Reloc::PIC_),
         ABI(TM.getSubtarget<MipsSubtarget>().getTargetABI()),
-        LongBranchSeqSize(!IsPIC ? 2 : (ABI == MipsSubtarget::N64 ? 10 : 9)) {}
+        LongBranchSeqSize(!IsPIC ? 2 : (ABI == MipsSubtarget::N64 ? 10 :
+            (!TM.getSubtarget<MipsSubtarget>().isTargetNaCl() ? 9 : 10))) {}
 
     const char *getPassName() const override {
       return "Mips Long Branch";
@@ -168,7 +170,7 @@ void MipsLongBranch::initMBBInfo() {
   MBBInfos.resize(MF->size());
 
   const MipsInstrInfo *TII =
-    static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
+      static_cast<const MipsInstrInfo *>(TM.getSubtargetImpl()->getInstrInfo());
   for (unsigned I = 0, E = MBBInfos.size(); I < E; ++I) {
     MachineBasicBlock *MBB = MF->getBlockNumbered(I);
 
@@ -215,7 +217,7 @@ int64_t MipsLongBranch::computeOffset(const MachineInstr *Br) {
 void MipsLongBranch::replaceBranch(MachineBasicBlock &MBB, Iter Br,
                                    DebugLoc DL, MachineBasicBlock *MBBOpnd) {
   const MipsInstrInfo *TII =
-    static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
+      static_cast<const MipsInstrInfo *>(TM.getSubtargetImpl()->getInstrInfo());
   unsigned NewOpc = TII->getOppositeBranchOpc(Br->getOpcode());
   const MCInstrDesc &NewDesc = TII->get(NewOpc);
 
@@ -252,7 +254,7 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
   MachineBasicBlock *LongBrMBB = MF->CreateMachineBasicBlock(BB);
 
   const MipsInstrInfo *TII =
-    static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
+      static_cast<const MipsInstrInfo *>(TM.getSubtargetImpl()->getInstrInfo());
 
   MF->insert(FallThroughMBB, LongBrMBB);
   MBB->removeSuccessor(TgtMBB);
@@ -263,6 +265,13 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
     MF->insert(FallThroughMBB, BalTgtMBB);
     LongBrMBB->addSuccessor(BalTgtMBB);
     BalTgtMBB->addSuccessor(TgtMBB);
+
+    // We must select between the MIPS32r6/MIPS64r6 BAL (which is a normal
+    // instruction) and the pre-MIPS32r6/MIPS64r6 definition (which is an
+    // pseudo-instruction wrapping BGEZAL).
+
+    const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
+    unsigned BalOp = Subtarget.hasMips32r6() ? Mips::BAL : Mips::BAL_BR;
 
     if (ABI != MipsSubtarget::N64) {
       // $longbr:
@@ -305,9 +314,11 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
       BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::LONG_BRANCH_LUi), Mips::AT)
         .addMBB(TgtMBB).addMBB(BalTgtMBB);
       MIBundleBuilder(*LongBrMBB, Pos)
-        .append(BuildMI(*MF, DL, TII->get(Mips::BAL_BR)).addMBB(BalTgtMBB))
-        .append(BuildMI(*MF, DL, TII->get(Mips::LONG_BRANCH_ADDiu), Mips::AT)
-                  .addReg(Mips::AT).addMBB(TgtMBB).addMBB(BalTgtMBB));
+          .append(BuildMI(*MF, DL, TII->get(BalOp)).addMBB(BalTgtMBB))
+          .append(BuildMI(*MF, DL, TII->get(Mips::LONG_BRANCH_ADDiu), Mips::AT)
+                      .addReg(Mips::AT)
+                      .addMBB(TgtMBB)
+                      .addMBB(BalTgtMBB));
 
       Pos = BalTgtMBB->begin();
 
@@ -316,10 +327,23 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
       BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::LW), Mips::RA)
         .addReg(Mips::SP).addImm(0);
 
-      MIBundleBuilder(*BalTgtMBB, Pos)
-        .append(BuildMI(*MF, DL, TII->get(Mips::JR)).addReg(Mips::AT))
-        .append(BuildMI(*MF, DL, TII->get(Mips::ADDiu), Mips::SP)
-                .addReg(Mips::SP).addImm(8));
+      if (!TM.getSubtarget<MipsSubtarget>().isTargetNaCl()) {
+        MIBundleBuilder(*BalTgtMBB, Pos)
+          .append(BuildMI(*MF, DL, TII->get(Mips::JR)).addReg(Mips::AT))
+          .append(BuildMI(*MF, DL, TII->get(Mips::ADDiu), Mips::SP)
+                  .addReg(Mips::SP).addImm(8));
+      } else {
+        // In NaCl, modifying the sp is not allowed in branch delay slot.
+        BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::ADDiu), Mips::SP)
+          .addReg(Mips::SP).addImm(8);
+
+        MIBundleBuilder(*BalTgtMBB, Pos)
+          .append(BuildMI(*MF, DL, TII->get(Mips::JR)).addReg(Mips::AT))
+          .append(BuildMI(*MF, DL, TII->get(Mips::NOP)));
+
+        // Bundle-align the target of indirect branch JR.
+        TgtMBB->setAlignment(MIPS_NACL_BUNDLE_ALIGN);
+      }
     } else {
       // $longbr:
       //  daddiu $sp, $sp, -16
@@ -364,11 +388,12 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
         .addReg(Mips::AT_64).addImm(16);
 
       MIBundleBuilder(*LongBrMBB, Pos)
-        .append(BuildMI(*MF, DL, TII->get(Mips::BAL_BR)).addMBB(BalTgtMBB))
-        .append(BuildMI(*MF, DL, TII->get(Mips::LONG_BRANCH_DADDiu),
-                        Mips::AT_64).addReg(Mips::AT_64)
-                                    .addMBB(TgtMBB, MipsII::MO_ABS_LO)
-                                    .addMBB(BalTgtMBB));
+          .append(BuildMI(*MF, DL, TII->get(BalOp)).addMBB(BalTgtMBB))
+          .append(
+              BuildMI(*MF, DL, TII->get(Mips::LONG_BRANCH_DADDiu), Mips::AT_64)
+                  .addReg(Mips::AT_64)
+                  .addMBB(TgtMBB, MipsII::MO_ABS_LO)
+                  .addMBB(BalTgtMBB));
 
       Pos = BalTgtMBB->begin();
 
@@ -422,9 +447,10 @@ static void emitGPDisp(MachineFunction &F, const MipsInstrInfo *TII) {
 
 bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
   const MipsInstrInfo *TII =
-    static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
+      static_cast<const MipsInstrInfo *>(TM.getSubtargetImpl()->getInstrInfo());
 
-  if (TM.getSubtarget<MipsSubtarget>().inMips16Mode())
+  const MipsSubtarget &STI = TM.getSubtarget<MipsSubtarget>();
+  if (STI.inMips16Mode() || !STI.enableLongBranchPass())
     return false;
   if ((TM.getRelocationModel() == Reloc::PIC_) &&
       TM.getSubtarget<MipsSubtarget>().isABI_O32() &&
@@ -450,9 +476,18 @@ bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
         continue;
 
       int ShVal = TM.getSubtarget<MipsSubtarget>().inMicroMipsMode() ? 2 : 4;
+      int64_t Offset = computeOffset(I->Br) / ShVal;
+
+      if (TM.getSubtarget<MipsSubtarget>().isTargetNaCl()) {
+        // The offset calculation does not include sandboxing instructions
+        // that will be added later in the MC layer.  Since at this point we
+        // don't know the exact amount of code that "sandboxing" will add, we
+        // conservatively estimate that code will not grow more than 100%.
+        Offset *= 2;
+      }
 
       // Check if offset fits into 16-bit immediate field of branches.
-      if (!ForceLongBranch && isInt<16>(computeOffset(I->Br) / ShVal))
+      if (!ForceLongBranch && isInt<16>(Offset))
         continue;
 
       I->HasLongBranch = true;

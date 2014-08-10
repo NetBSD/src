@@ -51,7 +51,7 @@ public:
 
   AArch64TTI(const AArch64TargetMachine *TM)
       : ImmutablePass(ID), TM(TM), ST(TM->getSubtargetImpl()),
-        TLI(TM->getTargetLowering()) {
+        TLI(TM->getSubtargetImpl()->getTargetLowering()) {
     initializeAArch64TTIPass(*PassRegistry::getPassRegistry());
   }
 
@@ -124,6 +124,9 @@ public:
 
   unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
                            unsigned AddressSpace) const override;
+
+  unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const override;
+
   /// @}
 };
 
@@ -306,28 +309,64 @@ unsigned AArch64TTI::getCastInstrCost(unsigned Opcode, Type *Dst,
   static const TypeConversionCostTblEntry<MVT> ConversionTbl[] = {
     // LowerVectorINT_TO_FP:
     { ISD::SINT_TO_FP, MVT::v2f32, MVT::v2i32, 1 },
-    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v2i8, 1 },
-    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v2i16, 1 },
-    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v2i32, 1 },
+    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v4i32, 1 },
     { ISD::SINT_TO_FP, MVT::v2f64, MVT::v2i64, 1 },
     { ISD::UINT_TO_FP, MVT::v2f32, MVT::v2i32, 1 },
-    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i8, 1 },
-    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i16, 1 },
-    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i32, 1 },
+    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v4i32, 1 },
     { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i64, 1 },
+
+    // Complex: to v2f32
+    { ISD::SINT_TO_FP, MVT::v2f32, MVT::v2i8,  3 },
+    { ISD::SINT_TO_FP, MVT::v2f32, MVT::v2i16, 3 },
+    { ISD::SINT_TO_FP, MVT::v2f32, MVT::v2i64, 2 },
+    { ISD::UINT_TO_FP, MVT::v2f32, MVT::v2i8,  3 },
+    { ISD::UINT_TO_FP, MVT::v2f32, MVT::v2i16, 3 },
+    { ISD::UINT_TO_FP, MVT::v2f32, MVT::v2i64, 2 },
+
+    // Complex: to v4f32
+    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v4i8,  4 },
+    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v4i16, 2 },
+    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v4i8,  3 },
+    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v4i16, 2 },
+
+    // Complex: to v2f64
+    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v2i8,  4 },
+    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v2i16, 4 },
+    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v2i32, 2 },
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i8,  4 },
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i16, 4 },
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i32, 2 },
+
+
     // LowerVectorFP_TO_INT
+    { ISD::FP_TO_SINT, MVT::v2i32, MVT::v2f32, 1 },
     { ISD::FP_TO_SINT, MVT::v4i32, MVT::v4f32, 1 },
     { ISD::FP_TO_SINT, MVT::v2i64, MVT::v2f64, 1 },
+    { ISD::FP_TO_UINT, MVT::v2i32, MVT::v2f32, 1 },
     { ISD::FP_TO_UINT, MVT::v4i32, MVT::v4f32, 1 },
     { ISD::FP_TO_UINT, MVT::v2i64, MVT::v2f64, 1 },
-    { ISD::FP_TO_UINT, MVT::v2i32, MVT::v2f64, 1 },
-    { ISD::FP_TO_SINT, MVT::v2i32, MVT::v2f64, 1 },
-    { ISD::FP_TO_UINT, MVT::v2i64, MVT::v2f32, 4 },
-    { ISD::FP_TO_SINT, MVT::v2i64, MVT::v2f32, 4 },
-    { ISD::FP_TO_UINT, MVT::v4i16, MVT::v4f32, 4 },
-    { ISD::FP_TO_SINT, MVT::v4i16, MVT::v4f32, 4 },
-    { ISD::FP_TO_UINT, MVT::v2i64, MVT::v2f64, 4 },
-    { ISD::FP_TO_SINT, MVT::v2i64, MVT::v2f64, 4 },
+
+    // Complex, from v2f32: legal type is v2i32 (no cost) or v2i64 (1 ext).
+    { ISD::FP_TO_SINT, MVT::v2i64, MVT::v2f32, 2 },
+    { ISD::FP_TO_SINT, MVT::v2i16, MVT::v2f32, 1 },
+    { ISD::FP_TO_SINT, MVT::v2i8,  MVT::v2f32, 1 },
+    { ISD::FP_TO_UINT, MVT::v2i64, MVT::v2f32, 2 },
+    { ISD::FP_TO_UINT, MVT::v2i16, MVT::v2f32, 1 },
+    { ISD::FP_TO_UINT, MVT::v2i8,  MVT::v2f32, 1 },
+
+    // Complex, from v4f32: legal type is v4i16, 1 narrowing => ~2
+    { ISD::FP_TO_SINT, MVT::v4i16, MVT::v4f32, 2 },
+    { ISD::FP_TO_SINT, MVT::v4i8,  MVT::v4f32, 2 },
+    { ISD::FP_TO_UINT, MVT::v4i16, MVT::v4f32, 2 },
+    { ISD::FP_TO_UINT, MVT::v4i8,  MVT::v4f32, 2 },
+
+    // Complex, from v2f64: legal type is v2i32, 1 narrowing => ~2.
+    { ISD::FP_TO_SINT, MVT::v2i32, MVT::v2f64, 2 },
+    { ISD::FP_TO_SINT, MVT::v2i16, MVT::v2f64, 2 },
+    { ISD::FP_TO_SINT, MVT::v2i8,  MVT::v2f64, 2 },
+    { ISD::FP_TO_UINT, MVT::v2i32, MVT::v2f64, 2 },
+    { ISD::FP_TO_UINT, MVT::v2i16, MVT::v2f64, 2 },
+    { ISD::FP_TO_UINT, MVT::v2i8,  MVT::v2f64, 2 },
   };
 
   int Idx = ConvertCostTableLookup<MVT>(
@@ -461,4 +500,16 @@ unsigned AArch64TTI::getMemoryOpCost(unsigned Opcode, Type *Src,
   }
 
   return LT.first;
+}
+
+unsigned AArch64TTI::getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const {
+  unsigned Cost = 0;
+  for (auto *I : Tys) {
+    if (!I->isVectorTy())
+      continue;
+    if (I->getScalarSizeInBits() * I->getVectorNumElements() == 128)
+      Cost += getMemoryOpCost(Instruction::Store, I, 128, 0) +
+        getMemoryOpCost(Instruction::Load, I, 128, 0);
+  }
+  return Cost;
 }

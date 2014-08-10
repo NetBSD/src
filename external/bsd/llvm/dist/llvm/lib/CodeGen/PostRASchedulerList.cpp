@@ -98,6 +98,11 @@ namespace {
     }
 
     bool runOnMachineFunction(MachineFunction &Fn) override;
+    
+    bool enablePostRAScheduler(
+        const TargetSubtargetInfo &ST, CodeGenOpt::Level OptLevel,
+        TargetSubtargetInfo::AntiDepBreakMode &Mode,
+        TargetSubtargetInfo::RegClassVector &CriticalPathRCs) const;
   };
   char PostRAScheduler::ID = 0;
 
@@ -195,9 +200,11 @@ SchedulePostRATDList::SchedulePostRATDList(
   : ScheduleDAGInstrs(MF, MLI, MDT, /*IsPostRA=*/true), AA(AA), EndIndex(0) {
 
   const TargetMachine &TM = MF.getTarget();
-  const InstrItineraryData *InstrItins = TM.getInstrItineraryData();
+  const InstrItineraryData *InstrItins =
+      TM.getSubtargetImpl()->getInstrItineraryData();
   HazardRec =
-    TM.getInstrInfo()->CreateTargetPostRAHazardRecognizer(InstrItins, this);
+      TM.getSubtargetImpl()->getInstrInfo()->CreateTargetPostRAHazardRecognizer(
+          InstrItins, this);
 
   assert((AntiDepMode == TargetSubtargetInfo::ANTIDEP_NONE ||
           MRI.tracksLiveness()) &&
@@ -245,11 +252,22 @@ void SchedulePostRATDList::dumpSchedule() const {
 }
 #endif
 
+bool PostRAScheduler::enablePostRAScheduler(
+    const TargetSubtargetInfo &ST,
+    CodeGenOpt::Level OptLevel,
+    TargetSubtargetInfo::AntiDepBreakMode &Mode,
+    TargetSubtargetInfo::RegClassVector &CriticalPathRCs) const {
+  Mode = ST.getAntiDepBreakMode();
+  ST.getCriticalPathRCs(CriticalPathRCs);
+  return ST.enablePostMachineScheduler() &&
+         OptLevel >= ST.getOptLevelToEnablePostRAScheduler();
+}
+
 bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   if (skipOptnoneFunction(*Fn.getFunction()))
     return false;
 
-  TII = Fn.getTarget().getInstrInfo();
+  TII = Fn.getSubtarget().getInstrInfo();
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
   AliasAnalysis *AA = &getAnalysis<AliasAnalysis>();
@@ -267,9 +285,10 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   } else {
     // Check that post-RA scheduling is enabled for this target.
     // This may upgrade the AntiDepMode.
-    const TargetSubtargetInfo &ST = Fn.getTarget().getSubtarget<TargetSubtargetInfo>();
-    if (!ST.enablePostRAScheduler(PassConfig->getOptLevel(), AntiDepMode,
-                                  CriticalPathRCs))
+    const TargetSubtargetInfo &ST =
+        Fn.getTarget().getSubtarget<TargetSubtargetInfo>();
+    if (!enablePostRAScheduler(ST, PassConfig->getOptLevel(),
+                               AntiDepMode, CriticalPathRCs))
       return false;
   }
 

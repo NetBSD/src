@@ -24,6 +24,7 @@
 #include "ObjDumper.h"
 #include "StreamWriter.h"
 #include "llvm/Object/Archive.h"
+#include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
@@ -35,8 +36,8 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
-#include "llvm/Support/system_error.h"
 #include <string>
+#include <system_error>
 
 
 using namespace llvm;
@@ -135,13 +136,18 @@ namespace opts {
                               cl::desc("Display the ARM attributes section"));
   cl::alias ARMAttributesShort("-a", cl::desc("Alias for --arm-attributes"),
                                cl::aliasopt(ARMAttributes));
+
+  // -mips-plt-got
+  cl::opt<bool>
+  MipsPLTGOT("mips-plt-got",
+             cl::desc("Display the MIPS GOT and PLT GOT sections"));
 } // namespace opts
 
 static int ReturnValue = EXIT_SUCCESS;
 
 namespace llvm {
 
-bool error(error_code EC) {
+bool error(std::error_code EC) {
   if (!EC)
     return false;
 
@@ -160,8 +166,7 @@ bool relocAddressLess(RelocationRef a, RelocationRef b) {
 
 } // namespace llvm
 
-
-static void reportError(StringRef Input, error_code EC) {
+static void reportError(StringRef Input, std::error_code EC) {
   if (Input == "-")
     Input = "<stdin>";
 
@@ -178,9 +183,21 @@ static void reportError(StringRef Input, StringRef Message) {
   ReturnValue = EXIT_FAILURE;
 }
 
+static bool isMipsArch(unsigned Arch) {
+  switch (Arch) {
+  case llvm::Triple::mips:
+  case llvm::Triple::mipsel:
+  case llvm::Triple::mips64:
+  case llvm::Triple::mips64el:
+    return true;
+  default:
+    return false;
+  }
+}
+
 /// @brief Creates an format-specific object file dumper.
-static error_code createDumper(const ObjectFile *Obj, StreamWriter &Writer,
-                               std::unique_ptr<ObjDumper> &Result) {
+static std::error_code createDumper(const ObjectFile *Obj, StreamWriter &Writer,
+                                    std::unique_ptr<ObjDumper> &Result) {
   if (!Obj)
     return readobj_error::unsupported_file_format;
 
@@ -194,12 +211,23 @@ static error_code createDumper(const ObjectFile *Obj, StreamWriter &Writer,
   return readobj_error::unsupported_obj_file_format;
 }
 
+static StringRef getLoadName(const ObjectFile *Obj) {
+  if (auto *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
+    return ELF->getLoadName();
+  if (auto *ELF = dyn_cast<ELF64LEObjectFile>(Obj))
+    return ELF->getLoadName();
+  if (auto *ELF = dyn_cast<ELF32BEObjectFile>(Obj))
+    return ELF->getLoadName();
+  if (auto *ELF = dyn_cast<ELF64BEObjectFile>(Obj))
+    return ELF->getLoadName();
+  llvm_unreachable("Not ELF");
+}
 
 /// @brief Dumps the specified object file.
 static void dumpObject(const ObjectFile *Obj) {
   StreamWriter Writer(outs());
   std::unique_ptr<ObjDumper> Dumper;
-  if (error_code EC = createDumper(Obj, Writer, Dumper)) {
+  if (std::error_code EC = createDumper(Obj, Writer, Dumper)) {
     reportError(Obj->getFileName(), EC);
     return;
   }
@@ -212,7 +240,7 @@ static void dumpObject(const ObjectFile *Obj) {
          << "\n";
   outs() << "AddressSize: " << (8*Obj->getBytesInAddress()) << "bit\n";
   if (Obj->isELF())
-    outs() << "LoadName: " << Obj->getLoadName() << "\n";
+    outs() << "LoadName: " << getLoadName(Obj) << "\n";
 
   if (opts::FileHeaders)
     Dumper->printFileHeaders();
@@ -235,6 +263,9 @@ static void dumpObject(const ObjectFile *Obj) {
   if (Obj->getArch() == llvm::Triple::arm && Obj->isELF())
     if (opts::ARMAttributes)
       Dumper->printAttributes();
+  if (isMipsArch(Obj->getArch()) && Obj->isELF())
+    if (opts::MipsPLTGOT)
+      Dumper->printMipsPLTGOT();
 }
 
 
@@ -243,15 +274,15 @@ static void dumpArchive(const Archive *Arc) {
   for (Archive::child_iterator ArcI = Arc->child_begin(),
                                ArcE = Arc->child_end();
                                ArcI != ArcE; ++ArcI) {
-    std::unique_ptr<Binary> child;
-    if (error_code EC = ArcI->getAsBinary(child)) {
+    ErrorOr<std::unique_ptr<Binary>> ChildOrErr = ArcI->getAsBinary();
+    if (std::error_code EC = ChildOrErr.getError()) {
       // Ignore non-object files.
       if (EC != object_error::invalid_file_type)
         reportError(Arc->getFileName(), EC.message());
       continue;
     }
 
-    if (ObjectFile *Obj = dyn_cast<ObjectFile>(child.get()))
+    if (ObjectFile *Obj = dyn_cast<ObjectFile>(&*ChildOrErr.get()))
       dumpObject(Obj);
     else
       reportError(Arc->getFileName(), readobj_error::unrecognized_file_format);
@@ -268,16 +299,16 @@ static void dumpInput(StringRef File) {
   }
 
   // Attempt to open the binary.
-  ErrorOr<Binary *> BinaryOrErr = createBinary(File);
-  if (error_code EC = BinaryOrErr.getError()) {
+  ErrorOr<std::unique_ptr<Binary>> BinaryOrErr = createBinary(File);
+  if (std::error_code EC = BinaryOrErr.getError()) {
     reportError(File, EC);
     return;
   }
-  std::unique_ptr<Binary> Binary(BinaryOrErr.get());
+  Binary &Binary = *BinaryOrErr.get();
 
-  if (Archive *Arc = dyn_cast<Archive>(Binary.get()))
+  if (Archive *Arc = dyn_cast<Archive>(&Binary))
     dumpArchive(Arc);
-  else if (ObjectFile *Obj = dyn_cast<ObjectFile>(Binary.get()))
+  else if (ObjectFile *Obj = dyn_cast<ObjectFile>(&Binary))
     dumpObject(Obj);
   else
     reportError(File, readobj_error::unrecognized_file_format);

@@ -19,12 +19,19 @@
 
 namespace llvm {
 
+class DataLayout;
 class MachineFunction;
 class MachineInstr;
 class SDep;
 class SUnit;
+class TargetFrameLowering;
+class TargetInstrInfo;
+class TargetJITInfo;
+class TargetLowering;
 class TargetRegisterClass;
+class TargetRegisterInfo;
 class TargetSchedModel;
+class TargetSelectionDAGInfo;
 struct MachineSchedPolicy;
 template <typename T> class SmallVectorImpl;
 
@@ -47,6 +54,43 @@ public:
 
   virtual ~TargetSubtargetInfo();
 
+  // Interfaces to the major aspects of target machine information:
+  //
+  // -- Instruction opcode and operand information
+  // -- Pipelines and scheduling information
+  // -- Stack frame information
+  // -- Selection DAG lowering information
+  //
+  // N.B. These objects may change during compilation. It's not safe to cache
+  // them between functions.
+  virtual const TargetInstrInfo *getInstrInfo() const { return nullptr; }
+  virtual const TargetFrameLowering *getFrameLowering() const {
+    return nullptr;
+  }
+  virtual const TargetLowering *getTargetLowering() const { return nullptr; }
+  virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const {
+    return nullptr;
+  }
+  virtual const DataLayout *getDataLayout() const { return nullptr; }
+
+  /// getRegisterInfo - If register information is available, return it.  If
+  /// not, return null.  This is kept separate from RegInfo until RegInfo has
+  /// details of graph coloring register allocation removed from it.
+  ///
+  virtual const TargetRegisterInfo *getRegisterInfo() const { return nullptr; }
+
+  /// getJITInfo - If this target supports a JIT, return information for it,
+  /// otherwise return null.
+  ///
+  virtual TargetJITInfo *getJITInfo() { return nullptr; }
+
+  /// getInstrItineraryData - Returns instruction itinerary data for the target
+  /// or specific subtarget.
+  ///
+  virtual const InstrItineraryData *getInstrItineraryData() const {
+    return nullptr;
+  }
+
   /// Resolve a SchedClass at runtime, where SchedClass identifies an
   /// MCSchedClassDesc with the isVariant property. This may return the ID of
   /// another variant SchedClass, but repeated invocation must quickly terminate
@@ -66,6 +110,16 @@ public:
   /// scheduler. It does not yet disable the postRA scheduler.
   virtual bool enableMachineScheduler() const;
 
+  /// \brief True if the subtarget should run PostMachineScheduler.
+  ///
+  /// This only takes effect if the target has configured the
+  /// PostMachineScheduler pass to run, or if the global cl::opt flag,
+  /// MISchedPostRA, is set.
+  virtual bool enablePostMachineScheduler() const;
+
+  /// \brief True if the subtarget should run the atomic expansion pass.
+  virtual bool enableAtomicExpandLoadLinked() const;
+
   /// \brief Override generic scheduling policy within a region.
   ///
   /// This is a convenient way for targets that don't provide any custom
@@ -81,14 +135,30 @@ public:
   virtual void adjustSchedDependency(SUnit *def, SUnit *use,
                                      SDep& dep) const { }
 
-  // enablePostRAScheduler - If the target can benefit from post-regalloc
-  // scheduling and the specified optimization level meets the requirement
-  // return true to enable post-register-allocation scheduling. In
-  // CriticalPathRCs return any register classes that should only be broken
-  // if on the critical path.
-  virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
-                                     AntiDepBreakMode& Mode,
-                                     RegClassVector& CriticalPathRCs) const;
+  // For use with PostRAScheduling: get the anti-dependence breaking that should
+  // be performed before post-RA scheduling.
+  virtual AntiDepBreakMode getAntiDepBreakMode() const {
+    return ANTIDEP_NONE;
+  }
+
+  // For use with PostRAScheduling: in CriticalPathRCs, return any register
+  // classes that should only be considered for anti-dependence breaking if they
+  // are on the critical path.
+  virtual void getCriticalPathRCs(RegClassVector &CriticalPathRCs) const {
+    return CriticalPathRCs.clear();
+  }
+
+  // For use with PostRAScheduling: get the minimum optimization level needed
+  // to enable post-RA scheduling.
+  virtual CodeGenOpt::Level getOptLevelToEnablePostRAScheduler() const {
+    return CodeGenOpt::Default;
+  }
+
+  /// \brief True if the subtarget should run the local reassignment
+  /// heuristic of the register allocator.
+  /// This heuristic may be compile time intensive, \p OptLevel provides
+  /// a finer grain to tune the register allocator.
+  virtual bool enableRALocalReassignment(CodeGenOpt::Level OptLevel) const;
 
   /// \brief Enable use of alias analysis during code generation (during MI
   /// scheduling, DAGCombine, etc.).
@@ -99,6 +169,7 @@ public:
 
   /// \brief Reset the features for the subtarget.
   virtual void resetSubtargetFeatures(const MachineFunction *MF) { }
+
 };
 
 } // End llvm namespace

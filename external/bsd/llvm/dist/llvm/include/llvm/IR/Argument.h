@@ -56,8 +56,14 @@ public:
   unsigned getArgNo() const;
 
   /// \brief Return true if this argument has the nonnull attribute on it in
-  /// its containing function.
+  /// its containing function. Also returns true if at least one byte is known
+  /// to be dereferenceable and the pointer is in addrspace(0).
   bool hasNonNullAttr() const;
+
+  /// \brief If this argument has the dereferenceable attribute on it in its
+  /// containing function, return the number of bytes known to be
+  /// dereferenceable. Otherwise, zero is returned.
+  uint64_t getDereferenceableBytes() const;
 
   /// \brief Return true if this argument has the byval attribute on it in its
   /// containing function.
@@ -98,6 +104,14 @@ public:
   /// \brief Return true if this argument has the inalloca attribute on it in
   /// its containing function.
   bool hasInAllocaAttr() const;
+
+  /// \brief Return true if this argument has the zext attribute on it in its
+  /// containing function.
+  bool hasZExtAttr() const;
+
+  /// \brief Return true if this argument has the sext attribute on it in its
+  /// containing function.
+  bool hasSExtAttr() const;
 
   /// \brief Add a Attribute to an argument.
   void addAttr(AttributeSet AS);

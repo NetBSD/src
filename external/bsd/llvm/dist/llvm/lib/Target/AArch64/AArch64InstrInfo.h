@@ -17,6 +17,7 @@
 #include "AArch64.h"
 #include "AArch64RegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/CodeGen/MachineCombinerPattern.h"
 
 #define GET_INSTRINFO_HEADER
 #include "AArch64GenInstrInfo.inc"
@@ -44,9 +45,9 @@ public:
   /// always be able to get register info as well (through this method).
   const AArch64RegisterInfo &getRegisterInfo() const { return RI; }
 
-  const AArch64Subtarget &getSubTarget() const { return Subtarget; }
-
   unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
+
+  bool isAsCheapAsAMove(const MachineInstr *MI) const override;
 
   bool isCoalescableExtInstr(const MachineInstr &MI, unsigned &SrcReg,
                              unsigned &DstReg, unsigned &SubIdx) const override;
@@ -119,6 +120,7 @@ public:
                             int FrameIndex, const TargetRegisterClass *RC,
                             const TargetRegisterInfo *TRI) const override;
 
+  using TargetInstrInfo::foldMemoryOperandImpl;
   MachineInstr *
   foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                         const SmallVectorImpl<unsigned> &Ops,
@@ -155,7 +157,26 @@ public:
   bool optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
                             unsigned SrcReg2, int CmpMask, int CmpValue,
                             const MachineRegisterInfo *MRI) const override;
+  /// hasPattern - return true when there is potentially a faster code sequence
+  /// for an instruction chain ending in <Root>. All potential patterns are
+  /// listed
+  /// in the <Pattern> array.
+  virtual bool hasPattern(
+      MachineInstr &Root,
+      SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Pattern) const;
 
+  /// genAlternativeCodeSequence - when hasPattern() finds a pattern
+  /// this function generates the instructions that could replace the
+  /// original code sequence
+  virtual void genAlternativeCodeSequence(
+      MachineInstr &Root, MachineCombinerPattern::MC_PATTERN P,
+      SmallVectorImpl<MachineInstr *> &InsInstrs,
+      SmallVectorImpl<MachineInstr *> &DelInstrs,
+      DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const;
+  /// useMachineCombiner - AArch64 supports MachineCombiner
+  virtual bool useMachineCombiner(void) const;
+
+  bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const override;
 private:
   void instantiateCondBranch(MachineBasicBlock &MBB, DebugLoc DL,
                              MachineBasicBlock *TBB,
@@ -168,7 +189,7 @@ private:
 /// if necessary, to be replaced by the scavenger at the end of PEI.
 void emitFrameOffset(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                      DebugLoc DL, unsigned DestReg, unsigned SrcReg, int Offset,
-                     const AArch64InstrInfo *TII,
+                     const TargetInstrInfo *TII,
                      MachineInstr::MIFlag = MachineInstr::NoFlags,
                      bool SetNZCV = false);
 

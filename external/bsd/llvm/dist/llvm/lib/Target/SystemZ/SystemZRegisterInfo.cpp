@@ -7,37 +7,35 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "SystemZInstrInfo.h"
 #include "SystemZRegisterInfo.h"
-#include "SystemZTargetMachine.h"
+#include "SystemZSubtarget.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 using namespace llvm;
 
 #define GET_REGINFO_TARGET_DESC
 #include "SystemZGenRegisterInfo.inc"
 
-SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm)
-  : SystemZGenRegisterInfo(SystemZ::R14D), TM(tm) {}
+SystemZRegisterInfo::SystemZRegisterInfo()
+    : SystemZGenRegisterInfo(SystemZ::R14D) {}
 
-const MCPhysReg*
+const MCPhysReg *
 SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  static const MCPhysReg CalleeSavedRegs[] = {
-    SystemZ::R6D,  SystemZ::R7D,  SystemZ::R8D,  SystemZ::R9D,
-    SystemZ::R10D, SystemZ::R11D, SystemZ::R12D, SystemZ::R13D,
-    SystemZ::R14D, SystemZ::R15D,
-    SystemZ::F8D,  SystemZ::F9D,  SystemZ::F10D, SystemZ::F11D,
-    SystemZ::F12D, SystemZ::F13D, SystemZ::F14D, SystemZ::F15D,
-    0
-  };
+  return CSR_SystemZ_SaveList;
+}
 
-  return CalleeSavedRegs;
+const uint32_t *
+SystemZRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+  return CSR_SystemZ_RegMask;
 }
 
 BitVector
 SystemZRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
 
   if (TFI->hasFP(MF)) {
     // R11D is the frame pointer.  Reserve all aliases.
@@ -63,8 +61,9 @@ SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 
   MachineBasicBlock &MBB = *MI->getParent();
   MachineFunction &MF = *MBB.getParent();
-  auto *TII = static_cast<const SystemZInstrInfo*>(TM.getInstrInfo());
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+  auto *TII =
+      static_cast<const SystemZInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
   DebugLoc DL = MI->getDebugLoc();
 
   // Decompose the frame index into a base and offset.
@@ -135,6 +134,6 @@ SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 
 unsigned
 SystemZRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
   return TFI->hasFP(MF) ? SystemZ::R11D : SystemZ::R15D;
 }

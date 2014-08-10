@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/YAMLTraits.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Casting.h"
@@ -56,9 +57,7 @@ Input::Input(StringRef InputContent,
 Input::~Input() {
 }
 
-error_code Input::error() {
-  return EC;
-}
+std::error_code Input::error() { return EC; }
 
 // Pin the vtables to this file.
 void Input::HNode::anchor() {}
@@ -90,8 +89,8 @@ bool Input::setCurrentDocument() {
   return false;
 }
 
-void Input::nextDocument() {
-  ++DocIterator;
+bool Input::nextDocument() {
+  return ++DocIterator != Strm->end();
 }
 
 bool Input::mapTag(StringRef Tag, bool Default) {
@@ -327,7 +326,12 @@ Input::HNode *Input::createHNodes(Node *N) {
   } else if (MappingNode *Map = dyn_cast<MappingNode>(N)) {
     MapHNode *mapHNode = new MapHNode(N);
     for (KeyValueNode &KVN : *Map) {
-      ScalarNode *KeyScalar = dyn_cast<ScalarNode>(KVN.getKey());
+      Node *KeyNode = KVN.getKey();
+      ScalarNode *KeyScalar = dyn_cast<ScalarNode>(KeyNode);
+      if (!KeyScalar) {
+        setError(KeyNode, "Map key must be a scalar");
+        break;
+      }
       StringStorage.clear();
       StringRef KeyStr = KeyScalar->getValue(StringStorage);
       if (!StringStorage.empty()) {
