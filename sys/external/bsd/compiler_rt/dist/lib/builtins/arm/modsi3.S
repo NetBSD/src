@@ -20,8 +20,16 @@
 #define CLEAR_FRAME_AND_RETURN \
     pop    {r4, r7, pc}
 
-.syntax unified
-.p2align 3
+	.syntax unified
+	.text
+#if __ARM_ARCH_ISA_THUMB == 2
+	.thumb
+#endif
+
+@ int __modsi3(int divident, int divisor)
+@   Calculate and return the remainder of the (signed) division.
+
+	.p2align 3
 DEFINE_COMPILERRT_FUNCTION(__modsi3)
 #if __ARM_ARCH_EXT_IDIV__
 	tst     r1, r1
