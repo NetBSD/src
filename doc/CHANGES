@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1965 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1966 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -40,7 +40,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	apple: Recognize the apple disk partitioning scheme, and auto-discover
 		wedges. Fix iPod disk mounting, by adding quirk.
 		[christos 20120306]
-	fstab: Add NAME=wedgename for fs_spec and routines to parse it. Now
+	fstab(5): Add NAME=wedgename for fs_spec and routines to parse it. Now
 		wedges can be used in /etc/fstab, even in dynamic environments
 		where disks come and go and wedges get renumbered.
 		[christos 20120306]
@@ -52,7 +52,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		Interface II SAS controllers.  [bouyer 20120419]
 	kernel: Add support for 256 CPUs on amd64. [rmind 20120420]
 	OpenSSH: Imported 6.0 [christos 20120501]
-	bzip2: Imported 1.0.6 [wiz 20120507]
+	bzip2(1): Imported 1.0.6 [wiz 20120507]
 	kernel: Add a genfs_rename abstraction to help file systems correctly
 		implement rename, and use it for tmpfs, ffs, and ext2fs.
 		[riastradh 20120508]
@@ -71,7 +71,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		kern.uidinfo.* via sysctl. [christos 20120608]
 	usb(9): Added support for SMP to the USB subsytem.  By Jared D.
 		McNeill and myself.  [mrg 20120609]
-	kernel: {send,recv}mmsg support [christos 20120621]
+	kernel: Add sendmmsg and recvmmsg support [christos 20120621]
 	kernel: Add sysctls to avoid ipv6 DoS attacks (from OpenBSD):
 		net.inet6.ip6.neighborgcthresh = 2048
 		net.inet6.ip6.maxifprefixes = 16
@@ -103,9 +103,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[jnemeth 20120803]
 	uatp(4): Add driver for USB Apple trackpads. [riastradh 20120804]
 	libc: Update to tzcode2012e. [christos 20120809]
-	arm: Add support for the Beaglebone (TI AM335x-based board).
+	evbarm: Add support for the Beaglebone (TI AM335x-based board).
 		[matt 20120820]
-	arm: Add support for BEAGLEBOARDXM (TI DM37XX cpus) boards.
+	evbarm: Add support for BEAGLEBOARDXM (TI DM37XX cpus) boards.
 		[matt 20120822]
 	mfi(8): Added tagged queuing support.  [bouyer 20120823]
 	mfi(8): Added support for LSI SAS2208-based controllers.
@@ -158,7 +158,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	arm: fix EHCI support for OMAP3.  [jmcneill 20121211]
 	arm: enable direct-mapped poolpage support.  [matt 20121211]
 	arm: enable VFP-based pmap page zero/copy ops.  [matt 20121211]
-	openssh: Import 6.1. [christos 20121212]
+	OpenSSH: Import 6.1. [christos 20121212]
 	ptcd(4): Add a driver for the Protech PS3100 cash drawer port.
 		[mbalmer 20121216]
 	ibmcd(4): Add a driver for the IBM 4810 BSP cash drawer port.
@@ -227,9 +227,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[jmcneill 20130325]
 	vcaudio(4): Add support for Broadcom VideoCore IV audio service.
 		[jmcneill 20130325]
-	openssh: Import 6.2. [christos 20130329]
+	OpenSSH: Import 6.2. [christos 20130329]
 	mdocml: Import 1.12.1 [christos 20130402]
-	openpam: Import 20120526 (Micrampelis) [christos 20130405]
+	openpam(3): Import 20120526 (Micrampelis) [christos 20130405]
 	flex: Import 2.5.37 [christos 20130405]
 	byacc: Import 20130304 [christos 20130405]
 	libpcap: Import 1.3.0 [christos 20130406]
@@ -247,7 +247,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	arm: Make all arm ports with a command MACHINE_ARCH generate the same
 		userspace.  All sets are the same except for etc.tgz.
 		[matt 20130501]
-	disklabel: this is now a MI tool like installboot.  [matt 20130503]
+	disklabel(8): this is now a MI tool like installboot.  [matt 20130503]
 	vndcompress(1): Add support for restarting after interrupt.
 		[riastradh 20130503]
 	mcp980x(4): Add driver for Microchip MCP9800/1/2/3 I2C temperature
@@ -333,7 +333,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	libc: Update to tzcode2013i. [christos 20131226]
 	zoneinfo: Import tzdata2013i. [apb 20131226]
 	acpi(4): Updated ACPICA to 20131218. [christos 20131227]
-	openpam: Import 20130907 (Nummularia) [christos 20131227]
+	openpam(3): Import 20130907 (Nummularia) [christos 20131227]
 	ntp: import ntp 4.2.7p404.  [christos 20131227]
 	luna68k: Add preleminary support of 4bpp framebuffer.
 		[tsutsui 20131227]
@@ -343,7 +343,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	libpcap: Import 1.5.2 [christos 20131231]
 	bind: update to 9.9.5b1 [christos 20131231]
 	wpa: Import wpa_supplicant and hostapd 2.0 [christos 20140102]
-	dhcpcd: Import dhcpcd-6.2.0 [roy 20140103]
+	dhcpcd(8): Import dhcpcd-6.2.0 [roy 20140103]
 	luna68k: Make bootloader to detect booted device on ROM monitor's
 		load command and set proper default boot device.
 		[tsutsui 20140105]
@@ -466,7 +466,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		USB OTG controller. [bouyer 20140716]
 	tifb(4): added an experimental driver for the Texas Instruments AM335x
 		SoC's graphic controller. [bouyer 20140716]
-	lua: Updated to 5.3 work3 [lneto 20140719]
+	lua(1): Updated to 5.3 work3 [lneto 20140719]
 	luna68k: Add WSDISPLAY_COMPAT_RAWKBD support so that keyboard on
 		Xserver works without xmodmap(1) tweaks. [tsutsui 20140720]
 	urtwn(4): Add support for Realtek RTL8188EUS and RTL8188ETV chipsets.
@@ -478,7 +478,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	tmux(1): Import of tmux 1.9a.  [christos 20140724]
 	kernel: Added fdiscard and posix_fallocate system calls.
 		[dholland 20140725]
-	arm: Add support for the Kobo touch (i.MX50). [hkenken 20140725]
+	evbarm: Add support for the Kobo touch (i.MX50). [hkenken 20140725]
 	luna68k: Reset console ANSI color palette properly after returning to
 		WSDISPLAYIO_MODE_EMUL, i.e. on exiting Xserver.
 		[tsutsui 20140725]
@@ -504,7 +504,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		values generically rather than as per-driver special cases.
 		[tls 20140810]
 	cprng_fast(9): Replace slow/broken mutex-protected kernel
-		       _arc4random() with new cprng_fast implemenation
-		       from riastradh@ using per-cpu instances of chacha8.
-		       [tls 20140810]
+		_arc4random() with new cprng_fast implemenation
+		from riastradh@ using per-cpu instances of chacha8.
+		[tls 20140810]
 	OpenSSL: update to 1.0.1i [spz 20140810]
