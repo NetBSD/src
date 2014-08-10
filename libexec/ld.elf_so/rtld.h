@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.117 2014/03/06 19:19:40 matt Exp $	 */
+/*	$NetBSD: rtld.h,v 1.118 2014/08/10 23:35:26 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -48,7 +48,7 @@
 
 #if defined(_RTLD_SOURCE)
 
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && !defined(__ARM_DWARF_EH__)
 #include "unwind.h"
 #endif
 
@@ -352,7 +352,7 @@ __dso_public int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
 
 __dso_public void *_dlauxinfo(void) __pure;
 
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && !defined(__ARM_DWARF_EH__)
 /*
  * This is used by libgcc to find the start and length of the exception table
  * associated with a PC.
