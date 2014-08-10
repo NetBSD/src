@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2014/08/10 14:10:37 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.31 2014/08/10 19:11:08 joerg Exp $
 
 NOLINT=	1	# defined
 
@@ -82,6 +82,8 @@ SRCS+=		pixman-arm-neon.c		\
 		pixman-arm-neon-asm.S		\
 		pixman-arm-neon-asm-bilinear.S
 CPPFLAGS+=	-DUSE_ARM_NEON
+
+AFLAGS+=	${${ACTIVE_CC} == "clang" :? -fno-integrated-as :}
 # ARM iwMMX
 #SRCS+=		pixman-mmx.c
 #COPTS.pixman-mmx.c=	-mcpu=iwmmxt
