@@ -1,8 +1,7 @@
-#	$NetBSD: files.hfs,v 1.2 2007/03/06 11:28:47 dillo Exp $
+#	$NetBSD: files.hfs,v 1.3 2014/08/10 08:53:22 hannken Exp $
 
 deffs	HFS
 
-file	fs/hfs/hfs_nhash.c	hfs
 file	fs/hfs/hfs_subr.c	hfs
 file	fs/hfs/hfs_vfsops.c	hfs
 file	fs/hfs/hfs_vnops.c	hfs

@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.30 2014/07/25 08:20:51 dholland Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.31 2014/08/10 08:53:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.30 2014/07/25 08:20:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.31 2014/08/10 08:53:22 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.30 2014/07/25 08:20:51 dholland Exp 
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
@@ -335,7 +336,6 @@ hfs_vop_lookup(void *v)
 	struct hfsnode *dp;	/* hfsnode for directory being searched */
 	kauth_cred_t cred;
 	struct vnode **vpp;		/* resultant vnode */
-	struct vnode *pdp;		/* saved dp during symlink work */
 	struct vnode *tdp;		/* returned by VFS_VGET */
 	struct vnode *vdp;		/* vnode for directory being searched */
 	hfs_catalog_key_t key;	/* hfs+ catalog search key for requested child */
@@ -394,12 +394,10 @@ hfs_vop_lookup(void *v)
 	}
 #endif
 	
-	pdp = vdp;
 	if (flags & ISDOTDOT) {
 		DPRINTF(("DOTDOT "));
-		VOP_UNLOCK(pdp);	/* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, dp->h_parent, &tdp);
-		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
+		error = hfs_vget_internal(vdp->v_mount, dp->h_parent,
+		    HFS_RSRCFORK, &tdp);
 		if (error != 0)
 			goto error;
 		*vpp = tdp;
@@ -467,7 +465,8 @@ hfs_vop_lookup(void *v)
 			HFS_RSRCFORK, &tdp);
 		}
 		else
-			error = VFS_VGET(vdp->v_mount, rec.file.cnid, &tdp);
+			error = hfs_vget_internal(vdp->v_mount, rec.file.cnid,
+			    HFS_DATAFORK, &tdp);
 		if (error != 0)
 			goto error;
 		*vpp = tdp;
@@ -481,8 +480,6 @@ hfs_vop_lookup(void *v)
 	cache_enter(vdp, *vpp, cnp);
 #endif
 	
-	if (*vpp != vdp)
-		VOP_UNLOCK(*vpp);
 	error = 0;
 
 	/* FALLTHROUGH */
@@ -1039,8 +1036,8 @@ hfs_vop_reclaim(void *v)
 	vp = ap->a_vp;
 	hp = VTOH(vp);
 
-	/* Remove the hfsnode from its hash chain. */
-	hfs_nhashremove(hp);
+	KASSERT(hp->h_key.hnk_cnid == hp->h_rec.u.cnid);
+	vcache_remove(vp->v_mount, &hp->h_key, sizeof(hp->h_key));
 
 	/* Decrement the reference count to the volume's device. */
 	if (hp->h_devvp) {
@@ -1049,7 +1046,7 @@ hfs_vop_reclaim(void *v)
 	}
 	
 	genfs_node_destroy(vp);
-	free(vp->v_data, M_TEMP);
+	pool_put(&hfs_node_pool, hp);
 	vp->v_data = NULL;
 
 	return 0;
