@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.20 2012/02/02 19:43:00 tls Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.21 2014/08/10 16:44:34 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.20 2012/02/02 19:43:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.21 2014/08/10 16:44:34 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -245,7 +245,7 @@ ec_attach(device_t parent, device_t self, void *aux)
 	    ec_intr, sc);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 }
 
 /*

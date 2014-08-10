@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.22 2012/07/12 00:07:36 pgoyette Exp $
+.\"	$NetBSD: rnd.9,v 1.23 2014/08/10 16:44:32 tls Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,15 +100,32 @@ It is used internally to the rnd system.
 .Pp
 .Fa flags
 are the logical OR of
-.Dv RND_FLAG_NO_COLLECT
-(don't collect or estimate)
-.Dv RND_FLAG_NO_ESTIMATE
-(don't estimate)
-to control the default setting for collection and estimation.
+.Dv RND_FLAG_COLLECT_VALUE
+(mix data provided by this source into the pool)
+.Dv RND_FLAG_COLLECT_TIME
+(mix timestamps from this source into the pool)
+.Dv RND_FLAG_ESTIMATE_VALUE
+(use a delta estimator to count bits of entropy from this source's data towards
+the pool estimate)
+.Dv RND_FLAG_ESTIMATE_TIME
+(use a delta estimator to count bits of entropy from this source's timestamps
+towards the pool estimate).
+For many devices,
+.Dv RND_FLAG_DEFAULT
+(
+.Dv RND_FLAG_COLLECT_VALUE
+|
+.Dv RND_FLAG_COLLECT_TIME
+|
+.Dv RND_FLAG_ESTIMATE_TIME
+) is the best choice.
 Note that devices of type
 .Dv RND_TYPE_NET
 default to
-.Dv RND_FLAG_NO_ESTIMATE .
+.Dv RND_FLAG_COLLECT_VALUE
+|
+.Dv RND_FLAG_COLLECT_TIME
+(no entropy counted).
 .Pp
 .It Fn rnd_detach_source "krndsource_t *rnd_source"
 This function disconnects the device from entropy collection.

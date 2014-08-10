@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.115 2012/07/22 14:32:57 matt Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.116 2014/08/10 16:44:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.115 2012/07/22 14:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.116 2014/08/10 16:44:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -437,7 +437,7 @@ ex_config(struct ex_softc *sc)
 	/* TODO: set queues to 0 */
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	if (pmf_device_register1(sc->sc_dev, NULL, NULL, ex_shutdown))
 		pmf_class_network_register(sc->sc_dev, &sc->sc_ethercom.ec_if);

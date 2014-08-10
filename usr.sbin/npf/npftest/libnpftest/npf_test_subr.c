@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test_subr.c,v 1.10 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf_test_subr.c,v 1.11 2014/08/10 16:44:37 tls Exp $	*/
 
 /*
  * NPF initialisation and handler routines.
@@ -138,10 +138,10 @@ npf_inet_ntop(int af, const void *src, char *dst, socklen_t size)
 }
 
 /*
- * Need to override for cprng_fast32() -- we need deterministic PRNG.
+ * Need to override cprng_fast32() -- we need deterministic PRNG.
  */
 uint32_t
-_arc4random(void)
+cprng_fast32(void)
 {
 	return (uint32_t)(_random_func ? _random_func() : random());
 }

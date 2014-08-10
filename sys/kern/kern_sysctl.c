@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.252 2014/08/09 07:05:42 gson Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.253 2014/08/10 16:44:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.252 2014/08/09 07:05:42 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.253 2014/08/10 16:44:36 tls Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.252 2014/08/09 07:05:42 gson Exp $
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
+#include <sys/rnd.h>
 
 #define	MAXDESCLEN	1024
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");
@@ -1556,6 +1557,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		if (newlen != sz)
 			goto bad_size;
 		error = sysctl_copyin(l, newp, d, sz);
+		rnd_add_data(NULL, d, sz, 0);
 		break;
 	case CTLTYPE_STRING: {
 		/*
@@ -1599,8 +1601,10 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		/*
 		 * looks good, so pop it into place and zero the rest.
 		 */
-		if (len > 0)
+		if (len > 0) {
 			memcpy(d, newbuf, len);
+			rnd_add_data(NULL, d, len, 0);
+		}
 		if (sz != len)
 			memset((char*)d + len, 0, sz - len);
 		free(newbuf, M_SYSCTLDATA);

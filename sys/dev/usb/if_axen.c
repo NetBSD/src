@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.2 2013/10/29 16:10:49 joerg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3 2014/08/10 16:44:36 tls Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.2 2013/10/29 16:10:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3 2014/08/10 16:44:36 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -786,7 +786,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->axen_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&sc->axen_stat_ch, 0);
 	callout_setfunc(&sc->axen_stat_ch, axen_tick, sc);

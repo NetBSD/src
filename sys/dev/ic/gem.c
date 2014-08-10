@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.101 2013/02/04 18:29:55 jdc Exp $ */
+/*	$NetBSD: gem.c,v 1.102 2014/08/10 16:44:35 tls Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.101 2013/02/04 18:29:55 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.102 2014/08/10 16:44:35 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -581,7 +581,7 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 	ether_set_ifflags_cb(&sc->sc_ethercom, gem_ifflags_cb);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "interrupts");

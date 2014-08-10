@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.20 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.21 2014/08/10 16:44:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.20 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.21 2014/08/10 16:44:35 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -515,12 +515,25 @@ krndsource_to_rndsource(krndsource_t *kr, rndsource_t *r)
         r->flags = kr->flags;
 }
 
+static void
+krndsource_to_rndsource_est(krndsource_t *kr, rndsource_est_t *re)
+{
+	memset(re, 0, sizeof(*re));
+	krndsource_to_rndsource(kr, &re->rt);
+	re->dt_samples = kr->time_delta.insamples;
+	re->dt_total = kr->time_delta.outbits;
+	re->dv_samples = kr->value_delta.insamples;
+	re->dv_total = kr->value_delta.outbits;
+}
+
 int
 rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 {
 	krndsource_t *kr;
 	rndstat_t *rst;
 	rndstat_name_t *rstnm;
+	rndstat_est_t *rset;
+	rndstat_est_name_t *rsetnm;
 	rndctl_t *rctl;
 	rnddata_t *rnddata;
 	u_int32_t count, start;
@@ -536,6 +549,8 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 	case RNDGETPOOLSTAT:
 	case RNDGETSRCNUM:
 	case RNDGETSRCNAME:
+	case RNDGETESTNUM:
+	case RNDGETESTNAME:
 		ret = kauth_authorize_device(curlwp->l_cred,
 		    KAUTH_DEVICE_RND_GETPRIV, NULL, NULL, NULL, NULL);
 		if (ret)
@@ -624,6 +639,41 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		mutex_spin_exit(&rndpool_mtx);
 		break;
 
+	case RNDGETESTNUM:
+		rset = (rndstat_est_t *)addr;
+
+		if (rset->count == 0)
+			break;
+
+		if (rset->count > RND_MAXSTATCOUNT)
+			return (EINVAL);
+
+		mutex_spin_enter(&rndpool_mtx);
+		/*
+		 * Find the starting source by running through the
+		 * list of sources.
+		 */
+		kr = rnd_sources.lh_first;
+		start = rset->start;
+		while (kr != NULL && start > 1) {
+			kr = kr->list.le_next;
+			start--;
+		}
+
+		/* Return up to as many structures as the user asked
+		 * for.  If we run out of sources, a count of zero
+		 * will be returned, without an error.
+		 */
+		for (count = 0; count < rset->count && kr != NULL; count++) {
+			krndsource_to_rndsource_est(kr, &rset->source[count]);
+			kr = kr->list.le_next;
+		}
+
+		rset->count = count;
+
+		mutex_spin_exit(&rndpool_mtx);
+		break;
+
 	case RNDGETSRCNAME:
 		/*
 		 * Scan through the list, trying to find the name.
@@ -634,7 +684,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		while (kr != NULL) {
 			if (strncmp(kr->name, rstnm->name,
 				    MIN(sizeof(kr->name),
-					sizeof(*rstnm))) == 0) {
+					sizeof(rstnm->name))) == 0) {
 				krndsource_to_rndsource(kr, &rstnm->source);
 				mutex_spin_exit(&rndpool_mtx);
 				return (0);
@@ -644,6 +694,30 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		mutex_spin_exit(&rndpool_mtx);
 
 		ret = ENOENT;		/* name not found */
+
+		break;
+
+	case RNDGETESTNAME:
+		/*
+		 * Scan through the list, trying to find the name.
+		 */
+		mutex_spin_enter(&rndpool_mtx);
+		rsetnm = (rndstat_est_name_t *)addr;
+		kr = rnd_sources.lh_first;
+		while (kr != NULL) {
+			if (strncmp(kr->name, rsetnm->name,
+				    MIN(sizeof(kr->name),
+					sizeof(rsetnm->name))) == 0) {
+				krndsource_to_rndsource_est(kr,
+							    &rsetnm->source);
+				mutex_spin_exit(&rndpool_mtx);
+				return (0);
+			}
+			kr = kr->list.le_next;
+		}
+		mutex_spin_exit(&rndpool_mtx);
+
+		ret = ENOENT;           /* name not found */
 
 		break;
 
@@ -663,9 +737,11 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 			while (kr != NULL) {
 				if (kr->type == rctl->type) {
 					kr->flags &= ~rctl->mask;
+
 					kr->flags |=
 					    (rctl->flags & rctl->mask);
 				}
+
 				kr = kr->list.le_next;
 			}
 			mutex_spin_exit(&rndpool_mtx);
@@ -681,7 +757,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
                                         sizeof(rctl->name))) == 0) {
 				kr->flags &= ~rctl->mask;
 				kr->flags |= (rctl->flags & rctl->mask);
-				
+
 				mutex_spin_exit(&rndpool_mtx);
 				return (0);
 			}

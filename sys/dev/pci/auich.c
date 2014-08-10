@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.143 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: auich.c,v 1.144 2014/08/10 16:44:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.143 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.144 2014/08/10 16:44:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.143 2014/03/29 19:28:24 christos Exp $")
 #include <sys/sysctl.h>
 #include <sys/audioio.h>
 #include <sys/bus.h>
+#include <sys/rnd.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -1700,6 +1701,8 @@ auich_calibrate(struct auich_softc *sc)
 		       PRIu64 " us\n", device_xname(sc->sc_dev), wait_us);
 		return;
 	}
+
+	rnd_add_data(NULL, &wait_us, sizeof(wait_us), 1);
 
 	actual_48k_rate = (bytes * UINT64_C(250000)) / wait_us;
 

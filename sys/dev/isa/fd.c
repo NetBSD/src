@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.104 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: fd.c,v 1.105 2014/08/10 16:44:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.104 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.105 2014/08/10 16:44:35 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -587,7 +587,7 @@ fdattach(device_t parent, device_t self, void *aux)
 	    mountroothook_establish(fd_mountroot_hook, fd->sc_dev);
 
 	rnd_attach_source(&fd->rnd_source, device_xname(fd->sc_dev),
-			  RND_TYPE_DISK, 0);
+			  RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
 	fd_set_geometry(fd);
 

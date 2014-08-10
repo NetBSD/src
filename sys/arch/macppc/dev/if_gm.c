@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.43 2014/03/29 19:28:29 christos Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.44 2014/08/10 16:44:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.43 2014/03/29 19:28:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.44 2014/08/10 16:44:34 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -248,7 +248,8 @@ gmac_attach(device_t parent, device_t self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, laddr);
-	rnd_attach_source(&sc->sc_rnd_source, xname, RND_TYPE_NET, 0); 
+	rnd_attach_source(&sc->sc_rnd_source, xname, RND_TYPE_NET,
+			  RND_FLAG_DEFAULT); 
 }
 
 u_int

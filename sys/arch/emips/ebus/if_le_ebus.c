@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.5 2013/11/10 18:27:15 christos Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.6 2014/08/10 16:44:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.5 2013/11/10 18:27:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.6 2014/08/10 16:44:33 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -223,7 +223,7 @@ enic_attach(device_t parent, device_t self, void *aux)
 		panic("enic_attach: cannot establish shutdown hook");
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	ebus_intr_establish(parent, (void *)ia->ia_cookie, IPL_NET,
 	    enic_intr, sc);

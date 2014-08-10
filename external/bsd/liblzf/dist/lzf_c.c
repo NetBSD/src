@@ -34,9 +34,14 @@
  * either the BSD or the GPL.
  */
 
+#if defined(_KERNEL) || defined (_STANDALONE)
+#include <lib/libkern/libkern.h>
+#include "lzfP.h"
+#else
 #include "lzf.h"
+#endif
 
-#define HSIZE (1 << (HLOG))
+#define HSIZE (1 << (LZF_HLOG))
 
 /*
  * don't play with this unless you benchmark!
@@ -48,16 +53,16 @@
 # define FRST(p) (((p[0]) << 8) | p[1])
 # define NEXT(v,p) (((v) << 8) | p[2])
 # if ULTRA_FAST
-#  define IDX(h) ((( h             >> (3*8 - HLOG)) - h  ) & (HSIZE - 1))
+#  define IDX(h) ((( h             >> (3*8 - LZF_HLOG)) - h  ) & (HSIZE - 1))
 # elif VERY_FAST
-#  define IDX(h) ((( h             >> (3*8 - HLOG)) - h*5) & (HSIZE - 1))
+#  define IDX(h) ((( h             >> (3*8 - LZF_HLOG)) - h*5) & (HSIZE - 1))
 # else
-#  define IDX(h) ((((h ^ (h << 5)) >> (3*8 - HLOG)) - h*5) & (HSIZE - 1))
+#  define IDX(h) ((((h ^ (h << 5)) >> (3*8 - LZF_HLOG)) - h*5) & (HSIZE - 1))
 # endif
 #endif
 /*
  * IDX works because it is very similar to a multiplicative hash, e.g.
- * ((h * 57321 >> (3*8 - HLOG)) & (HSIZE - 1))
+ * ((h * 57321 >> (3*8 - LZF_HLOG)) & (HSIZE - 1))
  * the latter is also quite fast on newer CPUs, and compresses similarly.
  *
  * the next one is also quite good, albeit slow ;)
@@ -147,7 +152,7 @@ lzf_compress_r (const void *const in_data, unsigned int in_len,
 #endif
           && (off = ip - ref - 1) < MAX_OFF
           && ip + 4 < in_end
-          && ref > (u8 *)in_data
+          && ref > (const u8 *)in_data
 #if STRICT_ALIGN
           && ref[0] == ip[0]
           && ref[1] == ip[1]
