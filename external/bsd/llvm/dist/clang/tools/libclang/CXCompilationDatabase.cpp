@@ -16,8 +16,8 @@ clang_CompilationDatabase_fromDirectory(const char *BuildDir,
   std::string ErrorMsg;
   CXCompilationDatabase_Error Err = CXCompilationDatabase_NoError;
 
-  CompilationDatabase *db = CompilationDatabase::loadFromDirectory(BuildDir,
-                                                                   ErrorMsg);
+  std::unique_ptr<CompilationDatabase> db =
+      CompilationDatabase::loadFromDirectory(BuildDir, ErrorMsg);
 
   if (!db) {
     fprintf(stderr, "LIBCLANG TOOLING ERROR: %s\n", ErrorMsg.c_str());
@@ -27,7 +27,7 @@ clang_CompilationDatabase_fromDirectory(const char *BuildDir,
   if (ErrorCode)
     *ErrorCode = Err;
 
-  return db;
+  return db.release();
 }
 
 void
@@ -54,7 +54,7 @@ clang_CompilationDatabase_getCompileCommands(CXCompilationDatabase CDb,
       return new AllocatedCXCompileCommands(std::move(CCmd));
   }
 
-  return 0;
+  return nullptr;
 }
 
 CXCompileCommands
@@ -65,7 +65,7 @@ clang_CompilationDatabase_getAllCompileCommands(CXCompilationDatabase CDb) {
       return new AllocatedCXCompileCommands(std::move(CCmd));
   }
 
-  return 0;
+  return nullptr;
 }
 
 void
@@ -90,13 +90,13 @@ CXCompileCommand
 clang_CompileCommands_getCommand(CXCompileCommands Cmds, unsigned I)
 {
   if (!Cmds)
-    return 0;
+    return nullptr;
 
   AllocatedCXCompileCommands *ACC =
     static_cast<AllocatedCXCompileCommands *>(Cmds);
 
   if (I >= ACC->CCmd.size())
-    return 0;
+    return nullptr;
 
   return &ACC->CCmd[I];
 }

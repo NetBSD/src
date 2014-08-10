@@ -18,7 +18,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 #ifndef NDEBUG
 #include "llvm/Support/GraphWriter.h"
@@ -104,13 +104,24 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
       New->Buffer.reset(Buffer);
     } else {
       // Open the AST file.
-      llvm::error_code ec;
+      std::error_code ec;
       if (FileName == "-") {
-        ec = llvm::MemoryBuffer::getSTDIN(New->Buffer);
+        llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buf =
+            llvm::MemoryBuffer::getSTDIN();
+        ec = Buf.getError();
         if (ec)
           ErrorStr = ec.message();
-      } else
-        New->Buffer.reset(FileMgr.getBufferForFile(FileName, &ErrorStr));
+        else
+          New->Buffer = std::move(Buf.get());
+      } else {
+        // Leave the FileEntry open so if it gets read again by another
+        // ModuleManager it must be the same underlying file.
+        // FIXME: Because FileManager::getFile() doesn't guarantee that it will
+        // give us an open file, this may not be 100% reliable.
+        New->Buffer.reset(FileMgr.getBufferForFile(New->File, &ErrorStr,
+                                                   /*IsVolatile*/false,
+                                                   /*ShouldClose*/false));
+      }
       
       if (!New->Buffer)
         return Missing;
@@ -135,15 +146,12 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
   return NewModule? NewlyLoaded : AlreadyLoaded;
 }
 
-void ModuleManager::removeModules(ModuleIterator first, ModuleIterator last,
-                                  ModuleMap *modMap) {
+void ModuleManager::removeModules(
+    ModuleIterator first, ModuleIterator last,
+    llvm::SmallPtrSetImpl<ModuleFile *> &LoadedSuccessfully,
+    ModuleMap *modMap) {
   if (first == last)
     return;
-
-  // The first file entry is about to be rebuilt (or there was an error), so
-  // there should be no references to it. Remove it from the cache to close it,
-  // as Windows doesn't seem to allow renaming over an open file.
-  FileMgr.invalidateCache((*first)->File);
 
   // Collect the set of module file pointers that we'll be removing.
   llvm::SmallPtrSet<ModuleFile *, 4> victimSet(first, last);
@@ -165,6 +173,13 @@ void ModuleManager::removeModules(ModuleIterator first, ModuleIterator last,
         mod->setASTFile(nullptr);
       }
     }
+
+    // Files that didn't make it through ReadASTCore successfully will be
+    // rebuilt (or there was an error). Invalidate them so that we can load the
+    // new files that will be renamed over the old ones.
+    if (LoadedSuccessfully.count(*victim) == 0)
+      FileMgr.invalidateCache((*victim)->File);
+
     delete *victim;
   }
 

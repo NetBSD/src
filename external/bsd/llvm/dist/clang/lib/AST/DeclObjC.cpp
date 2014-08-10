@@ -952,6 +952,13 @@ ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
   llvm_unreachable("unknown method context");
 }
 
+SourceRange ObjCMethodDecl::getReturnTypeSourceRange() const {
+  const auto *TSI = getReturnTypeSourceInfo();
+  if (TSI)
+    return TSI->getTypeLoc().getSourceRange();
+  return SourceRange();
+}
+
 static void CollectOverriddenMethodsRecurse(const ObjCContainerDecl *Container,
                                             const ObjCMethodDecl *Method,
                                SmallVectorImpl<const ObjCMethodDecl *> &Methods,
@@ -1197,6 +1204,23 @@ bool ObjCInterfaceDecl::hasDesignatedInitializers() const {
     LoadExternalDefinition();
 
   return data().HasDesignatedInitializers;
+}
+
+StringRef
+ObjCInterfaceDecl::getObjCRuntimeNameAsString() const {
+  if (ObjCRuntimeNameAttr *ObjCRTName = getAttr<ObjCRuntimeNameAttr>())
+    return ObjCRTName->getMetadataName();
+
+  return getName();
+}
+
+StringRef
+ObjCImplementationDecl::getObjCRuntimeNameAsString() const {
+  if (ObjCInterfaceDecl *ID =
+      const_cast<ObjCImplementationDecl*>(this)->getClassInterface())
+    return ID->getObjCRuntimeNameAsString();
+    
+  return getName();
 }
 
 ObjCImplementationDecl *ObjCInterfaceDecl::getImplementation() const {
@@ -1601,6 +1625,14 @@ void ObjCProtocolDecl::collectInheritedProtocolProperties(
       for (const auto *PI : PDecl->protocols())
         PI->collectInheritedProtocolProperties(Property, PM);
   }
+}
+
+StringRef
+ObjCProtocolDecl::getObjCRuntimeNameAsString() const {
+  if (ObjCRuntimeNameAttr *ObjCRTName = getAttr<ObjCRuntimeNameAttr>())
+    return ObjCRTName->getMetadataName();
+
+  return getName();
 }
 
 //===----------------------------------------------------------------------===//
