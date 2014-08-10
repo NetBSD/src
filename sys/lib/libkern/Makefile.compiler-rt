@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.compiler-rt,v 1.4 2014/02/26 22:37:55 joerg Exp $
+# $NetBSD: Makefile.compiler-rt,v 1.5 2014/08/10 05:57:31 matt Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -21,32 +21,16 @@ GENERIC_SRCS+= \
 	addvdi3.c \
 	addvsi3.c \
 	addvti3.c \
-	ashldi3.c \
 	ashlti3.c \
-	ashrdi3.c \
 	ashrti3.c \
-	clzdi2.c \
-	clzsi2.c \
 	clzti2.c \
-	cmpdi2.c \
 	cmpti2.c \
-	ctzdi2.c \
-	ctzsi2.c \
 	ctzti2.c \
-	divdi3.c \
-	divmoddi4.c \
-	divmodsi4.c \
-	divsi3.c \
 	divti3.c \
-	ffsdi2.c \
 	ffsti2.c \
 	int_util.c \
-	lshrdi3.c \
 	lshrti3.c \
-	moddi3.c \
-	modsi3.c \
 	modti3.c \
-	muldi3.c \
 	mulodi4.c \
 	mulosi4.c \
 	muloti4.c \
@@ -54,7 +38,6 @@ GENERIC_SRCS+= \
 	mulvdi3.c \
 	mulvsi3.c \
 	mulvti3.c \
-	negdi2.c \
 	negti2.c \
 	negvdi2.c \
 	negvsi2.c \
@@ -68,17 +51,54 @@ GENERIC_SRCS+= \
 	subvdi3.c \
 	subvsi3.c \
 	subvti3.c \
-	ucmpdi2.c \
 	ucmpti2.c \
+	udivmodti4.c \
+	udivti3.c \
+	umodti3.c
+
+.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+GENERIC_SRCS+= \
+	clzsi2.c \
+	ctzsi2.c
+.endif
+
+.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+GENERIC_SRCS+= \
+	divmodsi4.c \
+	divsi3.c \
+	modsi3.c \
+	udivmodsi4.c \
+	udivsi3.c \
+	umodsi3.c
+.endif
+
+.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+GENERIC_SRCS+= \
+	clzdi2.c \
+	ctzdi2.c \
+	ffsdi2.c
+.endif
+
+.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+GENERIC_SRCS+= \
+	ashldi3.c \
+	ashrdi3.c \
+	lshrdi3.c
+.endif
+
+.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+GENERIC_SRCS+= \
+	cmpdi2.c \
+	divdi3.c \
+	divmoddi4.c \
+	moddi3.c \
+	muldi3.c \
+	negdi2.c \
+	ucmpdi2.c \
 	udivdi3.c \
 	udivmoddi4.c \
-	udivmodsi4.c \
-	udivmodti4.c \
-	udivsi3.c \
-	udivti3.c \
-	umoddi3.c \
-	umodsi3.c \
-	umodti3.c
+	umoddi3.c
+.endif
 
 .if ${MACHINE_CPU} == "arm"
 .  if !empty(MACHINE_ARCH:Mearm*)

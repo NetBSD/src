@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.126 2014/08/06 15:23:48 apb Exp $
+#	$NetBSD: sys.mk,v 1.127 2014/08/10 05:57:31 matt Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -32,6 +32,8 @@ DBG?=	-Os -freorder-blocks
 DBG?=	-O2 -fno-reorder-blocks
 .elif ${MACHINE_ARCH} == "coldfire"
 DBG?=	-O1
+.elif !empty(MACHINE_ARCH:Maarch64*)
+DBG?=	-O2 ${"${.TARGET:M*.po}" == "":? -fomit-frame-pointer:}
 .elif ${MACHINE_ARCH} == "vax"
 DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
 .else

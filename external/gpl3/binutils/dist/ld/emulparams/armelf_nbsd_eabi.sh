@@ -14,7 +14,7 @@ case "$target" in
   arm*-*-netbsdelf*-*eabi*)
     LIB_PATH='=/usr/lib'
     ;;
-  arm*-*-netbsdelf*)
+  aarch64*-*-netbsd* | arm*-*-netbsdelf*)
     LIB_PATH='=/usr/lib/eabi'
     ;;
 esac

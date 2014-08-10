@@ -184,6 +184,16 @@ case "${targ}" in
     targ_selvecs="bfd_elf64_littleaarch64_vec bfd_elf32_littleaarch64_vec bfd_elf32_bigaarch64_vec bfd_elf32_bigarm_vec bfd_elf32_littlearm_vec"
     want64=true
     ;;
+  aarch64-*-netbsd*)
+    targ_defvec=bfd_elf64_littleaarch64_vec
+    targ_selvecs="bfd_elf64_bigaarch64_vec bfd_elf32_littlearm_vec bfd_elf32_bigarm_vec"
+    want64=true
+    ;;
+  aarch64_be-*-netbsd*)
+    targ_defvec=bfd_elf64_bigaarch64_vec
+    targ_selvecs="bfd_elf64_littleaarch64_vec bfd_elf32_bigarm_vec bfd_elf32_littlearm_vec"
+    want64=true
+    ;;
   alpha*-*-freebsd* | alpha*-*-kfreebsd*-gnu)
     targ_defvec=bfd_elf64_alpha_freebsd_vec
     targ_selvecs="bfd_elf64_alpha_vec ecoffalpha_little_vec"

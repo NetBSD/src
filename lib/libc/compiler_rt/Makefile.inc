@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.21 2014/07/14 07:55:26 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.22 2014/08/10 05:57:31 matt Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -63,43 +63,28 @@ GENERIC_SRCS+= \
 	addvti3.c \
 	ashlti3.c \
 	ashrti3.c \
-	clzsi2.c \
 	clzti2.c \
 	cmpti2.c \
-	ctzsi2.c \
 	ctzti2.c \
-	divmodsi4.c \
-	divsi3.c \
 	divti3.c \
 	ffsti2.c \
 	fixsfdi.c \
 	fixdfdi.c \
 	fixunsdfdi.c \
 	fixunsdfsi.c \
-	fixunsdfti.c \
 	fixunssfdi.c \
 	fixunssfsi.c \
-	fixunssfti.c \
 	fixunsxfdi.c \
 	fixunsxfsi.c \
-	fixunsxfti.c \
 	fixxfdi.c \
-	fixxfti.c \
 	floatdidf.c \
 	floatdisf.c \
 	floatdixf.c \
-	floattidf.c \
-	floattisf.c \
-	floattixf.c \
 	floatundidf.c \
 	floatundisf.c \
 	floatundixf.c \
-	floatuntidf.c \
-	floatuntisf.c \
-	floatuntixf.c \
 	int_util.c \
 	lshrti3.c \
-	modsi3.c \
 	modti3.c \
 	muldc3.c \
 	mulosi4.c \
@@ -123,26 +108,49 @@ GENERIC_SRCS+= \
 	subvsi3.c \
 	subvti3.c \
 	ucmpti2.c \
-	udivmodsi4.c \
 	udivmodti4.c \
 	udivti3.c \
-	umodsi3.c \
 	umodti3.c
 
-.if ${MACHINE_CPU} != "sh3"
+.if ${MACHINE_ARCH} != "aarch64"
+GENERIC_SRCS+= \
+	fixunsdfti.c \
+	fixunssfti.c \
+	fixunsxfti.c \
+	fixxfti.c \
+	floattidf.c \
+	floattisf.c \
+	floattixf.c \
+	floatuntidf.c \
+	floatuntisf.c \
+	floatuntixf.c
+.endif
+
+# These have h/w instructions which are always used.
+.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_CPU} != "powerpc" \
+    && ${MACHINE_CPU} != "aarch64" && ${MACHINE_ARCH} != "vax"
+GENERIC_SRCS+= \
+	clzsi2.c \
+	ctzsi2.c \
+	divmodsi4.c \
+	divsi3.c \
+	modsi3.c \
+	udivmodsi4.c \
+	umodsi3.c
+
+. if ${MACHINE_CPU} != "sh3"
 # On sh3 __udivsi3 is gcc "millicode" with special calling convention
 # (less registers clobbered than usual).  Each DSO that needs it gets
 # its own hidden copy from libgcc.a.
 GENERIC_SRCS+= \
 	udivsi3.c
+. endif
 .endif
+
 
 GENERIC_SRCS+= \
 	absvdi2.c \
 	addvdi3.c \
-	clzdi2.c \
-	ctzdi2.c \
-	ffsdi2.c \
 	mulodi4.c \
 	mulvdi3.c \
 	negvdi2.c \
@@ -150,6 +158,16 @@ GENERIC_SRCS+= \
 	popcountdi2.c \
 	subvdi3.c
 
+# These have h/w instructions which are always used.
+.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_CPU} != "powerpc64" \
+    && ${MACHINE_ARCH} != "aarch64"
+GENERIC_SRCS+= \
+	clzdi2.c \
+	ctzdi2.c \
+	ffsdi2.c
+.endif
+
+# Don't need these on 64-bit machines.
 .if empty(LIBC_MACHINE_ARCH:M*64*) && ${LIBC_MACHINE_ARCH} != "alpha"
 GENERIC_SRCS+= \
 	cmpdi2.c \
@@ -184,6 +202,11 @@ GENERIC_SRCS+= \
 	gcc_qdiv.c \
 	gcc_qmul.c \
 	gcc_qsub.c
+.endif
+
+.if ${MACHINE_CPU} == "aarch64"
+GENERIC_SRCS+= \
+	clear_cache.c
 .endif
 
 .if ${MACHINE_CPU} == "arm"

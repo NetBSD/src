@@ -474,6 +474,8 @@ ALL_64_EMULATION_SOURCES = \
 	eaarch64elfb.c \
 	eaarch64linux.c \
 	eaarch64linuxb.c \
+	eaarch64nbsd.c \
+	eaarch64nbsdb.c \
 	eelf32_x86_64.c \
 	eelf32_x86_64_nacl.c \
 	eelf64_aix.c \
@@ -1777,6 +1779,14 @@ eaarch64linuxb.c: $(srcdir)/emulparams/aarch64linuxb.sh $(srcdir)/emulparams/aar
   $(ELF_DEPS) $(srcdir)/emultempl/aarch64elf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} aarch64linuxb "$(tdir_aarch64linuxb)"
+eaarch64nbsd.c: $(srcdir)/emulparams/aarch64nbsd.sh \
+  $(ELF_DEPS) $(srcdir)/emultempl/aarch64elf.em \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} aarch64nbsd "$(tdir_aarch64nbsd)"
+eaarch64nbsdb.c: $(srcdir)/emulparams/aarch64nbsdb.sh $(srcdir)/emulparams/aarch64nbsd.sh \
+  $(ELF_DEPS) $(srcdir)/emultempl/aarch64elf.em \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} aarch64nbsdb "$(tdir_aarch64nbsdb)"
 eor32.c: $(srcdir)/emulparams/or32.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/or32.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} or32 "$(tdir_or32)"
