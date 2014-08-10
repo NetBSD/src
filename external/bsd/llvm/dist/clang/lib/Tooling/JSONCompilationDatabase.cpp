@@ -17,7 +17,7 @@
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 namespace clang {
 namespace tooling {
@@ -118,15 +118,15 @@ std::vector<std::string> unescapeCommandLine(
 }
 
 class JSONCompilationDatabasePlugin : public CompilationDatabasePlugin {
-  CompilationDatabase *loadFromDirectory(StringRef Directory,
-                                         std::string &ErrorMessage) override {
+  std::unique_ptr<CompilationDatabase>
+  loadFromDirectory(StringRef Directory, std::string &ErrorMessage) override {
     SmallString<1024> JSONDatabasePath(Directory);
     llvm::sys::path::append(JSONDatabasePath, "compile_commands.json");
     std::unique_ptr<CompilationDatabase> Database(
         JSONCompilationDatabase::loadFromFile(JSONDatabasePath, ErrorMessage));
     if (!Database)
       return nullptr;
-    return Database.release();
+    return Database;
   }
 };
 
@@ -141,33 +141,32 @@ X("json-compilation-database", "Reads JSON formatted compilation databases");
 // and thus register the JSONCompilationDatabasePlugin.
 volatile int JSONAnchorSource = 0;
 
-JSONCompilationDatabase *
+std::unique_ptr<JSONCompilationDatabase>
 JSONCompilationDatabase::loadFromFile(StringRef FilePath,
                                       std::string &ErrorMessage) {
-  std::unique_ptr<llvm::MemoryBuffer> DatabaseBuffer;
-  llvm::error_code Result =
-    llvm::MemoryBuffer::getFile(FilePath, DatabaseBuffer);
-  if (Result != nullptr) {
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> DatabaseBuffer =
+      llvm::MemoryBuffer::getFile(FilePath);
+  if (std::error_code Result = DatabaseBuffer.getError()) {
     ErrorMessage = "Error while opening JSON database: " + Result.message();
     return nullptr;
   }
   std::unique_ptr<JSONCompilationDatabase> Database(
-      new JSONCompilationDatabase(DatabaseBuffer.release()));
+      new JSONCompilationDatabase(std::move(*DatabaseBuffer)));
   if (!Database->parse(ErrorMessage))
     return nullptr;
-  return Database.release();
+  return Database;
 }
 
-JSONCompilationDatabase *
+std::unique_ptr<JSONCompilationDatabase>
 JSONCompilationDatabase::loadFromBuffer(StringRef DatabaseString,
                                         std::string &ErrorMessage) {
   std::unique_ptr<llvm::MemoryBuffer> DatabaseBuffer(
       llvm::MemoryBuffer::getMemBuffer(DatabaseString));
   std::unique_ptr<JSONCompilationDatabase> Database(
-      new JSONCompilationDatabase(DatabaseBuffer.release()));
+      new JSONCompilationDatabase(std::move(DatabaseBuffer)));
   if (!Database->parse(ErrorMessage))
     return nullptr;
-  return Database.release();
+  return Database;
 }
 
 std::vector<CompileCommand>

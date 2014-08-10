@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i686-win32     -fsyntax-only -verify -std=c++11 %s
-// RUN: %clang_cc1 -triple x86_64-win32   -fsyntax-only -verify -std=c++1y %s
+// RUN: %clang_cc1 -triple i686-win32     -fsyntax-only -verify -std=c++11 -DMS %s
+// RUN: %clang_cc1 -triple x86_64-win32   -fsyntax-only -verify -std=c++1y -DMS %s
 // RUN: %clang_cc1 -triple i686-mingw32   -fsyntax-only -verify -std=c++1y %s
 // RUN: %clang_cc1 -triple x86_64-mingw32 -fsyntax-only -verify -std=c++11 %s
 
@@ -15,13 +15,13 @@ namespace { struct Internal {}; }
 
 
 // Invalid usage.
-__declspec(dllimport) typedef int typedef1; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
-typedef __declspec(dllimport) int typedef2; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
-typedef int __declspec(dllimport) typedef3; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
-typedef __declspec(dllimport) void (*FunTy)(); // expected-warning{{'dllimport' attribute only applies to variables and functions}}
-enum __declspec(dllimport) Enum {}; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
+__declspec(dllimport) typedef int typedef1; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
+typedef __declspec(dllimport) int typedef2; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
+typedef int __declspec(dllimport) typedef3; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
+typedef __declspec(dllimport) void (*FunTy)(); // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
+enum __declspec(dllimport) Enum {}; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
 #if __has_feature(cxx_strong_enums)
-  enum class __declspec(dllimport) EnumClass {}; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
+  enum class __declspec(dllimport) EnumClass {}; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
 #endif
 
 
@@ -243,6 +243,13 @@ __declspec(dllimport) void friend1();
 __declspec(dllimport) void friend4(); // expected-error{{redeclaration of 'friend4' cannot add 'dllimport' attribute}}
 __declspec(dllimport) inline void friend5() {} // expected-error{{redeclaration of 'friend5' cannot add 'dllimport' attribute}}
 
+void __declspec(dllimport) friend6(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+void __declspec(dllimport) friend7();
+struct FuncFriend2 {
+  friend void friend6(); // expected-warning{{'friend6' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+  friend void ::friend7();
+};
+
 // Implicit declarations can be redeclared with dllimport.
 __declspec(dllimport) void* operator new(__SIZE_TYPE__ n);
 
@@ -362,7 +369,6 @@ template<> __declspec(dllimport) void funcTmpl<ExplicitSpec_Def_Imported>() {} /
 template<> __declspec(dllimport) inline void funcTmpl<ExplicitSpec_InlineDef_Imported>() {}
 
 
-
 //===----------------------------------------------------------------------===//
 // Class members
 //===----------------------------------------------------------------------===//
@@ -396,7 +402,7 @@ private:
   __declspec(dllimport)                void privateDecl();
 public:
 
-  __declspec(dllimport)                int  Field; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
+  __declspec(dllimport)                int  Field; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
   __declspec(dllimport) static         int  StaticField;
   __declspec(dllimport) static         int  StaticFieldDef; // expected-note{{attribute is here}}
   __declspec(dllimport) static  const  int  StaticConstField;
@@ -794,7 +800,7 @@ private:
   __declspec(dllimport)                void privateDecl();
 public:
 
-  __declspec(dllimport)                int  Field; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
+  __declspec(dllimport)                int  Field; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
   __declspec(dllimport) static         int  StaticField;
   __declspec(dllimport) static         int  StaticFieldDef; // expected-note{{attribute is here}}
   __declspec(dllimport) static  const  int  StaticConstField;
@@ -817,9 +823,9 @@ template<typename T>        void ImportClassTmplMembers<T>::staticDef() {} // ex
 template<typename T> inline void ImportClassTmplMembers<T>::staticInlineDef() {}
 template<typename T>        void ImportClassTmplMembers<T>::staticInlineDecl() {}
 
-template<typename T>        int  ImportClassTmplMembers<T>::StaticFieldDef; // expected-error{{definition of dllimport static field not allowed}}
-template<typename T> const  int  ImportClassTmplMembers<T>::StaticConstFieldDef = 1; // expected-error{{definition of dllimport static field not allowed}}
-template<typename T> constexpr int ImportClassTmplMembers<T>::ConstexprFieldDef; // expected-error{{definition of dllimport static field not allowed}}
+template<typename T>        int  ImportClassTmplMembers<T>::StaticFieldDef; // expected-warning{{definition of dllimport static field}}
+template<typename T> const  int  ImportClassTmplMembers<T>::StaticConstFieldDef = 1; // expected-warning{{definition of dllimport static field}}
+template<typename T> constexpr int ImportClassTmplMembers<T>::ConstexprFieldDef; // expected-warning{{definition of dllimport static field}}
 
 
 // Redeclarations cannot add dllimport.
@@ -854,13 +860,13 @@ template<typename T> __declspec(dllimport) inline void CTMR<T>::staticInlineDef(
 template<typename T> __declspec(dllimport)        void CTMR<T>::staticInlineDecl() {}  // expected-error{{redeclaration of 'CTMR::staticInlineDecl' cannot add 'dllimport' attribute}}
 
 template<typename T> __declspec(dllimport)        int  CTMR<T>::StaticField = 1;       // expected-error{{redeclaration of 'CTMR::StaticField' cannot add 'dllimport' attribute}}
-                                                                                       // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                       // expected-warning@-1{{definition of dllimport static field}}
                                                                                        // expected-note@-2{{attribute is here}}
 template<typename T> __declspec(dllimport) const  int  CTMR<T>::StaticConstField = 1;  // expected-error{{redeclaration of 'CTMR::StaticConstField' cannot add 'dllimport' attribute}}
-                                                                                       // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                       // expected-warning@-1{{definition of dllimport static field}}
                                                                                        // expected-note@-2{{attribute is here}}
 template<typename T> __declspec(dllimport) constexpr int CTMR<T>::ConstexprField;      // expected-error{{redeclaration of 'CTMR::ConstexprField' cannot add 'dllimport' attribute}}
-                                                                                       // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                       // expected-warning@-1{{definition of dllimport static field}}
                                                                                        // expected-note@-2{{attribute is here}}
 
 
@@ -902,9 +908,9 @@ template<typename T> template<typename U> inline void ImportClsTmplMemTmpl<T>::s
 template<typename T> template<typename U>        void ImportClsTmplMemTmpl<T>::staticInlineDecl() {}
 
 #if __has_feature(cxx_variable_templates)
-template<typename T> template<typename U>        int  ImportClsTmplMemTmpl<T>::StaticFieldDef; // expected-error{{definition of dllimport static field not allowed}}
-template<typename T> template<typename U> const  int  ImportClsTmplMemTmpl<T>::StaticConstFieldDef = 1; // expected-error{{definition of dllimport static field not allowed}}
-template<typename T> template<typename U> constexpr int ImportClsTmplMemTmpl<T>::ConstexprFieldDef; // expected-error{{definition of dllimport static field not allowed}}
+template<typename T> template<typename U>        int  ImportClsTmplMemTmpl<T>::StaticFieldDef; // expected-warning{{definition of dllimport static field}}
+template<typename T> template<typename U> const  int  ImportClsTmplMemTmpl<T>::StaticConstFieldDef = 1; // expected-warning{{definition of dllimport static field}}
+template<typename T> template<typename U> constexpr int ImportClsTmplMemTmpl<T>::ConstexprFieldDef; // expected-warning{{definition of dllimport static field}}
 #endif // __has_feature(cxx_variable_templates)
 
 
@@ -936,12 +942,151 @@ template<typename T> template<typename U> __declspec(dllimport)        void CTMT
 
 #if __has_feature(cxx_variable_templates)
 template<typename T> template<typename U> __declspec(dllimport)        int  CTMTR<T>::StaticField = 1;       // expected-error{{redeclaration of 'CTMTR::StaticField' cannot add 'dllimport' attribute}}
-                                                                                                             // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                                             // expected-warning@-1{{definition of dllimport static field}}
                                                                                                              // expected-note@-2{{attribute is here}}
 template<typename T> template<typename U> __declspec(dllimport) const  int  CTMTR<T>::StaticConstField = 1;  // expected-error{{redeclaration of 'CTMTR::StaticConstField' cannot add 'dllimport' attribute}}
-                                                                                                             // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                                             // expected-warning@-1{{definition of dllimport static field}}
                                                                                                              // expected-note@-2{{attribute is here}}
 template<typename T> template<typename U> __declspec(dllimport) constexpr int CTMTR<T>::ConstexprField;      // expected-error{{redeclaration of 'CTMTR::ConstexprField' cannot add 'dllimport' attribute}}
-                                                                                                             // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                                             // expected-warning@-1{{definition of dllimport static field}}
                                                                                                              // expected-note@-2{{attribute is here}}
 #endif // __has_feature(cxx_variable_templates)
+
+
+
+//===----------------------------------------------------------------------===//
+// Classes
+//===----------------------------------------------------------------------===//
+
+class __declspec(dllimport) ClassDecl;
+
+class __declspec(dllimport) ClassDef { };
+
+template <typename T> class ClassTemplate {};
+
+#ifdef MS
+// expected-note@+5{{previous attribute is here}}
+// expected-note@+4{{previous attribute is here}}
+// expected-error@+4{{attribute 'dllexport' cannot be applied to member of 'dllimport' class}}
+// expected-error@+4{{attribute 'dllimport' cannot be applied to member of 'dllimport' class}}
+#endif
+class __declspec(dllimport) ImportClassWithDllMember {
+  void __declspec(dllexport) foo();
+  void __declspec(dllimport) bar();
+};
+
+#ifdef MS
+// expected-note@+5{{previous attribute is here}}
+// expected-note@+4{{previous attribute is here}}
+// expected-error@+4{{attribute 'dllimport' cannot be applied to member of 'dllexport' class}}
+// expected-error@+4{{attribute 'dllexport' cannot be applied to member of 'dllexport' class}}
+#endif
+class __declspec(dllexport) ExportClassWithDllMember {
+  void __declspec(dllimport) foo();
+  void __declspec(dllexport) bar();
+};
+
+namespace ImportedExplicitSpecialization {
+template <typename T> struct S { static int x; };
+template <typename T> int S<T>::x = sizeof(T);
+template <> struct __declspec(dllimport) S<int> { static int x; }; // expected-note{{attribute is here}}
+int S<int>::x = -1; // expected-error{{definition of dllimport static field not allowed}}
+}
+
+namespace PR19988 {
+// Don't error about applying delete to dllimport member function when instantiating.
+template <typename> struct __declspec(dllimport) S {
+  void foo() = delete;
+};
+S<int> s;
+}
+
+#ifdef MS
+// expected-warning@+3{{'dllimport' attribute ignored}}
+#endif
+template <typename T> struct PartiallySpecializedClassTemplate {};
+template <typename T> struct __declspec(dllimport) PartiallySpecializedClassTemplate<T*> { void f() {} };
+
+template <typename T> struct ExpliciallySpecializedClassTemplate {};
+template <> struct __declspec(dllimport) ExpliciallySpecializedClassTemplate<int> { void f() {} };
+
+
+//===----------------------------------------------------------------------===//
+// Classes with template base classes
+//===----------------------------------------------------------------------===//
+
+template <typename T> class __declspec(dllexport) ExportedClassTemplate {};
+
+template <typename T> class __declspec(dllimport) ImportedClassTemplate {};
+
+// ClassTemplate<int> gets imported.
+class __declspec(dllimport) DerivedFromTemplate : public ClassTemplate<int> {};
+
+// ClassTemplate<int> is already imported.
+class __declspec(dllimport) DerivedFromTemplate2 : public ClassTemplate<int> {};
+
+// ImportedClassTemplate is expliitly imported.
+class __declspec(dllimport) DerivedFromImportedTemplate : public ImportedClassTemplate<int> {};
+
+// ExportedClassTemplate is explicitly exported.
+class __declspec(dllimport) DerivedFromExportedTemplate : public ExportedClassTemplate<int> {};
+
+#ifdef MS
+// expected-note@+4{{class template 'ClassTemplate<double>' was instantiated here}}
+// expected-warning@+4{{propagating dll attribute to already instantiated base class template without dll attribute is not supported}}
+// expected-note@+3{{attribute is here}}
+#endif
+class DerivedFromTemplateD : public ClassTemplate<double> {};
+class __declspec(dllimport) DerivedFromTemplateD2 : public ClassTemplate<double> {};
+
+#ifdef MS
+// expected-note@+4{{class template 'ClassTemplate<bool>' was instantiated here}}
+// expected-warning@+4{{propagating dll attribute to already instantiated base class template with different dll attribute is not supported}}
+// expected-note@+3{{attribute is here}}
+#endif
+class __declspec(dllexport) DerivedFromTemplateB : public ClassTemplate<bool> {};
+class __declspec(dllimport) DerivedFromTemplateB2 : public ClassTemplate<bool> {};
+
+template <typename T> struct ExplicitlySpecializedTemplate { void func() {} };
+#ifdef MS
+// expected-note@+2{{class template 'ExplicitlySpecializedTemplate<int>' was explicitly specialized here}}
+#endif
+template <> struct ExplicitlySpecializedTemplate<int> { void func() {} };
+template <typename T> struct ExplicitlyExportSpecializedTemplate { void func() {} };
+template <> struct __declspec(dllexport) ExplicitlyExportSpecializedTemplate<int> { void func() {} };
+template <typename T> struct ExplicitlyImportSpecializedTemplate { void func() {} };
+template <> struct __declspec(dllimport) ExplicitlyImportSpecializedTemplate<int> { void func() {} };
+
+template <typename T> struct ExplicitlyInstantiatedTemplate { void func() {} };
+#ifdef MS
+// expected-note@+2{{class template 'ExplicitlyInstantiatedTemplate<int>' was instantiated here}}
+#endif
+template struct ExplicitlyInstantiatedTemplate<int>;
+template <typename T> struct ExplicitlyExportInstantiatedTemplate { void func() {} };
+template struct __declspec(dllexport) ExplicitlyExportInstantiatedTemplate<int>;
+template <typename T> struct ExplicitlyImportInstantiatedTemplate { void func() {} };
+template struct __declspec(dllimport) ExplicitlyImportInstantiatedTemplate<int>;
+
+#ifdef MS
+// expected-warning@+3{{propagating dll attribute to explicitly specialized base class template without dll attribute is not supported}}
+// expected-note@+2{{attribute is here}}
+#endif
+struct __declspec(dllimport) DerivedFromExplicitlySpecializedTemplate : public ExplicitlySpecializedTemplate<int> {};
+
+// Base class already specialized with export attribute.
+struct __declspec(dllimport) DerivedFromExplicitlyExportSpecializedTemplate : public ExplicitlyExportSpecializedTemplate<int> {};
+
+// Base class already specialized with import attribute.
+struct __declspec(dllimport) DerivedFromExplicitlyImportSpecializedTemplate : public ExplicitlyImportSpecializedTemplate<int> {};
+
+#ifdef MS
+// expected-warning@+3{{propagating dll attribute to already instantiated base class template without dll attribute is not supported}}
+// expected-note@+2{{attribute is here}}
+#endif
+struct __declspec(dllimport) DerivedFromExplicitlyInstantiatedTemplate : public ExplicitlyInstantiatedTemplate<int> {};
+
+// Base class already instantiated with export attribute.
+struct __declspec(dllimport) DerivedFromExplicitlyExportInstantiatedTemplate : public ExplicitlyExportInstantiatedTemplate<int> {};
+
+// Base class already instantiated with import attribute.
+struct __declspec(dllimport) DerivedFromExplicitlyImportInstantiatedTemplate : public ExplicitlyImportInstantiatedTemplate<int> {};

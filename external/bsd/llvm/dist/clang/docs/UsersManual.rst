@@ -577,19 +577,12 @@ feature.
 Current limitations
 ^^^^^^^^^^^^^^^^^^^
 
-1. For :option:`-Rpass` to provide source location information, you
-   need to enable debug line tables and column information. That is,
-   you need to add :option:`-gmlt` (or any of the debug-generating
-   flags) and :option:`-gcolumn-info`. If you omit these options,
-   every remark will be accompanied by a note stating that line number
-   information is missing.
-
-2. Optimization remarks that refer to function names will display the
+1. Optimization remarks that refer to function names will display the
    mangled name of the function. Since these remarks are emitted by the
    back end of the compiler, it does not know anything about the input
    language, nor its mangling rules.
 
-3. Some source locations are not displayed correctly. The front end has
+2. Some source locations are not displayed correctly. The front end has
    a more detailed source location tracking than the locations included
    in the debug info (e.g., the front end can locate code inside macro
    expansions). However, the locations used by :option:`-Rpass` are
@@ -938,10 +931,6 @@ are listed below.
       ``-fsanitize=address``:
       :doc:`AddressSanitizer`, a memory error
       detector.
-   -  ``-fsanitize=init-order``: Make AddressSanitizer check for
-      dynamic initialization order problems. Implied by ``-fsanitize=address``.
-   -  ``-fsanitize=address-full``: AddressSanitizer with all the
-      experimental features listed below.
    -  ``-fsanitize=integer``: Enables checks for undefined or
       suspicious integer behavior.
    -  .. _opt_fsanitize_thread:
@@ -1023,14 +1012,6 @@ are listed below.
       :doc:`SanitizerSpecialCaseList` for file format description.
    -  ``-fno-sanitize-blacklist``: don't use blacklist file, if it was
       specified earlier in the command line.
-
-   Experimental features of AddressSanitizer (not ready for widespread
-   use, require explicit ``-fsanitize=address``):
-
-   -  ``-fsanitize=use-after-return``: Check for use-after-return
-      errors (accessing local variable after the function exit).
-   -  ``-fsanitize=use-after-scope``: Check for use-after-scope errors
-      (accesing local variable after it went out of scope).
 
    Extra features of MemorySanitizer (require explicit
    ``-fsanitize=memory``):
@@ -1130,23 +1111,67 @@ are listed below.
    This option restricts the generated code to use general registers
    only. This only applies to the AArch64 architecture.
 
+**-f[no-]max-unknown-pointer-align=[number]**
+   Instruct the code generator to not enforce a higher alignment than the given
+   number (of bytes) when accessing memory via an opaque pointer or reference.
+   This cap is ignored when directly accessing a variable or when the pointee
+   type has an explicit “aligned” attribute.
 
-Using Sampling Profilers for Optimization
------------------------------------------
+   The value should usually be determined by the properties of the system allocator.
+   Some builtin types, especially vector types, have very high natural alignments;
+   when working with values of those types, Clang usually wants to use instructions
+   that take advantage of that alignment.  However, many system allocators do
+   not promise to return memory that is more than 8-byte or 16-byte-aligned.  Use
+   this option to limit the alignment that the compiler can assume for an arbitrary
+   pointer, which may point onto the heap.
+
+   This option does not affect the ABI alignment of types; the layout of structs and
+   unions and the value returned by the alignof operator remain the same.
+
+   This option can be overridden on a case-by-case basis by putting an explicit
+   “aligned” alignment on a struct, union, or typedef.  For example:
+
+   .. code-block:: console
+
+      #include <immintrin.h>
+      // Make an aligned typedef of the AVX-512 16-int vector type.
+      typedef __v16si __aligned_v16si __attribute__((aligned(64)));
+
+      void initialize_vector(__aligned_v16si *v) {
+        // The compiler may assume that ‘v’ is 64-byte aligned, regardless of the
+        // value of -fmax-unknown-pointer-align.
+      }
+
+
+Profile Guided Optimization
+---------------------------
+
+Profile information enables better optimization. For example, knowing that a
+branch is taken very frequently helps the compiler make better decisions when
+ordering basic blocks. Knowing that a function ``foo`` is called more
+frequently than another function ``bar`` helps the inliner.
+
+Clang supports profile guided optimization with two different kinds of
+profiling. A sampling profiler can generate a profile with very low runtime
+overhead, or you can build an instrumented version of the code that collects
+more detailed profile information. Both kinds of profiles can provide execution
+counts for instructions in the code and information on branches taken and
+function invocation.
+
+Regardless of which kind of profiling you use, be careful to collect profiles
+by running your code with inputs that are representative of the typical
+behavior. Code that is not exercised in the profile will be optimized as if it
+is unimportant, and the compiler may make poor optimization choices for code
+that is disproportionately used while profiling.
+
+Using Sampling Profilers
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Sampling profilers are used to collect runtime information, such as
 hardware counters, while your application executes. They are typically
 very efficient and do not incur a large runtime overhead. The
 sample data collected by the profiler can be used during compilation
 to determine what the most executed areas of the code are.
-
-In particular, sample profilers can provide execution counts for all
-instructions in the code and information on branches taken and function
-invocation. The compiler can use this information in its optimization
-cost models. For example, knowing that a branch is taken very
-frequently helps the compiler make better decisions when ordering
-basic blocks. Knowing that a function ``foo`` is called more
-frequently than another function ``bar`` helps the inliner.
 
 Using the data from a sample profiler requires some changes in the way
 a program is built. Before the compiler can use profiling information,
@@ -1207,7 +1232,7 @@ usual build cycle when using sample profilers for optimization:
 
 
 Sample Profile Format
-^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""
 
 If you are not using Linux Perf to collect profiles, you will need to
 write a conversion tool from your profiler to LLVM's format. This section
@@ -1291,6 +1316,60 @@ d. [OPTIONAL] Potential call targets and samples. If present, this
    with ``baz()`` being the relatively more frequently called target.
 
 
+Profiling with Instrumentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Clang also supports profiling via instrumentation. This requires building a
+special instrumented version of the code and has some runtime
+overhead during the profiling, but it provides more detailed results than a
+sampling profiler. It also provides reproducible results, at least to the
+extent that the code behaves consistently across runs.
+
+Here are the steps for using profile guided optimization with
+instrumentation:
+
+1. Build an instrumented version of the code by compiling and linking with the
+   ``-fprofile-instr-generate`` option.
+
+   .. code-block:: console
+
+     $ clang++ -O2 -fprofile-instr-generate code.cc -o code
+
+2. Run the instrumented executable with inputs that reflect the typical usage.
+   By default, the profile data will be written to a ``default.profraw`` file
+   in the current directory. You can override that default by setting the
+   ``LLVM_PROFILE_FILE`` environment variable to specify an alternate file.
+   Any instance of ``%p`` in that file name will be replaced by the process
+   ID, so that you can easily distinguish the profile output from multiple
+   runs.
+
+   .. code-block:: console
+
+     $ LLVM_PROFILE_FILE="code-%p.profraw" ./code
+
+3. Combine profiles from multiple runs and convert the "raw" profile format to
+   the input expected by clang. Use the ``merge`` command of the llvm-profdata
+   tool to do this.
+
+   .. code-block:: console
+
+     $ llvm-profdata merge -output=code.profdata code-*.profraw
+
+   Note that this step is necessary even when there is only one "raw" profile,
+   since the merge operation also changes the file format.
+
+4. Build the code again using the ``-fprofile-instr-use`` option to specify the
+   collected profile data.
+
+   .. code-block:: console
+
+     $ clang++ -O2 -fprofile-instr-use=code.profdata code.cc -o code
+
+   You can repeat step 4 as often as you like without regenerating the
+   profile. As you make changes to your code, clang may no longer be able to
+   use the profile data. It will warn you when this happens.
+
+
 Controlling Size of Debug Information
 -------------------------------------
 
@@ -1309,6 +1388,28 @@ below. If multiple flags are present, the last one is used.
   file names and line numbers (by such tools as ``gdb`` or ``addr2line``).  It
   doesn't contain any other data (e.g. description of local variables or
   function parameters).
+
+.. option:: -fstandalone-debug
+
+  Clang supports a number of optimizations to reduce the size of debug
+  information in the binary. They work based on the assumption that
+  the debug type information can be spread out over multiple
+  compilation units.  For instance, Clang will not emit type
+  definitions for types that are not needed by a module and could be
+  replaced with a forward declaration.  Further, Clang will only emit
+  type info for a dynamic C++ class in the module that contains the
+  vtable for the class.
+
+  The **-fstandalone-debug** option turns off these optimizations.
+  This is useful when working with 3rd-party libraries that don't come
+  with debug information.  Note that Clang will never emit type
+  information for types that are not referenced at all by the program.
+
+.. option:: -fno-standalone-debug
+
+   On Darwin **-fstandalone-debug** is enabled by default. The
+   **-fno-standalone-debug** option can be used to get to turn on the
+   vtable-based optimization described above.
 
 .. option:: -g
 
@@ -1736,55 +1837,94 @@ Execute ``clang-cl /?`` to see a list of supported options:
 
   ::
 
-    /?                     Display available options
-    /c                     Compile only
-    /D <macro[=value]>     Define macro
-    /fallback              Fall back to cl.exe if clang-cl fails to compile
-    /FA                    Output assembly code file during compilation
-    /Fa<file or directory> Output assembly code to this file during compilation
-    /Fe<file or directory> Set output executable file or directory (ends in / or \)
-    /FI<value>             Include file before parsing
-    /Fo<file or directory> Set output object file, or directory (ends in / or \)
-    /GF-                   Disable string pooling
-    /GR-                   Disable RTTI
-    /GR                    Enable RTTI
-    /help                  Display available options
-    /I <dir>               Add directory to include search path
-    /J                     Make char type unsigned
-    /LDd                   Create debug DLL
-    /LD                    Create DLL
-    /link <options>        Forward options to the linker
-    /MDd                   Use DLL debug run-time
-    /MD                    Use DLL run-time
-    /MTd                   Use static debug run-time
-    /MT                    Use static run-time
-    /Ob0                   Disable inlining
-    /Od                    Disable optimization
-    /Oi-                   Disable use of builtin functions
-    /Oi                    Enable use of builtin functions
-    /Os                    Optimize for size
-    /Ot                    Optimize for speed
-    /Ox                    Maximum optimization
-    /Oy-                   Disable frame pointer omission
-    /Oy                    Enable frame pointer omission
-    /O<n>                  Optimization level
-    /P                     Only run the preprocessor
-    /showIncludes          Print info about included files to stderr
-    /TC                    Treat all source files as C
-    /Tc <filename>         Specify a C source file
-    /TP                    Treat all source files as C++
-    /Tp <filename>         Specify a C++ source file
-    /U <macro>             Undefine macro
-    /W0                    Disable all warnings
-    /W1                    Enable -Wall
-    /W2                    Enable -Wall
-    /W3                    Enable -Wall
-    /W4                    Enable -Wall
-    /Wall                  Enable -Wall
-    /WX-                   Do not treat warnings as errors
-    /WX                    Treat warnings as errors
-    /w                     Disable all warnings
-    /Zs                    Syntax-check only
+    CL.EXE COMPATIBILITY OPTIONS:
+      /?                     Display available options
+      /arch:<value>          Set architecture for code generation
+      /C                     Don't discard comments when preprocessing
+      /c                     Compile only
+      /D <macro[=value]>     Define macro
+      /EH<value>             Exception handling model
+      /EP                    Disable linemarker output and preprocess to stdout
+      /E                     Preprocess to stdout
+      /fallback              Fall back to cl.exe if clang-cl fails to compile
+      /FA                    Output assembly code file during compilation
+      /Fa<file or directory> Output assembly code to this file during compilation
+      /Fe<file or directory> Set output executable file or directory (ends in / or \)
+      /FI <value>            Include file before parsing
+      /Fi<file>              Set preprocess output file name
+      /Fo<file or directory> Set output object file, or directory (ends in / or \)
+      /GF-                   Disable string pooling
+      /GR-                   Disable emission of RTTI data
+      /GR                    Enable emission of RTTI data
+      /Gw-                   Don't put each data item in its own section
+      /Gw                    Put each data item in its own section
+      /Gy-                   Don't put each function in its own section
+      /Gy                    Put each function in its own section
+      /help                  Display available options
+      /I <dir>               Add directory to include search path
+      /J                     Make char type unsigned
+      /LDd                   Create debug DLL
+      /LD                    Create DLL
+      /link <options>        Forward options to the linker
+      /MDd                   Use DLL debug run-time
+      /MD                    Use DLL run-time
+      /MTd                   Use static debug run-time
+      /MT                    Use static run-time
+      /Ob0                   Disable inlining
+      /Od                    Disable optimization
+      /Oi-                   Disable use of builtin functions
+      /Oi                    Enable use of builtin functions
+      /Os                    Optimize for size
+      /Ot                    Optimize for speed
+      /Ox                    Maximum optimization
+      /Oy-                   Disable frame pointer omission
+      /Oy                    Enable frame pointer omission
+      /O<n>                  Optimization level
+      /P                     Preprocess to file
+      /showIncludes          Print info about included files to stderr
+      /TC                    Treat all source files as C
+      /Tc <filename>         Specify a C source file
+      /TP                    Treat all source files as C++
+      /Tp <filename>         Specify a C++ source file
+      /U <macro>             Undefine macro
+      /vd<value>             Control vtordisp placement
+      /vmb                   Use a best-case representation method for member pointers
+      /vmg                   Use a most-general representation for member pointers
+      /vmm                   Set the default most-general representation to multiple inheritance
+      /vms                   Set the default most-general representation to single inheritance
+      /vmv                   Set the default most-general representation to virtual inheritance
+      /W0                    Disable all warnings
+      /W1                    Enable -Wall
+      /W2                    Enable -Wall
+      /W3                    Enable -Wall
+      /W4                    Enable -Wall
+      /Wall                  Enable -Wall
+      /WX-                   Do not treat warnings as errors
+      /WX                    Treat warnings as errors
+      /w                     Disable all warnings
+      /Zi                    Enable debug information
+      /Zp                    Set the default maximum struct packing alignment to 1
+      /Zp<value>             Specify the default maximum struct packing alignment
+      /Zs                    Syntax-check only
+
+    OPTIONS:
+      -###                  Print (but do not run) the commands to run for this compilation
+      -fms-compatibility-version=<value>
+                            Dot-separated value representing the Microsoft compiler version
+                            number to report in _MSC_VER (0 = don't define it (default))
+      -fmsc-version=<value> Microsoft compiler version number to report in _MSC_VER (0 = don't
+                            define it (default))
+      -fsanitize-blacklist=<value>
+                            Path to blacklist file for sanitizers
+      -fsanitize=<check>    Enable runtime instrumentation for bug detection: address (memory
+                            errors) | thread (race detection) | undefined (miscellaneous
+                            undefined behavior)
+      -mllvm <value>        Additional arguments to forward to LLVM's option processing
+      -Qunused-arguments    Don't emit warning for unused driver arguments
+      --target=<value>      Generate code for the given target
+      -v                    Show commands to run and use verbose output
+      -W<warning>           Enable the specified warning
+      -Xclang <arg>         Pass <arg> to the clang compiler
 
 The /fallback Option
 ^^^^^^^^^^^^^^^^^^^^
