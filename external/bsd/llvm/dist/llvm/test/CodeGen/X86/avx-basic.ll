@@ -72,9 +72,9 @@ entry:
   ret <4 x i64> %shuffle
 }
 
-; CHECK: movlhps
+; CHECK: vpunpcklqdq
 ; CHECK-NEXT: vextractf128  $1
-; CHECK-NEXT: movlhps
+; CHECK-NEXT: vpunpcklqdq
 ; CHECK-NEXT: vinsertf128 $1
 define <4 x i64> @C(<4 x i64> %a, <4 x i64> %b) nounwind uwtable readnone ssp {
 entry:
@@ -83,7 +83,7 @@ entry:
 }
 
 ; CHECK: vpshufd $-96
-; CHECK: vpshufd $-6
+; CHECK: vpunpckhdq
 ; CHECK: vinsertf128 $1
 define <8 x i32> @D(<8 x i32> %a, <8 x i32> %b) nounwind uwtable readnone ssp {
 entry:

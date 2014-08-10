@@ -16,6 +16,7 @@
 #define LLVM_PROFILEDATA_INSTRPROF_WRITER_H_
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Support/DataTypes.h"
@@ -28,18 +29,19 @@ namespace llvm {
 /// Writer for instrumentation based profile data.
 class InstrProfWriter {
 public:
-  struct CounterData {
-    uint64_t Hash;
-    std::vector<uint64_t> Counts;
-  };
+  typedef SmallDenseMap<uint64_t, std::vector<uint64_t>, 1> CounterData;
 private:
   StringMap<CounterData> FunctionData;
+  uint64_t MaxFunctionCount;
 public:
+  InstrProfWriter() : MaxFunctionCount(0) {}
+
   /// Add function counts for the given function. If there are already counts
   /// for this function and the hash and number of counts match, each counter is
   /// summed.
-  error_code addFunctionCounts(StringRef FunctionName, uint64_t FunctionHash,
-                               ArrayRef<uint64_t> Counters);
+  std::error_code addFunctionCounts(StringRef FunctionName,
+                                    uint64_t FunctionHash,
+                                    ArrayRef<uint64_t> Counters);
   /// Ensure that all data is written to disk.
   void write(raw_fd_ostream &OS);
 };

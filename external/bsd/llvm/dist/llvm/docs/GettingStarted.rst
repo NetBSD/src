@@ -87,9 +87,10 @@ Here's the short story for getting up and running quickly with LLVM:
    * ``make check-all`` --- This run the regression tests to ensure everything
      is in working order.
 
-   * It is also possible to use CMake instead of the makefiles. With CMake it is
-     possible to generate project files for several IDEs: Xcode, Eclipse CDT4,
-     CodeBlocks, Qt-Creator (use the CodeBlocks generator), KDevelop3.
+   * It is also possible to use `CMake <CMake.html>`_ instead of the makefiles.
+     With CMake it is possible to generate project files for several IDEs:
+     Xcode, Eclipse CDT4, CodeBlocks, Qt-Creator (use the CodeBlocks
+     generator), KDevelop3.
 
    * If you get an "internal compiler error (ICE)" or test failures, see
      `below`.
@@ -330,10 +331,23 @@ of this information from.
 .. _GCC wiki entry:
   http://gcc.gnu.org/wiki/InstallingGCC
 
-Once you have a GCC toolchain, use it as your host compiler. Things should
-generally "just work". You may need to pass a special linker flag,
-``-Wl,-rpath,$HOME/toolchains/lib`` or some variant thereof to get things to
-find the libstdc++ DSO in this toolchain.
+Once you have a GCC toolchain, configure your build of LLVM to use the new
+toolchain for your host compiler and C++ standard library. Because the new
+version of libstdc++ is not on the system library search path, you need to pass
+extra linker flags so that it can be found at link time (``-L``) and at runtime
+(``-rpath``). If you are using CMake, this invocation should produce working
+binaries:
+
+.. code-block:: console
+
+  % mkdir build
+  % cd build
+  % CC=$HOME/toolchains/bin/gcc CXX=$HOME/toolchains/bin/g++ \
+    cmake .. -DCMAKE_CXX_LINK_FLAGS="-Wl,-rpath,$HOME/toolchains/lib64 -L$HOME/toolchains/lib64"
+
+If you fail to set rpath, most LLVM binaries will fail on startup with a message
+from the loader similar to ``libstdc++.so.6: version `GLIBCXX_3.4.20' not
+found``. This means you need to tweak the -rpath linker flag.
 
 When you build Clang, you will need to give *it* access to modern C++11
 standard library in order to use it as your new host in part of a bootstrap.
@@ -680,7 +694,7 @@ The following options can be used to set or enable LLVM specific options:
 
   Enables optimized compilation (debugging symbols are removed and GCC
   optimization flags are enabled). Note that this is the default setting if you
-  are using the LLVM distribution. The default behavior of an Subversion
+  are using the LLVM distribution. The default behavior of a Subversion
   checkout is to use an unoptimized build (also known as a debug build).
 
 ``--enable-debug-runtime``
@@ -712,13 +726,6 @@ The following options can be used to set or enable LLVM specific options:
   generating the documentation can take a long time and producess 100s of
   megabytes of output.
 
-``--with-udis86``
-
-  LLVM can use external disassembler library for various purposes (now it's used
-  only for examining code produced by JIT). This option will enable usage of
-  `udis86 <http://udis86.sourceforge.net/>`_ x86 (both 32 and 64 bits)
-  disassembler library.
-
 To configure LLVM, follow these steps:
 
 #. Change directory into the object root directory:
@@ -741,7 +748,7 @@ builds:
 
 Debug Builds
 
-  These builds are the default when one is using an Subversion checkout and
+  These builds are the default when one is using a Subversion checkout and
   types ``gmake`` (unless the ``--enable-optimized`` option was used during
   configuration).  The build system will compile the tools and libraries with
   debugging information.  To get a Debug Build using the LLVM distribution the

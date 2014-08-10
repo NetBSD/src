@@ -322,6 +322,7 @@ public:
   enum ShuffleKind {
     SK_Broadcast,       ///< Broadcast element 0 to all other elements.
     SK_Reverse,         ///< Reverse the order of the vector.
+    SK_Alternate,       ///< Choose alternate elements from vector.
     SK_InsertSubvector, ///< InsertSubvector. Index indicates start offset.
     SK_ExtractSubvector ///< ExtractSubvector Index indicates start offset.
   };
@@ -414,6 +415,13 @@ public:
   /// the address indexing mode.
   virtual unsigned getAddressComputationCost(Type *Ty,
                                              bool IsComplex = false) const;
+
+  /// \returns The cost, if any, of keeping values of the given types alive
+  /// over a callsite.
+  ///
+  /// Some types may require the use of register classes that do not have
+  /// any callee-saved registers, so would require a spill and fill.
+  virtual unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const;
 
   /// @}
 

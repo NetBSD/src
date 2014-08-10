@@ -14,11 +14,7 @@
 #ifndef PPC_TARGETMACHINE_H
 #define PPC_TARGETMACHINE_H
 
-#include "PPCFrameLowering.h"
-#include "PPCISelLowering.h"
 #include "PPCInstrInfo.h"
-#include "PPCJITInfo.h"
-#include "PPCSelectionDAGInfo.h"
 #include "PPCSubtarget.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
@@ -29,40 +25,14 @@ namespace llvm {
 ///
 class PPCTargetMachine : public LLVMTargetMachine {
   PPCSubtarget        Subtarget;
-  const DataLayout    DL;       // Calculates type size & alignment
-  PPCInstrInfo        InstrInfo;
-  PPCFrameLowering    FrameLowering;
-  PPCJITInfo          JITInfo;
-  PPCTargetLowering   TLInfo;
-  PPCSelectionDAGInfo TSInfo;
-  InstrItineraryData  InstrItins;
 
 public:
   PPCTargetMachine(const Target &T, StringRef TT,
                    StringRef CPU, StringRef FS, const TargetOptions &Options,
                    Reloc::Model RM, CodeModel::Model CM,
-                   CodeGenOpt::Level OL, bool is64Bit);
+                   CodeGenOpt::Level OL);
 
-  const PPCInstrInfo      *getInstrInfo() const override { return &InstrInfo; }
-  const PPCFrameLowering  *getFrameLowering() const override {
-    return &FrameLowering;
-  }
-        PPCJITInfo        *getJITInfo() override         { return &JITInfo; }
-  const PPCTargetLowering *getTargetLowering() const override {
-   return &TLInfo;
-  }
-  const PPCSelectionDAGInfo* getSelectionDAGInfo() const override {
-    return &TSInfo;
-  }
-  const PPCRegisterInfo   *getRegisterInfo() const override {
-    return &InstrInfo.getRegisterInfo();
-  }
-
-  const DataLayout    *getDataLayout() const override    { return &DL; }
-  const PPCSubtarget  *getSubtargetImpl() const override { return &Subtarget; }
-  const InstrItineraryData *getInstrItineraryData() const override {
-    return &InstrItins;
-  }
+  const PPCSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
