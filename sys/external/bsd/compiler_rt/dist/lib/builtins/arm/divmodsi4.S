@@ -21,8 +21,17 @@
 #define CLEAR_FRAME_AND_RETURN \
     pop    {r4-r7, pc}
 
-.syntax unified
-.p2align 3
+	.syntax unified
+	.text
+#if __ARM_ARCH_ISA_THUMB == 2
+	.thumb
+#endif
+
+@ int __divmodsi4(int divident, int divisor, int *remainder)
+@   Calculate the quotient and remainder of the (signed) division.  The return
+@   value is the quotient, the remainder is placed in the variable.
+
+	.p2align 3
 DEFINE_COMPILERRT_FUNCTION(__divmodsi4)
 #if __ARM_ARCH_EXT_IDIV__
 	tst     r1, r1
