@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.56 2014/08/08 16:56:31 joerg Exp $
+#	$NetBSD: Makefile.powerpc,v 1.57 2014/08/10 17:44:26 joerg Exp $
 #
 # Makefile for NetBSD
 #
@@ -40,15 +40,17 @@ GENASSYM_CONF+=	${THISPPC}/${MACHINE}/genassym.cf
 CPPFLAGS+=	-D${MACHINE}=${MACHINE}
 CWARNFLAGS+=	-Wreturn-type
 .if ${PPCDIR} == "oea"
-CFLAGS+=	-mno-strict-align
-CFLAGS+=	-Wa,-maltivec
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mno-strict-align :}
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wa,-maltivec :}
 .endif
 .if ${PPCDIR} == "booke"
 DEFCOPTS=	-O2
 CFLAGS+=	-fstack-protector
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -misel :}
 .endif
-CFLAGS+=	-msdata=none
-CFLAGS+=	-msoft-float ${CCPUOPTS}
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msdata=none -msoft-float :}
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -mllvm -disable-ppc-float-in-variadic=true :}
+CFLAGS+=	${CCPUOPTS}
 AFLAGS+=	${AOPTS} -D_NOREGNAMES
 
 ##
