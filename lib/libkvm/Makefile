@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2012/03/21 10:08:30 matt Exp $
+#	$NetBSD: Makefile,v 1.50 2014/08/10 23:39:08 matt Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 WARNS=	3
@@ -20,6 +20,8 @@ SRCS=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
 .include <bsd.own.mk>
 .if exists(kvm_${KVM_MACHINE_ARCH}.c)
 SRCS+=	kvm_${KVM_MACHINE_ARCH}.c
+.elif exists(kvm_${KVM_MACHINE_CPU}.c)
+SRCS+=	kvm_${KVM_MACHINE_CPU}.c
 .elif exists(kvm_${MACHINE_ARCH}.c)
 SRCS+=	kvm_${MACHINE_ARCH}.c
 .elif  exists(kvm_${MACHINE_CPU}.c)

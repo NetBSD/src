@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.23 2014/08/10 10:15:39 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.24 2014/08/10 23:39:08 matt Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -6,7 +6,7 @@ COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
 COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
 .else
-COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${MACHINE_CPU}
+COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${LIBC_MACHINE_CPU}
 COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${LIBC_MACHINE_ARCH}
 .endif
 
@@ -135,8 +135,8 @@ GENERIC_SRCS+= \
 .endif
 
 # These have h/w instructions which are always used.
-.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_CPU} != "powerpc" \
-    && ${MACHINE_CPU} != "aarch64" && ${MACHINE_ARCH} != "vax"
+.if ${LIBC_MACHINE_ARCH} != "alpha" && ${LIBC_MACHINE_CPU} != "powerpc" \
+    && ${LIBC_MACHINE_CPU} != "aarch64" && ${LIBC_MACHINE_ARCH} != "vax"
 GENERIC_SRCS+= \
 	clzsi2.c \
 	ctzsi2.c \
@@ -146,7 +146,7 @@ GENERIC_SRCS+= \
 	udivmodsi4.c \
 	umodsi3.c
 
-. if ${MACHINE_CPU} != "sh3"
+. if ${LIBC_MACHINE_CPU} != "sh3"
 # On sh3 __udivsi3 is gcc "millicode" with special calling convention
 # (less registers clobbered than usual).  Each DSO that needs it gets
 # its own hidden copy from libgcc.a.
@@ -167,8 +167,8 @@ GENERIC_SRCS+= \
 	subvdi3.c
 
 # These have h/w instructions which are always used.
-.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_CPU} != "powerpc64" \
-    && ${MACHINE_ARCH} != "aarch64"
+.if ${LIBC_MACHINE_ARCH} != "alpha" && ${LIBC_MACHINE_CPU} != "powerpc64" \
+    && ${LIBC_MACHINE_ARCH} != "aarch64"
 GENERIC_SRCS+= \
 	clzdi2.c \
 	ctzdi2.c \
@@ -212,12 +212,12 @@ GENERIC_SRCS+= \
 	gcc_qsub.c
 .endif
 
-.if ${MACHINE_CPU} == "aarch64"
+.if ${LIBC_MACHINE_CPU} == "aarch64"
 GENERIC_SRCS+= \
 	clear_cache.c
 .endif
 
-.if ${MACHINE_CPU} == "arm"
+.if ${LIBC_MACHINE_CPU} == "arm"
 .if !empty(LIBC_MACHINE_ARCH:Mearm*)
 GENERIC_SRCS+= \
 	aeabi_idivmod.S \
