@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/08/02 09:11:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2014/08/10 14:43:03 jmcneill Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -27,7 +27,8 @@ CPPFLAGS+=	${X11FLAGS.DIX} \
 		${X11FLAGS.OS_DEFINES} \
 		-DUSE_RGB_TXT \
 		-UDDXTIME \
-		-DHAVE_SHA1_IN_LIBC
+		-DHAVE_SHA1_IN_LIBC \
+		-DMONOTONIC_CLOCK
 
 .include "../Makefile.common"
 
