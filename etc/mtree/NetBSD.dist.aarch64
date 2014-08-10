@@ -1,0 +1,24 @@
+# $NetBSD: NetBSD.dist.aarch64,v 1.1 2014/08/10 05:47:36 matt Exp $
+
+./lib/eabi
+./lib/oabi
+./lib/eabi/npf
+./lib/oabi/npf
+./usr/lib/eabi
+./usr/lib/eabi/i18n
+./usr/lib/eabi/lua
+./usr/lib/eabi/lua/5.1
+./usr/lib/eabi/security
+./usr/lib/oabi
+./usr/lib/oabi/i18n
+./usr/lib/oabi/lua
+./usr/lib/oabi/lua/5.1
+./usr/lib/oabi/security
+./usr/libdata/debug/lib/eabi
+./usr/libdata/debug/lib/eabi/npf
+./usr/libdata/debug/lib/oabi
+./usr/libdata/debug/lib/oabi/npf
+./usr/libdata/debug/usr/lib/eabi
+./usr/libdata/debug/usr/lib/eabi/i18n
+./usr/libdata/debug/usr/lib/oabi
+./usr/libdata/debug/usr/lib/oabi/i18n
