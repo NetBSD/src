@@ -88,8 +88,12 @@ Ladd:	lwarx	r5,0,r3
 .globl	.OPENSSL_rdtsc
 .align	4
 .OPENSSL_rdtsc:
-	mftb	r3
+Lrdtsc:
+	mftb    r5
 	mftbu	r4
+	mftb	r3
+	cmplw   r3,r5
+	bne     Lrdtsc
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
