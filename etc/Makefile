@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.420 2014/08/06 11:41:18 apb Exp $
+#	$NetBSD: Makefile,v 1.421 2014/08/10 05:56:36 matt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -179,10 +179,11 @@ motd: ${.CURDIR}/${MOTD_SOURCE} ${_NETBSD_VERSION_DEPENDS}
 	${HOST_INSTALL_FILE} ${.CURDIR}/${MOTD_SOURCE} ${.TARGET}
 
 CLEANFILES+=	MAKEDEV
+MAKEDEV_MACHINE=${"${MACHINE_CPU}" == "aarch64":?${MACHINE_CPU}:${MACHINE}}
 MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
-    ${.CURDIR}/etc.${MACHINE}/MAKEDEV.conf
+    ${.CURDIR}/etc.${MAKEDEV_MACHINE}/MAKEDEV.conf
 	${_MKTARGET_CREATE}
-	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
+	MACHINE=${MAKEDEV_MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
 	    ${TOOL_AWK} -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    > ${.TARGET}
@@ -280,8 +281,13 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	) | ${METALOG.add}
 .endif	# MKUNPRIVED != no
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/ttys
+.if exists(${.CURDIR}/etc.${MACHINE}/ttys)
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/etc.${MACHINE}/ttys ${DESTDIR}/etc
+.else
+	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    ${.CURDIR}/etc.${MACHINE_CPU}/ttys ${DESTDIR}/etc
+.endif
 .if exists(etc.${MACHINE}/boot.cfg)
 	${_MKMSG_INSTALL} ${DESTDIR}/boot.cfg
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \

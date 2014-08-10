@@ -8,7 +8,7 @@ unset STACK_ADDR
 unset EMBEDDED
 
 case "$target" in
-  arm*-*-netbsdelf*-*eabi*)
+  aarch64*-*-netbsd* | arm*-*-netbsdelf*-*eabi*)
     LIB_PATH='=/usr/lib/oabi'
     ;;
 esac

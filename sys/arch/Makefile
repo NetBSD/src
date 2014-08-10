@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2014/03/31 11:25:48 martin Exp $
+#	$NetBSD: Makefile,v 1.44 2014/08/10 05:57:31 matt Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
 # to the location of the machine includes (usually).
@@ -16,7 +16,9 @@ ARCHSUBDIR= mips
 ARCHSUBDIR= powerpc
 .endif
 
-.if ${MACHINE_CPU} == "arm"
+.if ${MACHINE_CPU} == "aarch64"
+SUBDIR= evbarm64
+.elif ${MACHINE_CPU} == "arm"
 SUBDIR= acorn26 acorn32 cats epoc32 evbarm hpcarm iyonix netwinder shark zaurus
 .else
 SUBDIR=	${MACHINE}
@@ -26,6 +28,9 @@ SUBDIR=	${MACHINE}
 .if exists(${ARCHSUBDIR})
 SUBDIR+= ${ARCHSUBDIR}
 .endif
+.endif
+.if ${MACHINE_CPU} == "aarch64"
+SUBDIR+= arm
 .endif
 .if ${MACHINE} == sparc
 SUBDIR+= sparc64
@@ -58,7 +63,7 @@ SUBDIR+= xen
 #	x68k x86_64 xen \
 #	zaurus
 
-.if ${MACHINE_CPU} == arm
+.if ${MACHINE_CPU} == aarch64 || ${MACHINE_CPU} == "arm"
 INCSYMLINKS= ${MACHINE_CPU} /usr/include/machine
 .else
 INCSYMLINKS= ${MACHINE} /usr/include/machine
