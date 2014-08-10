@@ -1,4 +1,4 @@
-//===-- lib/truncdfsf2.c - double -> single conversion ------------*- C -*-===//
+//===-- lib/truncdfsf2.c - quad -> double conversion --------------*- C -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define SRC_DOUBLE
-#define DST_SINGLE
+#define QUAD_PRECISION
+#include "fp_lib.h"
+
+#if defined(CRT_HAS_128BIT) && defined(CRT_LDBL_128BIT)
+#define SRC_QUAD
+#define DST_DOUBLE
 #include "fp_trunc_impl.inc"
 
-ARM_EABI_FNALIAS(d2f, truncdfsf2)
-
-COMPILER_RT_ABI float __truncdfsf2(double a) {
+COMPILER_RT_ABI double __trunctfdf2(long double a) {
     return __truncXfYf2__(a);
 }
+
+#endif
