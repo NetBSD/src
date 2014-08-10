@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.41 2014/07/25 08:32:22 dholland Exp $
+# $NetBSD: ad.arm,v 1.42 2014/08/10 08:07:50 spz Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -70,7 +70,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libcom_err.so.6.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libcom_err.so.7.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libcrypto.so.8.2.debug	comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libcrypto.so.8.3.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
@@ -186,7 +186,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/oabi/libssh.so.22.0.debug	comp-secsh-debug	crypto,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libssl.so.10.3.debug		comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libssl.so.10.4.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx

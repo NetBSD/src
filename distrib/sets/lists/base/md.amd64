@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.243 2014/08/06 12:15:01 martin Exp $
+# $NetBSD: md.amd64,v 1.244 2014/08/10 08:07:50 spz Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -92,7 +92,7 @@
 ./usr/lib/i386/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypto.so.8			base-compat-shlib	compat,pic
-./usr/lib/i386/libcrypto.so.8.2			base-compat-shlib	compat,pic
+./usr/lib/i386/libcrypto.so.8.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypto_idea.so.7		base-obsolete		obsolete
 ./usr/lib/i386/libcrypto_idea.so.7.0		base-obsolete		obsolete
 ./usr/lib/i386/libcrypto_mdc2.so.7		base-obsolete		obsolete
@@ -295,7 +295,7 @@
 ./usr/lib/i386/libssh.so.22			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssh.so.22.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10			base-compat-shlib	compat,pic
-./usr/lib/i386/libssl.so.10.3			base-compat-shlib	compat,pic
+./usr/lib/i386/libssl.so.10.4			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds,libstdcxx
 ./usr/lib/i386/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,libstdcxx
 ./usr/lib/i386/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,libstdcxx
