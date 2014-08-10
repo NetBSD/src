@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.69 2014/07/12 09:58:39 njoly Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.70 2014/08/10 06:22:06 matt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,11 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.69 2014/07/12 09:58:39 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.70 2014/08/10 06:22:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+#include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
