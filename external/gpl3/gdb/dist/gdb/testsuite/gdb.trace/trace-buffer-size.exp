@@ -1,4 +1,4 @@
-# Copyright 1998-2013 Free Software Foundation, Inc.
+# Copyright 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ if ![runto_main] {
 
 if ![gdb_target_supports_trace] {
     unsupported "target does not support trace"
-    return -1;
+    return -1
 }
 
 set BUFFER_SIZE 4
@@ -48,7 +48,7 @@ gdb_test_multiple "tstatus" $test {
 # If we did not get the default size then there is no point in running the
 # tests below.
 if { $default_size < 0 } {
-  return -1;
+  return -1
 }
 
 # Change buffer size to 'BUFFER_SIZE'.
@@ -64,9 +64,13 @@ gdb_test "show trace-buffer-size $BUFFER_SIZE" \
   "Requested size of trace buffer is $BUFFER_SIZE.*" \
   "show trace buffer size"
 
+# -1 means "no limit on GDB's end.  Let the target choose."
 gdb_test_no_output \
   "set trace-buffer-size -1" \
   "set trace buffer size 2"
+
+# "unlimited" means the same.
+gdb_test_no_output "set trace-buffer-size unlimited"
 
 # Test that tstatus gives us default buffer size now.
 gdb_test "tstatus" \

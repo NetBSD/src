@@ -1,9 +1,9 @@
-/*	$NetBSD: entry-id.c,v 1.1.1.3 2010/12/12 15:23:24 adam Exp $	*/
+/*	$NetBSD: entry-id.c,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/entry-id.c,v 1.67.2.11 2010/04/13 20:23:42 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -184,9 +184,9 @@ backsql_dn2id(
 	}
 	
 	/* begin TimesTen */
+	assert( bi->sql_id_query != NULL );
 	Debug( LDAP_DEBUG_TRACE, "   backsql_dn2id(\"%s\"): id_query \"%s\"\n",
 			ndn->bv_val, bi->sql_id_query, 0 );
-	assert( bi->sql_id_query != NULL );
  	rc = backsql_Prepare( dbh, &sth, bi->sql_id_query, 0 );
 	if ( rc != SQL_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, 
@@ -290,16 +290,16 @@ backsql_dn2id(
 			ber_str2bv_x( row.cols[ 1 ], 0, 1, &id->eid_keyval,
 					op->o_tmpmemctx );
 #else /* ! BACKSQL_ARBITRARY_KEY */
-			if ( lutil_atoulx( &id->eid_id, row.cols[ 0 ], 0 ) != 0 ) {
+			if ( BACKSQL_STR2ID( &id->eid_id, row.cols[ 0 ], 0 ) != 0 ) {
 				res = LDAP_OTHER;
 				goto done;
 			}
-			if ( lutil_atoulx( &id->eid_keyval, row.cols[ 1 ], 0 ) != 0 ) {
+			if ( BACKSQL_STR2ID( &id->eid_keyval, row.cols[ 1 ], 0 ) != 0 ) {
 				res = LDAP_OTHER;
 				goto done;
 			}
 #endif /* ! BACKSQL_ARBITRARY_KEY */
-			if ( lutil_atoulx( &id->eid_oc_id, row.cols[ 2 ], 0 ) != 0 ) {
+			if ( BACKSQL_STR2ID( &id->eid_oc_id, row.cols[ 2 ], 0 ) != 0 ) {
 				res = LDAP_OTHER;
 				goto done;
 			}
@@ -408,9 +408,9 @@ backsql_count_children(
 	}
 	
 	/* begin TimesTen */
+	assert( bi->sql_has_children_query != NULL );
 	Debug(LDAP_DEBUG_TRACE, "children id query \"%s\"\n", 
 			bi->sql_has_children_query, 0, 0);
-	assert( bi->sql_has_children_query != NULL );
  	rc = backsql_Prepare( dbh, &sth, bi->sql_has_children_query, 0 );
 	if ( rc != SQL_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, 
@@ -509,7 +509,7 @@ backsql_get_attr_vals( void *v_at, void *v_bsi )
 {
 	backsql_at_map_rec	*at = v_at;
 	backsql_srch_info	*bsi = v_bsi;
-	backsql_info		*bi = (backsql_info *)bsi->bsi_op->o_bd->be_private;
+	backsql_info		*bi;
 	RETCODE			rc;
 	SQLHSTMT		sth = SQL_NULL_HSTMT;
 	BACKSQL_ROW_NTS		row;
@@ -533,18 +533,12 @@ backsql_get_attr_vals( void *v_at, void *v_bsi )
 
 	assert( at != NULL );
 	assert( bsi != NULL );
+	Debug( LDAP_DEBUG_TRACE, "==>backsql_get_attr_vals(): "
+		"oc=\"%s\" attr=\"%s\" keyval=" BACKSQL_IDFMT "\n",
+		BACKSQL_OC_NAME( bsi->bsi_oc ), at->bam_ad->ad_cname.bv_val, 
+		BACKSQL_IDARG(bsi->bsi_c_eid->eid_keyval) );
 
-#ifdef BACKSQL_ARBITRARY_KEY
-	Debug( LDAP_DEBUG_TRACE, "==>backsql_get_attr_vals(): "
-		"oc=\"%s\" attr=\"%s\" keyval=%s\n",
-		BACKSQL_OC_NAME( bsi->bsi_oc ), at->bam_ad->ad_cname.bv_val, 
-		bsi->bsi_c_eid->eid_keyval.bv_val );
-#else /* ! BACKSQL_ARBITRARY_KEY */
-	Debug( LDAP_DEBUG_TRACE, "==>backsql_get_attr_vals(): "
-		"oc=\"%s\" attr=\"%s\" keyval=%ld\n",
-		BACKSQL_OC_NAME( bsi->bsi_oc ), at->bam_ad->ad_cname.bv_val, 
-		bsi->bsi_c_eid->eid_keyval );
-#endif /* ! BACKSQL_ARBITRARY_KEY */
+	bi = (backsql_info *)bsi->bsi_op->o_bd->be_private;
 
 #ifdef BACKSQL_PRETTY_VALIDATE
 	validate = at->bam_true_ad->ad_type->sat_syntax->ssyn_validate;
@@ -696,15 +690,9 @@ backsql_get_attr_vals( void *v_at, void *v_bsi )
 	}
 
 #ifdef BACKSQL_TRACE
-#ifdef BACKSQL_ARBITRARY_KEY
 	Debug( LDAP_DEBUG_TRACE, "backsql_get_attr_vals(): "
-		"query=\"%s\" keyval=%s\n", at->bam_query,
-		bsi->bsi_c_eid->eid_keyval.bv_val, 0 );
-#else /* !BACKSQL_ARBITRARY_KEY */
-	Debug( LDAP_DEBUG_TRACE, "backsql_get_attr_vals(): "
-		"query=\"%s\" keyval=%d\n", at->bam_query,
-		bsi->bsi_c_eid->eid_keyval, 0 );
-#endif /* ! BACKSQL_ARBITRARY_KEY */
+		"query=\"%s\" keyval=" BACKSQL_IDFMT "\n", at->bam_query,
+		BACKSQL_IDARG(bsi->bsi_c_eid->eid_keyval), 0 );
 #endif /* BACKSQL_TRACE */
 
 	rc = SQLExecute( sth );
@@ -940,18 +928,25 @@ backsql_id2entry( backsql_srch_info *bsi, backsql_entryID *eid )
 		goto done;
 	}
 
-	ber_dupbv_x( &bsi->bsi_e->e_name, &eid->eid_dn, op->o_tmpmemctx );
-	ber_dupbv_x( &bsi->bsi_e->e_nname, &eid->eid_ndn, op->o_tmpmemctx );
-
 	bsi->bsi_e->e_attrs = NULL;
 	bsi->bsi_e->e_private = NULL;
 
 	if ( eid->eid_oc == NULL ) {
 		eid->eid_oc = backsql_id2oc( bsi->bsi_op->o_bd->be_private,
 			eid->eid_oc_id );
+		if ( eid->eid_oc == NULL ) {
+			Debug( LDAP_DEBUG_TRACE,
+				"backsql_id2entry(): unable to fetch objectClass with id=" BACKSQL_IDNUMFMT " for entry id=" BACKSQL_IDFMT " dn=\"%s\"\n",
+				eid->eid_oc_id, BACKSQL_IDARG(eid->eid_id),
+				eid->eid_dn.bv_val );
+			return LDAP_OTHER;
+		}
 	}
 	bsi->bsi_oc = eid->eid_oc;
 	bsi->bsi_c_eid = eid;
+
+	ber_dupbv_x( &bsi->bsi_e->e_name, &eid->eid_dn, op->o_tmpmemctx );
+	ber_dupbv_x( &bsi->bsi_e->e_nname, &eid->eid_ndn, op->o_tmpmemctx );
 
 #ifndef BACKSQL_ARBITRARY_KEY	
 	/* FIXME: unused */

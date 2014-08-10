@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.19 2014/03/17 09:31:35 hannken Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.19.2.1 2014/08/10 06:56:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.19 2014/03/17 09:31:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.19.2.1 2014/08/10 06:56:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -373,7 +373,7 @@ quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
 	 * NB: only need to add dquot's for inodes being modified.
 	 */
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
 		error = vn_lock(vp, LK_EXCLUSIVE);
 		if (error) {
 			vrele(vp);
@@ -436,7 +436,7 @@ quota1_handle_cmd_quotaoff(struct lwp *l, struct ufsmount *ump, int type)
 	 * deleting any references to quota file being closed.
 	 */
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
 		error = vn_lock(vp, LK_EXCLUSIVE);
 		if (error) {
 			vrele(vp);
@@ -762,7 +762,7 @@ q1sync(struct mount *mp)
 	 * synchronizing any modified dquot structures.
 	 */
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
 		error = vn_lock(vp, LK_EXCLUSIVE);
 		if (error) {
 			vrele(vp);

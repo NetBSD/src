@@ -1,5 +1,4 @@
-/*	$NetBSD: tar.h,v 1.1.1.2 2011/05/12 20:46:54 christos Exp $	*/
-
+/*	$NetBSD: tar.h,v 1.1.1.2.22.1 2014/08/10 07:07:11 tls Exp $	*/
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;

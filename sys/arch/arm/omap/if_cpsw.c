@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.5 2014/02/26 03:58:33 ozaki-r Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.5.2.1 2014/08/10 06:53:52 tls Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.5 2014/02/26 03:58:33 ozaki-r Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.5.2.1 2014/08/10 06:53:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -527,7 +527,7 @@ cpsw_start(struct ifnet *ifp)
 	uint32_t * const dw = bd.word;
 	struct mbuf *m;
 	bus_dmamap_t dm;
-	u_int eopi = ~0;
+	u_int eopi __diagused = ~0;
 	u_int seg;
 	u_int txfree;
 	int txstart = -1;

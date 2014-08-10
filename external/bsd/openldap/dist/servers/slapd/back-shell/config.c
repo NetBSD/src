@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.3 2010/12/12 15:23:21 adam Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
 /* config.c - shell backend configuration file routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-shell/config.c,v 1.18.2.5 2010/04/13 20:23:39 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,108 +39,101 @@
 
 #include "slap.h"
 #include "shell.h"
+#include "config.h"
+
+static ConfigDriver shell_cf;
+
+enum {
+	SHELL_BIND = 0,
+	SHELL_UNBIND = 1,
+	SHELL_SEARCH,
+	SHELL_COMPARE,
+	SHELL_MODIFY,
+	SHELL_MODRDN,
+	SHELL_ADD,
+	SHELL_DELETE
+};
+
+static ConfigTable shellcfg[] = {
+	{ "bind", "args", 2, 0, 0, ARG_MAGIC|SHELL_BIND, shell_cf,
+		"( OLcfgDbAt:10.1 NAME 'olcShellBind' "
+			"DESC 'Bind command and arguments' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE ) ", NULL, NULL },
+	{ "unbind", "args", 2, 0, 0, ARG_MAGIC|SHELL_UNBIND, shell_cf,
+		"( OLcfgDbAt:10.2 NAME 'olcShellUnbind' "
+			"DESC 'Unbind command and arguments' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE ) ", NULL, NULL },
+	{ "search", "args", 2, 0, 0, ARG_MAGIC|SHELL_SEARCH, shell_cf,
+		"( OLcfgDbAt:10.3 NAME 'olcShellSearch' "
+			"DESC 'Search command and arguments' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE ) ", NULL, NULL },
+	{ "compare", "args", 2, 0, 0, ARG_MAGIC|SHELL_COMPARE, shell_cf,
+		"( OLcfgDbAt:10.4 NAME 'olcShellCompare' "
+			"DESC 'Compare command and arguments' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE ) ", NULL, NULL },
+	{ "modify", "args", 2, 0, 0, ARG_MAGIC|SHELL_MODIFY, shell_cf,
+		"( OLcfgDbAt:10.5 NAME 'olcShellModify' "
+			"DESC 'Modify command and arguments' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE ) ", NULL, NULL },
+	{ "modrdn", "args", 2, 0, 0, ARG_MAGIC|SHELL_MODRDN, shell_cf,
+		"( OLcfgDbAt:10.6 NAME 'olcShellModRDN' "
+			"DESC 'ModRDN command and arguments' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE ) ", NULL, NULL },
+	{ "add", "args", 2, 0, 0, ARG_MAGIC|SHELL_ADD, shell_cf,
+		"( OLcfgDbAt:10.7 NAME 'olcShellAdd' "
+			"DESC 'Add command and arguments' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE ) ", NULL, NULL },
+	{ "delete", "args", 2, 0, 0, ARG_MAGIC|SHELL_DELETE, shell_cf,
+		"( OLcfgDbAt:10.8 NAME 'olcShellDelete' "
+			"DESC 'Delete command and arguments' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE ) ", NULL, NULL },
+	{ NULL }
+};
+
+static ConfigOCs shellocs[] = {
+	{ "( OLcfgDbOc:10.1 "
+		"NAME 'olcShellConfig'  "
+		"DESC 'Shell backend configuration' "
+		"SUP olcDatabaseConfig "
+		"MAY ( olcShellBind $ olcShellUnbind $ olcShellSearch $ "
+			"olcShellCompare $ olcShellModify $ olcShellModRDN $ "
+			"olcShellAdd $ olcShellDelete ) )",
+				Cft_Database, shellcfg },
+	{ NULL }
+};
+
+static int
+shell_cf( ConfigArgs *c )
+{
+	struct shellinfo	*si = (struct shellinfo *) c->be->be_private;
+	char ***arr = &si->si_bind;
+
+	if ( c->op == SLAP_CONFIG_EMIT ) {
+		struct berval bv;
+		if ( !arr[c->type] ) return 1;
+		bv.bv_val = ldap_charray2str( arr[c->type], " " );
+		bv.bv_len = strlen( bv.bv_val );
+		ber_bvarray_add( &c->rvalue_vals, &bv );
+	} else if ( c->op == LDAP_MOD_DELETE ) {
+		ldap_charray_free( arr[c->type] );
+		arr[c->type] = NULL;
+	} else {
+		arr[c->type] = ldap_charray_dup( &c->argv[1] );
+	}
+	return 0;
+}
 
 int
-shell_back_db_config(
-    BackendDB	*be,
-    const char	*fname,
-    int		lineno,
-    int		argc,
-    char	**argv
-)
+shell_back_init_cf( BackendInfo *bi )
 {
-	struct shellinfo	*si = (struct shellinfo *) be->be_private;
-
-	if ( si == NULL ) {
-		fprintf( stderr, "%s: line %d: shell backend info is null!\n",
-		    fname, lineno );
-		return( 1 );
-	}
-
-	/* command + args to exec for binds */
-	if ( strcasecmp( argv[0], "bind" ) == 0 ) {
-		if ( argc < 2 ) {
-			fprintf( stderr,
-	"%s: line %d: missing executable in \"bind <executable>\" line\n",
-			    fname, lineno );
-			return( 1 );
-		}
-		si->si_bind = ldap_charray_dup( &argv[1] );
-
-	/* command + args to exec for unbinds */
-	} else if ( strcasecmp( argv[0], "unbind" ) == 0 ) {
-		if ( argc < 2 ) {
-			fprintf( stderr,
-	"%s: line %d: missing executable in \"unbind <executable>\" line\n",
-			    fname, lineno );
-			return( 1 );
-		}
-		si->si_unbind = ldap_charray_dup( &argv[1] );
-
-	/* command + args to exec for searches */
-	} else if ( strcasecmp( argv[0], "search" ) == 0 ) {
-		if ( argc < 2 ) {
-			fprintf( stderr,
-	"%s: line %d: missing executable in \"search <executable>\" line\n",
-			    fname, lineno );
-			return( 1 );
-		}
-		si->si_search = ldap_charray_dup( &argv[1] );
-
-	/* command + args to exec for compares */
-	} else if ( strcasecmp( argv[0], "compare" ) == 0 ) {
-		if ( argc < 2 ) {
-			fprintf( stderr,
-	"%s: line %d: missing executable in \"compare <executable>\" line\n",
-			    fname, lineno );
-			return( 1 );
-		}
-		si->si_compare = ldap_charray_dup( &argv[1] );
-
-	/* command + args to exec for modifies */
-	} else if ( strcasecmp( argv[0], "modify" ) == 0 ) {
-		if ( argc < 2 ) {
-			fprintf( stderr,
-	"%s: line %d: missing executable in \"modify <executable>\" line\n",
-			    fname, lineno );
-			return( 1 );
-		}
-		si->si_modify = ldap_charray_dup( &argv[1] );
-
-	/* command + args to exec for modrdn */
-	} else if ( strcasecmp( argv[0], "modrdn" ) == 0 ) {
-		if ( argc < 2 ) {
-			fprintf( stderr,
-	"%s: line %d: missing executable in \"modrdn <executable>\" line\n",
-			    fname, lineno );
-			return( 1 );
-		}
-		si->si_modrdn = ldap_charray_dup( &argv[1] );
-
-	/* command + args to exec for add */
-	} else if ( strcasecmp( argv[0], "add" ) == 0 ) {
-		if ( argc < 2 ) {
-			fprintf( stderr,
-	"%s: line %d: missing executable in \"add <executable>\" line\n",
-			    fname, lineno );
-			return( 1 );
-		}
-		si->si_add = ldap_charray_dup( &argv[1] );
-
-	/* command + args to exec for delete */
-	} else if ( strcasecmp( argv[0], "delete" ) == 0 ) {
-		if ( argc < 2 ) {
-			fprintf( stderr,
-	"%s: line %d: missing executable in \"delete <executable>\" line\n",
-			    fname, lineno );
-			return( 1 );
-		}
-		si->si_delete = ldap_charray_dup( &argv[1] );
-
-	/* anything else */
-	} else {
-		return SLAP_CONF_UNKNOWN;
-	}
-
-	return 0;
+	bi->bi_cf_ocs = shellocs;
+	return config_register_schema( shellcfg, shellocs );
 }

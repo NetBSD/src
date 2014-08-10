@@ -188,6 +188,7 @@ struct cdevsw vchiq_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
@@ -715,7 +716,6 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 
 	case VCHIQ_IOC_AWAIT_COMPLETION: {
 		VCHIQ_AWAIT_COMPLETION_T *pargs = arg;
-		int count = 0;
 
 		DEBUG_TRACE(AWAIT_COMPLETION_LINE);
 		if (!instance->connected) {
@@ -750,6 +750,8 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 
 		if (ret == 0) {
 			int msgbufcount = pargs->msgbufcount;
+			int count;
+
 			for (count = 0; count < pargs->count; count++) {
 				VCHIQ_COMPLETION_DATA_T *completion;
 				VCHIQ_SERVICE_T *service1;
@@ -831,7 +833,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 					count * sizeof(VCHIQ_COMPLETION_DATA_T)),
 					completion,
 					sizeof(VCHIQ_COMPLETION_DATA_T)) != 0) {
-						if (ret == 0)
+						if (count == 0)
 							ret = -EFAULT;
 					break;
 				}
@@ -843,7 +845,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			pargs->count = count;
 		}
 
-		if ((ret == 0 && count > 0) || ret != 0)
+		if (ret != 0)
 			up(&instance->remove_event);
 		lmutex_unlock(&instance->completion_mutex);
 		DEBUG_TRACE(AWAIT_COMPLETION_LINE);

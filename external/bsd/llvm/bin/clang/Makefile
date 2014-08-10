@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2014/02/14 20:23:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.30.2.1 2014/08/10 07:08:02 tls Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -75,10 +75,10 @@ LLVM_LIBS+= \
 	X86Utils \
 	X86AsmParser \
 	X86AsmPrinter \
-	Object \
 	SelectionDAG \
 	AsmPrinter \
 	CodeGen \
+	ProfileData \
 	Vectorize \
 	Target \
 	InstCombine \
@@ -88,6 +88,7 @@ LLVM_LIBS+= \
 	MCDisassembler \
 	MCParser \
 	MC \
+	Object \
 	Linker \
 	TransformsUtils \
 	ipa \
@@ -96,5 +97,10 @@ LLVM_LIBS+= \
 	Support
 
 .include "${.PARSEDIR}/../../link.mk"
+
+LDADD+=	-lz
+.if !defined(HOSTPROG)
+DPADD+=	${LIBZ}
+.endif
 
 .include <bsd.prog.mk>

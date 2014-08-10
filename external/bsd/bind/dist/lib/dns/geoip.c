@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.c,v 1.1.1.1 2014/02/28 17:40:13 christos Exp $	*/
+/*	$NetBSD: geoip.c,v 1.1.1.1.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -210,7 +210,7 @@ set_state(unsigned int family, isc_uint32_t ipnum, const geoipv6_t *ipnum6,
 }
 
 static geoip_state_t *
-get_state() {
+get_state(void) {
 #ifdef ISC_PLATFORM_USETHREADS
 	isc_result_t result;
 	geoip_state_t *state;

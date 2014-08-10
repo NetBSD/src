@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2014/01/02 08:21:38 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.7.2.1 2014/08/10 06:52:40 tls Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -290,19 +290,18 @@ main(int argc, char **argv)
 #endif /* NO_DEBUG */
 			break;
 
+		case 't':
+			bozo_set_pref(&prefs, "chroot dir", optarg);
+			break;
+
 #ifdef NO_USER_SUPPORT
 		case 'p':
-		case 't':
 		case 'u':
 			bozo_err(&httpd, 1, "User support is not enabled");
 			/* NOTREACHED */
 #else
 		case 'p':
 			bozo_set_pref(&prefs, "public_html", optarg);
-			break;
-
-		case 't':
-			bozo_set_pref(&prefs, "chroot dir", optarg);
 			break;
 
 		case 'u':

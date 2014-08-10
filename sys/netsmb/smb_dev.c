@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.41 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.41.2.1 2014/08/10 06:56:43 tls Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.41 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.41.2.1 2014/08/10 06:56:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -95,6 +95,7 @@ const struct cdevsw nsmb_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
 

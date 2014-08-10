@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (C) 2011-2012 Free Software Foundation, Inc.
+# Copyright (C) 2011-2014 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -29,7 +29,18 @@
 #     regenerate the various scripts and Makefiles are on the PATH.
 
 # The list of gnulib modules we are importing in GDB.
-IMPORTED_GNULIB_MODULES="fnmatch-gnu inttypes memmem update-copyright"
+IMPORTED_GNULIB_MODULES="\
+    fnmatch-gnu \
+    frexpl \
+    inttypes \
+    memmem \
+    update-copyright \
+    unistd \
+    pathmax \
+    strstr \
+    dirent \
+    sys_stat \
+"
 
 # The gnulib commit ID to use for the update.
 GNULIB_COMMIT_SHA1="8d5bd1402003bd0153984b138735adf537d960b0"

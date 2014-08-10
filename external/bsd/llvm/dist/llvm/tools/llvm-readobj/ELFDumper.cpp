@@ -42,18 +42,18 @@ public:
   ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
       : ObjDumper(Writer), Obj(Obj) {}
 
-  virtual void printFileHeaders() LLVM_OVERRIDE;
-  virtual void printSections() LLVM_OVERRIDE;
-  virtual void printRelocations() LLVM_OVERRIDE;
-  virtual void printSymbols() LLVM_OVERRIDE;
-  virtual void printDynamicSymbols() LLVM_OVERRIDE;
-  virtual void printUnwindInfo() LLVM_OVERRIDE;
+  void printFileHeaders() override;
+  void printSections() override;
+  void printRelocations() override;
+  void printSymbols() override;
+  void printDynamicSymbols() override;
+  void printUnwindInfo() override;
 
-  virtual void printDynamicTable() LLVM_OVERRIDE;
-  virtual void printNeededLibraries() LLVM_OVERRIDE;
-  virtual void printProgramHeaders() LLVM_OVERRIDE;
+  void printDynamicTable() override;
+  void printNeededLibraries() override;
+  void printProgramHeaders() override;
 
-  virtual void printAttributes() LLVM_OVERRIDE;
+  void printAttributes() override;
 
 private:
   typedef ELFFile<ELFT> ELFO;
@@ -83,14 +83,13 @@ namespace llvm {
 template <class ELFT>
 static error_code createELFDumper(const ELFFile<ELFT> *Obj,
                                   StreamWriter &Writer,
-                                  OwningPtr<ObjDumper> &Result) {
+                                  std::unique_ptr<ObjDumper> &Result) {
   Result.reset(new ELFDumper<ELFT>(Obj, Writer));
   return readobj_error::success;
 }
 
-error_code createELFDumper(const object::ObjectFile *Obj,
-                           StreamWriter& Writer,
-                           OwningPtr<ObjDumper> &Result) {
+error_code createELFDumper(const object::ObjectFile *Obj, StreamWriter &Writer,
+                           std::unique_ptr<ObjDumper> &Result) {
   // Little-endian 32-bit
   if (const ELF32LEObjectFile *ELFObj = dyn_cast<ELF32LEObjectFile>(Obj))
     return createELFDumper(ELFObj->getELFFile(), Writer, Result);
@@ -438,6 +437,29 @@ static const EnumEntry<unsigned> ElfSegmentFlags[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, PF_R)
 };
 
+static const EnumEntry<unsigned> ElfHeaderMipsFlags[] = {
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_NOREORDER),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_PIC),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_CPIC),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ABI2),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_32BITMODE),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_NAN2008),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ABI_O32),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_MICROMIPS),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_ASE_M16),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_1),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_2),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_3),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_4),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_5),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_32),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_64),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_32R2),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_64R2),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_32R6),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_64R6)
+};
+
 template<class ELFT>
 void ELFDumper<ELFT>::printFileHeaders() {
   const typename ELFO::Elf_Ehdr *Header = Obj->getHeader();
@@ -465,7 +487,11 @@ void ELFDumper<ELFT>::printFileHeaders() {
     W.printHex   ("Entry", Header->e_entry);
     W.printHex   ("ProgramHeaderOffset", Header->e_phoff);
     W.printHex   ("SectionHeaderOffset", Header->e_shoff);
-    W.printFlags ("Flags", Header->e_flags);
+    if (Header->e_machine == EM_MIPS)
+      W.printFlags("Flags", Header->e_flags, makeArrayRef(ElfHeaderMipsFlags),
+                   unsigned(ELF::EF_MIPS_ARCH));
+    else
+      W.printFlags("Flags", Header->e_flags);
     W.printNumber("HeaderSize", Header->e_ehsize);
     W.printNumber("ProgramHeaderEntrySize", Header->e_phentsize);
     W.printNumber("ProgramHeaderCount", Header->e_phnum);
@@ -626,12 +652,35 @@ void ELFDumper<ELFT>::printDynamicSymbols() {
 template <class ELFT>
 void ELFDumper<ELFT>::printSymbol(typename ELFO::Elf_Sym_Iter Symbol) {
   StringRef SymbolName = errorOrDefault(Obj->getSymbolName(Symbol));
-  const Elf_Shdr *Sec = Obj->getSection(&*Symbol);
-  StringRef SectionName = Sec ? errorOrDefault(Obj->getSectionName(Sec)) : "";
+
+  unsigned SectionIndex = Symbol->st_shndx;
+  StringRef SectionName;
+  if (SectionIndex == SHN_UNDEF) {
+    SectionName = "Undefined";
+  } else if (SectionIndex >= SHN_LOPROC && SectionIndex <= SHN_HIPROC) {
+    SectionName = "Processor Specific";
+  } else if (SectionIndex >= SHN_LOOS && SectionIndex <= SHN_HIOS) {
+    SectionName = "Operating System Specific";
+  } else if (SectionIndex > SHN_HIOS && SectionIndex < SHN_ABS) {
+    SectionName = "Reserved";
+  } else if (SectionIndex == SHN_ABS) {
+    SectionName = "Absolute";
+  } else if (SectionIndex == SHN_COMMON) {
+    SectionName = "Common";
+  } else {
+    if (SectionIndex == SHN_XINDEX)
+      SectionIndex = Obj->getSymbolTableIndex(&*Symbol);
+    assert(SectionIndex != SHN_XINDEX &&
+           "getSymbolTableIndex should handle this");
+    const Elf_Shdr *Sec = Obj->getSection(SectionIndex);
+    SectionName = errorOrDefault(Obj->getSectionName(Sec));
+  }
+
   std::string FullSymbolName(SymbolName);
   if (Symbol.isDynamic()) {
     bool IsDefault;
-    ErrorOr<StringRef> Version = Obj->getSymbolVersion(0, &*Symbol, IsDefault);
+    ErrorOr<StringRef> Version = Obj->getSymbolVersion(nullptr, &*Symbol,
+                                                       IsDefault);
     if (Version) {
       FullSymbolName += (IsDefault ? "@@" : "@");
       FullSymbolName += *Version;
@@ -647,7 +696,7 @@ void ELFDumper<ELFT>::printSymbol(typename ELFO::Elf_Sym_Iter Symbol) {
                   makeArrayRef(ElfSymbolBindings));
   W.printEnum  ("Type", Symbol->getType(), makeArrayRef(ElfSymbolTypes));
   W.printNumber("Other", Symbol->st_other);
-  W.printHex   ("Section", SectionName, Symbol->st_shndx);
+  W.printHex("Section", SectionName, SectionIndex);
 }
 
 #define LLVM_READOBJ_TYPE_CASE(name) \
@@ -691,6 +740,8 @@ static const char *getTypeString(uint64_t Type) {
   LLVM_READOBJ_TYPE_CASE(VERNEED);
   LLVM_READOBJ_TYPE_CASE(VERNEEDNUM);
   LLVM_READOBJ_TYPE_CASE(VERSYM);
+  LLVM_READOBJ_TYPE_CASE(RELCOUNT);
+  LLVM_READOBJ_TYPE_CASE(GNU_HASH);
   LLVM_READOBJ_TYPE_CASE(MIPS_RLD_VERSION);
   LLVM_READOBJ_TYPE_CASE(MIPS_FLAGS);
   LLVM_READOBJ_TYPE_CASE(MIPS_BASE_ADDRESS);
@@ -705,6 +756,57 @@ static const char *getTypeString(uint64_t Type) {
 }
 
 #undef LLVM_READOBJ_TYPE_CASE
+
+#define LLVM_READOBJ_DT_FLAG_ENT(prefix, enum) \
+  { #enum, prefix##_##enum }
+
+static const EnumEntry<unsigned> ElfDynamicDTFlags[] = {
+  LLVM_READOBJ_DT_FLAG_ENT(DF, ORIGIN),
+  LLVM_READOBJ_DT_FLAG_ENT(DF, SYMBOLIC),
+  LLVM_READOBJ_DT_FLAG_ENT(DF, TEXTREL),
+  LLVM_READOBJ_DT_FLAG_ENT(DF, BIND_NOW),
+  LLVM_READOBJ_DT_FLAG_ENT(DF, STATIC_TLS)
+};
+
+static const EnumEntry<unsigned> ElfDynamicDTMipsFlags[] = {
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, NONE),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, QUICKSTART),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, NOTPOT),
+  LLVM_READOBJ_DT_FLAG_ENT(RHS, NO_LIBRARY_REPLACEMENT),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, NO_MOVE),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, SGI_ONLY),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, GUARANTEE_INIT),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, DELTA_C_PLUS_PLUS),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, GUARANTEE_START_INIT),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, PIXIE),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, DEFAULT_DELAY_LOAD),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, REQUICKSTART),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, REQUICKSTARTED),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, CORD),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, NO_UNRES_UNDEF),
+  LLVM_READOBJ_DT_FLAG_ENT(RHF, RLD_ORDER_SAFE)
+};
+
+#undef LLVM_READOBJ_DT_FLAG_ENT
+
+template <typename T, typename TFlag>
+void printFlags(T Value, ArrayRef<EnumEntry<TFlag>> Flags, raw_ostream &OS) {
+  typedef EnumEntry<TFlag> FlagEntry;
+  typedef SmallVector<FlagEntry, 10> FlagVector;
+  FlagVector SetFlags;
+
+  for (const auto &Flag : Flags) {
+    if (Flag.Value == 0)
+      continue;
+
+    if ((Value & Flag.Value) == Flag.Value)
+      SetFlags.push_back(Flag);
+  }
+
+  for (const auto &Flag : SetFlags) {
+    OS << Flag.Name << " ";
+  }
+}
 
 template <class ELFT>
 static void printValue(const ELFFile<ELFT> *O, uint64_t Type, uint64_t Value,
@@ -734,14 +836,15 @@ static void printValue(const ELFFile<ELFT> *O, uint64_t Type, uint64_t Value,
   case DT_DEBUG:
   case DT_VERNEED:
   case DT_VERSYM:
+  case DT_GNU_HASH:
   case DT_NULL:
-  case DT_MIPS_FLAGS:
   case DT_MIPS_BASE_ADDRESS:
   case DT_MIPS_GOTSYM:
   case DT_MIPS_RLD_MAP:
   case DT_MIPS_PLTGOT:
     OS << format("0x%" PRIX64, Value);
     break;
+  case DT_RELCOUNT:
   case DT_VERNEEDNUM:
   case DT_MIPS_RLD_VERSION:
   case DT_MIPS_LOCAL_GOTNO:
@@ -770,6 +873,12 @@ static void printValue(const ELFFile<ELFT> *O, uint64_t Type, uint64_t Value,
   case DT_RPATH:
   case DT_RUNPATH:
     OS << O->getDynamicString(Value);
+    break;
+  case DT_MIPS_FLAGS:
+    printFlags(Value, makeArrayRef(ElfDynamicDTMipsFlags), OS);
+    break;
+  case DT_FLAGS:
+    printFlags(Value, makeArrayRef(ElfDynamicDTFlags), OS);
     break;
   }
 }

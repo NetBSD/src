@@ -1,5 +1,4 @@
-/*	$NetBSD: packet.c,v 1.1.1.3 2013/03/27 00:31:35 christos Exp $	*/
-
+/*	$NetBSD: packet.c,v 1.1.1.3.8.1 2014/08/10 07:06:55 tls Exp $	*/
 /* packet.c
 
    Packet assembly code, originally contributed by Archie Cobbs. */
@@ -35,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: packet.c,v 1.1.1.3 2013/03/27 00:31:35 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.1.1.3.8.1 2014/08/10 07:06:55 tls Exp $");
 
 #include "dhcpd.h"
 

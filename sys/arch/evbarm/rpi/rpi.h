@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi.h,v 1.2 2013/09/05 07:09:33 skrll Exp $	*/
+/*	$NetBSD: rpi.h,v 1.2.2.1 2014/08/10 06:53:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 /*
  * Kernel VM space: KERNEL_VM_BASE to 0xf0000000
  */
-#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x20000000)
 #define	KERNEL_VM_SIZE		(0xf0000000 - KERNEL_VM_BASE)
 
 /*

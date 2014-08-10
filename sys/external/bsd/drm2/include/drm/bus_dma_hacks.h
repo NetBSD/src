@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.3 2014/04/03 19:18:29 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.3.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,11 +34,19 @@
 
 #include <sys/cdefs.h>
 #include <sys/bus.h>
+#include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 /* XXX This is x86-specific bollocks.  */
+#if !defined(__i386__) && !defined(__x86_64__)
+#error DRM GEM/TTM need new MI bus_dma APIs!  Halp!
+#endif
+
+#include <x86/bus_private.h>
+#include <x86/machdep.h>
 
 static inline int
 bus_dmamem_wire_uvm_object(bus_dma_tag_t tag, struct uvm_object *uobj,
@@ -48,8 +56,7 @@ bus_dmamem_wire_uvm_object(bus_dma_tag_t tag, struct uvm_object *uobj,
 {
 	struct pglist pageq;
 	struct vm_page *page;
-	bus_addr_t prev_addr, addr;
-	unsigned int i;
+	unsigned i;
 	int error;
 
 	/*
@@ -78,30 +85,20 @@ bus_dmamem_wire_uvm_object(bus_dma_tag_t tag, struct uvm_object *uobj,
 	page = TAILQ_FIRST(pages);
 	KASSERT(page != NULL);
 
-	addr = VM_PAGE_TO_PHYS(page);
-	segs[0].ds_addr = addr;
-	segs[0].ds_len = PAGE_SIZE;
-
-	i = 0;
-	while ((page = TAILQ_NEXT(page, pageq.queue)) != NULL) {
-		prev_addr = addr;
-		addr = VM_PAGE_TO_PHYS(page);
-		if ((addr == (prev_addr + PAGE_SIZE)) &&
-		    ((addr & boundary) == (prev_addr & boundary))) {
-			segs[i].ds_len += PAGE_SIZE;
-		} else {
-			i += 1;
-			if (i >= nsegs) {
-				error = EFBIG;
-				goto fail1;
-			}
-			segs[i].ds_addr = addr;
-			segs[i].ds_len = PAGE_SIZE;
+	for (i = 0; i < nsegs; i++) {
+		if (page == NULL) {
+			error = EFBIG;
+			goto fail1;
 		}
+		segs[i].ds_addr = VM_PAGE_TO_PHYS(page);
+		segs[i].ds_len = MIN(PAGE_SIZE, size);
+		size -= PAGE_SIZE;
+		page = TAILQ_NEXT(page, pageq.queue);
 	}
+	KASSERT(page == NULL);
 
 	/* Success!  */
-	*rsegs = (i + 1);
+	*rsegs = nsegs;
 	return 0;
 
 fail1:	uvm_obj_unwirepages(uobj, start, (start + size));
@@ -114,6 +111,61 @@ bus_dmamem_unwire_uvm_object(bus_dma_tag_t tag __unused,
     bus_dma_segment_t *segs __unused, int nsegs __unused)
 {
 	uvm_obj_unwirepages(uobj, start, (start + size));
+}
+
+static inline int
+bus_dmamem_pgfl(bus_dma_tag_t tag)
+{
+	return x86_select_freelist(tag->_bounce_alloc_hi - 1);
+}
+
+static inline int
+bus_dmamap_load_pglist(bus_dma_tag_t tag, bus_dmamap_t map,
+    struct pglist *pglist, bus_size_t size, int flags)
+{
+	km_flag_t kmflags;
+	bus_dma_segment_t *segs;
+	int nsegs, seg;
+	struct vm_page *page;
+	int error;
+
+	nsegs = 0;
+	TAILQ_FOREACH(page, pglist, pageq.queue) {
+		if (nsegs == MIN(INT_MAX, (SIZE_MAX / sizeof(segs[0]))))
+			return ENOMEM;
+		nsegs++;
+	}
+
+	KASSERT(nsegs <= (SIZE_MAX / sizeof(segs[0])));
+	switch (flags & (BUS_DMA_WAITOK|BUS_DMA_NOWAIT)) {
+	case BUS_DMA_WAITOK:	kmflags = KM_SLEEP;	break;
+	case BUS_DMA_NOWAIT:	kmflags = KM_NOSLEEP;	break;
+	default:		panic("invalid flags: %d", flags);
+	}
+	segs = kmem_alloc((nsegs * sizeof(segs[0])), kmflags);
+	if (segs == NULL)
+		return ENOMEM;
+
+	seg = 0;
+	TAILQ_FOREACH(page, pglist, pageq.queue) {
+		segs[seg].ds_addr = VM_PAGE_TO_PHYS(page);
+		segs[seg].ds_len = PAGE_SIZE;
+		seg++;
+	}
+
+	error = bus_dmamap_load_raw(tag, map, segs, nsegs, size, flags);
+	if (error)
+		goto fail0;
+
+	/* Success!  */
+	error = 0;
+	goto out;
+
+fail1: __unused
+	bus_dmamap_unload(tag, map);
+fail0:	KASSERT(error);
+out:	kmem_free(segs, (nsegs * sizeof(segs[0])));
+	return error;
 }
 
 #endif	/* _DRM_BUS_DMA_HACKS_H_ */

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2013 Free Software Foundation, Inc.
+# Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,15 @@ if {![istarget *-*-linux*]
 
 standard_testfile
 
-if {[build_executable $testfile.exp $testfile $srcfile debug] == -1} {
+# Make this available to gdb before the program starts, it is
+# automagically loaded by gdb.
+set remote_python_file [gdb_remote_download host \
+			    ${srcdir}/${subdir}/${testfile}.py]
+
+set quoted_name "\"$remote_python_file\""
+
+if {[build_executable $testfile.exp $testfile $srcfile \
+	 [list debug additional_flags=-DSCRIPT_FILE=$quoted_name]] == -1} {
     return -1
 }
 
@@ -42,18 +50,14 @@ gdb_start
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-# Make this available to gdb before the program starts, it is
-# automagically loaded by gdb.
-set remote_python_file [remote_download host ${srcdir}/${subdir}/${testfile}.py]
-
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_test_no_output "set auto-load safe-path ${remote_python_file}" "set auto-load safe-path"
 gdb_load ${binfile}
 
 # Verify gdb loaded the script.
-gdb_test "info auto-load python-scripts" "Yes.*${testfile}.py.*full name: .*/${testfile}.py.*"
+gdb_test "info auto-load python-scripts" "Yes.*${testfile}.py.*"
 # Again, with a regexp this time.
-gdb_test "info auto-load python-scripts ${testfile}" "Yes.*${testfile}.py.*full name: .*/${testfile}.py.*"
+gdb_test "info auto-load python-scripts ${testfile}" "Yes.*${testfile}.py.*"
 # Again, with a regexp that matches no scripts.
 gdb_test "info auto-load python-scripts no-script-matches-this" \
   "No auto-load scripts matching no-script-matches-this."

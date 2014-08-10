@@ -1083,7 +1083,7 @@ return 0;
 int
 gen_PWR ()
 {
-#ifdef SIGPWR
+#if defined(SIGPWR) && (!defined (SIGLOST) || SIGPWR != SIGLOST)
   kill (getpid (), SIGPWR);
 #else
   handle_PWR (0);
@@ -1662,7 +1662,7 @@ main ()
 #ifdef SIGUSR2
   signal (SIGUSR2, handle_USR2);
 #endif
-#ifdef SIGPWR
+#if defined(SIGPWR) && (!defined (SIGLOST) || SIGPWR != SIGLOST)
   signal (SIGPWR, handle_PWR);
 #endif
 #if defined (SIGPOLL) && (!defined (SIGIO) || SIGPOLL != SIGIO)

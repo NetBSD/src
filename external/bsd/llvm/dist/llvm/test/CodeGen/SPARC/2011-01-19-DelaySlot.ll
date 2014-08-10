@@ -1,6 +1,7 @@
 ;RUN: llc -march=sparc < %s -verify-machineinstrs | FileCheck %s
 ;RUN: llc -march=sparc -O0 < %s -verify-machineinstrs | FileCheck %s -check-prefix=UNOPT
 
+target triple = "sparc-unknown-linux-gnu"
 
 define i32 @test(i32 %a) nounwind {
 entry:
@@ -59,7 +60,7 @@ entry:
 ;CHECK:      !NO_APP
 ;CHECK-NEXT: cmp
 ;CHECK-NEXT: bg
-;CHECK-NEXT: or
+;CHECK-NEXT: mov
   tail call void asm sideeffect "sethi 0, %g0", ""() nounwind
   %0 = icmp slt i32 %a, 0
   br i1 %0, label %bb, label %bb1

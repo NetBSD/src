@@ -1,14 +1,15 @@
-/*	$NetBSD: LDAPEntryList.h,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: LDAPEntryList.h,v 1.1.1.2.24.1 2014/08/10 07:09:42 tls Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPEntryList.h,v 1.6.6.1 2008/04/14 23:09:26 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
 #ifndef LDAP_ENTRY_LIST_H
 #define LDAP_ENTRY_LIST_H
 
+#include <cstdio>
 #include <list>
 
 class LDAPEntry;

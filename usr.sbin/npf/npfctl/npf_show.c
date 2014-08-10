@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.13 2014/03/14 11:29:45 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.13.2.1 2014/08/10 07:00:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.13 2014/03/14 11:29:45 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.13.2.1 2014/08/10 07:00:01 tls Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -248,7 +248,7 @@ static const struct mark_keyword_mapent {
 	u_int		fwords;
 } mark_keyword_map[] = {
 	{ BM_IPVER,	"family %s",	NULL,		print_family,	1 },
-	{ BM_PROTO,	"proto %s",	NULL,		print_proto,	1 },
+	{ BM_PROTO,	"proto %s",	", ",		print_proto,	1 },
 	{ BM_TCPFL,	"flags %s",	NULL,		print_tcpflags,	2 },
 	{ BM_ICMP_TYPE,	"icmp-type %s",	NULL,		print_number,	1 },
 	{ BM_ICMP_CODE,	"code %s",	NULL,		print_number,	1 },
@@ -452,7 +452,7 @@ npfctl_config_show(int fd)
 		if (ncf == NULL) {
 			return errno;
 		}
-		fprintf(ctx->fp, "Filtering:\t%s\nConfiguration:\t%s\n",
+		fprintf(ctx->fp, "# filtering:\t%s\n# config:\t%s\n",
 		    active ? "active" : "inactive",
 		    loaded ? "loaded" : "empty");
 		print_linesep(ctx);

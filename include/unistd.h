@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.140 2014/01/02 23:33:50 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.140.2.1 2014/08/10 07:03:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -173,6 +173,7 @@ ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
  */
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600 || \
     defined(_NETBSD_SOURCE)
+int	 posix_fallocate(int, off_t, off_t);
 int	 setegid(gid_t);
 int	 seteuid(uid_t);
 #endif
@@ -328,6 +329,7 @@ int	 dup3(int, int, int);
 void	 endusershell(void);
 int	 exect(const char *, char * const *, char * const *);
 int	 fchroot(int);
+int	 fdiscard(int, off_t, off_t);
 int	 fsync_range(int, int, off_t, off_t);
 int	 getdomainname(char *, size_t);
 int	 getgrouplist(const char *, gid_t, gid_t *, int *);
@@ -353,6 +355,7 @@ __aconst char *getusershell(void);
 int	 initgroups(const char *, gid_t);
 int	 iruserok(uint32_t, int, const char *, const char *);
 int      issetugid(void);
+int	 mkstemps(char *, int);
 int	 nfssvc(int, void *);
 int	 pipe2(int *, int);
 int	 profil(char *, size_t, u_long, u_int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.99 2014/01/13 18:23:36 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.99.2.1 2014/08/10 06:56:30 tls Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.99 2014/01/13 18:23:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.99.2.1 2014/08/10 06:56:30 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1096,6 +1096,8 @@ nd6_newaddrmsg(struct ifaddr *ifa)
 
 /*
  * Start Duplicate Address Detection (DAD) for specified interface address.
+ *
+ * Note that callout is used when xtick > 0 and not when xtick == 0.
  *
  * xtick: minimum delay ticks for IFF_UP event
  */

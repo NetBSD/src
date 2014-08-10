@@ -1,5 +1,5 @@
-#	Id: Makefile.in,v 1.42 2012/03/15 09:22:12 plunky Exp 	
-#	$NetBSD: Makefile.in,v 1.1.1.5 2012/03/26 14:26:46 plunky Exp $
+#	Id: Makefile.in,v 1.45 2014/05/28 09:04:51 plunky Exp 	
+#	$NetBSD: Makefile.in,v 1.1.1.5.10.1 2014/08/10 07:10:07 tls Exp $
 #
 # Makefile.in for ccom
 #
@@ -31,7 +31,6 @@ exec_prefix = @exec_prefix@
 libexecdir = @libexecdir@
 datarootdir = @datarootdir@
 mandir = @mandir@
-strip = @strip@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
@@ -47,12 +46,13 @@ all: $(DEST)
 OBJS=	builtins.o cgram.o code.o common.o compat.o external.o		\
 	gcc_compat.o init.o inline.o local.o local2.o main.o		\
 	match.o optim.o optim2.o order.o pftn.o reader.o		\
-	regs.o scan.o stabs.o symtabs.o table.o trees.o
+	regs.o scan.o stabs.o symtabs.o table.o trees.o unicode.o
 
 LOBJS=	mkext.lo common.lo table.lo
 
 HDRS=	$(srcdir)/pass1.h $(MIPDIR)/pass2.h $(MIPDIR)/manifest.h	\
-	$(MDIR)/macdefs.h $(MIPDIR)/node.h $(MIPDIR)/compat.h
+	$(MDIR)/macdefs.h $(MIPDIR)/node.h $(MIPDIR)/compat.h		\
+	$(MIPDIR)/unicode.h
 
 #
 # round 1: generate external.[ch], cgram.[ch] & scan.c
@@ -162,6 +162,9 @@ table.o: $(MDIR)/table.c
 trees.o: $(srcdir)/trees.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/trees.c
 
+unicode.o: $(MIPDIR)/unicode.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(MIPDIR)/unicode.c
+
 #
 # round 3: build $(DEST)
 #
@@ -172,10 +175,6 @@ $(DEST): $(OBJS)
 install: $(DEST)
 	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
 	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(libexecdir)
-	@if [ $(strip) = yes ]; then				\
-		strip $(DESTDIR)$(libexecdir)/$(DEST) ;		\
-		echo strip $(DESTDIR)$(libexecdir)/$(DEST) ;	\
-	fi
 	test -z "$(DESTDIR)$(mandir)/man1" || mkdir -p "$(DESTDIR)$(mandir)/man1"
 	$(INSTALL_DATA) $(srcdir)/ccom.1 $(DESTDIR)$(mandir)/man1/$(DEST).1
 

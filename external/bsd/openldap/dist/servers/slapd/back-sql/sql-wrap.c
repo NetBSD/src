@@ -1,9 +1,9 @@
-/*	$NetBSD: sql-wrap.c,v 1.1.1.3 2010/12/12 15:23:27 adam Exp $	*/
+/*	$NetBSD: sql-wrap.c,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.43.2.9 2010/04/13 20:23:43 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -150,7 +150,7 @@ backsql_BindRowAsStrings_x( SQLHSTMT sth, BACKSQL_ROW_NTS *row, void *ctx )
 	} else {
 		SQLCHAR		colname[ 64 ];
 		SQLSMALLINT	name_len, col_type, col_scale, col_null;
-		UDWORD		col_prec;
+		SQLLEN		col_prec;
 		int		i;
 
 #ifdef BACKSQL_TRACE
@@ -182,8 +182,8 @@ backsql_BindRowAsStrings_x( SQLHSTMT sth, BACKSQL_ROW_NTS *row, void *ctx )
 			goto nomem;
 		}
 
-		row->value_len = (SQLINTEGER *)ber_memcalloc_x( row->ncols,
-				sizeof( SQLINTEGER ), ctx );
+		row->value_len = (SQLLEN *)ber_memcalloc_x( row->ncols,
+				sizeof( SQLLEN ), ctx );
 		if ( row->value_len == NULL ) {
 			goto nomem;
 		}
@@ -426,7 +426,8 @@ backsql_open_db_handle(
 	 * TimesTen : Turn off autocommit.  We must explicitly
 	 * commit any transactions. 
 	 */
-	SQLSetConnectOption( *dbhp, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF );
+	SQLSetConnectOption( *dbhp, SQL_AUTOCOMMIT,
+		BACKSQL_AUTOCOMMIT_ON( bi ) ?  SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF );
 
 	/* 
 	 * See if this connection is to TimesTen.  If it is,

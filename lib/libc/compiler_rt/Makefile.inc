@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.17 2014/03/19 20:30:53 uwe Exp $
+# $NetBSD: Makefile.inc,v 1.17.2.1 2014/08/10 06:51:50 tls Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -23,10 +23,8 @@ COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${LIBC_MACHINE_ARCH}
 #	divdc3.c \
 #	divsc3.c
 
-.if ${HAVE_LLVM:Uno} == "yes"
-# Requires C11 support
-GENERIC_SRCS+= atomic.c
-.endif
+# Implemented on top of our atomic interface.
+#GENERIC_SRCS+= atomic.c
 
 .if ${HAVE_LIBGCC_EH} == "no"
 GENERIC_SRCS+= \
@@ -171,7 +169,10 @@ GENERIC_SRCS+= \
 
 GENERIC_SRCS+= \
 	GCDAProfiling.c \
-	PGOProfiling.c
+	InstrProfiling.c \
+	InstrProfilingBuffer.c \
+	InstrProfilingFile.c \
+	InstrProfilingPlatformOther.c
 
 .if ${LIBC_MACHINE_ARCH} == "powerpc"
 GENERIC_SRCS+= \
@@ -210,9 +211,12 @@ GENERIC_SRCS+= \
 SRCS+=	${src:R}.S
 .  else
 SRCS+=	${src}
+.    if ${src:E} != "cc"
 COPTS.${src}+=	-Wno-missing-prototypes \
 		-Wno-old-style-definition \
 		-Wno-strict-prototypes \
-		-Wno-uninitialized
+		-Wno-uninitialized \
+		-Wno-cast-qual
+.    endif
 .  endif
 .endfor

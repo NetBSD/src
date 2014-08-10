@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwalker,v 1.5 2014/03/29 12:00:27 hkenken Exp $
+#	$NetBSD: files.netwalker,v 1.5.2.1 2014/08/10 06:53:55 tls Exp $
 #
 # Sharp Netwalker configuration info
 #
@@ -30,9 +30,23 @@ file	arch/evbarm/netwalker/netwalker_spi.c	spi_netwalker
 
 # Mouse button
 device	mousebtn: wsmousedev
-attach	mousebtn at gpio with btn_netwalker
-file	arch/evbarm/netwalker/netwalker_btn.c	btn_netwalker
+attach	mousebtn at gpio with netwalker_btn
+file	arch/evbarm/netwalker/netwalker_btn.c	netwalker_btn
 defflag	opt_mousebtn.h				MOUSEBTN_POLLING
+
+# Power button
+device	pwrbtn: sysmon_envsys
+attach	pwrbtn at gpio with netwalker_pwr
+file	arch/evbarm/netwalker/netwalker_pwr.c	netwalker_pwr
+
+# Lid close switch
+device	lidsw: sysmon_envsys
+attach	lidsw at gpio with netwalker_lid
+file	arch/evbarm/netwalker/netwalker_lid.c	netwalker_lid
+
+# LCD BackLight
+attach	imxpwm at axi with netwalker_backlight
+file	arch/evbarm/netwalker/netwalker_backlight.c	netwalker_backlight needs-flag
 
 # OJ6SH-T25 Optical Joystick
 device  oj6sh: wsmousedev

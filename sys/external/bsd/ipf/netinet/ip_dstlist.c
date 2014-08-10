@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_dstlist.c,v 1.7 2014/04/01 15:19:29 christos Exp $	*/
+/*	$NetBSD: ip_dstlist.c,v 1.7.2.1 2014/08/10 06:55:40 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -1141,7 +1141,7 @@ ipf_dstlist_select(fr_info_t *fin, ippool_dst_t *d)
 		MD5Update(&ctx, (u_char *)&fin->fin_dst6,
 			  sizeof(fin->fin_dst6));
 		MD5Final(h.bytes, &ctx);
-		x = h.hash[0] % d->ipld_nodes;
+		x = ntohl(h.hash[0]) % d->ipld_nodes;
 		sel = d->ipld_dests[x];
 		break;
 
@@ -1151,7 +1151,7 @@ ipf_dstlist_select(fr_info_t *fin, ippool_dst_t *d)
 		MD5Update(&ctx, (u_char *)&fin->fin_src6,
 			  sizeof(fin->fin_src6));
 		MD5Final(h.bytes, &ctx);
-		x = h.hash[0] % d->ipld_nodes;
+		x = ntohl(h.hash[0]) % d->ipld_nodes;
 		sel = d->ipld_dests[x];
 		break;
 
@@ -1161,7 +1161,7 @@ ipf_dstlist_select(fr_info_t *fin, ippool_dst_t *d)
 		MD5Update(&ctx, (u_char *)&fin->fin_dst6,
 			  sizeof(fin->fin_dst6));
 		MD5Final(h.bytes, &ctx);
-		x = h.hash[0] % d->ipld_nodes;
+		x = ntohl(h.hash[0]) % d->ipld_nodes;
 		sel = d->ipld_dests[x];
 		break;
 

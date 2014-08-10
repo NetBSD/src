@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.11 2010/01/04 19:20:05 plunky Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.11.36.1 2014/08/10 06:56:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.11 2010/01/04 19:20:05 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.11.36.1 2014/08/10 06:56:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,13 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.11 2010/01/04 19:20:05 plunky Exp 
  */
 
 /*
- * l2cap_attach(handle, btproto, upper)
+ * l2cap_attach_pcb(handle, btproto, upper)
  *
  *	attach new l2cap_channel to handle, populate
  *	with reasonable defaults
  */
 int
-l2cap_attach(struct l2cap_channel **handle,
+l2cap_attach_pcb(struct l2cap_channel **handle,
 		const struct btproto *proto, void *upper)
 {
 	struct l2cap_channel *chan;
@@ -102,12 +102,12 @@ l2cap_attach(struct l2cap_channel **handle,
 }
 
 /*
- * l2cap_bind(l2cap_channel, sockaddr)
+ * l2cap_bind_pcb(l2cap_channel, sockaddr)
  *
  *	set local address of channel
  */
 int
-l2cap_bind(struct l2cap_channel *chan, struct sockaddr_bt *addr)
+l2cap_bind_pcb(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 {
 
 	if (chan->lc_lcid != L2CAP_NULL_CID)
@@ -118,12 +118,12 @@ l2cap_bind(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 }
 
 /*
- * l2cap_sockaddr(l2cap_channel, sockaddr)
+ * l2cap_sockaddr_pcb(l2cap_channel, sockaddr)
  *
  *	get local address of channel
  */
 int
-l2cap_sockaddr(struct l2cap_channel *chan, struct sockaddr_bt *addr)
+l2cap_sockaddr_pcb(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 {
 
 	memcpy(addr, &chan->lc_laddr, sizeof(struct sockaddr_bt));
@@ -131,7 +131,7 @@ l2cap_sockaddr(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 }
 
 /*
- * l2cap_connect(l2cap_channel, sockaddr)
+ * l2cap_connect_pcb(l2cap_channel, sockaddr)
  *
  *	Initiate a connection to destination. This corresponds to
  *	"Open Channel Request" in the L2CAP specification and will
@@ -144,7 +144,7 @@ l2cap_sockaddr(struct l2cap_channel *chan, struct sockaddr_bt *addr)
  *		proto->connecting(upper)
  */
 int
-l2cap_connect(struct l2cap_channel *chan, struct sockaddr_bt *dest)
+l2cap_connect_pcb(struct l2cap_channel *chan, struct sockaddr_bt *dest)
 {
 	struct hci_unit *unit;
 	int err;
@@ -209,12 +209,12 @@ fail:
 }
 
 /*
- * l2cap_peeraddr(l2cap_channel, sockaddr)
+ * l2cap_peeraddr_pcb(l2cap_channel, sockaddr)
  *
  *	get remote address of channel
  */
 int
-l2cap_peeraddr(struct l2cap_channel *chan, struct sockaddr_bt *addr)
+l2cap_peeraddr_pcb(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 {
 
 	memcpy(addr, &chan->lc_raddr, sizeof(struct sockaddr_bt));
@@ -222,7 +222,7 @@ l2cap_peeraddr(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 }
 
 /*
- * l2cap_disconnect(l2cap_channel, linger)
+ * l2cap_disconnect_pcb(l2cap_channel, linger)
  *
  *	Initiate L2CAP disconnection. This corresponds to
  *	"Close Channel Request" in the L2CAP specification
@@ -235,7 +235,7 @@ l2cap_peeraddr(struct l2cap_channel *chan, struct sockaddr_bt *addr)
  *	the queue.
  */
 int
-l2cap_disconnect(struct l2cap_channel *chan, int linger)
+l2cap_disconnect_pcb(struct l2cap_channel *chan, int linger)
 {
 	int err = 0;
 
@@ -260,12 +260,12 @@ l2cap_disconnect(struct l2cap_channel *chan, int linger)
 }
 
 /*
- * l2cap_detach(handle)
+ * l2cap_detach_pcb(handle)
  *
  *	Detach l2cap channel from handle & close it down
  */
-int
-l2cap_detach(struct l2cap_channel **handle)
+void
+l2cap_detach_pcb(struct l2cap_channel **handle)
 {
 	struct l2cap_channel *chan;
 
@@ -288,11 +288,10 @@ l2cap_detach(struct l2cap_channel **handle)
 	 */
 
 	free(chan, M_BLUETOOTH);
-	return 0;
 }
 
 /*
- * l2cap_listen(l2cap_channel)
+ * l2cap_listen_pcb(l2cap_channel)
  *
  *	Use this channel as a listening post (until detached). This will
  *	result in calls to:
@@ -309,7 +308,7 @@ l2cap_detach(struct l2cap_channel **handle)
  *	You cannot use this channel for anything else subsequent to this call
  */
 int
-l2cap_listen(struct l2cap_channel *chan)
+l2cap_listen_pcb(struct l2cap_channel *chan)
 {
 	struct l2cap_channel *used, *prev = NULL;
 	uint32_t psm;
@@ -373,7 +372,7 @@ l2cap_listen(struct l2cap_channel *chan)
 }
 
 /*
- * l2cap_send(l2cap_channel, mbuf)
+ * l2cap_send_pcb(l2cap_channel, mbuf)
  *
  *	Output SDU on channel described by channel. This corresponds
  *	to "Send Data Request" in the L2CAP specification. The upper
@@ -395,7 +394,7 @@ l2cap_listen(struct l2cap_channel *chan)
  *	B-Frame header and start sending if we are not already
  */
 int
-l2cap_send(struct l2cap_channel *chan, struct mbuf *m)
+l2cap_send_pcb(struct l2cap_channel *chan, struct mbuf *m)
 {
 	l2cap_hdr_t *hdr;
 	int plen;

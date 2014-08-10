@@ -1,7 +1,7 @@
-/*	$NetBSD: zone_test.c,v 1.6 2014/03/01 03:24:33 christos Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.6.2.1 2014/08/10 07:06:36 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -78,7 +78,7 @@ isc_sockaddr_t addr;
 			(void)NULL
 
 static void
-usage() {
+usage(void) {
 	fprintf(stderr,
 		"usage: zone_test [-dqsSM] [-c class] [-f file] zone\n");
 	exit(1);

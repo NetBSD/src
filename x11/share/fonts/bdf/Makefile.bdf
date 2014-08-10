@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bdf,v 1.8 2014/01/27 08:18:08 apb Exp $
+#	$NetBSD: Makefile.bdf,v 1.8.2.1 2014/08/10 07:00:45 tls Exp $
 
 # Font files built using this makefile are cleaned in two ways:
 #
@@ -17,7 +17,7 @@ FILESDIR=	${X11FONTDIR}/${FONTSUBDIR}
 .PATH:  	${X11SRCDIR.xc}/fonts/bdf/${FONTSUBDIR}
 
 FONTSUFFIX=	.gz
-FONTGZIP=	| ${TOOL_GZIP} ${GZIPLEVEL:U-9} -ncf
+FONTGZIP=	| ${TOOL_GZIP_N} ${GZIPLEVEL:U-9} -cf
 
 .include "${NETBSDSRCDIR}/x11/tools/bdftopcf/Makefile.bdftopcf"
 .include "${NETBSDSRCDIR}/x11/tools/ucs2any/Makefile.ucs2any"

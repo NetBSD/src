@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2014/03/18 18:20:43 riastradh Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2014/08/10 06:56:10 tls Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -8,7 +8,6 @@
 .PATH:	${S}/external/bsd/drm2/dist/drm
 
 KMOD=	drmkms
-IOCONF=	drmkms.ioconf
 
 # Upstream source files.
 #SRCS+=	ati_pcigart.c		# Moved to drmkms_pci module.
@@ -26,6 +25,7 @@ SRCS+=	drm_drv.c
 SRCS+=	drm_edid.c
 #SRCS+=	drm_encoder_slave.c	# XXX Rewrite for i2c.
 SRCS+=	drm_fb_helper.c		# XXX Rewrite for wsconsole.
+SRCS+=	drm_flip_work.c
 SRCS+=	drm_fops.c
 SRCS+=	drm_gem.c
 SRCS+=	drm_global.c
@@ -39,19 +39,23 @@ SRCS+=	drm_memory.c
 SRCS+=	drm_mm.c
 SRCS+=	drm_modes.c
 #SRCS+=	drm_pci.c		# Moved to drmkms_pci module.
+SRCS+=	drm_plane_helper.c
 #SRCS+=	drm_platform.c		# XXX Rewrite per platform.
 #SRCS+=	drm_prime.c		# XXX Revisit later.
-#SRCS+=	drm_proc.c		# XXX Rewrite for sysctl.
+SRCS+=	drm_probe_helper.c
+SRCS+=	drm_rect.c
 SRCS+=	drm_scatter.c
 SRCS+=	drm_stub.c
+SRCS+=	drm_sysfs.c
 SRCS+=	drm_vm.c
+SRCS+=	drm_vma_manager.c
 
 # NetBSD additions.
 SRCS+=	drm_gem_vm.c
 SRCS+=	drm_module.c
-SRCS+=	drm_sysfs.c
 
 COPTS.drm_crtc.c+=	-Wno-shadow
+COPTS.drm_crtc.c+=	-Wno-missing-field-initializers
 COPTS.drm_edid.c+=	-Wno-shadow
 
 .include <bsd.kmodule.mk>

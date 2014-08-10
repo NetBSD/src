@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.120 2013/10/25 20:22:55 martin Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.120.2.1 2014/08/10 06:57:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.120 2013/10/25 20:22:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.120.2.1 2014/08/10 06:57:00 tls Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -146,6 +146,7 @@ struct uvm_aobj {
 	struct uao_swhash *u_swhash;
 	u_long u_swhashmask;		/* mask for hashtable */
 	LIST_ENTRY(uvm_aobj) u_list;	/* global list of aobjs */
+	int u_freelist;		  /* freelist to allocate pages from */
 };
 
 static void	uao_free(struct uvm_aobj *);
@@ -160,6 +161,8 @@ static struct uao_swhash_elt *uao_find_swhash_elt
 static bool uao_pagein(struct uvm_aobj *, int, int);
 static bool uao_pagein_page(struct uvm_aobj *, int);
 #endif /* defined(VMSWAP) */
+
+static struct vm_page	*uao_pagealloc(struct uvm_object *, voff_t, int);
 
 /*
  * aobj_pager
@@ -436,6 +439,12 @@ uao_create(vsize_t size, int flags)
 	}
 
 	/*
+	 * no freelist by default
+	 */
+
+	aobj->u_freelist = VM_NFREELIST;
+
+	/*
  	 * allocate hash/array if necessary
  	 *
  	 * note: in the KERNSWAP case no need to worry about locking since
@@ -487,6 +496,41 @@ uao_create(vsize_t size, int flags)
 	LIST_INSERT_HEAD(&uao_list, aobj, u_list);
 	mutex_exit(&uao_list_lock);
 	return(&aobj->u_obj);
+}
+
+/*
+ * uao_set_pgfl: allocate pages only from the specified freelist.
+ *
+ * => must be called before any pages are allocated for the object.
+ * => reset by setting it to VM_NFREELIST, meaning any freelist.
+ */
+
+void
+uao_set_pgfl(struct uvm_object *uobj, int freelist)
+{
+	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
+
+	KASSERTMSG((0 <= freelist), "invalid freelist %d", freelist);
+	KASSERTMSG((freelist <= VM_NFREELIST), "invalid freelist %d",
+	    freelist);
+
+	aobj->u_freelist = freelist;
+}
+
+/*
+ * uao_pagealloc: allocate a page for aobj.
+ */
+
+static inline struct vm_page *
+uao_pagealloc(struct uvm_object *uobj, voff_t offset, int flags)
+{
+	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
+
+	if (__predict_true(aobj->u_freelist == VM_NFREELIST))
+		return uvm_pagealloc(uobj, offset, NULL, flags);
+	else
+		return uvm_pagealloc_strat(uobj, offset, NULL, flags,
+		    UVM_PGA_STRAT_ONLY, aobj->u_freelist);
 }
 
 /*
@@ -864,8 +908,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 			if (ptmp == NULL && uao_find_swslot(uobj,
 			    current_offset >> PAGE_SHIFT) == 0) {
-				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL, UVM_FLAG_COLORMATCH|UVM_PGA_ZERO);
+				ptmp = uao_pagealloc(uobj, current_offset,
+				    UVM_FLAG_COLORMATCH|UVM_PGA_ZERO);
 				if (ptmp) {
 					/* new page */
 					ptmp->flags &= ~(PG_FAKE);
@@ -959,8 +1003,7 @@ gotpage:
 			/* not resident?   allocate one now (if we can) */
 			if (ptmp == NULL) {
 
-				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL, 0);
+				ptmp = uao_pagealloc(uobj, current_offset, 0);
 
 				/* out of RAM? */
 				if (ptmp == NULL) {

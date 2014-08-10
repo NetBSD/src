@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm_km.9,v 1.2 2011/06/03 18:43:38 rmind Exp $
+.\"	$NetBSD: uvm_km.9,v 1.2.18.1 2014/08/10 06:53:26 tls Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Fn uvm_km_free "struct vm_map *map" "vaddr_t addr" "vsize_t size" "uvm_flag_t flags"
 .Ft struct vm_map *
 .Fn uvm_km_suballoc "struct vm_map *map" "vaddr_t *min" "vaddr_t *max" \
-"vsize_t size" "int flags" "bool fixed" "struct vm_map_kernel *submap"
+"vsize_t size" "int flags" "bool fixed" "struct vm_map *submap"
 .Sh DESCRIPTION
 The UVM facility for allocation of kernel memory or address space in pages.
 Both wired and pageable memory can be allocated by this facility, as well

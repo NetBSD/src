@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/09/03 14:54:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2014/08/10 07:09:09 tls Exp $
 
 LIB=	LLVMX86Disassembler
 
@@ -10,7 +10,7 @@ CPPFLAGS+=	-I${X86_OBJDIR}
 .PATH: ${LLVM_SRCDIR}/lib/Target/X86/Disassembler
 
 SRCS+=	X86Disassembler.cpp \
-	X86DisassemblerDecoder.c
+	X86DisassemblerDecoder.cpp
 
 .for src in ${SRCS:M*.c}
 CPPFLAGS.${src}+=	-std=gnu99

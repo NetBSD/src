@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.2.1 2014/08/10 06:54:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,15 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.2.1 2014/08/10 06:54:04 tls Exp $");
 
 #include "debug_playstation2.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>		/* time */
+#include <sys/proc.h>
 
 #include <mips/locore.h>
+#include <mips/mips3_clock.h>
 
 #include <dev/clock_subr.h>
 #include <machine/bootinfo.h>
@@ -48,7 +50,7 @@ void
 cpu_initclocks(void)
 {
 	struct todr_chip_handle	todr = {
-		.todr_gettime_ymdhms = get_bootinfo_tod;
+		.todr_gettime_ymdhms = get_bootinfo_tod,
 	};
 
 	/*

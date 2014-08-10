@@ -1,5 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.1.1.3 2013/03/27 00:31:35 christos Exp $	*/
-
+/*	$NetBSD: lpf.c,v 1.1.1.3.8.1 2014/08/10 07:06:55 tls Exp $	*/
 /* lpf.c
 
    Linux packet filter code, contributed by Brian Murrel at Interlinx
@@ -30,11 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lpf.c,v 1.1.1.3 2013/03/27 00:31:35 christos Exp $");
+__RCSID("$NetBSD: lpf.c,v 1.1.1.3.8.1 2014/08/10 07:06:55 tls Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_LPF_SEND) || defined (USE_LPF_RECEIVE)
-#include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <errno.h>
 
@@ -46,8 +44,14 @@ __RCSID("$NetBSD: lpf.c,v 1.1.1.3 2013/03/27 00:31:35 christos Exp $");
 #include "includes/netinet/ip.h"
 #include "includes/netinet/udp.h"
 #include "includes/netinet/if_ether.h"
-#include <net/if.h>
+#endif
 
+#if defined (USE_LPF_RECEIVE) || defined (USE_LPF_HWADDR)
+#include <sys/ioctl.h>
+#include <net/if.h>
+#endif
+
+#if defined (USE_LPF_SEND) || defined (USE_LPF_RECEIVE)
 /* Reinitializes the specified interface after an address change.   This
    is not required for packet-filter APIs. */
 
@@ -423,7 +427,9 @@ void maybe_setup_fallback ()
 		interface_dereference (&fbi, MDL);
 	}
 }
+#endif
 
+#if defined (USE_LPF_RECEIVE) || defined (USE_LPF_HWADDR)
 void
 get_hw_addr(const char *name, struct hardware *hw) {
 	int sock;

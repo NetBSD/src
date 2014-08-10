@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.3 2014/04/04 15:16:59 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.3.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.3 2014/04/04 15:16:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.3.2.1 2014/08/10 06:55:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.3 2014/04/04 15:16:59 riastradh Exp $"
 /* XXX Mega-kludge because modules are broken.  */
 #include <sys/once.h>
 #endif
+#include <sys/pmf.h>
 #include <sys/poll.h>
 #ifndef _MODULE
 #include <sys/reboot.h>		/* XXX drm_init kludge */
@@ -52,57 +53,15 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.3 2014/04/04 15:16:59 riastradh Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <prop/proplib.h>
+#include <linux/err.h>
+
+#include <linux/pm.h>
 
 #include <drm/drmP.h>
 
-#include "ioconf.h"
-
-static int drm_minor_types[] = {
-	DRM_MINOR_LEGACY,
-	DRM_MINOR_CONTROL,
-#if 0				/* XXX Nothing seems to use this?  */
-	DRM_MINOR_RENDER,
-#endif
-};
-
-static int drm_type_minors[] = {
-	[DRM_MINOR_LEGACY] = 0,
-	[DRM_MINOR_CONTROL] = 1,
-#if 0
-	[DRM_MINOR_RENDER] = 2,
-#endif
-};
-
-struct drm_softc {
-	struct drm_device	*sc_drm_dev;
-	struct drm_minor	sc_minor[__arraycount(drm_minor_types)];
-	unsigned int		sc_opencount;
-	bool			sc_initialized;
-};
-
-struct drm_attach_args {
-	struct drm_device	*daa_drm_dev;
-	struct drm_driver	*daa_driver;
-	unsigned long		daa_flags;
-};
-
-static int	drm_match(device_t, cfdata_t, void *);
-static void	drm_attach(device_t, device_t, void *);
-static int	drm_detach(device_t, int);
-
-#ifndef _MODULE
-/* XXX Mega-kludge because modules are broken.  */
-static int	drm_init(void);
-static ONCE_DECL(drm_init_once);
-#endif
-
-static void	drm_undo_fill_in_dev(struct drm_device *);
-
-static struct drm_softc *drm_dev_softc(dev_t);
-static struct drm_minor *drm_dev_minor(dev_t);
-
 static dev_type_open(drm_open);
+
+static int	drm_firstopen(struct drm_device *);
 
 static int	drm_close(struct file *);
 static int	drm_read(struct file *, off_t *, struct uio *, kauth_cred_t,
@@ -118,9 +77,6 @@ static paddr_t	drm_mmap(dev_t, off_t, int);
 
 static drm_ioctl_t	drm_version;
 static drm_ioctl_t	drm_mmap_ioctl;
-
-/* XXX Can this be pushed into struct drm_device?  */
-struct mutex drm_global_mutex;
 
 #define	DRM_IOCTL_DEF(IOCTL, FUNC, FLAGS)				\
 	[DRM_IOCTL_NR(IOCTL)] = {					\
@@ -151,14 +107,15 @@ static drm_ioctl_t	drm_agp_unbind_hook_ioctl;
 
 /* Table copied verbatim from dist/drm/drm_drv.c.  */
 static const struct drm_ioctl_desc drm_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_IOCTL_VERSION, drm_version, DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_VERSION, drm_version, DRM_UNLOCKED|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF(DRM_IOCTL_GET_UNIQUE, drm_getunique, 0),
 	DRM_IOCTL_DEF(DRM_IOCTL_GET_MAGIC, drm_getmagic, 0),
 	DRM_IOCTL_DEF(DRM_IOCTL_IRQ_BUSID, drm_irq_by_busid, DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_GET_MAP, drm_getmap, DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_GET_CLIENT, drm_getclient, DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_GET_STATS, drm_getstats, DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_GET_CAP, drm_getcap, DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_GET_CAP, drm_getcap, DRM_UNLOCKED|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF(DRM_IOCTL_SET_CLIENT_CAP, drm_setclientcap, 0),
 	DRM_IOCTL_DEF(DRM_IOCTL_SET_VERSION, drm_setversion, DRM_MASTER),
 
 	DRM_IOCTL_DEF(DRM_IOCTL_SET_UNIQUE, drm_setunique, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
@@ -177,7 +134,7 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 
 	DRM_IOCTL_DEF(DRM_IOCTL_ADD_CTX, drm_addctx, DRM_AUTH|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_RM_CTX, drm_rmctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_MOD_CTX, drm_modctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_MOD_CTX, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_GET_CTX, drm_getctx, DRM_AUTH),
 	DRM_IOCTL_DEF(DRM_IOCTL_SWITCH_CTX, drm_switchctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_NEW_CTX, drm_newctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
@@ -196,8 +153,7 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_INFO_BUFS, drm_infobufs, DRM_AUTH),
 	DRM_IOCTL_DEF(DRM_IOCTL_MAP_BUFS, drm_mapbufs, DRM_AUTH),
 	DRM_IOCTL_DEF(DRM_IOCTL_FREE_BUFS, drm_freebufs, DRM_AUTH),
-	/* The DRM_IOCTL_DMA ioctl should be defined by the driver. */
-	DRM_IOCTL_DEF(DRM_IOCTL_DMA, NULL, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_IOCTL_DMA, drm_dma_ioctl, DRM_AUTH),
 
 	DRM_IOCTL_DEF(DRM_IOCTL_CONTROL, drm_control, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 
@@ -212,7 +168,7 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_AGP_UNBIND, drm_agp_unbind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 #endif
 
-	DRM_IOCTL_DEF(DRM_IOCTL_SG_ALLOC, drm_sg_alloc_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_SG_ALLOC, drm_sg_alloc, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_SG_FREE, drm_sg_free, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 
 	DRM_IOCTL_DEF(DRM_IOCTL_WAIT_VBLANK, drm_wait_vblank, DRM_UNLOCKED),
@@ -221,15 +177,15 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 
 	DRM_IOCTL_DEF(DRM_IOCTL_UPDATE_DRAW, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 
-	DRM_IOCTL_DEF(DRM_IOCTL_GEM_CLOSE, drm_gem_close_ioctl, DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_GEM_CLOSE, drm_gem_close_ioctl, DRM_UNLOCKED|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF(DRM_IOCTL_GEM_FLINK, drm_gem_flink_ioctl, DRM_AUTH|DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_GEM_OPEN, drm_gem_open_ioctl, DRM_AUTH|DRM_UNLOCKED),
 
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETRESOURCES, drm_mode_getresources, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 
 #ifndef __NetBSD__		/* XXX drm prime */
-	DRM_IOCTL_DEF(DRM_IOCTL_PRIME_HANDLE_TO_FD, drm_prime_handle_to_fd_ioctl, DRM_AUTH|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_PRIME_FD_TO_HANDLE, drm_prime_fd_to_handle_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_PRIME_HANDLE_TO_FD, drm_prime_handle_to_fd_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF(DRM_IOCTL_PRIME_FD_TO_HANDLE, drm_prime_fd_to_handle_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
 #endif
 
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPLANERESOURCES, drm_mode_getplane_res, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
@@ -242,8 +198,8 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETGAMMA, drm_mode_gamma_set_ioctl, DRM_MASTER|DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETENCODER, drm_mode_getencoder, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCONNECTOR, drm_mode_getconnector, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_ATTACHMODE, drm_mode_attachmode_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_DETACHMODE, drm_mode_detachmode_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_ATTACHMODE, drm_noop, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_DETACHMODE, drm_noop, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPROPERTY, drm_mode_getproperty_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETPROPERTY, drm_mode_connector_property_set_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPROPBLOB, drm_mode_getblob_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
@@ -258,6 +214,7 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_DESTROY_DUMB, drm_mode_destroy_dumb_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_OBJ_GETPROPERTIES, drm_mode_obj_get_properties_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_OBJ_SETPROPERTY, drm_mode_obj_set_property_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_CURSOR2, drm_mode_cursor2_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 
 #ifdef __NetBSD__
 	DRM_IOCTL_DEF(DRM_IOCTL_MMAP, drm_mmap_ioctl, DRM_UNLOCKED),
@@ -275,6 +232,7 @@ const struct cdevsw drm_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = drm_mmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	/* XXX was D_TTY | D_NEGOFFSAFE */
 	/* XXX Add D_MPSAFE some day... */
 	.d_flag = D_NEGOFFSAFE,
@@ -292,284 +250,60 @@ static const struct fileops drm_fileops = {
 	.fo_restart = fnullop_restart,
 };
 
-CFATTACH_DECL_NEW(drmkms, sizeof(struct drm_softc),
-    drm_match, drm_attach, drm_detach, NULL);
-
-static int
-drm_match(device_t parent __unused, cfdata_t match __unused,
-    void *aux __unused)
-{
-
-#ifndef _MODULE
-	/* XXX Mega-kludge because modules are broken.  */
-	if (RUN_ONCE(&drm_init_once, &drm_init) != 0)
-		return 0;
-#endif
-
-	return 1;
-}
-
-static void
-drm_attach(device_t parent, device_t self, void *aux)
-{
-	struct drm_softc *sc = device_private(self);
-	const struct drm_attach_args *const daa = aux;
-	struct drm_device *const dev = daa->daa_drm_dev;
-	unsigned int i;
-	int error;
-
-	KASSERT(sc != NULL);
-	KASSERT(dev != NULL);
-	KASSERT(daa->daa_driver != NULL);
-	KASSERT(device_unit(self) >= 0);
-
-	aprint_normal("\n");
-
-	sc->sc_initialized = false;     /* paranoia */
-
-	sc->sc_drm_dev = dev;
-	sc->sc_opencount = 0;
-
-	if (device_unit(self) >= 64) { /* XXX Need to do something here!  */
-		aprint_error_dev(self, "can't handle >=64 drm devices!");
-		error = ENFILE;	/* XXX */
-		goto fail0;
-	}
-
-	for (i = 0; i < __arraycount(drm_minor_types); i++) {
-		sc->sc_minor[i].index = (i * 64) + device_unit(self);
-		sc->sc_minor[i].type = drm_minor_types[i];
-		sc->sc_minor[i].device =
-		    makedev(cdevsw_lookup_major(&drm_cdevsw),
-			sc->sc_minor[i].index);
-		sc->sc_minor[i].kdev = self;
-		sc->sc_minor[i].dev = dev;
-		sc->sc_minor[i].master = NULL;
-		INIT_LIST_HEAD(&sc->sc_minor[i].master_list);
-		(void)memset(&sc->sc_minor[i].mode_group, 0,
-		    sizeof(sc->sc_minor[i].mode_group));
-	}
-
-	dev->dev = self;
-
-	if (drm_core_check_feature(dev, DRIVER_MODESET))
-		dev->control =
-		    &sc->sc_minor[drm_type_minors[DRM_MINOR_CONTROL]];
-	dev->primary = &sc->sc_minor[drm_type_minors[DRM_MINOR_LEGACY]];
-
-	error = drm_fill_in_dev(dev, NULL, daa->daa_driver);
-	if (error) {
-		aprint_error_dev(parent, "unable to initialize drm: %d\n",
-		    error);
-		goto fail0;
-	}
-	KASSERT(dev->driver == daa->daa_driver);
-
-	if (dev->driver->load != NULL) {
-		/* XXX errno Linux->NetBSD */
-		error = -(*dev->driver->load)(dev, daa->daa_flags);
-		if (error) {
-			aprint_error_dev(parent, "unable to load driver: %d\n",
-			    error);
-			goto fail1;
-		}
-	}
-
-	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
-		/* XXX errno Linux->NetBSD */
-		error = -drm_mode_group_init_legacy_group(dev,
-		    &dev->primary->mode_group);
-		if (error) {
-			aprint_error_dev(parent, "unable to init legacy group"
-			    ": %d\n", error);
-			goto fail2;
-		}
-	}
-
-	/* Success!  */
-	sc->sc_initialized = true;
-	return;
-
-fail2:	if (dev->driver->unload != NULL)
-		(*dev->driver->unload)(dev);
-fail1:	drm_undo_fill_in_dev(dev);
-fail0:	prop_dictionary_set_int64(device_properties(self), "error",
-	    (int64_t)error);
-}
-
-static int
-drm_detach(device_t self, int flags)
-{
-	struct drm_softc *const sc = device_private(self);
-	KASSERT(sc != NULL);
-	struct drm_device *const dev = sc->sc_drm_dev;
-	KASSERT(dev != NULL);
-
-	if (!sc->sc_initialized)
-		return 0;
-
-	if (sc->sc_opencount != 0)
-		return EBUSY;
-
-	/* XXX The placement of this is pretty random...  */
-	if (dev->driver->unload != NULL)
-		(*dev->driver->unload)(dev);
-
-	/*
-	 * XXX Either this shouldn't be here, or the driver's load
-	 * function shouldn't be responsible for drm_vblank_init.
-	 */
-	drm_vblank_cleanup(dev);
-
-	drm_undo_fill_in_dev(dev);
-
-	return 0;
-}
-
-#ifndef _MODULE
-/*
- * drm_init is a mega-kludge that exists because modules are broken:
- * builtin modules do not get initialized until long after configure
- * runs, so there's no way for MODULE_CMD_INIT to prepare data
- * structures that configure needs.
- */
-static int
-drm_init(void)
-{
-	extern int linux_suppress_init;
-	int error;
-
-	KASSERT(!linux_suppress_init);
-
-	error = linux_kmap_init();
-	if (error) {
-		aprint_error("drmkms: unable to initialize linux kmap:"
-		    " %d", error);
-		goto fail0;
-	}
-
-	error = linux_workqueue_init();
-	if (error) {
-		aprint_error("drmkms: unable to initialize workqueues:"
-		    " %d", error);
-		goto fail1;
-	}
-
-	linux_suppress_init = 1;
-	linux_mutex_init(&drm_global_mutex);
-
-	if (ISSET(boothowto, AB_DEBUG))
-		drm_debug = ~(unsigned int)0;
-
-	return 0;
-
-fail1:	linux_kmap_fini();
-fail0:	linux_mutex_destroy(&drm_global_mutex);
-	return error;
-}
-#endif
-
-static void
-drm_undo_fill_in_dev(struct drm_device *dev)
-{
-	/*
-	 * XXX Synchronize with drm_fill_in_dev, perhaps with reference
-	 * to drm_put_dev.
-	 */
-
-	if (ISSET(dev->driver->driver_features, DRIVER_GEM))
-		drm_gem_destroy(dev);
-
-	drm_ctxbitmap_cleanup(dev);
-
-	/* XXX Move to dev->driver->bus->agp_destroy.  */
-	if (drm_core_has_MTRR(dev) &&
-	    drm_core_has_AGP(dev) &&
-	    (dev->agp != NULL) &&
-	    (dev->agp->agp_mtrr >= 0)) {
-		int error __unused;
-		error = mtrr_del(dev->agp->agp_mtrr,
-		    dev->agp->agp_info.ai_aperture_base,
-		    dev->agp->agp_info.ai_aperture_size);
-		DRM_DEBUG("mtrr_del=%d\n", error);
-	}
-
-	/* XXX Move into dev->driver->bus->agp_destroy.  */
-	if (drm_core_has_AGP(dev) && (dev->agp != NULL)) {
-		kfree(dev->agp);
-		dev->agp = NULL;
-	}
-
-	/* XXX Remove the entries in this.  */
-	drm_ht_remove(&dev->map_hash);
-
-	linux_mutex_destroy(&dev->ctxlist_mutex);
-	linux_mutex_destroy(&dev->struct_mutex);
-	spin_lock_destroy(&dev->event_lock);
-	spin_lock_destroy(&dev->count_lock);
-}
-
-static struct drm_softc *
-drm_dev_softc(dev_t d)
-{
-	return device_lookup_private(&drmkms_cd, (minor(d) % 64));
-}
-
-static struct drm_minor *
-drm_dev_minor(dev_t d)
-{
-	struct drm_softc *const sc = drm_dev_softc(d);
-
-	if (sc == NULL)
-		return NULL;
-
-	const unsigned int i = minor(d) / 64;
-	if (i >= __arraycount(drm_minor_types))
-		return NULL;
-
-	return &sc->sc_minor[i];
-}
-
 static int
 drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 {
-	struct drm_softc *const sc = drm_dev_softc(d);
-	struct drm_minor *const dminor = drm_dev_minor(d);
+	struct drm_minor *dminor;
+	struct drm_device *dev;
+	bool firstopen, lastclose;
 	int fd;
 	struct file *fp;
-	unsigned int opencount;
 	int error;
+	extern int drm_guarantee_initialized(void);
 
-	if (dminor == NULL) {
-		error = ENXIO;
+	error = drm_guarantee_initialized();
+	if (error)
 		goto fail0;
-	}
 
 	if (flags & O_EXCL) {
 		error = EBUSY;
 		goto fail0;
 	}
 
-	if (dminor->dev->switch_power_state != DRM_SWITCH_POWER_ON) {
-		error = EINVAL;
+	dminor = drm_minor_acquire(minor(d));
+	if (IS_ERR(dminor)) {
+		/* XXX errno Linux->NetBSD */
+		error = -PTR_ERR(dminor);
 		goto fail0;
 	}
+	dev = dminor->dev;
+	if (dev->switch_power_state != DRM_SWITCH_POWER_ON) {
+		error = EINVAL;
+		goto fail1;
+	}
 
-	do {
-		opencount = sc->sc_opencount;
-		if (opencount == UINT_MAX) {
-			error = EBUSY;
-			goto fail0;
-		}
-	} while (atomic_cas_uint(&sc->sc_opencount, opencount, (opencount + 1))
-	    != opencount);
+	spin_lock(&dev->count_lock);
+	if (dev->open_count == INT_MAX) {
+		spin_unlock(&dev->count_lock);
+		error = EBUSY;
+		goto fail1;
+	}
+	firstopen = (dev->open_count == 0);
+	dev->open_count++;
+	spin_unlock(&dev->count_lock);
+
+	if (firstopen) {
+		/* XXX errno Linux->NetBSD */
+		error = drm_firstopen(dev);
+		if (error)
+			goto fail2;
+	}
 
 	error = fd_allocfile(&fp, &fd);
 	if (error)
-		goto fail1;
+		goto fail2;
 
 	struct drm_file *const file = kmem_zalloc(sizeof(*file), KM_SLEEP);
-
 	/* XXX errno Linux->NetBSD */
 	error = -drm_open_file(file, fp, dminor);
 	if (error)
@@ -581,16 +315,17 @@ drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 	/* Success!  (But error has to be EMOVEFD, not 0.)  */
 	return error;
 
-fail3:
-	kmem_free(file, sizeof(*file));
-
-fail2: __unused
+fail3:	kmem_free(file, sizeof(*file));
 	fd_abort(curproc, fp, fd);
-
-fail1:
-	atomic_dec_uint(&sc->sc_opencount);
-
-fail0:
+fail2:	spin_lock(&dev->count_lock);
+	KASSERT(0 < dev->open_count);
+	--dev->open_count;
+	lastclose = (dev->open_count == 0);
+	spin_unlock(&dev->count_lock);
+	if (lastclose)
+		(void)drm_lastclose(dev);
+fail1:	drm_minor_release(dminor);
+fail0:	KASSERT(error);
 	return error;
 }
 
@@ -598,15 +333,84 @@ static int
 drm_close(struct file *fp)
 {
 	struct drm_file *const file = fp->f_data;
-	struct drm_softc *const sc = device_private(file->minor->kdev);
-	int error;
+	struct drm_minor *const dminor = file->minor;
+	struct drm_device *const dev = dminor->dev;
+	bool lastclose;
 
-	KASSERT(0 < sc->sc_opencount);
+	drm_close_file(file);
+	kmem_free(file, sizeof(*file));
 
-	/* XXX errno Linux->NetBSD */
-	error = -drm_close_file(file);
-	atomic_dec_uint(&sc->sc_opencount);
-	return error;
+	spin_lock(&dev->count_lock);
+	KASSERT(0 < dev->open_count);
+	--dev->open_count;
+	lastclose = (dev->open_count == 0);
+	spin_unlock(&dev->count_lock);
+
+	if (lastclose)
+		(void)drm_lastclose(dev);
+
+	drm_minor_release(dminor);
+
+	return 0;
+}
+
+static int
+drm_firstopen(struct drm_device *dev)
+{
+	int ret;
+
+	if (drm_core_check_feature(dev, DRIVER_MODESET))
+		return 0;
+
+	if (dev->driver->firstopen) {
+		ret = (*dev->driver->firstopen)(dev);
+		if (ret)
+			goto fail0;
+	}
+
+	ret = drm_legacy_dma_setup(dev);
+	if (ret)
+		goto fail1;
+
+	return 0;
+
+fail2: __unused
+	drm_legacy_dma_takedown(dev);
+fail1:	if (dev->driver->lastclose)
+		(*dev->driver->lastclose)(dev);
+fail0:	KASSERT(ret);
+	return ret;
+}
+
+int
+drm_lastclose(struct drm_device *dev)
+{
+	struct drm_vma_entry *vma, *vma_temp;
+
+	/* XXX Order is sketchy here...  */
+	if (dev->driver->lastclose)
+		(*dev->driver->lastclose)(dev);
+	if (dev->irq_enabled && !drm_core_check_feature(dev, DRIVER_MODESET))
+		drm_irq_uninstall(dev);
+
+	mutex_lock(&dev->struct_mutex);
+	drm_agp_clear(dev);
+	drm_legacy_sg_cleanup(dev);
+	list_for_each_entry_safe(vma, vma_temp, &dev->vmalist, head) {
+		list_del(&vma->head);
+		kfree(vma);
+	}
+	drm_legacy_dma_takedown(dev);
+	mutex_unlock(&dev->struct_mutex);
+
+	if (!drm_core_check_feature(dev, DRIVER_MODESET)) {
+		dev->sigdata.lock = NULL;
+		dev->context_flag = 0;
+		dev->last_context = 0;
+		dev->if_version = 0;
+	}
+
+	return 0;
 }
 
 static int
@@ -631,13 +435,12 @@ drm_read(struct file *fp, off_t *off, struct uio *uio, kauth_cred_t cred,
 				error = 0;
 			break;
 		}
-
 		if (event == NULL)
 			break;
-
 		error = uiomove(event->event, event->event->length, uio);
 		if (error)	/* XXX Requeue the event?  */
 			break;
+		(*event->destroy)(event);
 	}
 
 	/* Success!  */
@@ -722,7 +525,6 @@ drm_kqfilter(struct file *fp, struct knote *kn)
 		SLIST_INSERT_HEAD(&file->event_selq.sel_klist, kn, kn_selnext);
 		spin_unlock_irqrestore(&dev->event_lock, irqflags);
 		return 0;
-
 	case EVFILT_WRITE:
 	default:
 		return EINVAL;
@@ -774,15 +576,18 @@ static int
 drm_stat(struct file *fp, struct stat *st)
 {
 	struct drm_file *const file = fp->f_data;
+	struct drm_minor *const dminor = file->minor;
+	const dev_t devno = makedev(cdevsw_lookup_major(&drm_cdevsw),
+	    64*dminor->index + dminor->type);
 
 	(void)memset(st, 0, sizeof(*st));
 
-	st->st_dev = file->minor->device;
+	st->st_dev = devno;
 	st->st_ino = 0;		/* XXX (dev,ino) uniqueness bleh */
 	st->st_uid = kauth_cred_geteuid(fp->f_cred);
 	st->st_gid = kauth_cred_getegid(fp->f_cred);
 	st->st_mode = S_IFCHR;	/* XXX what? */
-	st->st_rdev = file->minor->device;
+	st->st_rdev = devno;
 	/* XXX what else? */
 
 	return 0;
@@ -852,7 +657,6 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 	    (file->minor->type == DRM_MINOR_CONTROL))
 		return EACCES;
 
-	atomic_inc(&dev->ioctl_count);
 	if (!ISSET(ioctl->flags, DRM_UNLOCKED))
 		mutex_lock(&drm_global_mutex);
 
@@ -861,7 +665,6 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 
 	if (!ISSET(ioctl->flags, DRM_UNLOCKED))
 		mutex_unlock(&drm_global_mutex);
-	atomic_dec(&dev->ioctl_count);
 
 	return error;
 }
@@ -894,77 +697,30 @@ drm_version(struct drm_device *dev, void *data, struct drm_file *file)
 	error = drm_version_string(v->name, &v->name_len, dev->driver->name);
 	if (error)
 		goto out;
-
 	error = drm_version_string(v->date, &v->date_len, dev->driver->date);
 	if (error)
 		goto out;
-
 	error = drm_version_string(v->desc, &v->desc_len, dev->driver->desc);
 	if (error)
 		goto out;
-out:
-	return error;
-}
 
-int
-drm_config_found(device_t parent, struct drm_driver *driver,
-    unsigned long flags, struct drm_device *dev)
-{
-	static const struct drm_attach_args zero_daa;
-	struct drm_attach_args daa = zero_daa;
-	device_t child;
-	int64_t error64;
-	int error = 0;
-
-	daa.daa_drm_dev = dev;
-	daa.daa_driver = driver;
-	daa.daa_flags = flags;
-
-	dev->driver = driver;
-
-	child = config_found_ia(parent, "drmkmsbus", &daa, NULL);
-	if (child == NULL) {
-		aprint_error_dev(parent, "no drm pseudo-device found\n");
-		return ENOENT;
-	}
-
-	if (prop_dictionary_get_int64(device_properties(child), "error",
-		&error64))
-		error = (int)error64;
-
-	return error;
-}
-
-struct drm_local_map *
-drm_getsarea(struct drm_device *dev)
-{
-	struct drm_map_list *entry;
-
-	list_for_each_entry(entry, &dev->maplist, head) {
-		struct drm_local_map *const map = entry->map;
-
-		if (map == NULL)
-			continue;
-		if (map->type != _DRM_SHM)
-			continue;
-		if (!ISSET(map->flags, _DRM_CONTAINS_LOCK))
-			continue;
-
-		return map;
-	}
-
-	return NULL;
+out:	return error;
 }
 
 static paddr_t
 drm_mmap(dev_t d, off_t offset, int prot)
 {
-	struct drm_minor *const dminor = drm_dev_minor(d);
+	struct drm_minor *dminor;
+	paddr_t paddr;
 
-	if (dminor == NULL)
+	dminor = drm_minor_acquire(minor(d));
+	if (IS_ERR(dminor))
 		return (paddr_t)-1;
 
-	return drm_mmap_paddr(dminor->dev, offset, prot);
+	paddr = drm_mmap_paddr(dminor->dev, offset, prot);
+
+	drm_minor_release(dminor);
+	return paddr;
 }
 
 static int
@@ -977,6 +733,7 @@ drm_mmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
 	const int flags = args->dnm_flags;
 	const off_t offset = args->dnm_offset;
 	struct uvm_object *uobj;
+	voff_t uoffset;
 	const vm_prot_t vm_maxprot = (VM_PROT_READ | VM_PROT_WRITE);
 	vm_prot_t vm_prot;
 	int uvmflag;
@@ -991,26 +748,20 @@ drm_mmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
 		return -EACCES;
 	if (flags != MAP_SHARED)
 		return -EINVAL;
+	if (offset != (offset & ~(PAGE_SIZE-1)))
+		return -EINVAL;
+	if (size != (size & ~(PAGE_SIZE-1)))
+		return -EINVAL;
 	(void)addr;		/* XXX ignore -- no MAP_FIXED for now */
 
-	/* Try a GEM object mapping first.  */
-	ret = drm_gem_mmap_object(dev, offset, size, prot, &uobj);
+	ret = (*dev->driver->mmap_object)(dev, offset, size, prot, &uobj,
+	    &uoffset, file->filp);
 	if (ret)
 		return ret;
-	if (uobj != NULL)
-		goto map;
+	if (uobj == NULL)
+		return -EINVAL;
 
-	/* Try a traditional DRM mapping second.  */
-	ret = drm_mmap_object(dev, offset, size, prot, &uobj);
-	if (ret)
-		return ret;
-	if (uobj != NULL)
-		goto map;
-
-	/* Fail.  */
-	return ret;
-
-map:	vm_prot = ((ISSET(prot, PROT_READ)? VM_PROT_READ : 0) |
+	vm_prot = ((ISSET(prot, PROT_READ)? VM_PROT_READ : 0) |
 	    (ISSET(prot, PROT_WRITE)? VM_PROT_WRITE : 0));
 	KASSERT(vm_prot == (vm_prot & vm_maxprot));
 	uvmflag = UVM_MAPFLAG(vm_prot, vm_maxprot, UVM_INH_COPY,
@@ -1020,8 +771,8 @@ map:	vm_prot = ((ISSET(prot, PROT_READ)? VM_PROT_READ : 0) |
 	vaddr = (*curproc->p_emul->e_vm_default_addr)(curproc,
 	    (vaddr_t)curproc->p_vmspace->vm_daddr, size);
 	/* XXX errno NetBSD->Linux */
-	ret = -uvm_map(&curproc->p_vmspace->vm_map, &vaddr, size, uobj, offset,
-	    align, uvmflag);
+	ret = -uvm_map(&curproc->p_vmspace->vm_map, &vaddr, size, uobj,
+	    uoffset, align, uvmflag);
 	if (ret) {
 		(*uobj->pgops->pgo_detach)(uobj);
 		return ret;

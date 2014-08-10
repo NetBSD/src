@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.181 2014/02/07 00:25:45 joerg Exp $
+#	$NetBSD: Makefile.i386,v 1.181.2.1 2014/08/10 06:53:59 tls Exp $
 
 # Makefile for NetBSD
 #
@@ -33,6 +33,7 @@ GENASSYM_CONF=	${I386}/i386/genassym.cf
 ##
 ## (2) compile settings
 ##
+DEFCOPTS=	-O2 -fno-omit-frame-pointer
 CPPFLAGS+=	-Di386
 CFLAGS+=	-msoft-float
 ## no-sse implies no-sse2 but not no-avx

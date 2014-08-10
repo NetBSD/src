@@ -1,4 +1,4 @@
-/*	$NetBSD: mm_types.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: mm_types.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,5 +37,13 @@
 struct page {
 	struct vm_page p_vmp;
 };
+
+typedef unsigned pgprot_t;
+
+static inline unsigned
+pgprot_val(pgprot_t pgprot)
+{
+	return pgprot;
+}
 
 #endif  /* _LINUX_MM_TYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.6 2014/01/28 13:02:56 martin Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.6.2.1 2014/08/10 06:56:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.6 2014/01/28 13:02:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.6.2.1 2014/08/10 06:56:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -846,20 +846,15 @@ ext2fs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 		}
 
 		/* Neither -- keep ascending the family tree.  */
-
-		/*
-		 * Unlock vp so that we can lock the parent, but keep
-		 * vp referenced until after we have found the parent,
-		 * so that dotdot_ino will not be recycled.
-		 *
-		 * XXX This guarantees that vp's inode number will not
-		 * be recycled, but why can't dotdot_ino be recycled?
-		 */
-		VOP_UNLOCK(vp);
-		error = VFS_VGET(mp, dotdot_ino, &dvp);
-		vrele(vp);
-		if (error)
+		error = vcache_get(mp, &dotdot_ino, sizeof(dotdot_ino), &dvp);
+		vput(vp);
+		if (error)  
 			return error;
+		error = vn_lock(dvp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(dvp);
+			return error;
+		}
 
 		KASSERT(dvp != NULL);
 		KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);

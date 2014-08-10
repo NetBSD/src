@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/05 21:37:02 tron Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2014/08/10 07:10:56 tls Exp $
 
 LIBISPRIVATE=	yes
 
@@ -24,6 +24,8 @@ HOSTPROG_CXX=	1
 
 COPTS.diagnostic.c=	-Wno-stack-protector
 COPTS.intl.c=		-Wno-stack-protector
+
+${SRCS}: ${GCCARCH}/defs.mk
 
 .include <bsd.lib.mk>
 

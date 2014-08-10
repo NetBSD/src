@@ -1,4 +1,4 @@
-/*	$NetBSD: lwres.h,v 1.4 2012/06/05 00:43:06 christos Exp $	*/
+/*	$NetBSD: lwres.h,v 1.4.10.1 2014/08/10 07:06:44 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")

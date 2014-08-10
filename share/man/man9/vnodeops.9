@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.93 2014/02/27 16:51:37 hannken Exp $
+.\"     $NetBSD: vnodeops.9,v 1.93.2.1 2014/08/10 06:53:26 tls Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 27, 2014
+.Dd July 21, 2014
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -42,6 +42,8 @@
 .Nm VOP_SETATTR ,
 .Nm VOP_READ ,
 .Nm VOP_WRITE ,
+.Nm VOP_FALLOCATE ,
+.Nm VOP_FDISCARD ,
 .Nm VOP_IOCTL ,
 .Nm VOP_FCNTL ,
 .Nm VOP_POLL ,
@@ -115,6 +117,10 @@
 .Fn VOP_WRITE "struct vnode *vp" "struct uio *uio" "int ioflag" \
 "kauth_cred_t cred"
 .Ft int
+.Fn VOP_FALLOCATE "struct vnode *vp" "off_t pos" "off_t len"
+.Ft int
+.Fn VOP_FDISCARD "struct vnode *vp" "off_t pos" "off_t len"
+.Ft int
 .Fn VOP_IOCTL "struct vnode *vp" "u_long command" "void *data" \
 "int fflag" "kauth_cred_t cred"
 .Ft int
@@ -135,7 +141,7 @@
 .Fn VOP_SEEK "struct vnode *vp" "off_t oldoff" "off_t newoff" \
 "kauth_cred_t cred"
 .Ft int
-.Fn VOP_REMOVE "struct vnode *vp" "struct vnode *vp" \
+.Fn VOP_REMOVE "struct vnode *dvp" "struct vnode *vp" \
 "struct componentname *cnp"
 .Ft int
 .Fn VOP_LINK "struct vnode *dvp" "struct vnode *vp" \
@@ -235,6 +241,8 @@ The following table gives a summary of the operations.
 .It VOP_SETATTR	Set file attributes
 .It VOP_READ	Read from a file
 .It VOP_WRITE	Write to a file
+.It VOP_FALLOCATE	Allocate backing for a file
+.It VOP_FDISCARD	Discard backing for a file
 .It VOP_IOCTL	Perform device-specific I/O
 .It VOP_FCNTL	Perform file control
 .It VOP_POLL	Test if poll event has occurred
@@ -555,6 +563,10 @@ Attributes which are not available are set to the value VNOVAL.
 .Pp
 For more information on vnode attributes see
 .Xr vattr 9 .
+Historically it was considered acceptable to call
+.Fn VOP_GETATTR
+without first locking the vnode.
+This usage is deprecated.
 .Pp
 The vnode
 .Fa vp
@@ -649,6 +661,50 @@ The low 16 bits are a bit mask which can contain the same flags as
 .Pp
 Zero is returned on success, otherwise an error is returned.
 The vnode should be locked on entry and remains locked on exit.
+.It Fn VOP_FALLOCATE "vp" "pos" "len"
+Allocate backing store.
+The argument
+.Fa vp
+is the vnode for the file.
+The
+.Fa pos
+and
+.Fa len
+arguments (specified in bytes) name an extent within the file.
+The blocks underlying this range, rounding up at the top and down at
+the bottom if needed, are checked; if no physical storage is
+allocated, a physical block is allocated and zeroed.
+This operation removes
+.Dq holes
+from files.
+.It Fn VOP_FDISCARD "vp" "pos" "len"
+Discard backing store.
+The argument
+.Fa vp
+is the vnode for the file.
+The
+.Fa pos
+and
+.Fa len
+arguments (specified in bytes) name an extent within the file.
+The blocks underlying this range, rounding down at the top and up at
+the bottom if needed, are checked.
+If any physical storage is used, it is deallocated.
+This operation creates
+.Dq holes
+in files.
+Discarded blocks of regular files read back afterwards as zeroes.
+On devices, the underlying discard-block operation if any (e.g. ATA
+TRIM) is issued.
+The device handles this as it sees fit.
+In particular it is
+.Em not
+guaranteed that discarded blocks on devices will be zeroed; reading a
+discarded block might produce zeros, or ones, or the previously
+existing data, or some other data, or trash.
+.\" XXX: if you discard part of a block in a regular file, should that
+.\" part be explicitly zeroed? Also, how do you find the underlying
+.\" block size?
 .It Fn VOP_IOCTL "vp" "command" "data" "fflag" "cred"
 Perform device-specific I/O.
 The argument
@@ -851,11 +907,18 @@ is the pathname component about the file's new name.
 If the operation is successful zero is returned, otherwise an error
 code is returned.
 .Pp
+The caller must hold the target file system's rename lock.
 The source directory and file vnodes should be unlocked and their
 reference counts should be incremented before entry.
 The target directory and file vnodes should both be locked on entry.
 .Fn VOP_RENAME
 updates the reference counts prior to returning.
+.Pp
+Because of the complexity and nastiness of the interface, please do
+not write new code that calls
+.Fn VOP_RENAME
+directly until such time as ongoing cleanup work reaches a point where
+the interface has been rendered halfway sane.
 .It Fn VOP_MKDIR "dvp" "vpp" "cnp" "vap"
 Make a new directory in a given directory.
 The argument

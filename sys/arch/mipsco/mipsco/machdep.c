@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2014/03/24 20:06:32 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77.2.1 2014/08/10 06:54:02 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2014/03/24 20:06:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77.2.1 2014/08/10 06:54:02 tls Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -183,7 +183,6 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 	extern char edata[], end[];
 	const char *bi_msg;
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	int nsym = 0;
 	char *ssym = 0;
 	char *esym = 0;
 	struct btinfo_symtab *bi_syms;
@@ -218,7 +217,6 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 
 	/* Load sysmbol table if present */
 	if (bi_syms != NULL) {
-		nsym = bi_syms->nsym;
 		ssym = (void *)bi_syms->ssym;
 		esym = (void *)bi_syms->esym;
 		kernend = (void *)mips_round_page(esym);
@@ -591,9 +589,7 @@ null_cnpollc(dev_t dev, int on)
 void
 consinit(void)
 {
-	int zs_unit;
 
-	zs_unit = 0;
 	cn_tab = &consdev_zs;
 
 	(*cn_tab->cn_init)(cn_tab);

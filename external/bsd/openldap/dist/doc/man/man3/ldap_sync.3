@@ -1,6 +1,6 @@
 .TH LDAP_SYNC 3 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" OpenLDAP: pkg/ldap/doc/man/man3/ldap_sync.3,v 1.1.2.7 2010/04/13 20:22:40 kurt Exp
-.\" Copyright 2006-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP$
+.\" Copyright 2006-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_sync_init, ldap_sync_init_refresh_only, ldap_sync_init_refresh_and_persist, ldap_sync_poll \- LDAP sync routines
@@ -20,7 +20,7 @@ OpenLDAP LDAP (libldap, \-lldap)
 .LP
 .BI "ldap_sync_t * ldap_sync_initialize(ldap_sync_t *" ls ");"
 .LP
-.BI "int ldap_sync_destroy(ldap_sync_t *" ls ", int " freeit ");"
+.BI "void ldap_sync_destroy(ldap_sync_t *" ls ", int " freeit ");"
 .LP
 .BI "typedef int (*" ldap_sync_search_entry_f ")(ldap_sync_t *" ls ","
 .RS

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.51 2011/01/22 22:26:10 matt Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.51.28.1 2014/08/10 06:56:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,6 @@
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
 #include <sys/disk.h>
-#include <sys/rbtree.h>
 #endif
 
 /*
@@ -130,7 +129,6 @@ struct nfs_args {
  */
 struct	nfsmount {
 	kmutex_t nm_lock;		/* Lock for this structure */
-	krwlock_t nm_rbtlock;		/* Lock for the rbtree */
 	kcondvar_t nm_rcvcv;
 	kcondvar_t nm_sndcv;
 	int	nm_flag;		/* Flags for soft/hard... */
@@ -138,7 +136,6 @@ struct	nfsmount {
 	int	nm_numgrps;		/* Max. size of groupslist */
 	struct	vnode *nm_vnode;
 	struct	socket *nm_so;		/* Rpc socket */
-	struct	rb_tree nm_rbtree;	/* red/black tree by fh for nfsnode */
 	int	nm_sotype;		/* Type of socket */
 	int	nm_soproto;		/* and protocol */
 	int	nm_soflags;		/* pr_flags for socket protocol */

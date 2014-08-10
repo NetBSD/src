@@ -1,8 +1,9 @@
-.TH SLAPO-PCACHE 5 "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 1998-2010 The OpenLDAP Foundation, All Rights Reserved.
+.lf 1 stdin
+.TH SLAPO-PCACHE 5 "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 1998-2014 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-pcache.5,v 1.14.2.12 2010/04/13 20:22:44 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapo\-pcache \- proxy cache overlay to slapd
 .SH SYNOPSIS
@@ -49,7 +50,8 @@ with the
 .BR meta ,
 and
 .BR sql
-backends.
+backends. Please note that the underlying backend must have a configured
+.BR rootdn.
 .TP
 .B pcache <database> <max_entries> <numattrsets> <entry_limit> <cc_period> 
 The directive enables proxy caching in the current backend and sets general
@@ -78,6 +80,7 @@ special attributes "*" (all user attributes), "+" (all operational attributes)
 or both; in the latter case, any other attribute is redundant and should
 be avoided for clarity.  A set of attributes can contain "1.1" as the only
 attribute; in this case, only the presence of the entries is cached.
+Attributes prefixed by "undef:" need not be present in the schema.
 
 .TP
 .B pcacheMaxQueries <queries>

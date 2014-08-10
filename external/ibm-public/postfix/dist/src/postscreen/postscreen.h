@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen.h,v 1.1.1.3 2013/09/25 19:06:33 tron Exp $	*/
+/*	$NetBSD: postscreen.h,v 1.1.1.3.2.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -38,6 +38,25 @@
 #define PSC_READ_BUF_SIZE	1024
 
  /*
+  * Numeric indices and symbolic names for tests whose time stamps and status
+  * flags can be accessed by numeric index.
+  */
+#define PSC_TINDX_PREGR	0		/* pregreet */
+#define PSC_TINDX_DNSBL	1		/* dnsbl */
+#define PSC_TINDX_PIPEL	2		/* pipelining */
+#define PSC_TINDX_NSMTP	3		/* non-smtp command */
+#define PSC_TINDX_BARLF	4		/* bare newline */
+#define PSC_TINDX_COUNT	5		/* number of tests */
+
+#define PSC_TNAME_PREGR	"pregreet"
+#define PSC_TNAME_DNSBL	"dnsbl"
+#define PSC_TNAME_PIPEL	"pipelining"
+#define PSC_TNAME_NSMTP	"non-smtp command"
+#define PSC_TNAME_BARLF	"bare newline"
+
+#define PSC_TINDX_BYTNAME(tname) (PSC_TINDX_ ## tname)
+
+ /*
   * Per-session state.
   */
 typedef struct {
@@ -55,16 +74,11 @@ typedef struct {
     /* Test context. */
     struct timeval start_time;		/* start of current test */
     const char *test_name;		/* name of current test */
-    /* Before-handshake tests. */
-    time_t  pregr_stamp;		/* pregreet expiration time */
-    time_t  dnsbl_stamp;		/* dnsbl expiration time */
+    time_t  expire_time[PSC_TINDX_COUNT];	/* per-test expiration */
     VSTRING *dnsbl_reply;		/* dnsbl reject text */
+    int     dnsbl_score;		/* saved DNSBL score */
+    const char *dnsbl_name;		/* DNSBL name with largest weight */
     int     dnsbl_index;		/* dnsbl request index */
-    time_t  penal_stamp;		/* penalty expiration time */
-    /* Built-in SMTP protocol engine. */
-    time_t  pipel_stamp;		/* pipelining expiration time */
-    time_t  nsmtp_stamp;		/* non-smtp command expiration time */
-    time_t  barlf_stamp;		/* bare newline expiration time */
     const char *rcpt_reply;		/* how to reject recipients */
     int     command_count;		/* error + junk command count */
     const char *protocol;		/* SMTP or ESMTP */
@@ -78,10 +92,26 @@ typedef struct {
     const char *where;			/* SMTP protocol state */
 } PSC_STATE;
 
+ /*
+  * Emulate legacy ad-hoc variables on top of indexable time stamps. This
+  * avoids massive scar tissue during initial feature development.
+  */
+#define pregr_stamp	expire_time[PSC_TINDX_PREGR]
+#define dnsbl_stamp	expire_time[PSC_TINDX_DNSBL]
+#define pipel_stamp	expire_time[PSC_TINDX_PIPEL]
+#define nsmtp_stamp	expire_time[PSC_TINDX_NSMTP]
+#define barlf_stamp	expire_time[PSC_TINDX_BARLF]
+
+ /*
+  * Special expiration time values.
+  */
 #define PSC_TIME_STAMP_NEW		(0)	/* test was never passed */
 #define PSC_TIME_STAMP_DISABLED		(1)	/* never passed but disabled */
 #define PSC_TIME_STAMP_INVALID		(-1)	/* must not be cached */
 
+ /*
+  * Status flags.
+  */
 #define PSC_STATE_FLAG_NOFORWARD	(1<<0)	/* don't forward this session */
 #define PSC_STATE_FLAG_USING_TLS	(1<<1)	/* using the TLS proxy */
 #define PSC_STATE_FLAG_UNUSED2		(1<<2)	/* use me! */
@@ -90,8 +120,11 @@ typedef struct {
 #define PSC_STATE_FLAG_HANGUP		(1<<5)	/* NOT a test failure */
 #define PSC_STATE_FLAG_SMTPD_X21	(1<<6)	/* hang up after command */
 #define PSC_STATE_FLAG_WLIST_FAIL	(1<<7)	/* do not whitelist */
+#define PSC_STATE_FLAG_TEST_BASE	(8)	/* start of indexable flags */
 
  /*
+  * Tests whose flags and expiration time can be accessed by numerical index.
+  * 
   * Important: every MUMBLE_TODO flag must have a MUMBLE_PASS flag, such that
   * MUMBLE_PASS == PSC_STATE_FLAGS_TODO_TO_PASS(MUMBLE_TODO).
   * 
@@ -109,39 +142,74 @@ typedef struct {
   * the result was ignored. MUMBLE_FAIL, on the other hand, is always final.
   * We use MUMBLE_SKIP to indicate that a decision was either "fail" or
   * forced "pass".
+  * 
+  * The difference between DONE and SKIP is in the beholder's eye. These flags
+  * share the same bit.
   */
 #define PSC_STATE_FLAGS_TODO_TO_PASS(todo_flags) ((todo_flags) >> 1)
 #define PSC_STATE_FLAGS_TODO_TO_DONE(todo_flags) ((todo_flags) << 1)
 
-#define PSC_STATE_FLAG_PENAL_UPDATE	(1<<6)	/* save new penalty */
-#define PSC_STATE_FLAG_PENAL_FAIL	(1<<7)	/* penalty is active */
+#define PSC_STATE_FLAG_SHIFT_FAIL	(0)	/* failed test */
+#define PSC_STATE_FLAG_SHIFT_PASS	(1)	/* passed test */
+#define PSC_STATE_FLAG_SHIFT_TODO	(2)	/* expired test */
+#define PSC_STATE_FLAG_SHIFT_DONE	(3)	/* decision is final */
+#define PSC_STATE_FLAG_SHIFT_SKIP	(3)	/* action is already logged */
+#define PSC_STATE_FLAG_SHIFT_STRIDE	(4)	/* nr of flags per test */
 
-#define PSC_STATE_FLAG_PREGR_FAIL	(1<<8)	/* failed pregreet test */
-#define PSC_STATE_FLAG_PREGR_PASS	(1<<9)	/* passed pregreet test */
-#define PSC_STATE_FLAG_PREGR_TODO	(1<<10)	/* pregreet test expired */
-#define PSC_STATE_FLAG_PREGR_DONE	(1<<11)	/* decision is final */
+#define PSC_STATE_FLAG_SHIFT_BYFNAME(fname) (PSC_STATE_FLAG_SHIFT_ ## fname)
 
-#define PSC_STATE_FLAG_DNSBL_FAIL	(1<<12)	/* failed DNSBL test */
-#define PSC_STATE_FLAG_DNSBL_PASS	(1<<13)	/* passed DNSBL test */
-#define PSC_STATE_FLAG_DNSBL_TODO	(1<<14)	/* DNSBL test expired */
-#define PSC_STATE_FLAG_DNSBL_DONE	(1<<15)	/* decision is final */
+ /*
+  * Indexable per-test flags. These are used for DNS whitelisting multiple
+  * tests, without needing per-test ad-hoc code.
+  */
+#define PSC_STATE_FLAG_BYTINDX_FNAME(tindx, fname) \
+	(1U << (PSC_STATE_FLAG_TEST_BASE \
+	    + PSC_STATE_FLAG_SHIFT_STRIDE * (tindx) \
+	    + PSC_STATE_FLAG_SHIFT_BYFNAME(fname)))
 
- /* Room here for one more after-handshake test. */
+#define PSC_STATE_FLAG_BYTINDX_FAIL(tindx) \
+	PSC_STATE_FLAG_BYTINDX_FNAME((tindx), FAIL)
+#define PSC_STATE_FLAG_BYTINDX_PASS(tindx) \
+	PSC_STATE_FLAG_BYTINDX_FNAME((tindx), PASS)
+#define PSC_STATE_FLAG_BYTINDX_TODO(tindx) \
+	PSC_STATE_FLAG_BYTINDX_FNAME((tindx), TODO)
+#define PSC_STATE_FLAG_BYTINDX_DONE(tindx) \
+	PSC_STATE_FLAG_BYTINDX_FNAME((tindx), DONE)
+#define PSC_STATE_FLAG_BYTINDX_SKIP(tindx) \
+	PSC_STATE_FLAG_BYTINDX_FNAME((tindx), SKIP)
 
-#define PSC_STATE_FLAG_PIPEL_FAIL	(1<<20)	/* failed pipelining test */
-#define PSC_STATE_FLAG_PIPEL_PASS	(1<<21)	/* passed pipelining test */
-#define PSC_STATE_FLAG_PIPEL_TODO	(1<<22)	/* pipelining test expired */
-#define PSC_STATE_FLAG_PIPEL_SKIP	(1<<23)	/* action is already logged */
+ /*
+  * Flags with distinct names. These are used in the per-test ad-hoc code.
+  */
+#define PSC_STATE_FLAG_BYTNAME_FNAME(tname, fname) \
+	(1U << (PSC_STATE_FLAG_TEST_BASE \
+	    + PSC_STATE_FLAG_SHIFT_STRIDE * PSC_TINDX_BYTNAME(tname) \
+	    + PSC_STATE_FLAG_SHIFT_BYFNAME(fname)))
 
-#define PSC_STATE_FLAG_NSMTP_FAIL	(1<<24)	/* failed non-SMTP test */
-#define PSC_STATE_FLAG_NSMTP_PASS	(1<<25)	/* passed non-SMTP test */
-#define PSC_STATE_FLAG_NSMTP_TODO	(1<<26)	/* non-SMTP test expired */
-#define PSC_STATE_FLAG_NSMTP_SKIP	(1<<27)	/* action is already logged */
+#define PSC_STATE_FLAG_PREGR_FAIL PSC_STATE_FLAG_BYTNAME_FNAME(PREGR, FAIL)
+#define PSC_STATE_FLAG_PREGR_PASS PSC_STATE_FLAG_BYTNAME_FNAME(PREGR, PASS)
+#define PSC_STATE_FLAG_PREGR_TODO PSC_STATE_FLAG_BYTNAME_FNAME(PREGR, TODO)
+#define PSC_STATE_FLAG_PREGR_DONE PSC_STATE_FLAG_BYTNAME_FNAME(PREGR, DONE)
 
-#define PSC_STATE_FLAG_BARLF_FAIL	(1<<28)	/* failed bare newline test */
-#define PSC_STATE_FLAG_BARLF_PASS	(1<<29)	/* passed bare newline test */
-#define PSC_STATE_FLAG_BARLF_TODO	(1<<30)	/* bare newline test expired */
-#define PSC_STATE_FLAG_BARLF_SKIP	(1<<31)	/* action is already logged */
+#define PSC_STATE_FLAG_DNSBL_FAIL PSC_STATE_FLAG_BYTNAME_FNAME(DNSBL, FAIL)
+#define PSC_STATE_FLAG_DNSBL_PASS PSC_STATE_FLAG_BYTNAME_FNAME(DNSBL, PASS)
+#define PSC_STATE_FLAG_DNSBL_TODO PSC_STATE_FLAG_BYTNAME_FNAME(DNSBL, TODO)
+#define PSC_STATE_FLAG_DNSBL_DONE PSC_STATE_FLAG_BYTNAME_FNAME(DNSBL, DONE)
+
+#define PSC_STATE_FLAG_PIPEL_FAIL PSC_STATE_FLAG_BYTNAME_FNAME(PIPEL, FAIL)
+#define PSC_STATE_FLAG_PIPEL_PASS PSC_STATE_FLAG_BYTNAME_FNAME(PIPEL, PASS)
+#define PSC_STATE_FLAG_PIPEL_TODO PSC_STATE_FLAG_BYTNAME_FNAME(PIPEL, TODO)
+#define PSC_STATE_FLAG_PIPEL_SKIP PSC_STATE_FLAG_BYTNAME_FNAME(PIPEL, SKIP)
+
+#define PSC_STATE_FLAG_NSMTP_FAIL PSC_STATE_FLAG_BYTNAME_FNAME(NSMTP, FAIL)
+#define PSC_STATE_FLAG_NSMTP_PASS PSC_STATE_FLAG_BYTNAME_FNAME(NSMTP, PASS)
+#define PSC_STATE_FLAG_NSMTP_TODO PSC_STATE_FLAG_BYTNAME_FNAME(NSMTP, TODO)
+#define PSC_STATE_FLAG_NSMTP_SKIP PSC_STATE_FLAG_BYTNAME_FNAME(NSMTP, SKIP)
+
+#define PSC_STATE_FLAG_BARLF_FAIL PSC_STATE_FLAG_BYTNAME_FNAME(BARLF, FAIL)
+#define PSC_STATE_FLAG_BARLF_PASS PSC_STATE_FLAG_BYTNAME_FNAME(BARLF, PASS)
+#define PSC_STATE_FLAG_BARLF_TODO PSC_STATE_FLAG_BYTNAME_FNAME(BARLF, TODO)
+#define PSC_STATE_FLAG_BARLF_SKIP PSC_STATE_FLAG_BYTNAME_FNAME(BARLF, SKIP)
 
  /*
   * Aggregates for individual tests.
@@ -157,12 +225,17 @@ typedef struct {
 #define PSC_STATE_MASK_BARLF_TODO_FAIL \
 	(PSC_STATE_FLAG_BARLF_TODO | PSC_STATE_FLAG_BARLF_FAIL)
 
+#define PSC_STATE_MASK_PREGR_TODO_DONE \
+	(PSC_STATE_FLAG_PREGR_TODO | PSC_STATE_FLAG_PREGR_DONE)
 #define PSC_STATE_MASK_PIPEL_TODO_SKIP \
 	(PSC_STATE_FLAG_PIPEL_TODO | PSC_STATE_FLAG_PIPEL_SKIP)
 #define PSC_STATE_MASK_NSMTP_TODO_SKIP \
 	(PSC_STATE_FLAG_NSMTP_TODO | PSC_STATE_FLAG_NSMTP_SKIP)
 #define PSC_STATE_MASK_BARLF_TODO_SKIP \
 	(PSC_STATE_FLAG_BARLF_TODO | PSC_STATE_FLAG_BARLF_SKIP)
+
+#define PSC_STATE_MASK_PREGR_FAIL_DONE \
+	(PSC_STATE_FLAG_PREGR_FAIL | PSC_STATE_FLAG_PREGR_DONE)
 
 #define PSC_STATE_MASK_PIPEL_TODO_PASS_FAIL \
 	(PSC_STATE_MASK_PIPEL_TODO_FAIL | PSC_STATE_FLAG_PIPEL_PASS)
@@ -197,7 +270,7 @@ typedef struct {
   * Super-aggregates for all tests combined.
   */
 #define PSC_STATE_MASK_ANY_FAIL \
-	(PSC_STATE_FLAG_BLIST_FAIL | PSC_STATE_FLAG_PENAL_FAIL | \
+	(PSC_STATE_FLAG_BLIST_FAIL | \
 	PSC_STATE_MASK_EARLY_FAIL | PSC_STATE_MASK_SMTPD_FAIL | \
 	PSC_STATE_FLAG_WLIST_FAIL)
 
@@ -211,7 +284,7 @@ typedef struct {
 	(PSC_STATE_MASK_ANY_TODO | PSC_STATE_MASK_ANY_FAIL)
 
 #define PSC_STATE_MASK_ANY_UPDATE \
-	(PSC_STATE_MASK_ANY_PASS | PSC_STATE_FLAG_PENAL_UPDATE)
+	(PSC_STATE_MASK_ANY_PASS)
 
  /*
   * Meta-commands for state->where that reflect the initial command processor
@@ -416,13 +489,12 @@ extern int psc_dnsbl_request(const char *, void (*) (int, char *), char *);
   * postscreen_tests.c
   */
 #define PSC_INIT_TESTS(dst) do { \
+	time_t *_it_stamp_p; \
 	(dst)->flags = 0; \
-	(dst)->pregr_stamp = PSC_TIME_STAMP_INVALID; \
-	(dst)->dnsbl_stamp = PSC_TIME_STAMP_INVALID; \
-	(dst)->pipel_stamp = PSC_TIME_STAMP_INVALID; \
-	(dst)->nsmtp_stamp = PSC_TIME_STAMP_INVALID; \
-	(dst)->barlf_stamp = PSC_TIME_STAMP_INVALID; \
-	(dst)->penal_stamp = PSC_TIME_STAMP_INVALID; \
+	for (_it_stamp_p = (dst)->expire_time; \
+	    _it_stamp_p < (dst)->expire_time + PSC_TINDX_COUNT; \
+	    _it_stamp_p++) \
+	    *_it_stamp_p = PSC_TIME_STAMP_INVALID; \
     } while (0)
 #define PSC_BEGIN_TESTS(state, name) do { \
 	(state)->test_name = (name); \
@@ -433,6 +505,7 @@ extern void psc_parse_tests(PSC_STATE *, const char *, time_t);
 extern char *psc_print_tests(VSTRING *, PSC_STATE *);
 extern char *psc_print_grey_key(VSTRING *, const char *, const char *,
 				        const char *, const char *);
+extern const char *psc_test_name(int);
 
 #define PSC_MIN(x, y) ((x) < (y) ? (x) : (y))
 #define PSC_MAX(x, y) ((x) > (y) ? (x) : (y))

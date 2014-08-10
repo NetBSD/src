@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.17 2014/03/24 14:15:37 szptvlfn Exp $
+# $NetBSD: MMNET_GENERIC,v 1.17.2.1 2014/08/10 06:53:54 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.17.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -94,6 +94,7 @@ options     SYMTAB_SPACE=600000
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 
 # Compatibility options
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 #options 	COMPAT_09	# NetBSD 0.9
 #options 	COMPAT_10	# NetBSD 1.0

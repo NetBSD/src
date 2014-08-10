@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.9 2014/03/30 13:14:40 skrll Exp $*/
+/*$NetBSD: ixgbe.c,v 1.9.2.1 2014/08/10 06:54:57 tls Exp $*/
 
 #include "opt_inet.h"
 
@@ -107,6 +107,7 @@ static ixgbe_vendor_info_t ixgbe_vendor_info_array[] =
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_COMBO_BACKPLANE, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_BACKPLANE_FCOE, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_FCOE, 0, 0, 0},
+	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_DELL, 0, 0, 0},
 	/* required last entry */
 	{0, 0, 0, 0, 0}
 };
@@ -804,7 +805,6 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&stats->roc);
 	evcnt_detach(&stats->rjc);
 	evcnt_detach(&stats->mngprc);
-	evcnt_detach(&stats->mngptc);
 	evcnt_detach(&stats->xec);
 
 	/* Packet Transmission Stats */
@@ -1377,7 +1377,7 @@ static inline void
 ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	u64	queue = (u64)(1 << vector);
+	u64	queue = (u64)(1ULL << vector);
 	u32	mask;
 
 	if (hw->mac.type == ixgbe_mac_82598EB) {
@@ -1393,11 +1393,11 @@ ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 	}
 }
 
-static inline void
+__unused static inline void
 ixgbe_disable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	u64	queue = (u64)(1 << vector);
+	u64	queue = (u64)(1ULL << vector);
 	u32	mask;
 
 	if (hw->mac.type == ixgbe_mac_82598EB) {
@@ -2275,7 +2275,8 @@ ixgbe_allocate_legacy(struct adapter *adapter, const struct pci_attach_args *pa)
 		return ENXIO;
 	} else {
 		aprint_normal_dev(dev, "interrupting at %s\n",
-		    pci_intr_string(adapter->osdep.pc, adapter->osdep.ih, intrbuf, sizeof(intrbuf)));
+		    pci_intr_string(adapter->osdep.pc, adapter->osdep.ih,
+			intrbuf, sizeof(intrbuf)));
 	}
 
 	/*
@@ -2549,8 +2550,8 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 {
 #if defined(NETBSD_MSI_OR_MSIX)
 	struct 		ix_queue *que = adapter->queues;
-#endif
 	device_t	dev = adapter->dev;
+#endif
 	int		rid;
 
 #if defined(NETBSD_MSI_OR_MSIX)
@@ -2591,7 +2592,6 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 	else
 		(adapter->msix != 0) ? (rid = 1):(rid = 0);
 
-	printf("%s: disestablishing interrupt handler\n", device_xname(dev));
 	pci_intr_disestablish(adapter->osdep.pc, adapter->osdep.intr);
 	adapter->osdep.intr = NULL;
 
@@ -2724,6 +2724,8 @@ ixgbe_config_link(struct adapter *adapter)
 		if ((!autoneg) && (hw->mac.ops.get_link_capabilities))
                 	err  = hw->mac.ops.get_link_capabilities(hw,
 			    &autoneg, &negotiate);
+		else
+			negotiate = 0;
 		if (err)
 			goto out;
 		if (hw->mac.ops.setup_link)
@@ -3256,7 +3258,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	struct ip6_hdr ip6;
 	int  ehdrlen, ip_hlen = 0;
 	u16	etype;
-	u8	ipproto = 0;
+	u8	ipproto __diagused = 0;
 	bool	offload;
 	int ctxd = txr->next_avail_desc;
 	u16 vtag = 0;
@@ -4648,7 +4650,7 @@ next_desc:
 	** Schedule another interrupt if so.
 	*/
 	if ((staterr & IXGBE_RXD_STAT_DD) != 0) {
-		ixgbe_rearm_queues(adapter, (u64)(1 << que->msix));
+		ixgbe_rearm_queues(adapter, (u64)(1ULL << que->msix));
 		return true;
 	}
 
@@ -5019,9 +5021,9 @@ ixgbe_handle_link(void *context)
 {
 	struct adapter  *adapter = context;
 
-	ixgbe_check_link(&adapter->hw,
-	    &adapter->link_speed, &adapter->link_up, 0);
-       	ixgbe_update_link_status(adapter);
+	if (ixgbe_check_link(&adapter->hw,
+	    &adapter->link_speed, &adapter->link_up, 0) == 0)
+	    ixgbe_update_link_status(adapter);
 }
 
 /*
@@ -5066,6 +5068,8 @@ ixgbe_handle_msf(void *context)
 	autoneg = hw->phy.autoneg_advertised;
 	if ((!autoneg) && (hw->mac.ops.get_link_capabilities))
 		hw->mac.ops.get_link_capabilities(hw, &autoneg, &negotiate);
+	else
+		negotiate = 0;
 	if (hw->mac.ops.setup_link)
 		hw->mac.ops.setup_link(hw, autoneg, negotiate, TRUE);
 	return;
@@ -5629,8 +5633,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "Received Jabber");
 	evcnt_attach_dynamic(&stats->mngprc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Management Packets Received");
-	evcnt_attach_dynamic(&stats->mngptc, EVCNT_TYPE_MISC, NULL,
-	    stats->namebuf, "Management Packets Dropped");
 	evcnt_attach_dynamic(&stats->xec, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Checksum Errors");
 

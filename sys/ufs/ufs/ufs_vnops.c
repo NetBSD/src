@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.220 2014/01/23 10:13:57 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.220.2.1 2014/08/10 06:56:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.220 2014/01/23 10:13:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.220.2.1 2014/08/10 06:56:58 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -225,21 +225,20 @@ ufs_mknod(void *v)
 	UFS_WAPBL_UPDATE(*vpp, NULL, NULL, 0);
 	UFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
 	/*
-	 * Remove inode so that it will be reloaded by VFS_VGET and
+	 * Remove inode so that it will be reloaded by vcache_get and
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
 	(*vpp)->v_type = VNON;
 	VOP_UNLOCK(*vpp);
 	vgone(*vpp);
-	error = VFS_VGET(mp, ino, vpp);
+	error = vcache_get(mp, &ino, sizeof(ino), vpp);
 out:
 	fstrans_done(ap->a_dvp->v_mount);
 	if (error != 0) {
 		*vpp = NULL;
 		return (error);
 	}
-	VOP_UNLOCK(*vpp);
 	return (0);
 }
 

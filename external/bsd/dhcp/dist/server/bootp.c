@@ -1,11 +1,10 @@
-/*	$NetBSD: bootp.c,v 1.1.1.2 2013/03/24 22:50:38 christos Exp $	*/
-
+/*	$NetBSD: bootp.c,v 1.1.1.2.8.1 2014/08/10 07:06:56 tls Exp $	*/
 /* bootp.c
 
    BOOTP Protocol support. */
 
 /*
- * Copyright (c) 2009,2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2012-2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004,2005,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
@@ -27,16 +26,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bootp.c,v 1.1.1.2 2013/03/24 22:50:38 christos Exp $");
+__RCSID("$NetBSD: bootp.c,v 1.1.1.2.8.1 2014/08/10 07:06:56 tls Exp $");
 
 #include "dhcpd.h"
 #include <errno.h>
@@ -165,28 +158,26 @@ void bootp (packet)
 	option_state_allocate (&options, MDL);
 
 	/* Execute the subnet statements. */
-	execute_statements_in_scope ((struct binding_value **)0,
-				     packet, lease, (struct client_state *)0,
-				     packet -> options, options,
-				     &lease -> scope, lease -> subnet -> group,
-				     (struct group *)0);
+	execute_statements_in_scope (NULL, packet, lease, NULL,
+				     packet->options, options,
+				     &lease->scope, lease->subnet->group,
+				     NULL, NULL);
 
 	/* Execute statements from class scopes. */
 	for (i = packet -> class_count; i > 0; i--) {
-		execute_statements_in_scope
-			((struct binding_value **)0,
-			 packet, lease, (struct client_state *)0,
-			 packet -> options, options,
-			 &lease -> scope, packet -> classes [i - 1] -> group,
-			 lease -> subnet -> group);
+		execute_statements_in_scope(NULL, packet, lease, NULL,
+					    packet->options, options,
+					    &lease->scope,
+					    packet->classes[i - 1]->group,
+					    lease->subnet->group, NULL);
 	}
 
 	/* Execute the host statements. */
 	if (hp != NULL) {
 		execute_statements_in_scope (NULL, packet, lease, NULL,
 					     packet->options, options,
-					     &lease->scope,
-					     hp->group, lease->subnet->group);
+					     &lease->scope, hp->group,
+					     lease->subnet->group, NULL);
 	}
 	
 	/* Drop the request if it's not allowed for this client. */
@@ -345,10 +336,9 @@ void bootp (packet)
 	}
 
 	/* Execute the commit statements, if there are any. */
-	execute_statements ((struct binding_value **)0,
-			    packet, lease, (struct client_state *)0,
-			    packet -> options,
-			    options, &lease -> scope, lease -> on_commit);
+	execute_statements (NULL, packet, lease, NULL, packet->options,
+			    options, &lease->scope, lease->on_star.on_commit,
+			    NULL);
 
 	/* We're done with the option state. */
 	option_state_dereference (&options, MDL);

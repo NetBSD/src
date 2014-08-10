@@ -1,9 +1,9 @@
-/*	$NetBSD: modrdn.c,v 1.1.1.3 2010/12/12 15:23:11 adam Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.39.2.12 2010/04/13 20:23:31 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.

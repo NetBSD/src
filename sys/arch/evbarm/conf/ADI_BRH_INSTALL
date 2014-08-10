@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH_INSTALL,v 1.1 2003/04/08 20:49:01 thorpej Exp $
+#	$NetBSD: ADI_BRH_INSTALL,v 1.1.168.1 2014/08/10 06:53:54 tls Exp $
 #
 #	ADI_BRH_INSTALL -- BRH kernel with installation-sized
 #	ramdisk
@@ -6,3 +6,6 @@
 
 include "arch/evbarm/conf/ADI_BRH"
 include "arch/evbarm/conf/INSTALL"
+no config netbsd-fxp0
+no config netbsd-wd0
+no config netbsd-sd0

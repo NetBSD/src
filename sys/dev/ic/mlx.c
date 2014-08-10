@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.61 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: mlx.c,v 1.61.2.1 2014/08/10 06:54:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.61 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.61.2.1 2014/08/10 06:54:52 tls Exp $");
 
 #include "ld.h"
 
@@ -141,6 +141,7 @@ const struct cdevsw mlx_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

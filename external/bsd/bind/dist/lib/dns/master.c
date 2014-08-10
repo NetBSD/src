@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.11 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.11.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -801,13 +801,12 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 	dns_rdatalist_t rdatalist;
 	dns_rdatatype_t type;
 	rdatalist_head_t head;
-	int n;
 	int target_size = MINTSIZ;	/* only one rdata at a time */
 	isc_buffer_t buffer;
 	isc_buffer_t target;
 	isc_result_t result;
 	isc_textregion_t r;
-	unsigned int start, stop, step, i;
+	int i, n, start, stop, step = 0;
 	dns_incctx_t *ictx;
 
 	ictx = lctx->inc;
@@ -825,8 +824,10 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 	}
 	isc_buffer_init(&target, target_mem, target_size);
 
-	n = sscanf(range, "%u-%u/%u", &start, &stop, &step);
-	if (n < 2 || stop < start) {
+	n = sscanf(range, "%d-%d/%d", &start, &stop, &step);
+	if ((n < 2) || (start < 0) || (stop < 0) || (step < 0) ||
+	    (stop < start))
+	{
 	       (*callbacks->error)(callbacks,
 				  "%s: %s:%lu: invalid range '%s'",
 				  "$GENERATE", source, line, range);

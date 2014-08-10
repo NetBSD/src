@@ -13,12 +13,21 @@
 # The default is $host_cpu.
 
 case $host in
+ arm*-*-netbsdelf* | \
+ i[34567]86-*-netbsdelf* | \
+ m68*-*-netbsdelf* | \
+ sparc-*-netbsdelf* | \
+ vax-*-netbsdelf*)
+    ;;
  alpha*-*-osf1* | \
  alpha*-*-osf2* | \
+ arm*-*-netbsd* | \
  hppa*-*-hiux* | \
  i[34567]86-ncr-* | \
  i[34567]86-*-dgux* | \
  i[34567]86-*-lynxos* | \
+ i[34567]86-*-netbsd* | \
+ i[34567]86-*-openbsd[0-2].* | i[34567]86-*-openbsd3.[0-3] | \
  i[34567]86-*-sco3.2v5* | \
  i[34567]86-*-sco3.2v4* | \
  i[34567]86-*-sco* | \
@@ -29,7 +38,10 @@ case $host in
  i[34567]86-*-unixware* | \
  i[34567]86-*-sysv* | \
  i[34567]86-*-isc* | \
+ m68*-*-netbsd* | \
+ sparc-*-netbsd* | \
  rs6000-*-lynxos* | \
+ vax-*-netbsd* | \
  null)
     echo "*** Configuration $host is obsolete." >&2
     echo "*** Support has been REMOVED." >&2
@@ -78,7 +90,6 @@ alpha*-*-openbsd*)	gdb_host=nbsd ;;
 arm*-*-linux*)		gdb_host=linux ;;
 arm*-*-netbsdelf* | arm*-*-knetbsd*-gnu)
 			gdb_host=nbsdelf ;;
-arm*-*-netbsd*)		gdb_host=nbsdaout ;;
 arm*-*-openbsd*)	gdb_host=nbsdelf ;;
 
 hppa*-*-hpux*)
@@ -91,7 +102,6 @@ i[34567]86-*-freebsd* | i[34567]86-*-kfreebsd*-gnu)
 			gdb_host=fbsd ;;
 i[34567]86-*-netbsdelf* | i[34567]86-*-knetbsd*-gnu)
 			gdb_host=nbsdelf ;;
-i[34567]86-*-netbsd*)	gdb_host=nbsdaout ;;
 i[34567]86-*-go32*)	gdb_host=go32 ;;
 i[34567]86-*-mingw32*)	gdb_host=mingw
 			gdb_host_obs=mingw-hdep.o
@@ -100,8 +110,6 @@ i[34567]86-*-msdosdjgpp*) gdb_host=go32 ;;
 i[34567]86-*-linux*)	gdb_host=linux ;;
 i[34567]86-*-gnu*)	gdb_host=i386gnu ;;
 i[3456]86-*-nto*) 	gdb_host=nto ;;
-i[34567]86-*-openbsd[0-2].* | i[34567]86-*-openbsd3.[0-3])
-			gdb_host=obsdaout ;;
 i[34567]86-*-openbsd*)	gdb_host=obsd ;;
 i[34567]86-*-solaris2.1[0-9]* | x86_64-*-solaris2.1[0-9]*)
 			gdb_host=sol2-64 ;;
@@ -114,7 +122,6 @@ ia64-*-linux*)		gdb_host=linux ;;
 m68*-*-linux*)		gdb_host=linux ;;
 m68*-*-netbsdelf* | m68*-*-knetbsd*-gnu | m5407-*-netbsdelf*)
 			gdb_host=nbsdelf ;;
-m68*-*-netbsd*)		gdb_host=nbsdaout ;;
 m68*-*-openbsd*)	gdb_host=obsd ;;
 
 m88*-*-openbsd*)	gdb_host=obsd ;;
@@ -126,25 +133,25 @@ mips*-*-netbsd* | mips*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 mips64*-*-openbsd*)	gdb_host=obsd64 ;;
 
-powerpc-*-aix* | rs6000-*-*)
+powerpc-*-aix* | rs6000-*-* | powerpc64-*-aix*)
 			gdb_host=aix ;;
 powerpc*-*-freebsd*)	gdb_host=fbsd ;;
-powerpc-*-linux*)	gdb_host=linux ;;
 powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 powerpc64-*-netbsd* | powerpc64-*-knetbsd*-gnu)
 			gdb_host=ppc64-nbsd ;;
 powerpc-*-openbsd*)	gdb_host=obsd ;;
 
-powerpc64-*-linux*)     gdb_host=ppc64-linux
+powerpc64*-*-linux*)	gdb_host=ppc64-linux
                         # Support 'pseudo-native' debugging on the Cell BE
                         if test "${target_cpu}" = "spu"; then
 				gdb_host=spu-linux
 				gdb_native=yes
                         fi
 			;;
+powerpc*-*-linux*)	gdb_host=linux ;;
 
-s390*-*-*)		gdb_host=s390 ;;
+s390*-*-linux*)		gdb_host=linux ;;
 
 sh*-*-netbsdelf* | sh*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
@@ -156,8 +163,6 @@ sparc-*-linux*)		gdb_host=linux ;;
 sparc64-*-linux*)	gdb_host=linux64 ;;
 sparc-*-netbsdelf* | sparc-*-knetbsd*-gnu)
 			gdb_host=nbsdelf ;;
-sparc-*-netbsdaout*)	gdb_host=nbsdaout ;;
-sparc-*-netbsd*)	gdb_host=nbsdaout ;;
 sparc64-*-netbsd* | sparc64-*-knetbsd*-gnu)
 			gdb_host=nbsd64 ;;
 sparc-*-openbsd*)	gdb_host=nbsdelf ;;
@@ -171,7 +176,6 @@ tilegx-*-linux*)	gdb_host=linux ;;
 vax-*-bsd*)		gdb_host=vax ;;
 vax-*-netbsdelf* | vax-*-knetbsd*-gnu)
 			gdb_host=nbsdelf ;;
-vax-*-netbsd*)		gdb_host=nbsdaout ;;
 vax-*-openbsd*)		gdb_host=obsd ;;
 vax-*-ultrix*)		gdb_host=vax ;;
 

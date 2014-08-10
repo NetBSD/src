@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.32 2013/12/26 18:34:28 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.32.2.1 2014/08/10 06:51:51 tls Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.32 2013/12/26 18:34:28 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.32.2.1 2014/08/10 06:51:51 tls Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -39,7 +39,9 @@ __RCSID("$NetBSD: zdump.c,v 1.32 2013/12/26 18:34:28 christos Exp $");
 
 #ifndef HAVE_STDINT_H
 # define HAVE_STDINT_H \
-    (199901 <= __STDC_VERSION__ || 2 < (__GLIBC__ + (0 < __GLIBC_MINOR__)))
+    (199901 <= __STDC_VERSION__ \
+     || 2 < __GLIBC__ + (1 <= __GLIBC_MINOR__)	\
+     || __CYGWIN__)
 #endif
 #if HAVE_STDINT_H
 # include "stdint.h"

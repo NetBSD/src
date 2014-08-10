@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2002/08/02 03:58:10 simonb Exp $
+# $NetBSD: Makefile,v 1.3.72.1 2014/08/10 06:59:31 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	ifmcstat
 MAN=	ifmcstat.8
 
-LDADD=	-lkvm
-DPADD=	${LIBKVM}
+LDADD+=	-lutil
+DPADD+=	${LIBUTIL}
 
 CPPFLAGS+=	-DINET6
 

@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.26 2011/06/05 08:54:42 plunky Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.3 2011/09/01 12:46:32 plunky Exp $	*/
+/*	Id: code.c,v 1.28 2012/06/06 09:28:01 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.3.20.1 2014/08/10 07:10:06 tls Exp $	*/
 /*	$OpenBSD: code.c,v 1.2 2007/11/22 15:06:43 stefan Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ defloc(struct symtab *sp)
  * deals with struct return here
  */
 void
-efcode()
+efcode(void)
 {
 	NODE *p, *q;
 	int sz;
@@ -143,7 +143,7 @@ bfcode(struct symtab **a, int cnt)
 
 	if (cftnsp->stype == STRTY+FTN || cftnsp->stype == UNIONTY+FTN) {
 		/* Function returns struct, adjust arg offset */
-		for (i = 0; i < n; i++)
+		for (i = 0; i < cnt; i++)
 			a[i]->soffset += SZPOINT(LONG);
 	}
 
@@ -182,9 +182,9 @@ bfcode(struct symtab **a, int cnt)
 /* called just before final exit */
 /* flag is 1 if errors, 0 if none */
 void
-ejobcode(int errors)
+ejobcode(int flag)
 {
-	if (errors)
+	if (flag)
 		return;
 
 	printf("\t.end\n");

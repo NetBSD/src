@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.19.2.2 2014/07/17 14:03:33 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.19.2.3 2014/08/10 06:54:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.19.2.2 2014/07/17 14:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.19.2.3 2014/08/10 06:54:50 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -137,6 +137,7 @@ const struct cdevsw rnd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

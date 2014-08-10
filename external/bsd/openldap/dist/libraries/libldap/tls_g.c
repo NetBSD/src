@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_g.c,v 1.1.1.2 2010/12/12 15:21:39 adam Exp $	*/
+/*	$NetBSD: tls_g.c,v 1.1.1.2.24.1 2014/08/10 07:09:47 tls Exp $	*/
 
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
-/* OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.9 2010/04/14 22:10:21 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 /* ACKNOWLEDGEMENTS: GNUTLS support written by Howard Chu and
- * Matt Backes; sponsored by The Written Word (thewrittenword.com)
+ * Emily Backes; sponsored by The Written Word (thewrittenword.com)
  * and Stanford University (stanford.edu).
  */
 
@@ -42,10 +42,6 @@
 
 #include "ldap-int.h"
 #include "ldap-tls.h"
-
-#ifdef LDAP_R_COMPILE
-#include <ldap_pvt_thread.h>
-#endif
 
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
@@ -259,13 +255,9 @@ static void
 tlsg_ctx_ref( tls_ctx *ctx )
 {
 	tlsg_ctx *c = (tlsg_ctx *)ctx;
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &c->ref_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &c->ref_mutex );
 	c->refcount++;
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &c->ref_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &c->ref_mutex );
 }
 
 static void
@@ -276,13 +268,9 @@ tlsg_ctx_free ( tls_ctx *ctx )
 
 	if ( !c ) return;
 
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &c->ref_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &c->ref_mutex );
 	refcount = --c->refcount;
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &c->ref_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &c->ref_mutex );
 	if ( refcount )
 		return;
 #ifdef HAVE_CIPHERSUITES
@@ -544,9 +532,11 @@ tlsg_x509_cert_dn( struct berval *cert, struct berval *dn, int get_subject )
 	ber_init2( ber, cert, LBER_USE_DER );
 	tag = ber_skip_tag( ber, &len );	/* Sequence */
 	tag = ber_skip_tag( ber, &len );	/* Sequence */
-	tag = ber_skip_tag( ber, &len );	/* Context + Constructed (version) */
-	if ( tag == 0xa0 )	/* Version is optional */
+	tag = ber_peek_tag( ber, &len );	/* Context + Constructed (version) */
+	if ( tag == 0xa0 ) {	/* Version is optional */
+		tag = ber_skip_tag( ber, &len );
 		tag = ber_get_int( ber, &i );	/* Int: Version */
+	}
 	tag = ber_skip_tag( ber, &len );	/* Int: Serial (can be longer than ber_int_t) */
 	ber_skip_data( ber, len );
 	tag = ber_skip_tag( ber, &len );	/* Sequence: Signature */
@@ -663,12 +653,8 @@ tlsg_session_chkhost( LDAP *ld, tls_session *session, const char *name_in )
 	}
 
 #ifdef LDAP_PF_INET6
-	if (name[0] == '[' && strchr(name, ']')) {
-		char *n2 = ldap_strdup(name+1);
-		*strchr(n2, ']') = 0;
-		if (inet_pton(AF_INET6, n2, &addr))
-			ntype = IS_IP6;
-		LDAP_FREE(n2);
+	if (inet_pton(AF_INET6, name, &addr)) {
+		ntype = IS_IP6;
 	} else 
 #endif
 	if ((ptr = strrchr(name, '.')) && isdigit((unsigned char)ptr[1])) {
@@ -969,7 +955,7 @@ tlsg_sb_close( Sockbuf_IO_Desc *sbiod )
 	assert( sbiod->sbiod_pvt != NULL );
 
 	p = (struct tls_data *)sbiod->sbiod_pvt;
-	gnutls_bye ( p->session->session, GNUTLS_SHUT_RDWR );
+	gnutls_bye ( p->session->session, GNUTLS_SHUT_WR );
 	return 0;
 }
 

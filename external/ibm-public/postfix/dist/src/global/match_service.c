@@ -1,4 +1,4 @@
-/*	$NetBSD: match_service.c,v 1.1.1.2 2013/01/02 18:58:59 tron Exp $	*/
+/*	$NetBSD: match_service.c,v 1.1.1.2.6.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -28,13 +28,16 @@
 /*	that it does not drag in all the LDAP, SQL and other map
 /*	lookup client code into programs that don't need it.
 /*
-/*	Each pattern is of the form "name.type" or "type", where
+/*	Each pattern is of the form "name/type" or "type", where
 /*	"name" and "type" are the first two fields of a master.cf
 /*	entry. Patterns are separated by whitespace and/or commas.
 /*	Matches are case insensitive. Patterns are matched in the
 /*	specified order, and the matching process stops at the first
 /*	match.  In order to reverse the result of a pattern match,
 /*	precede a pattern with an exclamation point (!).
+/*
+/*	For backwards compatibility, the form name.type is still
+/*	supported.
 /*
 /*	match_service_init() parses the pattern list. The result
 /*	must be passed to match_service_match() or match_service_free().
@@ -80,6 +83,19 @@
 #include <stringops.h>
 #include <match_service.h>
 
+/* match_service_compat - backwards compatibility */
+
+static void match_service_compat(ARGV *argv)
+{
+    char  **cpp;
+    char   *cp;
+
+    for (cpp = argv->argv; *cpp; cpp++) {
+	if (strrchr(*cpp, '/') == 0 && (cp = strrchr(*cpp, '.')) != 0)
+	    *cp = '/';
+    }
+}
+
 /* match_service_init - initialize pattern list */
 
 ARGV   *match_service_init(const char *patterns)
@@ -94,6 +110,7 @@ ARGV   *match_service_init(const char *patterns)
 	argv_add(list, item, (char *) 0);
     argv_terminate(list);
     myfree(saved_patterns);
+    match_service_compat(list);
     return (list);
 }
 
@@ -107,6 +124,7 @@ ARGV   *match_service_init_argv(char **patterns)
     for (cpp = patterns; *cpp; cpp++)
 	argv_add(list, *cpp, (char *) 0);
     argv_terminate(list);
+    match_service_compat(list);
     return (list);
 }
 
@@ -129,8 +147,8 @@ int     match_service_match(ARGV *list, const char *name_type)
     /*
      * Sanity check.
      */
-    if ((type = strrchr(name_type, '.')) == 0 || *++type == 0)
-	msg_panic("%s: malformed service: \"%s\"; need \"name.type\" format",
+    if ((type = strrchr(name_type, '/')) == 0 || *++type == 0)
+	msg_panic("%s: malformed service: \"%s\"; need \"name/type\" format",
 		  myname, name_type);
 
     /*
@@ -141,7 +159,7 @@ int     match_service_match(ARGV *list, const char *name_type)
 	    msg_info("%s: %s ~? %s", myname, name_type, pattern);
 	for (match = 1; *pattern == '!'; pattern++)
 	    match = !match;
-	if (strcasecmp(strchr(pattern, '.') ? name_type : type, pattern) == 0) {
+	if (strcasecmp(strchr(pattern, '/') ? name_type : type, pattern) == 0) {
 	    if (msg_verbose)
 		msg_info("%s: %s: found match", myname, name_type);
 	    return (match);

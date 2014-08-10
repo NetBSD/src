@@ -1,11 +1,10 @@
-/*	$NetBSD: dispatch.c,v 1.3 2013/03/27 00:38:07 christos Exp $	*/
-
+/*	$NetBSD: dispatch.c,v 1.3.8.1 2014/08/10 07:06:55 tls Exp $	*/
 /* dispatch.c
 
    Network input dispatcher... */
 
 /*
- * Copyright (c) 2004-2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2011,2013 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -29,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dispatch.c,v 1.3 2013/03/27 00:38:07 christos Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.3.8.1 2014/08/10 07:06:55 tls Exp $");
 
 #include "dhcpd.h"
 
@@ -115,7 +114,26 @@ dispatch(void)
 {
 	isc_result_t status;
 
-	status = isc_app_ctxrun(dhcp_gbl_ctx.actx);
+	do {
+		status = isc_app_ctxrun(dhcp_gbl_ctx.actx);
+
+		/*
+		 * isc_app_ctxrun can be stopped by receiving a
+		 * signal. It will return ISC_R_RELOAD in that
+		 * case. That is a normal behavior.
+		 */
+
+		if (status == ISC_R_RELOAD) {
+			/*
+			 * dhcp_set_control_state() will do the job.
+			 * Note its first argument is ignored.
+			 */
+			status = dhcp_set_control_state(server_shutdown,
+							server_shutdown);
+			if (status == ISC_R_SUCCESS)
+				status = ISC_R_RELOAD;
+		}
+	} while (status == ISC_R_RELOAD);
 
 	log_fatal ("Dispatch routine failed: %s -- exiting",
 		   isc_result_totext (status));

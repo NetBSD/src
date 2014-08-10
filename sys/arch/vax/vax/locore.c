@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.81 2014/03/24 20:06:33 christos Exp $	*/
+/*	$NetBSD: locore.c,v 1.81.2.1 2014/08/10 06:54:10 tls Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.81 2014/03/24 20:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.81.2.1 2014/08/10 06:54:10 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -94,7 +94,10 @@ _start(struct rpb *prpb)
 	extern uintptr_t scratch;
 	struct pte *pt;
 	vaddr_t uv;
-	const char *mv, *md;
+	const char *mv;
+#if VAX410 || VAXANY
+	const char *md;
+#endif
 
 	mtpr(AST_NO, PR_ASTLVL); /* Turn off ASTs */
 

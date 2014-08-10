@@ -1,4 +1,4 @@
-/*	$NetBSD: base64_code.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: base64_code.c,v 1.1.1.1.26.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -17,6 +17,18 @@
 /*	VSTRING	*result;
 /*	const char *in;
 /*	ssize_t	len;
+/*
+/*	VSTRING	*base64_encode_opt(result, in, len, flags)
+/*	VSTRING	*result;
+/*	const char *in;
+/*	ssize_t	len;
+/*	int	flags;
+/*
+/*	VSTRING	*base64_decode_opt(result, in, len, flags)
+/*	VSTRING	*result;
+/*	const char *in;
+/*	ssize_t	len;
+/*	int	flags;
 /* DESCRIPTION
 /*	base64_encode() takes a block of len bytes and encodes it as one
 /*	null-terminated string.  The result value is the result argument.
@@ -24,6 +36,14 @@
 /*	base64_decode() performs the opposite transformation. The result
 /*	value is the result argument. The result is null terminated, whether
 /*	or not that makes sense.
+/*
+/*	base64_encode_opt() and base64_decode_opt() provide extended
+/*	interfaces.  In both cases the flags arguments is the bit-wise
+/*	OR of zero or more the following:
+/* .IP BASE64_FLAG_APPEND
+/*	Append the result, instead of overwriting the result buffer.
+/* .PP
+/*	For convenience, BASE64_FLAG_NONE specifies none of the above.
 /* DIAGNOSTICS
 /*	base64_decode () returns a null pointer when the input contains
 /*	characters not in the base 64 alphabet.
@@ -65,7 +85,17 @@ static unsigned char to_b64[] =
 
 /* base64_encode - raw data to encoded */
 
+#undef base64_encode
+
+extern VSTRING *base64_encode(VSTRING *, const char *, ssize_t);
+
 VSTRING *base64_encode(VSTRING *result, const char *in, ssize_t len)
+{
+    return (base64_encode_opt(result, in, len, BASE64_FLAG_NONE));
+}
+
+VSTRING *base64_encode_opt(VSTRING *result, const char *in, ssize_t len,
+			           int flags)
 {
     const unsigned char *cp;
     ssize_t count;
@@ -73,7 +103,8 @@ VSTRING *base64_encode(VSTRING *result, const char *in, ssize_t len)
     /*
      * Encode 3 -> 4.
      */
-    VSTRING_RESET(result);
+    if ((flags & BASE64_FLAG_APPEND) == 0)
+	VSTRING_RESET(result);
     for (cp = UNSIG_CHAR_PTR(in), count = len; count > 0; count -= 3, cp += 3) {
 	VSTRING_ADDCH(result, to_b64[cp[0] >> 2]);
 	if (count > 1) {
@@ -99,7 +130,17 @@ VSTRING *base64_encode(VSTRING *result, const char *in, ssize_t len)
 
 /* base64_decode - encoded data to raw */
 
+#undef base64_decode
+
+extern VSTRING *base64_decode(VSTRING *, const char *, ssize_t);
+
 VSTRING *base64_decode(VSTRING *result, const char *in, ssize_t len)
+{
+    return (base64_decode_opt(result, in, len, BASE64_FLAG_NONE));
+}
+
+VSTRING *base64_decode_opt(VSTRING *result, const char *in, ssize_t len,
+			           int flags)
 {
     static unsigned char *un_b64 = 0;
     const unsigned char *cp;
@@ -131,7 +172,8 @@ VSTRING *base64_decode(VSTRING *result, const char *in, ssize_t len)
     /*
      * Decode 4 -> 3.
      */
-    VSTRING_RESET(result);
+    if ((flags & BASE64_FLAG_APPEND) == 0)
+	VSTRING_RESET(result);
     for (cp = UNSIG_CHAR_PTR(in), count = 0; count < len; count += 4) {
 	if ((ch0 = un_b64[*cp++]) == INVALID
 	    || (ch1 = un_b64[*cp++]) == INVALID)
@@ -161,11 +203,14 @@ VSTRING *base64_decode(VSTRING *result, const char *in, ssize_t len)
 #define STR(x)	vstring_str(x)
 #define LEN(x)	VSTRING_LEN(x)
 
+#define TESXT 	"this is a test!"
+
 int     main(int unused_argc, char **unused_argv)
 {
     VSTRING *b1 = vstring_alloc(1);
     VSTRING *b2 = vstring_alloc(1);
-    char   *test = "this is a test";
+    char   *test = TESXT;
+    char   *test2 = TESXT TESXT;
 
 #define DECODE(b,x,l) { \
 	if (base64_decode((b),(x),(l)) == 0) \
@@ -199,6 +244,11 @@ int     main(int unused_argc, char **unused_argv)
     DECODE(b1, STR(b2), LEN(b2));
     DECODE(b2, STR(b1), LEN(b1));
     VERIFY(STR(b2), test);
+
+    base64_encode(b1, test, strlen(test));
+    base64_encode_opt(b1, test, strlen(test), BASE64_FLAG_APPEND);
+    DECODE(b2, STR(b1), LEN(b1));
+    VERIFY(STR(b2), test2);
 
     vstring_free(b1);
     vstring_free(b2);

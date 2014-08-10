@@ -1,4 +1,4 @@
-/*	$NetBSD: sample-update.c,v 1.1.1.1 2014/02/28 17:40:16 christos Exp $	*/
+/*	$NetBSD: sample-update.c,v 1.1.1.1.2.1 2014/08/10 07:06:44 tls Exp $	*/
 
 /*
  * Copyright (C) 2009, 2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 
 #include <config.h>
 
+#ifndef WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -27,14 +28,17 @@
 
 #include <arpa/inet.h>
 
+#include <netdb.h>
 #include <unistd.h>
+#endif
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netdb.h>
 
 #include <isc/buffer.h>
+#include <isc/commandline.h>
 #include <isc/lex.h>
 #include <isc/lib.h>
 #include <isc/mem.h>
@@ -103,7 +107,7 @@ main(int argc, char *argv[]) {
 	isc_boolean_t isdelete;
 	isc_buffer_t b, *buf;
 	dns_fixedname_t zname0, pname0, uname0;
-	size_t namelen;
+	unsigned int namelen;
 	dns_name_t *zname = NULL, *uname, *pname;
 	dns_rdataset_t *rdataset;
 	dns_rdatalist_t *rdatalist;
@@ -111,30 +115,30 @@ main(int argc, char *argv[]) {
 	dns_namelist_t updatelist, prereqlist, *prereqlistp = NULL;
 	isc_mem_t *umctx = NULL;
 
-	while ((ch = getopt(argc, argv, "a:k:p:r:z:")) != -1) {
+	while ((ch = isc_commandline_parse(argc, argv, "a:k:p:r:z:")) != EOF) {
 		switch (ch) {
 		case 'k':
-			keyfilename = optarg;
+			keyfilename = isc_commandline_argument;
 			break;
 		case 'a':
-			auth_server = optarg;
+			auth_server = isc_commandline_argument;
 			break;
 		case 'p':
-			prereqstr = optarg;
+			prereqstr = isc_commandline_argument;
 			break;
 		case 'r':
-			recursive_server = optarg;
+			recursive_server = isc_commandline_argument;
 			break;
 		case 'z':
-			zonenamestr = optarg;
+			zonenamestr = isc_commandline_argument;
 			break;
 		default:
 			usage();
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
+	argc -= isc_commandline_index;
+	argv += isc_commandline_index;
 	if (argc < 2)
 		usage();
 
@@ -193,7 +197,7 @@ main(int argc, char *argv[]) {
 		INSIST(res->ai_addrlen <= sizeof(sa_auth.type));
 		memmove(&sa_auth.type, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
-		sa_auth.length = res->ai_addrlen;
+		sa_auth.length = (unsigned int)res->ai_addrlen;
 		ISC_LINK_INIT(&sa_auth, link);
 
 		ISC_LIST_APPEND(auth_servers, &sa_auth, link);
@@ -215,7 +219,7 @@ main(int argc, char *argv[]) {
 		INSIST(res->ai_addrlen <= sizeof(sa_recursive.type));
 		memmove(&sa_recursive.type, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
-		sa_recursive.length = res->ai_addrlen;
+		sa_recursive.length = (unsigned int)res->ai_addrlen;
 		ISC_LINK_INIT(&sa_recursive, link);
 		ISC_LIST_INIT(rec_servers);
 		ISC_LIST_APPEND(rec_servers, &sa_recursive, link);

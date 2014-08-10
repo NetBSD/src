@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: module.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,11 +32,16 @@
 #ifndef _LINUX_MODULE_H_
 #define _LINUX_MODULE_H_
 
+#include <linux/export.h>
+#include <linux/moduleparam.h>
+
 #define	module_init(INIT)
 #define	module_exit(EXIT)
 
 #define	MODULE_AUTHOR(AUTHOR)
 #define	MODULE_DESCRIPTION(DESCRIPTION)
+#define	MODULE_DEVICE_TABLE(DESCRIPTION, IDLIST)
+#define	MODULE_FIRMWARE(FIRMWARE)
 #define	MODULE_LICENSE(LICENSE)
 #define	MODULE_PARM_DESC(PARAMETER, DESCRIPTION)
 

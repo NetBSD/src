@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.20 2014/01/23 10:13:57 hannken Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.20.2.1 2014/08/10 06:56:58 tls Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.20 2014/01/23 10:13:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.20.2.1 2014/08/10 06:56:58 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -112,48 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.20 2014/01/23 10:13:57 hannken Exp 
 static int ulfs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
 static int ulfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
     struct lwp *);
-
-/*
- * A virgin directory (no blushing please).
- */
-static const struct lfs_dirtemplate mastertemplate = {
-	0,	12,			LFS_DT_DIR,	1,	".",
-	0,	LFS_DIRBLKSIZ - 12,	LFS_DT_DIR,	2,	".."
-};
-
-/*
- * Create a regular file
- */
-int
-ulfs_create(void *v)
-{
-	struct vop_create_v3_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		**a_vpp;
-		struct componentname	*a_cnp;
-		struct vattr		*a_vap;
-	} */ *ap = v;
-	int	error;
-	struct vnode *dvp = ap->a_dvp;
-	struct ulfs_lookup_results *ulr;
-
-	/* XXX should handle this material another way */
-	ulr = &VTOI(dvp)->i_crap;
-	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
-
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-	error =
-	    ulfs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
-			  dvp, ulr, ap->a_vpp, ap->a_cnp);
-	if (error) {
-		fstrans_done(dvp->v_mount);
-		return (error);
-	}
-	fstrans_done(dvp->v_mount);
-	VN_KNOTE(dvp, NOTE_WRITE);
-	VOP_UNLOCK(*ap->a_vpp);
-	return (0);
-}
 
 /*
  * Open called.
@@ -713,156 +671,6 @@ ulfs_whiteout(void *v)
 }
 
 int
-ulfs_mkdir(void *v)
-{
-	struct vop_mkdir_v3_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		**a_vpp;
-		struct componentname	*a_cnp;
-		struct vattr		*a_vap;
-	} */ *ap = v;
-	struct vnode		*dvp = ap->a_dvp, *tvp;
-	struct vattr		*vap = ap->a_vap;
-	struct componentname	*cnp = ap->a_cnp;
-	struct inode		*ip, *dp = VTOI(dvp);
-	struct buf		*bp;
-	struct lfs_dirtemplate	dirtemplate;
-	struct lfs_direct		*newdir;
-	int			error, dmode;
-	struct ulfsmount	*ump = dp->i_ump;
-	struct lfs *fs = ump->um_lfs;
-	int dirblksiz = fs->um_dirblksiz;
-	struct ulfs_lookup_results *ulr;
-
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-
-	/* XXX should handle this material another way */
-	ulr = &dp->i_crap;
-	ULFS_CHECK_CRAPCOUNTER(dp);
-
-	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
-		error = EMLINK;
-		goto out;
-	}
-	dmode = vap->va_mode & ACCESSPERMS;
-	dmode |= LFS_IFDIR;
-	/*
-	 * Must simulate part of ulfs_makeinode here to acquire the inode,
-	 * but not have it entered in the parent directory. The entry is
-	 * made later after writing "." and ".." entries.
-	 */
-	if ((error = lfs_valloc(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
-		goto out;
-
-	tvp = *ap->a_vpp;
-	ip = VTOI(tvp);
-
-	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
-	DIP_ASSIGN(ip, uid, ip->i_uid);
-	ip->i_gid = dp->i_gid;
-	DIP_ASSIGN(ip, gid, ip->i_gid);
-#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
-		lfs_vfree(tvp, ip->i_number, dmode);
-		fstrans_done(dvp->v_mount);
-		vput(tvp);
-		return (error);
-	}
-#endif
-	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	ip->i_mode = dmode;
-	DIP_ASSIGN(ip, mode, dmode);
-	tvp->v_type = VDIR;	/* Rest init'd in getnewvnode(). */
-	ip->i_nlink = 2;
-	DIP_ASSIGN(ip, nlink, 2);
-	if (cnp->cn_flags & ISWHITEOUT) {
-		ip->i_flags |= UF_OPAQUE;
-		DIP_ASSIGN(ip, flags, ip->i_flags);
-	}
-
-	/*
-	 * Bump link count in parent directory to reflect work done below.
-	 * Should be done before reference is created so cleanup is
-	 * possible if we crash.
-	 */
-	dp->i_nlink++;
-	DIP_ASSIGN(dp, nlink, dp->i_nlink);
-	dp->i_flag |= IN_CHANGE;
-	if ((error = lfs_update(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
-		goto bad;
-
-	/*
-	 * Initialize directory with "." and ".." from static template.
-	 */
-	dirtemplate = mastertemplate;
-	dirtemplate.dotdot_reclen = dirblksiz - dirtemplate.dot_reclen;
-	dirtemplate.dot_ino = ulfs_rw32(ip->i_number, ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dotdot_ino = ulfs_rw32(dp->i_number, ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dot_reclen = ulfs_rw16(dirtemplate.dot_reclen,
-	    ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dotdot_reclen = ulfs_rw16(dirtemplate.dotdot_reclen,
-	    ULFS_MPNEEDSWAP(fs));
-	if (fs->um_maxsymlinklen <= 0) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		if (ULFS_MPNEEDSWAP(fs) == 0)
-#else
-		if (ULFS_MPNEEDSWAP(fs) != 0)
-#endif
-		{
-			dirtemplate.dot_type = dirtemplate.dot_namlen;
-			dirtemplate.dotdot_type = dirtemplate.dotdot_namlen;
-			dirtemplate.dot_namlen = dirtemplate.dotdot_namlen = 0;
-		} else
-			dirtemplate.dot_type = dirtemplate.dotdot_type = 0;
-	}
-	if ((error = lfs_balloc(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
-	    B_CLRBUF, &bp)) != 0)
-		goto bad;
-	ip->i_size = dirblksiz;
-	DIP_ASSIGN(ip, size, dirblksiz);
-	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	uvm_vnp_setsize(tvp, ip->i_size);
-	memcpy((void *)bp->b_data, (void *)&dirtemplate, sizeof dirtemplate);
-
-	/*
-	 * Directory set up, now install it's entry in the parent directory.
-	 * We must write out the buffer containing the new directory body
-	 * before entering the new name in the parent.
-	 */
-	if ((error = VOP_BWRITE(bp->b_vp, bp)) != 0)
-		goto bad;
-	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
-		goto bad;
-	}
-	newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-	ulfs_makedirentry(ip, cnp, newdir);
-	error = ulfs_direnter(dvp, ulr, tvp, newdir, cnp, bp);
-	pool_cache_put(ulfs_direct_cache, newdir);
- bad:
-	if (error == 0) {
-		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-		VOP_UNLOCK(tvp);
-	} else {
-		dp->i_nlink--;
-		DIP_ASSIGN(dp, nlink, dp->i_nlink);
-		dp->i_flag |= IN_CHANGE;
-		/*
-		 * No need to do an explicit lfs_truncate here, vrele will
-		 * do this for us because we set the link count to 0.
-		 */
-		ip->i_nlink = 0;
-		DIP_ASSIGN(ip, nlink, 0);
-		ip->i_flag |= IN_CHANGE;
-		/* If IN_ADIROP, account for it */
-		lfs_unmark_vnode(tvp);
-		vput(tvp);
-	}
- out:
-	fstrans_done(dvp->v_mount);
-	return (error);
-}
-
-int
 ulfs_rmdir(void *v)
 {
 	struct vop_rmdir_args /* {
@@ -950,59 +758,6 @@ ulfs_rmdir(void *v)
 	vput(vp);
 	fstrans_done(dvp->v_mount);
 	vput(dvp);
-	return (error);
-}
-
-/*
- * symlink -- make a symbolic link
- */
-int
-ulfs_symlink(void *v)
-{
-	struct vop_symlink_v3_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		**a_vpp;
-		struct componentname	*a_cnp;
-		struct vattr		*a_vap;
-		char			*a_target;
-	} */ *ap = v;
-	struct vnode	*vp, **vpp;
-	struct inode	*ip;
-	int		len, error;
-	struct ulfs_lookup_results *ulr;
-
-	vpp = ap->a_vpp;
-
-	/* XXX should handle this material another way */
-	ulr = &VTOI(ap->a_dvp)->i_crap;
-	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
-
-	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
-	error = ulfs_makeinode(LFS_IFLNK | ap->a_vap->va_mode, ap->a_dvp, ulr,
-			      vpp, ap->a_cnp);
-	if (error)
-		goto out;
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vp = *vpp;
-	len = strlen(ap->a_target);
-	ip = VTOI(vp);
-	if (len < ip->i_lfs->um_maxsymlinklen) {
-		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
-		ip->i_size = len;
-		DIP_ASSIGN(ip, size, len);
-		uvm_vnp_setsize(vp, ip->i_size);
-		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		if (vp->v_mount->mnt_flag & MNT_RELATIME)
-			ip->i_flag |= IN_ACCESS;
-	} else
-		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED,
-		    ap->a_cnp->cn_cred, NULL, NULL);
-	VOP_UNLOCK(vp);
-	if (error)
-		vrele(vp);
-out:
-	fstrans_done(ap->a_dvp->v_mount);
 	return (error);
 }
 

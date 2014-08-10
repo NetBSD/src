@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.93 2014/03/23 15:21:15 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.93.2.1 2014/08/10 06:55:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.93 2014/03/23 15:21:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.93.2.1 2014/08/10 06:55:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,8 @@ ntfs_mount (
 	struct vnode	*devvp;
 	struct ntfs_args *args = data;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

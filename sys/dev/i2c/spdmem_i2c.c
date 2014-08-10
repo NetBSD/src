@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.8 2013/08/07 19:38:45 soren Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.8.2.1 2014/08/10 06:54:51 tls Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.8 2013/08/07 19:38:45 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.8.2.1 2014/08/10 06:54:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,8 +66,6 @@ CFATTACH_DECL_NEW(spdmem_iic, sizeof(struct spdmem_i2c_softc),
     spdmem_i2c_match, spdmem_i2c_attach, spdmem_i2c_detach, NULL);
 
 static uint8_t spdmem_i2c_read(struct spdmem_softc *, uint8_t);
-
-SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
 
 static int
 spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
@@ -152,7 +150,6 @@ spdmem_modcmd(modcmd_t cmd, void *opaque)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		sysctl_spdmem_setup(&spdmem_sysctl_clog);
 		error = config_init_component(cfdriver_ioconf_spdmem,
 		    cfattach_ioconf_spdmem, cfdata_ioconf_spdmem);
 #endif

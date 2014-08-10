@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.215 2013/07/16 07:31:40 jklos Exp $
+# $NetBSD: GENERIC,v 1.215.4.1 2014/08/10 06:54:01 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,9 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.215 $"
+#ident 		"GENERIC-$Revision: 1.215.4.1 $"
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 maxusers	16		# estimated number of users
 

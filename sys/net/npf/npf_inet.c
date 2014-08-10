@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.30 2014/02/19 03:51:31 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.30.2.1 2014/08/10 06:56:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.30 2014/02/19 03:51:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.30.2.1 2014/08/10 06:56:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -221,8 +221,9 @@ npf_tcpsaw(const npf_cache_t *npc, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
  * npf_fetch_tcpopts: parse and return TCP options.
  */
 bool
-npf_fetch_tcpopts(npf_cache_t *npc, nbuf_t *nbuf, uint16_t *mss, int *wscale)
+npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	const struct tcphdr *th = npc->npc_l4.tcp;
 	int topts_len, step;
 	void *nptr;
@@ -306,7 +307,7 @@ next:
 	ok = true;
 done:
 	if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
-		npf_recache(npc, nbuf);
+		npf_recache(npc);
 	}
 	return ok;
 }
@@ -433,8 +434,9 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
  * => nbuf offset shall be set accordingly.
  */
 int
-npf_cache_all(npf_cache_t *npc, nbuf_t *nbuf)
+npf_cache_all(npf_cache_t *npc)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	int flags, l4flags;
 	u_int hlen;
 
@@ -500,14 +502,16 @@ again:
 }
 
 void
-npf_recache(npf_cache_t *npc, nbuf_t *nbuf)
+npf_recache(npf_cache_t *npc)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	const int mflags __diagused = npc->npc_info & (NPC_IP46 | NPC_LAYER4);
 	int flags __diagused;
 
 	nbuf_reset(nbuf);
 	npc->npc_info = 0;
-	flags = npf_cache_all(npc, nbuf);
+	flags = npf_cache_all(npc);
+
 	KASSERT((flags & mflags) == mflags);
 	KASSERT(nbuf_flag_p(nbuf, NBUF_DATAREF_RESET) == 0);
 }
@@ -735,12 +739,15 @@ npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
 
 #if defined(DDB) || defined(_NPF_TESTING)
 
-void
-npf_addr_dump(const npf_addr_t *addr)
+const char *
+npf_addr_dump(const npf_addr_t *addr, int alen)
 {
-	printf("IP[%x:%x:%x:%x]\n",
-	    addr->s6_addr32[0], addr->s6_addr32[1],
-	    addr->s6_addr32[2], addr->s6_addr32[3]);
+	if (alen == sizeof(struct in_addr)) {
+		struct in_addr ip;
+		memcpy(&ip, addr, alen);
+		return inet_ntoa(ip);
+	}
+	return "[IPv6]"; // XXX
 }
 
 #endif

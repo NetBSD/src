@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.117 2014/01/27 19:19:15 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.117.2.1 2014/08/10 06:54:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.117 2014/01/27 19:19:15 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.117.2.1 2014/08/10 06:54:33 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.117 2014/01/27 19:19:15 njoly Exp
 #include <sys/kauth.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
-#include <sys/fcntl.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -111,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.117 2014/01/27 19:19:15 njoly Exp
 
 static int linux_to_bsd_domain(int);
 static int bsd_to_linux_domain(int);
+static int linux_to_bsd_type(int);
 int linux_to_bsd_sopt_level(int);
 int linux_to_bsd_so_sockopt(int);
 int linux_to_bsd_ip_sockopt(int);
@@ -238,6 +238,27 @@ bsd_to_linux_domain(int bdom)
 }
 
 static int
+linux_to_bsd_type(int ltype)
+{
+	int type, flags;
+
+	/* Real types are identical between Linux and NetBSD */
+	type = ltype & LINUX_SOCK_TYPE_MASK;
+
+	/* But flags are not .. */
+	flags = ltype & ~LINUX_SOCK_TYPE_MASK;
+	if (flags & ~(LINUX_SOCK_CLOEXEC|LINUX_SOCK_NONBLOCK))
+		return -1;
+
+	if (flags & LINUX_SOCK_CLOEXEC)
+		type |= SOCK_CLOEXEC;
+	if (flags & LINUX_SOCK_NONBLOCK)
+		type |= SOCK_NONBLOCK;
+
+	return type;
+}
+
+static int
 linux_to_bsd_msg_flags(int lflag)
 {
 	int i, lfl, bfl;
@@ -300,15 +321,15 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 		syscallarg(int) protocol;
 	} */
 	struct sys___socket30_args bsa;
-	struct sys_fcntl_args fsa;
-	register_t fretval[2];
-	int error, flags;
+	int error;
 
 
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
-	SCARG(&bsa, type) = SCARG(uap, type) & LINUX_SOCK_TYPE_MASK;
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
+		return EINVAL;
+	SCARG(&bsa, type) = linux_to_bsd_type(SCARG(uap, type));
+	if (SCARG(&bsa, type) == -1)
 		return EINVAL;
 	/*
 	 * Apparently linux uses this to talk to ISDN sockets. If we fail
@@ -317,35 +338,7 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 	 */
 	if (SCARG(&bsa, domain) == AF_ROUTE && SCARG(&bsa, type) == SOCK_RAW)
 		return ENOTSUP;
-	flags = SCARG(uap, type) & ~LINUX_SOCK_TYPE_MASK;
-	if (flags & ~(LINUX_SOCK_CLOEXEC | LINUX_SOCK_NONBLOCK))
-		return EINVAL;
 	error = sys___socket30(l, &bsa, retval);
-
-	/*
-	 * Linux overloads the "type" parameter to include some
-	 * fcntl flags to be set on the file descriptor.
-	 * Process those if creating the socket succeeded.
-	 */
-
-	if (!error && flags & LINUX_SOCK_CLOEXEC) {
-		SCARG(&fsa, fd) = *retval;
-		SCARG(&fsa, cmd) = F_SETFD;
-		SCARG(&fsa, arg) = (void *)(uintptr_t)FD_CLOEXEC;
-		(void) sys_fcntl(l, &fsa, fretval);
-	}
-	if (!error && flags & LINUX_SOCK_NONBLOCK) {
-		SCARG(&fsa, fd) = *retval;
-		SCARG(&fsa, cmd) = F_SETFL;
-		SCARG(&fsa, arg) = (void *)(uintptr_t)O_NONBLOCK;
-		error = sys_fcntl(l, &fsa, fretval);
-		if (error) {
-			struct sys_close_args csa;
-
-			SCARG(&csa, fd) = *retval;
-			(void) sys_close(l, &csa, fretval);
-		}
-	}
 
 #ifdef INET6
 	/*
@@ -385,7 +378,9 @@ linux_sys_socketpair(struct lwp *l, const struct linux_sys_socketpair_args *uap,
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
-	SCARG(&bsa, type) = SCARG(uap, type);
+	SCARG(&bsa, type) = linux_to_bsd_type(SCARG(uap, type));
+	if (SCARG(&bsa, type) == -1)
+		return EINVAL;
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
 	SCARG(&bsa, rsv) = SCARG(uap, rsv);
 
@@ -1105,10 +1100,7 @@ linux_getifname(struct lwp *l, register_t *retval, void *data)
 	if (error)
 		return error;
 
-	if (ifr.ifr_ifru.ifru_ifindex >= if_indexlim)
-		return ENODEV;
-	
-	ifp = ifindex2ifnet[ifr.ifr_ifru.ifru_ifindex];
+	ifp = if_byindex(ifr.ifr_ifru.ifru_ifindex);
 	if (ifp == NULL)
 		return ENODEV;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.11 2012/05/06 22:27:00 joerg Exp $	*/
+/*	$NetBSD: grep.c,v 1.11.8.1 2014/08/10 06:58:14 tls Exp $	*/
 /* 	$FreeBSD: head/usr.bin/grep/grep.c 211519 2010-08-19 22:55:17Z delphij $	*/
 /*	$OpenBSD: grep.c,v 1.42 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grep.c,v 1.11 2012/05/06 22:27:00 joerg Exp $");
+__RCSID("$NetBSD: grep.c,v 1.11.8.1 2014/08/10 06:58:14 tls Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -158,7 +158,6 @@ __dead static void
 usage(void)
 {
 	fprintf(stderr, getstr(4), __progname);
-	fprintf(stderr, "%s", getstr(5));
 	fprintf(stderr, "%s", getstr(5));
 	fprintf(stderr, "%s", getstr(6));
 	fprintf(stderr, "%s", getstr(7));

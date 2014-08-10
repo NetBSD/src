@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,11 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 
-#define	jiffies	hardclock_ticks
+#define	jiffies		hardclock_ticks
+#define	jiffies_64	hardclock_ticks /* XXX */
+
+/* XXX Er, what?  */
+#define	MAX_JIFFY_OFFSET	((INT_MAX >> 1) - 1)
 
 static inline unsigned int
 msecs_to_jiffies(unsigned int msec)
@@ -52,7 +56,12 @@ jiffies_to_msecs(unsigned int j)
 static inline unsigned int
 usecs_to_jiffies(unsigned int usec)
 {
-	return mstohz((usec + (1000 / hz) - 1) / (1000 / hz));
+	const struct timeval tv = {
+		.tv_sec = usec / 1000000,
+		.tv_usec = usec % 1000000,
+	};
+
+	return tvtohz(&tv);
 }
 
 static inline unsigned int

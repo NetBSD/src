@@ -1,4 +1,4 @@
-# Copyright 2000-2013 Free Software Foundation, Inc.
+# Copyright 2000-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -346,7 +346,7 @@ proc gdbserver_reconnect { } {
     global gdbserver_protocol
     global gdbserver_gdbport
 
-    global gdbserver_reconnect_p;
+    global gdbserver_reconnect_p
     if {![info exists gdbserver_reconnect_p] || !$gdbserver_reconnect_p} {
 	error "gdbserver_reconnect_p is not set before gdbserver_reconnect"
 	return 0

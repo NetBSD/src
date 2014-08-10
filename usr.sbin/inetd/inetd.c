@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.121 2012/12/13 19:38:40 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.121.6.1 2014/08/10 06:59:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.121 2012/12/13 19:38:40 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.121.6.1 2014/08/10 06:59:34 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -762,11 +762,11 @@ reapchild(void)
 
 				if (WIFEXITED(status) && WEXITSTATUS(status))
 					syslog(LOG_WARNING,
-					    "%s: exit status 0x%x",
+					    "%s: exit status %u",
 					    sep->se_server, WEXITSTATUS(status));
 				else if (WIFSIGNALED(status))
 					syslog(LOG_WARNING,
-					    "%s: exit signal 0x%x",
+					    "%s: exit signal %u",
 					    sep->se_server, WTERMSIG(status));
 				sep->se_wait = 1;
 				ev = allocchange();

@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.47 2012/06/19 06:09:36 dholland Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.47.8.1 2014/08/10 06:52:44 tls Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
-static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
-#else
-__RCSID("$NetBSD: rstat_proc.c,v 1.47 2012/06/19 06:09:36 dholland Exp $");
+static char sccsid[] =
+	"from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
+static char sccsid[] =
+	"from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #endif
-#endif
+__RCSID("$NetBSD: rstat_proc.c,v 1.47.8.1 2014/08/10 06:52:44 tls Exp $");
 
 /*
  * rstat service:  built with rstat.x and derived from rpc.rstatd.c
@@ -48,6 +47,7 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.47 2012/06/19 06:09:36 dholland Exp $");
 #include <sys/param.h>
 #include <sys/sched.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -55,18 +55,11 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.47 2012/06/19 06:09:36 dholland Exp $");
 #include <string.h>
 #include <signal.h>
 #include <fcntl.h>
-#include <kvm.h>
 #include <limits.h>
-#include <nlist.h>
 #include <syslog.h>
-#ifdef BSD
 #include <sys/sysctl.h>
 #include <uvm/uvm_extern.h>
 #include "drvstats.h"
-#else
-#include <sys/dk.h>
-#endif
-
 #include <net/if.h>
 
 /*
@@ -89,27 +82,14 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.47 2012/06/19 06:09:36 dholland Exp $");
 #undef if_collisions
 #include <rpcsvc/rstat.h>
 
-#ifdef BSD
 #define BSD_CPUSTATES	5	/* Use protocol's idea of CPU states */
 int	cp_xlat[CPUSTATES] = { CP_USER, CP_NICE, CP_SYS, CP_IDLE };
-#endif
-
-struct nlist nl[] = {
-#define	X_IFNET		0
-	{ "_ifnet", 0, 0, 0, 0 },
-	{ NULL, 0, 0, 0, 0 },
-};
 
 int hz;
-char *memf = NULL, *nlistf = NULL;
-
-struct ifnet_head ifnetq;	/* chain of ethernet interfaces */
-unsigned int numintfs;
 
 extern int from_inetd;
 int sincelastreq = 0;		/* number of alarms since last request */
 extern int closedown;
-kvm_t *kfd;
 
 union {
 	struct stats s1;
@@ -118,8 +98,6 @@ union {
 } stats_all;
 
 void updatestat(int);
-void setup(void);
-void setup_kd_once(void);
 void stat_init(void);
 int havedisk(void);
 void rstat_service(struct svc_req *, SVCXPRT *);
@@ -134,7 +112,7 @@ void
 stat_init(void)
 {
 	stat_is_init = 1;
-	setup();
+	drvinit(0);
 	updatestat(0);
 	(void) signal(SIGALRM, updatestat);
 	alarm(1);
@@ -196,12 +174,11 @@ rstatproc_havedisk_1_svc(void *arg, struct svc_req *rqstp)
 void
 updatestat(int dummy)
 {
-	long off;
-	unsigned int i;
-	size_t len;
-	int mib[2];
+	struct if_nameindex *ifps;
+	struct ifdatareq ifdr;
+	size_t i, len;
+	int mib[2], s;
 	struct uvmexp_sysctl uvmexp;
-	struct ifnet ifnet;
 	double avrun[3];
 	struct timeval tm, btm;
 
@@ -230,21 +207,9 @@ updatestat(int dummy)
 	for (i = 0; i < ndrive && i < DK_NDRIVE; i++)
 		stats_all.s3.dk_xfer[i] = cur.rxfer[i] + cur.wxfer[i];
 
-#ifdef BSD
 	for (i = 0; i < CPUSTATES; i++)
 		stats_all.s3.cp_time[i] = cur.cp_time[cp_xlat[i]];
-#else
- 	if (kvm_read(kfd, (long)nl[X_CPTIME].n_value,
-		     (char *)stats_all.s3.cp_time,
-		     sizeof (stats_all.s3.cp_time))
-	    != sizeof (stats_all.s3.cp_time)) {
-		syslog(LOG_ERR, "can't read cp_time from kmem");
-		exit(1);
-	}
-#endif
-#ifdef BSD
         (void)getloadavg(avrun, sizeof(avrun) / sizeof(avrun[0]));
-#endif
 	stats_all.s3.avenrun[0] = avrun[0] * FSCALE;
 	stats_all.s3.avenrun[1] = avrun[1] * FSCALE;
 	stats_all.s3.avenrun[2] = avrun[2] * FSCALE;
@@ -287,74 +252,30 @@ updatestat(int dummy)
 	stats_all.s3.if_ierrors = 0;
 	stats_all.s3.if_oerrors = 0;
 	stats_all.s3.if_collisions = 0;
-	for (off = (long)ifnetq.tqh_first, i = 0; off && i < numintfs; i++) {
-		if (kvm_read(kfd, off, (char *)&ifnet, sizeof ifnet) !=
-		    sizeof ifnet) {
-			syslog(LOG_ERR, "can't read ifnet from kmem");
-			exit(1);
-		}
-		stats_all.s3.if_ipackets += ifnet.if_data.ifi_ipackets;
-		stats_all.s3.if_opackets += ifnet.if_data.ifi_opackets;
-		stats_all.s3.if_ierrors += ifnet.if_data.ifi_ierrors;
-		stats_all.s3.if_oerrors += ifnet.if_data.ifi_oerrors;
-		stats_all.s3.if_collisions += ifnet.if_data.ifi_collisions;
-		off = (long)ifnet.if_list.tqe_next;
+
+	ifps = if_nameindex();
+	if (ifps == NULL) {
+		syslog(LOG_ERR, "can't read interface list from kernel");
+		exit(1);
 	}
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	for (i = 0; s != -1 && ifps[i].if_name != NULL; ++i) {
+		strlcpy(ifdr.ifdr_name, ifps[i].if_name, sizeof(ifdr.ifdr_name));
+		if (ioctl(s, SIOCGIFDATA, &ifdr) != 0)
+			continue;
+		stats_all.s3.if_ipackets += ifdr.ifdr_data.ifi_ipackets;
+		stats_all.s3.if_opackets += ifdr.ifdr_data.ifi_opackets;
+		stats_all.s3.if_ierrors += ifdr.ifdr_data.ifi_ierrors;
+		stats_all.s3.if_oerrors += ifdr.ifdr_data.ifi_oerrors;
+		stats_all.s3.if_collisions += ifdr.ifdr_data.ifi_collisions;
+	}
+	if (s != -1)
+		close(s);
+	if_freenameindex(ifps);
+
 	stats_all.s3.curtime.tv_sec = tm.tv_sec;
 	stats_all.s3.curtime.tv_usec = tm.tv_usec;
 	alarm(1);
-}
-
-void
-setup_kd_once(void)
-{
-        char errbuf[_POSIX2_LINE_MAX];
-        kfd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
-        if (kfd == NULL) {
-                syslog(LOG_ERR, "%s", errbuf);
-                exit (1);
-        }
-}
-
-void
-setup(void)
-{
-	struct ifnet ifnet;
-	long off;
-        static int is_kfd_setup = 0;
-
-        /*  setup() is called after each dormant->active
-         *  transition.  Since we never close the kvm files
-         *  (there's no reason), make sure we don't open them
-         *  each time, as that can lead to exhaustion of all open
-         *  files!  */
-        if (!is_kfd_setup) {
-                setup_kd_once();
-                is_kfd_setup = 1;
-	}
-
-	if (kvm_nlist(kfd, nl) != 0) {
-		syslog(LOG_ERR, "can't get namelist");
-		exit (1);
-        }
-
-	if (kvm_read(kfd, (long)nl[X_IFNET].n_value, &ifnetq,
-                     sizeof ifnetq) != sizeof ifnetq)  {
-		syslog(LOG_ERR, "can't read ifnet queue head from kmem");
-		exit(1);
-        }
-
-	numintfs = 0;
-	for (off = (long)ifnetq.tqh_first; off;) {
-		if (kvm_read(kfd, off, (char *)&ifnet, sizeof ifnet) !=
-		    sizeof ifnet) {
-			syslog(LOG_ERR, "can't read ifnet from kmem");
-			exit(1);
-		}
-		numintfs++;
-		off = (long)ifnet.if_list.tqe_next;
-	}
-	drvinit(0);
 }
 
 /*

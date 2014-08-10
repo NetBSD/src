@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/12/02 18:39:53 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2014/08/10 06:57:05 tls Exp $
 #
 
 .include <bsd.own.mk>
@@ -16,6 +16,7 @@ PROGS=		h_mdserv
 LDADD+=	-lrumpdev_md -lrumpdev_disk -lrumpdev -lrumpvfs
 LDADD+=	-lrump
 LDADD+=	-lrumpuser
+LDADD+=	-lrump
 LDADD+=	-lpthread
 
 WARNS=	4

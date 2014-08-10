@@ -195,7 +195,7 @@ static unsigned ProcessCharEscape(const char *ThisTokBegin,
         << std::string(1, ResultChar);
     break;
   default:
-    if (Diags == 0)
+    if (!Diags)
       break;
 
     if (isPrintable(ResultChar))
@@ -340,7 +340,7 @@ static int MeasureUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
   FullSourceLoc Loc;
 
   if (!ProcessUCNEscape(ThisTokBegin, ThisTokBuf, ThisTokEnd, UcnVal,
-                        UcnLen, Loc, 0, Features, true)) {
+                        UcnLen, Loc, nullptr, Features, true)) {
     HadError = true;
     return 0;
   }
@@ -571,7 +571,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
   // Parse the suffix.  At this point we can classify whether we have an FP or
   // integer constant.
   bool isFPConstant = isFloatingLiteral();
-  const char *ImaginarySuffixLoc = 0;
+  const char *ImaginarySuffixLoc = nullptr;
 
   // Loop over all of the characters of the suffix.  If we see something bad,
   // we break out of the loop.
@@ -606,16 +606,18 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
     case 'i':
     case 'I':
       if (PP.getLangOpts().MicrosoftExt) {
-        if (isFPConstant || isLong || isLongLong) break;
+        if (isLong || isLongLong) break;
 
         // Allow i8, i16, i32, i64, and i128.
         if (s + 1 != ThisTokEnd) {
           switch (s[1]) {
             case '8':
+              if (isFPConstant) break;
               s += 2; // i8 suffix
               isMicrosoftInteger = true;
               break;
             case '1':
+              if (isFPConstant) break;
               if (s + 2 == ThisTokEnd) break;
               if (s[2] == '6') {
                 s += 3; // i16 suffix
@@ -630,6 +632,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
               }
               break;
             case '3':
+              if (isFPConstant) break;
               if (s + 2 == ThisTokEnd) break;
               if (s[2] == '2') {
                 s += 3; // i32 suffix
@@ -638,6 +641,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
               }
               break;
             case '6':
+              if (isFPConstant) break;
               if (s + 2 == ThisTokEnd) break;
               if (s[2] == '4') {
                 s += 3; // i64 suffix
@@ -648,7 +652,8 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
             default:
               break;
           }
-          break;
+          if (isMicrosoftInteger)
+            break;
         }
       }
       // "i", "if", and "il" are user-defined suffixes in C++1y.
@@ -765,6 +770,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
       s++;
       saw_period = true;
       const char *floatDigitsBegin = s;
+      checkSeparator(TokLoc, s, CSK_BeforeDigits);
       s = SkipHexDigits(s);
       noSignificand &= (floatDigitsBegin == s);
     }
@@ -779,6 +785,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     // A binary exponent can appear with or with a '.'. If dotted, the
     // binary exponent is required.
     if (*s == 'p' || *s == 'P') {
+      checkSeparator(TokLoc, s, CSK_AfterDigits);
       const char *Exponent = s;
       s++;
       saw_exponent = true;
@@ -790,6 +797,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
         hadError = true;
         return;
       }
+      checkSeparator(TokLoc, s, CSK_BeforeDigits);
       s = first_non_digit;
 
       if (!PP.getLangOpts().HexFloats)
@@ -858,9 +866,11 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     s++;
     radix = 10;
     saw_period = true;
+    checkSeparator(TokLoc, s, CSK_BeforeDigits);
     s = SkipDigits(s); // Skip suffix.
   }
   if (*s == 'e' || *s == 'E') { // exponent
+    checkSeparator(TokLoc, s, CSK_AfterDigits);
     const char *Exponent = s;
     s++;
     radix = 10;
@@ -868,6 +878,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     if (*s == '+' || *s == '-')  s++; // sign
     const char *first_non_digit = SkipDigits(s);
     if (first_non_digit != s) {
+      checkSeparator(TokLoc, s, CSK_BeforeDigits);
       s = first_non_digit;
     } else {
       PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-ThisTokBegin),
@@ -1248,7 +1259,7 @@ StringLiteralParser::
 StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
                     Preprocessor &PP, bool Complain)
   : SM(PP.getSourceManager()), Features(PP.getLangOpts()),
-    Target(PP.getTargetInfo()), Diags(Complain ? &PP.getDiagnostics() : 0),
+    Target(PP.getTargetInfo()), Diags(Complain ? &PP.getDiagnostics() :nullptr),
     MaxTokenLength(0), SizeBound(0), CharByteWidth(0), Kind(tok::unknown),
     ResultPtr(ResultBuf.data()), hadError(false), Pascal(false) {
   init(StringToks, NumStringToks);
@@ -1373,7 +1384,7 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
         // result of a concatenation involving at least one user-defined-string-
         // literal, all the participating user-defined-string-literals shall
         // have the same ud-suffix.
-        if (!UDSuffixBuf.equals(UDSuffix)) {
+        if (UDSuffixBuf != UDSuffix) {
           if (Diags) {
             SourceLocation TokLoc = StringToks[i].getLocation();
             Diags->Report(TokLoc, diag::err_string_concat_mixed_suffix)
@@ -1571,8 +1582,7 @@ bool StringLiteralParser::CopyStringFragment(const Token &Tok,
     Dummy.reserve(Fragment.size() * CharByteWidth);
     char *Ptr = Dummy.data();
 
-    while (!Builder.hasMaxRanges() &&
-           !ConvertUTF8toWide(CharByteWidth, NextFragment, Ptr, ErrorPtrTmp)) {
+    while (!ConvertUTF8toWide(CharByteWidth, NextFragment, Ptr, ErrorPtrTmp)) {
       const char *ErrorPtr = reinterpret_cast<const char *>(ErrorPtrTmp);
       NextStart = resyncUTF8(ErrorPtr, Fragment.end());
       Builder << MakeCharSourceRange(Features, SourceLoc, TokBegin,

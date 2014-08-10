@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.106 2014/03/23 15:21:17 hannken Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.106.2.1 2014/08/10 06:56:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.106 2014/03/23 15:21:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.106.2.1 2014/08/10 06:56:58 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -99,7 +99,8 @@ struct vfsops mfs_vfsops = {
 	.vfs_quotactl = ufs_quotactl,
 	.vfs_statvfs = mfs_statvfs,
 	.vfs_sync = ffs_sync,
-	.vfs_vget = ffs_vget,
+	.vfs_vget = ufs_vget,
+	.vfs_loadvnode = ffs_loadvnode,
 	.vfs_fhtovp = ffs_fhtovp,
 	.vfs_vptofh = ffs_vptofh,
 	.vfs_init = mfs_init,
@@ -247,6 +248,8 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct proc *p;
 	int flags, error = 0;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

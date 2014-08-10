@@ -1,6 +1,6 @@
 /* C language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2013 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,7 +61,7 @@ extern int c_parse (void);
 
 extern void c_error (char *);
 
-extern int c_parse_escape (char **, struct obstack *);
+extern int c_parse_escape (const char **, struct obstack *);
 
 /* Defined in c-typeprint.c */
 extern void c_print_type (struct type *, const char *,

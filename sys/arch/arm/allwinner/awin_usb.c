@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.10 2014/02/20 21:48:38 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.10.4.1 2014/08/10 06:53:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -139,10 +139,11 @@ ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 	int error = ohci_init(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
-	} else {
-		/* Attach usb device. */
-		sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+		return;
 	}
+
+	/* Attach usb device. */
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 
 	const int irq = awinusb_ohci_irqs[usbaa->usbaa_port];
 	usbsc->usbsc_ohci_ih = intr_establish(irq, IPL_USB,
@@ -212,10 +213,10 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 	int error = ehci_init(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
-	} else {
-		/* Attach usb device. */
-		sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+		return;
 	}
+	/* Attach usb device. */
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 
 	const int irq = awinusb_ehci_irqs[usbaa->usbaa_port];
 	usbsc->usbsc_ehci_ih = intr_establish(irq, IPL_USB,

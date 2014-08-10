@@ -1,4 +1,4 @@
-/*	$NetBSD: igma.c,v 1.1 2014/01/21 14:52:07 mlelstv Exp $	*/
+/*	$NetBSD: igma.c,v 1.1.2.1 2014/08/10 06:54:54 tls Exp $	*/
 
 /*
  * Copyright (c) 2014 Michael van Elst
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igma.c,v 1.1 2014/01/21 14:52:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igma.c,v 1.1.2.1 2014/08/10 06:54:54 tls Exp $");
 
 #include "vga.h"
 
@@ -383,9 +383,6 @@ igma_attach(device_t parent, device_t self, void *aux)
 
 #if NVGA > 0
 	iaa.iaa_console = vga_cndetach() ? true : false;
-	/* Hack */
-	if (iaa.iaa_console)
-		wsdisplay_cndetach();
 #else
 	iaa.iaa_console = 0;
 #endif

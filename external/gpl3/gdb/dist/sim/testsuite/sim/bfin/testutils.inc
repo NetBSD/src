@@ -159,7 +159,7 @@ _main:
 
 	R0.L = 0x0A;	/* newline */
 	R0.H = 0x0000;
-	CALL __emu_out;  
+	CALL __emu_out;
 1:
 	EMUEXCPT;
 	JUMP 1b;

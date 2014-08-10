@@ -1,4 +1,4 @@
-#	$NetBSD: KUROBOX_PRO,v 1.5 2013/01/30 13:52:17 he Exp $
+#	$NetBSD: KUROBOX_PRO,v 1.5.10.1 2014/08/10 06:53:54 tls Exp $
 #
 #  KUROBOX_PRO -- KUROUTOSHIKOU. KURO-BOX/PRO platform kernel
 #
@@ -19,7 +19,7 @@ config		netbsd-wd0	root on wd0 type ffs
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

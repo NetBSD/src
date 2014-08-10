@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sockmap.c,v 1.3 2013/11/14 02:27:29 christos Exp $	*/
+/*	$NetBSD: dict_sockmap.c,v 1.3.2.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -311,36 +311,44 @@ static void dict_sockmap_close(DICT *dict)
 DICT   *dict_sockmap_open(const char *mapname, int open_flags, int dict_flags)
 {
     DICT_SOCKMAP *dp;
-    char   *saved_name;
+    char   *saved_name = 0;
     char   *sockmap;
     DICT_SOCKMAP_REFC_HANDLE *ref_handle;
     HTABLE_INFO *client_info;
 
     /*
+     * Let the optimizer worry about eliminating redundant code.
+     */
+#define DICT_SOCKMAP_OPEN_RETURN(d) { \
+	DICT *__d = (d); \
+	if (saved_name != 0) \
+	    myfree(saved_name); \
+	return (__d); \
+    } while (0)
+
+    /*
      * Sanity checks.
      */
     if (open_flags != O_RDONLY)
-	return (dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
-			       open_flags, dict_flags,
-			       "%s:%s map requires O_RDONLY access mode",
-			       DICT_TYPE_SOCKMAP, mapname));
+	DICT_SOCKMAP_OPEN_RETURN(dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
+					   open_flags, dict_flags,
+				  "%s:%s map requires O_RDONLY access mode",
+					   DICT_TYPE_SOCKMAP, mapname));
     if (dict_flags & DICT_FLAG_NO_UNAUTH)
-	return (dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
-			       open_flags, dict_flags,
+	DICT_SOCKMAP_OPEN_RETURN(dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
+					   open_flags, dict_flags,
 		     "%s:%s map is not allowed for security-sensitive data",
-			       DICT_TYPE_SOCKMAP, mapname));
+					   DICT_TYPE_SOCKMAP, mapname));
 
     /*
      * Separate the socketmap name from the socketmap server name.
      */
     saved_name = mystrdup(mapname);
-    if ((sockmap = split_at_right(saved_name, ':')) == 0) {
-	myfree(saved_name);
-	return (dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
-			       open_flags, dict_flags,
-			       "%s requires server:socketmap argument",
-			       DICT_TYPE_SOCKMAP));
-    }
+    if ((sockmap = split_at_right(saved_name, ':')) == 0)
+	DICT_SOCKMAP_OPEN_RETURN(dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
+					   open_flags, dict_flags,
+				    "%s requires server:socketmap argument",
+					   DICT_TYPE_SOCKMAP));
 
     /*
      * Use one reference-counted client handle for all socketmaps with the
@@ -374,10 +382,5 @@ DICT   *dict_sockmap_open(const char *mapname, int open_flags, int dict_flags)
     /* Don't look up parent domains or network superblocks. */
     dp->dict.flags = dict_flags | DICT_FLAG_PATTERN;
 
-    /*
-     * Clean up.
-     */
-    myfree(saved_name);
-
-    return (DICT_DEBUG (&dp->dict));
+    DICT_SOCKMAP_OPEN_RETURN(DICT_DEBUG (&dp->dict));
 }

@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpkern_if_pub.h,v 1.15 2014/03/10 22:44:10 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_pub.h,v 1.15.2.1 2014/08/10 06:56:50 tls Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.11 2013/03/07 18:49:13 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.6 2013/02/14 10:54:54 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.13 2014/04/25 13:10:42 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp 
  */
 
 int rump_pub_module_init(const struct modinfo * const *, size_t);
@@ -22,3 +22,6 @@ void rump_pub_lwproc_releaselwp(void);
 struct lwp * rump_pub_lwproc_curlwp(void);
 void rump_pub_lwproc_sysent_usenative(void);
 void rump_pub_allbetsareoff_setid(pid_t, int);
+int rump_pub_etfs_register(const char *, const char *, enum rump_etfs_type);
+int rump_pub_etfs_register_withsize(const char *, const char *, enum rump_etfs_type, uint64_t, uint64_t);
+int rump_pub_etfs_remove(const char *);

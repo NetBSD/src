@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.5 2014/03/01 03:24:33 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.5.2.1 2014/08/10 07:06:36 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -58,7 +58,7 @@ static char *version_error =
 	"named requires Windows 2000 Service Pack 2 or later to run correctly";
 
 void
-ns_paths_init() {
+ns_paths_init(void) {
 	if (!Initialized)
 		isc_ntpaths_init();
 

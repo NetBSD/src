@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.62 2014/04/02 17:09:23 justin Exp $	*/
+/*	$NetBSD: rump.h,v 1.62.2.1 2014/08/10 06:56:50 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -107,6 +107,20 @@ int	rump_nativeabi_p(void);
 int	rump_boot_gethowto(void);
 void	rump_boot_sethowto(int);
 void	rump_boot_setsigmodel(enum rump_sigmodel);
+
+struct rump_boot_etfs {
+	/* client initializes */
+	const char *eb_key;
+	const char *eb_hostpath;
+	enum rump_etfs_type eb_type;
+	uint64_t eb_begin;
+	uint64_t eb_size;
+
+	/* rump kernel initializes */
+	struct rump_boot_etfs *_eb_next;
+	int eb_status;
+};
+void	rump_boot_etfs_register(struct rump_boot_etfs *);
 
 void	rump_schedule(void);
 void	rump_unschedule(void);

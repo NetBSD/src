@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.41 2014/03/26 08:17:59 christos Exp $	*/
+/*	$NetBSD: par.c,v 1.41.2.1 2014/08/10 06:54:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.41 2014/03/26 08:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.41.2.1 2014/08/10 06:54:10 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -135,6 +135,7 @@ const struct cdevsw par_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

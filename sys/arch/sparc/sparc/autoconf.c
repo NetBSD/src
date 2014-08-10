@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.255 2014/03/26 17:31:13 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.255.2.1 2014/08/10 06:54:08 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.255 2014/03/26 17:31:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.255.2.1 2014/08/10 06:54:08 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1034,8 +1034,13 @@ char *
 clockfreq(int freq)
 {
 	static char buf[10];
+	size_t len;
 
-	humanize_number(buf, sizeof(buf), freq / 1000, "", 1000);
+	freq /= 1000;
+	len = snprintf(buf, sizeof(buf), "%d", freq / 1000);
+	freq %= 1000;
+	if (freq)
+		snprintf(buf + len, sizeof(buf) - len, ".%03d", freq);
 	return buf;
 }
 
@@ -1311,8 +1316,10 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (prom_getprop_address1(node, &ma.ma_promvaddr) != 0)
 			continue;
 
-		if (config_found(dev, (void *)&ma, mbprint) == NULL)
+		if (config_found(dev, (void *)&ma, mbprint) == NULL) {
+			if (ssp->flags & BS_OPTIONAL) continue;
 			panic(sp);
+		}
 	}
 
 	/*

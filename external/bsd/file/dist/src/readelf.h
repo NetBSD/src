@@ -1,5 +1,4 @@
-/*	$NetBSD: readelf.h,v 1.1.1.4 2013/12/01 19:28:16 christos Exp $	*/
-
+/*	$NetBSD: readelf.h,v 1.1.1.4.2.1 2014/08/10 07:07:11 tls Exp $	*/
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.

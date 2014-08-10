@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.9.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -216,7 +216,7 @@ struct isc__mempool {
 					  ISC_MEM_DEBUGRECORD)) != 0 && \
 		     b != NULL) \
 			 add_trace_entry(a, b, c, d, e); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define DELETE_TRACE(a, b, c, d, e)	delete_trace_entry(a, b, c, d, e)
 
 static void
@@ -2268,7 +2268,7 @@ isc_mempool_getfillcount(isc_mempool_t *mpctx0) {
 }
 
 isc_result_t
-isc__mem_register() {
+isc__mem_register(void) {
 	return (isc_mem_register(isc_mem_create2));
 }
 
@@ -2357,7 +2357,7 @@ typedef struct summarystat {
 #endif
 
 #ifdef HAVE_LIBXML2
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
 static int
 xml_renderctx(isc__mem_t *ctx, summarystat_t *summary,
 	      xmlTextWriterPtr writer)
@@ -2527,7 +2527,7 @@ isc_mem_renderxml(xmlTextWriterPtr writer) {
 		result = ISC_R_NOMEMORY;\
 		goto error;\
 	} \
-} while(0)
+} while(/*CONSTCOND*/0)
 
 static isc_result_t
 json_renderctx(isc__mem_t *ctx, summarystat_t *summary, json_object *array) {

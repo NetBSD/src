@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.3 2010/12/12 15:22:54 adam Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
 /* config.c - bdb backend configuration file routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.91.2.19 2010/04/13 20:23:23 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -243,6 +243,8 @@ bdb_online_index( void *ctx, void *arg )
 		rc = TXN_BEGIN( bdb->bi_dbenv, NULL, &txn, bdb->bi_db_opflags );
 		if ( rc ) 
 			break;
+		Debug( LDAP_DEBUG_TRACE, LDAP_XSTRING(bdb_online_index) ": txn id: %x\n",
+			txn->id(txn), 0, 0 );
 		if ( getnext ) {
 			getnext = 0;
 			BDB_ID2DISK( id, &nid );
@@ -284,17 +286,16 @@ bdb_online_index( void *ctx, void *arg )
 		}
 		if ( ei->bei_e ) {
 			rc = bdb_index_entry( op, txn, BDB_INDEX_UPDATE_OP, ei->bei_e );
-			if ( rc == DB_LOCK_DEADLOCK ) {
+			if ( rc ) {
 				TXN_ABORT( txn );
-				ldap_pvt_thread_yield();
-				continue;
-			}
-			if ( rc == 0 ) {
-				rc = TXN_COMMIT( txn, 0 );
-				txn = NULL;
-			}
-			if ( rc )
+				if ( rc == DB_LOCK_DEADLOCK ) {
+					ldap_pvt_thread_yield();
+					continue;
+				}
 				break;
+			}
+			rc = TXN_COMMIT( txn, 0 );
+			txn = NULL;
 		}
 		id++;
 		getnext = 1;
@@ -325,32 +326,39 @@ bdb_cf_cleanup( ConfigArgs *c )
 {
 	struct bdb_info *bdb = c->be->be_private;
 	int rc = 0;
-
-	if ( bdb->bi_flags & BDB_UPD_CONFIG ) {
-		if ( bdb->bi_db_config ) {
-			int i;
-			FILE *f = fopen( bdb->bi_db_config_path, "w" );
-			if ( f ) {
-				for (i=0; bdb->bi_db_config[i].bv_val; i++)
-					fprintf( f, "%s\n", bdb->bi_db_config[i].bv_val );
-				fclose( f );
-			}
-		} else {
-			unlink( bdb->bi_db_config_path );
-		}
-		bdb->bi_flags ^= BDB_UPD_CONFIG;
-	}
+	BerVarray bva;
 
 	if ( bdb->bi_flags & BDB_DEL_INDEX ) {
 		bdb_attr_flush( bdb );
 		bdb->bi_flags ^= BDB_DEL_INDEX;
 	}
-	
+
 	if ( bdb->bi_flags & BDB_RE_OPEN ) {
 		bdb->bi_flags ^= BDB_RE_OPEN;
+		bva = bdb->bi_db_config;
+		bdb->bi_db_config = NULL;
 		rc = c->be->bd_info->bi_db_close( c->be, &c->reply );
-		if ( rc == 0 )
+		if ( rc == 0 ) {
+			if ( bdb->bi_flags & BDB_UPD_CONFIG ) {
+				if ( bva ) {
+					int i;
+					FILE *f = fopen( bdb->bi_db_config_path, "w" );
+					if ( f ) {
+						bdb->bi_db_config = bva;
+						bva = NULL;
+						for (i=0; bdb->bi_db_config[i].bv_val; i++)
+							fprintf( f, "%s\n", bdb->bi_db_config[i].bv_val );
+						fclose( f );
+					} else {
+						ber_bvarray_free( bva );
+					}
+				} else {
+					unlink( bdb->bi_db_config_path );
+				}
+				bdb->bi_flags ^= BDB_UPD_CONFIG;
+			}
 			rc = c->be->bd_info->bi_db_open( c->be, &c->reply );
+		}
 		/* If this fails, we need to restart */
 		if ( rc ) {
 			slapd_shutdown = 2;
@@ -389,8 +397,8 @@ bdb_cf_gen( ConfigArgs *c )
 			if ( bdb->bi_txn_cp ) {
 				char buf[64];
 				struct berval bv;
-				bv.bv_len = snprintf( buf, sizeof(buf), "%d %d", bdb->bi_txn_cp_kbyte,
-					bdb->bi_txn_cp_min );
+				bv.bv_len = snprintf( buf, sizeof(buf), "%ld %ld",
+					(long) bdb->bi_txn_cp_kbyte, (long) bdb->bi_txn_cp_min );
 				if ( bv.bv_len > 0 && bv.bv_len < sizeof(buf) ) {
 					bv.bv_val = buf;
 					value_add_one( &c->rvalue_vals, &bv );
@@ -558,7 +566,7 @@ bdb_cf_gen( ConfigArgs *c )
 				for (; bdb->bi_db_config[i].bv_val; i++)
 					bdb->bi_db_config[i] = bdb->bi_db_config[i+1];
 			}
-			bdb->bi_flags |= BDB_UPD_CONFIG;
+			bdb->bi_flags |= BDB_UPD_CONFIG|BDB_RE_OPEN;
 			c->cleanup = bdb_cf_cleanup;
 			break;
 		/* Doesn't really make sense to change these on the fly;
@@ -760,7 +768,7 @@ bdb_cf_gen( ConfigArgs *c )
 		}
 
 		if ( bdb->bi_flags & BDB_IS_OPEN ) {
-			bdb->bi_flags |= BDB_UPD_CONFIG;
+			bdb->bi_flags |= BDB_UPD_CONFIG|BDB_RE_OPEN;
 			c->cleanup = bdb_cf_cleanup;
 		} else {
 		/* If we're just starting up...

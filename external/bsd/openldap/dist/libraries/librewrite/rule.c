@@ -1,9 +1,9 @@
-/*	$NetBSD: rule.c,v 1.1.1.3 2010/12/12 15:22:13 adam Exp $	*/
+/*	$NetBSD: rule.c,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/librewrite/rule.c,v 1.23.2.6 2010/04/13 20:23:09 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -127,7 +127,7 @@ rewrite_rule_compile(
 {
 	int flags = REWRITE_REGEX_EXTENDED | REWRITE_REGEX_ICASE;
 	int mode = REWRITE_RECURSE;
-	int max_passes = info->li_max_passes_per_rule;
+	int max_passes;
 
 	struct rewrite_rule *rule = NULL;
 	struct rewrite_subst *subst = NULL;
@@ -139,10 +139,11 @@ rewrite_rule_compile(
 	assert( context != NULL );
 	assert( pattern != NULL );
 	assert( result != NULL );
-
 	/*
 	 * A null flagstring should be allowed
 	 */
+
+	max_passes = info->li_max_passes_per_rule;
 
 	/*
 	 * Take care of substitution string

@@ -1,4 +1,4 @@
-/*	$NetBSD: content-bozo.c,v 1.9 2014/01/02 08:21:38 mrg Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.9.2.1 2014/08/10 06:52:40 tls Exp $	*/
 
 /*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -172,6 +172,7 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".ice",	4, "x-conference/x-cooltalk",	"",		"", NULL },
 	{ ".wrl",	4, "x-world/x-vrml",		"",		"", NULL },
 	{ ".vrml",	5, "x-world/x-vrml",		"",		"", NULL },
+	{ ".svg",	5, "image/svg+xml",		"",		"", NULL },
 	{ NULL,		0, NULL,		NULL,		NULL, NULL }
 };
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: backglue.c,v 1.1.1.4 2010/12/12 15:22:19 adam Exp $	*/
+/*	$NetBSD: backglue.c,v 1.1.1.4.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* backglue.c - backend glue */
-/* OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.25 2010/06/10 19:33:40 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -261,6 +261,30 @@ glue_op_func ( Operation *op, SlapReply *rs )
 }
 
 static int
+glue_op_abandon( Operation *op, SlapReply *rs )
+{
+	slap_overinst	*on = (slap_overinst *)op->o_bd->bd_info;
+	glueinfo		*gi = (glueinfo *)on->on_bi.bi_private;
+	BackendDB *b0 = op->o_bd;
+	BackendInfo *bi0 = op->o_bd->bd_info;
+	int i;
+
+	b0->bd_info = on->on_info->oi_orig;
+
+	for (i = gi->gi_nodes-1; i >= 0; i--) {
+		assert( gi->gi_n[i].gn_be->be_nsuffix != NULL );
+		op->o_bd = gi->gi_n[i].gn_be;
+		if ( op->o_bd == b0 )
+			continue;
+		if ( op->o_bd->bd_info->bi_op_abandon )
+			op->o_bd->bd_info->bi_op_abandon( op, rs );
+	}
+	op->o_bd = b0;
+	op->o_bd->bd_info = bi0;
+	return SLAP_CB_CONTINUE;
+}
+
+static int
 glue_response ( Operation *op, SlapReply *rs )
 {
 	BackendDB *be = op->o_bd;
@@ -421,9 +445,10 @@ glue_op_search ( Operation *op, SlapReply *rs )
 		if ( op->o_bd == b0 )
 			return SLAP_CB_CONTINUE;
 
-		rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 		if (op->o_bd && op->o_bd->be_search) {
 			rs->sr_err = op->o_bd->be_search( op, rs );
+		} else {
+			rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 		}
 		return rs->sr_err;
 
@@ -1511,6 +1536,7 @@ glue_sub_init()
 	glue.on_bi.bi_op_modrdn = glue_op_func;
 	glue.on_bi.bi_op_add = glue_op_func;
 	glue.on_bi.bi_op_delete = glue_op_func;
+	glue.on_bi.bi_op_abandon = glue_op_abandon;
 	glue.on_bi.bi_extended = glue_op_func;
 
 	glue.on_bi.bi_chk_referrals = glue_chk_referrals;

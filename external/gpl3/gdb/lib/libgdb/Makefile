@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/10/04 13:04:00 christos Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2014/08/10 07:12:17 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
 		-I${DIST}/gdb/common \
+		-I${DIST}/gdb/gnulib/import \
 		-I${DIST}/include/opcode \
 		-I${DIST}/libdecnumber \
 		-I${DIST} \
@@ -41,8 +42,8 @@ CWARNFLAGS.clang+=	-Wno-switch
 .include <bsd.lib.mk>
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
-    ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/doc \
-    ${GDBARCHDIR}
+    ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/target \
+    ${DIST}/gdb/doc ${GDBARCHDIR}
 
 #
 COPTS+=	-Wno-stack-protector
@@ -51,8 +52,4 @@ ada-exp.c: ada-lex.c
 
 .if ${MACHINE} == "amiga"
 COPTS.dwarf2-frame.c+=-O1
-.endif
-
-.if defined(HAVE_GCC) && HAVE_GCC == 4 && ${MACHINE} == "sun2"
-COPTS.dwarf2-frame.c+=-O0
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2014/02/02 03:20:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.21.2.1 2014/08/10 06:52:40 tls Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -84,9 +84,9 @@ export-distfile:
 	); \
 	pax -wf ${TAR} ${BASE}; \
 	gzip -nc9 ${TAR} > ${TAR}.gz; \
-	bzip2 -9 ${TAR}
-	@echo "Exported two files in ${dir}:"
-	@echo ${TAR}.gz
-	@echo ${TAR}.bz2
+	bzip2 -9 ${TAR}; \
+	echo "Exported two files in $${dir}:"; \
+	echo ${TAR}.gz; \
+	echo ${TAR}.bz2
 
 .include <bsd.prog.mk>

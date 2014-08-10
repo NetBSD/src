@@ -1,10 +1,10 @@
-/*	$NetBSD: operation.c,v 1.1.1.3 2010/12/12 15:23:16 adam Exp $	*/
+/*	$NetBSD: operation.c,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
 /* operation.c - deal with operation subsystem */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/operation.c,v 1.46.2.7 2010/04/13 20:23:33 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -104,7 +104,7 @@ monitor_subsys_ops_init(
 		 * Initiated ops
 		 */
 		e = monitor_entry_stub( &ms->mss_dn, &ms->mss_ndn, &monitor_op[i].rdn,
-			mi->mi_oc_monitorOperation, mi, NULL, NULL );
+			mi->mi_oc_monitorOperation, NULL, NULL );
 
 		if ( e == NULL ) {
 			Debug( LDAP_DEBUG_ANY,

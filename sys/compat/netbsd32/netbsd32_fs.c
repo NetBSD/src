@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.69 2013/10/17 18:01:11 njoly Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.69.2.1 2014/08/10 06:54:33 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.69 2013/10/17 18:01:11 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.69.2.1 2014/08/10 06:54:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -634,7 +634,7 @@ netbsd32_preadv(struct lwp *l, const struct netbsd32_preadv_args *uap, register_
 		syscallarg(const netbsd32_iovecp_t) iovp;
 		syscallarg(int) iovcnt;
 		syscallarg(int) pad;
-		syscallarg(off_t) offset;
+		syscallarg(netbsd32_off_t) offset;
 	} */
 	file_t *fp;
 	struct vnode *vp;
@@ -680,7 +680,7 @@ netbsd32_pwritev(struct lwp *l, const struct netbsd32_pwritev_args *uap, registe
 		syscallarg(const netbsd32_iovecp_t) iovp;
 		syscallarg(int) iovcnt;
 		syscallarg(int) pad;
-		syscallarg(off_t) offset;
+		syscallarg(netbsd32_off_t) offset;
 	} */
 	file_t *fp;
 	struct vnode *vp;

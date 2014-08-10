@@ -1,9 +1,9 @@
-/*	$NetBSD: sasl.c,v 1.1.1.3 2010/12/12 15:21:35 adam Exp $	*/
+/*	$NetBSD: sasl.c,v 1.1.1.3.24.1 2014/08/10 07:09:47 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.64.2.8 2010/04/13 20:22:59 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -403,6 +403,84 @@ ldap_pvt_sasl_getmechs ( LDAP *ld, char **pmechlist )
 }
 
 /*
+ * ldap_sasl_interactive_bind - interactive SASL authentication
+ *
+ * This routine uses interactive callbacks.
+ *
+ * LDAP_SUCCESS is returned upon success, the ldap error code
+ * otherwise. LDAP_SASL_BIND_IN_PROGRESS is returned if further
+ * calls are needed.
+ */
+int
+ldap_sasl_interactive_bind(
+	LDAP *ld,
+	LDAP_CONST char *dn, /* usually NULL */
+	LDAP_CONST char *mechs,
+	LDAPControl **serverControls,
+	LDAPControl **clientControls,
+	unsigned flags,
+	LDAP_SASL_INTERACT_PROC *interact,
+	void *defaults,
+	LDAPMessage *result,
+	const char **rmech,
+	int *msgid )
+{
+	char *smechs = NULL;
+	int rc;
+
+#ifdef LDAP_CONNECTIONLESS
+	if( LDAP_IS_UDP(ld) ) {
+		/* Just force it to simple bind, silly to make the user
+		 * ask all the time. No, we don't ever actually bind, but I'll
+		 * let the final bind handler take care of saving the cdn.
+		 */
+		rc = ldap_simple_bind( ld, dn, NULL );
+		rc = rc < 0 ? rc : 0;
+		goto done;
+	} else
+#endif
+
+	/* First time */
+	if ( !result ) {
+
+#ifdef HAVE_CYRUS_SASL
+	if( mechs == NULL || *mechs == '\0' ) {
+		mechs = ld->ld_options.ldo_def_sasl_mech;
+	}
+#endif
+		
+	if( mechs == NULL || *mechs == '\0' ) {
+		/* FIXME: this needs to be asynchronous too;
+		 * perhaps NULL should be disallowed for async usage?
+		 */
+		rc = ldap_pvt_sasl_getmechs( ld, &smechs );
+		if( rc != LDAP_SUCCESS ) {
+			goto done;
+		}
+
+		Debug( LDAP_DEBUG_TRACE,
+			"ldap_sasl_interactive_bind: server supports: %s\n",
+			smechs, 0, 0 );
+
+		mechs = smechs;
+
+	} else {
+		Debug( LDAP_DEBUG_TRACE,
+			"ldap_sasl_interactive_bind: user selected: %s\n",
+			mechs, 0, 0 );
+	}
+	}
+	rc = ldap_int_sasl_bind( ld, dn, mechs,
+		serverControls, clientControls,
+		flags, interact, defaults, result, rmech, msgid );
+
+done:
+	if ( smechs ) LDAP_FREE( smechs );
+
+	return rc;
+}
+
+/*
  * ldap_sasl_interactive_bind_s - interactive SASL authentication
  *
  * This routine uses interactive callbacks.
@@ -421,57 +499,30 @@ ldap_sasl_interactive_bind_s(
 	LDAP_SASL_INTERACT_PROC *interact,
 	void *defaults )
 {
-	int rc;
-	char *smechs = NULL;
+	const char *rmech = NULL;
+	LDAPMessage *result = NULL;
+	int rc, msgid;
 
-#if defined( LDAP_R_COMPILE ) && defined( HAVE_CYRUS_SASL )
-	ldap_pvt_thread_mutex_lock( &ldap_int_sasl_mutex );
-#endif
+	do {
+		rc = ldap_sasl_interactive_bind( ld, dn, mechs,
+			serverControls, clientControls,
+			flags, interact, defaults, result, &rmech, &msgid );
+
+		ldap_msgfree( result );
+
+		if ( rc != LDAP_SASL_BIND_IN_PROGRESS )
+			break;
+
 #ifdef LDAP_CONNECTIONLESS
-	if( LDAP_IS_UDP(ld) ) {
-		/* Just force it to simple bind, silly to make the user
-		 * ask all the time. No, we don't ever actually bind, but I'll
-		 * let the final bind handler take care of saving the cdn.
-		 */
-		rc = ldap_simple_bind( ld, dn, NULL );
-		rc = rc < 0 ? rc : 0;
-		goto done;
-	} else
-#endif
-
-#ifdef HAVE_CYRUS_SASL
-	if( mechs == NULL || *mechs == '\0' ) {
-		mechs = ld->ld_options.ldo_def_sasl_mech;
-	}
-#endif
-		
-	if( mechs == NULL || *mechs == '\0' ) {
-		rc = ldap_pvt_sasl_getmechs( ld, &smechs );
-		if( rc != LDAP_SUCCESS ) {
-			goto done;
+		if (LDAP_IS_UDP(ld)) {
+			break;
 		}
-
-		Debug( LDAP_DEBUG_TRACE,
-			"ldap_sasl_interactive_bind_s: server supports: %s\n",
-			smechs, 0, 0 );
-
-		mechs = smechs;
-
-	} else {
-		Debug( LDAP_DEBUG_TRACE,
-			"ldap_sasl_interactive_bind_s: user selected: %s\n",
-			mechs, 0, 0 );
-	}
-
-	rc = ldap_int_sasl_bind( ld, dn, mechs,
-		serverControls, clientControls,
-		flags, interact, defaults );
-
-done:
-#if defined( LDAP_R_COMPILE ) && defined( HAVE_CYRUS_SASL )
-	ldap_pvt_thread_mutex_unlock( &ldap_int_sasl_mutex );
 #endif
-	if ( smechs ) LDAP_FREE( smechs );
+
+		if ( ldap_result( ld, msgid, LDAP_MSG_ALL, NULL, &result ) == -1 || !result ) {
+			return( ld->ld_errno );	/* ldap_result sets ld_errno */
+		}
+	} while ( rc == LDAP_SASL_BIND_IN_PROGRESS );
 
 	return rc;
 }
@@ -735,8 +786,9 @@ sb_sasl_generic_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 		return ret;
 	} else if ( p->buf_out.buf_ptr != p->buf_out.buf_end ) {
 		/* partial write? pretend nothing got written */
-		len2 = 0;
 		p->flags |= LDAP_PVT_SASL_PARTIAL_WRITE;
+		sock_errset(EAGAIN);
+		len2 = -1;
 	}
 
 	/* return number of bytes encoded, not written, to ensure

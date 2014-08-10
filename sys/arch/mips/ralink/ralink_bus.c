@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_bus.c,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_bus.c,v 1.2.26.1 2014/08/10 06:54:02 tls Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -69,7 +69,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_bus.c,v 1.2 2011/07/28 15:38:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_bus.c,v 1.2.26.1 2014/08/10 06:54:02 tls Exp $");
 #define	_MIPS_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
@@ -91,10 +91,18 @@ struct mips_bus_dma_tag	ra_bus_dmat = {
 	._dmatag_ops = _BUS_DMATAG_OPS_INITIALIZER,
 };
 
+const bus_space_handle_t ra_sysctl_bsh =
+    (bus_space_handle_t) RA_IOREG_VADDR(RA_SYSCTL_BASE, 0);
+
 void
 ra_bus_init(void)
 {
 	ra_bus_bus_mem_init(&ra_bus_memt, NULL);
+#ifdef DIAGNOSTIC
+	bus_space_handle_t bsh = 0xdeadfa11;
+	bus_space_map(&ra_bus_memt, RA_SYSCTL_BASE, 0x100, 0, &bsh);
+	KASSERT(ra_sysctl_bsh == bsh);
+#endif
 }
 
 /*

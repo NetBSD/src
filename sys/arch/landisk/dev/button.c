@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.7 2014/03/16 05:20:24 dholland Exp $	*/
+/*	$NetBSD: button.c,v 1.7.2.1 2014/08/10 06:54:00 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.7 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.7.2.1 2014/08/10 06:54:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -101,6 +101,7 @@ const struct cdevsw button_cdevsw = {
 	.d_poll = btnpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = btnkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

@@ -16,9 +16,9 @@
 #define LLVM_CLANG_FILESYSTEMSTATCACHE_H
 
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/FileSystem.h"
+#include <memory>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -38,6 +38,10 @@ struct FileData {
   bool IsDirectory;
   bool IsNamedPipe;
   bool InPCH;
+  bool IsVFSMapped; // FIXME: remove this when files support multiple names
+  FileData()
+      : Size(0), ModTime(0), IsDirectory(false), IsNamedPipe(false),
+        InPCH(false), IsVFSMapped(false) {}
 };
 
 /// \brief Abstract interface for introducing a FileManager cache for 'stat'
@@ -46,8 +50,8 @@ struct FileData {
 class FileSystemStatCache {
   virtual void anchor();
 protected:
-  OwningPtr<FileSystemStatCache> NextStatCache;
-  
+  std::unique_ptr<FileSystemStatCache> NextStatCache;
+
 public:
   virtual ~FileSystemStatCache() {}
   
@@ -82,8 +86,8 @@ public:
   /// \brief Retrieve the next stat call cache in the chain, transferring
   /// ownership of this cache (and, transitively, all of the remaining caches)
   /// to the caller.
-  FileSystemStatCache *takeNextStatCache() { return NextStatCache.take(); }
-  
+  FileSystemStatCache *takeNextStatCache() { return NextStatCache.release(); }
+
 protected:
   virtual LookupResult getStat(const char *Path, FileData &Data, bool isFile,
                                vfs::File **F, vfs::FileSystem &FS) = 0;
@@ -95,7 +99,7 @@ protected:
 
     // If we hit the end of the list of stat caches to try, just compute and
     // return it without a cache.
-    return get(Path, Data, isFile, F, 0, FS) ? CacheMissing : CacheExists;
+    return get(Path, Data, isFile, F, nullptr, FS) ? CacheMissing : CacheExists;
   }
 };
 
@@ -113,8 +117,8 @@ public:
   iterator begin() const { return StatCalls.begin(); }
   iterator end() const { return StatCalls.end(); }
 
-  virtual LookupResult getStat(const char *Path, FileData &Data, bool isFile,
-                               vfs::File **F, vfs::FileSystem &FS);
+  LookupResult getStat(const char *Path, FileData &Data, bool isFile,
+                       vfs::File **F, vfs::FileSystem &FS) override;
 };
 
 } // end namespace clang

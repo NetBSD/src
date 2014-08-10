@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.25 2013/12/18 12:54:01 skrll Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.25.2.1 2014/08/10 06:53:52 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.25 2013/12/18 12:54:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.25.2.1 2014/08/10 06:53:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -915,10 +915,6 @@ omapfb_bitblt(struct omapfb_softc *sc, int xs, int ys, int xd, int yd,
 	int hstep, vstep;
 	uint32_t saddr, daddr;
 
-	/*
-	 * TODO:
-	 * - use 32bit transfers if we're properly aligned
-	 */
 	saddr = sc->sc_fbhwaddr + sc->sc_stride * ys + xs * bpp;
 	daddr = sc->sc_fbhwaddr + sc->sc_stride * yd + xd * bpp;
 

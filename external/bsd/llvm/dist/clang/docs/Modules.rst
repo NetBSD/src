@@ -144,7 +144,7 @@ Module maps
 -----------
 The crucial link between modules and headers is described by a *module map*, which describes how a collection of existing headers maps on to the (logical) structure of a module. For example, one could imagine a module ``std`` covering the C standard library. Each of the C standard library headers (``<stdio.h>``, ``<stdlib.h>``, ``<math.h>``, etc.) would contribute to the ``std`` module, by placing their respective APIs into the corresponding submodule (``std.io``, ``std.lib``, ``std.math``, etc.). Having a list of the headers that are part of the ``std`` module allows the compiler to build the ``std`` module as a standalone entity, and having the mapping from header names to (sub)modules allows the automatic translation of ``#include`` directives to module imports.
 
-Module maps are specified as separate files (each named ``module.map``) alongside the headers they describe, which allows them to be added to existing software libraries without having to change the library headers themselves (in most cases [#]_). The actual `Module map language`_ is described in a later section.
+Module maps are specified as separate files (each named ``module.modulemap``) alongside the headers they describe, which allows them to be added to existing software libraries without having to change the library headers themselves (in most cases [#]_). The actual `Module map language`_ is described in a later section.
 
 .. note::
 
@@ -198,6 +198,9 @@ Command-line parameters
 ``-fmodule-map-file=<file>``
   Load the given module map file if a header from its directory or one of its subdirectories is loaded.
 
+``-fmodules-search-all``
+  If a symbol is not found, search modules referenced in the current module maps but not imported for symbols, so the error message can reference the module by name.  Note that if the global module index has not been built before, this might take some time as it needs to build all the modules.  Note that this option doesn't apply in module builds, to avoid the recursion.
+
 Module Semantics
 ================
 
@@ -237,15 +240,21 @@ Module Map Language
 
 The module map language describes the mapping from header files to the
 logical structure of modules. To enable support for using a library as
-a module, one must write a ``module.map`` file for that library. The
-``module.map`` file is placed alongside the header files themselves,
+a module, one must write a ``module.modulemap`` file for that library. The
+``module.modulemap`` file is placed alongside the header files themselves,
 and is written in the module map language described below.
+
+.. note::
+    For compatibility with previous releases, if a module map file named
+    ``module.modulemap`` is not found, Clang will also search for a file named
+    ``module.map``. This behavior is deprecated and we plan to eventually
+    remove it.
 
 As an example, the module map file for the C standard library might look a bit like this:
 
 .. parsed-literal::
 
-  module std [system] {
+  module std [system] [extern_c] {
     module complex {
       header "complex.h"
       export *
@@ -319,13 +328,15 @@ The ``framework`` qualifier specifies that this module corresponds to a Darwin-s
 .. parsed-literal::
 
   Name.framework/
-    module.map                Module map for the framework
+    Modules/module.modulemap  Module map for the framework
     Headers/                  Subdirectory containing framework headers
     Frameworks/               Subdirectory containing embedded frameworks
     Resources/                Subdirectory containing additional resources
     Name                      Symbolic link to the shared library for the framework
 
-The ``system`` attribute specifies that the module is a system module. When a system module is rebuilt, all of the module's header will be considered system headers, which suppresses warnings. This is equivalent to placing ``#pragma GCC system_header`` in each of the module's headers. The form of attributes is described in the section Attributes_, below.
+The ``system`` attribute specifies that the module is a system module. When a system module is rebuilt, all of the module's headers will be considered system headers, which suppresses warnings. This is equivalent to placing ``#pragma GCC system_header`` in each of the module's headers. The form of attributes is described in the section Attributes_, below.
+
+The ``extern_c`` attribute specifies that the module contains C code that can be used from within C++. When such a module is built for use in C++ code, all of the module's headers will be treated as if they were contained within an implicit ``extern "C"`` block. An import for a module with this attribute can appear within an ``extern "C"`` block. No other restrictions are lifted, however: the module currently cannot be imported within an ``extern "C"`` block in a namespace.
 
 Modules can have a number of different kinds of members, each of which is described below:
 
@@ -725,6 +736,63 @@ Attributes are used in a number of places in the grammar to describe specific be
 
 Any *identifier* can be used as an attribute, and each declaration specifies what attributes can be applied to it.
 
+Private Module Map Files
+------------------------
+Module map files are typically named ``module.modulemap`` and live
+either alongside the headers they describe or in a parent directory of
+the headers they describe. These module maps typically describe all of
+the API for the library.
+
+However, in some cases, the presence or absence of particular headers
+is used to distinguish between the "public" and "private" APIs of a
+particular library. For example, a library may contain the headers
+``Foo.h`` and ``Foo_Private.h``, providing public and private APIs,
+respectively. Additionally, ``Foo_Private.h`` may only be available on
+some versions of library, and absent in others. One cannot easily
+express this with a single module map file in the library:
+
+.. parsed-literal::
+
+  module Foo {
+    header "Foo.h"
+    
+    explicit module Private {
+      header "Foo_Private.h"
+    }
+  }
+
+
+because the header ``Foo_Private.h`` won't always be available. The
+module map file could be customized based on whether
+``Foo_Private.h`` is available or not, but doing so requires custom
+build machinery.
+
+Private module map files, which are named ``module.private.modulemap``
+(or, for backward compatibility, ``module_private.map``), allow one to
+augment the primary module map file with an additional submodule. For
+example, we would split the module map file above into two module map
+files:
+
+.. code-block:: c
+
+  /* module.modulemap */
+  module Foo {
+    header "Foo.h"
+  }
+  
+  /* module.private.modulemap */
+  explicit module Foo.Private {
+    header "Foo_Private.h"
+  }
+
+
+When a ``module.private.modulemap`` file is found alongside a
+``module.modulemap`` file, it is loaded after the ``module.modulemap``
+file. In our example library, the ``module.private.modulemap`` file
+would be available when ``Foo_Private.h`` is available, making it
+easier to split a library's public and private APIs along header
+boundaries.
+
 Modularizing a Platform
 =======================
 To get any benefit out of modules, one needs to introduce module maps for software libraries starting at the bottom of the stack. This typically means introducing a module map covering the operating system's headers and the C standard library headers (in ``/usr/include``, for a Unix system). 
@@ -774,7 +842,7 @@ Where To Learn More About Modules
 =================================
 The Clang source code provides additional information about modules:
 
-``clang/lib/Headers/module.map``
+``clang/lib/Headers/module.modulemap``
   Module map for Clang's compiler-specific header files.
 
 ``clang/test/Modules/``

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.26 2012/10/27 17:18:37 chs Exp $	*/
+/*	$NetBSD: if_il.c,v 1.26.10.1 2014/08/10 06:54:57 tls Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.26 2012/10/27 17:18:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.26.10.1 2014/08/10 06:54:57 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -332,7 +332,7 @@ ilinit(struct ifnet *ifp)
 		addr->il_csr = ILC_ALLMC;
 		if (ilwait(ui, "all multi"))
 			return 0;
-	else {
+	} else {
 		int i;
 		register struct ether_addr *ep = is->is_maddrs;
 		struct ether_multi *enm;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfsmod,v 1.4 2012/11/21 17:48:05 pooka Exp $
+#	$NetBSD: Makefile.zfsmod,v 1.4.10.1 2014/08/10 06:56:11 tls Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -19,6 +19,10 @@ SRCS+=	zprop_common.c
 .PATH: ${ZFSDIR}/dist/uts/common/zmod
 
 SRCS+= trees.c
+
+.PATH:	${ZFSDIR}/lib/libzpool
+
+SRCS+=	atomic.c
 
 .PATH:	${ZFSDIR}/dist/uts/common/fs/zfs
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: romcons.c,v 1.2 2014/03/16 05:20:25 dholland Exp $	*/
+/*	$NetBSD: romcons.c,v 1.2.2.1 2014/08/10 06:54:03 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: romcons.c,v 1.2 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: romcons.c,v 1.2.2.1 2014/08/10 06:54:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -92,6 +92,7 @@ const struct cdevsw romcons_cdevsw = {
 	.d_poll = romcons_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

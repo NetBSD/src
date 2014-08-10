@@ -1,4 +1,4 @@
-/*	$NetBSD: hmacsha.c,v 1.6 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: hmacsha.c,v 1.6.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2005-2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -221,8 +221,8 @@ isc_hmacsha1_init(isc_hmacsha1_t *ctx, const unsigned char *key,
 	};
 
 	DE_CONST(key, keyTemplate[5].pValue);
-	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_FALSE, ISC_FALSE,
-				       NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
 	ctx->object = CK_INVALID_HANDLE;
 	PK11_FATALCHECK(pkcs_C_CreateObject,
 			(ctx->session, keyTemplate,
@@ -294,8 +294,8 @@ isc_hmacsha224_init(isc_hmacsha224_t *ctx, const unsigned char *key,
 	};
 
 	DE_CONST(key, keyTemplate[5].pValue);
-	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_FALSE, ISC_FALSE,
-				       NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
 	ctx->object = CK_INVALID_HANDLE;
 	PK11_FATALCHECK(pkcs_C_CreateObject,
 			(ctx->session, keyTemplate,
@@ -367,8 +367,8 @@ isc_hmacsha256_init(isc_hmacsha256_t *ctx, const unsigned char *key,
 	};
 
 	DE_CONST(key, keyTemplate[5].pValue);
-	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_FALSE, ISC_FALSE,
-				       NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
 	ctx->object = CK_INVALID_HANDLE;
 	PK11_FATALCHECK(pkcs_C_CreateObject,
 			(ctx->session, keyTemplate,
@@ -440,8 +440,8 @@ isc_hmacsha384_init(isc_hmacsha384_t *ctx, const unsigned char *key,
 	};
 
 	DE_CONST(key, keyTemplate[5].pValue);
-	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_FALSE, ISC_FALSE,
-				       NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
 	ctx->object = CK_INVALID_HANDLE;
 	PK11_FATALCHECK(pkcs_C_CreateObject,
 			(ctx->session, keyTemplate,
@@ -513,8 +513,8 @@ isc_hmacsha512_init(isc_hmacsha512_t *ctx, const unsigned char *key,
 	};
 
 	DE_CONST(key, keyTemplate[5].pValue);
-	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_FALSE, ISC_FALSE,
-				       NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
 	ctx->object = CK_INVALID_HANDLE;
 	PK11_FATALCHECK(pkcs_C_CreateObject,
 			(ctx->session, keyTemplate,

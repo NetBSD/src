@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.12 2012/01/21 19:44:30 nonaka Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.12.20.1 2014/08/10 06:54:51 tls Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.12 2012/01/21 19:44:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.12.20.1 2014/08/10 06:54:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ CFATTACH_DECL_NEW(rs5c372rtc, sizeof(struct rs5c372rtc_softc),
 static void rs5c372rtc_reg_write(struct rs5c372rtc_softc *, int, uint8_t);
 static int rs5c372rtc_clock_read(struct rs5c372rtc_softc *, struct clock_ymdhms *);
 static int rs5c372rtc_clock_write(struct rs5c372rtc_softc *, struct clock_ymdhms *);
-static int rs5c372rtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int rs5c372rtc_settime(struct todr_chip_handle *, struct timeval *);
+static int rs5c372rtc_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
+static int rs5c372rtc_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 
 static int
 rs5c372rtc_match(device_t parent, cfdata_t cf, void *arg)
@@ -91,8 +91,8 @@ rs5c372rtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_address = ia->ia_addr;
 	sc->sc_dev = self;
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = rs5c372rtc_gettime;
-	sc->sc_todr.todr_settime = rs5c372rtc_settime;
+	sc->sc_todr.todr_gettime_ymdhms = rs5c372rtc_gettime_ymdhms;
+	sc->sc_todr.todr_settime_ymdhms = rs5c372rtc_settime_ymdhms;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -103,31 +103,22 @@ rs5c372rtc_attach(device_t parent, device_t self, void *arg)
 }
 
 static int
-rs5c372rtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+rs5c372rtc_gettime_ymdhms(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
 	struct rs5c372rtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
 
-	memset(&dt, 0, sizeof(dt));
-
-	if (rs5c372rtc_clock_read(sc, &dt) == 0)
+	if (rs5c372rtc_clock_read(sc, dt) == 0)
 		return (-1);
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
 
 	return (0);
 }
 
 static int
-rs5c372rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
+rs5c372rtc_settime_ymdhms(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
 	struct rs5c372rtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
 
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
-	if (rs5c372rtc_clock_write(sc, &dt) == 0)
+	if (rs5c372rtc_clock_write(sc, dt) == 0)
 		return (-1);
 
 	return (0);

@@ -1,4 +1,4 @@
-#   Copyright 1998-2013 Free Software Foundation, Inc.
+#   Copyright 1998-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # This file was written by Michael Snyder (msnyder@cygnus.com)
 
-load_lib "trace-support.exp";
+load_lib "trace-support.exp"
 
 
 gdb_exit
@@ -36,10 +36,10 @@ gdb_file_cmd $binfile
 
 # define relative source line numbers:
 # all subsequent line numbers are relative to this first one (baseline)
-set baseline  [gdb_find_recursion_test_baseline $srcfile];
+set baseline  [gdb_find_recursion_test_baseline $srcfile]
 if { $baseline == -1 } then {
     fail "Could not find gdb_recursion_test function"
-    return;
+    return
 }
 
 set testline1 [expr $baseline + 4]
@@ -58,9 +58,9 @@ set testline6 [expr $baseline + 9]
 gdb_delete_tracepoints
 
 foreach x { 1 2 3 4 5 6 } {
-    set testline [expr \$testline$x];
-    set trcpt [gdb_gettpnum $testline];
-    set trcpt$x $trcpt;
+    set testline [expr \$testline$x]
+    set trcpt [gdb_gettpnum $testline]
+    set trcpt$x $trcpt
     gdb_test "passcount $x" \
 	     "Setting tracepoint $trcpt.* to $x" \
 	     "10.x: set passcount for tracepoint $trcpt"
@@ -80,39 +80,39 @@ gdb_test_no_output "set default-collect gdb_char_test, gdb_long_test - 100" \
     "10: set default-collect"
 
 proc gdb_verify_tracepoints { testname } {
-    global gdb_prompt;
+    global gdb_prompt
 
     set ws "\[\t \]+"
     set nl "\[\r\n\]+"
-    set ourstate 1;
-    set result "pass";
+    set ourstate 1
+    set result "pass"
     gdb_test_multiple "info tracepoints" "$testname" {
 	-re "\[0-9\]+\[\t \]+tracepoint\[\t \]+keep y\[\t \]+0x\[0-9a-fA-F\]+ in gdb_recursion_test\[^\r\n\]+\r\n\[ \t]+trace only if \[0-9\] - 1 == \[0-9\] / 2" {
 #	    if { $expect_out(1,string) != $ourstate } {
-#		set result "fail";
+#		set result "fail"
 #	    }
-	    incr ourstate;
-	    exp_continue;
+	    incr ourstate
+	    exp_continue
 	}
 	-re "$gdb_prompt $" {
 	    if { $ourstate >= 6 } {
-		set result "pass";
+		set result "pass"
 	    } else {
-		set result "fail";
+		set result "fail"
 	    }
 	}
 	default {
-	    set result "fail";
+	    set result "fail"
 	}
     }
-    $result $testname;
+    $result $testname
 
     gdb_test "show default-collect" \
 	"The list of expressions to collect by default is \"gdb_char_test, gdb_long_test - 100\"..*" \
 	"10: show default-collect"
 }
 
-gdb_verify_tracepoints "10.x: verify trace setup";
+gdb_verify_tracepoints "10.x: verify trace setup"
 
 # 10.1 Save current tracepoint definitions to a file
 
@@ -129,7 +129,7 @@ gdb_test "info tracepoints" "No tracepoints." "10.2: delete tracepoints"
 gdb_test "source savetrace.tr" \
 	"Tracepoint \[0-9\]+ at .*" \
 	"10.2: read back saved tracepoints"
-gdb_verify_tracepoints "10.2: verify recovered tracepoints";
+gdb_verify_tracepoints "10.2: verify recovered tracepoints"
 remote_file host delete savetrace.tr
 
 # 10.3 repeat with a path to the file
@@ -147,7 +147,7 @@ gdb_test "info tracepoints" "No tracepoints." "10.3: delete tracepoints"
 gdb_test "source $trace_file_name" \
 	"Tracepoint \[0-9\]+ at .*" \
 	"10.4: read saved tracepoints, full path"
-gdb_verify_tracepoints "10.3: verify recovered tracepoints, full path";
+gdb_verify_tracepoints "10.3: verify recovered tracepoints, full path"
 remote_file host delete $trace_file_name
 
 # 10.5 invalid filename

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2012/05/07 08:51:47 wiz Exp $
+#	$NetBSD: Makefile,v 1.17.8.1 2014/08/10 06:51:45 tls Exp $
 
 USE_FORT?= yes	# data driven bugs?
 
@@ -27,7 +27,7 @@ COPTS.blocksort.c+=	-fno-loop-optimize
 .endif
 
 .if ${MKSHARE} != "no"
-FILESDIR=	${HTMLDOCDIR}/bzip2
+FILESDIR=	/usr/share/doc/reference/ref1/bzip2
 FILES=		manual.html
 .endif
 

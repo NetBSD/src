@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.11 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.11.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -264,22 +264,22 @@ struct isc_mempool {
 	do { \
 		ISCMEMFUNC(put)((c), (p), (s) _ISC_MEM_FILELINE);	\
 		(p) = NULL; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define isc_mem_putanddetach(c, p, s) \
 	do { \
 		ISCMEMFUNC(putanddetach)((c), (p), (s) _ISC_MEM_FILELINE); \
 		(p) = NULL; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define isc_mem_free(c, p) \
 	do { \
 		ISCMEMFUNC(free)((c), (p) _ISC_MEM_FILELINE);	\
 		(p) = NULL; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define isc_mempool_put(c, p) \
 	do { \
 		ISCMEMPOOLFUNC(put)((c), (p) _ISC_MEM_FILELINE);	\
 		(p) = NULL; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*@{*/
 isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.12 2012/10/03 07:20:50 mlelstv Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.12.10.1 2014/08/10 06:55:53 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -73,7 +73,6 @@ enum anode_type { AROOT, ADIR, AFILE, ALDIR, ALFILE, ASLINK };
  */
 struct anode {
 	struct genfs_node gnode;
-	LIST_ENTRY(anode) link;
 	enum anode_type type;
 	char name[ADMAXNAMELEN+1];	/* (r/d/f) name for object */
 	struct datestamp mtimev;	/* (r) volume modified */
@@ -112,7 +111,6 @@ struct anode {
 #define ANODEHASHSZ (512)
 
 struct adosfsmount {
-	LIST_HEAD(anodechain, anode) anodetab[ANODEHASHSZ];
 	struct mount *mp;	/* owner mount */
 	u_int32_t dostype;	/* type of volume */
 	u_long rootb;		/* root block number */
@@ -168,10 +166,6 @@ int adoscaseequ(const u_char *, const u_char *, int, int);
 int adoshash(const u_char *, int, int, int);
 int adunixprot(int);
 int adosfs_getblktype(struct adosfsmount *, struct buf *);
-
-struct vnode *adosfs_ahashget(struct mount *, ino_t);
-void adosfs_ainshash(struct adosfsmount *, struct anode *);
-void adosfs_aremhash(struct anode *);
 
 int adosfs_lookup(void *);
 

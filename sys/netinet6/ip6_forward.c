@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.72 2013/06/29 21:06:58 rmind Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.72.4.1 2014/08/10 06:56:30 tls Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.72 2013/06/29 21:06:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.72.4.1 2014/08/10 06:56:30 tls Exp $");
 
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
@@ -100,9 +100,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 	u_int32_t inzone, outzone;
 	struct in6_addr src_in6, dst_in6;
 #ifdef IPSEC
-	struct secpolicy *sp = NULL;
 	int needipsec = 0;
-	int s;
+	struct secpolicy *sp = NULL;
 #endif
 
 	/*
@@ -155,19 +154,21 @@ ip6_forward(struct mbuf *m, int srcrt)
 	mcopy = m_copy(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN));
 
 #ifdef IPSEC
-	/* Check the security policy (SP) for the packet */
+	if (ipsec_used) {
+		/* Check the security policy (SP) for the packet */
 
-	sp = ipsec6_check_policy(m,NULL,0,&needipsec,&error);
-	if (error != 0) {
-		/*
-		 * Hack: -EINVAL is used to signal that a packet
-		 * should be silently discarded.  This is typically
-		 * because we asked key management for an SA and
-		 * it was delayed (e.g. kicked up to IKE).
-		 */
-	if (error == -EINVAL)
-		error = 0;
-	goto freecopy;
+		sp = ipsec6_check_policy(m, NULL, 0, &needipsec, &error);
+		if (error != 0) {
+			/*
+			 * Hack: -EINVAL is used to signal that a packet
+			 * should be silently discarded.  This is typically
+			 * because we asked key management for an SA and
+			 * it was delayed (e.g. kicked up to IKE).
+			 */
+			if (error == -EINVAL)
+				error = 0;
+			goto freecopy;
+		}
 	}
 #endif /* IPSEC */
 
@@ -261,8 +262,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 * ipsec6_proces_packet will send the packet using ip6_output 
 	 */
 	if (needipsec) {
-		s = splsoftnet();
-		error = ipsec6_process_packet(m,sp->req);
+		int s = splsoftnet();
+		error = ipsec6_process_packet(m, sp->req);
 		splx(s);
 		if (mcopy)
 			goto freecopy;

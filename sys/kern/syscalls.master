@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.267 2014/03/14 00:52:08 pooka Exp $
+	$NetBSD: syscalls.master,v 1.267.2.1 2014/08/10 06:55:58 tls Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -390,7 +390,7 @@
 			    off_t length); }
 201	STD 	 RUMP	{ int|sys||ftruncate(int fd, int PAD, off_t length); }
 202	STD	 RUMP 	{ int|sys||__sysctl(const int *name, u_int namelen, \
-			    void *old, size_t *oldlenp, const void *new, \
+			    void *oldv, size_t *oldlenp, const void *newv, \
 			    size_t newlen); }
 203	STD 		{ int|sys||mlock(const void *addr, size_t len); }
 204	STD 		{ int|sys||munlock(const void *addr, size_t len); }
@@ -629,7 +629,7 @@
 328	UNIMPL
 329	UNIMPL
 ; SA system calls.
-330	COMPAT_60 	{ int|sys||sa_register(void *new, void **old, \
+330	COMPAT_60 	{ int|sys||sa_register(void *newv, void **oldv, \
 				int flags, ssize_t stackinfo_offset); }
 331	COMPAT_60 	{ int|sys||sa_stacks(int num, stack_t *stacks); }
 332	COMPAT_60 	{ int|sys||sa_enable(void); }
@@ -765,16 +765,16 @@
 			    size_t fh_size, struct stat30 *sb); }
 
 ; Asynchronous I/O system calls
-399	STD MODULAR 	{ int|sys||aio_cancel(int fildes, struct aiocb *aiocbp); }
-400	STD MODULAR 	{ int|sys||aio_error(const struct aiocb *aiocbp); }
-401	STD MODULAR 	{ int|sys||aio_fsync(int op, struct aiocb *aiocbp); }
-402	STD MODULAR 	{ int|sys||aio_read(struct aiocb *aiocbp); }
-403	STD MODULAR 	{ int|sys||aio_return(struct aiocb *aiocbp); }
+399	STD MODULAR RUMP	{ int|sys||aio_cancel(int fildes, struct aiocb *aiocbp); }
+400	STD MODULAR RUMP	{ int|sys||aio_error(const struct aiocb *aiocbp); }
+401	STD MODULAR RUMP	{ int|sys||aio_fsync(int op, struct aiocb *aiocbp); }
+402	STD MODULAR RUMP	{ int|sys||aio_read(struct aiocb *aiocbp); }
+403	STD MODULAR RUMP	{ int|sys||aio_return(struct aiocb *aiocbp); }
 404	COMPAT_50 MODULAR { int|sys||aio_suspend(const struct aiocb *const *list, \
 			    int nent, const struct timespec50 *timeout); }
-405	STD MODULAR 	{ int|sys||aio_write(struct aiocb *aiocbp); }
-406	STD MODULAR 	{ int|sys||lio_listio(int mode, struct aiocb *const *list, \
-			    int nent, struct sigevent *sig); }
+405	STD MODULAR RUMP	{ int|sys||aio_write(struct aiocb *aiocbp); }
+406	STD MODULAR RUMP	{ int|sys||lio_listio(int mode, struct aiocb *const *list, \
+				    int nent, struct sigevent *sig); }
 
 407	UNIMPL
 408	UNIMPL
@@ -846,7 +846,7 @@
 			    const sigset_t *mask); }
 437	STD 	RUMP	{ int|sys|50|pollts(struct pollfd *fds, u_int nfds, \
 			    const struct timespec *ts, const sigset_t *mask); }
-438	STD MODULAR	{ int|sys|50|aio_suspend( \
+438	STD MODULAR RUMP { int|sys|50|aio_suspend( \
 			    const struct aiocb *const *list, \
 			    int nent, const struct timespec *timeout); }
 439	STD  RUMP	{ int|sys|50|stat(const char *path, struct stat *ub); }
@@ -944,3 +944,7 @@
 478	STD 		{ int|sys|60|_lwp_park(clockid_t clock_id, int flags, \
 			    const struct timespec *ts, lwpid_t unpark, \
 			    const void *hint, const void *unparkhint); }
+479	STD  RUMP	{ int|sys||posix_fallocate(int fd, int PAD, off_t pos, \
+			    off_t len); }
+480	STD  RUMP	{ int|sys||fdiscard(int fd, int PAD, off_t pos, \
+			    off_t len); }

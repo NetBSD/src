@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.21 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.21.2.1 2014/08/10 06:54:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.21 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.21.2.1 2014/08/10 06:54:04 tls Exp $");
 
 #include "debug_playstation2.h"
 
@@ -59,13 +59,15 @@ __KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.21 2014/03/31 11:25:49 martin Exp $");
 #define STATIC	static
 #endif
 
-STATIC struct gsfb {
-	int initialized;
-	int attached;
-	int is_console;
-	const struct wsscreen_descr *screen;
-	struct wsdisplay_font *font;
-} gsfb;
+struct gsfb_softc {
+	device_t sc_dev;
+	const struct wsscreen_descr *sc_screen;
+	struct wsdisplay_font *sc_font;
+	bool sc_is_console;
+};
+
+static int gsfb_is_console;
+static struct gsfb_softc gsfb_console_softc;
 
 STATIC void gsfb_dma_kick(paddr_t, size_t);
 STATIC void gsfb_font_expand_psmct32(const struct wsdisplay_font *, u_int,
@@ -177,14 +179,14 @@ STATIC const struct _gsfb_debug_window {
 STATIC char _gsfb_debug_buf[80 * 2];
 #endif /* GSFB_DEBUG_MONITOR */
 
-STATIC int gsfb_match(struct device *, struct cfdata *, void *);
-STATIC void gsfb_attach(struct device *, struct device *, void *);
+STATIC int gsfb_match(device_t, cfdata_t, void *);
+STATIC void gsfb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(gsfb, sizeof(struct device),
+CFATTACH_DECL_NEW(gsfb, sizeof(struct gsfb_softc),
     gsfb_match, gsfb_attach, NULL, NULL);
 
 STATIC void gsfb_hwinit(void);
-STATIC int gsfb_swinit(void);
+STATIC int gsfb_swinit(struct gsfb_softc*);
 
 /* console */
 void gsfbcnprobe(struct consdev *);
@@ -265,7 +267,7 @@ struct wsdisplay_accessops _gsfb_accessops = {
 };
 
 int
-gsfb_match(struct device *parent, struct cfdata *cf, void *aux)
+gsfb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	extern struct cfdriver gsfb_cd;
 	struct mainbus_attach_args *ma = aux;
@@ -273,24 +275,30 @@ gsfb_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(ma->ma_name, gsfb_cd.cd_name) != 0)
 		return (0);
 
-	return (!gsfb.attached);
+	return 1;
 }
 
 void
-gsfb_attach(struct device *parent, struct device *self, void *aux)
+gsfb_attach(device_t parent, device_t self, void *aux)
 {
 	struct wsemuldisplaydev_attach_args wa;
+	struct gsfb_softc *sc = device_private(self);
 
-	gsfb.attached = 1;
-	if (!gsfb.is_console && gsfb_swinit() != 0)
+	if (gsfb_is_console) {
+		memcpy(sc, &gsfb_console_softc, sizeof(gsfb_console_softc));
+		sc->sc_is_console = true;
+	}
+	sc->sc_dev = self;
+
+	if (!sc->sc_is_console && !gsfb_swinit(sc) != 0)
 		return;
 
 	printf("\n");
 
-	wa.console	= gsfb.is_console;
+	wa.console	= sc->sc_is_console;
 	wa.scrdata	= &_gsfb_screen_list;
 	wa.accessops	= &_gsfb_accessops;
-	wa.accesscookie	= &gsfb;
+	wa.accesscookie	= sc;
 
 	config_found(self, &wa, wsdisplaydevprint);
 }
@@ -312,10 +320,10 @@ gsfbcninit(struct consdev *cndev)
 	u_int32_t *buf = (void *)MIPS_PHYS_TO_KSEG1(paddr);
 	long defattr =  ATTR_BG_SET(WS_DEFAULT_BG) | ATTR_FG_SET(WS_DEFAULT_FG);
 
-	gsfb.is_console = 1;
+	gsfb_is_console = 1;
 
 	gsfb_hwinit();
-	gsfb_swinit();
+	gsfb_swinit(&gsfb_console_softc);
 
 	/* Set the screen to the default background color at boot */
 	buf[28] = gsfb_ansi_psmct32[ATTR_BG_GET(defattr)];
@@ -332,7 +340,8 @@ gsfbcninit(struct consdev *cndev)
 	}
 #endif /* GSFB_DEBUG_MONITOR */
 
-	wsdisplay_cnattach(&_gsfb_std_screen, &gsfb, 0, 0, defattr);
+	wsdisplay_cnattach(&_gsfb_std_screen, &gsfb_console_softc, 0, 0,
+	    defattr);
 }
 
 void
@@ -355,21 +364,20 @@ gsfb_hwinit(void)
 }
 
 int
-gsfb_swinit(void)
+gsfb_swinit(struct gsfb_softc *sc)
 {
 	int font;
 
 	wsfont_init();	
-	font = wsfont_find(NULL, 8, 16, 0,  WSDISPLAY_FONTORDER_L2R,
-	    WSDISPLAY_FONTORDER_L2R);
+	font = wsfont_find(NULL, 8, 16, 0, WSDISPLAY_FONTORDER_L2R,
+	    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (font < 0)
 		return (1);
 
-	if (wsfont_lock(font, &gsfb.font))
+	if (wsfont_lock(font, &sc->sc_font))
 		return (1);
 
-	gsfb.screen = &_gsfb_std_screen;
-	gsfb.initialized = 1;
+	sc->sc_screen = &_gsfb_std_screen;
 
 	return (0);
 }
@@ -380,9 +388,10 @@ gsfb_swinit(void)
 void
 _gsfb_cursor(void *cookie, int on, int row, int col)
 {
+	struct gsfb_softc *sc = cookie;
 	paddr_t paddr = MIPS_KSEG0_TO_PHYS(gsfb_cursor_cmd);
 	u_int32_t *buf = (void *)MIPS_PHYS_TO_KSEG1(paddr);
-	struct wsdisplay_font *font = gsfb.font;
+	struct wsdisplay_font *font = sc->sc_font;
 
 	gsfb_set_cursor_pos(buf, col, row, font->fontwidth, font->fontheight);
 
@@ -402,7 +411,8 @@ gsfb_set_cursor_pos(u_int32_t *p, int x, int y, int w, int h)
 int
 _gsfb_mapchar(void *cookie, int c, unsigned int *cp)
 {
-	struct wsdisplay_font *font = gsfb.font;
+	struct gsfb_softc *sc = cookie;
+	struct wsdisplay_font *font = sc->sc_font;
 	
 	if (font->encoding != WSDISPLAY_FONTENC_ISO)
 		if ((c = wsfont_map_unichar(font, c)) < 0)
@@ -422,9 +432,10 @@ _gsfb_mapchar(void *cookie, int c, unsigned int *cp)
 void
 _gsfb_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
+	struct gsfb_softc *sc = cookie;
 	paddr_t paddr = MIPS_KSEG0_TO_PHYS(gsfb_load_cmd_8x16_psmct32);
 	u_int32_t *buf = (void *)MIPS_PHYS_TO_KSEG1(paddr);
-	struct wsdisplay_font *font = gsfb.font;
+	struct wsdisplay_font *font = sc->sc_font;
 
 	/* copy font data to DMA region */
 	gsfb_font_expand_psmct32(font, uc, attr, &buf[FONT_SCRATCH_BASE]);
@@ -439,10 +450,11 @@ _gsfb_putchar(void *cookie, int row, int col, u_int uc, long attr)
 void
 _gsfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 {
+	struct gsfb_softc *sc = cookie;
 	paddr_t paddr = MIPS_KSEG0_TO_PHYS(gsfb_copy_cmd_8x16);
 	u_int32_t *cmd = (void *)MIPS_PHYS_TO_KSEG1(paddr);
-	int y = gsfb.font->fontheight * row;
-	int w = gsfb.font->fontwidth;
+	int y = sc->sc_font->fontheight * row;
+	int w = sc->sc_font->fontwidth;
 	int i;
 
 	if (dstcol > srccol) {
@@ -470,10 +482,11 @@ _gsfb_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 void
 _gsfb_copyrows(void *cookie, int src, int dst, int num)
 {
+	struct gsfb_softc *sc = cookie;
 	paddr_t paddr = MIPS_KSEG0_TO_PHYS(gsfb_scroll_cmd_640x16);
 	u_int32_t *cmd = (void *)MIPS_PHYS_TO_KSEG1(paddr);
 	int i;
-	int h = gsfb.font->fontheight;
+	int h = sc->sc_font->fontheight;
 
 	if (dst > src) {
 		for (i = num - 1; i >= 0; i--) {
@@ -491,10 +504,11 @@ _gsfb_copyrows(void *cookie, int src, int dst, int num)
 void
 _gsfb_eraserows(void *cookie, int row, int nrow, long attr)
 {
+	struct gsfb_softc *sc = cookie;
 	int i, j;
 	
 	for (j = 0; j < nrow; j++)
-		for (i = 0; i < gsfb.screen->ncols; i++)
+		for (i = 0; i < sc->sc_screen->ncols; i++)
 			_gsfb_putchar(cookie, row + j, i, ' ', attr);
 }
 

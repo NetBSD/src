@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.329 2014/03/25 09:52:55 ozaki-r Exp $
+#	$NetBSD: bsd.README,v 1.329.2.1 2014/08/10 06:53:30 tls Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -198,6 +198,12 @@ MKGCCCMDS	If "no", don't build gcc(1), but do build the GCC-related
 MKGDB		If "no", don't build gdb(1).
 		Default: yes
 
+MKGROFFHTMLDOC	If "no", avoid trying to use groff to generate html for
+		miscellaneous articles, as this seems to sometimes want
+		to run software not in base. Does not affect html man
+		pages.
+		Default: no
+
 MKHESIOD	If "no", disables building of Hesiod infrastructure
 		(libraries and support programs).
 		Default: yes
@@ -233,6 +239,10 @@ MKIPFILTER	If "no", don't build or install the IP Filter programs and LKM.
 MKISCSI		If "no", don't build or install iSCSI library or applications
 		(depends on libpthread.)
 		Default: yes
+
+MKKDEBUG	If "yes", force building of kernel symbol info and creation
+		of netbsd.gdb in all kernel builds, independently of the
+		settings for "makeoptions DEBUG" in the kernel config file.
 
 MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
@@ -605,14 +615,15 @@ LIBMODE		Library mode.  [${NONBINMODE}]
 DOCDIR		Base path for system documentation (e.g. PSD, USD, etc.)
 	        installation.  [/usr/share/doc]
 
-HTMLDOCDIR	Base path for html system documentation installation.
-		[/usr/share/doc/html]
-
 DOCGRP		Documentation group.  [wheel]
 
 DOCOWN		Documentation owner.  [root]
 
 DOCMODE		Documentation mode.  [${NONBINMODE}]
+
+GZIP_N_FLAG	Flags to pass to TOOL_GZIP to prevent it from inserting
+		file names or timestamps in the compressed output.
+		[-n, or -nT when TOOL_GZIP is really TOOL_PIGZ]
 
 NLSDIR		Base path for Native Language Support files installation.
 		[/usr/share/nls]
@@ -793,6 +804,11 @@ TOOL_GROFF		Front end for groff document formatting system.  [groff]
 
 TOOL_GZIP		Compression/decompression tool.  [gzip]
 
+TOOL_GZIP_N		Same as TOOL_GZIP, plus a command line option to
+			prevent it from inserting file names or timestamps
+			into the compressed output.
+			[${TOOL_GZIP} ${GZIP_N_FLAG}]
+
 TOOL_HEXDUMP		Ascii, decimal, hexadecimal, octal dump.  [hexdump]
 
 TOOL_HP300MKBOOT	Make bootable image for hp300.  [hp300-mkboot]
@@ -839,6 +855,8 @@ TOOL_MKTEMP		Make (unique) temporary file name.  [mktemp]
 TOOL_MSGC		Simple message list compiler.  [msgc]
 
 TOOL_MTREE		Map a directory hierarchy.  [mtree]
+
+TOOL_NCDCS		Turn ELF kernel into a NCD firmware image. [ncdcs]
 
 TOOL_PAX		Manipulate file archives and copy directories.  [pax]
 
@@ -1889,7 +1907,7 @@ LDFLAGS		Options to ${CC} during the link process.  []
 
 LINT		C program verifier.  [lint]
 
-LINTFLAGS	Options to ${LINT}.  [-chapbxzFS]
+LINTFLAGS	Options to ${LINT}.  [-chapbxzgFS]
 
 LORDER		List dependencies for object files.  [lorder]
 

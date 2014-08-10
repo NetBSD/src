@@ -42,7 +42,7 @@ class COFFAsmParser : public MCAsmParserExtension {
   bool ParseSectionName(StringRef &SectionName);
   bool ParseSectionFlags(StringRef FlagsString, unsigned* Flags);
 
-  virtual void Initialize(MCAsmParser &Parser) {
+  void Initialize(MCAsmParser &Parser) override {
     // Call the base implementation.
     MCAsmParserExtension::Initialize(Parser);
 
@@ -293,7 +293,7 @@ bool COFFAsmParser::ParseSectionSwitch(StringRef Section,
                                        unsigned Characteristics,
                                        SectionKind Kind) {
   return ParseSectionSwitch(Section, Characteristics, Kind, "",
-                            COFF::IMAGE_COMDAT_SELECT_ANY, 0);
+                            COFF::IMAGE_COMDAT_SELECT_ANY, nullptr);
 }
 
 bool COFFAsmParser::ParseSectionSwitch(StringRef Section,
@@ -359,7 +359,7 @@ bool COFFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   }
 
   COFF::COMDATType Type = COFF::IMAGE_COMDAT_SELECT_ANY;
-  const MCSectionCOFF *Assoc = 0;
+  const MCSectionCOFF *Assoc = nullptr;
   StringRef COMDATSymName;
   if (getLexer().is(AsmToken::Comma)) {
     Lex();
@@ -504,7 +504,7 @@ bool COFFAsmParser::parseCOMDATTypeAndAssoc(COFF::COMDATType &Type,
 ///  ::= .linkonce [ identifier [ identifier ] ]
 bool COFFAsmParser::ParseDirectiveLinkOnce(StringRef, SMLoc Loc) {
   COFF::COMDATType Type = COFF::IMAGE_COMDAT_SELECT_ANY;
-  const MCSectionCOFF *Assoc = 0;
+  const MCSectionCOFF *Assoc = nullptr;
   if (getLexer().is(AsmToken::Identifier))
     if (parseCOMDATTypeAndAssoc(Type, Assoc))
       return true;

@@ -12,14 +12,15 @@
 
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCParser/MCAsmParserExtension.h"
+#include "llvm/MC/MCTargetOptions.h"
 
 namespace llvm {
-class MCStreamer;
-class StringRef;
-class SMLoc;
 class AsmToken;
-class MCParsedAsmOperand;
 class MCInst;
+class MCParsedAsmOperand;
+class MCStreamer;
+class SMLoc;
+class StringRef;
 template <typename T> class SmallVectorImpl;
 
 enum AsmRewriteKind {
@@ -63,7 +64,7 @@ struct ParseInstructionInfo {
 
   SmallVectorImpl<AsmRewrite> *AsmRewrites;
 
-  ParseInstructionInfo() : AsmRewrites(0) {}
+  ParseInstructionInfo() : AsmRewrites(nullptr) {}
   ParseInstructionInfo(SmallVectorImpl<AsmRewrite> *rewrites)
     : AsmRewrites(rewrites) {}
 
@@ -96,6 +97,9 @@ protected: // Can only create subclasses.
   /// SemaCallback - The Sema callback implementation.  Must be set when parsing
   /// ms-style inline assembly.
   MCAsmParserSemaCallback *SemaCallback;
+
+  /// Set of options which affects instrumentation of inline assembly.
+  MCTargetOptions MCOptions;
 
 public:
   virtual ~MCTargetAsmParser();
@@ -179,7 +183,7 @@ public:
   virtual const MCExpr *applyModifierToExpr(const MCExpr *E,
                                             MCSymbolRefExpr::VariantKind,
                                             MCContext &Ctx) {
-    return 0;
+    return nullptr;
   }
 
   virtual void onLabelParsed(MCSymbol *Symbol) { };

@@ -4,13 +4,13 @@
 // CHECK-DAG: @_ZN5test11MD2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // CHECK-DAG: @_ZN5test11ND2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // CHECK-DAG: @_ZN5test11OD2Ev = alias {{.*}} @_ZN5test11AD2Ev
-// CHECK-DAG: @_ZN5test11SD2Ev = alias bitcast {{.*}} @_ZN5test11AD2Ev
+// CHECK-DAG: @_ZN5test11SD2Ev = alias {{.*}} @_ZN5test11AD2Ev
 
 // WIN32-DAG: @_ZN5test01AD1Ev = alias {{.*}} @_ZN5test01AD2Ev
 // WIN32-DAG: @_ZN5test11MD2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // WIN32-DAG: @_ZN5test11ND2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // WIN32-DAG: @_ZN5test11OD2Ev = alias {{.*}} @_ZN5test11AD2Ev
-// WIN32-DAG: @_ZN5test11SD2Ev = alias bitcast {{.*}} @_ZN5test11AD2Ev
+// WIN32-DAG: @_ZN5test11SD2Ev = alias {{.*}} @_ZN5test11AD2Ev
 
 
 struct A {
@@ -381,7 +381,7 @@ namespace test10 {
 
 // Checks from test3:
 
-  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::<anonymous namespace>::D"* %this) unnamed_addr
+  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::(anonymous namespace)::D"* %this) unnamed_addr
   // CHECK: invoke void {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
   // CHECK: call void @_ZdlPv({{.*}}) [[NUW:#[0-9]+]]
   // CHECK: ret void
@@ -405,7 +405,7 @@ namespace test10 {
   // CHECK: call void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK: ret void
 
-  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(%"struct.test3::<anonymous namespace>::C"* %this) unnamed_addr
+  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
   // CHECK: invoke void @_ZN5test31BD2Ev(
   // CHECK: call void @_ZN5test31AD2Ev(
   // CHECK: ret void
@@ -413,7 +413,7 @@ namespace test10 {
   // CHECK: declare void @_ZN5test31BD2Ev(
   // CHECK: declare void @_ZN5test31AD2Ev(
 
-  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::<anonymous namespace>::C"* %this) unnamed_addr
+  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
   // CHECK: invoke void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK: ret void

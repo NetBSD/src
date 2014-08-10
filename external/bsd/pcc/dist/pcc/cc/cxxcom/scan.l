@@ -1,6 +1,6 @@
 %{
-/*	Id: scan.l,v 1.1 2012/01/01 16:20:55 ragge Exp 	*/	
-/*	$NetBSD: scan.l,v 1.1.1.1 2012/01/11 20:33:21 plunky Exp $	*/
+/*	Id: scan.l,v 1.4 2014/05/03 09:47:51 ragge Exp 	*/	
+/*	$NetBSD: scan.l,v 1.1.1.1.20.1 2014/08/10 07:10:07 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -221,11 +221,11 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 
 %%
 
-int lineno;
+int lineno, issyshdr;
 char *ftitle = "<stdin>";
 
 static int
-namechk()
+namechk(void)
 { 	
 	struct symtab *s;
 	int i;
@@ -244,8 +244,10 @@ namechk()
 	}
 	unput(i);
 
+#ifdef GCC_COMPAT
 	if ((i = gcc_keyword(yylval.strp, &yylval.nodep)) > 0)
 		return i;
+#endif
 
 	if (notype)
 		return(C_NAME);
@@ -679,13 +681,21 @@ pragmas_weak(char *str)
 		return 1;
 	if ((s2 = pragtok(NULL)) == NULL) {
 		sp = lookup(addname(s1), SNORMAL);
+#ifdef GCC_COMPAT
 		sp->sap = attr_add(sp->sap, gcc_attr_parse(bdty(NAME, "weak")));
+#else
+		sp->sap = 0;
+#endif
 	} else if (*s2 == '=') {
 		if ((s2 = pragtok(NULL)) == NULL)
 			return 1;
 		sp = lookup(addname(s2), SNORMAL);
+#ifdef GCC_COMPAT
 		sp->sap = attr_add(sp->sap, gcc_attr_parse(bdty(CALL,
 		    bdty(NAME, "aliasweak"), bdty(STRING, s1, 0))));
+#else
+		sp->sap = NULL;
+#endif
 	} else
 		return 1;
 	return 0;
@@ -798,11 +808,12 @@ struct pragmas {
 	{ "ident", NULL },
 	{ 0 },
 };
+
 /*
  * got a full pragma line.  Split it up here.
  */
 static void
-pragma()
+pragma(void)
 {
 	struct pragmas *p;
 	char *t, *pt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.7 2013/06/19 15:30:25 msaitoh Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.7.6.1 2014/08/10 06:54:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.7 2013/06/19 15:30:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.7.6.1 2014/08/10 06:54:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,8 +290,9 @@ ihphy_status(struct mii_softc *sc)
 	}
 
 	if (esr & IHPHY_ESR_DUPLEX)
-		mii->mii_media_active |=
-		    IFM_FDX | mii_phy_flowstatus(sc);
+		mii->mii_media_active |= IFM_FDX | mii_phy_flowstatus(sc);
+	else
+		mii->mii_media_active |= IFM_HDX;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk11_api.c,v 1.1.1.1 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: pk11_api.c,v 1.1.1.1.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -326,6 +326,44 @@ pkcs_C_FindObjectsFinal(CK_SESSION_HANDLE hSession)
 	if (sym == NULL)
 		return (CKR_SYMBOL_RESOLUTION_FAILED);
 	return (*sym)(hSession);
+}
+
+CK_RV
+pkcs_C_EncryptInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism,
+		   CK_OBJECT_HANDLE hKey)
+{
+	static CK_C_EncryptInit sym = NULL;
+	static void *pPK11 = NULL;
+
+	if (hPK11 == NULL)
+		return (CKR_LIBRARY_FAILED_TO_LOAD);
+	if ((sym == NULL) || (hPK11 != pPK11)) {
+		pPK11 = hPK11;
+		sym = (CK_C_EncryptInit)dlsym(hPK11, "C_EncryptInit");
+	}
+	if (sym == NULL)
+		return (CKR_SYMBOL_RESOLUTION_FAILED);
+	return (*sym)(hSession, pMechanism, hKey);
+}
+
+CK_RV
+pkcs_C_Encrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
+	       CK_ULONG ulDataLen, CK_BYTE_PTR pEncryptedData,
+	       CK_ULONG_PTR pulEncryptedDataLen)
+{
+	static CK_C_Encrypt sym = NULL;
+	static void *pPK11 = NULL;
+
+	if (hPK11 == NULL)
+		return (CKR_LIBRARY_FAILED_TO_LOAD);
+	if ((sym == NULL) || (hPK11 != pPK11)) {
+		pPK11 = hPK11;
+		sym = (CK_C_Encrypt)dlsym(hPK11, "C_Encrypt");
+	}
+	if (sym == NULL)
+		return (CKR_SYMBOL_RESOLUTION_FAILED);
+	return (*sym)(hSession, pData, ulDataLen,
+		      pEncryptedData, pulEncryptedDataLen);
 }
 
 CK_RV

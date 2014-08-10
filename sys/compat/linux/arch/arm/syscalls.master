@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.54 2013/12/08 15:55:10 njoly Exp $
+	$NetBSD: syscalls.master,v 1.54.2.1 2014/08/10 06:54:32 tls Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -56,8 +56,9 @@
 0	NOARGS		{ int|linux_sys||nosys(void); }
 1	STD		{ int|linux_sys||exit(int rval); }
 2	NOARGS		{ int|sys||fork(void); }
-3	NOARGS		{ int|sys||read(int fd, char *buf, u_int nbyte); }
-4	NOARGS		{ int|sys||write(int fd, char *buf, u_int nbyte); }
+3	NOARGS		{ ssize_t|sys||read(int fd, void *buf, size_t nbyte); }
+4	NOARGS		{ ssize_t|sys||write(int fd, const void *buf, \
+			    size_t nbyte); }
 5	STD		{ int|linux_sys||open(const char *path, int flags, \
 			    linux_umode_t mode); }
 6	NOARGS		{ int|sys||close(int fd); }
@@ -71,7 +72,7 @@
 12	NOARGS		{ int|sys||chdir(const char *path); }
 13	STD		{ int|linux_sys||time(linux_time_t *t); }
 14	STD		{ int|linux_sys||mknod(const char *path, linux_umode_t mode, \
-			    int dev); }
+			    unsigned dev); }
 15	NOARGS		{ int|sys||chmod(const char *path, int mode); }
 16	STD		{ int|linux_sys||lchown16(const char *path, \
 			    linux_uid16_t uid, linux_gid16_t gid); }
@@ -176,7 +177,7 @@
 89	STD		{ int|linux_sys||readdir(int fd, void *dent, \
 			    unsigned int count); }
 90	STD		{ int|linux_sys||old_mmap(struct linux_oldmmap *lmp); }
-91	NOARGS		{ int|sys||munmap(void *addr, int len); }
+91	NOARGS		{ int|sys||munmap(void *addr, size_t len); }
 92	NOARGS		{ int|compat_43_sys||truncate(const char *path, \
 			    long length); }
 93	NOARGS		{ int|compat_43_sys||ftruncate(int fd, long length); }
@@ -251,10 +252,10 @@
 			    struct timeval50 *timeout); }
 143	NOARGS		{ int|sys||flock(int fd, int how); }
 144	NOARGS		{ int|sys|13|msync(void *addr, size_t len, int flags); }
-145	NOARGS		{ int|sys||readv(int fd, struct iovec *iovp, \
-				u_int iovcnt); }
-146	NOARGS		{ int|sys||writev(int fd, struct iovec *iovp, \
-				u_int iovcnt); }
+145	NOARGS		{ ssize_t|sys||readv(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
+146	NOARGS		{ ssize_t|sys||writev(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
 147	NOARGS		{ pid_t|sys||getsid(pid_t pid); }
 148	STD		{ int|linux_sys||fdatasync(int fd); }
 149	STD		{ int|linux_sys||__sysctl(struct linux___sysctl *lsp); }
@@ -315,9 +316,9 @@
 179	STD		{ int|linux_sys||rt_sigsuspend(linux_sigset_t *unewset, \
 			    size_t sigsetsize); }
 180	STD		{ int|linux_sys||pread(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
+			    size_t nbyte, off_t offset); }
 181	STD		{ int|linux_sys||pwrite(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
+			    size_t nbyte, off_t offset); }
 182	STD		{ int|linux_sys||chown16(const char *path, \
 			    linux_uid16_t uid, linux_gid16_t gid); }
 183	NOARGS		{ int|sys||__getcwd(char *bufp, size_t length); }
@@ -356,9 +357,9 @@
 				uid_t euid); }
 204	NOARGS		setregid32 { int|sys||setregid(gid_t rgid, \
 				gid_t egid); }
-205	NOARGS		getgroups32 { int|sys||getgroups(u_int gidsetsize, \
+205	NOARGS		getgroups32 { int|sys||getgroups(int gidsetsize, \
 				gid_t *gidset); }
-206	NOARGS		setgroups32 { int|sys||setgroups(u_int gidsetsize, \
+206	NOARGS		setgroups32 { int|sys||setgroups(int gidsetsize, \
 				gid_t *gidset); }
 207	NOARGS		fchown32 { int|sys||__posix_fchown(int fd, uid_t uid, \
 				gid_t gid); }
@@ -449,9 +450,10 @@
 267	STD		{ int|linux_sys||fstatfs64(int fd, \
 			    size_t sz, struct linux_statfs64 *sp); }
 268	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
-269	STD		{ int|linux_sys||utimes(const char *path, struct linux_timeval *times); }
-270	STD		{ int|linux_sys||fadvise64_64(int fd, \
-			    linux_off_t offset, linux_off_t len, int advice); }
+269	NOARGS		{ int|compat_50_sys||utimes(const char *path, \
+			    const struct timeval50 *tptr); }
+270	STD		{ int|linux_sys||fadvise64_64(int fd, off_t offset, \
+			    off_t len, int advice); }
 271	UNIMPL		pciconfig_iobase
 272	UNIMPL		pciconfig_read
 273	UNIMPL		pciconfig_write

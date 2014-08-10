@@ -1,4 +1,4 @@
-/*	$NetBSD: memcache_proto.c,v 1.1.1.1 2013/01/02 18:58:59 tron Exp $	*/
+/*	$NetBSD: memcache_proto.c,v 1.1.1.1.10.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -51,6 +51,7 @@
 #include <vstream.h>
 #include <vstring.h>
 #include <vstring_vstream.h>
+#include <compat_va_copy.h>
 
 /* Application-specific. */
 
@@ -184,12 +185,15 @@ int     memcache_printf(VSTREAM *stream, const char *fmt,...)
     va_list ap;
     int     ret;
 
+    va_start(ap, fmt);
+
     if (msg_verbose) {
 	VSTRING *buf = vstring_alloc(100);
+	va_list ap2;
 
-	va_start(ap, fmt);
-	vstring_vsprintf(buf, fmt, ap);
-	va_end(ap);
+	VA_COPY(ap2, ap);
+	vstring_vsprintf(buf, fmt, ap2);
+	va_end(ap2);
 	msg_info("%s write: %s", VSTREAM_PATH(stream), STR(buf));
 	vstring_free(buf);
     }
@@ -197,7 +201,6 @@ int     memcache_printf(VSTREAM *stream, const char *fmt,...)
     /*
      * Do the I/O.
      */
-    va_start(ap, fmt);
     ret = memcache_vprintf(stream, fmt, ap);
     va_end(ap);
     return (ret);

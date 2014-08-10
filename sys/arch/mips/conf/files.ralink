@@ -1,4 +1,4 @@
-#	$NetBSD: files.ralink,v 1.3 2011/08/02 03:40:00 cliff Exp $
+#	$NetBSD: files.ralink,v 1.3.26.1 2014/08/10 06:54:02 tls Exp $
 
 file	arch/mips/ralink/ralink_intr.c
 file	arch/mips/ralink/ralink_bus.c
@@ -43,3 +43,7 @@ device  cfi: norbus
 attach	cfi at mainbus with ralink_cfi
 file	arch/mips/ralink/ralink_cfi.c		ralink_cfi
 
+# Ralink PCIe
+device	rpci: pcibus
+attach	rpci at mainbus with ralink_pci
+file	arch/mips/ralink/ralink_pci.c		ralink_pci

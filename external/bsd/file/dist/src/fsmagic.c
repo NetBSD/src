@@ -1,5 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.8 2013/12/01 19:32:15 christos Exp $	*/
-
+/*	$NetBSD: fsmagic.c,v 1.8.2.1 2014/08/10 07:07:11 tls Exp $	*/
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -35,9 +34,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: fsmagic.c,v 1.71 2013/12/01 18:01:07 christos Exp $")
+FILE_RCSID("@(#)$File: fsmagic.c,v 1.73 2014/05/14 23:15:42 christos Exp $")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.8 2013/12/01 19:32:15 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.8.2.1 2014/08/10 07:07:11 tls Exp $");
 #endif
 #endif	/* lint */
 
@@ -59,7 +58,11 @@ __RCSID("$NetBSD: fsmagic.c,v 1.8 2013/12/01 19:32:15 christos Exp $");
 #ifdef major			/* Might be defined in sys/types.h.  */
 # define HAVE_MAJOR
 #endif
-  
+#ifdef WIN32
+# define WIN32_LEAN_AND_MEAN
+# include <windows.h>
+#endif
+
 #ifndef HAVE_MAJOR
 # define major(dev)  (((dev) >> 8) & 0xff)
 # define minor(dev)  ((dev) & 0xff)
@@ -129,6 +132,35 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 #endif
 	ret = stat(fn, sb);	/* don't merge into if; see "ret =" above */
 
+#ifdef WIN32
+	{
+		HANDLE hFile = CreateFile(fn, 0, FILE_SHARE_DELETE |
+		    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0,
+		    NULL);
+		if (hFile != INVALID_HANDLE_VALUE) {
+			/*
+			 * Stat failed, but we can still open it - assume it's
+			 * a block device, if nothing else.
+			 */
+			if (ret) {
+				sb->st_mode = S_IFBLK;
+				ret = 0;
+			}
+			switch (GetFileType(hFile)) {
+			case FILE_TYPE_CHAR:
+				sb->st_mode |= S_IFCHR;
+				sb->st_mode &= ~S_IFREG;
+				break;
+			case FILE_TYPE_PIPE:
+				sb->st_mode |= S_IFIFO;
+				sb->st_mode &= ~S_IFREG;
+				break;
+			}
+			CloseHandle(hFile);
+		}
+	}
+#endif
+
 	if (ret) {
 		if (ms->flags & MAGIC_ERROR) {
 			file_error(ms, errno, "cannot stat `%s'", fn);
@@ -182,7 +214,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 			if (handle_mime(ms, mime, "chardevice") == -1)
 				return -1;
 		} else {
-#ifdef HAVE_STAT_ST_RDEV
+#ifdef HAVE_STRUCT_STAT_ST_RDEV
 # ifdef dv_unit
 			if (file_printf(ms, "%scharacter special (%d/%d/%d)",
 			    COMMA, major(sb->st_rdev), dv_unit(sb->st_rdev),
@@ -216,7 +248,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 			if (handle_mime(ms, mime, "blockdevice") == -1)
 				return -1;
 		} else {
-#ifdef HAVE_STAT_ST_RDEV
+#ifdef HAVE_STRUCT_STAT_ST_RDEV
 # ifdef dv_unit
 			if (file_printf(ms, "%sblock special (%d/%d/%d)",
 			    COMMA, major(sb->st_rdev), dv_unit(sb->st_rdev),

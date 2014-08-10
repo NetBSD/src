@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_phy.c,v 1.11 2010/11/26 22:46:32 jfv Exp $*/
-/*$NetBSD: ixgbe_phy.c,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$NetBSD: ixgbe_phy.c,v 1.1.26.1 2014/08/10 06:54:57 tls Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -1399,7 +1399,7 @@ s32 ixgbe_write_i2c_byte_generic(struct ixgbe_hw *hw, u8 byte_offset,
                                  u8 dev_addr, u8 data)
 {
 	s32 status = IXGBE_SUCCESS;
-	u32 max_retry = 1;
+	u32 max_retry = 2;
 	u32 retry = 0;
 	u16 swfw_mask = 0;
 

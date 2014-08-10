@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_btn.c,v 1.1 2014/03/29 12:00:27 hkenken Exp $	*/
+/*	$NetBSD: netwalker_btn.c,v 1.1.2.1 2014/08/10 06:53:56 tls Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_btn.c,v 1.1 2014/03/29 12:00:27 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_btn.c,v 1.1.2.1 2014/08/10 06:53:56 tls Exp $");
 
 #include "opt_imxspi.h"
 #include "opt_mousebtn.h"
@@ -77,8 +77,8 @@ static int mousebtn_match(device_t, cfdata_t, void *);
 static void mousebtn_attach(device_t, device_t, void *);
 static int mousebtn_detach(device_t, int);
 
-CFATTACH_DECL_NEW(btn_netwalker, sizeof(struct mousebtn_softc),
-	mousebtn_match, mousebtn_attach, mousebtn_detach, NULL);
+CFATTACH_DECL_NEW(netwalker_btn, sizeof(struct mousebtn_softc),
+    mousebtn_match, mousebtn_attach, mousebtn_detach, NULL);
 
 static void mousebtn_poll(void *);
 static int mousebtn_intr(void *);

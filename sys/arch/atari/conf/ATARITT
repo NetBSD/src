@@ -1,13 +1,14 @@
 #
-# $NetBSD: ATARITT,v 1.112 2013/06/30 21:38:55 rmind Exp $
+# $NetBSD: ATARITT,v 1.112.4.1 2014/08/10 06:53:52 tls Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.92 2010/12/12 09:56:15 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.106 2014/07/05 09:28:48 tsutsui Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
+makeoptions COPTS="-O2 -fno-reorder-blocks" # see share/mk/sys.mk
 maxusers 16
 options HZ=64 # Set the clock-rate (48/64/96)
 options INSECURE # disable kernel security levels
@@ -53,7 +54,7 @@ options COMPAT_20 # Compatibility with NetBSD 2.0
 options COMPAT_30 # NetBSD 3.0 compatibility.
 options COMPAT_40 # NetBSD 4.0 compatibility.
 options COMPAT_50 # NetBSD 5.0 compatibility.
-options	COMPAT_60 # NetBSD 6.0 compatibility.
+options COMPAT_60 # NetBSD 6.0 compatibility.
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.

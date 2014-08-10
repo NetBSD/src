@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpvfs_if_pub.h,v 1.10 2012/11/18 18:40:45 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_pub.h,v 1.10.10.1 2014/08/10 06:56:50 tls Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.8 2012/11/18 18:39:23 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.9 2014/04/25 13:10:42 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp 
  */
 
 void rump_pub_getvninfo(struct vnode *, enum rump_vtype *, off_t *, dev_t *);
@@ -18,9 +18,6 @@ void rump_pub_vp_incref(struct vnode *);
 int rump_pub_vp_getref(struct vnode *);
 void rump_pub_vp_rele(struct vnode *);
 void rump_pub_vp_interlock(struct vnode *);
-int rump_pub_etfs_register(const char *, const char *, enum rump_etfs_type);
-int rump_pub_etfs_register_withsize(const char *, const char *, enum rump_etfs_type, uint64_t, uint64_t);
-int rump_pub_etfs_remove(const char *);
 void rump_pub_freecn(struct componentname *, int);
 int rump_pub_namei(uint32_t, uint32_t, const char *, struct vnode **, struct vnode **, struct componentname **);
 struct componentname * rump_pub_makecn(u_long, u_long, const char *, size_t, struct kauth_cred *, struct lwp *);

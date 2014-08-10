@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.69 2014/03/24 19:14:31 christos Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.69.2.1 2014/08/10 06:54:05 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.69 2014/03/24 19:14:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.69.2.1 2014/08/10 06:54:05 tls Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.69 2014/03/24 19:14:31 christo
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 
 #include <dev/mm.h>
 
@@ -488,6 +489,20 @@ xc_send_ipi(struct cpu_info *ci)
 	/* Broadcast: all, but local CPU (caller will handle it). */
 	cpu_send_ipi(target, IPI_XCALL);
 }
+
+void
+cpu_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	cpuid_t target = (ci != NULL ? cpu_index(ci) : IPI_DST_NOTME);
+
+	/* Unicast: remote CPU. */
+	/* Broadcast: all, but local CPU (caller will handle it). */
+	cpu_send_ipi(target, IPI_GENERIC);
+}
+
 #endif /* MULTIPROCESSOR */
 
 #ifdef MODULAR

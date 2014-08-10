@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_surrogate.c,v 1.1.1.1 2013/01/02 18:59:12 tron Exp $	*/
+/*	$NetBSD: dict_surrogate.c,v 1.1.1.1.10.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -63,6 +63,7 @@
 
 #include <mymalloc.h>
 #include <msg.h>
+#include <compat_va_copy.h>
 #include <dict.h>
 
 /* Application-specific. */
@@ -137,10 +138,17 @@ DICT   *dict_surrogate(const char *dict_type, const char *dict_name,
 		               const char *fmt,...)
 {
     va_list ap;
+    va_list ap2;
     DICT_SURROGATE *dp;
     VSTRING *buf;
     void    (*log_fn) (const char *, va_list);
     int     saved_errno = errno;
+
+    /*
+     * Initialize argument lists.
+     */
+    va_start(ap, fmt);
+    VA_COPY(ap2, ap);
 
     /*
      * Log the problem immediately when it is detected. The table may not be
@@ -149,7 +157,6 @@ DICT   *dict_surrogate(const char *dict_type, const char *dict_name,
      * to remain unnoticed until long after a configuration mistake is made.
      */
     log_fn = dict_allow_surrogate ? vmsg_error : vmsg_fatal;
-    va_start(ap, fmt);
     log_fn(fmt, ap);
     va_end(ap);
 
@@ -168,9 +175,8 @@ DICT   *dict_surrogate(const char *dict_type, const char *dict_name,
     dp->dict.owner.status = DICT_OWNER_TRUSTED;
     buf = vstring_alloc(10);
     errno = saved_errno;
-    va_start(ap, fmt);
-    vstring_vsprintf(buf, fmt, ap);
-    va_end(ap);
+    vstring_vsprintf(buf, fmt, ap2);
+    va_end(ap2);
     dp->reason = vstring_export(buf);
     return (DICT_DEBUG (&dp->dict));
 }

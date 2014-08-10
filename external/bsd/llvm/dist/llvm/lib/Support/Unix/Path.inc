@@ -89,7 +89,7 @@ namespace {
 
 static error_code TempDir(SmallVectorImpl<char> &result) {
   // FIXME: Don't use TMPDIR if program is SUID or SGID enabled.
-  const char *dir = 0;
+  const char *dir = nullptr;
   (dir = std::getenv("TMPDIR")) || (dir = std::getenv("TMP")) ||
       (dir = std::getenv("TEMP")) || (dir = std::getenv("TEMPDIR")) ||
 #ifdef P_tmpdir
@@ -246,7 +246,7 @@ error_code current_path(SmallVectorImpl<char> &result) {
 #endif
 
   while (true) {
-    if (::getcwd(result.data(), result.capacity()) == 0) {
+    if (::getcwd(result.data(), result.capacity()) == nullptr) {
       // See if there was a real error.
       if (errno != errc::not_enough_memory)
         return error_code(errno, system_category());
@@ -272,14 +272,29 @@ error_code create_directory(const Twine &path, bool IgnoreExisting) {
   return error_code::success();
 }
 
-error_code create_hard_link(const Twine &to, const Twine &from) {
+error_code normalize_separators(SmallVectorImpl<char> &Path) {
+  for (auto PI = Path.begin(), PE = Path.end(); PI < PE; ++PI) {
+    if (*PI == '\\') {
+      auto PN = PI + 1;
+      if (PN < PE && *PN == '\\')
+        ++PI; // increment once, the for loop will move over the escaped slash
+      else
+        *PI = '/';
+    }
+  }
+  return error_code::success();
+}
+
+// Note that we are using symbolic link because hard links are not supported by
+// all filesystems (SMB doesn't).
+error_code create_link(const Twine &to, const Twine &from) {
   // Get arguments.
   SmallString<128> from_storage;
   SmallString<128> to_storage;
   StringRef f = from.toNullTerminatedStringRef(from_storage);
   StringRef t = to.toNullTerminatedStringRef(to_storage);
 
-  if (::link(t.begin(), f.begin()) == -1)
+  if (::symlink(t.begin(), f.begin()) == -1)
     return error_code(errno, system_category());
 
   return error_code::success();
@@ -290,7 +305,7 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   struct stat buf;
-  if (stat(p.begin(), &buf) != 0) {
+  if (lstat(p.begin(), &buf) != 0) {
     if (errno != errc::no_such_file_or_directory || !IgnoreNonExisting)
       return error_code(errno, system_category());
     return error_code::success();
@@ -301,7 +316,7 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
   // check ensures that what we're trying to erase is a regular file. It
   // effectively prevents LLVM from erasing things like /dev/null, any block
   // special file, or other things that aren't "regular" files.
-  if (!S_ISREG(buf.st_mode) && !S_ISDIR(buf.st_mode))
+  if (!S_ISREG(buf.st_mode) && !S_ISDIR(buf.st_mode) && !S_ISLNK(buf.st_mode))
     return make_error_code(errc::operation_not_permitted);
 
   if (::remove(p.begin()) == -1) {
@@ -479,7 +494,7 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
 #ifdef MAP_FILE
   flags |= MAP_FILE;
 #endif
-  Mapping = ::mmap(0, Size, prot, flags, FD, Offset);
+  Mapping = ::mmap(nullptr, Size, prot, flags, FD, Offset);
   if (Mapping == MAP_FAILED)
     return error_code(errno, system_category());
   return error_code::success();
@@ -510,7 +525,7 @@ mapped_file_region::mapped_file_region(const Twine &path,
 
   ec = init(ofd, true, offset);
   if (ec)
-    Mapping = 0;
+    Mapping = nullptr;
 }
 
 mapped_file_region::mapped_file_region(int fd,
@@ -530,7 +545,7 @@ mapped_file_region::mapped_file_region(int fd,
 
   ec = init(fd, closefd, offset);
   if (ec)
-    Mapping = 0;
+    Mapping = nullptr;
 }
 
 mapped_file_region::~mapped_file_region() {
@@ -538,12 +553,10 @@ mapped_file_region::~mapped_file_region() {
     ::munmap(Mapping, Size);
 }
 
-#if LLVM_HAS_RVALUE_REFERENCES
 mapped_file_region::mapped_file_region(mapped_file_region &&other)
   : Mode(other.Mode), Size(other.Size), Mapping(other.Mapping) {
-  other.Mapping = 0;
+  other.Mapping = nullptr;
 }
-#endif
 
 mapped_file_region::mapmode mapped_file_region::flags() const {
   assert(Mapping && "Mapping failed but used anyway!");
@@ -574,7 +587,7 @@ error_code detail::directory_iterator_construct(detail::DirIterState &it,
                                                 StringRef path){
   SmallString<128> path_null(path);
   DIR *directory = ::opendir(path_null.c_str());
-  if (directory == 0)
+  if (!directory)
     return error_code(errno, system_category());
 
   it.IterationHandle = reinterpret_cast<intptr_t>(directory);
@@ -595,9 +608,9 @@ error_code detail::directory_iterator_destruct(detail::DirIterState &it) {
 error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   errno = 0;
   dirent *cur_dir = ::readdir(reinterpret_cast<DIR *>(it.IterationHandle));
-  if (cur_dir == 0 && errno != 0) {
+  if (cur_dir == nullptr && errno != 0) {
     return error_code(errno, system_category());
-  } else if (cur_dir != 0) {
+  } else if (cur_dir != nullptr) {
     StringRef name(cur_dir->d_name, NAMLEN(cur_dir));
     if ((name.size() == 1 && name[0] == '.') ||
         (name.size() == 2 && name[0] == '.' && name[1] == '.'))
@@ -617,7 +630,7 @@ error_code get_magic(const Twine &path, uint32_t len,
 
   // Open path.
   std::FILE *file = std::fopen(Path.data(), "rb");
-  if (file == 0)
+  if (!file)
     return error_code(errno, system_category());
 
   // Reserve storage.
@@ -654,7 +667,7 @@ error_code map_file_pages(const Twine &path, off_t file_offset, size_t size,
 #ifdef MAP_FILE
   flags |= MAP_FILE;
 #endif
-  result = ::mmap(0, size, prot, flags, fd, file_offset);
+  result = ::mmap(nullptr, size, prot, flags, fd, file_offset);
   if (result == MAP_FAILED) {
     return error_code(errno, system_category());
   }

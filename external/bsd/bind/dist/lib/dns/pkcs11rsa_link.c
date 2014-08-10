@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11rsa_link.c,v 1.1.1.1 2014/02/28 17:40:13 christos Exp $	*/
+/*	$NetBSD: pkcs11rsa_link.c,v 1.1.1.1.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -102,7 +102,7 @@ pkcs11rsa_createctx_sign(dst_key_t *key, dst_context_t *dctx) {
 		slotid = rsa->slot;
 	else
 		slotid = pk11_get_best_token(OP_RSA);
-	ret = pk11_get_session(pk11_ctx, OP_RSA, ISC_FALSE,
+	ret = pk11_get_session(pk11_ctx, OP_RSA, ISC_TRUE, ISC_FALSE,
 			       rsa->reqlogon, NULL, slotid);
 	if (ret != ISC_R_SUCCESS)
 		goto err;
@@ -297,7 +297,7 @@ pkcs11rsa_createctx_verify(dst_key_t *key, unsigned int maxbits,
 						  sizeof(*pk11_ctx));
 	if (pk11_ctx == NULL)
 		return (ISC_R_NOMEMORY);
-	ret = pk11_get_session(pk11_ctx, OP_RSA, ISC_FALSE,
+	ret = pk11_get_session(pk11_ctx, OP_RSA, ISC_TRUE, ISC_FALSE,
 			       rsa->reqlogon, NULL,
 			       pk11_get_best_token(OP_RSA));
 	if (ret != ISC_R_SUCCESS)
@@ -580,8 +580,8 @@ pkcs11rsa_generate(dst_key_t *key, int exp, void (*callback)(int)) {
 						  sizeof(*pk11_ctx));
 	if (pk11_ctx == NULL)
 		return (ISC_R_NOMEMORY);
-	ret = pk11_get_session(pk11_ctx, OP_RSA, ISC_FALSE, ISC_FALSE, NULL,
-			       pk11_get_best_token(OP_RSA));
+	ret = pk11_get_session(pk11_ctx, OP_RSA, ISC_TRUE, ISC_FALSE,
+			       ISC_FALSE, NULL, pk11_get_best_token(OP_RSA));
 	if (ret != ISC_R_SUCCESS)
 		goto err;
 
@@ -1102,7 +1102,7 @@ pkcs11rsa_fetch(dst_key_t *key, const char *engine, const char *label,
 						  sizeof(*pk11_ctx));
 	if (pk11_ctx == NULL)
 		DST_RET(ISC_R_NOMEMORY);
-	ret = pk11_get_session(pk11_ctx, OP_RSA, ISC_FALSE,
+	ret = pk11_get_session(pk11_ctx, OP_RSA, ISC_TRUE, ISC_FALSE,
 			       rsa->reqlogon, NULL, rsa->slot);
 	if (ret != ISC_R_SUCCESS)
 		goto err;
@@ -1442,7 +1442,7 @@ pkcs11rsa_fromlabel(dst_key_t *key, const char *engine, const char *label,
 						  sizeof(*pk11_ctx));
 	if (pk11_ctx == NULL)
 		DST_RET(ISC_R_NOMEMORY);
-	ret = pk11_get_session(pk11_ctx, OP_RSA, ISC_FALSE,
+	ret = pk11_get_session(pk11_ctx, OP_RSA, ISC_TRUE, ISC_FALSE,
 			       rsa->reqlogon, NULL, rsa->slot);
 	if (ret != ISC_R_SUCCESS)
 		goto err;

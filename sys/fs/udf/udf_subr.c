@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.124 2014/03/23 09:34:42 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.124.2.1 2014/08/10 06:55:54 tls Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.124 2014/03/23 09:34:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.124.2.1 2014/08/10 06:55:54 tls Exp $");
 #endif /* not lint */
 
 
@@ -1808,8 +1808,8 @@ udf_write_metadata_partition_spacetable(struct udf_mount *ump, int waitfor)
 	dscr = (union dscrptr *) ump->metadata_unalloc_dscr;
 	new_inflen = udf_tagsize(dscr, 1);
 
-	DPRINTF(VOLUMES, ("Resize and write out metadata space bitmap from "
-		"%"PRIu64" to %"PRIu64" bytes\n", inflen, new_inflen));
+	DPRINTF(VOLUMES, ("Resize and write out metadata space bitmap "
+		" for %"PRIu64" bytes\n", new_inflen));
 
 	error = udf_resize_node(bitmap_node, new_inflen, &dummy);
 	if (error)

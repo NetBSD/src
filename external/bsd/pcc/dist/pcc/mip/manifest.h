@@ -1,5 +1,5 @@
-/*	Id: manifest.h,v 1.99 2012/03/22 18:51:41 plunky Exp 	*/	
-/*	$NetBSD: manifest.h,v 1.1.1.5 2012/03/26 14:27:11 plunky Exp $	*/
+/*	Id: manifest.h,v 1.104 2014/06/07 07:04:10 plunky Exp 	*/	
+/*	$NetBSD: manifest.h,v 1.1.1.5.10.1 2014/08/10 07:10:07 tls Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -269,6 +269,7 @@ struct interpass_prolog {
 	int ipp_autos;		/* Size on stack needed */
 	int ip_tmpnum;		/* # allocated temp nodes so far */
 	int ip_lblnum;		/* # used labels so far */
+	int *ip_labels;		/* labels used in computed goto */
 #ifdef TARGET_IPP_MEMBERS
 	TARGET_IPP_MEMBERS
 #endif
@@ -317,11 +318,11 @@ typedef struct mark {
 } MARK;
 
 /* memory management stuff */
-void *permalloc(int size);
-void *tmpcalloc(int size);
-void *tmpalloc(int size);
+void *permalloc(size_t);
+void *tmpcalloc(size_t);
+void *tmpalloc(size_t);
 void tmpfree(void);
-char *newstring(char *, int len);
+char *newstring(char *, size_t);
 char *tmpstrdup(char *str);
 void markset(struct mark *m);
 void markfree(struct mark *m);
@@ -329,7 +330,7 @@ void markfree(struct mark *m);
 /* command-line processing */
 void mflags(char *);
 
-void tprint(FILE *, TWORD, TWORD);
+void tprint(TWORD, TWORD);
 
 /* pass t communication subroutines */
 void topt_compile(struct interpass *);
@@ -366,10 +367,12 @@ extern	int warniserr;		/* treat warnings as errors */
 #define	Wsign_compare			7
 #define	Wunknown_pragmas		8
 #define	Wunreachable_code		9
-#define	NUMW				10
+#define	Wdeprecated_declarations	10
+#define	Wattributes			11
 
 void warner(int type, ...);
-void Wflags(char *str);
+int Wset(char *, int, int);
+void Wflags(char *);
 TWORD deunsign(TWORD t);
 TWORD enunsign(TWORD t);
 #endif

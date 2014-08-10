@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.24 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.24.2.1 2014/08/10 06:54:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.24 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.24.2.1 2014/08/10 06:54:10 tls Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -127,6 +127,7 @@ const struct cdevsw bell_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

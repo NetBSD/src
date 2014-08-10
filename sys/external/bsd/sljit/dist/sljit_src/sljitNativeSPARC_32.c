@@ -1,3 +1,5 @@
+/*	$NetBSD: sljitNativeSPARC_32.c,v 1.1.1.1.14.1 2014/08/10 06:55:41 tls Exp $	*/
+
 /*
  *    Stack-less Just-In-Time compiler
  *
@@ -24,7 +26,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static int load_immediate(struct sljit_compiler *compiler, int dst, sljit_w imm)
+static sljit_si load_immediate(struct sljit_compiler *compiler, sljit_si dst, sljit_sw imm)
 {
 	if (imm <= SIMM_MAX && imm >= SIMM_MIN)
 		return push_inst(compiler, OR | D(dst) | S1(0) | IMM(imm), DR(dst));
@@ -35,8 +37,8 @@ static int load_immediate(struct sljit_compiler *compiler, int dst, sljit_w imm)
 
 #define ARG2(flags, src2) ((flags & SRC2_IMM) ? IMM(src2) : S2(src2))
 
-static SLJIT_INLINE int emit_single_op(struct sljit_compiler *compiler, int op, int flags,
-	int dst, int src1, sljit_w src2)
+static SLJIT_INLINE sljit_si emit_single_op(struct sljit_compiler *compiler, sljit_si op, sljit_si flags,
+	sljit_si dst, sljit_si src1, sljit_sw src2)
 {
 	SLJIT_COMPILE_ASSERT(ICC_IS_SET == SET_FLAGS, icc_is_set_and_set_flags_must_be_the_same);
 
@@ -44,6 +46,7 @@ static SLJIT_INLINE int emit_single_op(struct sljit_compiler *compiler, int op, 
 	case SLJIT_MOV:
 	case SLJIT_MOV_UI:
 	case SLJIT_MOV_SI:
+	case SLJIT_MOV_P:
 		SLJIT_ASSERT(src1 == TMP_REG1 && !(flags & SRC2_IMM));
 		if (dst != src2)
 			return push_inst(compiler, OR | D(dst) | S1(0) | S2(src2), DR(dst));
@@ -138,7 +141,7 @@ static SLJIT_INLINE int emit_single_op(struct sljit_compiler *compiler, int op, 
 	return SLJIT_SUCCESS;
 }
 
-static SLJIT_INLINE int emit_const(struct sljit_compiler *compiler, int dst, sljit_w init_value)
+static SLJIT_INLINE sljit_si emit_const(struct sljit_compiler *compiler, sljit_si dst, sljit_sw init_value)
 {
 	FAIL_IF(push_inst(compiler, SETHI | D(dst) | ((init_value >> 10) & 0x3fffff), DR(dst)));
 	return push_inst(compiler, OR | D(dst) | S1(dst) | IMM_ARG | (init_value & 0x3ff), DR(dst));
@@ -153,7 +156,7 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_set_jump_addr(sljit_uw addr, sljit_uw new_ad
 	SLJIT_CACHE_FLUSH(inst, inst + 2);
 }
 
-SLJIT_API_FUNC_ATTRIBUTE void sljit_set_const(sljit_uw addr, sljit_w new_constant)
+SLJIT_API_FUNC_ATTRIBUTE void sljit_set_const(sljit_uw addr, sljit_sw new_constant)
 {
 	sljit_ins *inst = (sljit_ins*)addr;
 

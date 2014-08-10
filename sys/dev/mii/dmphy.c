@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.34 2009/10/19 18:41:13 bouyer Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.34.36.1 2014/08/10 06:54:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.34 2009/10/19 18:41:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.34.36.1 2014/08/10 06:54:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,11 +247,11 @@ dmphy_status(struct mii_softc *sc)
 		if (dscsr & DSCSR_100FDX)
 			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
 		else if (dscsr & DSCSR_100HDX)
-			mii->mii_media_active |= IFM_100_TX;
+			mii->mii_media_active |= IFM_100_TX|IFM_HDX;
 		else if (dscsr & DSCSR_10FDX)
 			mii->mii_media_active |= IFM_10_T|IFM_FDX;
 		else if (dscsr & DSCSR_10HDX)
-			mii->mii_media_active |= IFM_10_T;
+			mii->mii_media_active |= IFM_10_T|IFM_HDX;
 		else
 			mii->mii_media_active |= IFM_NONE;
 	} else

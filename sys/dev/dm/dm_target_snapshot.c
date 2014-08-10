@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.15 2011/10/14 09:23:30 hannken Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.15.26.1 2014/08/10 06:54:51 tls Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -348,33 +348,18 @@ dm_target_snapshot_deps(dm_table_entry_t * table_en,
     prop_array_t prop_array)
 {
 	dm_target_snapshot_config_t *tsc;
-	struct vattr va;
-
-	int error;
 
 	if (table_en->target_config == NULL)
 		return 0;
 
 	tsc = table_en->target_config;
 
-	vn_lock(tsc->tsc_snap_dev->pdev_vnode, LK_SHARED | LK_RETRY);
-	error = VOP_GETATTR(tsc->tsc_snap_dev->pdev_vnode, &va, curlwp->l_cred);
-	VOP_UNLOCK(tsc->tsc_snap_dev->pdev_vnode);
-	if (error != 0)
-		return error;
-
-	prop_array_add_uint64(prop_array, (uint64_t) va.va_rdev);
+	prop_array_add_uint64(prop_array,
+	    (uint64_t) tsc->tsc_snap_dev->pdev_vnode->v_rdev);
 
 	if (tsc->tsc_persistent_dev) {
-
-		vn_lock(tsc->tsc_cow_dev->pdev_vnode, LK_SHARED | LK_RETRY);
-		error = VOP_GETATTR(tsc->tsc_cow_dev->pdev_vnode, &va,
-		    curlwp->l_cred);
-		VOP_UNLOCK(tsc->tsc_cow_dev->pdev_vnode);
-		if (error != 0)
-			return error;
-
-		prop_array_add_uint64(prop_array, (uint64_t) va.va_rdev);
+		prop_array_add_uint64(prop_array,
+		    (uint64_t) tsc->tsc_cow_dev->pdev_vnode->v_rdev);
 
 	}
 	return 0;

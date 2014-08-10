@@ -1,12 +1,11 @@
-/*	$NetBSD: inet.c,v 1.1.1.1 2013/03/24 15:45:53 christos Exp $	*/
-
+/*	$NetBSD: inet.c,v 1.1.1.1.8.1 2014/08/10 07:06:55 tls Exp $	*/
 /* inet.c
 
    Subroutines to manipulate internet addresses and ports in a safely portable
    way... */
 
 /*
- * Copyright (c) 2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2011,2013,2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2007-2009 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004,2005 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
@@ -29,16 +28,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inet.c,v 1.1.1.1 2013/03/24 15:45:53 christos Exp $");
+__RCSID("$NetBSD: inet.c,v 1.1.1.1.8.1 2014/08/10 07:06:55 tls Exp $");
 
 #include "dhcpd.h"
 
@@ -203,7 +196,6 @@ addr_match(addr, match)
 	if (addr->len != match->addr.len)
 		return 0;
 	
-	i = 0;
 	for (i = 0 ; i < addr->len ; i++) {
 		if ((addr->iabuf[i] & match->mask.iabuf[i]) !=
 							match->addr.iabuf[i])

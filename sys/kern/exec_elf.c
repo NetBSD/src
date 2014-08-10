@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.65 2014/03/22 07:27:21 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.65.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.65 2014/03/22 07:27:21 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.65.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -114,13 +114,6 @@ static void	elf_free_emul_arg(void *);
 /* round up and down to page boundaries. */
 #define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
 #define	ELF_TRUNC(a, b)		((a) & ~((b) - 1))
-
-/*
- * Arbitrary limits to avoid DoS for excessive memory allocation.
- */
-#define MAXPHNUM	128
-#define MAXSHNUM	32768
-#define MAXNOTESIZE	1024
 
 static void
 elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
@@ -304,7 +297,7 @@ elf_check_header(Elf_Ehdr *eh)
 	if (ELF_EHDR_FLAGS_OK(eh) == 0)
 		return ENOEXEC;
 
-	if (eh->e_shnum > MAXSHNUM || eh->e_phnum > MAXPHNUM)
+	if (eh->e_shnum > ELF_MAXSHNUM || eh->e_phnum > ELF_MAXPHNUM)
 		return ENOEXEC;
 
 	return 0;
@@ -789,7 +782,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		}
 	}
 
-	if (epp->ep_vmcmds.evs_cmds == NULL) {
+	if (epp->ep_vmcmds.evs_used == 0) {
 		/* No VMCMD; there was no PT_LOAD section, or those
 		 * sections were empty */
 		error = ENOEXEC;
@@ -870,9 +863,19 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 	int error;
 	int isnetbsd = 0;
 	char *ndata, *ndesc;
+#ifdef COMPAT_OLDNOTE
+	int compat_oldnote = -1;
+#endif
+	
+#ifdef DIAGNOSTIC
+	const char *badnote;
+#define BADNOTE(n) badnote = (n)
+#else
+#define BADNOTE(n)
+#endif
 
 	epp->ep_pax_flags = 0;
-	if (eh->e_shnum > MAXSHNUM || eh->e_shnum == 0)
+	if (eh->e_shnum > ELF_MAXSHNUM || eh->e_shnum == 0)
 		return ENOEXEC;
 
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
@@ -881,12 +884,12 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 	if (error)
 		goto out;
 
-	np = kmem_alloc(MAXNOTESIZE, KM_SLEEP);
+	np = kmem_alloc(ELF_MAXNOTESIZE, KM_SLEEP);
 	for (i = 0; i < eh->e_shnum; i++) {
 		Elf_Shdr *shp = &sh[i];
 
 		if (shp->sh_type != SHT_NOTE ||
-		    shp->sh_size > MAXNOTESIZE ||
+		    shp->sh_size > ELF_MAXNOTESIZE ||
 		    shp->sh_size < sizeof(Elf_Nhdr) + ELF_NOTE_NETBSD_NAMESZ)
 			continue;
 
@@ -905,12 +908,19 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		 * Ensure this size is consistent with what is indicated
 		 * in sh_size. The first check avoids integer overflows.
 		 */
-		if (np->n_namesz > shp->sh_size || np->n_descsz > shp->sh_size)
+		if (np->n_namesz > shp->sh_size || np->n_descsz > shp->sh_size) {
+			BADNOTE("note size limit");
 			goto bad;
+		}
 		nsize = sizeof(*np) + roundup(np->n_namesz, 4) +
 		    roundup(np->n_descsz, 4);
-		if (nsize != shp->sh_size)
+		if (nsize != shp->sh_size) {
+			BADNOTE("note size");
+#ifdef COMPAT_OLDNOTE
+			if (nsize > shp->sh_size || compat_oldnote == 0)
+#endif
 			goto bad;
+		}
 		ndesc = ndata + roundup(np->n_namesz, 4);
 
 		switch (np->n_type) {
@@ -923,6 +933,9 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 				memcpy(&epp->ep_osversion, ndesc,
 				    ELF_NOTE_NETBSD_DESCSZ);
 				isnetbsd = 1;
+#ifdef COMPAT_OLDNOTE
+				compat_oldnote = epp->ep_osversion == 199905;
+#endif
 				break;
 			}
 
@@ -934,7 +947,11 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    memcmp(ndata, ELF_NOTE_SUSE_NAME,
 			    ELF_NOTE_SUSE_NAMESZ) == 0)
 				break;
-
+#ifdef COMPAT_OLDNOTE
+			if (compat_oldnote == 1)
+				break;
+#endif
+			BADNOTE("NetBSD tag");
 			goto bad;
 
 		case ELF_NOTE_TYPE_PAX_TAG:
@@ -946,6 +963,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 				    sizeof(epp->ep_pax_flags));
 				break;
 			}
+			BADNOTE("PaX tag");
 			goto bad;
 
 		case ELF_NOTE_TYPE_MARCH_TAG:
@@ -954,19 +972,24 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    && memcmp(ndata, ELF_NOTE_MARCH_NAME,
 				    ELF_NOTE_MARCH_NAMESZ) == 0) {
 				/* Do not truncate the buffer */
-				if (np->n_descsz > sizeof(epp->ep_machine_arch))
+				if (np->n_descsz > sizeof(epp->ep_machine_arch)) {
+					BADNOTE("description size limit");
 					goto bad;
+				}
 				/*
 				 * Ensure ndesc is NUL-terminated and of the
 				 * expected length.
 				 */
 				if (strnlen(ndesc, np->n_descsz) + 1 !=
-				    np->n_descsz)
+				    np->n_descsz) {
+					BADNOTE("description size");
 					goto bad;
+				}
 				strlcpy(epp->ep_machine_arch, ndesc,
 				    sizeof(epp->ep_machine_arch));
 				break;
 			}
+			BADNOTE("march tag");
 			goto bad;
 
 		case ELF_NOTE_TYPE_MCMODEL_TAG:
@@ -978,6 +1001,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 				ELF_MD_MCMODEL_CHECK(epp, ndesc, np->n_descsz);
 				break;
 			}
+			BADNOTE("mcmodel tag");
 			goto bad;
 #endif
 			break;
@@ -986,6 +1010,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			break;
 
 		default:
+			BADNOTE("unknown tag");
 bad:
 #ifdef DIAGNOSTIC
 			/* Ignore GNU tags */
@@ -995,15 +1020,15 @@ bad:
 			    break;
 
 			int ns = MIN(np->n_namesz, shp->sh_size - sizeof(*np));
-			printf("%s: Unknown elf note type %d: "
-			    "[namesz=%d, descsz=%d name=%*.*s]\n",
-			    epp->ep_kname, np->n_type, np->n_namesz,
+			printf("%s: Unknown elf note type %d (%s): "
+			    "[namesz=%d, descsz=%d name=%-*.*s]\n",
+			    epp->ep_kname, np->n_type, badnote, np->n_namesz,
 			    np->n_descsz, ns, ns, ndata);
 #endif
 			break;
 		}
 	}
-	kmem_free(np, MAXNOTESIZE);
+	kmem_free(np, ELF_MAXNOTESIZE);
 
 	error = isnetbsd ? 0 : ENOEXEC;
 out:

@@ -1,10 +1,10 @@
-/*	$NetBSD: config.h,v 1.1.1.3 2010/12/12 15:22:26 adam Exp $	*/
+/*	$NetBSD: config.h,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* config.h - configuration abstraction structure */
-/* OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.34.2.20 2010/04/13 20:23:13 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -102,12 +102,21 @@ typedef int (ConfigLDAPadd)(
 typedef int (ConfigCfAdd)(
 	Operation *op, SlapReply *rs, Entry *parent, struct config_args_s *ca );
 
+#ifdef SLAP_CONFIG_DELETE
+/* Called when deleting a Cft_Misc Child object from cn=config */
+typedef int (ConfigLDAPdel)(
+	CfEntryInfo *ce, Operation *op );
+#endif
+
 typedef struct ConfigOCs {
 	const char *co_def;
 	ConfigType co_type;
 	ConfigTable *co_table;
 	ConfigLDAPadd *co_ldadd;
 	ConfigCfAdd *co_cfadd;
+#ifdef SLAP_CONFIG_DELETE
+	ConfigLDAPdel *co_lddel;
+#endif
 	ObjectClass *co_oc;
 	struct berval *co_name;
 } ConfigOCs;

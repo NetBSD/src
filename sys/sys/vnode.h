@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.246 2014/03/24 13:42:40 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.246.2.1 2014/08/10 06:56:55 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -207,8 +207,8 @@ typedef struct vnode vnode_t;
 #define	VI_MARKER	0x00008000	/* Dummy marker vnode */
 #endif	/* _VFS_VNODE_PRIVATE */
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
-#ifdef _VFS_VNODE_PRIVATE
 #define	VI_LOCKSHARE	0x00040000	/* v_interlock is shared */
+#ifdef _VFS_VNODE_PRIVATE
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_CHANGING	0x00100000	/* vnode changes state */
 #endif	/* _VFS_VNODE_PRIVATE */
@@ -556,6 +556,12 @@ struct vnode *
 	vnalloc(struct mount *);
 void	vnfree(struct vnode *);
 void	vremfree(struct vnode *);
+int	vcache_get(struct mount *, const void *, size_t, struct vnode **);
+int	vcache_rekey_enter(struct mount *, struct vnode *,
+	    const void *, size_t, const void *, size_t);
+void	vcache_rekey_exit(struct mount *, struct vnode *,
+	    const void *, size_t, const void *, size_t);
+void	vcache_remove(struct mount *, const void *, size_t);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);

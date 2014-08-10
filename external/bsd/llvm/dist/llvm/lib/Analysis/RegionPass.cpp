@@ -17,9 +17,10 @@
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Support/Timer.h"
 
-#define DEBUG_TYPE "regionpassmgr"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "regionpassmgr"
 
 //===----------------------------------------------------------------------===//
 // RGPassManager
@@ -31,15 +32,15 @@ RGPassManager::RGPassManager()
   : FunctionPass(ID), PMDataManager() {
   skipThisRegion = false;
   redoThisRegion = false;
-  RI = NULL;
-  CurrentRegion = NULL;
+  RI = nullptr;
+  CurrentRegion = nullptr;
 }
 
 // Recurse through all subregions and all regions  into RQ.
-static void addRegionIntoQueue(Region *R, std::deque<Region *> &RQ) {
-  RQ.push_back(R);
-  for (Region::iterator I = R->begin(), E = R->end(); I != E; ++I)
-    addRegionIntoQueue(*I, RQ);
+static void addRegionIntoQueue(Region &R, std::deque<Region *> &RQ) {
+  RQ.push_back(&R);
+  for (const auto &E : R)
+    addRegionIntoQueue(*E, RQ);
 }
 
 /// Pass Manager itself does not invalidate any analysis info.
@@ -57,7 +58,7 @@ bool RGPassManager::runOnFunction(Function &F) {
   // Collect inherited analysis from Module level pass manager.
   populateInheritedAnalysis(TPM->activeStack);
 
-  addRegionIntoQueue(RI->getTopLevelRegion(), RQ);
+  addRegionIntoQueue(*RI->getTopLevelRegion(), RQ);
 
   if (RQ.empty()) // No regions, skip calling finalizers
     return false;
@@ -185,19 +186,17 @@ private:
 
 public:
   static char ID;
-  PrintRegionPass() : RegionPass(ID), Out(dbgs()) {}
   PrintRegionPass(const std::string &B, raw_ostream &o)
       : RegionPass(ID), Banner(B), Out(o) {}
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
   }
 
-  virtual bool runOnRegion(Region *R, RGPassManager &RGM) {
+  bool runOnRegion(Region *R, RGPassManager &RGM) override {
     Out << Banner;
-    for (Region::block_iterator I = R->block_begin(), E = R->block_end();
-         I != E; ++I)
-      (*I)->print(Out);
+    for (const auto &BB : R->blocks())
+      BB->print(Out);
 
     return false;
   }

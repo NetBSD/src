@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.26 2014/04/01 05:37:35 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.26.2.1 2014/08/10 06:53:50 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.26 2014/04/01 05:37:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.26.2.1 2014/08/10 06:53:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -144,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.26 2014/04/01 05:37:35 skrll Exp
 
 struct bootmem_info bootmem_info;
 
+extern void *msgbufaddr;
 paddr_t msgbufphys;
 paddr_t physical_start;
 paddr_t physical_end;
@@ -160,10 +161,22 @@ extern char _end[];
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
+#if defined(KERNEL_BASE_VOFFSET)
+#define KERN_VTOPHYS(bmi, va) \
+	((paddr_t)((vaddr_t)(va) - KERNEL_BASE_VOFFSET))
+#define KERN_PHYSTOV(bmi, pa) \
+	((vaddr_t)((paddr_t)(pa) + KERNEL_BASE_VOFFSET))
+#elif defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+#define KERN_VTOPHYS(bmi, va) \
+	((paddr_t)((vaddr_t)(va) - pmap_directbase + (bmi)->bmi_start))
+#define KERN_PHYSTOV(bmi, pa) \
+	((vaddr_t)((paddr_t)(pa) - (bmi)->bmi_start + pmap_directbase))
+#else
 #define KERN_VTOPHYS(bmi, va) \
 	((paddr_t)((vaddr_t)(va) - KERNEL_BASE + (bmi)->bmi_start))
 #define KERN_PHYSTOV(bmi, pa) \
 	((vaddr_t)((paddr_t)(pa) - (bmi)->bmi_start + KERNEL_BASE))
+#endif
 
 void
 arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
@@ -209,7 +222,11 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	 */
 	if (bmi->bmi_start < bmi->bmi_kernelstart) {
 		pv->pv_pa = bmi->bmi_start;
+#if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+		pv->pv_va = pmap_directbase;
+#else
 		pv->pv_va = KERNEL_BASE;
+#endif
 		pv->pv_size = bmi->bmi_kernelstart - bmi->bmi_start;
 		bmi->bmi_freepages += pv->pv_size / PAGE_SIZE;
 #ifdef VERBOSE_INIT_ARM
@@ -386,7 +403,28 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	KASSERT(mapallmem_p);
-#endif
+#ifdef ARM_MMU_EXTENDED
+	/*
+	 * We can only use address beneath kernel_vm_base to map physical
+	 * memory.
+	 */
+	const psize_t physical_size =
+	    roundup(physical_end - physical_start, L1_SS_SIZE);
+	KASSERT(kernel_vm_base >= physical_size);
+	/*
+	 * If we don't have enough memory via TTBR1, we have use addresses
+	 * from TTBR0 to map some of the physical memory.  But try to use as
+	 * much high memory space as possible.
+	 */
+	if (kernel_vm_base - KERNEL_BASE < physical_size) {
+		pmap_directbase = kernel_vm_base - physical_size;
+		printf("%s: changing pmap_directbase to %#lx\n", __func__,
+		    pmap_directbase);
+	}
+#else
+	KASSERT(kernel_vm_base - KERNEL_BASE >= physical_end - physical_start);
+#endif /* ARM_MMU_EXTENDED */
+#endif /* __HAVE_MM_MD_DIRECT_MAPPED_PHYS */
 
 	/*
 	 * Calculate the number of L2 pages needed for mapping the
@@ -549,6 +587,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE, false);
 	add_pages(bmi, &msgbuf);
 	msgbufphys = msgbuf.pv_pa;
+	msgbufaddr = (void *)msgbuf.pv_va;
 
 	if (map_vectors_p) {
 		/*
@@ -569,7 +608,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #if (ARM_NMMUS > 1)
 	if (xscale_use_minidata)
 #endif          
-		valloc_pages(bmi, extrapv, nextrapages,
+		valloc_pages(bmi, &minidataclean, 1,
 		    VM_PROT_READ|VM_PROT_WRITE, 0, true);
 #endif
 
@@ -698,7 +737,11 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		cur_pv = *pv;
 		pv = SLIST_NEXT(pv, pv_list);
 	} else {
+#if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+		cur_pv.pv_va = pmap_directbase;
+#else
 		cur_pv.pv_va = KERNEL_BASE;
+#endif
 		cur_pv.pv_pa = bmi->bmi_start;
 		cur_pv.pv_size = pv->pv_pa - bmi->bmi_start;
 		cur_pv.pv_prot = VM_PROT_READ | VM_PROT_WRITE;
@@ -812,7 +855,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #if (ARM_NMMUS > 1)
 	if (xscale_use_minidata)
 #endif          
-		xscale_setup_minidata(l1_va, minidataclean.pv_va,
+		xscale_setup_minidata(l1pt_va, minidataclean.pv_va,
 		    minidataclean.pv_pa);      
 #endif
 

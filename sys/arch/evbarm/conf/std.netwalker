@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwalker,v 1.8 2014/03/07 12:35:14 hkenken Exp $
+#	$NetBSD: std.netwalker,v 1.8.2.1 2014/08/10 06:53:55 tls Exp $
 #
 # standard NetBSD/evbarm options for Sharp NetWalker
 
@@ -11,11 +11,12 @@ include	  	"arch/evbarm/conf/files.netwalker"
 options 	MODULAR
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_COUNTER
+options         __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	ARM_HAS_VBAR
 options 	TPIDRPRW_IS_CURCPU
 options 	CORTEX_PMC
 options 	CORTEX_PMC_CCNT_HZ=800000000
-options 	KERNEL_BASE_EXT=0xc0000000
+options 	KERNEL_BASE_EXT=0x80000000
 options 	EVBARM_BOARDTYPE="netwalker"
 options 	FPU_VFP
 

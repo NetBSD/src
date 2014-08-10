@@ -6,7 +6,7 @@
 PACKAGE=	tzcode
 
 # Version numbers of the code and data distributions.
-VERSION=	2013i
+VERSION=	2014e
 
 # Email address for bug reports.
 BUGEMAIL=	tz@iana.org
@@ -100,6 +100,7 @@ YEARISTYPE=	./yearistype
 LDLIBS=
 
 # Add the following to the end of the "CFLAGS=" line as needed.
+#  -DBIG_BANG=-9999999LL if the Big Bang occurred at time -9999999 (see zic.c)
 #  -DHAVE_ADJTIME=0 if `adjtime' does not exist (SVR0?)
 #  -DHAVE_DOS_FILE_NAMES if file names have drive specifiers etc. (MS-DOS)
 #  -DHAVE_GETTEXT=1 if `gettext' works (GNU, Linux, Solaris); also see LDLIBS
@@ -137,7 +138,7 @@ GCC_DEBUG_FLAGS = -Dlint -g3 -O3 -fno-common -fstrict-aliasing \
 	-Wbad-function-cast -Wcast-align -Wcast-qual \
 	-Wformat=2 -Winit-self \
 	-Wmissing-declarations -Wmissing-noreturn -Wmissing-prototypes \
-	-Wnested-externs \
+	-Wnested-externs -Wno-address -Wno-cast-qual \
 	-Wno-format-nonliteral -Wno-sign-compare -Wno-sign-conversion \
 	-Wno-type-limits \
 	-Wno-unused-parameter -Woverlength-strings -Wpointer-arith \
@@ -247,14 +248,13 @@ AWK=		awk
 # is typically nicer if it works.
 KSHELL=		/bin/bash
 
-# The path where SGML DTDs are kept.
-# The default is appropriate for Ubuntu 12.10.
+# The path where SGML DTDs are kept and the catalog file(s) to use when
+# validating.  The default is appropriate for Ubuntu 13.10.
 SGML_TOPDIR= /usr
 SGML_DTDDIR= $(SGML_TOPDIR)/share/xml/w3c-sgml-lib/schema/dtd
 SGML_SEARCH_PATH= $(SGML_DTDDIR)/REC-html401-19991224
-
-# The catalog file(s) to use when validating.
-SGML_CATALOG_FILES= HTML4.cat
+SGML_CATALOG_FILES= \
+  $(SGML_TOPDIR)/share/doc/w3-recs/html/www.w3.org/TR/1999/REC-html401-19991224/HTML4.cat
 
 # The name, arguments and environment of a program to validate your web pages.
 # See <http://www.jclark.com/sp/> for a validator, and
@@ -287,7 +287,7 @@ TARFLAGS=	`if tar $(GNUTARFLAGS) --version >/dev/null 2>&1; \
 		 fi`
 
 # Flags to give 'gzip' when making a distribution.
-GZIPFLAGS=	-9n
+GZIPFLAGS=	-9 ${GZIP_N_FLAG}
 
 ###############################################################################
 
@@ -445,7 +445,7 @@ check_web:	$(WEB_PAGES)
 
 clean_misc:
 		rm -f core *.o *.out \
-		  date tzselect version.h zdump zic yearistype
+		  date tzselect version.h zdump zic yearistype libtz.a
 clean:		clean_misc
 		rm -fr tzpublic
 

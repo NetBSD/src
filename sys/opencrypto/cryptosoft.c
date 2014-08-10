@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.44 2014/01/01 16:06:01 pgoyette Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.44.2.1 2014/08/10 06:56:47 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.44 2014/01/01 16:06:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.44.2.1 2014/08/10 06:56:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1333,6 +1333,9 @@ swcrypto_attach(device_t parent, device_t self, void *opaque)
 {
 
 	swcr_init();
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int	swcrypto_detach(device_t, int);
@@ -1340,6 +1343,7 @@ int	swcrypto_detach(device_t, int);
 int
 swcrypto_detach(device_t self, int flag)
 {
+	pmf_device_deregister(self);
 	if (swcr_id >= 0)
 		crypto_unregister_all(swcr_id);
 	return 0;

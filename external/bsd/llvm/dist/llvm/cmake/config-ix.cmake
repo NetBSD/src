@@ -17,6 +17,11 @@ if( UNIX AND NOT BEOS )
   # Used by check_symbol_exists:
   set(CMAKE_REQUIRED_LIBRARIES m)
 endif()
+# x86_64 FreeBSD 9.2 requires libcxxrt to be specified explicitly.
+if( CMAKE_SYSTEM MATCHES "FreeBSD-9.2-RELEASE" AND
+    CMAKE_SIZEOF_VOID_P EQUAL 8 )
+  list(APPEND CMAKE_REQUIRED_LIBRARIES "cxxrt")
+endif()
 
 # Helper macros and functions
 macro(add_cxx_include result files)
@@ -366,6 +371,8 @@ elseif (LLVM_NATIVE_ARCH MATCHES "powerpc")
   set(LLVM_NATIVE_ARCH PowerPC)
 elseif (LLVM_NATIVE_ARCH MATCHES "aarch64")
   set(LLVM_NATIVE_ARCH AArch64)
+elseif (LLVM_NATIVE_ARCH MATCHES "arm64")
+  set(LLVM_NATIVE_ARCH AArch64)
 elseif (LLVM_NATIVE_ARCH MATCHES "arm")
   set(LLVM_NATIVE_ARCH ARM)
 elseif (LLVM_NATIVE_ARCH MATCHES "mips")
@@ -479,7 +486,7 @@ set(LLVM_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 if (LLVM_ENABLE_DOXYGEN)
   message(STATUS "Doxygen enabled.")
-  find_package(Doxygen)
+  find_package(Doxygen REQUIRED)
 
   if (DOXYGEN_FOUND)
     # If we find doxygen and we want to enable doxygen by default create a
@@ -497,4 +504,14 @@ if (LLVM_ENABLE_DOXYGEN)
   endif()
 else()
   message(STATUS "Doxygen disabled.")
+endif()
+
+if (LLVM_ENABLE_SPHINX)
+  message(STATUS "Sphinx enabled.")
+  find_package(Sphinx REQUIRED)
+  if (LLVM_BUILD_DOCS)
+    add_custom_target(sphinx ALL)
+  endif()
+else()
+  message(STATUS "Sphinx disabled.")
 endif()

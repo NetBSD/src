@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: string.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #include <sys/cdefs.h>
 #include <sys/null.h>
 
+#include <linux/slab.h>
+
 static inline void *
 memchr_inv(const void *buffer, int c, size_t len)
 {
@@ -47,6 +49,19 @@ memchr_inv(const void *buffer, int c, size_t len)
 			return __UNCONST(p);
 
 	return NULL;
+}
+
+static inline void *
+kmemdup(const void *src, size_t len, gfp_t gfp)
+{
+	void *dst;
+
+	dst = kmalloc(len, gfp);
+	if (dst == NULL)
+		return NULL;
+
+	(void)memcpy(dst, src, len);
+	return dst;
 }
 
 #endif  /* _LINUX_STRING_H_ */

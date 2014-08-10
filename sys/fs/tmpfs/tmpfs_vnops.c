@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.118 2014/02/27 16:51:38 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.118.2.1 2014/08/10 06:55:54 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.118 2014/02/27 16:51:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.118.2.1 2014/08/10 06:55:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -74,6 +74,8 @@ const struct vnodeopv_entry_desc tmpfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc,		tmpfs_setattr },
 	{ &vop_read_desc,		tmpfs_read },
 	{ &vop_write_desc,		tmpfs_write },
+	{ &vop_fallocate_desc,		genfs_eopnotsupp },
+	{ &vop_fdiscard_desc,		genfs_eopnotsupp },
 	{ &vop_ioctl_desc,		tmpfs_ioctl },
 	{ &vop_fcntl_desc,		tmpfs_fcntl },
 	{ &vop_poll_desc,		tmpfs_poll },
@@ -343,7 +345,7 @@ tmpfs_mknod(void *v)
 	enum vtype vt = vap->va_type;
 
 	if (vt != VBLK && vt != VCHR && vt != VFIFO) {
-		vput(dvp);
+		*vpp = NULL;
 		return EINVAL;
 	}
 	return tmpfs_construct_node(dvp, vpp, vap, cnp, NULL);

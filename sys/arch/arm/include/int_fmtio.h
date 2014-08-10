@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.7 2014/01/29 18:51:37 matt Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.7.2.1 2014/08/10 06:53:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,12 +32,14 @@
 #ifndef _ARM_INT_FMTIO_H_
 #define _ARM_INT_FMTIO_H_
 
+#ifdef __INTPTR_FMTd__
+#include <sys/common_int_fmtio.h>
+#else
 /*
  * 7.8.1 Macros for format specifiers
  */
 
 /* fprintf macros for signed integers */
-
 #define	PRId8		"d"	/* int8_t		*/
 #define	PRId16		"d"	/* int16_t		*/
 #define	PRId32		"d"	/* int32_t		*/
@@ -208,5 +210,6 @@
 #define	SCNxFAST64	"llx"	/* uint_fast64_t	*/
 #define	SCNxMAX		"llx"	/* uintmax_t		*/
 #define	SCNxPTR		"lx"	/* uintptr_t		*/
+#endif
 
 #endif /* !_ARM_INT_FMTIO_H_ */

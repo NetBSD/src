@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_event.c,v 1.10 2014/01/23 10:50:14 manu Exp $	*/
+/*	$NetBSD: netbsd32_event.c,v 1.10.2.1 2014/08/10 06:54:33 tls Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.10 2014/01/23 10:50:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.10.2.1 2014/08/10 06:54:33 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,7 +112,8 @@ netbsd32___kevent50(struct lwp *l,
 
 	nchanges = SCARG(uap, nchanges);
 	nevents = SCARG(uap, nevents);
-	maxalloc = MIN(KQ_NEVENTS, MAX(nchanges, nevents));
+	maxalloc = KQ_NEVENTS;
+
 	netbsd32_kevent_ops.keo_private =
 	    kmem_alloc(maxalloc * sizeof(struct netbsd32_kevent), KM_SLEEP);
 

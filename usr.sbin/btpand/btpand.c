@@ -1,4 +1,4 @@
-/*	$NetBSD: btpand.c,v 1.6 2011/08/29 20:38:55 joerg Exp $	*/
+/*	$NetBSD: btpand.c,v 1.6.18.1 2014/08/10 06:59:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008-2009 Iain Hibbert. All rights reserved.");
-__RCSID("$NetBSD: btpand.c,v 1.6 2011/08/29 20:38:55 joerg Exp $");
+__RCSID("$NetBSD: btpand.c,v 1.6.18.1 2014/08/10 06:59:23 tls Exp $");
 
 #include <sys/wait.h>
 
@@ -213,6 +213,7 @@ main(int argc, char *argv[])
 	switch(fork()) {
 	case -1: /* bad */
 		err(EXIT_FAILURE, "fork() failed");
+		/*NOTREACHED*/
 
 	case 0:	/* child */
 		openlog(getprogname(), LOG_NDELAY | LOG_PERROR | LOG_PID, LOG_DAEMON);

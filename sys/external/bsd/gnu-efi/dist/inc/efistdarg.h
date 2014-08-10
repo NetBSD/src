@@ -1,4 +1,4 @@
-/*	$NetBSD: efistdarg.h,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: efistdarg.h,v 1.1.1.1.2.1 2014/08/10 06:55:40 tls Exp $	*/
 
 #ifndef _EFISTDARG_H_
 #define _EFISTDARG_H_
@@ -21,7 +21,11 @@ Revision History
 
 --*/
 #ifdef __GNUC__
+#ifdef __NetBSD__
+#include <sys/stdarg.h>
+#else
 #include "stdarg.h"
+#endif
 #else
 #define _INTSIZEOF(n)   ( (sizeof(n) + sizeof(UINTN) - 1) & ~(sizeof(UINTN) - 1) )
 

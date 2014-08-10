@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.27 2014/03/14 11:31:11 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.27.2.1 2014/08/10 07:06:59 tls Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 7, 2014
+.Dd July 7, 2014
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -111,15 +111,6 @@ is also an implementation of the IPv6 Router Solicitor as specified in
 .Li RFC 4861
 and
 .Li RFC 6106 .
-.Nm
-can optionally handle address and route management itself,
-and will do so by default if Router Solicitation is disabled in the kernel.
-If
-.Nm
-is managing routes,
-.Nm
-sends Neighbor Solicitions to each advertising router periodically and will
-expire the ones that do not respond.
 .Pp
 .Nm
 is also an implemenation of the DHCPv6 client as specified in
@@ -562,6 +553,14 @@ Dumps the last lease for the
 to stdout.
 .Ar interface
 could also be a path to a DHCP wire formatted file.
+Use the
+.Fl 4
+or
+.Fl 6
+flags to specify an address family.
+Pass a 2nd
+.Fl U, Fl Fl dumplease option to dump a secondary lease, such as
+DHCPv6 Prefix Delegation when not being mixed with another IA type.
 .It Fl V, Fl Fl variables
 Display a list of option codes and the associated variable for use in
 .Xr dhcpcd-run-hooks 8 .
@@ -614,6 +613,16 @@ unicasts INFORM to the destination, otherwise it defaults to STATIC.
 requires a Berkley Packet Filter, or BPF device on BSD based systems and a
 Linux Socket Filter, or LPF device on Linux based systems for all IPv4
 configuration.
+.Pp
+If restricting
+.Nm
+to a single interface and optionally address family via the command-line
+then all futher calls to
+.Nm
+to rebind, reconfigure or exit need to include the same restrictive flags
+so that
+.Nm
+knows which process to signal.
 .Sh FILES
 .Bl -ohang
 .It Pa @SYSCONFDIR@/dhcpcd.conf
@@ -621,6 +630,8 @@ Configuration file for dhcpcd.
 If you always use the same options, put them here.
 .It Pa @SYSCONFDIR@/dhcpcd.duid
 Text file that holds the DUID used to identify the host.
+.It Pa @SYSCONFDIR@/dhcpcd.secret
+Text file that holds a secret key known only to the host.
 .It Pa @SCRIPT@
 Bourne shell script that is run to configure or de-configure an interface.
 .It Pa @LIBDIR@/dhcpcd/dev
@@ -669,7 +680,8 @@ RFC\ 951, RFC\ 1534, RFC\ 2104, RFC\ 2131, RFC\ 2132, RFC\ 2563, RFC\ 2855,
 RFC\ 3004, RFC\ 3118, RFC\ 3203, RFC\ 3315, RFC\ 3361, RFC\ 3633, RFC\ 3396,
 RFC\ 3397, RFC\ 3442, RFC\ 3495, RFC\ 3925, RFC\ 3927, RFC\ 4039, RFC\ 4075,
 RFC\ 4242, RFC\ 4361, RFC\ 4390, RFC\ 4702, RFC\ 4074, RFC\ 4861, RFC\ 4833,
-RFC\ 5227, RFC\ 5942, RFC\ 5969, RFC\ 6106, RFC\ 6334, RFC\ 6704.
+RFC\ 5227, RFC\ 5942, RFC\ 5969, RFC\ 6106, RFC\ 6334, RFC\ 6603, RFC\ 6704,
+RFC\ 7217.
 .Sh AUTHORS
 .An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS

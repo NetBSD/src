@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.98 2013/06/05 23:08:01 christos Exp $
+#	$NetBSD: TX3922,v 1.98.6.1 2014/08/10 06:53:58 tls Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -77,6 +77,10 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	WAPBL		# File system journaling support

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.1.26.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -92,6 +92,7 @@ int     deliver_resolve_tree(LOCAL_STATE state, USER_ATTR usr_attr, TOK822 *addr
     int     status;
     ssize_t ext_len;
     char   *ratsign;
+    int     rcpt_delim;
 
     /*
      * Make verbose logging easier to understand.
@@ -132,8 +133,9 @@ int     deliver_resolve_tree(LOCAL_STATE state, USER_ATTR usr_attr, TOK822 *addr
 	 * Splice in the optional unmatched address extension.
 	 */
 	if (state.msg_attr.unmatched) {
+	    rcpt_delim = state.msg_attr.local[strlen(state.msg_attr.user)];
 	    if ((ratsign = strrchr(STR(reply.recipient), '@')) == 0) {
-		VSTRING_ADDCH(reply.recipient, *var_rcpt_delim);
+		VSTRING_ADDCH(reply.recipient, rcpt_delim);
 		vstring_strcat(reply.recipient, state.msg_attr.unmatched);
 	    } else {
 		ext_len = strlen(state.msg_attr.unmatched);
@@ -141,7 +143,7 @@ int     deliver_resolve_tree(LOCAL_STATE state, USER_ATTR usr_attr, TOK822 *addr
 		if ((ratsign = strrchr(STR(reply.recipient), '@')) == 0)
 		    msg_panic("%s: recipient @ botch", myname);
 		memmove(ratsign + ext_len + 1, ratsign, strlen(ratsign) + 1);
-		*ratsign = *var_rcpt_delim;
+		*ratsign = rcpt_delim;
 		memcpy(ratsign + 1, state.msg_attr.unmatched, ext_len);
 		VSTRING_SKIP(reply.recipient);
 	    }

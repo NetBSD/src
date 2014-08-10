@@ -1,4 +1,4 @@
-/* $NetBSD: ar9344.c,v 1.4 2012/10/27 17:18:02 chs Exp $ */
+/* $NetBSD: ar9344.c,v 1.4.10.1 2014/08/10 06:54:02 tls Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.4 2012/10/27 17:18:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.4.10.1 2014/08/10 06:54:02 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -120,9 +120,10 @@ ar9344_reset(void)
 static void
 ar9344_get_freqs(struct arfreqs *freqs)
 {
-	uint32_t out_div, ref_div, nint, nfrac, post_div;
+	uint32_t out_div, ref_div, nint, post_div;
 	uint32_t pll;
 	uint32_t ref_clk;
+	//uint32_t nfrac;
 
 	if (GETRESETREG(AR9344_RESET_BOOTSTRAP) & AR9344_BOOTSTRAP_REF_CLK_40) {
 		ref_clk = 40 * 1000000;
@@ -139,7 +140,7 @@ ar9344_get_freqs(struct arfreqs *freqs)
 	out_div = __SHIFTOUT(pll, AR9344_CPU_PLL_CONFIG_OUTDIV);
 	ref_div = __SHIFTOUT(pll, AR9344_CPU_PLL_CONFIG_REFDIV);
 	nint = __SHIFTOUT(pll, AR9344_CPU_PLL_CONFIG_NINT);
-	nfrac = __SHIFTOUT(pll, AR9344_CPU_PLL_CONFIG_NFRAC);
+	//nfrac = __SHIFTOUT(pll, AR9344_CPU_PLL_CONFIG_NFRAC);
 
 	const uint32_t cpu_pll_freq = (nint * ref_clk / ref_div) >> out_div;
 
@@ -150,7 +151,7 @@ ar9344_get_freqs(struct arfreqs *freqs)
 	out_div = __SHIFTOUT(pll, AR9344_DDR_PLL_CONFIG_OUTDIV);
 	ref_div = __SHIFTOUT(pll, AR9344_DDR_PLL_CONFIG_REFDIV);
 	nint = __SHIFTOUT(pll, AR9344_DDR_PLL_CONFIG_NINT);
-	nfrac = __SHIFTOUT(pll, AR9344_DDR_PLL_CONFIG_NFRAC);
+	//nfrac = __SHIFTOUT(pll, AR9344_DDR_PLL_CONFIG_NFRAC);
 
 	const uint32_t ddr_pll_freq = (nint * ref_clk / ref_div) >> out_div;
 

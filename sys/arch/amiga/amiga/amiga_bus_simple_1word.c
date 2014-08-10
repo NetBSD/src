@@ -1,4 +1,4 @@
-/* $NetBSD: amiga_bus_simple_1word.c,v 1.8 2012/11/19 22:32:48 rkujawa Exp $ */
+/* $NetBSD: amiga_bus_simple_1word.c,v 1.8.10.1 2014/08/10 06:53:49 tls Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <machine/pte.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_1word.c,v 1.8 2012/11/19 22:32:48 rkujawa Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_1word.c,v 1.8.10.1 2014/08/10 06:53:49 tls Exp $");
 
 #define AMIGA_SIMPLE_BUS_STRIDE 1		/* 1 byte per byte */
 #define AMIGA_SIMPLE_BUS_WORD_METHODS
@@ -173,8 +173,6 @@ const struct amiga_bus_space_methods amiga_bus_stride_1swap_abs = {
 	.bswms2 =	oabs(bswm2_),
 	.bsrr2 =	oabs(bsrr2_),           /* XXX swap? */
 	.bswr2 =	oabs(bswr2_),           /* XXX swap? */
-	.bsrr2 =	oabs(bsrr2_),
-	.bswr2 =	oabs(bswr2_),
 	.bssr2 =	oabs(bssr2_),           /* XXX swap? */
 	.bscr2 =	oabs(bscr2_),           /* XXX swap? */
 

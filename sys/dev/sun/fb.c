@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.34 2014/03/16 05:20:29 dholland Exp $ */
+/*	$NetBSD: fb.c,v 1.34.2.1 2014/08/10 06:54:58 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.34 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.34.2.1 2014/08/10 06:54:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ const struct cdevsw fb_cdevsw = {
 	.d_poll = fbpoll,
 	.d_mmap = fbmmap,
 	.d_kqfilter = fbkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

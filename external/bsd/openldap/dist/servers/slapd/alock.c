@@ -1,10 +1,10 @@
-/*	$NetBSD: alock.c,v 1.1.1.3 2010/12/12 15:22:17 adam Exp $	*/
+/*	$NetBSD: alock.c,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* alock.c - access lock library */
-/* OpenLDAP: pkg/ldap/servers/slapd/alock.c,v 1.5.2.13 2010/04/13 20:23:10 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2014 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -17,7 +17,7 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 /* ACKNOWLEDGEMENTS:
- * This work was initially developed by Matthew Backes at Symas
+ * This work was initially developed by Emily Backes at Symas
  * Corporation for inclusion in OpenLDAP Software.
  */
 
@@ -42,9 +42,9 @@
 #include <fcntl.h>
 
 #ifdef _WIN32
+#include <windows.h>
 #include <stdio.h>
 #include <io.h>
-#include <sys/locking.h>
 #endif
 
 
@@ -68,19 +68,15 @@ alock_grab_lock ( int fd, int slot )
 
 	res = fcntl (fd, F_SETLKW, &lock_info);
 #elif defined( _WIN32 )
-	if( _lseek( fd, (ALOCK_SLOT_SIZE * slot), SEEK_SET ) < 0 )
-		return -1;
-	/*
-	 * _lock will try for the lock once per second, returning EDEADLOCK
-	 * after ten tries. We just loop until we either get the lock
-	 * or some other error is returned.
-	 */
-	while((res = _locking( fd, _LK_LOCK, ALOCK_SLOT_SIZE )) < 0 ) {
-		if( errno != EDEADLOCK )
-			break;
-	}
+	OVERLAPPED ov;
+	HANDLE hh = _get_osfhandle ( fd );
+	ov.hEvent = 0;
+	ov.Offset = ALOCK_SLOT_SIZE*slot;
+	ov.OffsetHigh = 0;
+	res = LockFileEx( hh, LOCKFILE_EXCLUSIVE_LOCK, 0,
+		ALOCK_SLOT_SIZE, 0, &ov ) ? 0 : -1;
 #else
-#   error alock needs lockf, fcntl, or _locking
+#   error alock needs lockf, fcntl, or LockFile[Ex]
 #endif
 	if (res == -1) {
 		assert (errno != EDEADLK);
@@ -111,12 +107,54 @@ alock_release_lock ( int fd, int slot )
 	res = fcntl (fd, F_SETLKW, &lock_info);
 	if (res == -1) return -1;
 #elif defined( _WIN32 )
-	res = _lseek (fd, (ALOCK_SLOT_SIZE * slot), SEEK_SET);
-	if (res == -1) return -1;
-	res = _locking( fd, _LK_UNLCK, ALOCK_SLOT_SIZE );
-	if (res == -1) return -1;
+	HANDLE hh = _get_osfhandle ( fd );
+	if ( !UnlockFile ( hh, ALOCK_SLOT_SIZE*slot, 0,
+		ALOCK_SLOT_SIZE, 0 ))
+		return -1;
 #else
-#   error alock needs lockf, fcntl, or _locking
+#   error alock needs lockf, fcntl, or LockFile[Ex]
+#endif
+
+	return 0;
+}
+
+static int
+alock_share_lock ( int fd, int slot )
+{
+	int res;
+
+#if defined( HAVE_LOCKF )
+	res = 0;	/* lockf has no shared locks */
+#elif defined ( HAVE_FCNTL )
+	struct flock lock_info;
+	(void) memset ((void *) &lock_info, 0, sizeof (struct flock));
+
+	/* The shared lock replaces the existing lock */
+	lock_info.l_type = F_RDLCK;
+	lock_info.l_whence = SEEK_SET;
+	lock_info.l_start = (off_t) (ALOCK_SLOT_SIZE * slot);
+	lock_info.l_len = (off_t) ALOCK_SLOT_SIZE;
+
+	res = fcntl (fd, F_SETLK, &lock_info);
+	if (res == -1) return -1;
+#elif defined( _WIN32 )
+	OVERLAPPED ov;
+	HANDLE hh = _get_osfhandle ( fd );
+
+	/* Windows locks are mandatory, not advisory.
+	 * We must downgrade the lock to allow future
+	 * callers to read the slot data.
+	 *
+	 * First acquire a shared lock. Unlock will
+	 * release the existing exclusive lock.
+	 */
+	ov.hEvent = 0;
+	ov.Offset = ALOCK_SLOT_SIZE*slot;
+	ov.OffsetHigh = 0;
+	LockFileEx (hh, 0, 0, ALOCK_SLOT_SIZE, 0, &ov);
+	UnlockFile (hh, ALOCK_SLOT_SIZE*slot, 0, ALOCK_SLOT_SIZE, 0);
+#else
+#   error alock needs lockf, fcntl, or LockFile[Ex]
 #endif
 
 	return 0;
@@ -153,19 +191,22 @@ alock_test_lock ( int fd, int slot )
 
 	if (lock_info.l_type != F_UNLCK) return ALOCK_LOCKED;
 #elif defined( _WIN32 )
-	res = _lseek (fd, (ALOCK_SLOT_SIZE * slot), SEEK_SET);
-	if (res == -1) return -1;
-	res = _locking( fd, _LK_NBLCK, ALOCK_SLOT_SIZE );
-	_locking( fd, _LK_UNLCK, ALOCK_SLOT_SIZE );
-	if (res == -1) {
-	   if( errno == EACCES ) {
-		   return ALOCK_LOCKED;
-	   } else {
-		   return -1;
-	   }
+	OVERLAPPED ov;
+	HANDLE hh = _get_osfhandle ( fd );
+	ov.hEvent = 0;
+	ov.Offset = ALOCK_SLOT_SIZE*slot;
+	ov.OffsetHigh = 0;
+	if( !LockFileEx( hh,
+		LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY, 0,
+		ALOCK_SLOT_SIZE, 0, &ov )) {
+		int err = GetLastError();
+		if ( err == ERROR_LOCK_VIOLATION )
+			return ALOCK_LOCKED;
+		else
+			return -1;
 	}
 #else
-#   error alock needs lockf, fcntl, or _locking
+#   error alock needs lockf, fcntl, or LockFile
 #endif
 	
 	return 0;
@@ -366,7 +407,15 @@ alock_open ( alock_info_t * info,
 	}
 	ptr = lutil_strcopy(filename, envdir);
 	lutil_strcopy(ptr, "/alock");
+#ifdef _WIN32
+	{ HANDLE handle = CreateFile (filename, GENERIC_READ|GENERIC_WRITE,
+		FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL, NULL);
+		info->al_fd = _open_osfhandle (handle, 0);
+	}
+#else
 	info->al_fd = open (filename, O_CREAT|O_RDWR, 0666);
+#endif
 	ber_memfree (filename);
 	if (info->al_fd < 0) {
 		ber_memfree (slot_data.al_appname);
@@ -449,6 +498,7 @@ alock_open ( alock_info_t * info,
 		close (info->al_fd);
 		return ALOCK_UNSTABLE;
 	}
+	alock_share_lock (info->al_fd, info->al_slot);
 
 	res = alock_release_lock (info->al_fd, 0);
 	if (res == -1) { 
@@ -544,6 +594,12 @@ alock_close ( alock_info_t * info, int nosave )
 
 	res = alock_grab_lock (info->al_fd, 0);
 	if (res == -1) {
+fail:
+		/* Windows doesn't clean up locks immediately when a process exits.
+		 * Make sure we release our locks, to prevent stale locks from
+		 * hanging around.
+		 */
+		alock_release_lock (info->al_fd, 0);
 		close (info->al_fd);
 		return ALOCK_UNSTABLE;
 	}
@@ -551,31 +607,29 @@ alock_close ( alock_info_t * info, int nosave )
 	/* mark our slot as clean */
 	res = alock_read_slot (info, &slot_data);
 	if (res == -1) {
-		close (info->al_fd);
 		if (slot_data.al_appname != NULL) 
 			ber_memfree (slot_data.al_appname);
-		return ALOCK_UNSTABLE;
+		goto fail;
 	}
 	slot_data.al_lock = ALOCK_UNLOCKED;
 	if ( nosave )
 		slot_data.al_lock |= ALOCK_NOSAVE;
+	/* since we have slot 0 locked, we don't need our slot lock */
+	res = alock_release_lock (info->al_fd, info->al_slot);
+	if (res == -1) {
+		goto fail;
+	}
 	res = alock_write_slot (info, &slot_data);
 	if (res == -1) {
-		close (info->al_fd);
 		if (slot_data.al_appname != NULL) 
 			ber_memfree (slot_data.al_appname);
-		return ALOCK_UNSTABLE;
+		goto fail;
 	}
 	if (slot_data.al_appname != NULL) {
 		ber_memfree (slot_data.al_appname);
 		slot_data.al_appname = NULL;
 	}
 
-	res = alock_release_lock (info->al_fd, info->al_slot);
-	if (res == -1) {
-		close (info->al_fd);
-		return ALOCK_UNSTABLE;
-	}
 	res = alock_release_lock (info->al_fd, 0);
 	if (res == -1) {
 		close (info->al_fd);
@@ -604,14 +658,12 @@ alock_recover ( alock_info_t * info )
 
 	res = alock_grab_lock (info->al_fd, 0);
 	if (res == -1) {
-		close (info->al_fd);
-		return ALOCK_UNSTABLE;
+		goto fail;
 	}
 
 	res = fstat (info->al_fd, &statbuf);
 	if (res == -1) {
-		close (info->al_fd);
-		return ALOCK_UNSTABLE;
+		goto fail;
 	}
 
 	max_slot = (statbuf.st_size + ALOCK_SLOT_SIZE - 1) / ALOCK_SLOT_SIZE;
@@ -624,23 +676,20 @@ alock_recover ( alock_info_t * info )
 			if (res == ALOCK_LOCKED
 			    || res == ALOCK_UNIQUE) {
 				/* recovery attempt on an active db? */
-				close (info->al_fd);
-				return ALOCK_UNSTABLE;
+				goto fail;
 				
 			} else if (res == ALOCK_DIRTY) {
 				/* mark it clean */
 				res = alock_read_slot (&scan_info, &slot_data);
 				if (res == -1) {
-					close (info->al_fd);
-					return ALOCK_UNSTABLE;
+					goto fail;
 				}
 				slot_data.al_lock = ALOCK_UNLOCKED;
 				res = alock_write_slot (&scan_info, &slot_data);
 				if (res == -1) {
-					close (info->al_fd);
 					if (slot_data.al_appname != NULL) 
 						ber_memfree (slot_data.al_appname);
-					return ALOCK_UNSTABLE;
+					goto fail;
 				}
 				if (slot_data.al_appname != NULL) {
 					ber_memfree (slot_data.al_appname);
@@ -648,8 +697,7 @@ alock_recover ( alock_info_t * info )
 				}
 				
 			} else if (res == -1) {
-				close (info->al_fd);
-				return ALOCK_UNSTABLE;
+				goto fail;
 
 			}
 		}
@@ -662,6 +710,11 @@ alock_recover ( alock_info_t * info )
 	}
 
 	return ALOCK_CLEAN;
+
+fail:
+	alock_release_lock (info->al_fd, 0);
+	close (info->al_fd);
+	return ALOCK_UNSTABLE;
 }
 
 #endif /* SLAPD_BDB || SLAPD_HDB */

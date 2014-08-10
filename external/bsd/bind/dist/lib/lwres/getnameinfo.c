@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.5 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.5.2.1 2014/08/10 07:06:44 tls Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -149,9 +149,13 @@ static struct afd {
 #define ENI_SALEN	6
 #define ENI_NOSOCKET 	7
 
+/*!
+ * The test against 0 is there to keep the Solaris compiler
+ * from complaining about "end-of-loop code not reached".
+ */
 #define ERR(code) \
 	do { result = (code);			\
-		goto cleanup;			\
+		goto cleanup;	\
 	} while (/*CONSTCOND*/0)
 
 /*% lightweight resolver socket address structure to hostname and service name */

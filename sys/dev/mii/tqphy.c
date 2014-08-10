@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.38 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.38.36.1 2014/08/10 06:54:53 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.38 2009/10/19 18:41:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.38.36.1 2014/08/10 06:54:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,8 +250,11 @@ tqphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_100_TX;
 		else
 			mii->mii_media_active |= IFM_10_T;
+
 		if (diag & DIAG_DPLX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

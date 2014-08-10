@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.63 2013/09/15 15:54:23 martin Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.63.2.1 2014/08/10 06:57:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.63 2013/09/15 15:54:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.63.2.1 2014/08/10 06:57:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/03/04 21:05:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2014/08/10 07:09:08 tls Exp $
 
 LIB=	LLVMAArch64CodeGen
 
@@ -8,16 +8,26 @@ LIB=	LLVMAArch64CodeGen
 
 CPPFLAGS+=	-I${LLVM_SRCDIR}/lib/Target/AArch64
 
-SRCS+=	AArch64AsmPrinter.cpp \
-	AArch64BranchFixupPass.cpp \
+SRCS+=	AArch64AddressTypePromotion.cpp \
+	AArch64AdvSIMDScalarPass.cpp \
+	AArch64AsmPrinter.cpp \
+	AArch64BranchRelaxation.cpp \
+	AArch64CleanupLocalDynamicTLSPass.cpp \
+	AArch64CollectLOH.cpp \
+	AArch64ConditionalCompares.cpp \
+	AArch64DeadRegisterDefinitionsPass.cpp \
+	AArch64ExpandPseudoInsts.cpp \
+	AArch64FastISel.cpp \
 	AArch64FrameLowering.cpp \
+	AArch64InstrInfo.cpp \
 	AArch64ISelDAGToDAG.cpp \
 	AArch64ISelLowering.cpp \
-	AArch64InstrInfo.cpp \
-	AArch64MachineFunctionInfo.cpp \
+	AArch64LoadStoreOptimizer.cpp \
 	AArch64MCInstLower.cpp \
+	AArch64PromoteConstant.cpp \
 	AArch64RegisterInfo.cpp \
 	AArch64SelectionDAGInfo.cpp \
+	AArch64StorePairSuppress.cpp \
 	AArch64Subtarget.cpp \
 	AArch64TargetMachine.cpp \
 	AArch64TargetObjectFile.cpp \
@@ -27,14 +37,16 @@ TABLEGEN_SRC=		AArch64.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/AArch64
 TABLEGEN_OUTPUT= \
 	AArch64GenAsmMatcher.inc|-gen-asm-matcher \
+	AArch64GenAsmWriter1.inc|-gen-asm-writer^-asmwriternum=1 \
 	AArch64GenAsmWriter.inc|-gen-asm-writer \
 	AArch64GenCallingConv.inc|-gen-callingconv \
+	AArch64GenDAGISel.inc|-gen-dag-isel \
 	AArch64GenDisassemblerTables.inc|-gen-disassembler \
+	AArch64GenFastISel.inc|-gen-fast-isel \
 	AArch64GenInstrInfo.inc|-gen-instr-info \
 	AArch64GenMCCodeEmitter.inc|-gen-emitter^-mc-emitter \
 	AArch64GenMCPseudoLowering.inc|-gen-pseudo-lowering \
 	AArch64GenRegisterInfo.inc|-gen-register-info \
-	AArch64GenDAGISel.inc|-gen-dag-isel \
 	AArch64GenSubtargetInfo.inc|-gen-subtarget
 
 .include "${.PARSEDIR}/../../tablegen.mk"

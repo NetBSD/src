@@ -57,7 +57,7 @@ struct PassRegistryImpl {
   };
   DenseMap<const PassInfo*, AnalysisGroupInfo> AnalysisGroupInfoMap;
   
-  std::vector<const PassInfo*> ToFree;
+  std::vector<std::unique_ptr<const PassInfo>> ToFree;
   std::vector<PassRegistrationListener*> Listeners;
 };
 } // end anonymous namespace
@@ -75,20 +75,15 @@ void *PassRegistry::getImpl() const {
 PassRegistry::~PassRegistry() {
   sys::SmartScopedWriter<true> Guard(*Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(pImpl);
-  
-  for (std::vector<const PassInfo*>::iterator I = Impl->ToFree.begin(),
-       E = Impl->ToFree.end(); I != E; ++I)
-    delete *I;
-  
   delete Impl;
-  pImpl = 0;
+  pImpl = nullptr;
 }
 
 const PassInfo *PassRegistry::getPassInfo(const void *TI) const {
   sys::SmartScopedReader<true> Guard(*Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   PassRegistryImpl::MapType::const_iterator I = Impl->PassInfoMap.find(TI);
-  return I != Impl->PassInfoMap.end() ? I->second : 0;
+  return I != Impl->PassInfoMap.end() ? I->second : nullptr;
 }
 
 const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
@@ -96,7 +91,7 @@ const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   PassRegistryImpl::StringMapType::const_iterator
     I = Impl->PassInfoStringMap.find(Arg);
-  return I != Impl->PassInfoStringMap.end() ? I->second : 0;
+  return I != Impl->PassInfoStringMap.end() ? I->second : nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -117,7 +112,7 @@ void PassRegistry::registerPass(const PassInfo &PI, bool ShouldFree) {
        I = Impl->Listeners.begin(), E = Impl->Listeners.end(); I != E; ++I)
     (*I)->passRegistered(&PI);
   
-  if (ShouldFree) Impl->ToFree.push_back(&PI);
+  if (ShouldFree) Impl->ToFree.push_back(std::unique_ptr<const PassInfo>(&PI));
 }
 
 void PassRegistry::unregisterPass(const PassInfo &PI) {
@@ -148,7 +143,7 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
                                          bool isDefault,
                                          bool ShouldFree) {
   PassInfo *InterfaceInfo =  const_cast<PassInfo*>(getPassInfo(InterfaceID));
-  if (InterfaceInfo == 0) {
+  if (!InterfaceInfo) {
     // First reference to Interface, register it now.
     registerPass(Registeree);
     InterfaceInfo = &Registeree;
@@ -174,7 +169,7 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
            "Cannot add a pass to the same analysis group more than once!");
     AGI.Implementations.insert(ImplementationInfo);
     if (isDefault) {
-      assert(InterfaceInfo->getNormalCtor() == 0 &&
+      assert(InterfaceInfo->getNormalCtor() == nullptr &&
              "Default implementation for analysis group already specified!");
       assert(ImplementationInfo->getNormalCtor() &&
            "Cannot specify pass as default if it does not have a default ctor");
@@ -185,7 +180,8 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
   }
   
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
-  if (ShouldFree) Impl->ToFree.push_back(&Registeree);
+  if (ShouldFree)
+    Impl->ToFree.push_back(std::unique_ptr<const PassInfo>(&Registeree));
 }
 
 void PassRegistry::addRegistrationListener(PassRegistrationListener *L) {

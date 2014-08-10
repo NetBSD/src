@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2014/03/22 19:52:21 tron Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2014/08/10 07:10:56 tls Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -30,6 +30,7 @@ CHECKSUM_OBJS=	${BACKENDOBJ}/libbackend.a \
 
 # VER_CPPFLAGS from Makefile.inc
 CPPFLAGS.c-cppbuiltin.c=	${VER_CPPFLAGS}
+c-cppbuiltin.c: ${GCCARCH}/defs.mk
 
 COPTS.c-ada-spec.c=	-Wno-stack-protector
 COPTS.c-aux-info.c=	-Wno-stack-protector

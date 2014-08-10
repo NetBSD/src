@@ -1,6 +1,16 @@
 $eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
 
+changes in bozohttpd 20140717:
+	o  properly handle SSL errors.
+
+changes in bozohttpd 20140708:
+	o  fixes for virtual host support, from rajeev_v_pillai@yahoo.com
+	o  avoid printing double errors, from shm@netbsd.org
+	o  fix a security issue in basic HTTP authentication which would allow
+	   authentication to be bypassed, from shm@netbsd.org
+
 changes in bozohttpd 20140201:
+	o  support .svg files
 	o  fix a core dump when requests timeout
 
 changes in bozohttpd 20140102:

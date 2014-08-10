@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.39 2014/03/16 05:20:22 dholland Exp $ */
+/*	$NetBSD: par.c,v 1.39.2.1 2014/08/10 06:53:49 tls Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.39 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.39.2.1 2014/08/10 06:53:49 tls Exp $");
 
 /*
  * parallel port interface
@@ -124,6 +124,7 @@ const struct cdevsw par_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

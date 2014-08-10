@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/05/26 12:56:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.22.1 2014/08/10 07:09:53 tls Exp $
 
 USE_FORT?=	yes
 
@@ -11,7 +11,7 @@ LIB=		ldap
 .PATH:		${LDAP_SRCDIR}/man
 
 MAN=		ldap.3 ldap_abandon.3 ldap_add.3 ldap_bind.3 ldap_compare.3 \
-		ldap_delete.3 ldap_error.3 ldap_first_attribute.3 \
+		ldap_delete.3 ldap_dup.3 ldap_error.3 ldap_first_attribute.3 \
 		ldap_first_entry.3 ldap_first_message.3 \
 		ldap_first_reference.3 ldap_get_dn.3 ldap_get_values.3 \
 		ldap_modify.3 ldap_modrdn.3 ldap_open.3 \

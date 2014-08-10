@@ -1,10 +1,10 @@
-/*	$NetBSD: slapcommon.h,v 1.1.1.3 2010/12/12 15:22:48 adam Exp $	*/
+/*	$NetBSD: slapcommon.h,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* slapcommon.h - common definitions for the slap tools */
-/* OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.14.2.10 2010/04/14 22:59:10 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ typedef struct tool_vars {
 	int tv_continuemode;
 	int tv_nosubordinates;
 	int tv_dryrun;
-	int tv_jumpline;
+	unsigned long tv_jumpline;
 	struct berval tv_sub_ndn;
 	int tv_scope;
 	Filter *tv_filter;
@@ -66,6 +66,9 @@ typedef struct tool_vars {
 	slap_ssf_t tv_sasl_ssf;
 	unsigned tv_dn_mode;
 	unsigned int tv_csnsid;
+	ber_len_t tv_ldif_wrap;
+	char tv_maxcsnbuf[ LDAP_PVT_CSNSTR_BUFSIZE * ( SLAP_SYNC_SID_MAX + 1 ) ];
+	struct berval tv_maxcsn[ SLAP_SYNC_SID_MAX + 1 ];
 } tool_vars;
 
 extern tool_vars tool_globals;
@@ -100,6 +103,10 @@ extern tool_vars tool_globals;
 #define sasl_ssf tool_globals.tv_sasl_ssf
 #define dn_mode tool_globals.tv_dn_mode
 #define csnsid tool_globals.tv_csnsid
+#define ldif_wrap tool_globals.tv_ldif_wrap
+#define maxcsn tool_globals.tv_maxcsn
+#define maxcsnbuf tool_globals.tv_maxcsnbuf
+
 #define SLAP_TOOL_LDAPDN_PRETTY		SLAP_LDAPDN_PRETTY
 #define SLAP_TOOL_LDAPDN_NORMAL		(SLAP_LDAPDN_PRETTY << 1)
 
@@ -109,5 +116,25 @@ void slap_tool_init LDAP_P((
 	int argc, char **argv ));
 
 int slap_tool_destroy LDAP_P((void));
+
+int slap_tool_update_ctxcsn LDAP_P((
+	const char *progname,
+	unsigned long sid,
+	struct berval *bvtext ));
+
+unsigned long slap_tool_update_ctxcsn_check LDAP_P((
+	const char *progname,
+	Entry *e ));
+
+int slap_tool_update_ctxcsn_init LDAP_P((void));
+
+int slap_tool_entry_check LDAP_P((
+	const char *progname,
+	Operation *op,
+	Entry *e,
+	int lineno,
+	const char **text,
+	char *textbuf,
+	size_t textlen ));
 
 #endif /* SLAPCOMMON_H_ */

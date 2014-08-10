@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6nd.h,v 1.1.1.3 2014/03/14 11:27:41 roy Exp $ */
+/* $NetBSD: ipv6nd.h,v 1.1.1.3.2.1 2014/08/10 07:06:59 tls Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -50,7 +50,7 @@ struct ra {
 	struct in6_addr from;
 	char sfrom[INET6_ADDRSTRLEN];
 	unsigned char *data;
-	ssize_t data_len;
+	size_t data_len;
 	struct timeval received;
 	unsigned char flags;
 	uint32_t lifetime;
@@ -59,11 +59,6 @@ struct ra {
 	uint32_t mtu;
 	struct ipv6_addrhead addrs;
 	TAILQ_HEAD(, ra_opt) options;
-
-	unsigned char *ns;
-	size_t nslen;
-	int nsprobes;
-
 	int expired;
 };
 
@@ -77,13 +72,19 @@ struct rs_state {
 
 #define RS_STATE(a) ((struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
 
-#define MAX_REACHABLE_TIME	3600	/* seconds */
-#define REACHABLE_TIME		30	/* seconds */
-#define RETRANS_TIMER		1000	/* milliseconds */
-#define DELAY_FIRST_PROBE_TIME	5	/* seconds */
+#define MAX_RTR_SOLICITATION_DELAY	1	/* seconds */
+#define MAX_UNICAST_SOLICIT		3	/* 3 transmissions */
+
+#define MAX_REACHABLE_TIME		3600000	/* milliseconds */
+#define REACHABLE_TIME			30000	/* milliseconds */
+#define RETRANS_TIMER			1000	/* milliseconds */
+#define DELAY_FIRST_PROBE_TIME		5	/* seconds */
+
+#define IPV6ND_REACHABLE		(1 << 0)
+#define IPV6ND_ROUTER			(1 << 1)
 
 #ifdef INET6
-int ipv6nd_startrs(struct interface *);
+void ipv6nd_startrs(struct interface *);
 ssize_t ipv6nd_env(char **, const char *, const struct interface *);
 int ipv6nd_addrexists(struct dhcpcd_ctx *, const struct ipv6_addr *);
 void ipv6nd_freedrop_ra(struct ra *, int);
@@ -91,19 +92,20 @@ void ipv6nd_freedrop_ra(struct ra *, int);
 #define ipv6nd_drop_ra(ra) ipv6nd_freedrop_ra((ra),  1)
 ssize_t ipv6nd_free(struct interface *);
 void ipv6nd_expirera(void *arg);
-int ipv6nd_has_ra(const struct interface *);
+int ipv6nd_hasra(const struct interface *);
+int ipv6nd_hasradhcp(const struct interface *);
 void ipv6nd_handleifa(struct dhcpcd_ctx *, int,
     const char *, const struct in6_addr *, int);
 void ipv6nd_drop(struct interface *);
 
-void ipv6nd_proberouter(void *);
-void ipv6nd_cancelproberouter(struct ra *);
-
+#ifdef HAVE_RTM_GETNEIGH
+void ipv6nd_neighbour(struct dhcpcd_ctx *, struct in6_addr *, int);
+#endif
 #else
 #define ipv6nd_startrs(a) {}
 #define ipv6nd_addrexists(a, b) (0)
 #define ipv6nd_free(a)
-#define ipv6nd_has_ra(a) (0)
+#define ipv6nd_hasra(a) (0)
 #define ipv6nd_drop(a)
 #endif
 

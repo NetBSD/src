@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.1.1.6 2013/09/25 19:06:26 tron Exp $
+.\"	$NetBSD: smtpd.8,v 1.1.1.6.2.1 2014/08/10 07:12:47 tls Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -108,10 +108,6 @@ commands are enclosed with <>, and that those addresses do
 not contain RFC 822 style comments or phrases.
 .PP
 Available in Postfix version 2.1 and later:
-.IP "\fBresolve_null_domain (no)\fR"
-Resolve an address that ends in the "@" null domain as if the
-local hostname were specified, instead of rejecting the address as
-invalid.
 .IP "\fBsmtpd_reject_unlisted_sender (no)\fR"
 Request that the Postfix SMTP server rejects mail from unknown
 sender addresses, even when no explicit reject_unlisted_sender
@@ -152,7 +148,8 @@ A mechanism to transform commands from remote SMTP clients.
 .PP
 Available in Postfix version 2.9 and later:
 .IP "\fBsmtpd_per_record_deadline (normal: no, overload: yes)\fR"
-Change the behavior of the smtpd_timeout time limit, from a
+Change the behavior of the smtpd_timeout and smtpd_starttls_timeout
+time limits, from a
 time limit per read or write system call, to a time limit to send
 or receive a complete record (an SMTP command line, SMTP response
 line, SMTP message content line, or TLS protocol message).
@@ -352,6 +349,11 @@ Available in Postfix version 2.5 and later:
 .IP "\fBcyrus_sasl_config_path (empty)\fR"
 Search path for Cyrus SASL application configuration files,
 currently used only to locate the $smtpd_sasl_path.conf file.
+.PP
+Available in Postfix version 2.11 and later:
+.IP "\fBsmtpd_sasl_service (smtp)\fR"
+The service name that is passed to the SASL plug-in that is
+selected with \fBsmtpd_sasl_type\fR and \fBsmtpd_sasl_path\fR.
 .SH "STARTTLS SUPPORT CONTROLS"
 .na
 .nf
@@ -398,10 +400,10 @@ cipher list at all TLS security levels.
 File with the Postfix SMTP server DSA certificate in PEM format.
 .IP "\fBsmtpd_tls_dh1024_param_file (empty)\fR"
 File with DH parameters that the Postfix SMTP server should
-use with EDH ciphers.
+use with non-export EDH ciphers.
 .IP "\fBsmtpd_tls_dh512_param_file (empty)\fR"
 File with DH parameters that the Postfix SMTP server should
-use with EDH ciphers.
+use with export-grade EDH ciphers.
 .IP "\fBsmtpd_tls_dkey_file ($smtpd_tls_dcert_file)\fR"
 File with the Postfix SMTP server DSA private key in PEM format.
 .IP "\fBsmtpd_tls_key_file ($smtpd_tls_cert_file)\fR"
@@ -425,12 +427,6 @@ CommonName.
 .IP "\fBsmtpd_tls_req_ccert (no)\fR"
 With mandatory TLS encryption, require a trusted remote SMTP client
 certificate in order to allow TLS connections to proceed.
-.IP "\fBsmtpd_tls_session_cache_database (empty)\fR"
-Name of the file containing the optional Postfix SMTP server
-TLS session cache.
-.IP "\fBsmtpd_tls_session_cache_timeout (3600s)\fR"
-The expiration time of Postfix SMTP server TLS session cache
-information.
 .IP "\fBsmtpd_tls_wrappermode (no)\fR"
 Run the Postfix SMTP server in the non-standard "wrapper" mode,
 instead of using the STARTTLS command.
@@ -487,6 +483,10 @@ preference order instead of the remote client's cipher preference
 order.
 .IP "\fBtls_disable_workarounds (see 'postconf -d' output)\fR"
 List or bit-mask of OpenSSL bug work-arounds to disable.
+.PP
+Available in Postfix version 2.11 and later:
+.IP "\fBtlsmgr_service_name (tlsmgr)\fR"
+The name of the \fBtlsmgr\fR(8) service entry in master.cf.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -571,7 +571,8 @@ What remote SMTP clients are allowed to use the XCLIENT feature.
 Available in Postfix version 2.10 and later:
 .IP "\fBsmtpd_log_access_permit_actions (empty)\fR"
 Enable logging of the named "permit" actions in SMTP server
-access lists.
+access lists (by default, the SMTP server logs "reject" actions but
+not "permit" actions).
 .SH "KNOWN VERSUS UNKNOWN RECIPIENT CONTROLS"
 .na
 .nf
@@ -711,7 +712,8 @@ time unit.
 .PP
 Available in Postfix version 2.9 and later:
 .IP "\fBsmtpd_per_record_deadline (normal: no, overload: yes)\fR"
-Change the behavior of the smtpd_timeout time limit, from a
+Change the behavior of the smtpd_timeout and smtpd_starttls_timeout
+time limits, from a
 time limit per read or write system call, to a time limit to send
 or receive a complete record (an SMTP command line, SMTP response
 line, SMTP message content line, or TLS protocol message).
@@ -834,7 +836,7 @@ Optional access restrictions that the Postfix SMTP server
 applies in the context of the SMTP END-OF-DATA command.
 .PP
 Available in Postfix version 2.10 and later:
-.IP "\fBsmtpd_relay_restrictions (permit_mynetworks, reject_unauth_destination)\fR"
+.IP "\fBsmtpd_relay_restrictions (permit_mynetworks, permit_sasl_authenticated, defer_unauth_destination)\fR"
 Access restrictions for mail relay control that the Postfix
 SMTP server applies in the context of the RCPT TO command, before
 smtpd_recipient_restrictions.
@@ -1013,7 +1015,9 @@ The process name of a Postfix command or daemon process.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 The location of the Postfix top-level queue directory.
 .IP "\fBrecipient_delimiter (empty)\fR"
-The separator between user names and address extensions (user+foo).
+The set of characters that can separate a user name from its
+extension (example: user+foo), or a .forward file name from its
+extension (example: .forward+foo).
 .IP "\fBsmtpd_banner ($myhostname ESMTP $mail_name)\fR"
 The text that follows the 220 status code in the SMTP greeting
 banner.

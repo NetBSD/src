@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2014/03/21 20:54:13 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.25.2.1 2014/08/10 07:10:49 tls Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -10,11 +10,11 @@ LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
 UNSUPPORTED_COMPILER.clang=	# defined
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
-GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${LIBGCC_MACHINE_ARCH}
-GCCARCHLIBGCC=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libgcc/arch/${LIBGCC_MACHINE_ARCH}
-GCCARCHXX=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libstdc++-v3/arch/${LIBGCC_MACHINE_ARCH}
+GCCARCH=	${GCC_SUBDIR}/usr.bin/gcc/arch/${LIBGCC_MACHINE_ARCH}
+GCCARCHLIBGCC=	${GCC_SUBDIR}/lib/libgcc/arch/${LIBGCC_MACHINE_ARCH}
+GCCARCHXX=	${GCC_SUBDIR}/lib/libstdc++-v3/arch/${LIBGCC_MACHINE_ARCH}
 
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR} -I${GCCARCHLIBGCC}
@@ -40,7 +40,7 @@ CPPFLAGS+=	-I${DIST}/gcc/config/rs6000
 # Old style libgcc build procedure.
 #
 
-# This is copied from gcc/mklibgcc.in:$lib2funcs
+# This is copied from dist/libgcc/Makefile.in:$lib2funcs
 LIB2FUNCS_ALL= \
 	_muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3 _cmpdi2 _ucmpdi2    \
 	_clear_cache _trampoline __main \
@@ -52,7 +52,7 @@ LIB2FUNCS_ALL= \
 	_popcount_tab _popcountsi2 _popcountdi2 _paritysi2 _paritydi2 \
 	_powisf2 _powidf2 _powixf2 _powitf2 \
 	_mulsc3 _muldc3 _mulxc3 _multc3 _divsc3 _divdc3 _divxc3 _divtc3 \
-	_bswapsi2 _bswapdi2
+	_bswapsi2 _bswapdi2 _clrsbsi2 _clrsbdi2
 
 .if ${LIBGCC_MACHINE_ARCH} != "coldfire" && empty(LIBGCC_MACHINE_ARCH:Mearm*)
 
@@ -92,11 +92,13 @@ LIB2FUNCS=	${LIB2FUNCS_SHORT:=.c}
 LIB2FUNCS_ST=	${G_LIB2FUNCS_ST:=.c}
 LIB2DIVMOD=	${LIB2_DIVMOD_FUNCS:=.c}
 .if ${HAVE_LIBGCC_EH} == "no"
-LIB2_EH=	${G_LIB2ADDEH:M*.c:T:Nunwind-dw2.c:Nunwind-dw2-fde-dip.c:Nunwind-sjlj.c:Nunwind-c.c}
+LIB2_EH=	${G_LIB2ADDEH:M*.c:T:Nunwind-dw2.c:Nunwind-dw2-fde-dip.c:Nunwind-sjlj.c:Nunwind-c.c:Nunwind-arm.c:Npr-support.c}
+LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T:Nlibunwind.S}
+G_CONFIGLINKS:= ${G_CONFIGLINKS:S,libgcc/config/arm/unwind-arm.h,libgcc/unwind-generic.h,}
 .else
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
-.endif
 LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T}
+.endif
 
 # We have to weed out any existing func.S file that may exist
 # from the list of files we create.

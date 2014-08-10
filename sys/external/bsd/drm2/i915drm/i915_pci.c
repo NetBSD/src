@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.5 2014/04/04 16:02:34 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.5.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,61 +30,49 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.5 2014/04/04 16:02:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.5.2.1 2014/08/10 06:55:39 tls Exp $");
 
 #include <sys/types.h>
-#ifndef _MODULE
-/* XXX Mega-kludge because modules are broken.  */
-#include <sys/once.h>
-#endif
+#include <sys/queue.h>
 #include <sys/systm.h>
-
-#include <dev/pci/pciio.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-
-#include <dev/pci/wsdisplay_pci.h>
-#include <dev/wsfb/genfbvar.h>
+#include <sys/queue.h>
+#include <sys/workqueue.h>
 
 #include <drm/drmP.h>
 
 #include "i915_drv.h"
+#include "i915_pci.h"
 
-struct i915drm_softc {
+SIMPLEQ_HEAD(i915drmkms_task_head, i915drmkms_task);
+
+struct i915drmkms_softc {
 	device_t			sc_dev;
-	struct drm_device		sc_drm_dev;
+	enum {
+		I915DRMKMS_TASK_ATTACH,
+		I915DRMKMS_TASK_WORKQUEUE,
+	}				sc_task_state;
+	union {
+		struct workqueue		*workqueue;
+		struct i915drmkms_task_head	attach;
+	}				sc_task_u;
+	struct drm_device		*sc_drm_dev;
 	struct pci_dev			sc_pci_dev;
-	struct drm_i915_gem_object	*sc_fb_obj;
-	bus_space_handle_t		sc_fb_bsh;
-	struct genfb_softc		sc_genfb;
-	struct list_head		sc_fb_list; /* XXX Kludge!  */
 };
 
-static int	i915drm_match(device_t, cfdata_t, void *);
-static void	i915drm_attach(device_t, device_t, void *);
-static int	i915drm_detach(device_t, int);
+static const struct intel_device_info *
+		i915drmkms_pci_lookup(const struct pci_attach_args *);
 
-#ifndef _MODULE
-/* XXX Mega-kludge because modules are broken.  */
-static int	i915drm_init(void);
-static ONCE_DECL(i915drm_init_once);
-#endif
+static int	i915drmkms_match(device_t, cfdata_t, void *);
+static void	i915drmkms_attach(device_t, device_t, void *);
+static int	i915drmkms_detach(device_t, int);
 
-static void	i915drm_attach_framebuffer(device_t);
-static int	i915drm_detach_framebuffer(device_t, int);
+static bool	i915drmkms_suspend(device_t, const pmf_qual_t *);
+static bool	i915drmkms_resume(device_t, const pmf_qual_t *);
 
-static int	i915drm_fb_probe(struct drm_fb_helper *,
-		    struct drm_fb_helper_surface_size *);
-static int	i915drm_fb_create_handle(struct drm_framebuffer *,
-		    struct drm_file *, unsigned int *);
-static void	i915drm_fb_destroy(struct drm_framebuffer *);
+static void	i915drmkms_task_work(struct work *, void *);
 
-static int	i915drm_genfb_ioctl(void *, void *, unsigned long, void *,
-		    int, struct lwp *);
-static paddr_t	i915drm_genfb_mmap(void *, void *, off_t, int);
-
-CFATTACH_DECL_NEW(i915drmkms, sizeof(struct i915drm_softc),
-    i915drm_match, i915drm_attach, i915drm_detach, NULL);
+CFATTACH_DECL_NEW(i915drmkms, sizeof(struct i915drmkms_softc),
+    i915drmkms_match, i915drmkms_attach, i915drmkms_detach, NULL);
 
 /* XXX Kludge to get these from i915_drv.c.  */
 extern struct drm_driver *const i915_drm_driver;
@@ -92,7 +80,7 @@ extern const struct pci_device_id *const i915_device_ids;
 extern const size_t i915_n_device_ids;
 
 static const struct intel_device_info *
-i915drm_pci_lookup(const struct pci_attach_args *pa)
+i915drmkms_pci_lookup(const struct pci_attach_args *pa)
 {
 	size_t i;
 
@@ -119,9 +107,8 @@ i915drm_pci_lookup(const struct pci_attach_args *pa)
 	const struct intel_device_info *const info =
 	    (const void *)(uintptr_t)i915_device_ids[i].driver_data;
 
-	/* XXX Whattakludge!  */
-	if (info->is_valleyview) {
-		printf("i915drm: preliminary hardware support disabled\n");
+	if (IS_PRELIMINARY_HW(info)) {
+		printf("i915drmkms: preliminary hardware support disabled\n");
 		return NULL;
 	}
 
@@ -129,29 +116,31 @@ i915drm_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-i915drm_match(device_t parent, cfdata_t match, void *aux)
+i915drmkms_match(device_t parent, cfdata_t match, void *aux)
 {
+	extern int i915drmkms_guarantee_initialized(void);
 	const struct pci_attach_args *const pa = aux;
+	int error;
 
-#ifndef _MODULE
-	/* XXX Mega-kludge because modules are broken.  */
-	if (RUN_ONCE(&i915drm_init_once, &i915drm_init) != 0)
+	error = i915drmkms_guarantee_initialized();
+	if (error) {
+		aprint_error("i915drmkms: failed to initialize: %d\n", error);
 		return 0;
-#endif
+	}
 
-	if (i915drm_pci_lookup(pa) == NULL)
+	if (i915drmkms_pci_lookup(pa) == NULL)
 		return 0;
 
 	return 6;		/* XXX Beat genfb_pci...  */
 }
 
 static void
-i915drm_attach(device_t parent, device_t self, void *aux)
+i915drmkms_attach(device_t parent, device_t self, void *aux)
 {
-	struct i915drm_softc *const sc = device_private(self);
+	struct i915drmkms_softc *const sc = device_private(self);
 	const struct pci_attach_args *const pa = aux;
-	const struct intel_device_info *const info = i915drm_pci_lookup(pa);
-	const unsigned long flags =
+	const struct intel_device_info *const info = i915drmkms_pci_lookup(pa);
+	const unsigned long cookie =
 	    (unsigned long)(uintptr_t)(const void *)info;
 	int error;
 
@@ -161,408 +150,136 @@ i915drm_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, NULL);
 
-	/* XXX Whattakludge!  */
-	if (info->gen != 3) {
-		i915_drm_driver->driver_features &=~ DRIVER_REQUIRE_AGP;
-		i915_drm_driver->driver_features &=~ DRIVER_USE_AGP;
-	}
+	if (!pmf_device_register(self, &i915drmkms_suspend,
+		&i915drmkms_resume))
+		aprint_error_dev(self, "unable to establish power handler\n");
 
-	/* Initialize the drm pci driver state.  */
-	sc->sc_drm_dev.driver = i915_drm_driver;
-	drm_pci_attach(self, pa, &sc->sc_pci_dev, &sc->sc_drm_dev);
+	sc->sc_task_state = I915DRMKMS_TASK_ATTACH;
+	SIMPLEQ_INIT(&sc->sc_task_u.attach);
 
-	/* Attach the drm driver.  */
-	error = drm_config_found(self, i915_drm_driver, flags,
-	    &sc->sc_drm_dev);
+	/* XXX errno Linux->NetBSD */
+	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev, i915_drm_driver,
+	    cookie, &sc->sc_drm_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to attach drm: %d\n", error);
 		return;
 	}
 
-	/* Attach a framebuffer, but not until interrupts work.  */
-	config_interrupts(self, &i915drm_attach_framebuffer);
+	while (!SIMPLEQ_EMPTY(&sc->sc_task_u.attach)) {
+		struct i915drmkms_task *const task =
+		    SIMPLEQ_FIRST(&sc->sc_task_u.attach);
+
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_task_u.attach, ift_u.queue);
+		(*task->ift_fn)(task);
+	}
+
+	sc->sc_task_state = I915DRMKMS_TASK_WORKQUEUE;
+	error = workqueue_create(&sc->sc_task_u.workqueue, "intelfb",
+	    &i915drmkms_task_work, NULL, PRI_NONE, IPL_NONE, WQ_MPSAFE);
+	if (error) {
+		aprint_error_dev(self, "unable to create workqueue: %d\n",
+		    error);
+		sc->sc_task_u.workqueue = NULL;
+		return;
+	}
 }
 
 static int
-i915drm_detach(device_t self, int flags)
+i915drmkms_detach(device_t self, int flags)
 {
-	struct i915drm_softc *const sc = device_private(self);
+	struct i915drmkms_softc *const sc = device_private(self);
 	int error;
 
-	/*
-	 * XXX OK to do this first?  Detaching the drm driver runs
-	 * i915_driver_unload, which frees all the i915 private data
-	 * structures.
-	 */
-	error = i915drm_detach_framebuffer(self, flags);
-	if (error)
-		return error;
-
-	/* Detach the drm driver first.  */
+	/* XXX Check for in-use before tearing it all down...  */
 	error = config_detach_children(self, flags);
 	if (error)
 		return error;
 
-	/* drm driver is gone.  We can safely drop drm pci driver state.  */
-	error = drm_pci_detach(&sc->sc_drm_dev, flags);
+	if (sc->sc_task_state == I915DRMKMS_TASK_ATTACH)
+		goto out;
+	if (sc->sc_task_u.workqueue != NULL) {
+		workqueue_destroy(sc->sc_task_u.workqueue);
+		sc->sc_task_u.workqueue = NULL;
+	}
+
+	if (sc->sc_drm_dev == NULL)
+		goto out;
+	/* XXX errno Linux->NetBSD */
+	error = -drm_pci_detach(sc->sc_drm_dev, flags);
 	if (error)
+		/* XXX Kinda too late to fail now...  */
 		return error;
+	sc->sc_drm_dev = NULL;
 
+out:	pmf_device_deregister(self);
 	return 0;
 }
 
-#ifndef _MODULE
-/* XXX Mega-kludge because modules are broken.  See drm_init for details.  */
-static int
-i915drm_init(void)
+static bool
+i915drmkms_suspend(device_t self, const pmf_qual_t *qual)
 {
-	int error;
-
-	i915_drm_driver->num_ioctls = i915_max_ioctl;
-	i915_drm_driver->driver_features |= DRIVER_MODESET;
-
-	error = drm_pci_init(i915_drm_driver, NULL);
-	if (error) {
-		aprint_error("i915drmkms: failed to init pci: %d\n",
-		    error);
-		return error;
-	}
-
-	return 0;
-}
-#endif
-
-static struct drm_fb_helper_funcs i915drm_fb_helper_funcs = {
-	.gamma_set = &intel_crtc_fb_gamma_set,
-	.gamma_get = &intel_crtc_fb_gamma_get,
-	.fb_probe = &i915drm_fb_probe,
-};
-
-static void
-i915drm_attach_framebuffer(device_t self)
-{
-	struct i915drm_softc *const sc = device_private(self);
-	struct drm_device *const dev = &sc->sc_drm_dev;
-	struct drm_i915_private *const dev_priv = dev->dev_private;
+	struct i915drmkms_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
 	int ret;
 
-	INIT_LIST_HEAD(&sc->sc_fb_list);
+	if (dev == NULL)
+		return true;
 
-	KASSERT(dev_priv->fbdev == NULL);
-	dev_priv->fbdev = kmem_zalloc(sizeof(*dev_priv->fbdev), KM_SLEEP);
+	ret = i915_drm_freeze(dev);
+	if (ret)
+		return false;
 
-	struct drm_fb_helper *const fb_helper = &dev_priv->fbdev->helper;
-
-	fb_helper->funcs = &i915drm_fb_helper_funcs;
-	ret = drm_fb_helper_init(dev, fb_helper, dev_priv->num_pipe,
-	    INTELFB_CONN_LIMIT);
-	if (ret) {
-		aprint_error_dev(self, "unable to init drm fb helper: %d\n",
-		    ret);
-		goto fail0;
-	}
-
-	drm_fb_helper_single_add_all_connectors(fb_helper);
-	drm_fb_helper_initial_config(fb_helper, 32 /* XXX ? */);
-
-	/* Success!  */
-	return;
-
-fail1: __unused
-	drm_fb_helper_fini(fb_helper);
-fail0:	kmem_free(dev_priv->fbdev, sizeof(*dev_priv->fbdev));
-	dev_priv->fbdev = NULL;
+	return true;
 }
 
-static int
-i915drm_detach_framebuffer(device_t self, int flags)
+static bool
+i915drmkms_resume(device_t self, const pmf_qual_t *qual)
 {
-	struct i915drm_softc *const sc = device_private(self);
-	struct drm_device *const dev = &sc->sc_drm_dev;
-	struct drm_i915_private *const dev_priv = dev->dev_private;
-	struct intel_fbdev *const fbdev = dev_priv->fbdev;
-
-	if (fbdev != NULL) {
-		struct drm_fb_helper *const fb_helper = &fbdev->helper;
-
-		if (fb_helper->fb != NULL)
-			i915drm_fb_detach(fb_helper);
-		KASSERT(fb_helper->fb == NULL);
-
-		KASSERT(sc->sc_fb_obj == NULL);
-		drm_fb_helper_fini(fb_helper);
-		kmem_free(fbdev, sizeof(*fbdev));
-		dev_priv->fbdev = NULL;
-	}
-
-	return 0;
-}
-
-static const struct drm_framebuffer_funcs i915drm_fb_funcs = {
-	.create_handle = &i915drm_fb_create_handle,
-	.destroy = &i915drm_fb_destroy,
-};
-
-static int
-i915drm_fb_probe(struct drm_fb_helper *fb_helper,
-    struct drm_fb_helper_surface_size *sizes)
-{
-	struct drm_device *const dev = fb_helper->dev;
-	struct drm_i915_private *const dev_priv = dev->dev_private;
-	struct i915drm_softc *const sc = container_of(dev,
-	    struct i915drm_softc, sc_drm_dev);
-	const prop_dictionary_t dict = device_properties(sc->sc_dev);
-	static const struct genfb_ops zero_genfb_ops;
-	struct genfb_ops genfb_ops = zero_genfb_ops;
-	static const struct drm_mode_fb_cmd2 zero_mode_cmd;
-	struct drm_mode_fb_cmd2 mode_cmd = zero_mode_cmd;
-	bus_size_t size;
+	struct i915drmkms_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
 	int ret;
 
-	aprint_debug_dev(sc->sc_dev, "probe framebuffer"
-	    ": %"PRIu32" by %"PRIu32", bpp %"PRIu32" depth %"PRIu32"\n",
-	    sizes->surface_width,
-	    sizes->surface_height,
-	    sizes->surface_bpp,
-	    sizes->surface_depth);
+	if (dev == NULL)
+		return true;
 
-	if (fb_helper->fb != NULL) {
-#if notyet			/* XXX genfb detach */
-		i915drm_fb_detach(fb_helper);
-#else
-		aprint_debug_dev(sc->sc_dev, "already have a framebuffer"
-		    ": %p\n", fb_helper->fb);
-		return 0;
-#endif
-	}
+	ret = i915_drm_thaw_early(dev);
+	if (ret)
+		return false;
+	ret = i915_drm_thaw(dev);
+	if (ret)
+		return false;
 
-	/*
-	 * XXX Cargo-culted from Linux.  Using sizes as an input/output
-	 * parameter seems sketchy...
-	 */
-	if (sizes->surface_bpp == 24)
-		sizes->surface_bpp = 32;
-
-	mode_cmd.width = sizes->surface_width;
-	mode_cmd.height = sizes->surface_height;
-	KASSERT(sizes->surface_bpp <= (UINT32_MAX - 7));
-	KASSERT(mode_cmd.width <=
-	    ((UINT32_MAX / howmany(sizes->surface_bpp, 8)) - 63));
-	mode_cmd.pitches[0] = round_up((mode_cmd.width *
-		howmany(sizes->surface_bpp, 8)), 64);
-	mode_cmd.pixel_format = drm_mode_legacy_fb_format(sizes->surface_bpp,
-	    sizes->surface_depth);
-
-	KASSERT(mode_cmd.pitches[0] <=
-	    ((__type_max(bus_size_t) / mode_cmd.height) - 63));
-	size = round_up((mode_cmd.pitches[0] * mode_cmd.height), PAGE_SIZE);
-
-	sc->sc_fb_obj = i915_gem_alloc_object(dev, size);
-	if (sc->sc_fb_obj == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to create framebuffer\n");
-		ret = -ENODEV; /* XXX ? */
-		goto fail0;
-	}
-
-	mutex_lock(&dev->struct_mutex);
-	ret = intel_pin_and_fence_fb_obj(dev, sc->sc_fb_obj, NULL);
-	if (ret) {
-		aprint_error_dev(sc->sc_dev, "unable to pin fb: %d\n", ret);
-		goto fail1;
-	}
-
-	ret = intel_framebuffer_init(dev, &dev_priv->fbdev->ifb, &mode_cmd,
-	    sc->sc_fb_obj);
-	if (ret) {
-		aprint_error_dev(sc->sc_dev, "unable to init framebuffer"
-		    ": %d\n", ret);
-		goto fail2;
-	}
-
-	/*
-	 * XXX Kludge: drm_framebuffer_remove assumes that the
-	 * framebuffer has been put on a userspace list by
-	 * drm_mode_addfb and tries to list_del it.  This is not the
-	 * case, so pretend we are on a list.
-	 */
-	list_add(&dev_priv->fbdev->ifb.base.filp_head, &sc->sc_fb_list);
-
-	/*
-	 * XXX Kludge: The intel_framebuffer abstraction sets up a
-	 * destruction routine that frees the wrong pointer, under the
-	 * assumption (which is invalid even upstream) that all
-	 * intel_framebuffer structures are allocated in
-	 * intel_framebuffer_create.
-	 */
-	dev_priv->fbdev->ifb.base.funcs = &i915drm_fb_funcs;
-
-	fb_helper->fb = &dev_priv->fbdev->ifb.base;
-	mutex_unlock(&dev->struct_mutex);
-
-	/* XXX errno NetBSD->Linux */
-	ret = -bus_space_map(dev->bst,
-	    (dev_priv->mm.gtt_base_addr + sc->sc_fb_obj->gtt_offset),
-	    size,
-	    (BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE),
-	    &sc->sc_fb_bsh);
-	if (ret) {
-		aprint_error_dev(sc->sc_dev, "unable to map framebuffer: %d\n",
-		    ret);
-		goto fail3;
-	}
-
-	prop_dictionary_set_bool(dict, "is_console", 1); /* XXX */
-	prop_dictionary_set_uint32(dict, "width", mode_cmd.width);
-	prop_dictionary_set_uint32(dict, "height", mode_cmd.height);
-	prop_dictionary_set_uint8(dict, "depth", sizes->surface_bpp);
-	prop_dictionary_set_uint16(dict, "linebytes", mode_cmd.pitches[0]);
-	prop_dictionary_set_uint32(dict, "address", 0); /* XXX >32-bit */
-	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-	prop_dictionary_set_uint64(dict, "virtual_address",
-	    (uint64_t)(uintptr_t)bus_space_vaddr(dev->bst, sc->sc_fb_bsh));
-	sc->sc_genfb.sc_dev = sc->sc_dev;
-	genfb_init(&sc->sc_genfb);
-
-	genfb_ops.genfb_ioctl = i915drm_genfb_ioctl;
-	genfb_ops.genfb_mmap = i915drm_genfb_mmap;
-
-	/* XXX errno NetBSD->Linux */
-	ret = -genfb_attach(&sc->sc_genfb, &genfb_ops);
-	if (ret) {
-		aprint_error_dev(sc->sc_dev, "unable to attach genfb: %d\n",
-		    ret);
-		goto fail4;
-	}
-
-	/* Success!  */
-	return 1;
-
-fail4:	bus_space_unmap(dev->bst, sc->sc_fb_bsh, size);
-	fb_helper->fb = NULL;
-fail3:	drm_framebuffer_unreference(&dev_priv->fbdev->ifb.base);
-fail2:	i915_gem_object_unpin(sc->sc_fb_obj);
-fail1:	drm_gem_object_unreference_unlocked(&sc->sc_fb_obj->base);
-	mutex_unlock(&dev->struct_mutex);
-fail0:	KASSERT(ret < 0);
-	return ret;
+	return true;
 }
 
 static void
-i915drm_fb_detach(struct drm_fb_helper *fb_helper)
+i915drmkms_task_work(struct work *work, void *cookie __unused)
 {
-	struct drm_device *const dev = fb_helper->dev;
-	struct i915drm_softc *const sc = container_of(dev,
-	    struct i915drm_softc, sc_drm_dev);
-	struct drm_i915_gem_object *const obj = sc->sc_fb_obj;
+	struct i915drmkms_task *const task = container_of(work,
+	    struct i915drmkms_task, ift_u.work);
 
-	/* XXX How to detach genfb?  */
-	bus_space_unmap(dev->bst, sc->sc_fb_bsh, obj->base.size);
-	drm_framebuffer_unreference(fb_helper->fb);
-	fb_helper->fb = NULL;
-	drm_gem_object_unreference_unlocked(&obj->base);
-	sc->sc_fb_obj = NULL;
+	(*task->ift_fn)(task);
 }
 
-static void
-i915drm_fb_destroy(struct drm_framebuffer *fb)
+int
+i915drmkms_task_schedule(device_t self, struct i915drmkms_task *task)
 {
+	struct i915drmkms_softc *const sc = device_private(self);
 
-	drm_framebuffer_cleanup(fb);
-}
-
-static int
-i915drm_fb_create_handle(struct drm_framebuffer *fb, struct drm_file *file,
-    unsigned int *handle)
-{
-
-	return drm_gem_handle_create(file,
-	    &to_intel_framebuffer(fb)->obj->base, handle);
-}
-
-static int
-i915drm_genfb_ioctl(void *v, void *vs, unsigned long cmd, void *data, int flag,
-    struct lwp *l)
-{
-	struct genfb_softc *const genfb = v;
-	struct i915drm_softc *const sc = container_of(genfb,
-	    struct i915drm_softc, sc_genfb);
-	const struct pci_attach_args *const pa = &sc->sc_pci_dev.pd_pa;
-
-	switch (cmd) {
-	case WSDISPLAYIO_GTYPE:
-		*(unsigned int *)data = WSDISPLAY_TYPE_PCIVGA;
+	switch (sc->sc_task_state) {
+	case I915DRMKMS_TASK_ATTACH:
+		SIMPLEQ_INSERT_TAIL(&sc->sc_task_u.attach, task, ift_u.queue);
 		return 0;
-
-	/* PCI config read/write passthrough.  */
-	case PCI_IOC_CFGREAD:
-	case PCI_IOC_CFGWRITE:
-		return pci_devioctl(pa->pa_pc, pa->pa_tag, cmd, data, flag, l);
-
-	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(genfb->sc_dev,
-		    pa->pa_pc, pa->pa_tag, data);
-
+	case I915DRMKMS_TASK_WORKQUEUE:
+		if (sc->sc_task_u.workqueue == NULL) {
+			aprint_error_dev(self, "unable to schedule task\n");
+			return EIO;
+		}
+		workqueue_enqueue(sc->sc_task_u.workqueue, &task->ift_u.work,
+		    NULL);
+		return 0;
 	default:
-		return EPASSTHROUGH;
+		panic("i915drmkms in invalid task state: %d\n",
+		    (int)sc->sc_task_state);
 	}
-}
-
-static paddr_t
-i915drm_genfb_mmap(void *v, void *vs, off_t offset, int prot)
-{
-	struct genfb_softc *const genfb = v;
-	struct i915drm_softc *const sc = container_of(genfb,
-	    struct i915drm_softc, sc_genfb);
-	struct drm_device *const dev = &sc->sc_drm_dev;
-	struct drm_i915_private *const dev_priv = dev->dev_private;
-	const struct pci_attach_args *const pa = &dev->pdev->pd_pa;
-	unsigned int i;
-
-	if (offset < 0)
-		return -1;
-
-	/* Treat low memory as the framebuffer itself.  */
-	if (offset < genfb->sc_fbsize)
-		return bus_space_mmap(dev->bst,
-		    (dev_priv->mm.gtt_base_addr + sc->sc_fb_obj->gtt_offset),
-		    offset,
-		    prot, (BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE));
-
-	/* XXX Cargo-culted from genfb_pci.  */
-	if (kauth_authorize_machdep(kauth_cred_get(),
-		KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0) {
-		aprint_normal_dev(sc->sc_dev, "mmap at %"PRIxMAX" rejected\n",
-		    (uintmax_t)offset);
-		return -1;
-	}
-
-	for (i = 0; PCI_BAR(i) <= PCI_MAPREG_ROM; i++) {
-		pcireg_t type;
-		bus_addr_t addr;
-		bus_size_t size;
-		int flags;
-
-		/* Interrogate the BAR.  */
-		if (!pci_mapreg_probe(pa->pa_pc, pa->pa_tag, PCI_BAR(i),
-			&type))
-			continue;
-		if (PCI_MAPREG_TYPE(type) != PCI_MAPREG_TYPE_MEM)
-			continue;
-		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, PCI_BAR(i), type,
-			&addr, &size, &flags))
-			continue;
-
-		/* Try to map it if it's in range.  */
-		if ((addr <= offset) && (offset < (addr + size)))
-			return bus_space_mmap(pa->pa_memt, addr,
-			    (offset - addr), prot, flags);
-
-		/* Skip a slot if this was a 64-bit BAR.  */
-		if ((PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM) &&
-		    (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT))
-			i += 1;
-	}
-
-	/* Failure!  */
-	return -1;
 }

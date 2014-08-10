@@ -312,9 +312,9 @@
 @ISC_PLATFORM_OPENSSLHASH@
 
 /*
- * Define if AES must be provided by OpenSSL.
+ * Define if AES support is wanted
  */
-@ISC_PLATFORM_OPENSSLAES@
+@ISC_PLATFORM_WANTAES@
 
 /*
  * Defines for the noreturn attribute.

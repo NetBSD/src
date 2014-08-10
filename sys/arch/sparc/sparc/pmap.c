@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.357 2013/12/16 15:48:29 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.357.2.1 2014/08/10 06:54:08 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.357 2013/12/16 15:48:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.357.2.1 2014/08/10 06:54:08 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1255,10 +1255,10 @@ void
 mmu_reservemon4_4c(int *nrp, int *nsp)
 {
 	u_int va = 0, eva = 0;
-	int mmuseg, i, nr, ns, vr, lastvr;
+	int mmuseg, i, nr, ns, vr;
 	int *pte;
 #if defined(SUN4_MMU3L)
-	int mmureg;
+	int mmureg, lastvr = 0;
 #endif
 	struct regmap *rp;
 
@@ -1276,7 +1276,6 @@ mmu_reservemon4_4c(int *nrp, int *nsp)
 #endif
 	ns = *nsp;
 	nr = *nrp;
-	lastvr = 0;
 	while (va < eva) {
 		vr = VA_VREG(va);
 		rp = &pmap_kernel()->pm_regmap[vr];

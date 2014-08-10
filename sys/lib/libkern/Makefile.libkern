@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.32.2.3 2014/08/09 07:45:03 tls Exp $
+#	$NetBSD: Makefile.libkern,v 1.32.2.4 2014/08/10 06:56:02 tls Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -44,7 +44,7 @@ CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 .endif
 
 .if !defined(RUMPKERNEL)
-.include ".${PARSEDIR}/Makefile.compiler-rt"
+.include "${.PARSEDIR}/Makefile.compiler-rt"
 .endif
 
 # Other stuff
@@ -79,8 +79,8 @@ SRCS+=	random.c
 SRCS+=	rngtest.c
 
 SRCS+=	memchr.c
-SRCS+=	strcat.c strcmp.c strcpy.c strlen.c strnlen.c
-SRCS+=	strncat.c strncmp.c strncpy.c
+SRCS+=	strcat.c strcmp.c strcpy.c strcspn.c strlen.c strnlen.c
+SRCS+=	strncat.c strncmp.c strncpy.c strpbrk.c strspn.c
 SRCS+=	strcasecmp.c strncasecmp.c
 
 SRCS+=	xlat_mbr_fstype.c

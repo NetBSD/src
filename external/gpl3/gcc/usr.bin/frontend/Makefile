@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/03/01 10:00:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2014/08/10 07:10:56 tls Exp $
 
 LIBISPRIVATE=	yes
 
@@ -30,6 +30,8 @@ CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 HOST_CPPFLAGS+=	-I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 
 DPSRCS+=	specs.h
+
+${SRCS}: ${GCCARCH}/defs.mk
 
 MKPIC:=		no
 MKPICLIB:=	no

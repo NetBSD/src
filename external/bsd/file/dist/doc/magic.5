@@ -1,7 +1,7 @@
-.\"	$NetBSD: magic.5,v 1.11 2013/12/01 19:32:14 christos Exp $
+.\"	$NetBSD: magic.5,v 1.11.2.1 2014/08/10 07:07:10 tls Exp $
 .\"
-.\" $File: magic.man,v 1.79 2013/04/22 15:30:10 christos Exp $
-.Dd April 22, 2013
+.\" $File: magic.man,v 1.84 2014/06/03 19:01:34 christos Exp $
+.Dd June 3, 2014
 .Dt MAGIC 5
 .Os
 .\" install as magic.4 on USG, magic.5 on V7, Berkeley and Linux systems.
@@ -12,7 +12,7 @@
 This manual page documents the format of the magic file as
 used by the
 .Xr file 1
-command, version 5.16.
+command, version 5.19.
 The
 .Xr file 1
 command identifies the type of a file using,
@@ -230,19 +230,25 @@ Regular expressions can take exponential time to process, and their
 performance is hard to predict, so their use is discouraged.
 When used in production environments, their performance
 should be carefully checked.
-The type specification can be optionally followed by
-.Dv /[c][s] .
+The size of the string to search should also be limited by specifying
+.Dv /<length> ,
+to avoid performance issues scanning long files.
+The type specification can also be optionally followed by
+.Dv /[c][s][l] .
 The
 .Dq c
 flag makes the match case insensitive, while the
 .Dq s
 flag update the offset to the start offset of the match, rather than the end.
-The regular expression is tested against line
-.Dv N + 1
-onwards, where
-.Dv N
-is the given offset.
-Line endings are assumed to be in the machine's native format.
+The
+.Dq l
+modifier, changes the limit of length to mean number of lines instead of a
+byte count.
+Lines are delimited by the platforms native line delimiter.
+When a line count is specified, an implicit byte count also computed assuming
+each line is 80 characters long.
+If neither a byte or line count is specified, the search is limited automatically
+to 8KiB.
 .Dv ^
 and
 .Dv $
@@ -251,15 +257,15 @@ not beginning and end of file.
 .It Dv search
 A literal string search starting at the given offset.
 The same modifier flags can be used as for string patterns.
-The modifier flags (if any) must be followed by
-.Dv /number
-the range, that is, the number of positions at which the match will be
+The search expression must contain the range in the form
+.Dv /number,
+that is the number of positions at which the match will be
 attempted, starting from the start offset.
 This is suitable for
 searching larger binary expressions with variable offsets, using
 .Dv \e
 escapes for special characters.
-The offset works as for regex.
+The order of modifier and number is not relevant.
 .It Dv default
 This is intended to be used with the test
 .Em x
@@ -411,6 +417,9 @@ is octal, and
 .Dv 0x13
 is hexadecimal.
 .Pp
+Numeric operations are not performed on date types, instead the numeric
+value is interpreted as an offset.
+.Pp
 For string values, the string from the
 file must match the specified string.
 The operators
@@ -427,6 +436,9 @@ This means that a line can match any non-empty string (usually used to
 then print the string), with
 .Em \*[Gt]\e0
 (because all non-empty strings are greater than the empty string).
+.Pp
+Dates are treated as numerical values in the respective internal
+representation.
 .Pp
 The special test
 .Em x

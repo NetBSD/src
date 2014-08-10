@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.96 2014/03/20 06:48:54 skrll Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.96.2.1 2014/08/10 06:54:29 tls Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.96 2014/03/20 06:48:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.96.2.1 2014/08/10 06:54:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,8 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_setattr_desc, coda_setattr },	/* setattr */
     { &vop_read_desc, coda_read },		/* read */
     { &vop_write_desc, coda_write },		/* write */
+    { &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+    { &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
     { &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
     { &vop_ioctl_desc, coda_ioctl },		/* ioctl */
     { &vop_mmap_desc, genfs_mmap },		/* mmap */

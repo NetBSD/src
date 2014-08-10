@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2014/03/24 20:07:40 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40.2.1 2014/08/10 06:56:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -101,7 +101,7 @@ extern kcpuset_t *kcpuset_attached;
 extern kcpuset_t *kcpuset_running;
 
 static inline u_int
-cpu_index(struct cpu_info *ci)
+cpu_index(const struct cpu_info *ci)
 {
 	return ci->ci_index;
 }

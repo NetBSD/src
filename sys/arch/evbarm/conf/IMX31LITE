@@ -1,4 +1,4 @@
-#	$NetBSD: IMX31LITE,v 1.24 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: IMX31LITE,v 1.24.4.1 2014/08/10 06:53:54 tls Exp $
 #
 #	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
@@ -73,6 +73,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
@@ -119,7 +120,7 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 options 	PMAP_DEBUG	# Enable pmap_debug_level code

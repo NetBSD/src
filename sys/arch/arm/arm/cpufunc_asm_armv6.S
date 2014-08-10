@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv6.S,v 1.6 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv6.S,v 1.6.2.1 2014/08/10 06:53:50 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -33,7 +33,7 @@
  * These routines can be used by any core that supports the mcrr address
  * range operations.
  */
- 
+
 #include "assym.h"
 #include <machine/asm.h>
 #include <arm/locore.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.47 2014/03/16 05:20:24 dholland Exp $ */
+/*	$NetBSD: txcom.c,v 1.47.2.1 2014/08/10 06:53:58 tls Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.47 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.47.2.1 2014/08/10 06:53:58 tls Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -187,6 +187,7 @@ const struct cdevsw txcom_cdevsw = {
 	.d_poll = txcompoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

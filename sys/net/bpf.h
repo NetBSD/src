@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.63 2013/11/15 00:12:44 rmind Exp $	*/
+/*	$NetBSD: bpf.h,v 1.63.2.1 2014/08/10 06:56:15 tls Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -44,6 +44,9 @@
 
 /* BSD style release date */
 #define BPF_RELEASE 199606
+
+/* Date when COP instructions and external memory have been released. */
+#define BPF_COP_EXTMEM_RELEASE 20140624
 
 __BEGIN_DECLS
 
@@ -277,7 +280,27 @@ struct bpf_insn {
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
  */
-#define	BPF_MEMWORDS	16
+#define	BPF_MEMWORDS		16
+
+/*
+ * bpf_memword_init_t: bits indicate which words in the external memory
+ * store will be initialised by the caller before BPF program execution.
+ */
+typedef uint32_t bpf_memword_init_t;
+#define	BPF_MEMWORD_INIT(k)	(UINT32_C(1) << (k))
+
+/* Note: two most significant bits are reserved by bpfjit. */
+__CTASSERT(BPF_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY);
+
+#ifdef _KERNEL
+/*
+ * Max number of external memory words (for BPF_LD|BPF_MEM and BPF_ST).
+ */
+#define	BPF_MAX_MEMWORDS	30
+
+__CTASSERT(BPF_MAX_MEMWORDS >= BPF_MEMWORDS);
+__CTASSERT(BPF_MAX_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY);
+#endif
 
 /*
  * Structure to retrieve available DLTs for the interface.
@@ -290,23 +313,46 @@ struct bpf_dltlist {
 struct bpf_ctx;
 typedef struct bpf_ctx bpf_ctx_t;
 
-struct bpf_args;
-typedef struct bpf_args bpf_args_t;
+typedef struct bpf_args {
+	const uint8_t *	pkt;
+	size_t		wirelen;
+	size_t		buflen;
+	/*
+	 * The following arguments are used only by some kernel
+	 * subsystems.
+	 * They aren't required for classical bpf filter programs.
+	 * For such programs, bpfjit generated code doesn't read
+	 * those arguments at all. Note however that bpf interpreter
+	 * always needs a pointer to memstore.
+	 */
+	uint32_t *	mem; /* pointer to external memory store */
+	void *		arg; /* auxiliary argument for a copfunc */
+} bpf_args_t;
 
 #if defined(_KERNEL) || defined(__BPF_PRIVATE)
-typedef uint32_t (*bpf_copfunc_t)(bpf_ctx_t *, bpf_args_t *, uint32_t);
 
-struct bpf_args {
-	const struct mbuf *	pkt;
-	size_t			wirelen;
-	size_t			buflen;
-	uint32_t		mem[BPF_MEMWORDS];
-	void *			arg;
-};
+typedef uint32_t (*bpf_copfunc_t)(const bpf_ctx_t *, bpf_args_t *, uint32_t);
 
 struct bpf_ctx {
+	/*
+	 * BPF coprocessor functions and the number of them.
+	 */
 	const bpf_copfunc_t *	copfuncs;
 	size_t			nfuncs;
+
+	/*
+	 * The number of memory words in the external memory store.
+	 * There may be up to BPF_MAX_MEMWORDS words; if zero is set,
+	 * then the internal memory store is used which has a fixed
+	 * number of words (BPF_MEMWORDS).
+	 */
+	size_t			extwords;
+
+	/*
+	 * The bitmask indicating which words in the external memstore
+	 * will be initialised by the caller.
+	 */
+	bpf_memword_init_t	preinited;
 };
 #endif
 
@@ -403,20 +449,20 @@ bpf_mtap_sl_out(struct ifnet *_ifp, u_char *_hdr, struct mbuf *_m)
 }
 
 
-void     bpf_setops(void);
+void	bpf_setops(void);
 
-void     bpf_ops_handover_enter(struct bpf_ops *);
-void     bpf_ops_handover_exit(void);
+void	bpf_ops_handover_enter(struct bpf_ops *);
+void	bpf_ops_handover_exit(void);
 
-void	 bpfilterattach(int);
+void	bpfilterattach(int);
 
 bpf_ctx_t *bpf_create(void);
-bpf_ctx_t *bpf_default_ctx(void);
 void	bpf_destroy(bpf_ctx_t *);
 
 int	bpf_set_cop(bpf_ctx_t *, const bpf_copfunc_t *, size_t);
-u_int	bpf_filter_ext(bpf_ctx_t *, const struct bpf_insn *, bpf_args_t *);
-int	bpf_validate_ext(bpf_ctx_t *, const struct bpf_insn *, int);
+int	bpf_set_extmem(bpf_ctx_t *, size_t, bpf_memword_init_t);
+u_int	bpf_filter_ext(const bpf_ctx_t *, const struct bpf_insn *, bpf_args_t *);
+int	bpf_validate_ext(const bpf_ctx_t *, const struct bpf_insn *, int);
 
 bpfjit_func_t bpf_jit_generate(bpf_ctx_t *, void *, size_t);
 void	bpf_jit_freecode(bpfjit_func_t);

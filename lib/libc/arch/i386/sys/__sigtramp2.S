@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.4 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.4.40.1 2014/08/10 06:51:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,3 +50,4 @@ NENTRY(__sigtramp_siginfo_2)
 	SYSTRAP(setcontext)	/* do setcontext */
 	movl	$-1,4(%esp)	/* if we return here, something is wrong */
 	SYSTRAP(exit)		/* exit */
+END(__sigtramp_siginfo_2)

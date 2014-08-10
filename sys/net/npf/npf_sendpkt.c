@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.14 2013/02/09 03:35:32 rmind Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.14.10.1 2014/08/10 06:56:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.14 2013/02/09 03:35:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.14.10.1 2014/08/10 06:56:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -175,9 +175,9 @@ npf_return_tcp(npf_cache_t *npc)
  * npf_return_icmp: return an ICMP error.
  */
 static int
-npf_return_icmp(const npf_cache_t *npc, nbuf_t *nbuf)
+npf_return_icmp(const npf_cache_t *npc)
 {
-	struct mbuf *m = nbuf_head_mbuf(nbuf);
+	struct mbuf *m = nbuf_head_mbuf(npc->npc_nbuf);
 
 	if (npf_iscached(npc, NPC_IP4)) {
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT, 0, 0);
@@ -195,7 +195,7 @@ npf_return_icmp(const npf_cache_t *npc, nbuf_t *nbuf)
  * => Returns true if the buffer was consumed (freed) and false otherwise.
  */
 bool
-npf_return_block(npf_cache_t *npc, nbuf_t *nbuf, const int retfl)
+npf_return_block(npf_cache_t *npc, const int retfl)
 {
 	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
 		return false;
@@ -208,7 +208,7 @@ npf_return_block(npf_cache_t *npc, nbuf_t *nbuf, const int retfl)
 		break;
 	case IPPROTO_UDP:
 		if (retfl & NPF_RULE_RETICMP)
-			if (npf_return_icmp(npc, nbuf) == 0)
+			if (npf_return_icmp(npc) == 0)
 				return true;
 		break;
 	}

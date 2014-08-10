@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.1.1.4 2013/09/25 19:06:31 tron Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.1.1.4.2.1 2014/08/10 07:12:48 tls Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -146,7 +146,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_FUNC		"function"
 #define MAIL_ATTR_CCERT_SUBJECT	"ccert_subject"
 #define MAIL_ATTR_CCERT_ISSUER	"ccert_issuer"
-#define MAIL_ATTR_CCERT_FINGERPRINT "ccert_fingerprint"
+#define MAIL_ATTR_CCERT_CERT_FPRINT "ccert_fingerprint"
 #define MAIL_ATTR_CCERT_PKEY_FPRINT "ccert_pubkey_fingerprint"
 #define MAIL_ATTR_CRYPTO_PROTOCOL "encryption_protocol"
 #define MAIL_ATTR_CRYPTO_CIPHER	"encryption_cipher"
@@ -257,7 +257,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_TIMEOUT	"timeout"
 #define MAIL_ATTR_PEER_CN	"peer_CN"
 #define MAIL_ATTR_ISSUER_CN	"issuer_CN"
-#define MAIL_ATTR_PEER_FPT	"peer_fingerprint"
+#define MAIL_ATTR_PEER_CERT_FPT	"peer_fingerprint"
 #define MAIL_ATTR_PEER_PKEY_FPT	"peer_pubkey_fingerprint"
 #define MAIL_ATTR_PEER_STATUS	"peer_status"
 #define MAIL_ATTR_CIPHER_PROTOCOL "cipher_protocol"

@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.36 2014/03/15 15:15:27 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.36.2.1 2014/08/10 06:56:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.36 2014/03/15 15:15:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.36.2.1 2014/08/10 06:56:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -523,6 +523,19 @@ kpreempt_enable(void)
 	KPREEMPT_ENABLE(curlwp);
 }
 
+bool
+kpreempt_disabled(void)
+{
+#if 0
+	const lwp_t *l = curlwp;
+
+	return l->l_nopreempt != 0 || l->l_stat == LSZOMB ||
+	    (l->l_flag & LW_IDLE) != 0 || cpu_kpreempt_disabled();
+#endif
+	/* XXX: emulate cpu_kpreempt_disabled() */
+	return true;
+}
+
 void
 suspendsched(void)
 {
@@ -538,4 +551,20 @@ sched_nice(struct proc *p, int level)
 {
 
 	/* nothing to do for now */
+}
+
+void
+sched_enqueue(struct lwp *l, bool swtch)
+{
+
+	if (swtch)
+		panic("sched_enqueue with switcheroo");
+	rump_thread_allow(l);
+}
+
+void
+sched_dequeue(struct lwp *l)
+{
+
+	panic("sched_dequeue not implemented");
 }

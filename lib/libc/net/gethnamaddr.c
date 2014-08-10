@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.90 2014/01/24 17:26:18 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.90.2.1 2014/08/10 06:51:50 tls Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.90 2014/01/24 17:26:18 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.90.2.1 2014/08/10 06:51:50 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -741,7 +741,7 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 	char *p, *name;
 	char *cp, **q;
 	int af, len;
-	size_t llen, anum;
+	size_t anum;
 	char **aliases;
 	size_t maxaliases;
 	struct in6_addr host_addr;
@@ -751,62 +751,61 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 		errno = EINVAL;
 		return NULL;
 	}
+	p = NULL;
 	setup(aliases, maxaliases);
- again:
-	if ((p = fgetln(hf, &llen)) == NULL) {
-		free(aliases);
-		*he = HOST_NOT_FOUND;
-		return NULL;
-	}
-	if (llen < 1)
-		goto again;
-	if (*p == '#')
-		goto again;
-	p[llen] = '\0';
-	if (!(cp = strpbrk(p, "#\n")))
-		goto again;
-	*cp = '\0';
-	if (!(cp = strpbrk(p, " \t")))
-		goto again;
-	*cp++ = '\0';
-	if (inet_pton(AF_INET6, p, &host_addr) > 0) {
-		af = AF_INET6;
-		len = NS_IN6ADDRSZ;
-	} else if (inet_pton(AF_INET, p, &host_addr) > 0) {
-		res_state res = __res_get_state();
-		if (res == NULL)
-			goto nospc;
-		if (res->options & RES_USE_INET6) {
-			map_v4v6_address(buf, buf);
+	for (;;) {
+		free(p);
+		p = fparseln(hf, NULL, NULL, NULL, FPARSELN_UNESCALL);
+		if (p == NULL) {
+			free(aliases);
+			*he = HOST_NOT_FOUND;
+			return NULL;
+		}
+		if (!(cp = strpbrk(p, " \t")))
+			continue;
+		*cp++ = '\0';
+		if (inet_pton(AF_INET6, p, &host_addr) > 0) {
 			af = AF_INET6;
 			len = NS_IN6ADDRSZ;
 		} else {
-			af = AF_INET;
-			len = NS_INADDRSZ;
-		}
-		__res_put_state(res);
-	} else {
-		goto again;
-	}
-	/* if this is not something we're looking for, skip it. */
-	if (hent->h_addrtype != 0 && hent->h_addrtype != af)
-		goto again;
-	if (hent->h_length != 0 && hent->h_length != len)
-		goto again;
+			if (inet_pton(AF_INET, p, &host_addr) <= 0)
+				continue;
 
-	while (*cp == ' ' || *cp == '\t')
-		cp++;
-	if ((cp = strpbrk(name = cp, " \t")) != NULL)
-		*cp++ = '\0';
-	q = aliases;
-	while (cp && *cp) {
-		if (*cp == ' ' || *cp == '\t') {
-			cp++;
-			continue;
+			res_state res = __res_get_state();
+			if (res == NULL)
+				goto nospc;
+			if (res->options & RES_USE_INET6) {
+				map_v4v6_address(buf, buf);
+				af = AF_INET6;
+				len = NS_IN6ADDRSZ;
+			} else {
+				af = AF_INET;
+				len = NS_INADDRSZ;
+			}
+			__res_put_state(res);
 		}
-		addalias(q, cp, aliases, maxaliases);
-		if ((cp = strpbrk(cp, " \t")) != NULL)
+
+		/* if this is not something we're looking for, skip it. */
+		if (hent->h_addrtype != 0 && hent->h_addrtype != af)
+			continue;
+		if (hent->h_length != 0 && hent->h_length != len)
+			continue;
+
+		while (*cp == ' ' || *cp == '\t')
+			cp++;
+		if ((cp = strpbrk(name = cp, " \t")) != NULL)
 			*cp++ = '\0';
+		q = aliases;
+		while (cp && *cp) {
+			if (*cp == ' ' || *cp == '\t') {
+				cp++;
+				continue;
+			}
+			addalias(q, cp, aliases, maxaliases);
+			if ((cp = strpbrk(cp, " \t")) != NULL)
+				*cp++ = '\0';
+		}
+		break;
 	}
 	hent->h_length = len;
 	hent->h_addrtype = af;
@@ -823,9 +822,11 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 	hent->h_aliases[anum] = NULL;
 
 	*he = NETDB_SUCCESS;
+	free(p);
 	free(aliases);
 	return hent;
 nospc:
+	free(p);
 	free(aliases);
 	errno = ENOSPC;
 	*he = NETDB_INTERNAL;

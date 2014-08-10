@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_params.c,v 1.1.1.4 2013/01/02 18:59:07 tron Exp $	*/
+/*	$NetBSD: lmtp_params.c,v 1.1.1.4.6.1 2014/08/10 07:12:49 tls Exp $	*/
 
     static const CONFIG_STR_TABLE lmtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -24,6 +24,7 @@
 	VAR_LMTP_TLS_SEC_CMATCH, DEF_LMTP_TLS_SEC_CMATCH, &var_smtp_tls_sec_cmatch, 1, 0,
 	VAR_LMTP_TLS_FPT_CMATCH, DEF_LMTP_TLS_FPT_CMATCH, &var_smtp_tls_fpt_cmatch, 0, 0,
 	VAR_LMTP_TLS_FPT_DGST, DEF_LMTP_TLS_FPT_DGST, &var_smtp_tls_fpt_dgst, 1, 0,
+	VAR_LMTP_TLS_TAFILE, DEF_LMTP_TLS_TAFILE, &var_smtp_tls_tafile, 0, 0,
 	VAR_LMTP_TLS_PROTO, DEF_LMTP_TLS_PROTO, &var_smtp_tls_proto, 0, 0,
 	VAR_LMTP_TLS_CIPH, DEF_LMTP_TLS_CIPH, &var_smtp_tls_ciph, 1, 0,
 	VAR_LMTP_TLS_ECCERT_FILE, DEF_LMTP_TLS_ECCERT_FILE, &var_smtp_tls_eccert_file, 0, 0,
@@ -36,6 +37,7 @@
 	VAR_LMTP_BIND_ADDR6, DEF_LMTP_BIND_ADDR6, &var_smtp_bind_addr6, 0, 0,
 	VAR_LMTP_HELO_NAME, DEF_LMTP_HELO_NAME, &var_smtp_helo_name, 1, 0,
 	VAR_LMTP_HOST_LOOKUP, DEF_LMTP_HOST_LOOKUP, &var_smtp_host_lookup, 1, 0,
+	VAR_LMTP_DNS_SUPPORT, DEF_LMTP_DNS_SUPPORT, &var_smtp_dns_support, 0, 0,
 	VAR_LMTP_CACHE_DEST, DEF_LMTP_CACHE_DEST, &var_smtp_cache_dest, 0, 0,
 	VAR_SCACHE_SERVICE, DEF_SCACHE_SERVICE, &var_scache_service, 1, 0,
 	VAR_LMTP_EHLO_DIS_WORDS, DEF_LMTP_EHLO_DIS_WORDS, &var_smtp_ehlo_dis_words, 0, 0,
@@ -85,6 +87,7 @@
 	VAR_LMTP_LINE_LIMIT, DEF_LMTP_LINE_LIMIT, &var_smtp_line_limit, 0, 0,
 	VAR_LMTP_MXADDR_LIMIT, DEF_LMTP_MXADDR_LIMIT, &var_smtp_mxaddr_limit, 0, 0,
 	VAR_LMTP_MXSESS_LIMIT, DEF_LMTP_MXSESS_LIMIT, &var_smtp_mxsess_limit, 0, 0,
+	VAR_LMTP_REUSE_COUNT, DEF_LMTP_REUSE_COUNT, &var_smtp_reuse_count, 0, 0,
 #ifdef USE_TLS
 	VAR_LMTP_TLS_SCERT_VD, DEF_LMTP_TLS_SCERT_VD, &var_smtp_tls_scert_vd, 0, 0,
 #endif
@@ -105,6 +108,7 @@
 	VAR_LMTP_TLS_ENFORCE_PN, DEF_LMTP_TLS_ENFORCE_PN, &var_smtp_tls_enforce_peername,
 	VAR_LMTP_TLS_NOTEOFFER, DEF_LMTP_TLS_NOTEOFFER, &var_smtp_tls_note_starttls_offer,
 	VAR_LMTP_TLS_BLK_EARLY_MAIL_REPLY, DEF_LMTP_TLS_BLK_EARLY_MAIL_REPLY, &var_smtp_tls_blk_early_mail_reply,
+	VAR_LMTP_TLS_FORCE_TLSA, DEF_LMTP_TLS_FORCE_TLSA, &var_smtp_tls_force_tlsa,
 #endif
 	VAR_LMTP_SENDER_AUTH, DEF_LMTP_SENDER_AUTH, &var_smtp_sender_auth,
 	VAR_LMTP_CNAME_OVERR, DEF_LMTP_CNAME_OVERR, &var_smtp_cname_overr,

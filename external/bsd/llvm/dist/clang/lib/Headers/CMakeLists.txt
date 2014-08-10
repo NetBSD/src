@@ -10,6 +10,7 @@ set(files
   float.h
   fma4intrin.h
   fmaintrin.h
+  ia32intrin.h
   immintrin.h
   iso646.h
   Intrin.h
@@ -44,7 +45,7 @@ set(files
   xopintrin.h
   cpuid.h
   unwind.h
-  module.map
+  module.modulemap
   )
 
 set(output_dir ${LLVM_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION}/include)

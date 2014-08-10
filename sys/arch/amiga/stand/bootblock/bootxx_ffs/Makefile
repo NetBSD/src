@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2014/03/29 12:52:56 mlelstv Exp $
+#	$NetBSD: Makefile,v 1.21.2.1 2014/08/10 06:53:50 tls Exp $
 
 ### what we need:
 
@@ -53,7 +53,7 @@ INCPATH += -I${.CURDIR}/../boot -I${.CURDIR}/../../..
 INCPATH += -I${.CURDIR}/../elf2bb -I${.OBJDIR}
 
 AFLAGS += -m68030 -l
-CAFLAGS += -Wa,-l -Wa,-mcpu=68030 ${INCPATH} -D_PRIMARY_BOOT
+CAFLAGS += -Wa,-l -Wa,-march=68030 -Wa,-mcpu=68030 ${INCPATH} -D_PRIMARY_BOOT
 
 COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks
 COPTIM+= -Wa,-l -m68060 -Wa,-mcpu=68030 -fno-unwind-tables

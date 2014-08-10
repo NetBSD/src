@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.53 2013/10/15 19:13:32 jdc Exp $
+#	$NetBSD: files.i2c,v 1.53.2.1 2014/08/10 06:54:51 tls Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -102,6 +102,11 @@ file	dev/i2c/at24cxx.c			seeprom | at24cxx_eeprom
 device	lmtemp: sysmon_envsys
 attach	lmtemp at iic
 file	dev/i2c/lm75.c				lmtemp
+
+# IST-AG Humidity and Teperature sensor (P14)
+device	hythygtemp: sysmon_envsys
+attach	hythygtemp at iic
+file	dev/i2c/hytp14.c			hythygtemp
 
 # National Semiconductor LM78 temp sensor/fan controller
 attach	lm at iic with lm_iic

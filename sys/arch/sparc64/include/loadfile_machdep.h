@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.3 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.3.60.1 2014/08/10 06:54:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,9 +39,14 @@
 #define BCOPY(s, d, c)		sparc64_memcpy((void *)LOADADDR(d), \
 					(void *)(s), (c))
 #define BZERO(d, c)		sparc64_memset((void *)LOADADDR(d), 0, (c))
-#define	WARN(a)			(void)(printf a, \
-				    printf((errno ? ": %s\n" : "\n"), \
-				    strerror(errno)))
+#define	WARN(a)			do { \
+					(void)printf a; \
+					if (errno) \
+						(void)printf(": %s\n", \
+						             strerror(errno)); \
+					else \
+						(void)printf("\n"); \
+				} while(/* CONSTCOND */0)
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
 #define DEALLOC(a, b)		dealloc(a, b)

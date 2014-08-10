@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM56340,v 1.2 2014/02/21 22:31:58 matt Exp $
+#	$NetBSD: BCM56340,v 1.2.2.1 2014/08/10 06:53:54 tls Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -88,6 +88,7 @@ options		NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
@@ -139,7 +140,7 @@ options 	RNDVERBOSE	# Verbose rnd messages
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG	# Enable lock debugging
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

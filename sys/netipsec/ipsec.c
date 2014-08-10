@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.62 2013/12/24 15:48:53 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.62.2.1 2014/08/10 06:56:34 tls Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.62 2013/12/24 15:48:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.62.2.1 2014/08/10 06:56:34 tls Exp $");
 
 /*
  * IPsec controller part.
@@ -105,6 +105,9 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.62 2013/12/24 15:48:53 christos Exp $");
 #include <netipsec/ipsec_osdep.h>
 
 #include <net/net_osdep.h>
+
+int ipsec_used = 0;
+int ipsec_enabled = 1;
 
 #ifdef IPSEC_DEBUG
 int ipsec_debug = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.53 2014/02/21 18:00:09 palle Exp $ */
+/*	$NetBSD: param.h,v 1.53.2.1 2014/08/10 06:54:08 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -168,13 +168,12 @@ extern int nbpg, pgofset, pgshift;
 
 #define	_MAXNBPG	8192	/* fixed VAs, independent of actual NBPG */
 
-#define	AUXREG_VA	(      KERNEND + _MAXNBPG) /* 1 page REDZONE */
-#define	TMPMAP_VA	(    AUXREG_VA + _MAXNBPG)
-#define	MSGBUF_VA	(    TMPMAP_VA + _MAXNBPG)
+#define	MSGBUF_VA	(      KERNEND + _MAXNBPG) /* 1 page REDZONE */
 /*
+ * Maximum message buffer size is 248k.
  * Here's the location of the interrupt stack and CPU structure.
  */
-#define	INTSTACK	(      KERNEND + 8*_MAXNBPG)
+#define	INTSTACK	(      KERNEND + 32*_MAXNBPG)
 #define	EINTSTACK	(     INTSTACK + 4*_MAXNBPG)
 #define	CPUINFO_VA	(    EINTSTACK              )
 #define	PANICSTACK	(     INTSTACK + 8*_MAXNBPG)
@@ -197,7 +196,13 @@ extern int nbpg, pgofset, pgshift;
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
-#define MSGBUFSIZE	NBPG
+#if !defined (MSGBUFSIZE)		/* options MSGBUFSIZE=integer	*/
+#define MSGBUFSIZE	4 * NBPG
+#else
+#if INTSTACK - MSGBUF_VA - MSGBUFSIZE < 0
+#error MSGBUFSIZE is too large
+#endif
+#endif
 
 /*
  * Minimum size of the kernel kmem_arena in PAGE_SIZE-sized

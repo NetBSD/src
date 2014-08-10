@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2013 Free Software Foundation, Inc.
+# Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,14 +25,14 @@
 # continues the process with the equivalent of "jump *$PC", which
 # triggers any breakpoint at $PC.  The latter is what we want to test.
 
-set testfile break-entry
+standard_testfile start.c
 
 if [target_info exists use_gdb_stub] {
     untested ${testfile}.exp
     return
 }
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} start.c {additional_flags=-static}] } {
+if { [prepare_for_testing ${testfile}.exp ${testfile} $srcfile {additional_flags=-static}] } {
     return -1
 }
 

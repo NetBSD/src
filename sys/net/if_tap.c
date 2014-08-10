@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.74 2014/03/20 06:48:54 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.74.2.1 2014/08/10 06:56:15 tls Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.74 2014/03/20 06:48:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.74.2.1 2014/08/10 06:56:15 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -184,6 +184,7 @@ const struct cdevsw tap_cdevsw = {
 	.d_poll = tap_cdev_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = tap_cdev_kqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 
@@ -415,6 +416,7 @@ tap_detach(device_t self, int flags)
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 	seldestroy(&sc->sc_rsel);
 	mutex_destroy(&sc->sc_rdlock);
+	mutex_destroy(&sc->sc_kqlock);
 
 	pmf_device_deregister(self);
 
@@ -1181,7 +1183,6 @@ tap_dev_poll(int unit, int events, struct lwp *l)
 
 		s = splnet();
 		IFQ_POLL(&ifp->if_snd, m);
-		splx(s);
 
 		if (m != NULL)
 			revents |= events & (POLLIN|POLLRDNORM);
@@ -1190,6 +1191,7 @@ tap_dev_poll(int unit, int events, struct lwp *l)
 			selrecord(l, &sc->sc_rsel);
 			mutex_spin_exit(&sc->sc_kqlock);
 		}
+		splx(s);
 	}
 	revents |= events & (POLLOUT|POLLWRNORM);
 

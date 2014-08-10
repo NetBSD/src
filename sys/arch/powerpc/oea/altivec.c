@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.28 2013/08/23 06:21:33 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.28.2.1 2014/08/10 06:54:05 tls Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.28 2013/08/23 06:21:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.28.2.1 2014/08/10 06:54:05 tls Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.28 2013/08/23 06:21:33 matt Exp $");
 #include <powerpc/psl.h>
 
 static void vec_state_load(lwp_t *, u_int);
-static void vec_state_save(lwp_t *, u_int);
-static void vec_state_release(lwp_t *, u_int);
+static void vec_state_save(lwp_t *);
+static void vec_state_release(lwp_t *);
 
 const pcu_ops_t vec_ops = {
 	.pcu_id = PCU_VEC,
@@ -63,7 +63,7 @@ const pcu_ops_t vec_ops = {
 bool
 vec_used_p(lwp_t *l)
 {
-	return pcu_used_p(&vec_ops);
+	return pcu_valid_p(&vec_ops);
 }
 
 void
@@ -77,7 +77,7 @@ vec_state_load(lwp_t *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	if (__predict_false(!vec_used_p(l))) {
+	if ((flags & PCU_VALID) == 0) {
 		memset(&pcb->pcb_vr, 0, sizeof(pcb->pcb_vr));
 		vec_mark_used(l);
 	}
@@ -114,7 +114,7 @@ vec_state_load(lwp_t *l, u_int flags)
 }
 
 void
-vec_state_save(lwp_t *l, u_int flags)
+vec_state_save(lwp_t *l)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -149,7 +149,7 @@ vec_state_save(lwp_t *l, u_int flags)
 }
 
 void
-vec_state_release(lwp_t *l, u_int flags)
+vec_state_release(lwp_t *l)
 {
 	__asm volatile("dssall;sync");
 	l->l_md.md_utf->tf_srr1 &= ~PSL_VEC;

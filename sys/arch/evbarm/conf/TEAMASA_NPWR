@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.82 2014/03/02 13:26:03 joerg Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.82.2.1 2014/08/10 06:53:55 tls Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -77,6 +77,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
@@ -129,7 +130,7 @@ options 	USERCONF	# userconf(4) support
 # Development and Debugging options
 
 options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

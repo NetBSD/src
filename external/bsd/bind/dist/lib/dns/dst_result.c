@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_result.c,v 1.6 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: dst_result.c,v 1.6.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -53,7 +53,7 @@ static const char *text[DST_R_NRESULTS] = {
 	"no randomness available",		/*%< 19 */
 	"bad key type",				/*%< 20 */
 	"no engine",				/*%< 21 */
-	"illegal operation for an external key"	/*%< 22 */
+	"illegal operation for an external key",/*%< 22 */
 };
 
 #define DST_RESULT_RESULTSET			2

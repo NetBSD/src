@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2014/04/04 12:25:45 pooka Exp $	*/
+/*	$NetBSD: bus.h,v 1.4.2.1 2014/08/10 06:56:50 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -45,8 +45,9 @@ typedef void *bus_dma_tag_t;
 #define BUS_DMA_TAG_VALID(_tag_) ((_tag_) != NULL)
 
 typedef struct {
-	bus_addr_t ds_addr;
-	bus_size_t ds_len;
+	bus_addr_t	ds_addr;
+	bus_size_t	ds_len;
+	vaddr_t		_ds_vacookie;
 } bus_dma_segment_t;
 
 typedef struct {

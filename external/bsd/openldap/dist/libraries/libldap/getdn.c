@@ -1,9 +1,9 @@
-/*	$NetBSD: getdn.c,v 1.1.1.3 2010/12/12 15:21:32 adam Exp $	*/
+/*	$NetBSD: getdn.c,v 1.1.1.3.24.1 2014/08/10 07:09:47 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/getdn.c,v 1.130.2.6 2010/04/13 20:22:57 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -584,7 +584,7 @@ ldapava_new( const struct berval *attr, const struct berval *val,
 	return( ava );
 }
 
-void
+static void
 ldapava_free( LDAPAVA *ava, void *ctx )
 {
 	assert( ava != NULL );
@@ -2989,7 +2989,7 @@ int ldap_dn2bv_x( LDAPDN dn, struct berval *bv, unsigned flags, void *ctx )
 	 * a null dn means an empty dn string 
 	 * FIXME: better raise an error?
 	 */
-	if ( dn == NULL ) {
+	if ( dn == NULL || dn[0] == NULL ) {
 		bv->bv_val = LDAP_STRDUPX( "", ctx );
 		return( LDAP_SUCCESS );
 	}

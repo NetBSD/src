@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_lookup.c,v 1.1.1.1 2013/09/25 19:06:33 tron Exp $	*/
+/*	$NetBSD: postconf_lookup.c,v 1.1.1.1.2.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -8,37 +8,38 @@
 /* SYNOPSIS
 /*	#include <postconf.h>
 /*
-/*	const char *lookup_parameter_value(mode, name, local_scope, node)
+/*	const char *pcf_lookup_parameter_value(mode, name, local_scope, node)
 /*	int	mode;
 /*	const char *name;
-/*	PC_MASTER_ENT *local_scope;
-/*	PC_PARAM_NODE *node;
+/*	PCF_MASTER_ENT *local_scope;
+/*	PCF_PARAM_NODE *node;
 /*
-/*	char    *expand_parameter_value(buf, mode, value, local_scope)
+/*	char    *pcf_expand_parameter_value(buf, mode, value, local_scope)
 /*	VSTRING *buf;
 /*	int	mode;
 /*	const char *value;
-/*	PC_MASTER_ENT *local_scope;
+/*	PCF_MASTER_ENT *local_scope;
 /* DESCRIPTION
 /*	These functions perform parameter value lookups.  The order
 /*	of decreasing precedence is:
 /* .IP \(bu
-/*	Search name=value parameter settings in master.cf.
-/*	These lookups are disabled with the SHOW_DEFS flag.
+/*	Search name=value parameter settings in master.cf.  These
+/*	lookups are disabled with the PCF_SHOW_DEFS flag.
 /* .IP \(bu
-/*	Search name=value parameter settings in main.cf.
-/*	These lookups are disabled with the SHOW_DEFS flag.
+/*	Search name=value parameter settings in main.cf.  These
+/*	lookups are disabled with the PCF_SHOW_DEFS flag.
 /* .IP \(bu
 /*	Search built-in default parameter settings. These lookups
-/*	are disabled with the SHOW_NONDEF flag.
+/*	are disabled with the PCF_SHOW_NONDEF flag.
 /* .PP
-/*	lookup_parameter_value() looks up the value for the named
-/*	parameter, and returns null if the name was not found.
+/*	pcf_lookup_parameter_value() looks up the value for the
+/*	named parameter, and returns null if the name was not found.
 /*
-/*	expand_parameter_value() expands $name in the specified
-/*	parameter value. This function ignores the SHOW_NONDEF flag.
-/*	The result value is a pointer to storage in a user-supplied
-/*	buffer, or in a buffer that is overwritten with each call.
+/*	pcf_expand_parameter_value() expands $name in the specified
+/*	parameter value. This function ignores the PCF_SHOW_NONDEF
+/*	flag.  The result value is a pointer to storage in a
+/*	user-supplied buffer, or in a buffer that is overwritten
+/*	with each call.
 /*
 /*	Arguments:
 /* .IP buf
@@ -47,9 +48,9 @@
 /*	Bit-wise OR of zero or one of the following (other flags
 /*	are ignored):
 /* .RS
-/* .IP SHOW_DEFS
+/* .IP PCF_SHOW_DEFS
 /*	Search built-in default parameter settings only.
-/* .IP SHOW_NONDEF
+/* .IP PCF_SHOW_NONDEF
 /*	Search local (master.cf) and global (main.cf) name=value
 /*	parameter settings only.
 /* .RE
@@ -100,11 +101,11 @@
 
 #define STR(x) vstring_str(x)
 
-/* lookup_parameter_value - look up specific parameter value */
+/* pcf_lookup_parameter_value - look up specific parameter value */
 
-const char *lookup_parameter_value(int mode, const char *name,
-				           PC_MASTER_ENT *local_scope,
-				           PC_PARAM_NODE *node)
+const char *pcf_lookup_parameter_value(int mode, const char *name,
+				               PCF_MASTER_ENT *local_scope,
+				               PCF_PARAM_NODE *node)
 {
     const char *value = 0;
 
@@ -113,13 +114,13 @@ const char *lookup_parameter_value(int mode, const char *name,
      * name=value entries in main.cf. Built-in defaults have the lowest
      * precedence.
      */
-    if ((mode & SHOW_DEFS) != 0
+    if ((mode & PCF_SHOW_DEFS) != 0
 	|| ((local_scope == 0 || local_scope->all_params == 0
 	     || (value = dict_get(local_scope->all_params, name)) == 0)
 	    && (value = dict_lookup(CONFIG_DICT, name)) == 0
-	    && (mode & SHOW_NONDEF) == 0)) {
-	if (node != 0 || (node = PC_PARAM_TABLE_FIND(param_table, name)) != 0)
-	    value = convert_param_node(SHOW_DEFS, name, node);
+	    && (mode & PCF_SHOW_NONDEF) == 0)) {
+	if (node != 0 || (node = PCF_PARAM_TABLE_FIND(pcf_param_table, name)) != 0)
+	    value = pcf_convert_param_node(PCF_SHOW_DEFS, name, node);
     }
     return (value);
 }
@@ -130,30 +131,30 @@ const char *lookup_parameter_value(int mode, const char *name,
   */
 typedef struct {
     int     mode;
-    PC_MASTER_ENT *local_scope;
-} PC_EVAL_CTX;
+    PCF_MASTER_ENT *local_scope;
+} PCF_EVAL_CTX;
 
-/* lookup_parameter_value_wrapper - macro parser call-back routine */
+/* pcf_lookup_parameter_value_wrapper - macro parser call-back routine */
 
-static const char *lookup_parameter_value_wrapper(const char *key,
-						          int unused_type,
-						          char *context)
+static const char *pcf_lookup_parameter_value_wrapper(const char *key,
+						            int unused_type,
+						              char *context)
 {
-    PC_EVAL_CTX *cp = (PC_EVAL_CTX *) context;
+    PCF_EVAL_CTX *cp = (PCF_EVAL_CTX *) context;
 
-    return (lookup_parameter_value(cp->mode, key, cp->local_scope,
-				   (PC_PARAM_NODE *) 0));
+    return (pcf_lookup_parameter_value(cp->mode, key, cp->local_scope,
+				       (PCF_PARAM_NODE *) 0));
 }
 
-/* expand_parameter_value - expand $name in parameter value */
+/* pcf_expand_parameter_value - expand $name in parameter value */
 
-char   *expand_parameter_value(VSTRING *buf, int mode, const char *value,
-			               PC_MASTER_ENT *local_scope)
+char   *pcf_expand_parameter_value(VSTRING *buf, int mode, const char *value,
+				           PCF_MASTER_ENT *local_scope)
 {
-    const char *myname = "expand_parameter_value";
+    const char *myname = "pcf_expand_parameter_value";
     static VSTRING *local_buf;
     int     status;
-    PC_EVAL_CTX eval_ctx;
+    PCF_EVAL_CTX eval_ctx;
 
     /*
      * Initialize.
@@ -175,10 +176,10 @@ char   *expand_parameter_value(VSTRING *buf, int mode, const char *value,
      */
 #define DONT_FILTER (char *) 0
 
-    eval_ctx.mode = (mode & ~SHOW_NONDEF);
+    eval_ctx.mode = (mode & ~PCF_SHOW_NONDEF);
     eval_ctx.local_scope = local_scope;
     status = mac_expand(buf, value, MAC_EXP_FLAG_RECURSE, DONT_FILTER,
-			lookup_parameter_value_wrapper, (char *) &eval_ctx);
+		    pcf_lookup_parameter_value_wrapper, (char *) &eval_ctx);
     if (status & MAC_PARSE_ERROR)
 	msg_fatal("macro processing error");
     if (msg_verbose > 1) {

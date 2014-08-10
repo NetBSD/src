@@ -1,4 +1,4 @@
-/*	$NetBSD: bug.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: bug.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,10 @@
 
 #ifndef _LINUX_BUG_H_
 #define _LINUX_BUG_H_
+
+#include <asm/bug.h>
+
+#define	BUILD_BUG_ON_NOT_POWER_OF_2(n)					      \
+	CTASSERT(((n) != 0) && (((n) & ((n) - 1)) == 0))
 
 #endif  /* _LINUX_BUG_H_ */

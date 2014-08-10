@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.124 2013/11/23 14:20:22 christos Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.124.2.1 2014/08/10 06:56:30 tls Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.124 2013/11/23 14:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.124.2.1 2014/08/10 06:56:30 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -157,9 +157,6 @@ in6_pcballoc(struct socket *so, void *v)
 	struct inpcbtable *table = v;
 	struct in6pcb *in6p;
 	int s;
-#if defined(IPSEC)
-	int error;
-#endif
 
 	s = splnet();
 	in6p = pool_get(&in6pcb_pool, PR_NOWAIT);
@@ -175,12 +172,14 @@ in6_pcballoc(struct socket *so, void *v)
 	in6p->in6p_portalgo = PORTALGO_DEFAULT;
 	in6p->in6p_bindportonsend = false;
 #if defined(IPSEC)
-	error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
-	if (error != 0) {
-		s = splnet();
-		pool_put(&in6pcb_pool, in6p);
-		splx(s);
-		return error;
+	if (ipsec_enabled) {
+		int error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
+		if (error != 0) {
+			s = splnet();
+			pool_put(&in6pcb_pool, in6p);
+			splx(s);
+			return error;
+		}
 	}
 #endif /* IPSEC */
 	s = splnet();
@@ -567,7 +566,7 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 		in6p->in6p_flowinfo |=
 		    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
 #if defined(IPSEC)
-	if (in6p->in6p_socket->so_type == SOCK_STREAM)
+	if (ipsec_enabled && in6p->in6p_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(in6p->in6p_sp);
 #endif
 	return (0);
@@ -581,7 +580,8 @@ in6_pcbdisconnect(struct in6pcb *in6p)
 	in6_pcbstate(in6p, IN6P_BOUND);
 	in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
 #if defined(IPSEC)
-	ipsec_pcbdisconn(in6p->in6p_sp);
+	if (ipsec_enabled)
+		ipsec_pcbdisconn(in6p->in6p_sp);
 #endif
 	if (in6p->in6p_socket->so_state & SS_NOFDREF)
 		in6_pcbdetach(in6p);
@@ -597,25 +597,30 @@ in6_pcbdetach(struct in6pcb *in6p)
 		return;
 
 #if defined(IPSEC)
-	ipsec6_delete_pcbpolicy(in6p);
-#endif /* IPSEC */
-	so->so_pcb = 0;
-	if (in6p->in6p_options)
-		m_freem(in6p->in6p_options);
-	if (in6p->in6p_outputopts != NULL) {
-		ip6_clearpktopts(in6p->in6p_outputopts, -1);
-		free(in6p->in6p_outputopts, M_IP6OPT);
-	}
-	rtcache_free(&in6p->in6p_route);
-	ip6_freemoptions(in6p->in6p_moptions);
+	if (ipsec_enabled)
+		ipsec6_delete_pcbpolicy(in6p);
+#endif
+	so->so_pcb = NULL;
+
 	s = splnet();
 	in6_pcbstate(in6p, IN6P_ATTACHED);
 	LIST_REMOVE(&in6p->in6p_head, inph_lhash);
 	TAILQ_REMOVE(&in6p->in6p_table->inpt_queue, &in6p->in6p_head,
 	    inph_queue);
-	pool_put(&in6pcb_pool, in6p);
 	splx(s);
+
+	if (in6p->in6p_options) {
+		m_freem(in6p->in6p_options);
+	}
+	if (in6p->in6p_outputopts != NULL) {
+		ip6_clearpktopts(in6p->in6p_outputopts, -1);
+		free(in6p->in6p_outputopts, M_IP6OPT);
+	}
+	rtcache_free(&in6p->in6p_route);
 	sofree(so);				/* drops the socket's lock */
+
+	ip6_freemoptions(in6p->in6p_moptions);
+	pool_put(&in6pcb_pool, in6p);
 	mutex_enter(softnet_lock);		/* reacquire it */
 }
 

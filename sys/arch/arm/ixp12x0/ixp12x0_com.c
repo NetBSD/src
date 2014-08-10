@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.43.2.1 2014/04/07 03:37:30 tls Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.43.2.2 2014/08/10 06:53:51 tls Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.43.2.1 2014/04/07 03:37:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.43.2.2 2014/08/10 06:53:51 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -161,6 +161,7 @@ const struct cdevsw ixpcom_cdevsw = {
 	.d_poll = ixpcompoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

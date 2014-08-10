@@ -1,4 +1,4 @@
-/*	$NetBSD: cmos.c,v 1.10 2014/03/16 05:20:24 dholland Exp $	*/
+/*	$NetBSD: cmos.c,v 1.10.2.1 2014/08/10 06:53:59 tls Exp $	*/
 
 /*
  * Copyright (C) 2003 JONE System Co., Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.10 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.10.2.1 2014/08/10 06:53:59 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,7 @@ const struct cdevsw cmos_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

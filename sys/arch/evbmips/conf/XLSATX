@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.18 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: XLSATX,v 1.18.4.1 2014/08/10 06:53:56 tls Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.18 $"
+#ident 		"XLSATX-$Revision: 1.18.4.1 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -109,6 +109,10 @@ options 	INET6		# IPV6
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

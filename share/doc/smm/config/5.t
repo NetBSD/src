@@ -1,4 +1,4 @@
-.\" $NetBSD: 5.t,v 1.1 2007/12/18 03:35:53 garbled Exp $
+.\" $NetBSD: 5.t,v 1.1.46.1 2014/08/10 06:53:14 tls Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -81,13 +81,17 @@ file one step at a time.
 The first step is to fill in the global configuration parameters.
 The machine is a VAX, so the
 .I "machine type"
-is ``vax''.  We will assume this system will
+is ``vax''.
+We will assume this system will
 run only on this one processor, so the 
 .I "cpu type"
-is ``VAX780''.  The options are empty since this is going to
-be a ``vanilla'' VAX.  The system identifier, as mentioned before,
+is ``VAX780''.
+The options are empty since this is going to
+be a ``vanilla'' VAX.
+The system identifier, as mentioned before,
 is ``ANSEL,'' and the maximum number of users we plan to support is
-about 40.  Thus the beginning of the configuration file looks like
+about 40.
+Thus the beginning of the configuration file looks like
 this:
 .DS
 .ta 1.5i 2.5i 4.0i
@@ -102,7 +106,8 @@ maxusers	40
 .DE
 .PP
 To this we must then add the specifications for three
-system images.  The first will be our standard system with the
+system images.
+The first will be our standard system with the
 root on ``hp0'' and swapping on the same drive as the root.
 The second will have the root file system in the same location,
 but swap space interleaved among drives on each controller.
@@ -115,7 +120,8 @@ config	hpkernel	root on hp0 swap on hp0 and hp2
 config	genkernel	swap generic
 .DE
 .PP
-Finally, the hardware must be specified.  Let us first just try
+Finally, the hardware must be specified.
+Let us first just try
 transcribing the information from Table 1.
 .DS
 .ta 1.5i 2.5i 4.0i
@@ -138,14 +144,19 @@ device	dh2	at uba0 csr 0160060	vector dhrint dhxint
 (Oh, I forgot to mention one panel of the terminal multiplexor
 has modem control, thus the ``dm0'' device.)
 .PP
-This will suffice, but leaves us with little flexibility.  Suppose
-our first disk controller were to break.  We would like to recable the
+This will suffice, but leaves us with little flexibility.
+Suppose
+our first disk controller were to break.
+We would like to recable the
 drives normally on the second controller so that all our disks could
-still be used without reconfiguring the system.  To do this we wildcard
-the MASSBUS adapter connections and also the slave numbers.  Further,
+still be used without reconfiguring the system.
+To do this we wildcard
+the MASSBUS adapter connections and also the slave numbers.
+Further,
 we wildcard the UNIBUS adapter connections in case we decide some time
 in the future to purchase another adapter to offload the single UNIBUS
-we currently have.  The revised device specifications would then be:
+we currently have.
+The revised device specifications would then be:
 .DS
 .ta 1.5i 2.5i 4.0i
 controller	mba0	at nexus ?
@@ -169,13 +180,17 @@ The completed configuration file for ANSEL is shown in Appendix C.
 VAX-11/750 with network support
 .PP
 Our VAX-11/750 system will be located on two 10Mb/s Ethernet
-local area networks and also the DARPA Internet.  The system
+local area networks and also the DARPA Internet.
+The system
 will have a MASSBUS drive for the root file system and two
-UNIBUS drives.  Paging is interleaved among all three drives.
+UNIBUS drives.
+Paging is interleaved among all three drives.
 We have sold our standard DEC terminal multiplexors since this
-machine will be accessed solely through the network.  This
+machine will be accessed solely through the network.
+This
 machine is not intended to have a large user community, it
-does not have a great deal of memory.  First the global parameters:
+does not have a great deal of memory.
+First the global parameters:
 .DS
 .ta 1.5i 2.5i 4.0i
 #
@@ -192,9 +207,11 @@ options	NS
 .DE
 .PP
 The multiple cpu types allow us to replace UCBVAX with a
-more powerful cpu without reconfiguring the system.  The
+more powerful cpu without reconfiguring the system.
+The
 value of 32 given for the maximum number of users is done to
-force the system data structures to be over-allocated.  That
+force the system data structures to be over-allocated.
+That
 is desirable on this machine because, while it is not expected
 to support many users, it is expected to perform a great deal
 of work.
@@ -224,9 +241,11 @@ disk	rk1	at hk0 drive 1
 .DE
 .PP
 UCBVAX requires heavy interleaving of its paging area to keep up
-with all the mail traffic it handles.  The limiting factor on this
+with all the mail traffic it handles.
+The limiting factor on this
 system's performance is usually the number of disk arms, as opposed
-to memory or cpu cycles.  The extra UNIBUS controller, ``sc0'',
+to memory or cpu cycles.
+The extra UNIBUS controller, ``sc0'',
 is in case the MASSBUS controller breaks and a spare controller
 must be installed (most of our old UNIBUS controllers have been
 replaced with the newer MASSBUS controllers, so we have a number
@@ -241,11 +260,14 @@ The connection to the Internet is through
 an IMP, this requires yet another
 .I pseudo-device
 (in addition to the actual hardware device used by the
-IMP software).  And, finally, there are the two Ethernet devices.
+IMP software).
+And, finally, there are the two Ethernet devices.
 These use a special protocol, the Address Resolution Protocol (ARP),
-to map between Internet and Ethernet addresses.  Thus, yet another
+to map between Internet and Ethernet addresses.
+Thus, yet another
 .I pseudo-device
-is needed.  The additional device specifications are show below.
+is needed.
+The additional device specifications are show below.
 .DS
 .ta 1.5i 2.5i 4.0i
 pseudo-device	pty
@@ -265,8 +287,10 @@ It should be noted in these examples that neither system was
 configured to use disk quotas or the 4.1BSD compatibility mode.
 To use these optional facilities, and others, we would probably
 clean out our current configuration, reconfigure the system, then
-recompile and relink the system image(s).  This could, of course,
+recompile and relink the system image(s).
+This could, of course,
 be avoided by figuring out which relocatable object files are 
 affected by the reconfiguration, then reconfiguring and recompiling
-only those files affected by the configuration change.  This technique
+only those files affected by the configuration change.
+This technique
 should be used carefully.

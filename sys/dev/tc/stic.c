@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.50 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: stic.c,v 1.50.2.1 2014/08/10 06:54:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.50 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.50.2.1 2014/08/10 06:54:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,7 @@ const struct cdevsw stic_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = sticmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

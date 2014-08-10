@@ -53,27 +53,31 @@
 ; FISSION-LABEL: .debug_info.dwo contents:
 ; CHECK: Compile Unit: length = [[CU_SIZE:[0-9a-f]+]]
 
-; CHECK: DW_TAG_structure_type
+; CHECK: [[BAR:^0x........]]: DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_declaration
-; CHECK-NEXT: DW_AT_signature
-; CHECK: DW_TAG_class_type
+; CHECK-NEXT: DW_AT_signature {{.*}} (0x1d02f3be30cc5688)
+; CHECK: [[FLUFFY:^0x........]]: DW_TAG_class_type
 ; CHECK-NEXT: DW_AT_declaration
-; CHECK-NEXT: DW_AT_signature
+; CHECK-NEXT: DW_AT_signature {{.*}} (0xb04af47397402e77)
 
 ; Ensure the CU-local type 'walrus' is not placed in a type unit.
-; CHECK: DW_TAG_structure_type
+; CHECK: [[WALRUS:^0x........]]: DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name{{.*}}"walrus"
 ; CHECK-NEXT: DW_AT_byte_size
 ; CHECK-NEXT: DW_AT_decl_file
 ; CHECK-NEXT: DW_AT_decl_line
 
+
+; CHECK: [[WOMBAT:^0x........]]: DW_TAG_structure_type
+; CHECK-NEXT: DW_AT_declaration
+; CHECK-NEXT: DW_AT_signature {{.*}} (0xfd756cee88f8a118)
+
 ; FISSION-LABEL: .debug_types contents:
 ; FISSION-NOT: type_signature
 ; FISSION-LABEL: type_signature = 0x1d02f3be30cc5688
 ; FISSION: DW_TAG_type_unit
-; FISSION: DW_AT_stmt_list [DW_FORM_sec_offset] (0x00000000)
-; FISSION: DW_AT_GNU_dwo_name{{.*}}"bar.dwo"
-; FISSION: DW_AT_comp_dir{{.*}}"/tmp/dbginfo"
+; FISSION-NEXT: DW_AT_GNU_dwo_name{{.*}}"bar.dwo"
+; FISSION-NEXT: DW_AT_comp_dir{{.*}}"/tmp/dbginfo"
 ; FISSION-NOT: type_signature
 ; FISSION-LABEL: type_signature = 0xb04af47397402e77
 ; FISSION-NOT: type_signature
@@ -115,8 +119,7 @@
 ; CHECK-NOT: type_signature
 ; CHECK-LABEL: type_signature = 0xe94f6d3843e62d6b
 ; CHECK: DW_TAG_type_unit
-; SINGLE: DW_AT_stmt_list [DW_FORM_sec_offset] (0x00000000)
-; FISSION-NOT: DW_AT_stmt_list
+; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset] (0x00000000)
 ; CHECK-NOT: NULL
 ; CHECK-NOT: DW_AT_GNU_odr_signature
 ; CHECK: DW_TAG_structure_type
@@ -131,9 +134,20 @@
 ; CHECK-LABEL: .debug_line contents:
 ; CHECK: Line table prologue
 ; CHECK-NOT: file_names[
-; CHECK: file_names{{.*}} bar.h
+; SINGLE: file_names{{.*}} bar.h
 ; CHECK: file_names{{.*}} bar.cpp
 ; CHECK-NOT: file_names[
+
+; CHECK-LABEL: .debug_line.dwo contents:
+; FISSION: Line table prologue
+; FISSION: opcode_base: 1
+; FISSION-NOT: standard_opcode_lengths
+; FISSION-NOT: include_directories
+; FISSION-NOT: file_names[
+; FISSION: file_names{{.*}} bar.h
+; FISSION: file_names{{.*}} bar.cpp
+; FISSION-NOT: file_names[
+
 ; CHECK-LABEL: .debug_str contents:
 
 ; Use the unit size as a rough hash/identifier for the unit we're dealing with
@@ -142,25 +156,10 @@
 ; Don't emit pubtype entries for type DIEs in the compile unit that just indirect to a type unit.
 ; CHECK-NEXT: unit_size = [[CU_SIZE]]
 ; CHECK-NEXT: Offset Name
-; CHECK-NEXT: "walrus"
-; Type unit for 'bar'
-; SINGLE-NEXT: unit_size = 0x00000027
-; FISSION-NEXT: unit_size = 0x00000028
-; CHECK-NEXT: Offset Name
-; CHECK-NEXT: "bar"
-; SINGLE-NEXT: unit_size = 0x00000061
-; FISSION-NEXT: unit_size = 0x00000028
-; CHECK-NEXT: Offset Name
-; CHECK-NEXT: "int"
-; CHECK-NEXT: "echidna::capybara::mongoose::fluffy"
-; SINGLE-NEXT: unit_size = 0x0000003e
-; FISSION-NEXT: unit_size = 0x00000028
-; CHECK-NEXT: Offset Name
-; CHECK-NEXT: "wombat"
-; SINGLE-NEXT: unit_size = 0x0000004f
-; FISSION-NEXT: unit_size = 0x00000028
-; CHECK-NEXT: Offset Name
-; CHECK-NEXT: "int"
+; CHECK-NEXT: [[BAR]] "bar"
+; CHECK-NEXT: [[WOMBAT]] "wombat"
+; CHECK-NEXT: [[FLUFFY]] "echidna::capybara::mongoose::fluffy"
+; CHECK-NEXT: [[WALRUS]] "walrus"
 
 %struct.bar = type { i8 }
 %"class.echidna::capybara::mongoose::fluffy" = type { i32, i32 }

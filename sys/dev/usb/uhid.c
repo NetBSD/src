@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.90 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: uhid.c,v 1.90.2.1 2014/08/10 06:54:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.90 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.90.2.1 2014/08/10 06:54:59 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -126,6 +126,7 @@ const struct cdevsw uhid_cdevsw = {
 	.d_poll = uhidpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = uhidkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
@@ -218,6 +219,8 @@ uhid_detach(device_t self, int flags)
 	DPRINTF(("uhid_detach: sc=%p flags=%d\n", sc, flags));
 
 	sc->sc_dying = 1;
+
+	pmf_device_deregister(self);
 
 	mutex_enter(&sc->sc_lock);
 	if (sc->sc_hdev.sc_state & UHIDEV_OPEN) {

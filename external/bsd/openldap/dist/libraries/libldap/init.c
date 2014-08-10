@@ -1,9 +1,9 @@
-/*	$NetBSD: init.c,v 1.1.1.3 2010/12/12 15:21:32 adam Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.3.24.1 2014/08/10 07:09:47 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.102.2.14 2010/04/13 20:22:57 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,13 @@
 #include "lutil.h"
 
 struct ldapoptions ldap_int_global_options =
-	{ LDAP_UNINITIALIZED, LDAP_DEBUG_NONE };  
+	{ LDAP_UNINITIALIZED, LDAP_DEBUG_NONE
+		LDAP_LDO_NULLARG
+		LDAP_LDO_CONNECTIONLESS_NULLARG
+		LDAP_LDO_TLS_NULLARG
+		LDAP_LDO_SASL_NULLARG
+		LDAP_LDO_GSSAPI_NULLARG
+		LDAP_LDO_MUTEX_NULLARG };
 
 #define ATTR_NONE	0
 #define ATTR_BOOL	1
@@ -512,6 +518,15 @@ ldap_int_destroy_global_options(void)
  */
 void ldap_int_initialize_global_options( struct ldapoptions *gopts, int *dbglvl )
 {
+#ifdef LDAP_R_COMPILE
+	LDAP_PVT_MUTEX_FIRSTCREATE(gopts->ldo_mutex);
+#endif
+	LDAP_MUTEX_LOCK( &gopts->ldo_mutex );
+	if (gopts->ldo_valid == LDAP_INITIALIZED) {
+		/* someone else got here first */
+		LDAP_MUTEX_UNLOCK( &gopts->ldo_mutex );
+		return;
+	}
 	if (dbglvl)
 	    gopts->ldo_debug = *dbglvl;
 	else
@@ -575,6 +590,7 @@ void ldap_int_initialize_global_options( struct ldapoptions *gopts, int *dbglvl 
 	gopts->ldo_keepalive_idle = 0;
 
 	gopts->ldo_valid = LDAP_INITIALIZED;
+	LDAP_MUTEX_UNLOCK( &gopts->ldo_mutex );
    	return;
 }
 
@@ -618,7 +634,7 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 	    return; 
 	}
 }	/* The WinSock DLL is acceptable. Proceed. */
-#elif HAVE_WINSOCK
+#elif defined(HAVE_WINSOCK)
 {	WSADATA wsaData;
 	if ( WSAStartup( 0x0101, &wsaData ) != 0 ) {
 	    return;
@@ -627,6 +643,7 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 #endif
 
 #if defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
+	LDAP_MUTEX_LOCK( &ldap_int_hostname_mutex );
 	{
 		char	*name = ldap_int_hostname;
 
@@ -636,13 +653,14 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 			LDAP_FREE( name );
 		}
 	}
+	LDAP_MUTEX_UNLOCK( &ldap_int_hostname_mutex );
 #endif
 
 #ifndef HAVE_POLL
 	if ( ldap_int_tblsize == 0 ) ldap_int_ip_init();
 #endif
 
-	ldap_int_initialize_global_options(gopts, NULL);
+	ldap_int_initialize_global_options(gopts, dbglvl);
 
 	if( getenv("LDAPNOINIT") != NULL ) {
 		return;

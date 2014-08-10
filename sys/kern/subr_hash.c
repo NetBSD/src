@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.5 2012/06/05 20:51:36 rmind Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.5.12.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.5 2012/06/05 20:51:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.5.12.1 2014/08/10 06:55:58 tls Exp $");
 
 #include <sys/param.h>
+#include <sys/bitops.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 
@@ -89,10 +90,9 @@ hashinit(u_int elements, enum hashtype htype, bool waitok, u_long *hashmask)
 	if (elements > MAXELEMENTS)
 		elements = MAXELEMENTS;
 
-	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
-		continue;
-
+	hashsize = 1UL << (ilog2(elements - 1) + 1);
 	esize = hash_list_size(htype);
+
 	p = kmem_alloc(hashsize * esize, waitok ? KM_SLEEP : KM_NOSLEEP);
 	if (p == NULL)
 		return NULL;

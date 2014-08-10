@@ -182,6 +182,7 @@ copy ..\bin\named\named.html ..\Build\Release
 copy ..\bin\rndc\*.html ..\Build\Release
 copy ..\bin\confgen\*.html ..\Build\Release
 copy ..\bin\dig\*.html ..\Build\Release
+copy ..\bin\delv\*.html ..\Build\Release
 copy ..\bin\nsupdate\*.html ..\Build\Release
 copy ..\bin\check\*.html ..\Build\Release
 copy ..\bin\dnssec\dnssec-keygen.html ..\Build\Release
@@ -192,6 +193,10 @@ copy ..\bin\dnssec\dnssec-settime.html ..\Build\Release
 copy ..\bin\dnssec\dnssec-revoke.html ..\Build\Release
 copy ..\bin\dnssec\dnssec-verify.html ..\Build\Release
 copy ..\bin\dnssec\dnssec-importkey.html ..\Build\Release
+@IF PYTHON
+copy ..\bin\python\dnssec-checkds.html ..\Build\Release
+copy ..\bin\python\dnssec-coverage.html ..\Build\Release
+@END PYTHON
 @IF PKCS11
 copy ..\bin\pkcs11\pkcs11-keygen.html ..\Build\Release
 copy ..\bin\pkcs11\pkcs11-list.html ..\Build\Release
@@ -202,6 +207,7 @@ copy ..\bin\tools\arpaname.html ..\Build\Release
 copy ..\bin\tools\genrandom.html ..\Build\Release
 copy ..\bin\tools\isc-hmac-fixup.html ..\Build\Release
 copy ..\bin\tools\named-journalprint.html ..\Build\Release
+copy ..\bin\tools\named-rrchecker.html ..\Build\Release
 copy ..\bin\tools\nsec3hash.html ..\Build\Release
 
 echo Copying the migration notes.
@@ -257,6 +263,9 @@ copy /Y @VCREDIST_PATH@ ..\Build\Release\
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\config.h" />
+@IF AES
+    <ClInclude Include="..\include\isc\aes.h" />
+@END AES
     <ClInclude Include="..\include\isc\app.h" />
     <ClInclude Include="..\include\isc\assertions.h" />
     <ClInclude Include="..\include\isc\backtrace.h" />
@@ -338,6 +347,7 @@ copy /Y @VCREDIST_PATH@ ..\Build\Release\
     <ClInclude Include="..\include\pk11\constants.h" />
     <ClInclude Include="..\include\pk11\internal.h" />
     <ClInclude Include="..\include\pk11\pk11.h" />
+    <ClInclude Include="..\include\pk11\result.h" />
     <ClInclude Include="..\include\pkcs11\pkcs11.h" />
     <ClInclude Include="..\include\pkcs11\pkcs11f.h" />
     <ClInclude Include="..\include\pkcs11\pkcs11t.h" />
@@ -378,6 +388,9 @@ copy /Y @VCREDIST_PATH@ ..\Build\Release\
     <ClInclude Include="..\..\versions.h" />
   </ItemGroup>
   <ItemGroup>
+@IF AES
+    <ClCompile Include="..\aes.c" />
+@END AES
     <ClCompile Include="..\assertions.c" />
     <ClCompile Include="..\backtrace-emptytbl.c" />
     <ClCompile Include="..\backtrace.c" />
@@ -437,6 +450,7 @@ copy /Y @VCREDIST_PATH@ ..\Build\Release\
     <ClCompile Include="..\tm.c" />
 @IF PKCS11
     <ClCompile Include="..\pk11.c" />
+    <ClCompile Include="..\pk11_result.c" />
 @END PKCS11
     <ClCompile Include="app.c" />
     <ClCompile Include="condition.c" />

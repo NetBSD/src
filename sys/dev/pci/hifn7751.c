@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.54.2.1 2014/04/07 03:37:33 tls Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.54.2.2 2014/08/10 06:54:54 tls Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.54.2.1 2014/04/07 03:37:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.54.2.2 2014/08/10 06:54:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,6 +689,7 @@ hifn_rng_locked(void *vsc)
 
 		if (sc->sc_rng_need) {
 			nwords = (sc->sc_rng_need * NBBY) / HIFN_RNG_BITSPER;
+			nwords = MIN(__arraycount(num), nwords);
 		}
 
 		if (nwords < 2) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.10 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.10.2.1 2014/08/10 06:54:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -403,7 +403,6 @@ scabort(struct scsi_softc *hs)
 {
 	struct scsidevice *hd = hs->sc_spc;
 	int len;
-	u_char junk;
 
 	printf("sc%d: abort  phase=0x%x, ssts=0x%x, ints=0x%x\n",
 		hs->sc_ctlr, hd->scsi_psns, hd->scsi_ssts,
@@ -438,7 +437,7 @@ scabort(struct scsi_softc *hs)
 			hd->scsi_scmd = SCMD_SET_ACK;
 			while (hd->scsi_psns & PSNS_REQ)
 				DELAY(1);
-			junk = hd->scsi_temp;
+			(void)hd->scsi_temp;
 		} else {
 			/* one of the output phases - send an abort msg */
 			hd->scsi_temp = MSG_ABORT;

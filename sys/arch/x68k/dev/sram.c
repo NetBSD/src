@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.19 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: sram.c,v 1.19.2.1 2014/08/10 06:54:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.19 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.19.2.1 2014/08/10 06:54:10 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ const struct cdevsw sram_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

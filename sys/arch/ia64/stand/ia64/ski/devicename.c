@@ -1,4 +1,4 @@
-/*	$NetBSD: devicename.c,v 1.6 2014/03/27 18:22:56 christos Exp $	*/
+/*	$NetBSD: devicename.c,v 1.6.2.1 2014/08/10 06:54:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -224,7 +224,7 @@ ski_fmtdev(void *vdev)
 			if (len > buflen)
 				len = buflen;
 		}
-		strlcat(cp, ":", buflen - len);
+		strlcat(buf, ":", buflen - len);
 		break;
 
 	case DEVT_NET:

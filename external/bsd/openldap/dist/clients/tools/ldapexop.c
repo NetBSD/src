@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapexop.c,v 1.1.1.3 2010/12/12 15:18:11 adam Exp $	*/
+/*	$NetBSD: ldapexop.c,v 1.1.1.3.24.1 2014/08/10 07:09:42 tls Exp $	*/
 
 /* ldapexop.c -- a tool for performing well-known extended operations */
-/* OpenLDAP: pkg/ldap/clients/tools/ldapexop.c,v 1.9.2.8 2010/04/15 22:16:50 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,7 @@ main( int argc, char *argv[] )
 	char		*matcheddn = NULL, *text = NULL, **refs = NULL;
 	LDAPControl **ctrls = NULL;
 	int		id, code;
-	LDAPMessage	*res;
+	LDAPMessage	*res = NULL;
 
 	tool_init( TOOL_EXOP );
 	prog = lutil_progname( "ldapexop", argc, argv );
@@ -215,7 +215,7 @@ main( int argc, char *argv[] )
 		struct timeval	tv;
 
 		if ( tool_check_abandon( ld, id ) ) {
-			return LDAP_CANCELLED;
+			tool_exit( ld, LDAP_CANCELLED );
 		}
 
 		tv.tv_sec = 0;
@@ -249,7 +249,7 @@ main( int argc, char *argv[] )
 		char		*retoid = NULL;
 		struct berval	*retdata = NULL;
 
-		rc = ldap_parse_extended_result( ld, res, &retoid, &retdata, 1 );
+		rc = ldap_parse_extended_result( ld, res, &retoid, &retdata, 0 );
 
 		if ( rc != LDAP_SUCCESS ) {
 			tool_perror( "ldap_parse_extended_result", rc, NULL, NULL, NULL, NULL );
@@ -296,7 +296,7 @@ main( int argc, char *argv[] )
 			printf(_("# extended operation response\n"));
 		}
 
-		rc = ldap_parse_extended_result( ld, res, &retoid, &retdata, 1 );
+		rc = ldap_parse_extended_result( ld, res, &retoid, &retdata, 0 );
 		if ( rc != LDAP_SUCCESS ) {
 			tool_perror( "ldap_parse_extended_result", rc, NULL, NULL, NULL, NULL );
 			rc = EXIT_FAILURE;
@@ -320,7 +320,8 @@ main( int argc, char *argv[] )
 		}
 	}
 
-	if( verbose || ( code != LDAP_SUCCESS ) || matcheddn || text || refs ) {
+	if( verbose || code != LDAP_SUCCESS ||
+		( matcheddn && *matcheddn ) || ( text && *text ) || refs ) {
 		printf( _("Result: %s (%d)\n"), ldap_err2string( code ), code );
 
 		if( text && *text ) {
@@ -350,8 +351,7 @@ main( int argc, char *argv[] )
 
 skip:
 	/* disconnect from server */
-	tool_unbind( ld );
-	tool_destroy();
-
-	return code == LDAP_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE;
+	if ( res )
+		ldap_msgfree( res );
+	tool_exit( ld, code == LDAP_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE );
 }

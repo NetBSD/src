@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.48 2013/03/08 08:35:09 apb Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.48.10.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.48 2013/03/08 08:35:09 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.48.10.1 2014/08/10 06:55:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -307,7 +307,7 @@ sleepq_block(int timo, bool catch)
  *
  *	Wake zero or more LWPs blocked on a single wait channel.
  */
-lwp_t *
+void
 sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 {
 	lwp_t *l, *next;
@@ -326,7 +326,6 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 	}
 
 	mutex_spin_exit(mp);
-	return l;
 }
 
 /*

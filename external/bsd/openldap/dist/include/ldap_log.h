@@ -1,9 +1,9 @@
-/*	$NetBSD: ldap_log.h,v 1.1.1.3 2010/12/12 15:21:23 adam Exp $	*/
+/*	$NetBSD: ldap_log.h,v 1.1.1.3.24.1 2014/08/10 07:09:46 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/include/ldap_log.h,v 1.40.2.8 2010/04/13 20:22:48 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -244,11 +244,26 @@ extern void eb_syslog(int pri, const char *fmt, ...);
 #define LogTest(level) ( 0 )
 #endif /* ! LDAP_DEBUG */
 
+/* Actually now in liblber/debug.c */
 LDAP_LUTIL_F(int) lutil_debug_file LDAP_P(( FILE *file ));
 
 LDAP_LUTIL_F(void) lutil_debug LDAP_P((
 	int debug, int level,
 	const char* fmt, ... )) LDAP_GCCATTR((format(printf, 3, 4)));
+
+#ifdef LDAP_DEFINE_LDAP_DEBUG
+/* This struct matches the head of ldapoptions in <ldap-int.h> */
+struct ldapoptions_prefix {
+	short	ldo_valid;
+	int		ldo_debug;
+};
+#define ldap_debug \
+	(*(int *) ((char *)&ldap_int_global_options \
+		 + offsetof(struct ldapoptions_prefix, ldo_debug)))
+
+struct ldapoptions;
+LDAP_V ( struct ldapoptions ) ldap_int_global_options;
+#endif /* LDAP_DEFINE_LDAP_DEBUG */
 
 LDAP_END_DECL
 

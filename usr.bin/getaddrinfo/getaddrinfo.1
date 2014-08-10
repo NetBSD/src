@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.1,v 1.3 2014/03/19 18:21:39 riastradh Exp $
+.\"	$NetBSD: getaddrinfo.1,v 1.3.2.1 2014/08/10 06:58:08 tls Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 19, 2014
+.Dd April 22, 2014
 .Dt GETADDRINFO 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Op Fl cNnP
 .Op Fl f Ar family
 .Op Fl p Ar protocol
-.Op Fl s Ar service
+.Op Fl s Ar service Ns Op Ns / Ns Ar protocol
 .Op Fl t Ar socktype
 .Op Ar hostname
 .Sh DESCRIPTION
@@ -119,8 +119,11 @@ or
 Specify a protocol.
 Protocols may be numeric, or symbolic as listed in
 .Xr protocols 5 .
-.It Fl s Ar service
+.It Fl s Ar service Ns Op Ns / Ns Ar protocol
 Specify a service to look up.
+Services may be symbolic or numeric with an optional
+protocol suffix as listed in
+.Xr services 5 .
 If no service is specified, a hostname must be specified.
 .It Fl t Ar socktype
 Specify a socket type.

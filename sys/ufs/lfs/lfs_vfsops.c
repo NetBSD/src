@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.320 2014/03/24 13:42:40 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.320.2.1 2014/08/10 06:56:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.320 2014/03/24 13:42:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.320.2.1 2014/08/10 06:56:58 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -628,6 +628,8 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error = 0, update;
 	mode_t accessmode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2014/03/24 20:06:32 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.2.1 2014/08/10 06:53:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2014/03/24 20:06:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3.2.1 2014/08/10 06:53:59 tls Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1906,6 +1906,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	if (pack->ep_osversion < 699003600) {
 		p->p_md.md_flags |= MDP_OLDSPACE;
+	} else {
+		p->p_md.md_flags = 0;
 	}
 
 	hppa_setvmspace(l);

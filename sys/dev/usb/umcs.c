@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.6 2014/03/23 20:20:38 riastradh Exp $ */
+/* $NetBSD: umcs.c,v 1.6.2.1 2014/08/10 06:54:59 tls Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.6 2014/03/23 20:20:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.6.2.1 2014/08/10 06:54:59 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,19 +166,6 @@ umcs7840_reg_ctrl(int phyport)
 	case 1:	return MCS7840_DEV_REG_CONTROL2;
 	case 2:	return MCS7840_DEV_REG_CONTROL3;
 	case 3:	return MCS7840_DEV_REG_CONTROL4;
-	}
-}
-
-static inline int
-umcs7840_reg_dcr0(int phyport)
-{
-	KASSERT(phyport >= 0 && phyport < 4);
-	switch (phyport) {
-	default:
-	case 0:	return MCS7840_DEV_REG_DCR0_1;
-	case 1:	return MCS7840_DEV_REG_DCR0_2;
-	case 2:	return MCS7840_DEV_REG_DCR0_3;
-	case 3:	return MCS7840_DEV_REG_DCR0_4;
 	}
 }
 

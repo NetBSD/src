@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.12 2014/02/21 18:00:09 palle Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.12.2.1 2014/08/10 06:54:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -694,7 +694,7 @@ sparc64_finalize_tlb_sun4v(u_long data_va)
 			1,		/* valid */
 			0		/* endianness */
 			);
-		data |= SUN4V_TLB_L | SUN4V_TLB_CV; /* locked, virt.cache */
+		data |= SUN4V_TLB_CV|SUN4V_TLB_X; /* virt.cache, executable */
 		if (!writable_text) {
 			hv_rc = hv_mmu_unmap_perm_addr(dtlb_store[i].te_va,
 			                               MAP_DTLB);

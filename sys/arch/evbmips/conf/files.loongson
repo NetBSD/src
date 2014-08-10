@@ -1,4 +1,4 @@
-#	$NetBSD: files.loongson,v 1.4 2013/02/28 13:21:15 macallan Exp $
+#	$NetBSD: files.loongson,v 1.4.10.1 2014/08/10 06:53:56 tls Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -23,6 +23,9 @@ file	arch/mips/mips/mips3_clockintr.c
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
+
+# Stack-less Just-In-Time compiler
+include	"external/bsd/sljit/conf/files.sljit"
 
 include "dev/ata/files.ata"
 include "dev/scsipi/files.scsipi"

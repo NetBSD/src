@@ -1,10 +1,10 @@
-/*	$NetBSD: allowed.c,v 1.1.1.2 2010/12/12 15:18:55 adam Exp $	*/
+/*	$NetBSD: allowed.c,v 1.1.1.2.24.1 2014/08/10 07:09:43 tls Exp $	*/
 
 /* allowed.c - add allowed attributes based on ACL */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/allowed/allowed.c,v 1.3.2.4 2010/04/15 20:35:22 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2006-2010 The OpenLDAP Foundation.
+ * Copyright 2006-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,11 +49,23 @@
 #include "slap.h"
 
 /*
- * Schema from
+ * NOTE: part of the schema definition reported below is taken
+ * from Microsoft schema definitions (OID, NAME, SYNTAX);
  *
+ * EQUALITY is taken from
  * <http://www.redhat.com/archives/fedora-directory-devel/2006-August/msg00007.html>
+ * (posted by Andrew Bartlett)
  *
- * posted by Andrew Bartlett
+ * The rest is guessed.  Specifically
+ *
+ * DESC briefly describes the purpose
+ *
+ * NO-USER-MODIFICATION is added to make attributes operational
+ *
+ * USAGE is set to "dSAOperation" as per ITS#7493,
+ * to prevent replication, since this information
+ * is generated (based on ACL and identity of request)
+ * and not stored.
  */
 
 #define AA_SCHEMA_AT "1.2.840.113556.1.4"
@@ -75,7 +87,7 @@ static struct {
 		/* added by me :) */
 		"DESC 'Child classes allowed for a given object' "
 		"NO-USER-MODIFICATION "
-		"USAGE directoryOperation )", &ad_allowedChildClasses },
+		"USAGE dSAOperation )", &ad_allowedChildClasses },
 	{ "( " AA_SCHEMA_AT ".912 "
 		"NAME 'allowedChildClassesEffective' "
 		"EQUALITY objectIdentifierMatch "
@@ -83,7 +95,7 @@ static struct {
 		/* added by me :) */
 		"DESC 'Child classes allowed for a given object according to ACLs' "
 		"NO-USER-MODIFICATION "
-		"USAGE directoryOperation )", &ad_allowedChildClassesEffective },
+		"USAGE dSAOperation )", &ad_allowedChildClassesEffective },
 	{ "( " AA_SCHEMA_AT ".913 "
 		"NAME 'allowedAttributes' "
 		"EQUALITY objectIdentifierMatch "
@@ -91,7 +103,7 @@ static struct {
 		/* added by me :) */
 		"DESC 'Attributes allowed for a given object' "
 		"NO-USER-MODIFICATION "
-		"USAGE directoryOperation )", &ad_allowedAttributes },
+		"USAGE dSAOperation )", &ad_allowedAttributes },
 	{ "( " AA_SCHEMA_AT ".914 "
 		"NAME 'allowedAttributesEffective' "
 		"EQUALITY objectIdentifierMatch "
@@ -99,7 +111,7 @@ static struct {
 		/* added by me :) */
 		"DESC 'Attributes allowed for a given object according to ACLs' "
 		"NO-USER-MODIFICATION "
-		"USAGE directoryOperation )", &ad_allowedAttributesEffective },
+		"USAGE dSAOperation )", &ad_allowedAttributesEffective },
 
 	/* TODO: add objectClass stuff? */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.69 2014/03/23 15:21:15 hannken Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.69.2.1 2014/08/10 06:55:53 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.69 2014/03/23 15:21:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.69.2.1 2014/08/10 06:55:53 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -70,8 +70,6 @@ static struct sysctllog *adosfs_sysctl_log;
 int adosfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 int adosfs_loadbitmap(struct adosfsmount *);
 
-kmutex_t adosfs_hashlock;
-
 struct pool adosfs_node_pool;
 
 MALLOC_JUSTDEFINE(M_ANODE, "adosfs anode","adosfs anode structures and tables");
@@ -92,6 +90,8 @@ adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error;
 	mode_t accessmode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -167,7 +167,7 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct buf *bp;
 	struct vnode *rvp;
 	size_t bitmap_sz = 0;
-	int error, i;
+	int error;
 	uint64_t numsecs;
 	unsigned secsize;
 	unsigned long secsperblk, blksperdisk, resvblks;
@@ -260,12 +260,6 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = ffs(amp->bsize) - 1;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
 	mp->mnt_flag |= MNT_LOCAL;
-
-	/*
-	 * init anode table.
-	 */
-	for (i = 0; i < ANODEHASHSZ; i++)
-		LIST_INIT(&amp->anodetab[i]);
 
 	/*
 	 * get the root anode, if not a valid fs this will fail.
@@ -369,50 +363,55 @@ adosfs_statvfs(struct mount *mp, struct statvfs *sbp)
 }
 
 /*
- * lookup an anode, check mount's hash table if not found, create
- * return locked and referenced al la vget(vp, 1);
+ * lookup an anode, if not found, create
+ * return locked and referenced al la vget(vp, LK_EXCLUSIVE);
  */
 int
 adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 {
+	int error;
+
+	error = vcache_get(mp, &an, sizeof(an), vpp);
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+	return 0;
+}
+
+/*
+ * Initialize this vnode / anode pair.
+ * Caller assures no other thread will try to load this inode.
+ */
+int
+adosfs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
 	struct adosfsmount *amp;
-	struct vnode *vp;
 	struct anode *ap;
 	struct buf *bp;
+	ino_t an;
 	char *nam, *tmp;
 	int namlen, error;
 
-	error = 0;
+	KASSERT(key_len == sizeof(an));
+	memcpy(&an, key, key_len);
 	amp = VFSTOADOSFS(mp);
-	bp = NULL;
 
-	/*
-	 * check hash table. we are done if found
-	 */
-	if ((*vpp = adosfs_ahashget(mp, an)) != NULL)
-		return (0);
+	if ((error = bread(amp->devvp, an * amp->bsize / DEV_BSIZE,
+			   amp->bsize, NOCRED, 0, &bp)) != 0)
+		return error;
 
-	error = getnewvnode(VT_ADOSFS, mp, adosfs_vnodeop_p, NULL, &vp);
-	if (error)
-		return (error);
-
-	/*
-	 * setup, insert in hash, and lock before io.
-	 */
-	vp->v_data = ap = pool_get(&adosfs_node_pool, PR_WAITOK);
+	ap = pool_get(&adosfs_node_pool, PR_WAITOK);
 	memset(ap, 0, sizeof(struct anode));
 	ap->vp = vp;
 	ap->amp = amp;
 	ap->block = an;
 	ap->nwords = amp->nwords;
-	genfs_node_init(vp, &adosfs_genfsops);
-	adosfs_ainshash(amp, ap);
-
-	if ((error = bread(amp->devvp, an * amp->bsize / DEV_BSIZE,
-			   amp->bsize, NOCRED, 0, &bp)) != 0) {
-		vput(vp);
-		return (error);
-	}
 
 	/*
 	 * get type and fill rest in based on that.
@@ -466,9 +465,8 @@ adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 		ap->fsize = namlen;
 		break;
 	default:
-		brelse(bp, 0);
-		vput(vp);
-		return (EINVAL);
+		error = EINVAL;
+		goto bad;
 	}
 
 	/*
@@ -486,9 +484,8 @@ adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 		printf("adosfs: aget: name length too long blk %llu\n",
 		    (unsigned long long)an);
 #endif
-		brelse(bp, 0);
-		vput(vp);
-		return (EINVAL);
+		error = EINVAL;
+		goto bad;
 	}
 	memcpy(ap->name, nam, namlen);
 	ap->name[namlen] = 0;
@@ -529,15 +526,9 @@ adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 		bp = NULL;
 		error = bread(amp->devvp, ap->linkto * amp->bsize / DEV_BSIZE,
 		    amp->bsize, NOCRED, 0, &bp);
-		if (error) {
-			vput(vp);
-			return (error);
-		}
+		if (error)
+			goto bad;
 		ap->fsize = adoswordn(bp, ap->nwords - 47);
-		/*
-		 * Should ap->block be set to the real file header block?
-		 */
-		ap->block = ap->linkto;
 	}
 
 	if (ap->type == AROOT) {
@@ -584,10 +575,20 @@ adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 	ap->mtime.mins = adoswordn(bp, ap->nwords - 22);
 	ap->mtime.ticks = adoswordn(bp, ap->nwords - 21);
 
-	*vpp = vp;
 	brelse(bp, 0);
+	vp->v_tag = VT_ADOSFS;
+	vp->v_op = adosfs_vnodeop_p;
+	vp->v_data = ap;
+	genfs_node_init(vp, &adosfs_genfsops);
 	uvm_vnp_setsize(vp, ap->fsize);
-	return (0);
+	*new_key = &ap->block;
+	return 0;
+
+bad:
+	if (bp)
+		brelse(bp, 0);
+	pool_put(&adosfs_node_pool, ap);
+	return error;
 }
 
 /*
@@ -759,7 +760,6 @@ adosfs_init(void)
 {
 
 	malloc_type_attach(M_ANODE);
-	mutex_init(&adosfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	pool_init(&adosfs_node_pool, sizeof(struct anode), 0, 0, 0, "adosndpl",
 	    &pool_allocator_nointr, IPL_NONE);
 }
@@ -769,7 +769,6 @@ adosfs_done(void)
 {
 
 	pool_destroy(&adosfs_node_pool);
-	mutex_destroy(&adosfs_hashlock);
 	malloc_type_detach(M_ANODE);
 }
 
@@ -795,6 +794,7 @@ struct vfsops adosfs_vfsops = {
 	.vfs_statvfs = adosfs_statvfs,
 	.vfs_sync = adosfs_sync,
 	.vfs_vget = adosfs_vget,
+	.vfs_loadvnode = adosfs_loadvnode,
 	.vfs_fhtovp = adosfs_fhtovp,
 	.vfs_vptofh = adosfs_vptofh,
 	.vfs_init = adosfs_init,

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.143 2014/03/24 13:42:40 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.143.2.1 2014/08/10 06:56:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.143 2014/03/24 13:42:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.143.2.1 2014/08/10 06:56:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -123,6 +123,8 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_setattr_desc, spec_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
+	{ &vop_fallocate_desc, spec_fallocate },	/* fallocate */
+	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */
 	{ &vop_fcntl_desc, spec_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
@@ -835,6 +837,46 @@ spec_write(void *v)
 		panic("spec_write type");
 	}
 	/* NOTREACHED */
+}
+
+/*
+ * fdiscard, which on disk devices becomes TRIM.
+ */
+int
+spec_fdiscard(void *v)
+{
+	struct vop_fdiscard_args /* {
+		struct vnode *a_vp;
+		off_t a_pos;
+		off_t a_len;
+	} */ *ap = v;
+	struct vnode *vp;
+	dev_t dev;
+
+	vp = ap->a_vp;
+	dev = NODEV;
+
+	mutex_enter(vp->v_interlock);
+	if (vdead_check(vp, VDEAD_NOWAIT) == 0 && vp->v_specnode != NULL) {
+		dev = vp->v_rdev;
+	}
+	mutex_exit(vp->v_interlock);
+
+	if (dev == NODEV) {
+		return ENXIO;
+	}
+
+	switch (vp->v_type) {
+	    case VCHR:
+		// this is not stored for character devices
+		//KASSERT(vp == vp->v_specnode->sn_dev->sd_cdevvp);
+		return cdev_discard(dev, ap->a_pos, ap->a_len);
+	    case VBLK:
+		KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
+		return bdev_discard(dev, ap->a_pos, ap->a_len);
+	    default:
+		panic("spec_fdiscard: not a device\n");
+	}
 }
 
 /*

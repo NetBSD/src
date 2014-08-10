@@ -1,9 +1,9 @@
-/*	$NetBSD: slapd-search.c,v 1.1.1.3 2010/12/12 15:24:17 adam Exp $	*/
+/*	$NetBSD: slapd-search.c,v 1.1.1.3.24.1 2014/08/10 07:09:52 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/tests/progs/slapd-search.c,v 1.41.2.12 2010/04/13 20:23:59 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,7 @@ usage( char *name, char o )
 		"[-C] "
 		"[-F] "
 		"[-N] "
-		"[-S] "
+		"[-S[S[S]]] "
 		"[-i <ignore>] "
 		"[-l <loops>] "
 		"[-L <outerloops>] "
@@ -85,7 +85,10 @@ usage( char *name, char o )
 	exit( EXIT_FAILURE );
 }
 
-/* Just send requests without reading responses */
+/* -S: just send requests without reading responses
+ * -SS: send all requests asynchronous and immediately start reading responses
+ * -SSS: send all requests asynchronous; then read responses
+ */
 static int swamp;
 
 int
@@ -391,7 +394,12 @@ do_search( char *uri, char *manager, struct berval *passwd,
 	int     rc = LDAP_SUCCESS;
 	int	version = LDAP_VERSION3;
 	char	buf[ BUFSIZ ];
+	int		*msgids = NULL, active = 0;
 
+	/* make room for msgid */
+	if ( swamp > 1 ) {
+		msgids = (int *)calloc( sizeof(int), innerloop );
+	}
 
 retry:;
 	if ( ld == NULL ) {
@@ -442,49 +450,161 @@ retry:;
 		}
 	}
 
-	for ( ; i < innerloop; i++ ) {
-		LDAPMessage *res = NULL;
+	if ( swamp > 1 ) {
+		do {
+			LDAPMessage *res = NULL;
+			int j, msgid;
 
-		if (swamp) {
-			int msgid;
-			rc = ldap_search_ext( ld, sbase, scope,
-					filter, NULL, noattrs, NULL, NULL,
-					NULL, LDAP_NO_LIMIT, &msgid );
-			if ( rc == LDAP_SUCCESS ) continue;
-			else break;
-		}
+			if ( i < innerloop ) {
+				rc = ldap_search_ext( ld, sbase, scope,
+						filter, NULL, noattrs, NULL, NULL,
+						NULL, LDAP_NO_LIMIT, &msgids[i] );
 
-		rc = ldap_search_ext_s( ld, sbase, scope,
-				filter, attrs, noattrs, NULL, NULL,
-				NULL, LDAP_NO_LIMIT, &res );
-		if ( res != NULL ) {
-			ldap_msgfree( res );
-		}
+				active++;
+#if 0
+				fprintf( stderr,
+					">>> PID=%ld - Search maxloop=%d cnt=%d active=%d msgid=%d: "
+					"base=\"%s\" scope=%s filter=\"%s\"\n",
+					(long) pid, innerloop, i, active, msgids[i],
+					sbase, ldap_pvt_scope2str( scope ), filter );
+#endif
+				i++;
 
-		if ( rc ) {
-			int first = tester_ignore_err( rc );
-			/* if ignore.. */
-			if ( first ) {
-				/* only log if first occurrence */
-				if ( ( force < 2 && first > 0 ) || abs(first) == 1 ) {
-					tester_ldap_error( ld, "ldap_search_ext_s", NULL );
+				if ( rc ) {
+					int first = tester_ignore_err( rc );
+					/* if ignore.. */
+					if ( first ) {
+						/* only log if first occurrence */
+						if ( ( force < 2 && first > 0 ) || abs(first) == 1 ) {
+							tester_ldap_error( ld, "ldap_search_ext", NULL );
+						}
+						continue;
+					}
+		
+					/* busy needs special handling */
+					snprintf( buf, sizeof( buf ),
+						"base=\"%s\" filter=\"%s\"\n",
+						sbase, filter );
+					tester_ldap_error( ld, "ldap_search_ext", buf );
+					if ( rc == LDAP_BUSY && do_retry > 0 ) {
+						ldap_unbind_ext( ld, NULL, NULL );
+						ld = NULL;
+						do_retry--;
+						goto retry;
+					}
+					break;
 				}
-				continue;
+
+				if ( swamp > 2 ) {
+					continue;
+				}
 			}
 
-			/* busy needs special handling */
-			snprintf( buf, sizeof( buf ),
-				"base=\"%s\" filter=\"%s\"\n",
-				sbase, filter );
-			tester_ldap_error( ld, "ldap_search_ext_s", buf );
-			if ( rc == LDAP_BUSY && do_retry > 0 ) {
-				ldap_unbind_ext( ld, NULL, NULL );
-				ld = NULL;
-				do_retry--;
-				goto retry;
+			rc = ldap_result( ld, LDAP_RES_ANY, 0, NULL, &res );
+			switch ( rc ) {
+			case -1:
+				/* gone really bad */
+				goto cleanup;
+	
+			case 0:
+				/* timeout (impossible) */
+				break;
+	
+			case LDAP_RES_SEARCH_ENTRY:
+			case LDAP_RES_SEARCH_REFERENCE:
+				/* ignore */
+				break;
+	
+			case LDAP_RES_SEARCH_RESULT:
+				/* just remove, no error checking (TODO?) */
+				msgid = ldap_msgid( res );
+				ldap_parse_result( ld, res, &rc, NULL, NULL, NULL, NULL, 1 );
+				res = NULL;
+
+				/* linear search, bah */
+				for ( j = 0; j < i; j++ ) {
+					if ( msgids[ j ] == msgid ) {
+						msgids[ j ] = -1;
+						active--;
+#if 0
+						fprintf( stderr,
+							"<<< PID=%ld - SearchDone maxloop=%d cnt=%d active=%d msgid=%d: "
+							"base=\"%s\" scope=%s filter=\"%s\"\n",
+							(long) pid, innerloop, j, active, msgid,
+							sbase, ldap_pvt_scope2str( scope ), filter );
+#endif
+						break;
+					}
+				}
+				break;
+
+			default:
+				/* other messages unexpected */
+				fprintf( stderr,
+					"### PID=%ld - Search(%d): "
+					"base=\"%s\" scope=%s filter=\"%s\" "
+					"attrs=%s%s. unexpected response tag=%d\n",
+					(long) pid, innerloop,
+					sbase, ldap_pvt_scope2str( scope ), filter,
+					attrs[0], attrs[1] ? " (more...)" : "", rc );
+				break;
 			}
-			break;
+
+			if ( res != NULL ) {
+				ldap_msgfree( res );
+			}
+		} while ( i < innerloop || active > 0 );
+
+	} else {
+		for ( ; i < innerloop; i++ ) {
+			LDAPMessage *res = NULL;
+
+			if (swamp) {
+				int msgid;
+				rc = ldap_search_ext( ld, sbase, scope,
+						filter, NULL, noattrs, NULL, NULL,
+						NULL, LDAP_NO_LIMIT, &msgid );
+				if ( rc == LDAP_SUCCESS ) continue;
+				else break;
+			}
+	
+			rc = ldap_search_ext_s( ld, sbase, scope,
+					filter, attrs, noattrs, NULL, NULL,
+					NULL, LDAP_NO_LIMIT, &res );
+			if ( res != NULL ) {
+				ldap_msgfree( res );
+			}
+	
+			if ( rc ) {
+				int first = tester_ignore_err( rc );
+				/* if ignore.. */
+				if ( first ) {
+					/* only log if first occurrence */
+					if ( ( force < 2 && first > 0 ) || abs(first) == 1 ) {
+						tester_ldap_error( ld, "ldap_search_ext_s", NULL );
+					}
+					continue;
+				}
+	
+				/* busy needs special handling */
+				snprintf( buf, sizeof( buf ),
+					"base=\"%s\" filter=\"%s\"\n",
+					sbase, filter );
+				tester_ldap_error( ld, "ldap_search_ext_s", buf );
+				if ( rc == LDAP_BUSY && do_retry > 0 ) {
+					ldap_unbind_ext( ld, NULL, NULL );
+					ld = NULL;
+					do_retry--;
+					goto retry;
+				}
+				break;
+			}
 		}
+	}
+
+cleanup:;
+	if ( msgids != NULL ) {
+		free( msgids );
 	}
 
 	if ( ldp != NULL ) {

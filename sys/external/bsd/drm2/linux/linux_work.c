@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.2.2.1 2014/08/10 06:55:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.2.2.1 2014/08/10 06:55:40 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,7 +129,7 @@ alloc_ordered_workqueue(const char *name, int linux_flags)
 		return NULL;
 	}
 
-	mutex_init(&wq->wq_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&wq->wq_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&wq->wq_cv, name);
 	TAILQ_INIT(&wq->wq_delayed);
 	wq->wq_current_work = NULL;
@@ -202,6 +202,15 @@ struct wq_flush {
 };
 
 void
+flush_work(struct work_struct *work)
+{
+	struct workqueue_struct *const wq = work->w_wq;
+
+	if (wq != NULL)
+		flush_workqueue(wq);
+}
+
+void
 flush_workqueue(struct workqueue_struct *wq)
 {
 	static const struct wq_flush zero_wqf;
@@ -272,24 +281,49 @@ linux_wq_barrier(struct work_struct *work)
  *
  * We use __cpu_simple_lock(9) rather than mutex(9) because Linux code
  * does not destroy work, so there is nowhere to call mutex_destroy.
+ *
+ * XXX This is getting out of hand...  Really, work items shouldn't
+ * have locks in them at all; instead the workqueues should.
  */
 
 static void
 linux_work_lock_init(struct work_struct *work)
 {
+
 	__cpu_simple_lock_init(&work->w_lock);
 }
 
 static void
 linux_work_lock(struct work_struct *work)
 {
+	struct cpu_info *ci;
+	int cnt, s;
+
+	/* XXX Copypasta of MUTEX_SPIN_SPLRAISE.  */
+	s = splvm();
+	ci = curcpu();
+	cnt = ci->ci_mtx_count--;
+	__insn_barrier();
+	if (cnt == 0)
+		ci->ci_mtx_oldspl = s;
+
 	__cpu_simple_lock(&work->w_lock);
 }
 
 static void
 linux_work_unlock(struct work_struct *work)
 {
+	struct cpu_info *ci;
+	int s;
+
 	__cpu_simple_unlock(&work->w_lock);
+
+	/* XXX Copypasta of MUTEX_SPIN_SPLRESTORE.  */
+	ci = curcpu();
+	s = ci->ci_mtx_oldspl;
+	__insn_barrier();
+	if (++ci->ci_mtx_count == 0)
+		splx(s);
 }
 
 static bool __diagused
@@ -312,15 +346,17 @@ INIT_WORK(struct work_struct *work, void (*fn)(struct work_struct *))
 	work->w_fn = fn;
 }
 
-void
+bool
 schedule_work(struct work_struct *work)
 {
-	queue_work(system_wq, work);
+	return queue_work(system_wq, work);
 }
 
-void
+bool
 queue_work(struct workqueue_struct *wq, struct work_struct *work)
 {
+	/* True if we put it on the queue, false if it was already there.  */
+	bool newly_queued;
 
 	KASSERT(wq != NULL);
 
@@ -331,6 +367,7 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 		work->w_state = WORK_PENDING;
 		work->w_wq = wq;
 		workqueue_enqueue(wq->wq_workqueue, &work->w_wk, NULL);
+		newly_queued = true;
 		break;
 
 	case WORK_DELAYED:
@@ -339,9 +376,11 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 
 	case WORK_PENDING:
 		KASSERT(work->w_wq == wq);
+		newly_queued = false;
 		break;
 
 	case WORK_CANCELLED:
+		newly_queued = false;
 		break;
 
 	case WORK_DELAYED_CANCELLED:
@@ -353,6 +392,8 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 		break;
 	}
 	linux_work_unlock(work);
+
+	return newly_queued;
 }
 
 bool
@@ -506,16 +547,17 @@ INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct work_struct *))
 	INIT_WORK(&dw->work, fn);
 }
 
-void
+bool
 schedule_delayed_work(struct delayed_work *dw, unsigned long ticks)
 {
-	queue_delayed_work(system_wq, dw, ticks);
+	return queue_delayed_work(system_wq, dw, ticks);
 }
 
-void
+bool
 queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
     unsigned long ticks)
 {
+	bool newly_queued;
 
 	KASSERT(wq != NULL);
 
@@ -537,6 +579,7 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			dw->work.w_wq = wq;
 			TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
 		}
+		newly_queued = true;
 		break;
 
 	case WORK_DELAYED:
@@ -545,15 +588,18 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 		 * whenever it was going to time out, as Linux does --
 		 * neither speed it up nor postpone it.
 		 */
+		newly_queued = false;
 		break;
 
 	case WORK_PENDING:
 		KASSERT(dw->work.w_wq == wq);
+		newly_queued = false;
 		break;
 
 	case WORK_CANCELLED:
 	case WORK_DELAYED_CANCELLED:
 		/* XXX Wait for cancellation and then queue?  */
+		newly_queued = false;
 		break;
 
 	default:
@@ -562,6 +608,66 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 		break;
 	}
 	linux_work_unlock(&dw->work);
+
+	return newly_queued;
+}
+
+bool
+mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
+    unsigned long ticks)
+{
+	bool timer_modified;
+
+	KASSERT(wq != NULL);
+
+	linux_work_lock(&dw->work);
+	switch (dw->work.w_state) {
+	case WORK_IDLE:
+	case WORK_INVOKED:
+		if (ticks == 0) {
+			/* Skip the delay and queue it now.  */
+			dw->work.w_state = WORK_PENDING;
+			dw->work.w_wq = wq;
+			workqueue_enqueue(wq->wq_workqueue, &dw->work.w_wk,
+			    NULL);
+		} else {
+			callout_init(&dw->dw_callout, CALLOUT_MPSAFE);
+			callout_reset(&dw->dw_callout, ticks,
+			    &linux_worker_intr, dw);
+			dw->work.w_state = WORK_DELAYED;
+			dw->work.w_wq = wq;
+			TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
+		}
+		timer_modified = false;
+		break;
+
+	case WORK_DELAYED:
+		/*
+		 * Timer is already ticking.  Reschedule it.
+		 */
+		callout_schedule(&dw->dw_callout, ticks);
+		timer_modified = true;
+		break;
+
+	case WORK_PENDING:
+		KASSERT(dw->work.w_wq == wq);
+		timer_modified = false;
+		break;
+
+	case WORK_CANCELLED:
+	case WORK_DELAYED_CANCELLED:
+		/* XXX Wait for cancellation and then queue?  */
+		timer_modified = false;
+		break;
+
+	default:
+		panic("delayed work %p in bad state: %d", dw,
+		    (int)dw->work.w_state);
+		break;
+	}
+	linux_work_unlock(&dw->work);
+
+	return timer_modified;
 }
 
 bool
@@ -622,6 +728,7 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 		dw->work.w_state = WORK_CANCELLED;
 		linux_wait_for_cancelled_work(&dw->work);
 		cancelled_p = true;
+		break;
 
 	case WORK_INVOKED:
 		linux_wait_for_invoked_work(&dw->work);

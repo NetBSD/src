@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.112 2012/02/19 21:06:00 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.112.12.1 2014/08/10 06:53:49 tls Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.112 2012/02/19 21:06:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.112.12.1 2014/08/10 06:53:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2 = lwp_getpcb(l2);
 
 	l2->l_md.md_tf = l1->l_md.md_tf;
-	l2->l_md.md_flags = l1->l_md.md_flags & (MDLWP_FPUSED | MDLWP_FP_C);
+	l2->l_md.md_flags = l1->l_md.md_flags & MDLWP_FP_C;
 	l2->l_md.md_astpending = 0;
 
 	/*

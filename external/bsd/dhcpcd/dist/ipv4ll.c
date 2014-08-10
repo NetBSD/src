@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4ll.c,v 1.1.1.9 2014/02/25 13:14:29 roy Exp $");
+ __RCSID("$NetBSD: ipv4ll.c,v 1.1.1.9.2.1 2014/08/10 07:06:59 tls Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -40,9 +40,9 @@
 #include "common.h"
 #include "dhcp.h"
 #include "eloop.h"
+#include "if.h"
 #include "if-options.h"
 #include "ipv4ll.h"
-#include "net.h"
 
 static struct dhcp_message *
 ipv4ll_make_lease(uint32_t addr)
@@ -79,8 +79,7 @@ ipv4ll_find_lease(uint32_t old_addr)
 
 	for (;;) {
 		addr = htonl(LINKLOCAL_ADDR |
-		    (((uint32_t)abs((int)arc4random())
-			% 0xFD00) + 0x0100));
+		    (uint32_t)(abs((int)arc4random_uniform(0xFD00)) + 0x0100));
 		if (addr != old_addr &&
 		    IN_LINKLOCAL(ntohl(addr)))
 			break;

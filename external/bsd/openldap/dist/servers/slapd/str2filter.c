@@ -1,10 +1,10 @@
-/*	$NetBSD: str2filter.c,v 1.1.1.3 2010/12/12 15:22:48 adam Exp $	*/
+/*	$NetBSD: str2filter.c,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* str2filter.c - parse an RFC 4515 string filter */
-/* OpenLDAP: pkg/ldap/servers/slapd/str2filter.c,v 1.43.2.5 2010/04/13 20:23:21 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

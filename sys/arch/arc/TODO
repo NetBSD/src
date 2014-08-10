@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.29 2011/01/08 09:44:37 tsutsui Exp $
+$NetBSD: TODO,v 1.29.32.1 2014/08/10 06:53:50 tls Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
@@ -62,8 +62,6 @@ XXX some entries might be obsolete.
     o	remove UADDR
 
     o	fix mem_clusters[] usage.
-
-    o	intrcnt[] name cleanup, use MI evcnt(9)
 
     o	redesign interrupt handler framework.
 

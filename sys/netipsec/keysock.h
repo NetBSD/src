@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.6 2008/04/23 07:29:47 thorpej Exp $	*/
+/*	$NetBSD: keysock.h,v 1.6.62.1 2014/08/10 06:56:34 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
@@ -71,14 +71,6 @@ struct keycb {
 };
 
 int key_output (struct mbuf *, ...);
-#ifndef __NetBSD__
-int key_usrreq (struct socket *,
-	int, struct mbuf *, struct mbuf *, struct mbuf *);
-#else
-int key_usrreq (struct socket *,
-	int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
-#endif
-
 int key_sendup (struct socket *, struct sadb_msg *, u_int, int);
 int key_sendup_mbuf (struct socket *, struct mbuf *, int);
 #endif /* _KERNEL */

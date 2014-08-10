@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_bio_ops.c,v 1.1.1.4 2013/01/02 18:59:04 tron Exp $	*/
+/*	$NetBSD: tls_bio_ops.c,v 1.1.1.4.6.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -205,41 +205,6 @@ int     tls_bio(int fd, int timeout, TLS_SESS_STATE *TLScontext,
 	else
 	    msg_panic("%s: nothing to do here", myname);
 	err = SSL_get_error(TLScontext->con, status);
-
-#if (OPENSSL_VERSION_NUMBER <= 0x0090581fL)
-
-	/*
-	 * There is a bug up to and including OpenSSL-0.9.5a: if an error
-	 * occurs while checking the peers certificate due to some
-	 * certificate error (e.g. as happend with a RSA-padding error), the
-	 * error is put onto the error stack. If verification is not
-	 * enforced, this error should be ignored, but the error-queue is not
-	 * cleared, so we can find this error here. The bug has been fixed on
-	 * May 28, 2000.
-	 * 
-	 * This bug so far has only manifested as 4800:error:0407006A:rsa
-	 * routines:RSA_padding_check_PKCS1_type_1:block type is not
-	 * 01:rsa_pk1.c:100: 4800:error:04067072:rsa
-	 * routines:RSA_EAY_PUBLIC_DECRYPT:padding check
-	 * failed:rsa_eay.c:396: 4800:error:0D079006:asn1 encoding
-	 * routines:ASN1_verify:bad get asn1 object call:a_verify.c:109: so
-	 * that we specifically test for this error. We print the errors to
-	 * the logfile and automatically clear the error queue. Then we retry
-	 * to get another error code. We cannot do better, since we can only
-	 * retrieve the last entry of the error-queue without actually
-	 * cleaning it on the way.
-	 * 
-	 * This workaround is secure, as verify_result is set to "failed"
-	 * anyway.
-	 */
-	if (err == SSL_ERROR_SSL) {
-	    if (ERR_peek_error() == 0x0407006AL) {
-		tls_print_errors();
-		msg_info("OpenSSL <= 0.9.5a workaround called: certificate errors ignored");
-		err = SSL_get_error(TLScontext->con, status);
-	    }
-	}
-#endif
 
 	/*
 	 * Correspondence between SSL_ERROR_* error codes and tls_bio_(read,

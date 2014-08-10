@@ -1,10 +1,10 @@
-/*	$NetBSD: slapcommon.c,v 1.1.1.3 2010/12/12 15:22:48 adam Exp $	*/
+/*	$NetBSD: slapcommon.c,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* slapcommon.c - common routine for the slap tools */
-/* OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.73.2.20 2010/04/14 22:59:10 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -94,7 +94,7 @@ usage( int tool, const char *progname )
 		break;
 
 	case SLAPTEST:
-		options = " [-n databasenumber] [-u]\n";
+		options = " [-n databasenumber] [-u] [-Q]\n";
 		break;
 
 	case SLAPSCHEMA:
@@ -110,7 +110,7 @@ usage( int tool, const char *progname )
 }
 
 static int
-parse_slapopt( void )
+parse_slapopt( int tool, int *mode )
 {
 	size_t	len = 0;
 	char	*p;
@@ -194,6 +194,63 @@ parse_slapopt( void )
 #endif /* LOG_LOCAL4 */
 #endif /* LDAP_DEBUG && LDAP_SYSLOG */
 
+	} else if ( strncasecmp( optarg, "schema-check", len ) == 0 ) {
+		switch ( tool ) {
+		case SLAPADD:
+			if ( strcasecmp( p, "yes" ) == 0 ) {
+				*mode &= ~SLAP_TOOL_NO_SCHEMA_CHECK;
+			} else if ( strcasecmp( p, "no" ) == 0 ) {
+				*mode |= SLAP_TOOL_NO_SCHEMA_CHECK;
+			} else {
+				Debug( LDAP_DEBUG_ANY, "unable to parse schema-check=\"%s\".\n", p, 0, 0 );
+				return -1;
+			}
+			break;
+
+		default:
+			Debug( LDAP_DEBUG_ANY, "schema-check meaningless for tool.\n", 0, 0, 0 );
+			break;
+		}
+
+	} else if ( strncasecmp( optarg, "value-check", len ) == 0 ) {
+		switch ( tool ) {
+		case SLAPADD:
+			if ( strcasecmp( p, "yes" ) == 0 ) {
+				*mode |= SLAP_TOOL_VALUE_CHECK;
+			} else if ( strcasecmp( p, "no" ) == 0 ) {
+				*mode &= ~SLAP_TOOL_VALUE_CHECK;
+			} else {
+				Debug( LDAP_DEBUG_ANY, "unable to parse value-check=\"%s\".\n", p, 0, 0 );
+				return -1;
+			}
+			break;
+
+		default:
+			Debug( LDAP_DEBUG_ANY, "value-check meaningless for tool.\n", 0, 0, 0 );
+			break;
+		}
+
+	} else if ( strncasecmp( optarg, "ldif-wrap", len ) == 0 ) {
+		switch ( tool ) {
+		case SLAPCAT:
+			if ( strcasecmp( p, "no" ) == 0 ) {
+				ldif_wrap = LDIF_LINE_WIDTH_MAX;
+
+			} else {
+				unsigned int u;
+				if ( lutil_atou( &u, p ) ) {
+					Debug( LDAP_DEBUG_ANY, "unable to parse ldif-wrap=\"%s\".\n", p, 0, 0 );
+					return -1;
+				}
+				ldif_wrap = (ber_len_t)u;
+			}
+			break;
+
+		default:
+			Debug( LDAP_DEBUG_ANY, "value-check meaningless for tool.\n", 0, 0, 0 );
+			break;
+		}
+
 	} else {
 		return -1;
 	}
@@ -248,6 +305,8 @@ slap_tool_init(
 	free( leakfilename );
 	leakfilename = NULL;
 #endif
+
+	ldif_wrap = LDIF_LINE_WIDTH;
 
 	scope = LDAP_SCOPE_DEFAULT;
 
@@ -395,7 +454,7 @@ slap_tool_init(
 			} break;
 
 		case 'j':	/* jump to linenumber */
-			if ( lutil_atoi( &jumpline, optarg ) ) {
+			if ( lutil_atoul( &jumpline, optarg ) ) {
 				usage( tool, progname );
 			}
 			break;
@@ -422,7 +481,7 @@ slap_tool_init(
 			break;
 
 		case 'o':
-			if ( parse_slapopt() ) {
+			if ( parse_slapopt( tool, &mode ) ) {
 				usage( tool, progname );
 			}
 			break;
@@ -455,11 +514,19 @@ slap_tool_init(
 			}
 			break;
 
-		case 's':	/* dump subtree */
-			if ( tool == SLAPADD )
+		case 's':
+			switch ( tool ) {
+			case SLAPADD:
+				/* no schema check */
 				mode |= SLAP_TOOL_NO_SCHEMA_CHECK;
-			else if ( tool == SLAPCAT || tool == SLAPSCHEMA )
+				break;
+
+			case SLAPCAT:
+			case SLAPSCHEMA:
+				/* dump subtree */
 				subtree = ch_strdup( optarg );
+				break;
+			}
 			break;
 
 		case 't':	/* turn on truncate */
@@ -895,4 +962,261 @@ int slap_tool_destroy( void )
 	return rc;
 }
 
+int
+slap_tool_update_ctxcsn(
+	const char *progname,
+	unsigned long sid,
+	struct berval *bvtext )
+{
+	struct berval ctxdn;
+	ID ctxcsn_id;
+	Entry *ctxcsn_e;
+	int rc = EXIT_SUCCESS;
+
+	if ( !(update_ctxcsn && !dryrun && sid != SLAP_SYNC_SID_MAX + 1) ) {
+		return rc;
+	}
+
+	if ( SLAP_SYNC_SUBENTRY( be )) {
+		build_new_dn( &ctxdn, &be->be_nsuffix[0],
+			(struct berval *)&slap_ldapsync_cn_bv, NULL );
+	} else {
+		ctxdn = be->be_nsuffix[0];
+	}
+	ctxcsn_id = be->be_dn2id_get( be, &ctxdn );
+	if ( ctxcsn_id == NOID ) {
+		if ( SLAP_SYNC_SUBENTRY( be )) {
+			ctxcsn_e = slap_create_context_csn_entry( be, NULL );
+			for ( sid = 0; sid <= SLAP_SYNC_SID_MAX; sid++ ) {
+				if ( maxcsn[ sid ].bv_len ) {
+					attr_merge_one( ctxcsn_e, slap_schema.si_ad_contextCSN,
+						&maxcsn[ sid ], NULL );
+				}
+			}
+			ctxcsn_id = be->be_entry_put( be, ctxcsn_e, bvtext );
+			if ( ctxcsn_id == NOID ) {
+				fprintf( stderr, "%s: couldn't create context entry\n", progname );
+				rc = EXIT_FAILURE;
+			}
+		} else {
+			fprintf( stderr, "%s: context entry is missing\n", progname );
+			rc = EXIT_FAILURE;
+		}
+	} else {
+		ctxcsn_e = be->be_entry_get( be, ctxcsn_id );
+		if ( ctxcsn_e != NULL ) {
+			Entry *e = entry_dup( ctxcsn_e );
+			int change;
+			Attribute *attr = attr_find( e->e_attrs, slap_schema.si_ad_contextCSN );
+			if ( attr ) {
+				int		i;
+
+				change = 0;
+
+				for ( i = 0; !BER_BVISNULL( &attr->a_nvals[ i ] ); i++ ) {
+					int rc_sid;
+					int match;
+					const char *text = NULL;
+
+					rc_sid = slap_parse_csn_sid( &attr->a_nvals[ i ] );
+					if ( rc_sid < 0 ) {
+						Debug( LDAP_DEBUG_ANY,
+							"%s: unable to extract SID "
+							"from #%d contextCSN=%s\n",
+							progname, i,
+							attr->a_nvals[ i ].bv_val );
+						continue;
+					}
+
+					assert( rc_sid <= SLAP_SYNC_SID_MAX );
+
+					sid = (unsigned)rc_sid;
+
+					if ( maxcsn[ sid ].bv_len == 0 ) {
+						match = -1;
+
+					} else {
+						value_match( &match, slap_schema.si_ad_entryCSN,
+							slap_schema.si_ad_entryCSN->ad_type->sat_ordering,
+							SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
+							&maxcsn[ sid ], &attr->a_nvals[i], &text );
+					}
+
+					if ( match > 0 ) {
+						change = 1;
+					} else {
+						AC_MEMCPY( maxcsn[ sid ].bv_val,
+							attr->a_nvals[ i ].bv_val,
+							attr->a_nvals[ i ].bv_len );
+						maxcsn[ sid ].bv_val[ attr->a_nvals[ i ].bv_len ] = '\0';
+						maxcsn[ sid ].bv_len = attr->a_nvals[ i ].bv_len;
+					}
+				}
+
+				if ( change ) {
+					if ( attr->a_nvals != attr->a_vals ) {
+						ber_bvarray_free( attr->a_nvals );
+					}
+					attr->a_nvals = NULL;
+					ber_bvarray_free( attr->a_vals );
+					attr->a_vals = NULL;
+					attr->a_numvals = 0;
+				}
+			} else {
+				change = 1;
+			}
+
+			if ( change ) {
+				for ( sid = 0; sid <= SLAP_SYNC_SID_MAX; sid++ ) {
+					if ( maxcsn[ sid ].bv_len ) {
+						attr_merge_one( e, slap_schema.si_ad_contextCSN,
+							&maxcsn[ sid], NULL );
+					}
+				}
+
+				ctxcsn_id = be->be_entry_modify( be, e, bvtext );
+				if( ctxcsn_id == NOID ) {
+					fprintf( stderr, "%s: could not modify ctxcsn (%s)\n",
+						progname, bvtext->bv_val ? bvtext->bv_val : "" );
+					rc = EXIT_FAILURE;
+				} else if ( verbose ) {
+					fprintf( stderr, "modified: \"%s\" (%08lx)\n",
+						e->e_dn, (long) ctxcsn_id );
+				}
+			}
+			entry_free( e );
+		}
+	} 
+
+	return rc;
+}
+
+/*
+ * return value:
+ *	-1:			update_ctxcsn == 0
+ *	SLAP_SYNC_SID_MAX + 1:	unable to extract SID
+ *	0 <= SLAP_SYNC_SID_MAX:	the SID
+ */
+unsigned long
+slap_tool_update_ctxcsn_check(
+	const char *progname,
+	Entry *e )
+{
+	if ( update_ctxcsn ) {
+		unsigned long sid = SLAP_SYNC_SID_MAX + 1;
+		int rc_sid;
+		Attribute *attr;
+
+		attr = attr_find( e->e_attrs, slap_schema.si_ad_entryCSN );
+		assert( attr != NULL );
+
+		rc_sid = slap_parse_csn_sid( &attr->a_nvals[ 0 ] );
+		if ( rc_sid < 0 ) {
+			Debug( LDAP_DEBUG_ANY, "%s: could not "
+				"extract SID from entryCSN=%s, entry dn=\"%s\"\n",
+				progname, attr->a_nvals[ 0 ].bv_val, e->e_name.bv_val );
+			return (unsigned long)(-1);
+
+		} else {
+			int match;
+			const char *text = NULL;
+
+			assert( rc_sid <= SLAP_SYNC_SID_MAX );
+
+			sid = (unsigned)rc_sid;
+			if ( maxcsn[ sid ].bv_len != 0 ) {
+				match = 0;
+				value_match( &match, slap_schema.si_ad_entryCSN,
+					slap_schema.si_ad_entryCSN->ad_type->sat_ordering,
+					SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
+					&maxcsn[ sid ], &attr->a_nvals[0], &text );
+			} else {
+				match = -1;
+			}
+			if ( match < 0 ) {
+				strcpy( maxcsn[ sid ].bv_val, attr->a_nvals[0].bv_val );
+				maxcsn[ sid ].bv_len = attr->a_nvals[0].bv_len;
+			}
+		}
+	}
+
+	return (unsigned long)(-1);
+}
+
+int
+slap_tool_update_ctxcsn_init(void)
+{
+	if ( update_ctxcsn ) {
+		unsigned long sid;
+		maxcsn[ 0 ].bv_val = maxcsnbuf;
+		for ( sid = 1; sid <= SLAP_SYNC_SID_MAX; sid++ ) {
+			maxcsn[ sid ].bv_val = maxcsn[ sid - 1 ].bv_val + LDAP_PVT_CSNSTR_BUFSIZE;
+			maxcsn[ sid ].bv_len = 0;
+		}
+	}
+
+	return 0;
+}
+
+int
+slap_tool_entry_check(
+	const char *progname,
+	Operation *op,
+	Entry *e,
+	int lineno,
+	const char **text,
+	char *textbuf,
+	size_t textlen )
+{
+	/* NOTE: we may want to conditionally enable manage */
+	int manage = 0;
+
+	Attribute *oc = attr_find( e->e_attrs,
+		slap_schema.si_ad_objectClass );
+
+	if( oc == NULL ) {
+		fprintf( stderr, "%s: dn=\"%s\" (line=%d): %s\n",
+			progname, e->e_dn, lineno,
+			"no objectClass attribute");
+		return LDAP_NO_SUCH_ATTRIBUTE;
+	}
+
+	/* check schema */
+	op->o_bd = be;
+
+	if ( (slapMode & SLAP_TOOL_NO_SCHEMA_CHECK) == 0) {
+		int rc = entry_schema_check( op, e, NULL, manage, 1, NULL,
+			text, textbuf, textlen );
+
+		if( rc != LDAP_SUCCESS ) {
+			fprintf( stderr, "%s: dn=\"%s\" (line=%d): (%d) %s\n",
+				progname, e->e_dn, lineno, rc, *text );
+			return rc;
+		}
+		textbuf[ 0 ] = '\0';
+	}
+
+	if ( (slapMode & SLAP_TOOL_VALUE_CHECK) != 0) {
+		Modifications *ml = NULL;
+
+		int rc = slap_entry2mods( e, &ml, text, textbuf, textlen );
+		if ( rc != LDAP_SUCCESS ) {
+			fprintf( stderr, "%s: dn=\"%s\" (line=%d): (%d) %s\n",
+				progname, e->e_dn, lineno, rc, *text );
+			return rc;
+		}
+		textbuf[ 0 ] = '\0';
+
+		rc = slap_mods_check( op, ml, text, textbuf, textlen, NULL );
+		slap_mods_free( ml, 1 );
+		if ( rc != LDAP_SUCCESS ) {
+			fprintf( stderr, "%s: dn=\"%s\" (line=%d): (%d) %s\n",
+				progname, e->e_dn, lineno, rc, *text );
+			return rc;
+		}
+		textbuf[ 0 ] = '\0';
+	}
+
+	return LDAP_SUCCESS;
+}
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: abandon.c,v 1.1.1.3 2010/12/12 15:21:29 adam Exp $	*/
+/*	$NetBSD: abandon.c,v 1.1.1.3.24.1 2014/08/10 07:09:47 tls Exp $	*/
 
 /* abandon.c */
-/* OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.41.2.12 2010/04/13 20:22:55 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,18 +73,14 @@ ldap_abandon_ext(
 	Debug( LDAP_DEBUG_TRACE, "ldap_abandon_ext %d\n", msgid, 0, 0 );
 
 	/* check client controls */
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &ld->ld_req_mutex );
 
 	rc = ldap_int_client_controls( ld, cctrls );
 	if ( rc == LDAP_SUCCESS ) {
 		rc = do_abandon( ld, msgid, msgid, sctrls, 1 );
 	}
 
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &ld->ld_req_mutex );
 
 	return rc;
 }
@@ -117,16 +113,9 @@ ldap_pvt_discard(
 {
 	int	rc;
 
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
-#endif
-
+	LDAP_MUTEX_LOCK( &ld->ld_req_mutex );
 	rc = do_abandon( ld, msgid, msgid, NULL, 0 );
-
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
-#endif
-
+	LDAP_MUTEX_UNLOCK( &ld->ld_req_mutex );
 	return rc;
 }
 
@@ -182,13 +171,9 @@ start_again:;
 	/* ldap_msgdelete locks the res_mutex. Give up the req_mutex
 	 * while we're in there.
 	 */
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &ld->ld_req_mutex );
 	err = ldap_msgdelete( ld, msgid );
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &ld->ld_req_mutex );
 	if ( err == 0 ) {
 		ld->ld_errno = LDAP_SUCCESS;
 		return LDAP_SUCCESS;
@@ -223,21 +208,24 @@ start_again:;
 			 *		LDAP_NEXT_MSGID(ld, i);
 			 */
 
-			i = ++(ld)->ld_msgid;
+			LDAP_NEXT_MSGID(ld, i);
 #ifdef LDAP_CONNECTIONLESS
 			if ( LDAP_IS_UDP(ld) ) {
-				struct sockaddr sa = {0};
+				struct sockaddr_storage sa = {0};
 				/* dummy, filled with ldo_peer in request.c */
-				err = ber_write( ber, &sa, sizeof(sa), 0 );
+				err = ber_write( ber, (char *) &sa, sizeof(sa), 0 );
 			}
 			if ( LDAP_IS_UDP(ld) && ld->ld_options.ldo_version ==
 				LDAP_VERSION2 )
 			{
-				char *dn = ld->ld_options.ldo_cldapdn;
+				char *dn;
+				LDAP_MUTEX_LOCK( &ld->ld_options.ldo_mutex );
+				dn = ld->ld_options.ldo_cldapdn;
 				if (!dn) dn = "";
 				err = ber_printf( ber, "{isti",  /* '}' */
 					i, dn,
 					LDAP_REQ_ABANDON, msgid );
+				LDAP_MUTEX_UNLOCK( &ld->ld_options.ldo_mutex );
 			} else
 #endif
 			{
@@ -293,7 +281,14 @@ start_again:;
 
 	if ( lr != NULL ) {
 		if ( sendabandon || lr->lr_status == LDAP_REQST_WRITING ) {
+			/* release ld_req_mutex while grabbing ld_conn_mutex to
+			 * prevent deadlock.
+			 */
+			LDAP_MUTEX_UNLOCK( &ld->ld_req_mutex );
+			LDAP_MUTEX_LOCK( &ld->ld_conn_mutex );
 			ldap_free_connection( ld, lr->lr_conn, 0, 1 );
+			LDAP_MUTEX_UNLOCK( &ld->ld_conn_mutex );
+			LDAP_MUTEX_LOCK( &ld->ld_req_mutex );
 		}
 
 		if ( origid == msgid ) {
@@ -304,12 +299,7 @@ start_again:;
 		}
 	}
 
-#ifdef LDAP_R_COMPILE
-	/* ld_abandoned is actually protected by the ld_res_mutex;
-	 * give up the ld_req_mutex and get the other */
-	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
-	ldap_pvt_thread_mutex_lock( &ld->ld_res_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &ld->ld_abandon_mutex );
 
 	/* use bisection */
 	i = 0;
@@ -323,10 +313,7 @@ start_again:;
 		ld->ld_errno = LDAP_SUCCESS;
 	}
 
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
-	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &ld->ld_abandon_mutex );
 	return( ld->ld_errno );
 }
 
@@ -467,4 +454,3 @@ ldap_int_bisect_delete( ber_int_t **vp, ber_len_t *np, int id, int idx )
 
 	return 0;
 }
-

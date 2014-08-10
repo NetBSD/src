@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.8 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.8.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -224,7 +224,7 @@ struct dst_func {
  * Initializers
  */
 isc_result_t dst__openssl_init(const char *engine);
-void dst__pkcs11_init(isc_mem_t *mctx, const char *engine);
+#define dst__pkcs11_init pk11_initialize
 
 isc_result_t dst__hmacmd5_init(struct dst_func **funcp);
 isc_result_t dst__hmacsha1_init(struct dst_func **funcp);
@@ -257,7 +257,7 @@ isc_result_t dst__pkcs11gost_init(struct dst_func **funcp);
  * Destructors
  */
 void dst__openssl_destroy(void);
-isc_result_t dst__pkcs11_destroy(void);
+#define dst__pkcs11_destroy pk11_finalize
 
 /*%
  * Memory allocators using the DST memory pool.

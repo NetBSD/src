@@ -1,4 +1,4 @@
-/*	$NetBSD: attrs.h,v 1.1.1.1 2010/12/12 15:19:11 adam Exp $	*/
+/*	$NetBSD: attrs.h,v 1.1.1.1.24.1 2014/08/10 07:09:44 tls Exp $	*/
 
 /*
    attrs.h - wrapper macros for the gcc __attribute__(()) directive
@@ -21,8 +21,8 @@
    02110-1301 USA
 */
 
-#ifndef _COMPAT_ATTRS_H
-#define _COMPAT_ATTRS_H 1
+#ifndef COMPAT__ATTRS_H
+#define COMPAT__ATTRS_H 1
 
 /* macro for testing the version of GCC */
 #define GCC_VERSION(major,minor) \
@@ -90,4 +90,4 @@
 #endif /* not __STDC__ */
 #endif /* not __STRING */
 
-#endif /* not _COMPAT_ATTRS_H */
+#endif /* not COMPAT__ATTRS_H */

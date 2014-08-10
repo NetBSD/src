@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2014/02/04 08:08:59 njoly Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2014/08/10 06:57:37 tls Exp $
 
 NOMAN=		# defined
 
@@ -11,6 +11,7 @@ TESTS_SH=	t_integration
 FILESDIR=	${TESTSDIR}
 FILES+=		d_alignof.c
 FILES+=		d_c99_complex_num.c
+FILES+=		d_c99_complex_split.c
 FILES+=		d_c99_decls_after_stmt.c
 FILES+=		d_c99_decls_after_stmt2.c
 FILES+=		d_c99_decls_after_stmt3.c
@@ -31,10 +32,12 @@ FILES+=		d_compound_literals2.c
 FILES+=		d_constant_conv1.c
 FILES+=		d_constant_conv2.c
 FILES+=		d_cvt_in_ternary.c
+FILES+=		d_cvt_constant.c
 FILES+=		d_ellipsis_in_switch.c
 FILES+=		d_gcc_compound_statements1.c
 FILES+=		d_gcc_compound_statements2.c
 FILES+=		d_gcc_compound_statements3.c
+FILES+=		d_gcc_extension.c
 FILES+=		d_gcc_func.c
 FILES+=		d_gcc_variable_array_init.c
 FILES+=		d_incorrect_array_size.c

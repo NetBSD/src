@@ -1,4 +1,4 @@
-.\"	$NetBSD: ndp.8,v 1.26 2014/03/20 13:34:35 roy Exp $
+.\"	$NetBSD: ndp.8,v 1.26.2.1 2014/08/10 06:59:59 tls Exp $
 .\"	$KAME: ndp.8,v 1.33 2005/10/19 14:57:42 suz Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 20, 2014
+.Dd June 5, 2014
 .Dt NDP 8
 .Os
 .\"
@@ -189,6 +189,12 @@ variable is non-0, or the flag
 .Ic override_rtadv
 is on.
 This flag is set to 1 by default.
+.It Ic auto_linklocal
+Specify whether or not to perform automatic link-local address configuration on
+.Ar interface .
+This flag is set by
+.Li net.inet6.ip6.auto_linklocal
+sysctl variable.
 .It Ic override_rtadv
 Specify whether or not to override the
 .Li net.inet6.ip6.accept_rtadv

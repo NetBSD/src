@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_state.c,v 1.1.1.3 2013/09/25 19:06:33 tron Exp $	*/
+/*	$NetBSD: postscreen_state.c,v 1.1.1.3.2.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -269,9 +269,6 @@ const char *psc_print_state_flags(int flags, const char *context)
 	"HANGUP", PSC_STATE_FLAG_HANGUP,
 	/* unused */
 	"WLIST_FAIL", PSC_STATE_FLAG_WLIST_FAIL,
-
-	"PENAL_UPDATE", PSC_STATE_FLAG_PENAL_UPDATE,
-	"PENAL_FAIL", PSC_STATE_FLAG_PENAL_FAIL,
 
 	"PREGR_FAIL", PSC_STATE_FLAG_PREGR_FAIL,
 	"PREGR_PASS", PSC_STATE_FLAG_PREGR_PASS,

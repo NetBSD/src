@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.32 2014/02/25 12:13:19 martin Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.32.2.1 2014/08/10 06:51:51 tls Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.32 2014/02/25 12:13:19 martin Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.32.2.1 2014/08/10 06:51:51 tls Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -3928,7 +3928,6 @@ _malloc_prefork(void)
 		if (arenas[i] != NULL)
 			malloc_mutex_lock(&arenas[i]->mtx);
 	}
-	malloc_mutex_unlock(&arenas_mtx);
 
 	malloc_mutex_lock(&base_mtx);
 
@@ -3946,7 +3945,6 @@ _malloc_postfork(void)
 
 	malloc_mutex_unlock(&base_mtx);
 
-	malloc_mutex_lock(&arenas_mtx);
 	for (i = 0; i < narenas; i++) {
 		if (arenas[i] != NULL)
 			malloc_mutex_unlock(&arenas[i]->mtx);

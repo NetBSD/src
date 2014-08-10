@@ -31,19 +31,20 @@
 using namespace llvm;
 using namespace object;
 
+#define DEBUG_TYPE "mc"
+
 MCObjectDisassembler::MCObjectDisassembler(const ObjectFile &Obj,
                                            const MCDisassembler &Dis,
                                            const MCInstrAnalysis &MIA)
-    : Obj(Obj), Dis(Dis), MIA(MIA), MOS(0) {}
+    : Obj(Obj), Dis(Dis), MIA(MIA), MOS(nullptr) {}
 
 uint64_t MCObjectDisassembler::getEntrypoint() {
-  for (symbol_iterator SI = Obj.symbol_begin(), SE = Obj.symbol_end();
-       SI != SE; ++SI) {
+  for (const SymbolRef &Symbol : Obj.symbols()) {
     StringRef Name;
-    SI->getName(Name);
+    Symbol.getName(Name);
     if (Name == "main" || Name == "_main") {
       uint64_t Entrypoint;
-      SI->getAddress(Entrypoint);
+      Symbol.getAddress(Entrypoint);
       return getEffectiveLoadAddr(Entrypoint);
     }
   }
@@ -87,20 +88,24 @@ MCModule *MCObjectDisassembler::buildModule(bool withCFG) {
 }
 
 void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
-  for (section_iterator SI = Obj.section_begin(), SE = Obj.section_end();
-       SI != SE; ++SI) {
-    bool isText; SI->isText(isText);
-    bool isData; SI->isData(isData);
+  for (const SectionRef &Section : Obj.sections()) {
+    bool isText;
+    Section.isText(isText);
+    bool isData;
+    Section.isData(isData);
     if (!isData && !isText)
       continue;
 
-    uint64_t StartAddr; SI->getAddress(StartAddr);
-    uint64_t SecSize; SI->getSize(SecSize);
+    uint64_t StartAddr;
+    Section.getAddress(StartAddr);
+    uint64_t SecSize;
+    Section.getSize(SecSize);
     if (StartAddr == UnknownAddressOrSize || SecSize == UnknownAddressOrSize)
       continue;
     StartAddr = getEffectiveLoadAddr(StartAddr);
 
-    StringRef Contents; SI->getContents(Contents);
+    StringRef Contents;
+    Section.getContents(Contents);
     StringRefMemoryObject memoryObject(Contents, StartAddr);
 
     // We don't care about things like non-file-backed sections yet.
@@ -108,11 +113,12 @@ void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
       continue;
     uint64_t EndAddr = StartAddr + SecSize - 1;
 
-    StringRef SecName; SI->getName(SecName);
+    StringRef SecName;
+    Section.getName(SecName);
 
     if (isText) {
-      MCTextAtom *Text = 0;
-      MCDataAtom *InvalidData = 0;
+      MCTextAtom *Text = nullptr;
+      MCDataAtom *InvalidData = nullptr;
 
       uint64_t InstSize;
       for (uint64_t Index = 0; Index < SecSize; Index += InstSize) {
@@ -125,11 +131,11 @@ void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
             Text->setName(SecName);
           }
           Text->addInst(Inst, InstSize);
-          InvalidData = 0;
+          InvalidData = nullptr;
         } else {
           assert(InstSize && "getInstruction() consumed no bytes");
           if (!InvalidData) {
-            Text = 0;
+            Text = nullptr;
             InvalidData = Module->createDataAtom(CurAddr, CurAddr+InstSize - 1);
           }
           for (uint64_t I = 0; I < InstSize; ++I)
@@ -156,7 +162,7 @@ namespace {
     BBInfoSetTy Preds;
     MCObjectDisassembler::AddressSetTy SuccAddrs;
 
-    BBInfo() : Atom(0), BB(0) {}
+    BBInfo() : Atom(nullptr), BB(nullptr) {}
 
     void addSucc(BBInfo &Succ) {
       Succs.insert(&Succ);
@@ -176,13 +182,12 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
   AddressSetTy Splits;
   AddressSetTy Calls;
 
-  for (symbol_iterator SI = Obj.symbol_begin(), SE = Obj.symbol_end();
-       SI != SE; ++SI) {
+  for (const SymbolRef &Symbol : Obj.symbols()) {
     SymbolRef::Type SymType;
-    SI->getType(SymType);
+    Symbol.getType(SymType);
     if (SymType == SymbolRef::ST_Function) {
       uint64_t SymAddr;
-      SI->getAddress(SymAddr);
+      Symbol.getAddress(SymAddr);
       SymAddr = getEffectiveLoadAddr(SymAddr);
       Calls.push_back(SymAddr);
       Splits.push_back(SymAddr);
@@ -477,7 +482,7 @@ MCObjectDisassembler::createFunction(MCModule *Module, uint64_t BeginAddr,
       continue;
     // FIXME: MCModule should provide a findFunctionByAddr()
     if ((*FI)->getEntryBlock()->getInsts()->getBeginAddr() == BeginAddr)
-      return *FI;
+      return FI->get();
   }
 
   // Finally, just create a new one.
@@ -495,17 +500,16 @@ MCMachOObjectDisassembler::MCMachOObjectDisassembler(
     : MCObjectDisassembler(MOOF, Dis, MIA), MOOF(MOOF),
       VMAddrSlide(VMAddrSlide), HeaderLoadAddress(HeaderLoadAddress) {
 
-  for (section_iterator SI = MOOF.section_begin(), SE = MOOF.section_end();
-       SI != SE; ++SI) {
+  for (const SectionRef &Section : MOOF.sections()) {
     StringRef Name;
-    SI->getName(Name);
+    Section.getName(Name);
     // FIXME: We should use the S_ section type instead of the name.
     if (Name == "__mod_init_func") {
       DEBUG(dbgs() << "Found __mod_init_func section!\n");
-      SI->getContents(ModInitContents);
+      Section.getContents(ModInitContents);
     } else if (Name == "__mod_exit_func") {
       DEBUG(dbgs() << "Found __mod_exit_func section!\n");
-      SI->getContents(ModExitContents);
+      Section.getContents(ModExitContents);
     }
   }
 }

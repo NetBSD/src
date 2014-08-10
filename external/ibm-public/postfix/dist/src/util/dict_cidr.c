@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cidr.c,v 1.1.1.2 2013/01/02 18:59:12 tron Exp $	*/
+/*	$NetBSD: dict_cidr.c,v 1.1.1.2.6.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -167,34 +167,47 @@ static DICT_CIDR_ENTRY *dict_cidr_parse_rule(char *p, VSTRING *why)
 DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
 {
     DICT_CIDR *dict_cidr;
-    VSTREAM *map_fp;
+    VSTREAM *map_fp = 0;
     struct stat st;
-    VSTRING *line_buffer;
-    VSTRING *why;
+    VSTRING *line_buffer = 0;
+    VSTRING *why = 0;
     DICT_CIDR_ENTRY *rule;
     DICT_CIDR_ENTRY *last_rule = 0;
     int     lineno = 0;
 
     /*
+     * Let the optimizer worry about eliminating redundant code.
+     */
+#define DICT_CIDR_OPEN_RETURN(d) do { \
+	DICT *__d = (d); \
+	if (map_fp != 0 && vstream_fclose(map_fp)) \
+	    msg_fatal("cidr map %s: read error: %m", mapname); \
+	if (line_buffer != 0) \
+	    vstring_free(line_buffer); \
+	if (why != 0) \
+	    vstring_free(why); \
+	return (__d); \
+    } while (0)
+
+    /*
      * Sanity checks.
      */
     if (open_flags != O_RDONLY)
-	return (dict_surrogate(DICT_TYPE_CIDR, mapname, open_flags, dict_flags,
-			       "%s:%s map requires O_RDONLY access mode",
-			       DICT_TYPE_CIDR, mapname));
+	DICT_CIDR_OPEN_RETURN(dict_surrogate(DICT_TYPE_CIDR, mapname,
+					     open_flags, dict_flags,
+				  "%s:%s map requires O_RDONLY access mode",
+					     DICT_TYPE_CIDR, mapname));
 
     /*
      * Open the configuration file.
      */
     if ((map_fp = vstream_fopen(mapname, O_RDONLY, 0)) == 0)
-	return (dict_surrogate(DICT_TYPE_CIDR, mapname, open_flags, dict_flags,
-			       "open %s: %m", mapname));
+	DICT_CIDR_OPEN_RETURN(dict_surrogate(DICT_TYPE_CIDR, mapname,
+					     open_flags, dict_flags,
+					     "open %s: %m", mapname));
     if (fstat(vstream_fileno(map_fp), &st) < 0)
 	msg_fatal("fstat %s: %m", mapname);
 
-    /*
-     * No early returns without memory leaks.
-     */
     line_buffer = vstring_alloc(100);
     why = vstring_alloc(100);
 
@@ -226,13 +239,5 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
 	last_rule = rule;
     }
 
-    /*
-     * Clean up.
-     */
-    if (vstream_fclose(map_fp))
-	msg_fatal("cidr map %s: read error: %m", mapname);
-    vstring_free(line_buffer);
-    vstring_free(why);
-
-    return (DICT_DEBUG (&dict_cidr->dict));
+    DICT_CIDR_OPEN_RETURN(DICT_DEBUG (&dict_cidr->dict));
 }

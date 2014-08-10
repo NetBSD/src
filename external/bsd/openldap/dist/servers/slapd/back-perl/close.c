@@ -1,9 +1,9 @@
-/*	$NetBSD: close.c,v 1.1.1.3 2010/12/12 15:23:20 adam Exp $	*/
+/*	$NetBSD: close.c,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-perl/close.c,v 1.17.2.6 2010/04/13 20:23:37 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -48,6 +48,12 @@ perl_back_db_destroy(
 	ConfigReply *cr
 )
 {
+	PerlBackend *pb = be->be_private;
+
+	ch_free( pb->pb_module_name );
+	ber_bvarray_free( pb->pb_module_path );
+	ber_bvarray_free( pb->pb_module_config );
+
 	free( be->be_private );
 	be->be_private = NULL;
 

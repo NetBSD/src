@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.76 2013/03/01 18:25:56 joerg Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.76.10.1 2014/08/10 06:56:15 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.76 2013/03/01 18:25:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.76.10.1 2014/08/10 06:56:15 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -202,7 +202,7 @@ loop_clone_destroy(struct ifnet *ifp)
 	bpf_detach(ifp);
 	if_detach(ifp);
 
-	free(ifp, M_DEVBUF);
+	if_free(ifp);
 
 	return (0);
 }
@@ -211,11 +211,15 @@ int
 looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt)
 {
-	int s, isr = -1;
+	pktqueue_t *pktq = NULL;
 	struct ifqueue *ifq = NULL;
+	int s, isr = -1;
 	int csum_flags;
+	size_t pktlen;
 
 	MCLAIM(m, ifp->if_mowner);
+	KASSERT(KERNEL_LOCKED_P());
+
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
 	if (ifp->if_flags & IFF_LOOPBACK)
@@ -228,8 +232,9 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 			rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 	}
 
+	pktlen = m->m_pkthdr.len;
 	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
+	ifp->if_obytes += pktlen;
 
 #ifdef ALTQ
 	/*
@@ -285,8 +290,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 			ip_undefer_csum(m, 0, csum_flags);
 		}
 		m->m_pkthdr.csum_flags = 0;
-		ifq = &ipintrq;
-		isr = NETISR_IP;
+		pktq = ip_pktq;
 		break;
 #endif
 #ifdef INET6
@@ -299,8 +303,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		}
 		m->m_pkthdr.csum_flags = 0;
 		m->m_flags |= M_LOOP;
-		ifq = &ip6intrq;
-		isr = NETISR_IPV6;
+		pktq = ip6_pktq;
 		break;
 #endif
 #ifdef IPX
@@ -321,7 +324,21 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		m_freem(m);
 		return (EAFNOSUPPORT);
 	}
+
 	s = splnet();
+	if (__predict_true(pktq)) {
+		int error = 0;
+
+		if (__predict_true(pktq_enqueue(pktq, m, 0))) {
+			ifp->if_ipackets++;
+			ifp->if_ibytes += pktlen;
+		} else {
+			m_freem(m);
+			error = ENOBUFS;
+		}
+		splx(s);
+		return error;
+	}
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);
@@ -340,12 +357,14 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 static void
 lostart(struct ifnet *ifp)
 {
-	struct ifqueue *ifq;
-	struct mbuf *m;
-	uint32_t af;
-	int s, isr;
-
 	for (;;) {
+		pktqueue_t *pktq = NULL;
+		struct ifqueue *ifq = NULL;
+		struct mbuf *m;
+		size_t pktlen;
+		uint32_t af;
+		int s, isr = 0;
+
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			return;
@@ -356,15 +375,13 @@ lostart(struct ifnet *ifp)
 		switch (af) {
 #ifdef INET
 		case AF_INET:
-			ifq = &ipintrq;
-			isr = NETISR_IP;
+			pktq = ip_pktq;
 			break;
 #endif
 #ifdef INET6
 		case AF_INET6:
 			m->m_flags |= M_LOOP;
-			ifq = &ip6intrq;
-			isr = NETISR_IPV6;
+			pktq = ip6_pktq;
 			break;
 #endif
 #ifdef IPX
@@ -384,8 +401,20 @@ lostart(struct ifnet *ifp)
 			m_freem(m);
 			return;
 		}
+		pktlen = m->m_pkthdr.len;
 
 		s = splnet();
+		if (__predict_true(pktq)) {
+			if (__predict_false(pktq_enqueue(pktq, m, 0))) {
+				m_freem(m);
+				splx(s);
+				return;
+			}
+			ifp->if_ipackets++;
+			ifp->if_ibytes += pktlen;
+			splx(s);
+			continue;
+		}
 		if (IF_QFULL(ifq)) {
 			IF_DROP(ifq);
 			splx(s);
@@ -395,7 +424,7 @@ lostart(struct ifnet *ifp)
 		IF_ENQUEUE(ifq, m);
 		schednetisr(isr);
 		ifp->if_ipackets++;
-		ifp->if_ibytes += m->m_pkthdr.len;
+		ifp->if_ibytes += pktlen;
 		splx(s);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_int.h,v 1.9 2014/02/20 01:24:49 pooka Exp $	*/
+/*	$NetBSD: rumpuser_int.h,v 1.9.2.1 2014/08/10 06:52:26 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -101,3 +101,5 @@ int  rumpuser__errtrans(int);
 #else
 #define ET(_v_) return (_v_) ? rumpuser__errtrans(_v_) : 0;
 #endif
+
+int rumpuser__random_init(void);

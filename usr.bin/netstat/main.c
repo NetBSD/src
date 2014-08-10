@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.88 2013/11/23 22:01:12 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.88.2.1 2014/08/10 06:58:32 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.88 2013/11/23 22:01:12 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.88.2.1 2014/08/10 06:58:32 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,8 @@ struct nlist nl[] = {
 	{ "_udbtable", 0, 0, 0, 0 },
 #define	N_UDPSTAT	5
 	{ "_udpstat", 0, 0, 0, 0 },	/* not available via kvm */
-#define	N_IFNET		6
-	{ "_ifnet", 0, 0, 0, 0 },
+#define	N_IFNET_LIST		6
+	{ "_ifnet_list", 0, 0, 0, 0 },
 #define	N_ICMPSTAT	7
 	{ "_icmpstat", 0, 0, 0, 0 },	/* not available via kvm */
 #define	N_RTSTAT	8
@@ -570,7 +570,7 @@ main(int argc, char *argv[])
 	}
 	if (pflag) {
 		if (iflag && tp->pr_istats)
-			intpr(interval, nl[N_IFNET].n_value, tp->pr_istats);
+			intpr(interval, nl[N_IFNET_LIST].n_value, tp->pr_istats);
 		else if (tp->pr_stats)
 			(*tp->pr_stats)(nl[tp->pr_sindex].n_value,
 				tp->pr_name);
@@ -624,17 +624,17 @@ main(int argc, char *argv[])
 			if (af != AF_UNSPEC)
 				goto protostat;
 
-			intpr(interval, nl[N_IFNET].n_value, NULL);
+			intpr(interval, nl[N_IFNET_LIST].n_value, NULL);
 			break;
 		}
 		if (rflag) {
 			if (sflag)
 				rt_stats(use_sysctl ? 0 : nl[N_RTSTAT].n_value);
 			else {
-				if (!use_sysctl)
-					err(1, "-r is not supported "
-					    "for post-mortem analysis.");
-				p_rttables(af);
+				if (use_sysctl)
+					p_rttables(af);
+				else
+					routepr(nl[N_RTREE].n_value);
 			}
 			break;
 		}
@@ -723,7 +723,7 @@ printproto(struct protox *tp, const char *name)
 	if (sflag) {
 		if (iflag) {
 			if (tp->pr_istats)
-				intpr(interval, nl[N_IFNET].n_value,
+				intpr(interval, nl[N_IFNET_LIST].n_value,
 				      tp->pr_istats);
 			return;
 		}

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.72 2013/10/29 16:11:46 joerg Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.72.2.1 2014/08/10 06:53:30 tls Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -81,8 +81,6 @@ LIBRUMPFS_TMPFS?=	/usr/lib/librumpfs_tmpfs.a
 LIBRUMPFS_UDF?=		/usr/lib/librumpfs_udf.a
 LIBRUMPFS_UFS?=		/usr/lib/librumpfs_ufs.a
 
-HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
-HOST_MKDEPCXX?=	CC=${HOST_CXX:Q} mkdep
 MKDEP_SUFFIXES?=	.lo .ln
 
 # Override these:

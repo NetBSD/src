@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.225.2.1 2014/07/17 14:03:33 tls Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.225.2.2 2014/08/10 06:56:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.225.2.1 2014/07/17 14:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.225.2.2 2014/08/10 06:56:45 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1742,6 +1742,30 @@ netaddr_match(int family, union nethostaddr *haddr, struct mbuf *nam)
 	return (0);
 }
 
+struct nfs_clearcommit_ctx {
+	struct mount *mp;
+};
+
+static bool
+nfs_clearcommit_selector(void *cl, struct vnode *vp)
+{
+	struct nfs_clearcommit_ctx *c = cl;
+	struct nfsnode *np;
+	struct vm_page *pg;
+
+	np = VTONFS(vp);
+	if (vp->v_type != VREG || vp->v_mount != c->mp || np == NULL)
+		return false;
+	np->n_pushlo = np->n_pushhi = np->n_pushedlo =
+	    np->n_pushedhi = 0;
+	np->n_commitflags &=
+	    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
+	TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq.queue) {
+		pg->flags &= ~PG_NEEDCOMMIT;
+	}
+	return false;
+}
+
 /*
  * The write verifier has changed (probably due to a server reboot), so all
  * PG_NEEDCOMMIT pages will have to be written again. Since they are marked
@@ -1752,32 +1776,16 @@ netaddr_match(int family, union nethostaddr *haddr, struct mbuf *nam)
 void
 nfs_clearcommit(struct mount *mp)
 {
-	struct vnode *vp;
+	struct vnode *vp __diagused;
 	struct vnode_iterator *marker;
-	struct nfsnode *np;
-	struct vm_page *pg;
 	struct nfsmount *nmp = VFSTONFS(mp);
+	struct nfs_clearcommit_ctx ctx;
 
 	rw_enter(&nmp->nm_writeverflock, RW_WRITER);
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
-		mutex_enter(vp->v_interlock);
-		np = VTONFS(vp);
-		if (vp->v_type != VREG || vp->v_mount != mp || np == NULL) {
-			mutex_exit(vp->v_interlock);
-			vrele(vp);
-			continue;
-		}
-		np->n_pushlo = np->n_pushhi = np->n_pushedlo =
-		    np->n_pushedhi = 0;
-		np->n_commitflags &=
-		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq.queue) {
-			pg->flags &= ~PG_NEEDCOMMIT;
-		}
-		mutex_exit(vp->v_interlock);
-		vrele(vp);
-	}
+	ctx.mp = mp;
+	vp = vfs_vnode_iterator_next(marker, nfs_clearcommit_selector, &ctx);
+	KASSERT(vp == NULL);
 	vfs_vnode_iterator_destroy(marker);
 	mutex_enter(&nmp->nm_lock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;

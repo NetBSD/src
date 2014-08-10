@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnreg.h,v 1.6 2014/02/16 16:13:37 christos Exp $	*/
+/*	$NetBSD: if_urtwnreg.h,v 1.6.2.1 2014/08/10 06:54:59 tls Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -17,6 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define	URTWN_NOISE_FLOOR	-95
+
 #define R92C_MAX_CHAINS	2
 
 /* Maximum number of output pipes is 3. */
@@ -28,6 +30,9 @@
 #define R92C_TXPKTBUF_COUNT	256
 #define R92C_TX_PAGE_COUNT	248
 #define R92C_TX_PAGE_BOUNDARY	(R92C_TX_PAGE_COUNT + 1)
+#define R88E_TXPKTBUF_COUNT	177
+#define R88E_TX_PAGE_COUNT	169
+#define R88E_TX_PAGE_BOUNDARY	(R88E_TX_PAGE_COUNT + 1)
 
 #define R92C_H2C_NBOX	4
 
@@ -73,6 +78,11 @@
 #define R92C_HSISR			0x05c
 #define R92C_MCUFWDL			0x080
 #define R92C_HMEBOX_EXT(idx)		(0x088 + (idx) * 2)
+#define R88E_HIMR			0x0b0
+#define R88E_HISR			0x0b4
+#define R88E_HIMRE			0x0b8
+#define R88E_HISRE			0x0bc
+#define R92C_EFUSE_ACCESS		0x0cf
 #define R92C_BIST_SCAN			0x0d0
 #define R92C_BIST_RPT			0x0d4
 #define R92C_BIST_ROM_RPT		0x0d8
@@ -114,6 +124,7 @@
 #define R92C_LLT_INIT			0x1e0
 #define R92C_BB_ACCESS_CTRL		0x1e8
 #define R92C_BB_ACCESS_DATA		0x1ec
+#define R88E_HMEBOX_EXT(idx)		(0x1f0 + (idx) * 4)
 /* Tx DMA Configuration. */
 #define R92C_RQPN			0x200
 #define R92C_FIFOPAGE			0x204
@@ -143,6 +154,7 @@
 #define R92C_RD_RESP_PKT_TH		0x463
 #define R92C_INIRTS_RATE_SEL		0x480
 #define R92C_INIDATA_RATE_SEL(macid)	(0x484 + (macid))
+#define R92C_MAX_AGGR_NUM		0x4ca
 #define R92C_PROT_MODE_CTRL		0x4c8
 #define R92C_BAR_MODE_CTRL		0x4cc
 /* EDCA Configuration. */
@@ -315,6 +327,10 @@
 /* Bits for R92C_LDOV12D_CTRL. */
 #define R92C_LDOV12D_CTRL_LDV12_EN	0x01
 
+/* Bits for R92C_AFE_XTAL_CTRL. */
+#define R92C_AFE_XTAL_CTRL_ADDR_M	0x007ff800
+#define R92C_AFE_XTAL_CTRL_ADDR_S	11
+
 /* Bits for R92C_EFUSE_CTRL. */
 #define R92C_EFUSE_CTRL_DATA_M	0x000000ff
 #define R92C_EFUSE_CTRL_DATA_S	0
@@ -336,9 +352,26 @@
 #define R92C_MCUFWDL_BBINI_RDY		0x00000010
 #define R92C_MCUFWDL_RFINI_RDY		0x00000020
 #define R92C_MCUFWDL_WINTINI_RDY	0x00000040
+#define R92C_MCUFWDL_RAM_DL_SEL		0x00000080
 #define R92C_MCUFWDL_PAGE_M		0x00070000
 #define R92C_MCUFWDL_PAGE_S		16
 #define R92C_MCUFWDL_CPRST		0x00800000
+
+/* Bits for R88E_HIMR. */
+#define R88E_HIMR_CPWM			0x00000100
+#define R88E_HIMR_CPWM2			0x00000200
+#define R88E_HIMR_TBDER			0x04000000
+#define R88E_HIMR_PSTIMEOUT		0x20000000
+
+/* Bits for R88E_HIMRE.*/
+#define R88E_HIMRE_RXFOVW		0x00000100
+#define R88E_HIMRE_TXFOVW		0x00000200
+#define R88E_HIMRE_RXERR		0x00000400
+#define R88E_HIMRE_TXERR		0x00000800
+
+/* Bits for R92C_EFUSE_ACCESS. */
+#define R92C_EFUSE_ACCESS_OFF		0x00
+#define R92C_EFUSE_ACCESS_ON		0x69
 
 /* Bits for R92C_HPON_FSM. */
 #define R92C_HPON_FSM_CHIP_BONDING_ID_S		22
@@ -378,6 +411,7 @@
 #define R92C_CR_MACTXEN		0x00000040
 #define R92C_CR_MACRXEN		0x00000080
 #define R92C_CR_ENSEC		0x00000200
+#define R92C_CR_CALTMR_EN	0x00000400
 #define R92C_CR_NETTYPE_S	16
 #define R92C_CR_NETTYPE_M	0x00030000
 #define R92C_CR_NETTYPE_NOLINK	0
@@ -687,6 +721,8 @@
 #define R92C_LSSI_PARAM_DATA_S	0
 #define R92C_LSSI_PARAM_ADDR_M	0x03f00000
 #define R92C_LSSI_PARAM_ADDR_S	20
+#define R88E_LSSI_PARAM_ADDR_M	0x0ff00000
+#define R88E_LSSI_PARAM_ADDR_S	20
 
 /* Bits for R92C_FPGA0_ANAPARAM2. */
 #define R92C_FPGA0_ANAPARAM2_CBW20	0x00000400
@@ -719,7 +755,8 @@
 #define R92C_USB_STRING			0xfe80
 
 /* Bits for R92C_USB_SPECIAL_OPTION. */
-#define R92C_USB_SPECIAL_OPTION_AGG_EN	0x08
+#define R92C_USB_SPECIAL_OPTION_AGG_EN		0x08
+#define R92C_USB_SPECIAL_OPTION_INT_BULK_SEL	0x10
 
 /* Bits for R92C_USB_EP. */
 #define R92C_USB_EP_HQ_M	0x000f
@@ -779,6 +816,7 @@
 #define R92C_RF_CHNLBW_CHNL_M	0x003ff
 #define R92C_RF_CHNLBW_CHNL_S	0
 #define R92C_RF_CHNLBW_BW20	0x00400
+#define R88E_RF_CHNLBW_BW20	0x00c00
 #define R92C_RF_CHNLBW_LCSTART	0x08000
 
 
@@ -989,6 +1027,26 @@ struct r92c_rx_cck {
 	uint8_t		agc_rpt;
 } __packed;
 
+struct r88e_rx_cck {
+	uint8_t		path_agc[2];
+	uint8_t		sig_qual;
+	uint8_t		agc_rpt;
+	uint8_t		rpt_b;
+	uint8_t		reserved1;
+	uint8_t		noise_power;
+	uint8_t		path_cfotail[2];
+	uint8_t		pcts_mask[2];
+	uint8_t		stream_rxevm[2];
+	uint8_t		path_rxsnr[2];
+	uint8_t		noise_power_db_lsb;
+	uint8_t		reserved2[3];
+	uint8_t		stream_csi[2];
+	uint8_t		stream_target_csi[2];
+	uint8_t		sig_evm;
+	uint8_t		reserved3;
+	uint8_t		reserved4;
+} __packed;
+
 /* Tx MAC descriptor. */
 struct r92c_tx_desc {
 	uint32_t	txdw0;
@@ -1004,6 +1062,8 @@ struct r92c_tx_desc {
 	uint32_t	txdw1;
 #define R92C_TXDW1_MACID_M	0x0000001f
 #define R92C_TXDW1_MACID_S	0
+#define R88E_TXDW1_MACID_M	0x0000003f
+#define R88E_TXDW1_MACID_S	0
 #define R92C_TXDW1_AGGEN	0x00000020
 #define R92C_TXDW1_AGGBK	0x00000040
 #define R92C_TXDW1_QSEL_M	0x00001f00
@@ -1021,6 +1081,8 @@ struct r92c_tx_desc {
 #define R92C_TXDW1_PKTOFF_S	26
 
 	uint32_t	txdw2;
+#define R88E_TXDW2_AGGBK	0x00010000
+
 	uint16_t	txdw3;
 	uint16_t	txdseq;
 

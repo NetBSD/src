@@ -1,11 +1,10 @@
-/*	$NetBSD: pread.c,v 1.1.1.2 2013/12/01 19:28:16 christos Exp $	*/
-
+/*	$NetBSD: pread.c,v 1.1.1.2.2.1 2014/08/10 07:07:11 tls Exp $	*/
 #include "file.h"
 #ifndef lint
 #if 0
 FILE_RCSID("@(#)$File: pread.c,v 1.2 2013/04/02 16:23:07 christos Exp $")
 #else
-__RCSID("$NetBSD: pread.c,v 1.1.1.2 2013/12/01 19:28:16 christos Exp $");
+__RCSID("$NetBSD: pread.c,v 1.1.1.2.2.1 2014/08/10 07:07:11 tls Exp $");
 #endif
 #endif  /* lint */
 #include <fcntl.h>

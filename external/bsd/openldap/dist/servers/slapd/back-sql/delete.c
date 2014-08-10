@@ -1,9 +1,9 @@
-/*	$NetBSD: delete.c,v 1.1.1.3 2010/12/12 15:23:24 adam Exp $	*/
+/*	$NetBSD: delete.c,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/delete.c,v 1.35.2.10 2010/04/13 20:23:42 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.
@@ -336,7 +336,7 @@ backsql_tree_delete(
 {
 	Operation		op2 = *op;
 	slap_callback		sc = { 0 };
-	SlapReply		rs2 = { 0 };
+	SlapReply		rs2 = { REP_RESULT };
 	backsql_tree_delete_t	btd = { 0 };
 
 	int			rc;

@@ -1,9 +1,9 @@
-/*	$NetBSD: schema.c,v 1.1.1.3 2010/12/12 15:21:36 adam Exp $	*/
+/*	$NetBSD: schema.c,v 1.1.1.3.24.1 2014/08/10 07:09:47 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/schema.c,v 1.77.2.6 2010/04/13 20:23:00 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,48 +43,56 @@ choose_name( char *names[], const char *fallback )
 LDAP_CONST char *
 ldap_syntax2name( LDAPSyntax * syn )
 {
+	if (!syn) return NULL;
 	return( syn->syn_oid );
 }
 
 LDAP_CONST char *
 ldap_matchingrule2name( LDAPMatchingRule * mr )
 {
+	if (!mr) return NULL;
 	return( choose_name( mr->mr_names, mr->mr_oid ) );
 }
 
 LDAP_CONST char *
 ldap_matchingruleuse2name( LDAPMatchingRuleUse * mru )
 {
+	if (!mru) return NULL;
 	return( choose_name( mru->mru_names, mru->mru_oid ) );
 }
 
 LDAP_CONST char *
 ldap_attributetype2name( LDAPAttributeType * at )
 {
+	if (!at) return NULL;
 	return( choose_name( at->at_names, at->at_oid ) );
 }
 
 LDAP_CONST char *
 ldap_objectclass2name( LDAPObjectClass * oc )
 {
+	if (!oc) return NULL;
 	return( choose_name( oc->oc_names, oc->oc_oid ) );
 }
 
 LDAP_CONST char *
 ldap_contentrule2name( LDAPContentRule * cr )
 {
+	if (!cr) return NULL;
 	return( choose_name( cr->cr_names, cr->cr_oid ) );
 }
 
 LDAP_CONST char *
 ldap_nameform2name( LDAPNameForm * nf )
 {
+	if (!nf) return NULL;
 	return( choose_name( nf->nf_names, nf->nf_oid ) );
 }
 
 LDAP_CONST char *
 ldap_structurerule2name( LDAPStructureRule * sr )
 {
+	if (!sr) return NULL;
 	return( choose_name( sr->sr_names, NULL ) );
 }
 
@@ -381,7 +389,10 @@ struct berval *
 ldap_syntax2bv( LDAPSyntax * syn, struct berval *bv )
 {
 	safe_string * ss;
-	
+
+	if ( !syn || !bv )
+		return NULL;
+
 	ss = new_safe_string(256);
 	if ( !ss )
 		return NULL;
@@ -423,7 +434,10 @@ struct berval *
 ldap_matchingrule2bv( LDAPMatchingRule * mr, struct berval *bv )
 {
 	safe_string * ss;
-	
+
+	if ( !mr || !bv )
+		return NULL;
+
 	ss = new_safe_string(256);
 	if ( !ss )
 		return NULL;
@@ -482,7 +496,10 @@ struct berval *
 ldap_matchingruleuse2bv( LDAPMatchingRuleUse * mru, struct berval *bv )
 {
 	safe_string * ss;
-	
+
+	if ( !mru || !bv )
+		return NULL;
+
 	ss = new_safe_string(256);
 	if ( !ss )
 		return NULL;
@@ -541,7 +558,10 @@ struct berval *
 ldap_objectclass2bv( LDAPObjectClass * oc, struct berval *bv )
 {
 	safe_string * ss;
-	
+
+	if ( !oc || !bv )
+		return NULL;
+
 	ss = new_safe_string(256);
 	if ( !ss )
 		return NULL;
@@ -630,7 +650,10 @@ struct berval *
 ldap_contentrule2bv( LDAPContentRule * cr, struct berval *bv )
 {
 	safe_string * ss;
-	
+
+	if ( !cr || !bv )
+		return NULL;
+
 	ss = new_safe_string(256);
 	if ( !ss )
 		return NULL;
@@ -709,7 +732,10 @@ struct berval *
 ldap_structurerule2bv( LDAPStructureRule * sr, struct berval *bv )
 {
 	safe_string * ss;
-	
+
+	if ( !sr || !bv )
+		return NULL;
+
 	ss = new_safe_string(256);
 	if ( !ss )
 		return NULL;
@@ -773,7 +799,10 @@ struct berval *
 ldap_nameform2bv( LDAPNameForm * nf, struct berval *bv )
 {
 	safe_string * ss;
-	
+
+	if ( !nf || !bv )
+		return NULL;
+
 	ss = new_safe_string(256);
 	if ( !ss )
 		return NULL;
@@ -842,7 +871,10 @@ struct berval *
 ldap_attributetype2bv(  LDAPAttributeType * at, struct berval *bv )
 {
 	safe_string * ss;
-	
+
+	if ( !at || !bv )
+		return NULL;
+
 	ss = new_safe_string(256);
 	if ( !ss )
 		return NULL;
@@ -1457,6 +1489,7 @@ free_extensions(LDAPSchemaExtensionItem **extensions)
 void
 ldap_syntax_free( LDAPSyntax * syn )
 {
+	if ( !syn ) return;
 	LDAP_FREE(syn->syn_oid);
 	if (syn->syn_names) LDAP_VFREE(syn->syn_names);
 	if (syn->syn_desc) LDAP_FREE(syn->syn_desc);
@@ -1598,6 +1631,7 @@ ldap_str2syntax( LDAP_CONST char * s,
 void
 ldap_matchingrule_free( LDAPMatchingRule * mr )
 {
+	if (!mr) return;
 	LDAP_FREE(mr->mr_oid);
 	if (mr->mr_names) LDAP_VFREE(mr->mr_names);
 	if (mr->mr_desc) LDAP_FREE(mr->mr_desc);
@@ -1797,6 +1831,7 @@ ldap_str2matchingrule( LDAP_CONST char * s,
 void
 ldap_matchingruleuse_free( LDAPMatchingRuleUse * mru )
 {
+	if (!mru) return;
 	LDAP_FREE(mru->mru_oid);
 	if (mru->mru_names) LDAP_VFREE(mru->mru_names);
 	if (mru->mru_desc) LDAP_FREE(mru->mru_desc);
@@ -1995,6 +2030,7 @@ ldap_str2matchingruleuse( LDAP_CONST char * s,
 void
 ldap_attributetype_free(LDAPAttributeType * at)
 {
+	if (!at) return;
 	LDAP_FREE(at->at_oid);
 	if (at->at_names) LDAP_VFREE(at->at_names);
 	if (at->at_desc) LDAP_FREE(at->at_desc);
@@ -2378,6 +2414,7 @@ ldap_str2attributetype( LDAP_CONST char * s,
 void
 ldap_objectclass_free(LDAPObjectClass * oc)
 {
+	if (!oc) return;
 	LDAP_FREE(oc->oc_oid);
 	if (oc->oc_names) LDAP_VFREE(oc->oc_names);
 	if (oc->oc_desc) LDAP_FREE(oc->oc_desc);
@@ -2664,6 +2701,7 @@ ldap_str2objectclass( LDAP_CONST char * s,
 void
 ldap_contentrule_free(LDAPContentRule * cr)
 {
+	if (!cr) return;
 	LDAP_FREE(cr->cr_oid);
 	if (cr->cr_names) LDAP_VFREE(cr->cr_names);
 	if (cr->cr_desc) LDAP_FREE(cr->cr_desc);
@@ -2921,6 +2959,7 @@ ldap_str2contentrule( LDAP_CONST char * s,
 void
 ldap_structurerule_free(LDAPStructureRule * sr)
 {
+	if (!sr) return;
 	if (sr->sr_names) LDAP_VFREE(sr->sr_names);
 	if (sr->sr_desc) LDAP_FREE(sr->sr_desc);
 	if (sr->sr_nameform) LDAP_FREE(sr->sr_nameform);
@@ -3103,6 +3142,7 @@ ldap_str2structurerule( LDAP_CONST char * s,
 void
 ldap_nameform_free(LDAPNameForm * nf)
 {
+	if (!nf) return;
 	LDAP_FREE(nf->nf_oid);
 	if (nf->nf_names) LDAP_VFREE(nf->nf_names);
 	if (nf->nf_desc) LDAP_FREE(nf->nf_desc);

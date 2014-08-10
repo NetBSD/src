@@ -1,6 +1,6 @@
 /* Definitions for dealing with stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -76,6 +76,23 @@ struct block;
 struct gdbarch;
 struct ui_file;
 
+/* Status of a given frame's stack.  */
+
+enum frame_id_stack_status
+{
+  /* Stack address is invalid.  E.g., this frame is the outermost
+     (i.e., _start), and the stack hasn't been setup yet.  */
+  FID_STACK_INVALID = 0,
+
+  /* Stack address is valid, and is found in the stack_addr field.  */
+  FID_STACK_VALID = 1,
+
+  /* Stack address is unavailable.  I.e., there's a valid stack, but
+     we don't know where it is (because memory or registers we'd
+     compute it from were not collected).  */
+  FID_STACK_UNAVAILABLE = -1
+};
+
 /* The frame object.  */
 
 struct frame_info;
@@ -97,8 +114,9 @@ struct frame_id
      function pointer register or stack pointer register.  They are
      wrong.
 
-     This field is valid only if stack_addr_p is true.  Otherwise, this
-     frame represents the null frame.  */
+     This field is valid only if frame_id.stack_status is
+     FID_STACK_VALID.  It will be 0 for other
+     FID_STACK_... statuses.  */
   CORE_ADDR stack_addr;
 
   /* The frame's code address.  This shall be constant through out the
@@ -129,7 +147,7 @@ struct frame_id
   CORE_ADDR special_addr;
 
   /* Flags to indicate the above fields have valid contents.  */
-  unsigned int stack_addr_p : 1;
+  ENUM_BITFIELD(frame_id_stack_status) stack_status : 2;
   unsigned int code_addr_p : 1;
   unsigned int special_addr_p : 1;
 
@@ -168,6 +186,12 @@ extern struct frame_id frame_id_build (CORE_ADDR stack_addr,
 extern struct frame_id frame_id_build_special (CORE_ADDR stack_addr,
 					       CORE_ADDR code_addr,
 					       CORE_ADDR special_addr);
+
+/* Construct a frame ID representing a frame where the stack address
+   exists, but is unavailable.  CODE_ADDR is the frame's constant code
+   address (typically the entry point).  The special identifier
+   address is set to indicate a wild card.  */
+extern struct frame_id frame_id_build_unavailable_stack (CORE_ADDR code_addr);
 
 /* Construct a wild card frame ID.  The parameter is the frame's constant
    stack address (typically the outer-bound).  The code address as well
@@ -548,14 +572,6 @@ extern void put_frame_register_bytes (struct frame_info *frame, int regnum,
 
 extern CORE_ADDR frame_unwind_caller_pc (struct frame_info *frame);
 
-/* Same as frame_unwind_caller_pc, but returns a boolean indication of
-   whether the caller PC is determinable (when the PC is unavailable,
-   it will not be), instead of possibly throwing an error trying to
-   read unavailable memory or registers.  */
-
-extern int frame_unwind_caller_pc_if_available (struct frame_info *this_frame,
-						CORE_ADDR *pc);
-
 /* Discard the specified frame.  Restoring the registers to the state
    of the caller.  */
 extern void frame_pop (struct frame_info *frame);
@@ -659,14 +675,13 @@ extern CORE_ADDR get_pc_function_start (CORE_ADDR);
 
 extern struct frame_info *find_relative_frame (struct frame_info *, int *);
 
-extern void show_and_print_stack_frame (struct frame_info *fi, int print_level,
-					enum print_what print_what);
-
 extern void print_stack_frame (struct frame_info *, int print_level,
-			       enum print_what print_what);
+			       enum print_what print_what,
+			       int set_current_sal);
 
 extern void print_frame_info (struct frame_info *, int print_level,
-			      enum print_what print_what, int args);
+			      enum print_what print_what, int args,
+			      int set_current_sal);
 
 extern struct frame_info *block_innermost_frame (const struct block *);
 

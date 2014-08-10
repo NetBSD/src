@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.20 2008/08/04 06:19:35 matt Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.20.54.1 2014/08/10 06:56:16 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.20 2008/08/04 06:19:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.20.54.1 2014/08/10 06:56:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.20 2008/08/04 06:19:35 matt Exp $");
 #include <sys/socketvar.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
-#include <sys/errno.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -57,57 +57,62 @@ __KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.20 2008/08/04 06:19:35 matt Exp $");
  *	redo address binding to allow wildcards
  */
 
-struct	rawcbhead rawcb = LIST_HEAD_INITIALIZER(rawcb);
+struct rawcbhead	rawcb = LIST_HEAD_INITIALIZER(rawcb);
 
-u_long	raw_sendspace = RAWSNDQ;
-u_long	raw_recvspace = RAWRCVQ;
+static u_long		raw_sendspace = RAWSNDQ;
+static u_long		raw_recvspace = RAWRCVQ;
 
 /*
- * Allocate a control block and a nominal amount
- * of buffer space for the socket.
+ * Allocate a nominal amount of buffer space for the socket.
  */
 int
 raw_attach(struct socket *so, int proto)
 {
-	struct rawcb *rp = sotorawcb(so);
+	struct rawcb *rp;
 	int error;
 
 	/*
-	 * It is assumed that raw_attach is called
-	 * after space has been allocated for the
-	 * rawcb.
+	 * It is assumed that raw_attach() is called after space has been
+	 * allocated for the rawcb; consumer protocols may simply allocate
+	 * type struct rawcb, or a wrapper data structure that begins with a
+	 * struct rawcb.
 	 */
-	if (rp == 0)
-		return (ENOBUFS);
-	if ((error = soreserve(so, raw_sendspace, raw_recvspace)) != 0)
-		return (error);
+	rp = sotorawcb(so);
+	KASSERT(rp != NULL);
+	sosetlock(so);
+
+	if ((error = soreserve(so, raw_sendspace, raw_recvspace)) != 0) {
+		return error;
+	}
 	rp->rcb_socket = so;
 	rp->rcb_proto.sp_family = so->so_proto->pr_domain->dom_family;
 	rp->rcb_proto.sp_protocol = proto;
 	LIST_INSERT_HEAD(&rawcb, rp, rcb_list);
-	return (0);
+	KASSERT(solocked(so));
+
+	return 0;
 }
 
 /*
- * Detach the raw connection block and discard
- * socket resources.
+ * Detach the raw connection block and discard socket resources.
  */
 void
-raw_detach(struct rawcb *rp)
+raw_detach(struct socket *so)
 {
-	struct socket *so = rp->rcb_socket;
+	struct rawcb *rp = sotorawcb(so);
+	const size_t rcb_len = rp->rcb_len;
 
-	so->so_pcb = NULL;
+	KASSERT(rp != NULL);
+	KASSERT(solocked(so));
 	KASSERT(so->so_lock == softnet_lock);	/* XXX */
-	LIST_REMOVE(rp, rcb_list);		/* remove last reference */
-	/* sofree drops the socket's lock. */
+
+	/* Remove the last reference. */
+	LIST_REMOVE(rp, rcb_list);
+	so->so_pcb = NULL;
+
+	/* Note: sofree() drops the socket's lock. */
 	sofree(so);
-#ifdef notdef
-	if (rp->rcb_laddr)
-		m_freem(dtom(rp->rcb_laddr));
-	rp->rcb_laddr = 0;
-#endif
-	free((void *)rp, M_PCB);
+	kmem_free(rp, rcb_len);
 	mutex_enter(softnet_lock);
 }
 
@@ -117,12 +122,9 @@ raw_detach(struct rawcb *rp)
 void
 raw_disconnect(struct rawcb *rp)
 {
+	struct socket *so = rp->rcb_socket;
 
-#ifdef notdef
-	if (rp->rcb_faddr)
-		m_freem(dtom(rp->rcb_faddr));
-	rp->rcb_faddr = 0;
-#endif
-	if (rp->rcb_socket->so_state & SS_NOFDREF)
-		raw_detach(rp);
+	if (so->so_state & SS_NOFDREF) {
+		raw_detach(so);
+	}
 }

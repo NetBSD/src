@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.9 2014/02/25 18:30:09 pooka Exp $ */
+/* $NetBSD: spdmem.c,v 1.9.2.1 2014/08/10 06:54:52 tls Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.9 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.9.2.1 2014/08/10 06:54:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.9 2014/02/25 18:30:09 pooka Exp $");
 #include <dev/i2c/i2cvar.h>
 #include <dev/ic/spdmemreg.h>
 #include <dev/ic/spdmemvar.h>
-
-SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
 
 /* Routines for decoding spd data */
 static void decode_edofpm(const struct sysctlnode *, device_t, struct spdmem *);

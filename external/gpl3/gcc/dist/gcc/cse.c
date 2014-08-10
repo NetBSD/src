@@ -1824,7 +1824,7 @@ flush_hash_table (void)
       }
 }
 
-/* Function called for each rtx to check whether true dependence exist.  */
+/* Function called for each rtx to check whether an anti dependence exist.  */
 struct check_dependence_data
 {
   enum machine_mode mode;
@@ -1837,7 +1837,7 @@ check_dependence (rtx *x, void *data)
 {
   struct check_dependence_data *d = (struct check_dependence_data *) data;
   if (*x && MEM_P (*x))
-    return canon_true_dependence (d->exp, d->mode, d->addr, *x, NULL_RTX);
+    return canon_anti_dependence (*x, true, d->exp, d->mode, d->addr);
   else
     return 0;
 }
@@ -5659,9 +5659,10 @@ cse_insn (rtx insn)
 	  invalidate (XEXP (dest, 0), GET_MODE (dest));
       }
 
-  /* A volatile ASM or an UNSPEC_VOLATILE invalidates everything.  */
+  /* A volatile ASM invalidates everything.  */
   if (NONJUMP_INSN_P (insn)
-      && volatile_insn_p (PATTERN (insn)))
+      && GET_CODE (PATTERN (insn)) == ASM_OPERANDS
+      && MEM_VOLATILE_P (PATTERN (insn)))
     flush_hash_table ();
 
   /* Don't cse over a call to setjmp; on some machines (eg VAX)

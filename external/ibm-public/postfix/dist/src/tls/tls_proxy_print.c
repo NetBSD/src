@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_print.c,v 1.1.1.2 2013/01/02 18:59:05 tron Exp $	*/
+/*	$NetBSD: tls_proxy_print.c,v 1.1.1.2.6.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -67,8 +67,8 @@ int     tls_proxy_context_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
 		   STRING_OR_EMPTY(tp->peer_CN),
 		   ATTR_TYPE_STR, MAIL_ATTR_ISSUER_CN,
 		   STRING_OR_EMPTY(tp->issuer_CN),
-		   ATTR_TYPE_STR, MAIL_ATTR_PEER_FPT,
-		   STRING_OR_EMPTY(tp->peer_fingerprint),
+		   ATTR_TYPE_STR, MAIL_ATTR_PEER_CERT_FPT,
+		   STRING_OR_EMPTY(tp->peer_cert_fprint),
 		   ATTR_TYPE_STR, MAIL_ATTR_PEER_PKEY_FPT,
 		   STRING_OR_EMPTY(tp->peer_pkey_fprint),
 		   ATTR_TYPE_INT, MAIL_ATTR_PEER_STATUS,

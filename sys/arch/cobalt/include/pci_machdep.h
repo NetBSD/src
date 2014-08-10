@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.13 2014/03/29 19:28:27 christos Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.13.2.1 2014/08/10 06:53:53 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -46,7 +46,7 @@ struct pci_attach_args;
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 
-extern struct cobalt_bus_dma_tag pci_bus_dma_tag;
+extern struct mips_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Types provided to machine-independent PCI code

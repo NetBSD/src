@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.8 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.8.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1203,7 +1203,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 				count++;
 				CONVERTTOASCII(c);
 				if (downcase)
-					c = maptolower[(int)c];
+					c = maptolower[c & 0xff];
 				*ndata++ = c;
 				nrem--;
 				nused++;
@@ -1227,7 +1227,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 				count++;
 				CONVERTTOASCII(c);
 				if (downcase)
-					c = maptolower[(int)c];
+					c = maptolower[c & 0xff];
 				*ndata++ = c;
 				nrem--;
 				nused++;
@@ -1242,7 +1242,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 			if (!isdigit(c & 0xff))
 				return (DNS_R_BADESCAPE);
 			value *= 10;
-			value += digitvalue[(int)c];
+			value += digitvalue[c & 0xff];
 			digits++;
 			if (digits == 3) {
 				if (value > 255)
@@ -1294,7 +1294,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 				while (n2 > 0) {
 					c = *label++;
 					if (downcase)
-						c = maptolower[(int)c];
+						c = maptolower[c & 0xff];
 					*ndata++ = c;
 					n2--;
 				}

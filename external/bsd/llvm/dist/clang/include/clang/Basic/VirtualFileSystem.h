@@ -15,8 +15,10 @@
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/Support/FileSystem.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/ErrorOr.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
 
 namespace llvm {
@@ -36,6 +38,9 @@ class Status {
   uint64_t Size;
   llvm::sys::fs::file_type Type;
   llvm::sys::fs::perms Perms;
+
+public:
+  bool IsVFSMapped; // FIXME: remove when files support multiple names
 
 public:
   Status() : Type(llvm::sys::fs::file_type::status_error) {}
@@ -84,10 +89,10 @@ public:
   /// \brief Get the status of the file.
   virtual llvm::ErrorOr<Status> status() = 0;
   /// \brief Get the contents of the file as a \p MemoryBuffer.
-  virtual llvm::error_code getBuffer(const Twine &Name,
-                                     OwningPtr<llvm::MemoryBuffer> &Result,
-                                     int64_t FileSize = -1,
-                                     bool RequiresNullTerminator = true) = 0;
+  virtual llvm::error_code
+  getBuffer(const Twine &Name, std::unique_ptr<llvm::MemoryBuffer> &Result,
+            int64_t FileSize = -1, bool RequiresNullTerminator = true,
+            bool IsVolatile = false) = 0;
   /// \brief Closes the file.
   virtual llvm::error_code close() = 0;
   /// \brief Sets the name to use for this file.
@@ -95,7 +100,7 @@ public:
 };
 
 /// \brief The virtual file system interface.
-class FileSystem : public RefCountedBase<FileSystem> {
+class FileSystem : public llvm::ThreadSafeRefCountedBase<FileSystem> {
 public:
   virtual ~FileSystem();
 
@@ -103,14 +108,15 @@ public:
   virtual llvm::ErrorOr<Status> status(const Twine &Path) = 0;
   /// \brief Get a \p File object for the file at \p Path, if one exists.
   virtual llvm::error_code openFileForRead(const Twine &Path,
-                                           OwningPtr<File> &Result) = 0;
+                                           std::unique_ptr<File> &Result) = 0;
 
   /// This is a convenience method that opens a file, gets its content and then
   /// closes the file.
   llvm::error_code getBufferForFile(const Twine &Name,
-                                    OwningPtr<llvm::MemoryBuffer> &Result,
+                                    std::unique_ptr<llvm::MemoryBuffer> &Result,
                                     int64_t FileSize = -1,
-                                    bool RequiresNullTerminator = true);
+                                    bool RequiresNullTerminator = true,
+                                    bool IsVolatile = false);
 };
 
 /// \brief Gets an \p vfs::FileSystem for the 'real' file system, as seen by
@@ -147,9 +153,9 @@ public:
   /// \brief Pushes a file system on top of the stack.
   void pushOverlay(IntrusiveRefCntPtr<FileSystem> FS);
 
-  llvm::ErrorOr<Status> status(const Twine &Path) LLVM_OVERRIDE;
+  llvm::ErrorOr<Status> status(const Twine &Path) override;
   llvm::error_code openFileForRead(const Twine &Path,
-                                   OwningPtr<File> &Result) LLVM_OVERRIDE;
+                                   std::unique_ptr<File> &Result) override;
 };
 
 /// \brief Get a globally unique ID for a virtual file or directory.
@@ -162,8 +168,28 @@ llvm::sys::fs::UniqueID getNextVirtualUniqueID();
 IntrusiveRefCntPtr<FileSystem>
 getVFSFromYAML(llvm::MemoryBuffer *Buffer,
                llvm::SourceMgr::DiagHandlerTy DiagHandler,
-               void *DiagContext = 0,
+               void *DiagContext = nullptr,
                IntrusiveRefCntPtr<FileSystem> ExternalFS = getRealFileSystem());
+
+struct YAMLVFSEntry {
+  template <typename T1, typename T2> YAMLVFSEntry(T1 &&VPath, T2 &&RPath)
+      : VPath(std::forward<T1>(VPath)), RPath(std::forward<T2>(RPath)) {}
+  std::string VPath;
+  std::string RPath;
+};
+
+class YAMLVFSWriter {
+  std::vector<YAMLVFSEntry> Mappings;
+  Optional<bool> IsCaseSensitive;
+
+public:
+  YAMLVFSWriter() {}
+  void addFileMapping(StringRef VirtualPath, StringRef RealPath);
+  void setCaseSensitivity(bool CaseSensitive) {
+    IsCaseSensitive = CaseSensitive;
+  }
+  void write(llvm::raw_ostream &OS);
+};
 
 } // end namespace vfs
 } // end namespace clang

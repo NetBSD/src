@@ -18,9 +18,8 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
-#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <vector>
 
@@ -57,6 +56,7 @@ class MachineBasicBlock;
 class MachineInstr;
 class MachineRegisterInfo;
 class MDNode;
+class MVT;
 class PHINode;
 class PtrToIntInst;
 class ReturnInst;
@@ -96,7 +96,7 @@ class SelectionDAGBuilder {
     DebugLoc dl;
     unsigned SDNodeOrder;
   public:
-    DanglingDebugInfo() : DI(0), dl(DebugLoc()), SDNodeOrder(0) { }
+    DanglingDebugInfo() : DI(nullptr), dl(DebugLoc()), SDNodeOrder(0) { }
     DanglingDebugInfo(const DbgValueInst *di, DebugLoc DL, unsigned SDNO) :
       DI(di), dl(DL), SDNodeOrder(SDNO) { }
     const DbgValueInst* getDI() { return DI; }
@@ -135,7 +135,7 @@ private:
     MachineBasicBlock* BB;
     uint32_t ExtraWeight;
 
-    Case() : Low(0), High(0), BB(0), ExtraWeight(0) { }
+    Case() : Low(nullptr), High(nullptr), BB(nullptr), ExtraWeight(0) { }
     Case(const Constant *low, const Constant *high, MachineBasicBlock *bb,
          uint32_t extraweight) : Low(low), High(high), BB(bb),
          ExtraWeight(extraweight) { }
@@ -396,8 +396,8 @@ private:
   ///        the same function, use the same failure basic block).
   class StackProtectorDescriptor {
   public:
-    StackProtectorDescriptor() : ParentMBB(0), SuccessMBB(0), FailureMBB(0),
-                                 Guard(0) { }
+    StackProtectorDescriptor() : ParentMBB(nullptr), SuccessMBB(nullptr),
+                                 FailureMBB(nullptr), Guard(nullptr) { }
     ~StackProtectorDescriptor() { }
 
     /// Returns true if all fields of the stack protector descriptor are
@@ -432,8 +432,8 @@ private:
     /// parent mbb after we create the stack protector check (SuccessMBB). This
     /// BB is visited only on stack protector check success.
     void resetPerBBState() {
-      ParentMBB = 0;
-      SuccessMBB = 0;
+      ParentMBB = nullptr;
+      SuccessMBB = nullptr;
     }
 
     /// Reset state that only changes when we switch functions.
@@ -446,8 +446,8 @@ private:
     /// 2.The guard variable since the guard variable we are checking against is
     /// always the same.
     void resetPerFunctionState() {
-      FailureMBB = 0;
-      Guard = 0;
+      FailureMBB = nullptr;
+      Guard = nullptr;
     }
 
     MachineBasicBlock *getParentMBB() { return ParentMBB; }
@@ -482,7 +482,7 @@ private:
     /// block will be created.
     MachineBasicBlock *AddSuccessorMBB(const BasicBlock *BB,
                                        MachineBasicBlock *ParentMBB,
-                                       MachineBasicBlock *SuccMBB = 0);
+                                       MachineBasicBlock *SuccMBB = nullptr);
   };
 
 private:
@@ -538,7 +538,7 @@ public:
 
   SelectionDAGBuilder(SelectionDAG &dag, FunctionLoweringInfo &funcinfo,
                       CodeGenOpt::Level ol)
-    : CurInst(NULL), SDNodeOrder(LowestSDNodeOrder), TM(dag.getTarget()),
+    : CurInst(nullptr), SDNodeOrder(LowestSDNodeOrder), TM(dag.getTarget()),
       DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
       HasTailCall(false) {
   }
@@ -600,13 +600,13 @@ public:
 
   void setValue(const Value *V, SDValue NewN) {
     SDValue &N = NodeMap[V];
-    assert(N.getNode() == 0 && "Already set a value for this node!");
+    assert(!N.getNode() && "Already set a value for this node!");
     N = NewN;
   }
 
   void setUnusedArgValue(const Value *V, SDValue NewN) {
     SDValue &N = UnusedArgNodeMap[V];
-    assert(N.getNode() == 0 && "Already set a value for this node!");
+    assert(!N.getNode() && "Already set a value for this node!");
     N = NewN;
   }
 
@@ -624,7 +624,7 @@ public:
   void CopyToExportRegsIfNeeded(const Value *V);
   void ExportFromCurrentBlock(const Value *V);
   void LowerCallTo(ImmutableCallSite CS, SDValue Callee, bool IsTailCall,
-                   MachineBasicBlock *LandingPad = NULL);
+                   MachineBasicBlock *LandingPad = nullptr);
 
   std::pair<SDValue, SDValue> LowerCallOperands(const CallInst &CI,
                                                 unsigned ArgIdx,
@@ -642,7 +642,7 @@ private:
   void visitBr(const BranchInst &I);
   void visitSwitch(const SwitchInst &I);
   void visitIndirectBr(const IndirectBrInst &I);
-  void visitUnreachable(const UnreachableInst &I) { /* noop */ }
+  void visitUnreachable(const UnreachableInst &I);
 
   // Helpers for visitSwitch
   bool handleSmallSwitchRange(CaseRec& CR,
@@ -785,7 +785,8 @@ private:
   /// corresponding DBG_VALUE machine instruction for it now. At the end of
   /// instruction selection, they will be inserted to the entry BB.
   bool EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
-                                int64_t Offset, const SDValue &N);
+                                int64_t Offset, bool IsIndirect,
+                                const SDValue &N);
 };
 
 } // end namespace llvm

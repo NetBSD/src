@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2013/05/02 03:56:41 matt Exp $
+#	$NetBSD: Makefile,v 1.9.8.1 2014/08/10 06:54:00 tls Exp $
 
 INCSDIR=	/usr/include/iyonix
-INCS=
+INCS=		sljit_machdep.h
 
 .include "../../arm/include/Makefile.common"

@@ -1010,7 +1010,7 @@ install-unwind_h-forbuild:
 	dest=$(gcc_objdir)/include/tmp$$$$-unwind.h; \
 	cp unwind.h $$dest; \
 	chmod a+r $$dest; \
-	sh $(srcdir)/../move-if-change $$dest $(gcc_objdir)/include/unwind.h
+	$(SHELL) $(srcdir)/../move-if-change $$dest $(gcc_objdir)/include/unwind.h
 
 # Copy unwind.h to the place where gcc will look at run-time, once installed
 #

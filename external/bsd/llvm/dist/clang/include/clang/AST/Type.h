@@ -18,20 +18,19 @@
 #include "clang/AST/TemplateName.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/ExceptionSpecificationType.h"
-#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/Linkage.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/Visibility.h"
-#include "llvm/ADT/APSInt.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/type_traits.h"
 
 namespace clang {
   enum {
@@ -500,14 +499,14 @@ struct SplitQualType {
   /// The local qualifiers.
   Qualifiers Quals;
 
-  SplitQualType() : Ty(0), Quals() {}
+  SplitQualType() : Ty(nullptr), Quals() {}
   SplitQualType(const Type *ty, Qualifiers qs) : Ty(ty), Quals(qs) {}
 
   SplitQualType getSingleStepDesugaredType() const; // end of this file
 
-  // Make llvm::tie work.
-  operator std::pair<const Type *,Qualifiers>() const {
-    return std::pair<const Type *,Qualifiers>(Ty, Quals);
+  // Make std::tie work.
+  std::pair<const Type *,Qualifiers> asPair() const {
+    return std::pair<const Type *, Qualifiers>(Ty, Quals);
   }
 
   friend bool operator==(SplitQualType a, SplitQualType b) {
@@ -1438,7 +1437,7 @@ public:
   /// \brief Def If non-NULL, and the type refers to some kind of declaration
   /// that can be completed (such as a C struct, C++ class, or Objective-C
   /// class), will be set to the declaration.
-  bool isIncompleteType(NamedDecl **Def = 0) const;
+  bool isIncompleteType(NamedDecl **Def = nullptr) const;
 
   /// isIncompleteOrObjectType - Return true if this is an incomplete or object
   /// type, in other words, not a function type.
@@ -2850,14 +2849,16 @@ public:
     ExtProtoInfo()
         : Variadic(false), HasTrailingReturn(false), TypeQuals(0),
           ExceptionSpecType(EST_None), RefQualifier(RQ_None), NumExceptions(0),
-          Exceptions(0), NoexceptExpr(0), ExceptionSpecDecl(0),
-          ExceptionSpecTemplate(0), ConsumedParameters(0) {}
+          Exceptions(nullptr), NoexceptExpr(nullptr),
+          ExceptionSpecDecl(nullptr), ExceptionSpecTemplate(nullptr),
+          ConsumedParameters(nullptr) {}
 
     ExtProtoInfo(CallingConv CC)
         : ExtInfo(CC), Variadic(false), HasTrailingReturn(false), TypeQuals(0),
           ExceptionSpecType(EST_None), RefQualifier(RQ_None), NumExceptions(0),
-          Exceptions(0), NoexceptExpr(0), ExceptionSpecDecl(0),
-          ExceptionSpecTemplate(0), ConsumedParameters(0) {}
+          Exceptions(nullptr), NoexceptExpr(nullptr),
+          ExceptionSpecDecl(nullptr), ExceptionSpecTemplate(nullptr),
+          ConsumedParameters(nullptr) {}
 
     FunctionType::ExtInfo ExtInfo;
     bool Variadic : 1;
@@ -3011,7 +3012,7 @@ public:
   }
   Expr *getNoexceptExpr() const {
     if (getExceptionSpecType() != EST_ComputedNoexcept)
-      return 0;
+      return nullptr;
     // NoexceptExpr sits where the arguments end.
     return *reinterpret_cast<Expr *const *>(param_type_end());
   }
@@ -3022,7 +3023,7 @@ public:
   FunctionDecl *getExceptionSpecDecl() const {
     if (getExceptionSpecType() != EST_Uninstantiated &&
         getExceptionSpecType() != EST_Unevaluated)
-      return 0;
+      return nullptr;
     return reinterpret_cast<FunctionDecl *const *>(param_type_end())[0];
   }
   /// \brief If this function type has an uninstantiated exception
@@ -3031,7 +3032,7 @@ public:
   /// this type.
   FunctionDecl *getExceptionSpecTemplate() const {
     if (getExceptionSpecType() != EST_Uninstantiated)
-      return 0;
+      return nullptr;
     return reinterpret_cast<FunctionDecl *const *>(param_type_end())[1];
   }
   /// \brief Determine whether this function type has a non-throwing exception
@@ -3060,6 +3061,11 @@ public:
   }
 
   typedef const QualType *param_type_iterator;
+  typedef llvm::iterator_range<param_type_iterator> param_type_range;
+
+  param_type_range param_types() const {
+    return param_type_range(param_type_begin(), param_type_end());
+  }
   param_type_iterator param_type_begin() const {
     return reinterpret_cast<const QualType *>(this+1);
   }
@@ -3068,6 +3074,11 @@ public:
   }
 
   typedef const QualType *exception_iterator;
+  typedef llvm::iterator_range<exception_iterator> exception_range;
+
+  exception_range exceptions() const {
+    return exception_range(exception_begin(), exception_end());
+  }
   exception_iterator exception_begin() const {
     // exceptions begin where arguments end
     return param_type_end();
@@ -3509,7 +3520,7 @@ public:
   bool isParameterPack() const { return getCanTTPTInfo().ParameterPack; }
 
   TemplateTypeParmDecl *getDecl() const {
-    return isCanonicalUnqualified() ? 0 : TTPDecl;
+    return isCanonicalUnqualified() ? nullptr : TTPDecl;
   }
 
   IdentifierInfo *getIdentifier() const;
@@ -3970,9 +3981,9 @@ public:
 
   static bool KeywordIsTagTypeKind(ElaboratedTypeKeyword Keyword);
 
-  static const char *getKeywordName(ElaboratedTypeKeyword Keyword);
+  static StringRef getKeywordName(ElaboratedTypeKeyword Keyword);
 
-  static const char *getTagTypeKindName(TagTypeKind Kind) {
+  static StringRef getTagTypeKindName(TagTypeKind Kind) {
     return getKeywordName(getKeywordForTagTypeKind(Kind));
   }
 
@@ -4004,7 +4015,7 @@ class ElaboratedType : public TypeWithKeyword, public llvm::FoldingSetNode {
                       NamedType->isVariablyModifiedType(),
                       NamedType->containsUnexpandedParameterPack()),
       NNS(NNS), NamedType(NamedType) {
-    assert(!(Keyword == ETK_None && NNS == 0) &&
+    assert(!(Keyword == ETK_None && NNS == nullptr) &&
            "ElaboratedType cannot have elaborated type keyword "
            "and name qualifier both null.");
   }
@@ -4213,7 +4224,7 @@ class PackExpansionType : public Type, public llvm::FoldingSetNode {
                     Optional<unsigned> NumExpansions)
     : Type(PackExpansion, Canon, /*Dependent=*/Pattern->isDependentType(),
            /*InstantiationDependent=*/true,
-           /*VariableModified=*/Pattern->isVariablyModifiedType(),
+           /*VariablyModified=*/Pattern->isVariablyModifiedType(),
            /*ContainsUnexpandedParameterPack=*/false),
       Pattern(Pattern),
       NumExpansions(NumExpansions? *NumExpansions + 1: 0) { }
@@ -4340,7 +4351,9 @@ public:
   ObjCInterfaceDecl *getInterface() const;
 
   typedef ObjCProtocolDecl * const *qual_iterator;
+  typedef llvm::iterator_range<qual_iterator> qual_range;
 
+  qual_range quals() const { return qual_range(qual_begin(), qual_end()); }
   qual_iterator qual_begin() const { return getProtocolStorage(); }
   qual_iterator qual_end() const { return qual_begin() + getNumProtocols(); }
 
@@ -4444,7 +4457,7 @@ inline ObjCInterfaceDecl *ObjCObjectType::getInterface() const {
   if (const ObjCInterfaceType *T =
         getBaseType()->getAs<ObjCInterfaceType>())
     return T->getDecl();
-  return 0;
+  return nullptr;
 }
 
 /// ObjCObjectPointerType - Used to represent a pointer to an
@@ -4542,7 +4555,9 @@ public:
   /// for convenience.  This will always iterate over the full set of
   /// protocols on a type, not just those provided directly.
   typedef ObjCObjectType::qual_iterator qual_iterator;
+  typedef llvm::iterator_range<qual_iterator> qual_range;
 
+  qual_range quals() const { return qual_range(qual_begin(), qual_end()); }
   qual_iterator qual_begin() const {
     return getObjectType()->qual_begin();
   }
@@ -4647,7 +4662,7 @@ inline const Type *QualType::getTypePtr() const {
 }
 
 inline const Type *QualType::getTypePtrOrNull() const {
-  return (isNull() ? 0 : getCommonPtr()->BaseType);
+  return (isNull() ? nullptr : getCommonPtr()->BaseType);
 }
 
 inline SplitQualType QualType::split() const {
@@ -5036,7 +5051,7 @@ inline const BuiltinType *Type::getAsPlaceholderType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(this))
     if (BT->isPlaceholderType())
       return BT;
-  return 0;
+  return nullptr;
 }
 
 inline bool Type::isSpecificPlaceholderType(unsigned K) const {
@@ -5173,10 +5188,9 @@ inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
 
 // Helper class template that is used by Type::getAs to ensure that one does
 // not try to look through a qualified type to get to an array type.
-template<typename T,
-         bool isArrayType = (llvm::is_same<T, ArrayType>::value ||
-                             llvm::is_base_of<ArrayType, T>::value)>
-struct ArrayType_cannot_be_used_with_getAs { };
+template <typename T, bool isArrayType = (std::is_same<T, ArrayType>::value ||
+                                          std::is_base_of<ArrayType, T>::value)>
+struct ArrayType_cannot_be_used_with_getAs {};
 
 template<typename T>
 struct ArrayType_cannot_be_used_with_getAs<T, true>;
@@ -5192,7 +5206,7 @@ template <typename T> const T *Type::getAs() const {
 
   // If the canonical form of this type isn't the right kind, reject it.
   if (!isa<T>(CanonicalType))
-    return 0;
+    return nullptr;
 
   // If this is a typedef for the type, strip the typedef off without
   // losing all typedef information.
@@ -5206,7 +5220,7 @@ inline const ArrayType *Type::getAsArrayTypeUnsafe() const {
 
   // If the canonical form of this type isn't the right kind, reject it.
   if (!isa<ArrayType>(CanonicalType))
-    return 0;
+    return nullptr;
 
   // If this is a typedef for the type, strip the typedef off without
   // losing all typedef information.

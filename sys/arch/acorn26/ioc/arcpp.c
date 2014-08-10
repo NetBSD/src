@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.13 2014/03/16 05:20:22 dholland Exp $ */
+/* $NetBSD: arcpp.c,v 1.13.2.1 2014/08/10 06:53:48 tls Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.13 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.13.2.1 2014/08/10 06:53:48 tls Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -119,6 +119,7 @@ const struct cdevsw arcpp_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

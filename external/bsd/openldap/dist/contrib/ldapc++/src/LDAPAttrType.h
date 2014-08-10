@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPAttrType.h,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: LDAPAttrType.h,v 1.1.1.2.24.1 2014/08/10 07:09:42 tls Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAttrType.h,v 1.3.4.4 2008/09/02 23:58:15 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2003, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2003-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

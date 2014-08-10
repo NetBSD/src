@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sparcmcexpr"
 #include "SparcMCExpr.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -22,6 +21,8 @@
 
 
 using namespace llvm;
+
+#define DEBUG_TYPE "sparcmcexpr"
 
 const SparcMCExpr*
 SparcMCExpr::Create(VariantKind Kind, const MCExpr *Expr,
@@ -160,9 +161,7 @@ Sparc::Fixups SparcMCExpr::getFixupKind(SparcMCExpr::VariantKind Kind) {
 bool
 SparcMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
                                        const MCAsmLayout *Layout) const {
-  if (!Layout)
-    return false;
-  return getSubExpr()->EvaluateAsRelocatable(Res, *Layout);
+  return getSubExpr()->EvaluateAsRelocatable(Res, Layout);
 }
 
 static void fixELFSymbolsInTLSFixupsImpl(const MCExpr *Expr, MCAssembler &Asm) {

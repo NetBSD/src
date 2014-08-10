@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.15 2014/02/28 05:27:05 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.15.2.1 2014/08/10 06:54:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ __lwp_gettcb_fast(void)
 	void *__tcb;
 
 	__asm __volatile(
-		"addi %[__tcb],%%r2,%[__offset]@l"
+		"addi %[__tcb],%%r2,%[__offset]"
 	    :	[__tcb] "=r" (__tcb)
 	    :	[__offset] "n" (-(TLS_TP_OFFSET + sizeof(struct tls_tcb))));
 
@@ -163,7 +163,7 @@ static __inline void
 __lwp_settcb(void *__tcb)
 {
 	__asm __volatile(
-		"addi %%r2,%[__tcb],%[__offset]@l"
+		"addi %%r2,%[__tcb],%[__offset]"
 	    :
 	    :	[__tcb] "r" (__tcb),
 		[__offset] "n" (TLS_TP_OFFSET + sizeof(struct tls_tcb)));

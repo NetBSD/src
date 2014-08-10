@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphy.c,v 1.9 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: ikphy.c,v 1.9.36.1 2014/08/10 06:54:53 tls Exp $	*/
 
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
@@ -59,7 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.9 2009/10/19 18:41:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.9.36.1 2014/08/10 06:54:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,6 +342,8 @@ ikphy_status(struct mii_softc *sc)
 		if (pssr & GG82563_PSSR_DUPLEX)
 			mii->mii_media_active |=
 			    IFM_FDX | mii_phy_flowstatus(sc);
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 	kmrn = PHY_READ(sc, GG82563_PHY_KMRN_MODE_CTRL);

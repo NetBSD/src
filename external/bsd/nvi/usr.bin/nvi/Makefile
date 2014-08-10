@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/11/30 14:52:40 christos Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2014/08/10 07:09:35 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -79,10 +79,11 @@ ipc_def.h: ipc.awk vipc.awk ipc_cmd.c ip_read.c
 .for i in cl common ex ip ipc vi
 DPSRCS+=${i}_extern.h
 CLEANFILES+=${i}_extern.h
-_${i}_SRCS != echo ${DIST}/${i}/*.c ${DIST}/${i}/*.xs
+# does not work, DIST isn't set yet here
+#_${i}_SRCS != echo ${DIST}/${i}/*.c ${DIST}/${i}/*.xs
 ${i}_extern.h: ${SRCS}
 	${_MKTARGET_CREATE}
-	@${TOOL_SED} -n "s/^ \* PUBLIC: \(.*\)/\1/p" ${.ALLSRC:M*/$i/*} > ${.TARGET}.tmp
+	@${TOOL_SED} -n "s/^ \* PUBLIC: \(.*\)/\1/p" ${.ALLSRC:M${DIST}/$i/*} > ${.TARGET}.tmp
 	@if cmp -s ${.TARGET}.tmp ${.TARGET}; then \
 		rm -f ${.TARGET}.tmp; \
 	else \

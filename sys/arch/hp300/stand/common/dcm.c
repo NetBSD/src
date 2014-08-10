@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.8 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: dcm.c,v 1.8.28.1 2014/08/10 06:53:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,7 +112,7 @@ dcmgetchar(dev_t dev)
 	struct dcmrfifo *fifo;
 	struct dcmpreg *pp;
 	unsigned int head;
-	int c, stat, port;
+	int c, port;
 
 	port = DCMCONUNIT;
 	pp = dcm_preg(dcm, port);
@@ -121,10 +121,10 @@ dcmgetchar(dev_t dev)
 		return 0;
 	fifo = &dcm->dcm_rfifos[3-port][head>>1];
 	c = fifo->data_char;
-	stat = fifo->data_stat;
+	(void)fifo->data_stat;
 	pp->r_head = (head + 2) & RX_MASK;
 	SEM_LOCK(dcm);
-	stat = dcm->dcm_iir;
+	(void)dcm->dcm_iir;
 	SEM_UNLOCK(dcm);
 	return c;
 }
@@ -145,7 +145,7 @@ dcmputchar(dev_t dev, int c)
 	struct dcmpreg *pp;
 	int timo;
 	unsigned int tail;
-	int port, stat;
+	int port;
 
 	port = DCMCONUNIT;
 	pp = dcm_preg(dcm, port);
@@ -163,7 +163,7 @@ dcmputchar(dev_t dev, int c)
 	while (tail != (pp->t_head & TX_MASK) && --timo)
 		;
 	SEM_LOCK(dcm);
-	stat = dcm->dcm_iir;
+	(void)dcm->dcm_iir;
 	SEM_UNLOCK(dcm);
 }
 #endif

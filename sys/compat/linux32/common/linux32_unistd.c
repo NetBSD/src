@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.36 2013/11/18 01:35:22 chs Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.36.2.1 2014/08/10 06:54:33 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.36 2013/11/18 01:35:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.36.2.1 2014/08/10 06:54:33 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -226,7 +226,7 @@ linux32_select1(struct lwp *l, register_t *retval, int nfds,
 }
 
 static int
-linux32_pipe(struct lwp *l, int *fd, register_t *retval, int flags)
+linux32_pipe(struct lwp *l, int *fd, register_t *retval)
 {
 	/* {
 		syscallarg(netbsd32_intp) fd;
@@ -240,10 +240,6 @@ linux32_pipe(struct lwp *l, int *fd, register_t *retval, int flags)
 	if ((error = copyout(pfds, fd, 2 * sizeof(*fd))) != 0)
 		return error;
 
-	if (flags & LINUX_O_CLOEXEC) {
-		fd_set_exclose(l, retval[0], true);
-		fd_set_exclose(l, retval[1], true);
-	}
 	retval[0] = 0;
 	retval[1] = 0;
 
@@ -257,31 +253,23 @@ linux32_sys_pipe(struct lwp *l, const struct linux32_sys_pipe_args *uap,
 	int error;
 	if ((error = pipe1(l, retval, 0)))
 		return error;
-	return linux32_pipe(l, SCARG_P32(uap, fd), retval, 0);
+	return linux32_pipe(l, SCARG_P32(uap, fd), retval);
 }
 
 int
 linux32_sys_pipe2(struct lwp *l, const struct linux32_sys_pipe2_args *uap,
     register_t *retval)
 {
-	int flag = 0;
-	int error;
+	int flags, error;
 
-	switch (SCARG(uap, flags)) {
-	case LINUX_O_CLOEXEC:
-		break;
-	case LINUX_O_NONBLOCK:
-	case LINUX_O_NONBLOCK|LINUX_O_CLOEXEC:
-		flag = O_NONBLOCK;
-		break;
-	default:
+	flags = linux_to_bsd_ioflags(SCARG(uap, flags));
+	if ((flags & ~(O_CLOEXEC|O_NONBLOCK)) != 0)
 		return EINVAL;
-	}
 
-	if ((error = pipe1(l, retval, flag)))
+	if ((error = pipe1(l, retval, flags)))
 		return error;
 
-	return linux32_pipe(l, SCARG_P32(uap, fd), retval, SCARG(uap, flags));
+	return linux32_pipe(l, SCARG_P32(uap, fd), retval);
 }
 
 int
@@ -293,19 +281,13 @@ linux32_sys_dup3(struct lwp *l, const struct linux32_sys_dup3_args *uap,
 		syscallarg(int) to;
 		syscallarg(int) flags;
 	} */
-	struct sys_dup2_args ua;
-	int error;
+	struct linux_sys_dup3_args ua;
 
 	NETBSD32TO64_UAP(from);
 	NETBSD32TO64_UAP(to);
+	NETBSD32TO64_UAP(flags);
 
-	if ((error = sys_dup2(l, &ua, retval)))
-		return error;
-
-	if (SCARG(uap, flags) & LINUX_O_CLOEXEC)
-		fd_set_exclose(l, SCARG(uap, to), true);
-
-	return 0;
+	return linux_sys_dup3(l, &ua, retval);
 }
 
 
@@ -723,13 +705,14 @@ linux32_sys_pread(struct lwp *l,
 		syscallarg(int) fd;
 		syscallarg(netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) nbyte;
-		syscallarg(linux32_off_t) offset;
+		syscallarg(netbsd32_off_t) offset;
 	} */
 	struct sys_pread_args pra;
 
 	SCARG(&pra, fd) = SCARG(uap, fd);
 	SCARG(&pra, buf) = SCARG_P32(uap, buf);
 	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, PAD) = 0;
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
 	return sys_pread(l, &pra, retval);
@@ -746,13 +729,14 @@ linux32_sys_pwrite(struct lwp *l,
 		syscallarg(int) fd;
 		syscallarg(const netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) nbyte;
-		syscallarg(linux32_off_t) offset;
+		syscallarg(netbsd32_off_t) offset;
 	} */
 	struct sys_pwrite_args pra;
 
 	SCARG(&pra, fd) = SCARG(uap, fd);
 	SCARG(&pra, buf) = SCARG_P32(uap, buf);
 	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, PAD) = 0;
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
 	return sys_pwrite(l, &pra, retval);

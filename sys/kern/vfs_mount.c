@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.28 2014/03/18 10:21:47 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.28.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.28 2014/03/18 10:21:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.28.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -371,8 +371,9 @@ vfs_vnode_iterator_destroy(struct vnode_iterator *vi)
 	vnfree(mvp);
 }
 
-bool
-vfs_vnode_iterator_next(struct vnode_iterator *vi, struct vnode **vpp)
+struct vnode *
+vfs_vnode_iterator_next(struct vnode_iterator *vi,
+    bool (*f)(void *, struct vnode *), void *cl)
 {
 	struct vnode *mvp = &vi->vi_vnode;
 	struct mount *mp = mvp->v_mount;
@@ -386,22 +387,17 @@ vfs_vnode_iterator_next(struct vnode_iterator *vi, struct vnode **vpp)
 		vp = TAILQ_NEXT(mvp, v_mntvnodes);
 		TAILQ_REMOVE(&mp->mnt_vnodelist, mvp, v_mntvnodes);
 		mvp->v_usecount = 0;
+again:
 		if (vp == NULL) {
 	       		mutex_exit(&mntvnode_lock);
-			*vpp = NULL;
-	       		return false;
+	       		return NULL;
 		}
-
 		mutex_enter(vp->v_interlock);
-		while ((vp->v_iflag & VI_MARKER) != 0) {
+		if (ISSET(vp->v_iflag, VI_MARKER) ||
+		    (f && !ISSET(vp->v_iflag, VI_XLOCK) && !(*f)(cl, vp))) {
 			mutex_exit(vp->v_interlock);
 			vp = TAILQ_NEXT(vp, v_mntvnodes);
-			if (vp == NULL) {
-				mutex_exit(&mntvnode_lock);
-				*vpp = NULL;
-				return false;
-			}
-			mutex_enter(vp->v_interlock);
+			goto again;
 		}
 
 		TAILQ_INSERT_AFTER(&mp->mnt_vnodelist, vp, mvp, v_mntvnodes);
@@ -411,8 +407,7 @@ vfs_vnode_iterator_next(struct vnode_iterator *vi, struct vnode **vpp)
 		KASSERT(error == 0 || error == ENOENT);
 	} while (error != 0);
 
-	*vpp = vp;
-	return true;
+	return vp;
 }
 
 /*
@@ -465,19 +460,47 @@ int busyprt = 0;	/* print out busy vnodes */
 struct ctldebug debug1 = { "busyprt", &busyprt };
 #endif
 
-static vnode_t *
-vflushnext(struct vnode_iterator *marker, int *when)
-{
-	struct vnode *vp;
+struct vflush_ctx {
+	const struct vnode *skipvp;
+	int flags;
+};
 
+static bool
+vflush_selector(void *cl, struct vnode *vp)
+{
+	struct vflush_ctx *c = cl;
+	/*
+	 * Skip over a selected vnode.
+	 */
+	if (vp == c->skipvp)
+		return false;
+	/*
+	 * Skip over a vnodes marked VSYSTEM.
+	 */
+	if ((c->flags & SKIPSYSTEM) && (vp->v_vflag & VV_SYSTEM))
+		return false;
+
+	/*
+	 * If WRITECLOSE is set, only flush out regular file
+	 * vnodes open for writing.
+	 */
+	if ((c->flags & WRITECLOSE) && vp->v_type == VREG) {
+		if (vp->v_writecount == 0)
+			return false;
+	}
+	return true;
+}
+
+static vnode_t *
+vflushnext(struct vnode_iterator *marker, void *ctx, int *when)
+{
 	if (hardclock_ticks > *when) {
 		yield();
 		*when = hardclock_ticks + hz / 10;
 	}
-	if (vfs_vnode_iterator_next(marker, &vp))
-		return vp;
-	return NULL;
+	return vfs_vnode_iterator_next(marker, vflush_selector, ctx);
 }
+
 
 int
 vflush(struct mount *mp, vnode_t *skipvp, int flags)
@@ -485,39 +508,16 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 	vnode_t *vp;
 	struct vnode_iterator *marker;
 	int busy = 0, when = 0;
+	struct vflush_ctx ctx;
 
 	/* First, flush out any vnode references from vrele_list. */
 	vrele_flush();
 
 	vfs_vnode_iterator_init(mp, &marker);
-	while ((vp = vflushnext(marker, &when)) != NULL) {
-		/*
-		 * Skip over a selected vnode.
-		 */
-		if (vp == skipvp) {
-			vrele(vp);
-			continue;
-		}
-		/*
-		 * Skip over a vnodes marked VSYSTEM.
-		 */
-		if ((flags & SKIPSYSTEM) && (vp->v_vflag & VV_SYSTEM)) {
-			vrele(vp);
-			continue;
-		}
-		/*
-		 * If WRITECLOSE is set, only flush out regular file
-		 * vnodes open for writing.
-		 */
-		if ((flags & WRITECLOSE) && vp->v_type == VREG) {
-			mutex_enter(vp->v_interlock);
-			if (vp->v_writecount == 0) {
-				mutex_exit(vp->v_interlock);
-				vrele(vp);
-				continue;
-			}
-			mutex_exit(vp->v_interlock);
-		}
+
+	ctx.skipvp = skipvp;
+	ctx.flags = flags;
+	while ((vp = vflushnext(marker, &ctx, &when)) != NULL) {
 		/*
 		 * First try to recycle the vnode.
 		 */

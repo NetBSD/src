@@ -30,13 +30,13 @@
 #include "clang/Sema/Sema.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Atomic.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
+#include <atomic>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -249,11 +249,14 @@ namespace {
 /// AllocatedCXCodeCompleteResults outlives the CXTranslationUnit, so we can
 /// not rely on the StringPool in the TU.
 struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
-  AllocatedCXCodeCompleteResults(const FileSystemOptions& FileSystemOpts);
+  AllocatedCXCodeCompleteResults(IntrusiveRefCntPtr<FileManager> FileMgr);
   ~AllocatedCXCodeCompleteResults();
   
   /// \brief Diagnostics produced while performing code completion.
   SmallVector<StoredDiagnostic, 8> Diagnostics;
+
+  /// \brief Allocated API-exposed wrappters for Diagnostics.
+  SmallVector<CXStoredDiagnostic *, 8> DiagnosticsWrappers;
 
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
   
@@ -262,8 +265,6 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   
   /// \brief Language options used to adjust source locations.
   LangOptions LangOpts;
-
-  FileSystemOptions FileSystemOpts;
 
   /// \brief File manager, used for diagnostics.
   IntrusiveRefCntPtr<FileManager> FileMgr;
@@ -315,30 +316,25 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
 /// currently active.
 ///
 /// Used for debugging purposes only.
-static llvm::sys::cas_flag CodeCompletionResultObjects;
+static std::atomic<unsigned> CodeCompletionResultObjects;
   
 AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults(
-                                      const FileSystemOptions& FileSystemOpts)
-  : CXCodeCompleteResults(),
-    DiagOpts(new DiagnosticOptions),
-    Diag(new DiagnosticsEngine(
-                   IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
-                   &*DiagOpts)),
-    FileSystemOpts(FileSystemOpts),
-    FileMgr(new FileManager(FileSystemOpts)),
-    SourceMgr(new SourceManager(*Diag, *FileMgr)),
-    CodeCompletionAllocator(new clang::GlobalCodeCompletionAllocator),
-    Contexts(CXCompletionContext_Unknown),
-    ContainerKind(CXCursor_InvalidCode),
-    ContainerIsIncomplete(1)
-{ 
-  if (getenv("LIBCLANG_OBJTRACKING")) {
-    llvm::sys::AtomicIncrement(&CodeCompletionResultObjects);
-    fprintf(stderr, "+++ %d completion results\n", CodeCompletionResultObjects);
-  }    
+    IntrusiveRefCntPtr<FileManager> FileMgr)
+    : CXCodeCompleteResults(),
+      DiagOpts(new DiagnosticOptions),
+      Diag(new DiagnosticsEngine(
+          IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs), &*DiagOpts)),
+      FileMgr(FileMgr), SourceMgr(new SourceManager(*Diag, *FileMgr)),
+      CodeCompletionAllocator(new clang::GlobalCodeCompletionAllocator),
+      Contexts(CXCompletionContext_Unknown),
+      ContainerKind(CXCursor_InvalidCode), ContainerIsIncomplete(1) {
+  if (getenv("LIBCLANG_OBJTRACKING"))
+    fprintf(stderr, "+++ %u completion results\n",
+            ++CodeCompletionResultObjects);
 }
   
 AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
+  llvm::DeleteContainerPointers(DiagnosticsWrappers);
   delete [] Results;
 
   for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
@@ -346,10 +342,9 @@ AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
   for (unsigned I = 0, N = TemporaryBuffers.size(); I != N; ++I)
     delete TemporaryBuffers[I];
 
-  if (getenv("LIBCLANG_OBJTRACKING")) {
-    llvm::sys::AtomicDecrement(&CodeCompletionResultObjects);
-    fprintf(stderr, "--- %d completion results\n", CodeCompletionResultObjects);
-  }    
+  if (getenv("LIBCLANG_OBJTRACKING"))
+    fprintf(stderr, "--- %u completion results\n",
+            --CodeCompletionResultObjects);
 }
   
 } // end extern "C"
@@ -539,11 +534,11 @@ namespace {
         AllocatedResults(Results), CCTUInfo(Results.CodeCompletionAllocator),
         TU(TranslationUnit) { }
     ~CaptureCompletionResults() { Finish(); }
-    
-    virtual void ProcessCodeCompleteResults(Sema &S, 
-                                            CodeCompletionContext Context,
-                                            CodeCompletionResult *Results,
-                                            unsigned NumResults) {
+
+    void ProcessCodeCompleteResults(Sema &S, 
+                                    CodeCompletionContext Context,
+                                    CodeCompletionResult *Results,
+                                    unsigned NumResults) override {
       StoredResults.reserve(StoredResults.size() + NumResults);
       for (unsigned I = 0; I != NumResults; ++I) {
         CodeCompletionString *StoredCompletion        
@@ -616,10 +611,10 @@ namespace {
         AllocatedResults.ContainerIsIncomplete = 1;
       }
     }
-    
-    virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
-                                           OverloadCandidate *Candidates,
-                                           unsigned NumCandidates) {
+
+    void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
+                                   OverloadCandidate *Candidates,
+                                   unsigned NumCandidates) override {
       StoredResults.reserve(StoredResults.size() + NumCandidates);
       for (unsigned I = 0; I != NumCandidates; ++I) {
         CodeCompletionString *StoredCompletion
@@ -632,13 +627,13 @@ namespace {
         StoredResults.push_back(R);
       }
     }
-    
-    virtual CodeCompletionAllocator &getAllocator() { 
+
+    CodeCompletionAllocator &getAllocator() override {
       return *AllocatedResults.CodeCompletionAllocator;
     }
 
-    virtual CodeCompletionTUInfo &getCodeCompletionTUInfo() { return CCTUInfo; }
-    
+    CodeCompletionTUInfo &getCodeCompletionTUInfo() override { return CCTUInfo;}
+
   private:
     void Finish() {
       AllocatedResults.Results = new CXCompletionResult [StoredResults.size()];
@@ -711,8 +706,8 @@ void clang_codeCompleteAt_Impl(void *UserData) {
   }
 
   // Parse the resulting source file to find code-completion results.
-  AllocatedCXCodeCompleteResults *Results = 
-        new AllocatedCXCodeCompleteResults(AST->getFileSystemOpts());
+  AllocatedCXCodeCompleteResults *Results = new AllocatedCXCodeCompleteResults(
+      &AST->getFileManager());
   Results->Results = 0;
   Results->NumResults = 0;
   
@@ -731,7 +726,9 @@ void clang_codeCompleteAt_Impl(void *UserData) {
                     *Results->Diag, Results->LangOpts, *Results->SourceMgr,
                     *Results->FileMgr, Results->Diagnostics,
                     Results->TemporaryBuffers);
-  
+
+  Results->DiagnosticsWrappers.resize(Results->Diagnostics.size());
+
   // Keep a reference to the allocator used for cached global completions, so
   // that we can be sure that the memory used by our code completion strings
   // doesn't get freed due to subsequent reparses (while the code completion
@@ -878,7 +875,11 @@ clang_codeCompleteGetDiagnostic(CXCodeCompleteResults *ResultsIn,
   if (!Results || Index >= Results->Diagnostics.size())
     return 0;
 
-  return new CXStoredDiagnostic(Results->Diagnostics[Index], Results->LangOpts);
+  CXStoredDiagnostic *Diag = Results->DiagnosticsWrappers[Index];
+  if (!Diag)
+    Results->DiagnosticsWrappers[Index] = Diag =
+        new CXStoredDiagnostic(Results->Diagnostics[Index], Results->LangOpts);
+  return Diag;
 }
 
 unsigned long long

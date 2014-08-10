@@ -1,9 +1,9 @@
-/*	$NetBSD: passwd.c,v 1.3 2010/12/12 15:46:33 adam Exp $	*/
+/*	$NetBSD: passwd.c,v 1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.104.2.10 2010/04/13 20:23:06 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -427,7 +427,7 @@ static int pw_string(
 }
 #endif /* SLAPD_LMHASH || SLAPD_CRYPT */
 
-static int pw_string64(
+int lutil_passwd_string64(
 	const struct berval *sc,
 	const struct berval *hash,
 	struct berval *b64,
@@ -1054,7 +1054,7 @@ static int hash_ssha1(
 		(const unsigned char *)salt.bv_val, salt.bv_len );
 	lutil_SHA1Final( SHA1digest, &SHA1context );
 
-	return pw_string64( scheme, &digest, hash, &salt);
+	return lutil_passwd_string64( scheme, &digest, hash, &salt);
 }
 
 static int hash_sha1(
@@ -1074,7 +1074,7 @@ static int hash_sha1(
 		(const unsigned char *)passwd->bv_val, passwd->bv_len );
 	lutil_SHA1Final( SHA1digest, &SHA1context );
             
-	return pw_string64( scheme, &digest, hash, NULL);
+	return lutil_passwd_string64( scheme, &digest, hash, NULL);
 }
 #endif
 
@@ -1106,7 +1106,7 @@ static int hash_smd5(
 		(const unsigned char *) salt.bv_val, salt.bv_len );
 	lutil_MD5Final( MD5digest, &MD5context );
 
-	return pw_string64( scheme, &digest, hash, &salt );
+	return lutil_passwd_string64( scheme, &digest, hash, &salt );
 }
 
 static int hash_md5(
@@ -1128,7 +1128,7 @@ static int hash_md5(
 		(const unsigned char *) passwd->bv_val, passwd->bv_len );
 	lutil_MD5Final( MD5digest, &MD5context );
 
-	return pw_string64( scheme, &digest, hash, NULL );
+	return lutil_passwd_string64( scheme, &digest, hash, NULL );
 ;
 }
 

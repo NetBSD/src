@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.29 2014/03/14 11:29:44 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.29.2.1 2014/08/10 06:56:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.29 2014/03/14 11:29:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.29.2.1 2014/08/10 06:56:16 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.29 2014/03/14 11:29:44 rmind Exp $
 #include <netinet6/ip6_var.h>
 
 #include "npf_impl.h"
+#include "npf_conn.h"
 
 static bool		pfil_registered = false;
 static pfil_head_t *	npf_ph_if = NULL;
@@ -86,8 +87,9 @@ npf_ifhook(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 }
 
 static int
-npf_reassembly(npf_cache_t *npc, nbuf_t *nbuf, struct mbuf **mp)
+npf_reassembly(npf_cache_t *npc, struct mbuf **mp)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	int error = EINVAL;
 
 	/* Reset the mbuf as it may have changed. */
@@ -124,7 +126,7 @@ npf_reassembly(npf_cache_t *npc, nbuf_t *nbuf, struct mbuf **mp)
 	nbuf_init(nbuf, *mp, nbuf->nb_ifp);
 	npc->npc_info = 0;
 
-	if (npf_cache_all(npc, nbuf) & NPC_IPFRAG) {
+	if (npf_cache_all(npc) & NPC_IPFRAG) {
 		return EINVAL;
 	}
 	npf_stats_inc(NPF_STAT_REASSEMBLY);
@@ -141,7 +143,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 {
 	nbuf_t nbuf;
 	npf_cache_t npc;
-	npf_session_t *se;
+	npf_conn_t *con;
 	npf_rule_t *rl;
 	npf_rproc_t *rp;
 	int error, retfl;
@@ -153,20 +155,22 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	 */
 	KASSERT(ifp != NULL);
 	nbuf_init(&nbuf, *mp, ifp);
+	npc.npc_nbuf = &nbuf;
 	npc.npc_info = 0;
+
 	decision = NPF_DECISION_BLOCK;
 	error = 0;
 	retfl = 0;
 	rp = NULL;
 
 	/* Cache everything.  Determine whether it is an IP fragment. */
-	if (npf_cache_all(&npc, &nbuf) & NPC_IPFRAG) {
+	if (__predict_false(npf_cache_all(&npc) & NPC_IPFRAG)) {
 		/*
 		 * Pass to IPv4 or IPv6 reassembly mechanism.
 		 */
-		error = npf_reassembly(&npc, &nbuf, mp);
+		error = npf_reassembly(&npc, mp);
 		if (error) {
-			se = NULL;
+			con = NULL;
 			goto out;
 		}
 		if (*mp == NULL) {
@@ -175,16 +179,16 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		}
 	}
 
-	/* Inspect the list of sessions (if found, acquires a reference). */
-	se = npf_session_inspect(&npc, &nbuf, di, &error);
+	/* Inspect the list of connections (if found, acquires a reference). */
+	con = npf_conn_inspect(&npc, di, &error);
 
-	/* If "passing" session found - skip the ruleset inspection. */
-	if (se && npf_session_pass(se, &rp)) {
-		npf_stats_inc(NPF_STAT_PASS_SESSION);
+	/* If "passing" connection found - skip the ruleset inspection. */
+	if (con && npf_conn_pass(con, &rp)) {
+		npf_stats_inc(NPF_STAT_PASS_CONN);
 		KASSERT(error == 0);
 		goto pass;
 	}
-	if (error) {
+	if (__predict_false(error)) {
 		if (error == ENETUNREACH)
 			goto block;
 		goto out;
@@ -194,8 +198,8 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	int slock = npf_config_read_enter();
 	npf_ruleset_t *rlset = npf_config_ruleset();
 
-	rl = npf_ruleset_inspect(&npc, &nbuf, rlset, di, NPF_LAYER_3);
-	if (rl == NULL) {
+	rl = npf_ruleset_inspect(&npc, rlset, di, NPF_LAYER_3);
+	if (__predict_false(rl == NULL)) {
 		const bool pass = npf_default_pass();
 		npf_config_read_exit(slock);
 
@@ -209,7 +213,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 
 	/*
 	 * Get the rule procedure (acquires a reference) for association
-	 * with a session (if any) and execution.
+	 * with a connection (if any) and execution.
 	 */
 	KASSERT(rp == NULL);
 	rp = npf_rule_getrproc(rl);
@@ -225,19 +229,19 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	npf_stats_inc(NPF_STAT_PASS_RULESET);
 
 	/*
-	 * Establish a "pass" session, if required.  Just proceed,
-	 * if session creation fails (e.g. due to unsupported protocol).
+	 * Establish a "pass" connection, if required.  Just proceed if
+	 * connection creation fails (e.g. due to unsupported protocol).
 	 */
-	if ((retfl & NPF_RULE_STATEFUL) != 0 && !se) {
-		se = npf_session_establish(&npc, &nbuf, di,
+	if ((retfl & NPF_RULE_STATEFUL) != 0 && !con) {
+		con = npf_conn_establish(&npc, di,
 		    (retfl & NPF_RULE_MULTIENDS) == 0);
-		if (se) {
+		if (con) {
 			/*
 			 * Note: the reference on the rule procedure is
-			 * transfered to the session.  It will be released
-			 * on session destruction.
+			 * transfered to the connection.  It will be
+			 * released on connection destruction.
 			 */
-			npf_session_setpass(se, rp);
+			npf_conn_setpass(con, rp);
 		}
 	}
 pass:
@@ -246,22 +250,27 @@ pass:
 	/*
 	 * Perform NAT.
 	 */
-	error = npf_do_nat(&npc, se, &nbuf, di);
+	error = npf_do_nat(&npc, con, di);
 block:
 	/*
 	 * Execute the rule procedure, if any is associated.
 	 * It may reverse the decision from pass to block.
 	 */
-	if (rp) {
-		npf_rproc_run(&npc, &nbuf, rp, &decision);
+	if (rp && !npf_rproc_run(&npc, rp, &decision)) {
+		if (con) {
+			npf_conn_release(con);
+		}
+		npf_rproc_release(rp);
+		*mp = NULL;
+		return 0;
 	}
 out:
 	/*
-	 * Release the reference on a session.  Release the reference on a
-	 * rule procedure only if there was no association.
+	 * Release the reference on a connection.  Release the reference
+	 * on a rule procedure only if there was no association.
 	 */
-	if (se) {
-		npf_session_release(se);
+	if (con) {
+		npf_conn_release(con);
 	} else if (rp) {
 		npf_rproc_release(rp);
 	}
@@ -286,7 +295,7 @@ out:
 	 * Depending on the flags and protocol, return TCP reset (RST) or
 	 * ICMP destination unreachable.
 	 */
-	if (retfl && npf_return_block(&npc, &nbuf, retfl)) {
+	if (retfl && npf_return_block(&npc, retfl)) {
 		*mp = NULL;
 	}
 

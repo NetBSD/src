@@ -39,17 +39,19 @@
 	.word	_C_LABEL(PAGE_MASK)
 
 ENTRY(sheeva_dcache_wbinv_range)
-	str	lr, [sp, #-4]!
-	mrs	lr, cpsr
+	push	{r4,r5}
+	mrs	r4, cpsr
+	orr	r5, r4, #I32_bit | F32_bit
+
 	/* Start with cache line aligned address */
 	ldr	ip, .Lsheeva_cache_line_size
-	ldr	ip, [ip]
-	sub	ip, ip, #1
-	and	r2, r0, ip
+	ldr	r3, [ip]
+	sub	r3, r3, #1
+	and	r2, r0, r3
 	add	r1, r1, r2
-	add	r1, r1, ip
-	bics	r1, r1, ip
-	bics	r0, r0, ip
+	add	r1, r1, r3
+	bic	r1, r1, r3
+	bic	r0, r0, r3
 
 	ldr	ip, .Lsheeva_asm_page_mask
 	and	r2, r0, ip
@@ -57,16 +59,13 @@ ENTRY(sheeva_dcache_wbinv_range)
 	cmp	r1, r2
 	movcc	ip, r1
 	movcs	ip, r2
+	sub	r2, r0, #1
 1:
-	add	r3, r0, ip
-	sub	r2, r3, #1
-	/* Disable irqs */
-	orr	r3, lr, #I32_bit | F32_bit
-	msr	cpsr_c, r3
+	add	r2, r2, ip
+	msr	cpsr_c, r5		/* Disable irqs */
 	mcr	p15, 5, r0, c15, c15, 0	/* Clean and inv zone start address */
 	mcr	p15, 5, r2, c15, c15, 1	/* Clean and inv zone end address */
-	/* Enable irqs */
-	msr	cpsr_c, lr
+	msr	cpsr_c, r4		/* Enable irqs */
 
 	add	r0, r0, ip
 	sub	r1, r1, ip
@@ -77,21 +76,24 @@ ENTRY(sheeva_dcache_wbinv_range)
 	bne	1b
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	ldr	lr, [sp], #4
+	pop	{r4, r5}
 	RET
+END(sheeva_dcache_wbinv_range)
 
 ENTRY(sheeva_dcache_inv_range)
-	str	lr, [sp, #-4]!
-	mrs	lr, cpsr
+	push	{r4,r5}
+	mrs	r4, cpsr
+	orr	r5, r4, #I32_bit | F32_bit
+
 	/* Start with cache line aligned address */
 	ldr	ip, .Lsheeva_cache_line_size
-	ldr	ip, [ip]
-	sub	ip, ip, #1
-	and	r2, r0, ip
+	ldr	r3, [ip]
+	sub	r3, r3, #1
+	and	r2, r0, r3
 	add	r1, r1, r2
-	add	r1, r1, ip
-	bics	r1, r1, ip
-	bics	r0, r0, ip
+	add	r1, r1, r3
+	bic	r1, r1, r3
+	bic	r0, r0, r3
 
 	ldr	ip, .Lsheeva_asm_page_mask
 	and	r2, r0, ip
@@ -99,16 +101,13 @@ ENTRY(sheeva_dcache_inv_range)
 	cmp	r1, r2
 	movcc	ip, r1
 	movcs	ip, r2
+	sub	r2, r0, #1
 1:
-	add	r3, r0, ip
-	sub	r2, r3, #1
-	/* Disable irqs */
-	orr	r3, lr, #I32_bit | F32_bit
-	msr	cpsr_c, r3
+	add	r2, r2, ip
+	msr	cpsr_c, r5		/* Disable irqs */
 	mcr	p15, 5, r0, c15, c14, 0	/* Inv zone start address */
 	mcr	p15, 5, r2, c15, c14, 1	/* Inv zone end address */
-	/* Enable irqs */
-	msr	cpsr_c, lr
+	msr	cpsr_c, r4		/* Enable irqs */
 
 	add	r0, r0, ip
 	sub	r1, r1, ip
@@ -119,21 +118,24 @@ ENTRY(sheeva_dcache_inv_range)
 	bne	1b
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	ldr	lr, [sp], #4
+	pop	{r4, r5}
 	RET
+END(sheeva_dcache_inv_range)
 
 ENTRY(sheeva_dcache_wb_range)
-	str	lr, [sp, #-4]!
-	mrs	lr, cpsr
+	push	{r4,r5}
+	mrs	r4, cpsr
+	orr	r5, r4, #I32_bit | F32_bit
+
 	/* Start with cache line aligned address */
 	ldr	ip, .Lsheeva_cache_line_size
-	ldr	ip, [ip]
-	sub	ip, ip, #1
-	and	r2, r0, ip
+	ldr	r3, [ip]
+	sub	r3, r3, #1
+	and	r2, r0, r3
 	add	r1, r1, r2
-	add	r1, r1, ip
-	bics	r1, r1, ip
-	bics	r0, r0, ip
+	add	r1, r1, r3
+	bic	r1, r1, r3
+	bic	r0, r0, r3
 
 	ldr	ip, .Lsheeva_asm_page_mask
 	and	r2, r0, ip
@@ -141,16 +143,13 @@ ENTRY(sheeva_dcache_wb_range)
 	cmp	r1, r2
 	movcc	ip, r1
 	movcs	ip, r2
+	sub	r2, r0, #1
 1:
-	add	r3, r0, ip
-	sub	r2, r3, #1
-	/* Disable irqs */
-	orr	r3, lr, #I32_bit | F32_bit
-	msr	cpsr_c, r3
+	add	r2, r2, ip
+	msr	cpsr_c, r5		/* Disable irqs */
 	mcr	p15, 5, r0, c15, c13, 0	/* Clean zone start address */
 	mcr	p15, 5, r2, c15, c13, 1	/* Clean zone end address */
-	/* Enable irqs */
-	msr	cpsr_c, lr
+	msr	cpsr_c, r4		/* Enable irqs */
 
 	add	r0, r0, ip
 	sub	r1, r1, ip
@@ -161,21 +160,24 @@ ENTRY(sheeva_dcache_wb_range)
 	bne	1b
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	ldr	lr, [sp], #4
+	pop	{r4, r5}
 	RET
+END(sheeva_dcache_wb_range)
 
 ENTRY(sheeva_idcache_wbinv_range)
-	str	lr, [sp, #-4]!
-	mrs	lr, cpsr
+	push	{r4,r5}
+	mrs	r4, cpsr
+	orr	r5, r4, #I32_bit | F32_bit
+
 	/* Start with cache line aligned address */
 	ldr	ip, .Lsheeva_cache_line_size
-	ldr	ip, [ip]
-	sub	ip, ip, #1
-	and	r2, r0, ip
+	ldr	r3, [ip]
+	sub	r3, r3, #1
+	and	r2, r0, r3
 	add	r1, r1, r2
-	add	r1, r1, ip
-	bics	r1, r1, ip
-	bics	r0, r0, ip
+	add	r1, r1, r3
+	bic	r1, r1, r3
+	bic	r0, r0, r3
 
 	ldr	ip, .Lsheeva_asm_page_mask
 	and	r2, r0, ip
@@ -183,27 +185,22 @@ ENTRY(sheeva_idcache_wbinv_range)
 	cmp	r1, r2
 	movcc	ip, r1
 	movcs	ip, r2
+	sub	r2, r0, #1
 1:
-	add	r3, r0, ip
-	sub	r2, r3, #1
-	/* Disable irqs */
-	orr	r3, lr, #I32_bit | F32_bit
-	msr	cpsr_c, r3
+	add	r2, r2, ip
+	msr	cpsr_c, r5		/* Disable irqs */
 	mcr	p15, 5, r0, c15, c15, 0	/* Clean and inv zone start address */
 	mcr	p15, 5, r2, c15, c15, 1	/* Clean and inv zone end address */
-	/* Enable irqs */
-	msr	cpsr_c, lr
+	msr	cpsr_c, r4		/* Enable irqs */
 
 	/* Invalidate and clean icache line by line */
-	ldr	r3, .Lsheeva_cache_line_size
-	ldr	r3, [r3]
 2:
 	mcr	p15, 0, r0, c7, c5, 1
 	add	r0, r0, r3
 	cmp	r2, r0
 	bhi	2b
 
-	add	r0, r2, #1
+	add	r0, r0, ip
 	sub	r1, r1, ip
 	cmp	r1, #PAGE_SIZE
 	movcc	ip, r1
@@ -212,8 +209,151 @@ ENTRY(sheeva_idcache_wbinv_range)
 	bne	1b
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	ldr	lr, [sp], #4
+	pop	{r4, r5}
 	RET
+END(sheeva_idcache_wbinv_range)
+
+ENTRY(sheeva_sdcache_wbinv_range)
+	push	{r4,r5}
+	mrs	r4, cpsr
+	orr	r5, r4, #I32_bit | F32_bit
+
+	mov	r1, r2		/* ignore paddr_t argument */
+
+	/* Start with cache line aligned address */
+	ldr	ip, .Lsheeva_cache_line_size
+	ldr	ip, [ip]
+	sub	ip, ip, #1
+	and	r2, r0, ip
+	add	r1, r1, r2
+	add	r1, r1, ip
+	bic	r1, r1, ip
+	bic	r0, r0, ip
+
+	ldr	ip, .Lsheeva_asm_page_mask
+	and	r2, r0, ip
+	rsb	r2, r2, #PAGE_SIZE
+	cmp	r1, r2
+	movcc	ip, r1
+	movcs	ip, r2
+	sub	r2, r0, #1
+1:
+	add	r2, r2, ip
+	msr	cpsr_c, r5		/* Disable irqs */
+	mcr	p15, 1, r0, c15, c9, 4	/* Clean L2 zone start address */
+	mcr	p15, 1, r2, c15, c9, 5	/* Clean L2 zone end address */
+	mcr	p15, 1, r0, c15, c11, 4	/* Inv L2 zone start address */
+	mcr	p15, 1, r2, c15, c11, 5	/* Inv L2 zone end address */
+	msr	cpsr_c, r4		/* Enable irqs */
+
+	add	r0, r0, ip
+	sub	r1, r1, ip
+	cmp	r1, #PAGE_SIZE
+	movcc	ip, r1
+	movcs	ip, #PAGE_SIZE
+	cmp	r1, #0
+	bne	1b
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
+	pop	{r4, r5}
+	RET
+END(sheeva_sdcache_wbinv_range)
+
+ENTRY(sheeva_sdcache_inv_range)
+	push	{r4,r5}
+	mrs	r4, cpsr
+	orr	r5, r4, #I32_bit | F32_bit
+
+	mov	r1, r2		/* ignore paddr_t argument */
+
+	/* Start with cache line aligned address */
+	ldr	ip, .Lsheeva_cache_line_size
+	ldr	r3, [ip]
+	sub	r3, r3, #1
+	and	r2, r0, r3
+	add	r1, r1, r2
+	add	r1, r1, r3
+	bic	r1, r1, r3
+	bic	r0, r0, r3
+
+	ldr	ip, .Lsheeva_asm_page_mask
+	and	r2, r0, ip
+	rsb	r2, r2, #PAGE_SIZE
+	cmp	r1, r2
+	movcc	ip, r1
+	movcs	ip, r2
+	sub	r2, r2, #1
+1:
+	add	r2, r2, ip
+	msr	cpsr_c, r5		/* Disable irqs */
+	mcr	p15, 1, r0, c15, c11, 4	/* Inv L2 zone start address */
+	mcr	p15, 1, r2, c15, c11, 5	/* Inv L2 zone end address */
+	msr	cpsr_c, r4		/* Enable irqs */
+
+	add	r0, r0, ip
+	sub	r1, r1, ip
+	cmp	r1, #PAGE_SIZE
+	movcc	ip, r1
+	movcs	ip, #PAGE_SIZE
+	cmp	r1, #0
+	bne	1b
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
+	pop	{r4, r5}
+	RET
+END(sheeva_sdcache_inv_range)
+
+ENTRY(sheeva_sdcache_wb_range)
+	push	{r4,r5}
+	mrs	r4, cpsr
+	orr	r5, r4, #I32_bit | F32_bit
+
+	mov	r1, r2		/* ignore paddr_t argument */
+
+	/* Start with cache line aligned address */
+	ldr	ip, .Lsheeva_cache_line_size
+	ldr	r3, [ip]
+	sub	r3, r3, #1
+	and	r2, r0, r3
+	add	r1, r1, r2
+	add	r1, r1, r3
+	bic	r1, r1, r3
+	bic	r0, r0, r3
+
+	ldr	ip, .Lsheeva_asm_page_mask
+	and	r2, r0,	ip
+	rsb	r2, r2, #PAGE_SIZE
+	cmp	r1, r2
+	movcc	ip, r1
+	movcs	ip, r2
+	sub	r2, r0, #1
+1:
+	add	r2, r2, ip
+	msr	cpsr_c, r5		/* Disable irqs */
+	mcr	p15, 1, r0, c15, c9, 4	/* Clean L2 zone start address */
+	mcr	p15, 1, r2, c15, c9, 5	/* Clean L2 zone end address */
+	msr	cpsr_c, r4		/* Enable irqs */
+
+	add	r0, r0, ip
+	sub	r1, r1, ip
+	cmp	r1, #PAGE_SIZE
+	movcc	ip, r1
+	movcs	ip, #PAGE_SIZE
+	cmp	r1, #0
+	bne	1b
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
+	pop	{r4, r5}
+	RET
+END(sheeva_sdcache_wb_range)
+
+ENTRY(sheeva_sdcache_wbinv_all)
+	mov	r0, #0
+	mcr	p15, 1, r0, c15, c9, 0	/* Clean L2 */
+	mcr	p15, 1, r0, c15, c11, 0	/* Invalidate L2 */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
+	RET
+END(sheeva_sdcache_wbinv_all)
 
 /*
  * CPU sleep
@@ -222,3 +362,4 @@ ENTRY_NP(sheeva_cpu_sleep)
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c0, 4	/* wait for interrupt */
 	RET
+END(sheeva_cpu_sleep)

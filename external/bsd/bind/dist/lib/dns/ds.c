@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.c,v 1.5 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: ds.c,v 1.5.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 		isc_gost_invalidate(&gost);		\
 		return (ret);				\
 	}						\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 	case DNS_DSDIGEST_GOST:
 		RETERR(isc_gost_init(&gost));

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.53 2012/06/25 15:28:39 christos Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.53.12.1 2014/08/10 06:56:30 tls Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.53 2012/06/25 15:28:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.53.12.1 2014/08/10 06:56:30 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -591,7 +591,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	/* If the caller specify the outgoing interface explicitly, use it. */
 	if (opts && (pi = opts->ip6po_pktinfo) != NULL && pi->ipi6_ifindex) {
 		/* XXX boundary check is assumed to be already done. */
-		ifp = ifindex2ifnet[pi->ipi6_ifindex];
+		ifp = if_byindex(pi->ipi6_ifindex);
 		if (ifp != NULL &&
 		    (norouteok || retrt == NULL ||
 		    IN6_IS_ADDR_MULTICAST(dst))) {

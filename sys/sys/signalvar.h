@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.85 2014/01/01 18:57:16 dsl Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.85.2.1 2014/08/10 06:56:54 tls Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -130,7 +130,7 @@ void	kpsignal(struct proc *, struct ksiginfo *, void *);
 void	child_psignal(struct proc *, int);
 void	siginit(struct proc *);
 void	trapsignal(struct lwp *, struct ksiginfo *);
-void	sigexit(struct lwp *, int);
+void	sigexit(struct lwp *, int) __dead;
 void	killproc(struct proc *, const char *);
 void	setsigvec(struct proc *, int, struct sigaction *);
 int	killpg1(struct lwp *, struct ksiginfo *, int, int);

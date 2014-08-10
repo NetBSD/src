@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.8 2014/03/01 03:24:40 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.8.2.1 2014/08/10 07:06:44 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -990,9 +990,9 @@ options_clauses[] = {
 	{ "listen-on", &cfg_type_listenon, CFG_CLAUSEFLAG_MULTI },
 	{ "listen-on-v6", &cfg_type_listenon, CFG_CLAUSEFLAG_MULTI },
 #ifdef ISC_PLATFORM_USESIT
-	{ "sit-secret", &cfg_type_qstring, 0 },
+	{ "sit-secret", &cfg_type_sstring, 0 },
 #else
-	{ "sit-secret", &cfg_type_qstring, CFG_CLAUSEFLAG_NOTCONFIGURED },
+	{ "sit-secret", &cfg_type_sstring, CFG_CLAUSEFLAG_NOTCONFIGURED },
 #endif
 	{ "managed-keys-directory", &cfg_type_qstring, 0 },
 	{ "match-mapped-addresses", &cfg_type_boolean, 0 },

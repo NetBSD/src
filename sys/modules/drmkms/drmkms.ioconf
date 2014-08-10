@@ -1,9 +1,0 @@
-#       $NetBSD: drmkms.ioconf,v 1.2 2014/03/18 18:20:43 riastradh Exp $
-
-ioconf drmkms
-
-include "conf/files"
-
-pseudo-root	drmkmsbus*
-
-drmkms*		at drmkmsbus?

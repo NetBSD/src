@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2012/11/25 21:55:51 alnsn Exp $
+#	$NetBSD: Makefile,v 1.22.10.1 2014/08/10 06:54:07 tls Exp $
 
 INCSDIR= /usr/include/sgimips
 
@@ -17,7 +17,7 @@ INCS=	asm.h ansi.h autoconf.h \
 	param.h pci_machdep.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h \
 	ptrace.h \
 	reg.h regdef.h regnum.h reloc.h rwlock.h \
-	setjmp.h signal.h sljitarch.h \
+	setjmp.h signal.h sljit_machdep.h \
 	trap.h types.h \
 	vmparam.h \
 	wchar_limits.h \

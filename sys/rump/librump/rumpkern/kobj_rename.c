@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_rename.c,v 1.1 2010/04/26 23:17:13 pooka Exp $	*/
+/*	$NetBSD: kobj_rename.c,v 1.1.38.1 2014/08/10 06:56:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_rename.c,v 1.1 2010/04/26 23:17:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_rename.c,v 1.1.38.1 2014/08/10 06:56:51 tls Exp $");
 
 #define ELFSIZE ARCH_ELFSIZE
 
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: kobj_rename.c,v 1.1 2010/04/26 23:17:13 pooka Exp $"
 #include <sys/kmem.h>
 #include <sys/kobj.h>
 #include <sys/systm.h>
+
+#include <rump/rump.h>
 
 /*
  * Mangle symbols into rump kernel namespace.  This means
@@ -70,15 +72,12 @@ kobj_renamespace(Elf_Sym *symtab, size_t symcount,
 	size_t worktabsz, worktabidx;
 	unsigned i;
 	const size_t prefixlen = strlen(RUMPNS);
-
-#ifndef _RUMP_NATIVE_ABI
 	static int warned;
 
-	if (!warned) {
+	if (!rump_nativeabi_p() && !warned) {
 		printf("warning: kernel ABI not supported on this arch\n");
 		warned = 1;
 	}
-#endif
 
 	/* allocate space for worst-case stringtab */
 	worktabsz = *strtabsz + symcount * prefixlen;

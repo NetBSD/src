@@ -1,4 +1,4 @@
-/*	$NetBSD: hmacmd5.c,v 1.5 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: hmacmd5.c,v 1.5.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -91,8 +91,8 @@ isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
 	};
 
 	DE_CONST(key, keyTemplate[5].pValue);
-	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_FALSE, ISC_FALSE,
-				       NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
 	ctx->object = CK_INVALID_HANDLE;
 	PK11_FATALCHECK(pkcs_C_CreateObject,
 			(ctx->session, keyTemplate,
@@ -156,8 +156,8 @@ isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
 	unsigned char ipad[PADLEN];
 	unsigned int i;
 
-	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_FALSE, ISC_FALSE,
-				       NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
 	RUNTIME_CHECK((ctx->key = pk11_mem_get(PADLEN)) != NULL);
 	if (len > PADLEN) {
 		CK_BYTE_PTR kPart;

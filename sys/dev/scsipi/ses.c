@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.46 2014/03/16 05:20:29 dholland Exp $ */
+/*	$NetBSD: ses.c,v 1.46.2.1 2014/08/10 06:54:58 tls Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.46 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.46.2.1 2014/08/10 06:54:58 tls Exp $");
 
 #include "opt_scsi.h"
 
@@ -147,6 +147,7 @@ const struct cdevsw ses_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

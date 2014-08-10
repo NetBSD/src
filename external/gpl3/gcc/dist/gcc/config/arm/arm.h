@@ -889,6 +889,11 @@ extern int arm_arch_thumb_hwdiv;
 #define ARM_UNWIND_INFO  0
 #endif
 
+/* Overriden by config/arm/netbsd-eabi.h.  */
+#ifndef ARM_DWARF_UNWIND_TABLES
+#define ARM_DWARF_UNWIND_TABLES 0
+#endif
+
 /* Use r0 and r1 to pass exception handling information.  */
 #define EH_RETURN_DATA_REGNO(N) (((N) < 2) ? N : INVALID_REGNUM)
 
@@ -899,11 +904,21 @@ extern int arm_arch_thumb_hwdiv;
 #ifndef ARM_TARGET2_DWARF_FORMAT
 #define ARM_TARGET2_DWARF_FORMAT DW_EH_PE_pcrel
 
+#  if ARM_DWARF_UNWIND_TABLES
+/* DWARF unwinding uses the normal indirect/pcrel vs absptr format
+   for 32bit platforms. */
+#  define ASM_PREFERRED_EH_DATA_FORMAT(CODE, GLOBAL) \
+    ((flag_pic \
+     && ((GLOBAL) || (CODE))) \
+     ? ((GLOBAL) ? DW_EH_PE_indirect : 0) | DW_EH_PE_pcrel | DW_EH_PE_sdata4 \
+     : DW_EH_PE_absptr)
+#  else
 /* ttype entries (the only interesting data references used)
    use TARGET2 relocations.  */
-#define ASM_PREFERRED_EH_DATA_FORMAT(code, data) \
-  (((code) == 0 && (data) == 1 && ARM_UNWIND_INFO) ? ARM_TARGET2_DWARF_FORMAT \
-			       : DW_EH_PE_absptr)
+#  define ASM_PREFERRED_EH_DATA_FORMAT(code, data) \
+    (((code) == 0 && (data) == 1 && ARM_UNWIND_INFO) ? ARM_TARGET2_DWARF_FORMAT \
+     : DW_EH_PE_absptr)
+#  endif
 #endif
 
 /* The native (Norcroft) Pascal compiler for the ARM passes the static chain
@@ -2143,14 +2158,9 @@ extern int making_const_table;
 #undef ASM_OUTPUT_BEFORE_CASE_LABEL
 #define ASM_OUTPUT_BEFORE_CASE_LABEL(FILE, PREFIX, NUM, TABLE) /* Empty.  */
 
-/* Make sure subsequent insns are aligned after a TBB.  */
-#define ASM_OUTPUT_CASE_END(FILE, NUM, JUMPTABLE)	\
-  do							\
-    {							\
-      if (GET_MODE (PATTERN (JUMPTABLE)) == QImode)	\
-	ASM_OUTPUT_ALIGN (FILE, 1);			\
-    }							\
-  while (0)
+#define LABEL_ALIGN_AFTER_BARRIER(LABEL)                \
+   (GET_CODE (PATTERN (prev_active_insn (LABEL))) == ADDR_DIFF_VEC \
+   ? 1 : 0)
 
 #define ARM_DECLARE_FUNCTION_NAME(STREAM, NAME, DECL) 	\
   do							\
@@ -2319,7 +2329,7 @@ extern int making_const_table;
 
 /* -mcpu=native handling only makes sense with compiler running on
    an ARM chip.  */
-#if defined(__linux__)
+#if defined(__arm__) && defined(__linux__)
 extern const char *host_detect_local_cpu (int argc, const char **argv);
 # define EXTRA_SPEC_FUNCTIONS						\
   { "local_cpu_detect", host_detect_local_cpu },

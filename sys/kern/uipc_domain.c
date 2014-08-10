@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.91 2014/04/02 15:35:45 seanb Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.91.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.91 2014/04/02 15:35:45 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.91.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -77,6 +77,10 @@ u_int	pffasttimo_now;
 static struct sysctllog *domain_sysctllog;
 static void sysctl_net_setup(void);
 
+/* ensure successful linkage even without any domains in link sets */
+static struct domain domain_dummy;
+__link_set_add_rodata(domains,domain_dummy);
+
 void
 domaininit(bool addroute)
 {
@@ -91,6 +95,8 @@ domaininit(bool addroute)
 	 * domain is added last.
 	 */
 	__link_set_foreach(dpp, domains) {
+		if (*dpp == &domain_dummy)
+			continue;
 		if ((*dpp)->dom_family == PF_ROUTE)
 			rt_domain = *dpp;
 		else
@@ -418,7 +424,7 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 	pcb->ki_rcvq = so->so_rcv.sb_cc;
 	pcb->ki_sndq = so->so_snd.sb_cc;
 
-	un = (struct sockaddr_un *)&pcb->ki_src;
+	un = (struct sockaddr_un *)pcb->ki_spad;
 	/*
 	 * local domain sockets may bind without having a local
 	 * endpoint.  bleah!
@@ -430,17 +436,17 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 		 * makeun().
 		 */
 		memcpy(un, unp->unp_addr,
-		    min(sizeof(pcb->ki_s), unp->unp_addr->sun_len + 1));
+		    min(sizeof(pcb->ki_spad), unp->unp_addr->sun_len + 1));
 	}
 	else {
 		un->sun_len = offsetof(struct sockaddr_un, sun_path);
 		un->sun_family = pcb->ki_family;
 	}
 	if (unp->unp_conn != NULL) {
-		un = (struct sockaddr_un *)&pcb->ki_dst;
+		un = (struct sockaddr_un *)pcb->ki_dpad;
 		if (unp->unp_conn->unp_addr != NULL) {
 			memcpy(un, unp->unp_conn->unp_addr,
-			    min(sizeof(pcb->ki_s), unp->unp_conn->unp_addr->sun_len + 1));
+			    min(sizeof(pcb->ki_dpad), unp->unp_conn->unp_addr->sun_len + 1));
 		}
 		else {
 			un->sun_len = offsetof(struct sockaddr_un, sun_path);

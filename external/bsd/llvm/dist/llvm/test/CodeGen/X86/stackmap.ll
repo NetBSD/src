@@ -4,45 +4,55 @@
 
 ; CHECK-LABEL:  .section  __LLVM_STACKMAPS,__llvm_stackmaps
 ; CHECK-NEXT:  __LLVM_StackMaps:
-; CHECK-NEXT:   .long 0
+; Header
+; CHECK-NEXT:   .byte 1
+; CHECK-NEXT:   .byte 0
+; CHECK-NEXT:   .short 0
 ; Num Functions
-; CHECK-NEXT:   .long 14
-; CHECK-NEXT:   .long _constantargs
-; CHECK-NEXT:   .long 8
-; CHECK-NEXT:   .long _osrinline
-; CHECK-NEXT:   .long 24
-; CHECK-NEXT:   .long _osrcold
-; CHECK-NEXT:   .long 8
-; CHECK-NEXT:   .long _propertyRead
-; CHECK-NEXT:   .long 8
-; CHECK-NEXT:   .long _propertyWrite
-; CHECK-NEXT:   .long 8
-; CHECK-NEXT:   .long _jsVoidCall
-; CHECK-NEXT:   .long 8
-; CHECK-NEXT:   .long _jsIntCall
-; CHECK-NEXT:   .long 8
-; CHECK-NEXT:   .long _spilledValue
-; CHECK-NEXT:   .long 56
-; CHECK-NEXT:   .long _spilledStackMapValue
-; CHECK-NEXT:   .long 56
-; CHECK-NEXT:   .long _spillSubReg
-; CHECK-NEXT:   .long 56
-; CHECK-NEXT:   .long _subRegOffset
-; CHECK-NEXT:   .long 56
-; CHECK-NEXT:   .long _liveConstant
-; CHECK-NEXT:   .long 8
-; CHECK-NEXT:   .long _directFrameIdx
-; CHECK-NEXT:   .long 56
-; CHECK-NEXT:   .long _longid
-; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long 15
 ; Num LargeConstants
-; CHECK-NEXT:   .long   3
+; CHECK-NEXT:   .long 3
+; Num Callsites
+; CHECK-NEXT:   .long 19
+
+; Functions and stack size
+; CHECK-NEXT:   .quad _constantargs
+; CHECK-NEXT:   .quad 8
+; CHECK-NEXT:   .quad _osrinline
+; CHECK-NEXT:   .quad 24
+; CHECK-NEXT:   .quad _osrcold
+; CHECK-NEXT:   .quad 8
+; CHECK-NEXT:   .quad _propertyRead
+; CHECK-NEXT:   .quad 8
+; CHECK-NEXT:   .quad _propertyWrite
+; CHECK-NEXT:   .quad 8
+; CHECK-NEXT:   .quad _jsVoidCall
+; CHECK-NEXT:   .quad 8
+; CHECK-NEXT:   .quad _jsIntCall
+; CHECK-NEXT:   .quad 8
+; CHECK-NEXT:   .quad _spilledValue
+; CHECK-NEXT:   .quad 56
+; CHECK-NEXT:   .quad _spilledStackMapValue
+; CHECK-NEXT:   .quad 56
+; CHECK-NEXT:   .quad _spillSubReg
+; CHECK-NEXT:   .quad 56
+; CHECK-NEXT:   .quad _subRegOffset
+; CHECK-NEXT:   .quad 56
+; CHECK-NEXT:   .quad _liveConstant
+; CHECK-NEXT:   .quad 8
+; CHECK-NEXT:   .quad _directFrameIdx
+; CHECK-NEXT:   .quad 56
+; CHECK-NEXT:   .quad _longid
+; CHECK-NEXT:   .quad 8
+; CHECK-NEXT:   .quad _clobberScratch
+; CHECK-NEXT:   .quad 56
+
+; Large Constants
 ; CHECK-NEXT:   .quad   2147483648
 ; CHECK-NEXT:   .quad   4294967295
 ; CHECK-NEXT:   .quad   4294967296
-; Num Callsites
-; CHECK-NEXT:   .long   18
 
+; Callsites
 ; Constant arguments
 ;
 ; CHECK-NEXT:   .quad   1
@@ -433,6 +443,24 @@ entry:
   tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 4294967296, i32 0, i8* null, i32 0)
   tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 9223372036854775807, i32 0, i8* null, i32 0)
   tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 -1, i32 0, i8* null, i32 0)
+  ret void
+}
+
+; Map a value when R11 is the only free register.
+; The scratch register should not be used for a live stackmap value.
+;
+; CHECK-LABEL:  .long L{{.*}}-_clobberScratch
+; CHECK-NEXT:   .short 0
+; 1 location
+; CHECK-NEXT:   .short 1
+; Loc 0: Indirect fp - offset
+; CHECK-NEXT:   .byte   3
+; CHECK-NEXT:   .byte   4
+; CHECK-NEXT:   .short  6
+; CHECK-NEXT:   .long   -{{[0-9]+}}
+define void @clobberScratch(i32 %a) {
+  tail call void asm sideeffect "nop", "~{ax},~{bx},~{cx},~{dx},~{bp},~{si},~{di},~{r8},~{r9},~{r10},~{r12},~{r13},~{r14},~{r15}"() nounwind
+  tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 16, i32 8, i32 %a)
   ret void
 }
 

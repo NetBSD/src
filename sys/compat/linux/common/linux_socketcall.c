@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.43 2013/12/27 15:10:53 njoly Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.43.2.1 2014/08/10 06:54:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.43 2013/12/27 15:10:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.43.2.1 2014/08/10 06:54:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -125,7 +125,7 @@ linux_sys_socketcall(struct lwp *l, const struct linux_sys_socketcall_args *uap,
 	struct linux_socketcall_dummy_args lda;
 	int error;
 
-	if (SCARG(uap, what) < 0 || SCARG(uap, what) > LINUX_MAX_SOCKETCALL)
+	if (SCARG(uap, what) <= 0 || SCARG(uap, what) > LINUX_MAX_SOCKETCALL)
 		return ENOSYS;
 
 	if ((error = copyin(SCARG(uap, args), &lda,

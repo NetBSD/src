@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.25 2013/12/09 09:35:16 wiz Exp $      */
+/*        $NetBSD: dm.h,v 1.25.2.1 2014/08/10 06:54:51 tls Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+
+#include <miscfs/specfs/specdev.h> /* for v_rdev */
 
 #include <prop/proplib.h>
 

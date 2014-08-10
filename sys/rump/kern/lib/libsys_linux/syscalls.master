@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14 2014/04/04 18:24:12 njoly Exp $
+	$NetBSD: syscalls.master,v 1.14.2.1 2014/08/10 06:56:51 tls Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -256,9 +256,9 @@
 171	UNIMPL		1.0 shmsys
 172	UNIMPL
 173	NOARGS 	 	{ ssize_t|sys||pread(int fd, char *buf, \
-			    size_t nbyte, int PAD, linux_off_t offset); }
+			    size_t nbyte, int PAD, off_t offset); }
 174	NOARGS 	 	{ ssize_t|sys||pwrite(int fd, char *buf, \
-			    size_t nbyte, int PAD, linux_off_t offset); }
+			    size_t nbyte, int PAD, off_t offset); }
 175	UNIMPL		ntp_gettime
 176	UNIMPL		ntp_adjtime
 177	UNIMPL
@@ -547,8 +547,8 @@
 			    struct timezone *tzp); }
 419	NOARGS		{ int|linux_sys||settimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
-420	NOARGS		{ int|linux_sys||utimes(const char *path, \
-			    struct linux_timeval *tv); }
+420	NOARGS		{ int|compat_50_sys||utimes(const char *path, \
+			    const struct timveval50 *tptr); }
 421	UNIMPL		adjtime
 422	UNIMPL		lfs_segwait
 423	NOARGS		{ int|sys|50|futimes(int fd, \

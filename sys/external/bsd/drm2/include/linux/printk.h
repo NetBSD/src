@@ -1,4 +1,4 @@
-/*	$NetBSD: printk.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: printk.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,12 +37,18 @@
 
 #define	printk		printf
 #define	vprintk		vprintf
+#define	printk_once	printf
 #define	pr_err		printf	/* XXX */
+#define	pr_cont		printf	/* XXX */
 #define	pr_info		printf	/* XXX */
+#define	pr_info_once	printf	/* XXX */
 #define	pr_warn_once	printf	/* XXX */
 #define	KERN_DEBUG	"drm kern debug: "
+#define	KERN_INFO	"drm kern info: "
 #define	KERN_WARNING	"drm kern warning: "
 #define	KERN_ERR	"drm kern error: "
+#define	KERN_CRIT	"drm kern crit: "
+#define	KERN_CONT	""
 
 #define	DUMP_PREFIX_NONE	0
 #define	DUMP_PREFIX_OFFSET	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.60 2011/08/30 19:06:06 joerg Exp $	*/
+/*	$NetBSD: iostat.c,v 1.60.18.1 2014/08/10 06:59:37 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.60 2011/08/30 19:06:06 joerg Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.60.18.1 2014/08/10 06:59:37 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,9 +90,6 @@ __RCSID("$NetBSD: iostat.c,v 1.60 2011/08/30 19:06:06 joerg Exp $");
 #include <math.h>
 
 #include "drvstats.h"
-
-/* Namelist and memory files. */
-char	*nlistf, *memf;
 
 int		hz;
 static int	reps, interval;
@@ -130,7 +127,7 @@ main(int argc, char *argv[])
 	struct timespec	tv;
 	struct ttysize ts;
 
-	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:x")) != -1)
+	while ((ch = getopt(argc, argv, "Cc:dDITw:x")) != -1)
 		switch (ch) {
 		case 'c':
 			if ((reps = atoi(optarg)) <= 0)
@@ -149,12 +146,6 @@ main(int argc, char *argv[])
 			break;
 		case 'I':
 			todo |= SHOW_TOTALS;
-			break;
-		case 'M':
-			memf = optarg;
-			break;
-		case 'N':
-			nlistf = optarg;
 			break;
 		case 'T':
 			todo |= SHOW_TTY;
@@ -450,8 +441,8 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: iostat [-CdDITx] [-c count] [-M core] "
-	    "[-N system] [-w wait] [drives]\n");
+	(void)fprintf(stderr, "usage: iostat [-CdDITx] [-c count] "
+	    "[-w wait] [drives]\n");
 	exit(1);
 }
 

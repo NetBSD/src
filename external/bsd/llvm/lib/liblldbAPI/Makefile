@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2014/08/10 07:09:10 tls Exp $
 
 LIB=	lldbAPI
 
@@ -26,7 +26,6 @@ SRCS+=	SBAddress.cpp \
 	SBFrame.cpp \
 	SBFunction.cpp \
 	SBHostOS.cpp \
-	SBInputReader.cpp \
 	SBInstruction.cpp \
 	SBInstructionList.cpp \
 	SBLineEntry.cpp \

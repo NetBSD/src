@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.28 2009/03/20 13:56:57 joerg Exp $	*/
+/*	$NetBSD: getopt.c,v 1.28.22.1 2014/08/10 06:51:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getopt.c,v 1.28 2009/03/20 13:56:57 joerg Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.28.22.1 2014/08/10 06:51:51 tls Exp $");
 
 #include "namespace.h"
 
@@ -116,6 +116,12 @@ getopt(int nargc, char * const nargv[], const char *ostr)
 		   entire next argument. */
 		if (*place)
 			optarg = __UNCONST(place);
+		else if (oli[2] == ':')
+			/*
+			 * GNU Extension, for optional arguments if the rest of
+			 * the argument is empty, we return NULL
+			 */
+			optarg = NULL;
 		else if (nargc > ++optind)
 			optarg = nargv[optind];
 		else {

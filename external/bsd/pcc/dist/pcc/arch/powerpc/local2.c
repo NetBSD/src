@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.25 2010/11/26 17:06:31 ragge Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.4 2011/09/01 12:46:48 plunky Exp $	*/
+/*	Id: local2.c,v 1.27 2014/06/01 11:35:03 ragge Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.4.20.1 2014/08/10 07:10:06 tls Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1004,7 +1004,7 @@ reg64name(int reg, int hi)
 	    (hi == LOWREG && features(FEATURE_BIGENDIAN)))
 		off = 1;
 		
-	fprintf(stdout, "%s" , rnames[idx + off]);
+	printf("%s" , rnames[idx + off]);
 }
 
 /*
@@ -1023,14 +1023,14 @@ upput(NODE *p, int size)
 	case NAME:
 	case OREG:
 		if (features(FEATURE_BIGENDIAN))
-			fprintf(stdout, "%d", (int)p->n_lval);
+			printf("%d", (int)p->n_lval);
 		else
-			fprintf(stdout, "%d", (int)(p->n_lval + 4));
-		fprintf(stdout, "(%s)", rnames[regno(p)]);
+			printf("%d", (int)(p->n_lval + 4));
+		printf("(%s)", rnames[regno(p)]);
 		break;
 
 	case ICON:
-		fprintf(stdout, CONFMT, p->n_lval >> 32);
+		printf(CONFMT, p->n_lval >> 32);
 		break;
 
 	default:
@@ -1214,7 +1214,7 @@ storefloat(struct interpass *ip, NODE *p)
 			NODE *ll;
 			int off;
 
-                	off = BITOOR(freetemp(szty(t)));
+                	off = (freetemp(szty(t)));
                 	ll = mklnode(OREG, off, SPREG, t);
 			nip = ipnode(mkbinode(ASSIGN, ll, p->n_left, t));
 			p->n_left = mklnode(OREG, off, SPREG, t);

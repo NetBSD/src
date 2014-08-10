@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.79 2013/06/05 23:07:59 christos Exp $
+#	$NetBSD: P5064,v 1.79.6.1 2014/08/10 06:53:48 tls Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.79 $"
+#ident 		"P5064-$Revision: 1.79.6.1 $"
 
 maxusers 32
 
@@ -50,6 +50,10 @@ options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options 	COMPAT_43

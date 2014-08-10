@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.129 2014/02/07 15:29:23 hannken Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.129.2.1 2014/08/10 06:56:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.129 2014/02/07 15:29:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.129.2.1 2014/08/10 06:56:58 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -137,8 +137,7 @@ ufs_lookup(void *v)
 	int numdirpasses;		/* strategy for directory search */
 	doff_t endsearch;		/* offset to end directory search */
 	doff_t prevoff;			/* previous value of ulr_offset */
-	struct vnode *pdp;		/* saved dp during symlink work */
-	struct vnode *tdp;		/* returned by VFS_VGET */
+	struct vnode *tdp;		/* returned by vcache_get */
 	doff_t enduseful;		/* pointer past last used dir slot.
 					   used for directory truncation. */
 	u_long bmask;			/* block offset mask */
@@ -287,7 +286,7 @@ ufs_lookup(void *v)
 		    NULL, &bp, false)))
 			goto out;
 		numdirpasses = 2;
-		nchstats.ncs_2passes++;
+		namecache_count_2passes();
 	}
 	prevoff = results->ulr_offset;
 	endsearch = roundup(dp->i_size, dirblksiz);
@@ -523,7 +522,7 @@ notfound:
 
 found:
 	if (numdirpasses == 2)
-		nchstats.ncs_pass2++;
+		namecache_count_pass2();
 	/*
 	 * Check that directory length properly reflects presence
 	 * of this entry.
@@ -566,11 +565,8 @@ found:
 			vref(vdp);
 			tdp = vdp;
 		} else {
-			if (flags & ISDOTDOT)
-				VOP_UNLOCK(vdp); /* race to get the inode */
-			error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-			if (flags & ISDOTDOT)
-				vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+			error = vcache_get(vdp->v_mount,
+			    &foundino, sizeof(foundino), &tdp);
 			if (error)
 				goto out;
 		}
@@ -579,10 +575,7 @@ found:
 		 */
 		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error) {
-			if (dp->i_number == foundino)
-				vrele(tdp);
-			else
-				vput(tdp);
+			vrele(tdp);
 			goto out;
 		}
 		/*
@@ -596,10 +589,7 @@ found:
 			    tdp, vdp, genfs_can_sticky(cred, dp->i_uid,
 			    VTOI(tdp)->i_uid));
 			if (error) {
-				if (dp->i_number == foundino)
-					vrele(tdp);
-				else
-					vput(tdp);
+				vrele(tdp);
 				error = EPERM;
 				goto out;
 			}
@@ -627,11 +617,8 @@ found:
 			error = EISDIR;
 			goto out;
 		}
-		if (flags & ISDOTDOT)
-			VOP_UNLOCK(vdp); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-		if (flags & ISDOTDOT)
-			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+		error = vcache_get(vdp->v_mount,
+		    &foundino, sizeof(foundino), &tdp);
 		if (error)
 			goto out;
 		*vpp = tdp;
@@ -639,39 +626,12 @@ found:
 		goto out;
 	}
 
-	/*
-	 * Step through the translation in the name.  We do not `vput' the
-	 * directory because we may need it again if a symbolic link
-	 * is relative to the current directory.  Instead we save it
-	 * unlocked as "pdp".  We must get the target inode before unlocking
-	 * the directory to insure that the inode will not be removed
-	 * before we get it.  We prevent deadlock by always fetching
-	 * inodes from the root, moving down the directory tree. Thus
-	 * when following backward pointers ".." we must unlock the
-	 * parent directory before getting the requested directory.
-	 * There is a potential race condition here if both the current
-	 * and parent directories are removed before the VFS_VGET for the
-	 * inode associated with ".." returns.  We hope that this occurs
-	 * infrequently since we cannot avoid this race condition without
-	 * implementing a sophisticated deadlock detection algorithm.
-	 * Note also that this simple deadlock detection scheme will not
-	 * work if the file system has any hard links other than ".."
-	 * that point backwards in the directory structure.
-	 */
-	pdp = vdp;
-	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp);	/* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
-		if (error) {
-			goto out;
-		}
-		*vpp = tdp;
-	} else if (dp->i_number == foundino) {
+	if (dp->i_number == foundino) {
 		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
+		error = vcache_get(vdp->v_mount,
+		    &foundino, sizeof(foundino), &tdp);
 		if (error)
 			goto out;
 		*vpp = tdp;
@@ -684,8 +644,6 @@ found:
 	error = 0;
 
 out:
-	if (error == 0 && *vpp != vdp)
-		VOP_UNLOCK(*vpp);
 	fstrans_done(vdp->v_mount);
 	return error;
 }
@@ -1268,204 +1226,6 @@ ufs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 		return (0);
 	}
 	return (1);
-}
-
-/*
- * Check if source directory is in the path of the target directory.
- * Target is supplied locked, source is unlocked.
- * The target is always vput before returning.
- */
-int
-ufs_checkpath(struct inode *source, struct inode *target, kauth_cred_t cred)
-{
-	struct vnode *nextvp, *vp;
-	int error, rootino, namlen;
-	struct dirtemplate dirbuf;
-	const int needswap = UFS_MPNEEDSWAP(target->i_ump);
-
-	vp = ITOV(target);
-	if (target->i_number == source->i_number) {
-		error = EEXIST;
-		goto out;
-	}
-	rootino = UFS_ROOTINO;
-	error = 0;
-	if (target->i_number == rootino)
-		goto out;
-
-	for (;;) {
-		if (vp->v_type != VDIR) {
-			error = ENOTDIR;
-			break;
-		}
-		error = vn_rdwr(UIO_READ, vp, (void *)&dirbuf,
-		    sizeof (struct dirtemplate), (off_t)0, UIO_SYSSPACE,
-		    IO_NODELOCKED, cred, NULL, NULL);
-		if (error != 0)
-			break;
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (FSFMT(vp) && needswap == 0)
-			namlen = dirbuf.dotdot_type;
-		else
-			namlen = dirbuf.dotdot_namlen;
-#else
-		if (FSFMT(vp) && needswap != 0)
-			namlen = dirbuf.dotdot_type;
-		else
-			namlen = dirbuf.dotdot_namlen;
-#endif
-		if (namlen != 2 ||
-		    dirbuf.dotdot_name[0] != '.' ||
-		    dirbuf.dotdot_name[1] != '.') {
-			error = ENOTDIR;
-			break;
-		}
-		if (ufs_rw32(dirbuf.dotdot_ino, needswap) == source->i_number) {
-			error = EINVAL;
-			break;
-		}
-		if (ufs_rw32(dirbuf.dotdot_ino, needswap) == rootino)
-			break;
-		VOP_UNLOCK(vp);
-		error = VFS_VGET(vp->v_mount,
-		    ufs_rw32(dirbuf.dotdot_ino, needswap), &nextvp);
-		vrele(vp);
-		if (error) {
-			vp = NULL;
-			break;
-		}
-		vp = nextvp;
-	}
-
-out:
-	if (error == ENOTDIR)
-		printf("checkpath: .. not a directory\n");
-	if (vp != NULL)
-		vput(vp);
-	return (error);
-}
-
-/*
- * Extract the inode number of ".." from a directory.
- * Helper for ufs_parentcheck.
- */
-static int
-ufs_readdotdot(struct vnode *vp, int needswap, kauth_cred_t cred, ino_t *result)
-{
-	struct dirtemplate dirbuf;
-	int namlen, error;
-
-	error = vn_rdwr(UIO_READ, vp, &dirbuf,
-		    sizeof (struct dirtemplate), (off_t)0, UIO_SYSSPACE,
-		    IO_NODELOCKED, cred, NULL, NULL);
-	if (error) {
-		return error;
-	}
-
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-	if (FSFMT(vp) && needswap == 0)
-		namlen = dirbuf.dotdot_type;
-	else
-		namlen = dirbuf.dotdot_namlen;
-#else
-	if (FSFMT(vp) && needswap != 0)
-		namlen = dirbuf.dotdot_type;
-	else
-		namlen = dirbuf.dotdot_namlen;
-#endif
-	if (namlen != 2 ||
-	    dirbuf.dotdot_name[0] != '.' ||
-	    dirbuf.dotdot_name[1] != '.') {
-		printf("ufs_readdotdot: directory %llu contains "
-		       "garbage instead of ..\n",
-		       (unsigned long long) VTOI(vp)->i_number);
-		return ENOTDIR;
-	}
-	*result = ufs_rw32(dirbuf.dotdot_ino, needswap);
-	return 0;
-}
-
-/*
- * Check if LOWER is a descendent of UPPER. If we find UPPER, return
- * nonzero in FOUND and return a reference to the immediate descendent
- * of UPPER in UPPERCHILD. If we don't find UPPER (that is, if we
- * reach the volume root and that isn't UPPER), return zero in FOUND
- * and null in UPPERCHILD.
- *
- * Neither UPPER nor LOWER should be locked.
- *
- * On error (such as a permissions error checking up the directory
- * tree) fail entirely.
- *
- * Note that UPPER and LOWER must be on the same volume, and because
- * we inspect only that volume NEEDSWAP can be constant.
- */
-int
-ufs_parentcheck(struct vnode *upper, struct vnode *lower, kauth_cred_t cred,
-		int *found_ret, struct vnode **upperchild_ret)
-{
-	const int needswap = UFS_MPNEEDSWAP(VTOI(lower)->i_ump);
-	ino_t upper_ino, found_ino = 0;	/* XXX: gcc */
-	struct vnode *current, *next;
-	int error;
-
-	if (upper == lower) {
-		vref(upper);
-		*found_ret = 1;
-		*upperchild_ret = upper;
-		return 0;
-	}
-	if (VTOI(lower)->i_number == UFS_ROOTINO) {
-		*found_ret = 0;
-		*upperchild_ret = NULL;
-		return 0;
-	}
-
-	upper_ino = VTOI(upper)->i_number;
-
-	current = lower;
-	vref(current);
-	vn_lock(current, LK_EXCLUSIVE | LK_RETRY);
-
-	for (;;) {
-		error = ufs_readdotdot(current, needswap, cred, &found_ino);
-		if (error) {
-			vput(current);
-			return error;
-		}
-		if (found_ino == upper_ino) {
-			VOP_UNLOCK(current);
-			*found_ret = 1;
-			*upperchild_ret = current;
-			return 0;
-		}
-		if (found_ino == UFS_ROOTINO) {
-			vput(current);
-			*found_ret = 0;
-			*upperchild_ret = NULL;
-			return 0;
-		}
-		VOP_UNLOCK(current);
-		error = VFS_VGET(current->v_mount, found_ino, &next);
-		if (error) {
-			vrele(current);
-			return error;
-		}
-		KASSERT(VOP_ISLOCKED(next));
-		if (next->v_type != VDIR) {
-			printf("ufs_parentcheck: inode %llu reached via .. of "
-			       "inode %llu is not a directory\n",
-			    (unsigned long long)VTOI(next)->i_number,
-			    (unsigned long long)VTOI(current)->i_number);
-			vput(next);
-			vrele(current);
-			return ENOTDIR;
-		}
-		vrele(current);
-		current = next;
-	}
-
-	return 0;
 }
 
 #define	UFS_DIRRABLKS 0

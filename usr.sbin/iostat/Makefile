@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2011/01/07 03:12:27 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.24.22.1 2014/08/10 06:59:37 tls Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/vmstat
 # drvstats.c pulled in from ../../usr.bin/vmstat
 SRCS=	drvstats.c iostat.c
 
-DPADD=	${LIBKVM} ${LIBM}
-LDADD=	-lkvm -lm
+DPADD=	${LIBM}
+LDADD=	-lm
 
 .include <bsd.prog.mk>

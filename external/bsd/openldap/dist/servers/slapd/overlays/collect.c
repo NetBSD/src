@@ -1,10 +1,10 @@
-/*	$NetBSD: collect.c,v 1.1.1.3 2010/12/12 15:23:32 adam Exp $	*/
+/*	$NetBSD: collect.c,v 1.1.1.3.24.1 2014/08/10 07:09:51 tls Exp $	*/
 
 /* collect.c - Demonstration of overlay code */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/collect.c,v 1.5.2.12 2010/04/14 17:26:11 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2010 The OpenLDAP Foundation.
+ * Copyright 2003-2014 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -388,19 +388,7 @@ collect_response( Operation *op, SlapReply *rs )
 			* don't modify it directly. Make a copy and
 			* work with that instead.
 			*/
-			if ( !( rs->sr_flags & REP_ENTRY_MODIFIABLE ) ) {
-				Entry *e;
-
-				e = entry_dup( rs->sr_entry );
-				if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
-					overlay_entry_release_ov( op, rs->sr_entry, 0, on );
-					rs->sr_flags &= ~REP_ENTRY_MUSTRELEASE;
-				} else if ( rs->sr_flags & REP_ENTRY_MUSTBEFREED ) {
-					entry_free( rs->sr_entry );
-				}
-				rs->sr_entry = e;
-				rs->sr_flags |= REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED;
-			}
+			rs_entry2modifiable( op, rs, on );
 
 			/* Loop for each attribute in this collectinfo */
 			for(idx=0; idx<ci->ci_ad_num; idx++) {

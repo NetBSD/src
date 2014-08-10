@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr.h,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: mtrr.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,52 +31,5 @@
 
 #ifndef _ASM_MTRR_H_
 #define _ASM_MTRR_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_mtrr.h"
-#endif
-
-#include <machine/mtrr.h>
-
-#define	MTRR_TYPE_WRCOMB	MTRR_TYPE_WC
-
-static inline int
-mtrr_add(unsigned long base, unsigned long size, int type,
-    bool increment __unused)
-{
-#ifdef MTRR
-	struct mtrr mtrr;
-	int n = 1;
-
-	mtrr.base = base;
-	mtrr.len = size;
-	mtrr.type = type;
-	mtrr.flags = MTRR_VALID;
-
-	/* XXX errno NetBSD->Linux */
-	return -mtrr_set(&mtrr, &n, NULL, MTRR_GETSET_KERNEL);
-#else
-	return 0;
-#endif
-}
-
-static inline int
-mtrr_del(int handle __unused, unsigned long base, unsigned long size)
-{
-#ifdef MTRR
-	struct mtrr mtrr;
-	int n = 1;
-
-	mtrr.base = base;
-	mtrr.len = size;
-	mtrr.type = 0;
-	mtrr.flags = 0;		/* not MTRR_VALID */
-
-	/* XXX errno NetBSD->Linux */
-	return -mtrr_set(&mtrr, &n, NULL, MTRR_GETSET_KERNEL);
-#else
-	return 0;
-#endif
-}
 
 #endif  /* _ASM_MTRR_H_ */

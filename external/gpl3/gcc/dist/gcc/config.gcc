@@ -431,7 +431,7 @@ picochip-*-*)
         ;;
 powerpc*-*-*)
 	cpu_type=rs6000
-	extra_headers="ppc-asm.h altivec.h spe.h ppu_intrinsics.h paired.h spu2vmx.h vec_types.h si2vmx.h"
+	extra_headers="ppc-asm.h altivec.h spe.h ppu_intrinsics.h paired.h spu2vmx.h vec_types.h si2vmx.h htmintrin.h htmxlintrin.h"
 	need_64bit_hwint=yes
 	case x$with_cpu in
 	    xpowerpc64|xdefault64|x6[23]0|x970|xG5|xpower[345678]|xpower6x|xrs64a|xcell|xa2|xe500mc64|xe5500|Xe6500)
@@ -2115,15 +2115,15 @@ powerpc*-*-freebsd*)
 	esac
 	;;
 powerpc*-*-netbsd*)
-	tm_file="${tm_file} dbxelf.h elfos.h freebsd-spec.h rs6000/sysv4.h"
+	tm_file="${tm_file} dbxelf.h elfos.h freebsd-spec.h"
 	tm_file="${tm_file} netbsd.h netbsd-elf.h"
 	case ${target} in
 	  powerpc64*)
-	    tm_file="rs6000/biarch64.h ${tm_file} rs6000/default64.h rs6000/netbsd64.h"
+	    tm_file="rs6000/biarch64.h ${tm_file} rs6000/sysv4.h rs6000/default64.h rs6000/netbsd64.h"
 	    tmake_file="${tmake_file} rs6000/t-netbsd64"
 	    ;;
 	  *)
-	    tm_file="${tm_file} rs6000/netbsd.h"
+	    tm_file="${tm_file} rs6000/sysv4.h rs6000/netbsd.h"
 	    tmake_file="${tmake_file} rs6000/t-netbsd"
 	    ;;
 	esac
@@ -2185,7 +2185,7 @@ powerpc*-*-linux*)
 	tmake_file="rs6000/t-fprules rs6000/t-ppcos ${tmake_file} rs6000/t-ppccomm"
 	case ${target} in
 	    powerpc*le-*-*)
-	    tm_file="${tm_file} rs6000/sysv4le.h" ;;
+		tm_file="${tm_file} rs6000/sysv4le.h" ;;
 	esac
 	maybe_biarch=yes
 	case ${target} in
@@ -2208,6 +2208,19 @@ powerpc*-*-linux*)
 		fi
 		tm_file="rs6000/biarch64.h ${tm_file} rs6000/linux64.h glibc-stdint.h"
 		tmake_file="$tmake_file rs6000/t-linux64"
+		case ${target} in
+		    powerpc*le-*-*)
+			tmake_file="$tmake_file rs6000/t-linux64le"
+			case ${enable_targets} in
+			    all | *powerpc64-* | *powerpc-*)
+				tmake_file="$tmake_file rs6000/t-linux64lebe" ;;
+			esac ;;
+		    *)
+			case ${enable_targets} in
+			    all | *powerpc64le-* | *powerpcle-*)
+				tmake_file="$tmake_file rs6000/t-linux64bele" ;;
+			esac ;;
+		esac
 		extra_options="${extra_options} rs6000/linux64.opt"
 		;;
 	    *)
@@ -3246,6 +3259,11 @@ case "${target}" in
 				  ${srcdir}/config/aarch64/$def | \
 				  sed -e 's/^[^,]*,[ 	]*//' | \
 				  sed -e 's/,.*$//'`
+				# Extract the architecture flags from aarch64-arches.def
+				ext_mask=`grep "^$pattern(\"$base_val\"," \
+				   ${srcdir}/config/aarch64/$def | \
+				   sed -e 's/)$//' | \
+				   sed -e 's/^.*,//'`
 			  else
 				base_id=`grep "^$pattern(\"$base_val\"," \
 				  ${srcdir}/config/aarch64/$def | \
@@ -3618,7 +3636,7 @@ case "${target}" in
 		;;
 
 	powerpc*-*-* | rs6000-*-*)
-		supported_defaults="cpu cpu_32 cpu_64 float tune tune_32 tune_64"
+		supported_defaults="abi cpu cpu_32 cpu_64 float tune tune_32 tune_64"
 
 		for which in cpu cpu_32 cpu_64 tune tune_32 tune_64; do
 			eval "val=\$with_$which"
@@ -3655,6 +3673,16 @@ case "${target}" in
 				;;
 			esac
 		done
+
+		case "$with_abi" in
+		"" | elfv1 | elfv2 )
+			#OK
+			;;
+		*)
+			echo "Unknown ABI used in --with-abi=$with_abi"
+			exit 1
+			;;
+		esac
 		;;
 
 	s390*-*-*)
@@ -3785,10 +3813,8 @@ esac
 target_cpu_default2=
 case ${target} in
 	aarch64*-*-*)
-		if test x$target_cpu_cname = x
+		if test x"$target_cpu_cname" != x
 		then
-			target_cpu_default2=TARGET_CPU_generic
-		else
 			target_cpu_default2=$target_cpu_cname
 		fi
 		;;

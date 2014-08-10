@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.121 2012/04/20 20:23:21 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.121.12.1 2014/08/10 06:54:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct scsipi_generic {
  * scsipi_async_event_t:
  *
  *	Asynchronous events from the adapter to the mid-layer and
- *	peripherial.
+ *	peripheral.
  *
  *	Arguments:
  *
@@ -346,7 +346,7 @@ struct scsipi_channel {
 /*
  * scsipi_periph:
  *
- *	This structure describes the path between a peripherial device
+ *	This structure describes the path between a peripheral device
  *	and an adapter.  It contains a pointer to the adapter channel
  *	which in turn contains a pointer to the adapter.
  *
@@ -357,13 +357,13 @@ struct scsipi_channel {
  *	still be an improvement.
  */
 struct scsipi_periph {
-	device_t periph_dev;	/* pointer to peripherial's device */
+	device_t periph_dev;	/* pointer to peripheral's device */
 	struct scsipi_channel *periph_channel; /* channel we're connected to */
 
 					/* link in channel's table of periphs */
 	LIST_ENTRY(scsipi_periph) periph_hash;
 
-	const struct scsipi_periphsw *periph_switch; /* peripherial's entry
+	const struct scsipi_periphsw *periph_switch; /* peripheral's entry
 							points */
 	int	periph_openings;	/* max # of outstanding commands */
 	int	periph_active;		/* current # of outstanding commands */
@@ -393,7 +393,7 @@ struct scsipi_periph {
 	/* Bitmap of free command tags. */
 	u_int32_t periph_freetags[PERIPH_NTAGWORDS];
 
-	/* Pending scsipi_xfers on this peripherial. */
+	/* Pending scsipi_xfers on this peripheral. */
 	struct scsipi_xfer_queue periph_xferq;
 
 	callout_t periph_callout;
@@ -512,7 +512,7 @@ struct scsipi_xfer {
 	callout_t xs_callout;		/* callout for adapter use */
 	int	xs_control;		/* control flags */
 	volatile int xs_status;		/* status flags */
-	struct scsipi_periph *xs_periph;/* peripherial doing the xfer */
+	struct scsipi_periph *xs_periph;/* peripheral doing the xfer */
 	int	xs_retries;		/* the number of times to retry */
 	int	xs_requeuecnt;		/* number of requeues */
 	int	timeout;		/* in milliseconds */

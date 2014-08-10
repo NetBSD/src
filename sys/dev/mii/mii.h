@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.17 2013/06/16 06:29:08 msaitoh Exp $	*/
+/*	$NetBSD: mii.h,v 1.17.6.1 2014/08/10 06:54:53 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -45,7 +45,7 @@
 #define	MII_COMMAND_WRITE	0x01
 #define	MII_COMMAND_ACK		0x02
 
-#define	MII_BMCR	0x00 	/* Basic mode control register (rw) */
+#define	MII_BMCR	0x00	/* Basic mode control register (rw) */
 #define	BMCR_RESET	0x8000	/* reset */
 #define	BMCR_LOOP	0x4000	/* loopback */
 #define	BMCR_SPEED0	0x2000	/* speed selection (LSB) */
@@ -83,7 +83,7 @@
 /*
  * Note that the EXTSTAT bit indicates that there is extended status
  * info available in register 15, but 802.3 section 22.2.4.3 also
- * states that that all 1000 Mb/s capable PHYs will set this bit to 1.
+ * states that all 1000 Mb/s capable PHYs will set this bit to 1.
  */
 
 #define	BMSR_MEDIAMASK	(BMSR_100T4|BMSR_100TXFDX|BMSR_100TXHDX| \

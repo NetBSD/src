@@ -1,5 +1,5 @@
-/*	Id: optim.c,v 1.49 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: optim.c,v 1.1.1.5 2012/03/26 14:26:49 plunky Exp $	*/
+/*	Id: optim.c,v 1.57 2014/04/08 19:54:56 ragge Exp 	*/	
+/*	$NetBSD: optim.c,v 1.1.1.5.10.1 2014/08/10 07:10:07 tls Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -194,10 +194,8 @@ again:	o = p->n_op;
 			} else
 #endif
 			/* avoid larger shifts than type size */
-			if (RV(p) >= sz) {
-				RV(p) = RV(p) % sz;
+			if (RV(p) >= sz)
 				werror("shift larger than type");
-			}
 			if (RV(p) == 0)
 				p = zapleft(p);
 		}
@@ -235,13 +233,25 @@ again:	o = p->n_op;
 			} else
 #endif
 			/* avoid larger shifts than type size */
-			if (RV(p) >= sz) {
-				RV(p) = RV(p) % sz;
+			if (RV(p) >= sz)
 				werror("shift larger than type");
-			}
 			if (RV(p) == 0)  
 				p = zapleft(p);
 		}
+		break;
+
+	case QUEST:
+		if (!LCON(p))
+			break;
+		if (LV(p) == 0) {
+			q = p->n_right->n_right;
+		} else {
+			q = p->n_right->n_left;
+			p->n_right->n_left = p->n_right->n_right;
+		}
+		p->n_right->n_op = UMUL; /* for tfree() */
+		tfree(p);
+		p = q;
 		break;
 
 	case MINUS:
@@ -253,7 +263,7 @@ again:	o = p->n_op;
 		if( !nncon(p->n_right) ) break;
 		RV(p) = -RV(p);
 		o = p->n_op = PLUS;
-
+		/* FALLTHROUGH */
 	case MUL:
 		/*
 		 * Check for u=(x-y)+z; where all vars are pointers to
@@ -263,7 +273,7 @@ again:	o = p->n_op;
 		 *    calculation do not give correct result if using
 		 *    unaligned structs.
 		 */
-		if (p->n_type == INTPTR && RCON(p) &&
+		if (o == MUL && p->n_type == INTPTR && RCON(p) &&
 		    LO(p) == DIV && RCON(p->n_left) &&
 		    RV(p) == RV(p->n_left) &&
 		    LO(p->n_left) == MINUS) {
@@ -287,6 +297,11 @@ again:	o = p->n_op;
 			SWAP( p->n_left, p->n_right );
 		/* make ops tower to the left, not the right */
 		if( RO(p) == o ){
+			SWAP(p->n_left, p->n_right);
+#ifdef notdef
+		/* Yetch, this breaks type correctness in trees */
+		/* Code was probably written before types */
+		/* All we can do here is swap and pray */
 			NODE *t1, *t2, *t3;
 			t1 = p->n_left;
 			sp = p->n_right;
@@ -298,6 +313,7 @@ again:	o = p->n_op;
 			sp->n_right = t2;
 			sp->n_type = p->n_type;
 			p->n_right = t3;
+#endif
 			}
 		if(o == PLUS && LO(p) == MINUS && RCON(p) && RCON(p->n_left) &&
 		   conval(p->n_right, MINUS, p->n_left->n_right)){
@@ -381,6 +397,18 @@ again:	o = p->n_op;
 	case ULE:
 	case UGT:
 	case UGE:
+		if (LCON(p) && RCON(p) &&
+		    !ISPTR(p->n_left->n_type) && !ISPTR(p->n_right->n_type)) {
+			/* Do constant evaluation */
+			q = p->n_left;
+			if (conval(q, o, p->n_right)) {
+				nfree(p->n_right);
+				nfree(p);
+				p = q;
+				break;
+			}
+		}
+
 		if( !LCON(p) ) break;
 
 		/* exchange operands */
@@ -390,6 +418,20 @@ again:	o = p->n_op;
 		p->n_right = sp;
 		p->n_op = revrel[p->n_op - EQ ];
 		break;
+
+	case CBRANCH:
+		if (LCON(p)) {
+			if (LV(p) == 0) {
+				tfree(p);
+				p = bcon(0);
+			} else {
+				tfree(p->n_left);
+				p->n_left = p->n_right;
+				p->n_op = GOTO;
+			}
+		}
+		break;
+				
 
 #ifdef notyet
 	case ASSIGN:
@@ -420,7 +462,8 @@ ispow2(CONSZ c)
 }
 
 int
-nncon( p ) NODE *p; {
+nncon(NODE *p)
+{
 	/* is p a constant without a name */
 	return( p->n_op == ICON && p->n_sp == NULL );
-	}
+}

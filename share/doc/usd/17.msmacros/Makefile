@@ -1,11 +1,14 @@
-#	$NetBSD: Makefile,v 1.1 2007/11/29 12:35:07 mjf Exp $
+#	$NetBSD: Makefile,v 1.1.48.1 2014/08/10 06:53:14 tls Exp $
 
-DIR=	usd/17.msmacros
+SECTION=reference/ref1/roff
+ARTICLE=msmacros
 SRCS=	ms fig1.pic
 MACROS=	-ms
-
-paper.ps: ${SRCS}
-	${TOOL_SOELIM} ${SRCS} | ${TOOL_PIC} | ${TOOL_TBL} | ${TOOL_EQN} | \
-	    ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
+ROFF_PIC=yes
+ROFF_TBL=yes
+ROFF_EQN=yes
+EXTRAHTMLFILES=\
+	msmacros1.png msmacros2.png msmacros3.png msmacros4.png msmacros5.png \
+	msmacros6.png msmacros7.png msmacros8.png msmacros9.png 
 
 .include <bsd.doc.mk>

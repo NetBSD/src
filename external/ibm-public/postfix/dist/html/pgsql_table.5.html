@@ -10,295 +10,258 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
        pgsql_table - Postfix PostgreSQL client configuration
 
 <b>SYNOPSIS</b>
-       <b>postmap -q "</b><i>string</i><b>" <a href="pgsql_table.5.html">pgsql</a>:/etc/postfix/filename</b>
+       <b>postmap -q "</b><i>string</i><b>" <a href="pgsql_table.5.html">pgsql</a>:/etc/postfix/</b><i>filename</i>
 
        <b>postmap -q - <a href="pgsql_table.5.html">pgsql</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
 <b>DESCRIPTION</b>
-       The  Postfix  mail system uses optional tables for address
-       rewriting or mail routing. These tables are usually in <b>dbm</b>
-       or <b>db</b> format.
+       The  Postfix  mail system uses optional tables for address rewriting or
+       mail routing. These tables are usually in <b>dbm</b> or <b>db</b> format.
 
-       Alternatively,  lookup  tables  can  be specified as Post-
-       greSQL databases.  In order  to  use  PostgreSQL  lookups,
-       define  a  PostgreSQL source as a lookup table in <a href="postconf.5.html">main.cf</a>,
-       for example:
+       Alternatively, lookup tables can be specified as PostgreSQL  databases.
+       In  order  to  use  PostgreSQL lookups, define a PostgreSQL source as a
+       lookup table in <a href="postconf.5.html">main.cf</a>, for example:
            <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="pgsql_table.5.html">pgsql</a>:/etc/pgsql-aliases.cf
 
-       The file /etc/postfix/pgsql-aliases.cf has the same format
-       as  the  Postfix <a href="postconf.5.html">main.cf</a> file, and can specify the parame-
-       ters described below.
+       The file /etc/postfix/pgsql-aliases.cf has the same format as the Post-
+       fix <a href="postconf.5.html">main.cf</a> file, and can specify the parameters described below.
 
 <b>BACKWARDS COMPATIBILITY</b>
-       For compatibility with other Postfix lookup tables,  Post-
-       greSQL  parameters  can  also  be  defined in <a href="postconf.5.html">main.cf</a>.  In
-       order to do that, specify as PostgreSQL source a name that
-       doesn't  begin  with  a  slash  or  a dot.  The PostgreSQL
-       parameters will then be  accessible  as  the  name  you've
-       given the source in its definition, an underscore, and the
-       name of the parameter.  For example, if the map is  speci-
-       fied  as  "<a href="pgsql_table.5.html">pgsql</a>:<i>pgsqlname</i>",  the  parameter "hosts" below
-       would be defined in <a href="postconf.5.html">main.cf</a> as "<i>pgsqlname</i>_hosts".
+       For  compatibility with other Postfix lookup tables, PostgreSQL parame-
+       ters can also be defined in <a href="postconf.5.html">main.cf</a>.  In order to do that,  specify  as
+       PostgreSQL source a name that doesn't begin with a slash or a dot.  The
+       PostgreSQL parameters will then be accessible as the name you've  given
+       the source in its definition, an underscore, and the name of the param-
+       eter.  For example, if the map is specified as  "<a href="pgsql_table.5.html">pgsql</a>:<i>pgsqlname</i>",  the
+       parameter  "hosts"  below  would  be  defined  in  <a href="postconf.5.html">main.cf</a>  as  "<i>pgsql-</i>
+       <i>name</i>_hosts".
 
-       Note: with this form, the  passwords  for  the  PostgreSQL
-       sources  are  written in <a href="postconf.5.html">main.cf</a>, which is normally world-
-       readable.  Support for this form  will  be  removed  in  a
-       future Postfix version.
+       Note: with this form, the passwords  for  the  PostgreSQL  sources  are
+       written in <a href="postconf.5.html">main.cf</a>, which is normally world-readable.  Support for this
+       form will be removed in a future Postfix version.
 
-       Normally,  the  SQL  query is specified via a single <b>query</b>
-       parameter (described in more  detail  below).   When  this
-       parameter  is not specified in the map definition, Postfix
-       reverts to an older interface, with the  SQL   query  con-
-       structed   from  the <b>select_function</b>, <b>select_field</b>, <b>table</b>,
-       <b>where_field</b> and <b>additional_conditions</b> parameters.  The old
-       interface  will be gradually phased out. To migrate to the
-       new interface set:
+       Normally, the SQL query is  specified  via  a  single  <b>query</b>  parameter
+       (described in more detail below).  When this parameter is not specified
+       in the map definition, Postfix reverts to an older interface, with  the
+       SQL   query constructed  from the <b>select_function</b>, <b>select_field</b>, <b>table</b>,
+       <b>where_field</b> and <b>additional_conditions</b> parameters.   The  old  interface
+       will be gradually phased out. To migrate to the new interface set:
 
            <b>query</b> = SELECT <i>select</i><b>_</b><i>function</i>('%s')
 
-       or in the absence of  <b>select_function</b>,  the  lower  prece-
-       dence:
+       or in the absence of <b>select_function</b>, the lower precedence:
 
            <b>query</b> = SELECT <i>select</i><b>_</b><i>field</i>
                FROM <i>table</i>
                WHERE <i>where</i><b>_</b><i>field</i> = '%s'
                    <i>additional</i><b>_</b><i>conditions</i>
 
-       Use  the  value,  not  the name, of each legacy parameter.
-       Note that the <b>additional_conditions</b> parameter is  optional
-       and if not empty, will always start with <b>AND</b>.
+       Use  the  value,  not the name, of each legacy parameter. Note that the
+       <b>additional_conditions</b> parameter is optional  and  if  not  empty,  will
+       always start with <b>AND</b>.
 
 <b>LIST MEMBERSHIP</b>
-       When using SQL to store lists such as $<a href="postconf.5.html#mynetworks">mynetworks</a>, $<a href="postconf.5.html#mydestination">mydes</a>-
-       <a href="postconf.5.html#mydestination">tination</a>, $<a href="postconf.5.html#relay_domains">relay_domains</a>, $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, etc.,  it
-       is  important to understand that the table must store each
-       list member as a separate key. The table  lookup  verifies
-       the  *existence*  of  the  key.  See "Postfix lists versus
-       tables" in the <a href="DATABASE_README.html">DATABASE_README</a> document for a  discussion.
+       When  using  SQL  to  store  lists such as $<a href="postconf.5.html#mynetworks">mynetworks</a>, $<a href="postconf.5.html#mydestination">mydestination</a>,
+       $<a href="postconf.5.html#relay_domains">relay_domains</a>, $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, etc., it is important to  under-
+       stand that the table must store each list member as a separate key. The
+       table lookup verifies the *existence* of the key.  See  "Postfix  lists
+       versus tables" in the <a href="DATABASE_README.html">DATABASE_README</a> document for a discussion.
 
-       Do  NOT create tables that return the full list of domains
-       in $<a href="postconf.5.html#mydestination">mydestination</a> or $<a href="postconf.5.html#relay_domains">relay_domains</a> etc., or IP  addresses
-       in $<a href="postconf.5.html#mynetworks">mynetworks</a>.
+       Do  NOT create tables that return the full list of domains in $<a href="postconf.5.html#mydestination">mydesti</a>-
+       <a href="postconf.5.html#mydestination">nation</a> or $<a href="postconf.5.html#relay_domains">relay_domains</a> etc., or IP addresses in $<a href="postconf.5.html#mynetworks">mynetworks</a>.
 
-       DO create tables with each matching item as a key and with
-       an arbitrary value. With SQL databases it is not  uncommon
-       to return the key itself or a constant value.
+       DO create tables with each matching item as a key and with an arbitrary
+       value.  With  SQL databases it is not uncommon to return the key itself
+       or a constant value.
 
 <b>PGSQL PARAMETERS</b>
-       <b>hosts</b>  The  hosts  that Postfix will try to connect to and
-              query from.  Specify <i>unix:</i> for UNIX-domain sockets,
-              <i>inet:</i> for TCP connections (default).  Example:
+       <b>hosts</b>  The hosts that Postfix will try to connect to  and  query  from.
+              Specify <i>unix:</i> for UNIX-domain sockets, <i>inet:</i> for TCP connections
+              (default).  Example:
                   hosts = host1.some.domain host2.some.domain:port
                   hosts = unix:/file/name
 
-              The  hosts are tried in random order, with all con-
-              nections  over  UNIX  domain  sockets  being  tried
-              before  those  over TCP.  The connections are auto-
-              matically closed  after  being  idle  for  about  1
+              The hosts are tried in random order, with all  connections  over
+              UNIX domain sockets being tried before those over TCP.  The con-
+              nections are automatically closed after being idle for  about  1
               minute, and are re-opened as necessary.
 
-              NOTE: the <i>unix:</i> and <i>inet:</i> prefixes are accepted for
-              backwards compatibility reasons, but  are  actually
-              ignored.  The PostgreSQL client library will always
-              try to connect to an UNIX socket if the name starts
-              with  a slash, and will try a TCP connection other-
-              wise.
+              NOTE:  the  <i>unix:</i>  and <i>inet:</i> prefixes are accepted for backwards
+              compatibility reasons, but are actually ignored.  The PostgreSQL
+              client  library  will always try to connect to an UNIX socket if
+              the name starts with a slash, and will try a TCP connection oth-
+              erwise.
 
        <b>user, password</b>
-              The user name and password to log  into  the  pgsql
-              server.  Example:
+              The  user name and password to log into the pgsql server.  Exam-
+              ple:
                   user = someone
                   password = some_password
 
        <b>dbname</b> The database name on the servers. Example:
                   dbname = customer_database
 
-       <b>query</b>  The SQL query template used to search the database,
-              where <b>%s</b> is a substitute for the address Postfix is
-              trying to resolve, e.g.
+       <b>query</b>  The SQL query template used to search the database, where <b>%s</b>  is
+              a  substitute for the address Postfix is trying to resolve, e.g.
                   query = SELECT replacement FROM aliases WHERE mailbox = '%s'
 
-              This  parameter  supports  the following '%' expan-
-              sions:
+              This parameter supports the following '%' expansions:
 
-              <b>%%</b>     This is replaced by a literal '%' character.
-                     (Postfix 2.2 and later)
+              <b>%%</b>     This is replaced by a literal '%' character. (Postfix 2.2
+                     and later)
 
-              <b>%s</b>     This  is  replaced  by  the  input key.  SQL
-                     quoting is used to make sure that the  input
-                     key  does not add unexpected metacharacters.
+              <b>%s</b>     This  is  replaced by the input key.  SQL quoting is used
+                     to make sure that the input key does not  add  unexpected
+                     metacharacters.
 
-              <b>%u</b>     When the input key is an address of the form
-                     user@domain,  <b>%u</b>  is  replaced  by  the  SQL
-                     quoted local part of  the  address.   Other-
-                     wise,  <b>%u</b>  is  replaced by the entire search
-                     string.  If  the  localpart  is  empty,  the
-                     query  is suppressed and returns no results.
+              <b>%u</b>     When the input key is an address of the form user@domain,
+                     <b>%u</b> is replaced by  the  SQL  quoted  local  part  of  the
+                     address.   Otherwise, <b>%u</b> is replaced by the entire search
+                     string.  If the localpart is empty,  the  query  is  sup-
+                     pressed and returns no results.
 
-              <b>%d</b>     When the input key is an address of the form
-                     user@domain,  <b>%d</b>  is  replaced  by  the  SQL
-                     quoted domain part of the  address.   Other-
-                     wise, the query is suppressed and returns no
-                     results.
+              <b>%d</b>     When the input key is an address of the form user@domain,
+                     <b>%d</b> is replaced by the  SQL  quoted  domain  part  of  the
+                     address.   Otherwise, the query is suppressed and returns
+                     no results.
 
-              <b>%[SUD]</b> The  upper-case  equivalents  of  the  above
-                     expansions  behave  in  the  <b>query</b> parameter
-                     identically  to  their  lower-case  counter-
-                     parts.   With  the  <b>result_format</b>  parameter
-                     (see  below),  they  expand  the  input  key
-                     rather than the result value.
+              <b>%[SUD]</b> The upper-case equivalents of the above expansions behave
+                     in  the  <b>query</b>  parameter identically to their lower-case
+                     counter-parts.  With  the  <b>result_format</b>  parameter  (see
+                     below),  they expand the input key rather than the result
+                     value.
 
-                     The  above  %S,  %U  and  %D  expansions are
-                     available with Postfix 2.2 and later
+                     The above %S, %U and %D  expansions  are  available  with
+                     Postfix 2.2 and later
 
-              <b>%[1-9]</b> The patterns %1, %2, ... %9 are replaced  by
-                     the corresponding most significant component
-                     of the input key's domain. If the input  key
-                     is <i>user@mail.example.com</i>, then %1 is <b>com</b>, %2
-                     is <b>example</b> and %3 is <b>mail</b>. If the input  key
-                     is  unqualified  or  does  not  have  enough
-                     domain components to satisfy all the  speci-
-                     fied  patterns,  the query is suppressed and
-                     returns no results.
+              <b>%[1-9]</b> The  patterns  %1,  %2, ... %9 are replaced by the corre-
+                     sponding most significant component of  the  input  key's
+                     domain.  If  the input key is <i>user@mail.example.com</i>, then
+                     %1 is <b>com</b>, %2 is <b>example</b> and %3 is <b>mail</b>. If the input key
+                     is  unqualified or does not have enough domain components
+                     to satisfy all the specified patterns, the query is  sup-
+                     pressed and returns no results.
 
-                     The above %1, ... %9 expansions  are  avail-
-                     able with Postfix 2.2 and later
+                     The  above %1, ... %9 expansions are available with Post-
+                     fix 2.2 and later
 
-              The  <b>domain</b>  parameter  described  below limits the
-              input keys to addresses in matching  domains.  When
-              the  <b>domain</b> parameter is non-empty, SQL queries for
-              unqualified addresses or addresses in  non-matching
-              domains are suppressed and return no results.
+              The <b>domain</b> parameter described below limits the  input  keys  to
+              addresses in matching domains. When the <b>domain</b> parameter is non-
+              empty, SQL queries for unqualified  addresses  or  addresses  in
+              non-matching domains are suppressed and return no results.
 
-              The  precedence  of this parameter has changed with
-              Postfix 2.2, in prior releases the precedence  was,
-              from  highest  to  lowest,  <b>select_function</b>, <b>query</b>,
-              <b>select_field</b>, ...
+              The  precedence  of this parameter has changed with Postfix 2.2,
+              in prior releases the precedence was, from  highest  to  lowest,
+              <b>select_function</b>, <b>query</b>, <b>select_field</b>, ...
 
-              With Postfix 2.2 the <b>query</b>  parameter  has  highest
-              precedence, see COMPATIBILITY above.
+              With Postfix 2.2 the <b>query</b> parameter has highest precedence, see
+              COMPATIBILITY above.
 
               NOTE: DO NOT put quotes around the <b>query</b> parameter.
 
        <b>result_format (default: %s</b>)
-              Format template applied to result attributes.  Most
-              commonly  used  to  append (or prepend) text to the
-              result. This parameter supports the  following  '%'
-              expansions:
+              Format template applied to result attributes. Most commonly used
+              to  append  (or prepend) text to the result. This parameter sup-
+              ports the following '%' expansions:
 
               <b>%%</b>     This is replaced by a literal '%' character.
 
-              <b>%s</b>     This is replaced by the value of the  result
-                     attribute.   When  result  is  empty  it  is
+              <b>%s</b>     This is replaced by the value of  the  result  attribute.
+                     When result is empty it is skipped.
+
+              <b>%u</b>     When the result attribute value is an address of the form
+                     user@domain, <b>%u</b> is replaced by  the  local  part  of  the
+                     address.  When  the  result  has an empty localpart it is
                      skipped.
 
-              <b>%u</b>     When  the  result  attribute  value  is   an
-                     address  of  the  form  user@domain,  <b>%u</b>  is
-                     replaced by the local part of  the  address.
-                     When the result has an empty localpart it is
+              <b>%d</b>     When a result attribute value is an address of  the  form
+                     user@domain,  <b>%d</b>  is  replaced  by the domain part of the
+                     attribute value. When the result  is  unqualified  it  is
                      skipped.
-
-              <b>%d</b>     When a result attribute value is an  address
-                     of  the  form user@domain, <b>%d</b> is replaced by
-                     the domain part of the attribute value. When
-                     the result is unqualified it is skipped.
 
               <b>%[SUD1-9]</b>
-                     The  upper-case and decimal digit expansions
-                     interpolate  the  parts  of  the  input  key
-                     rather  than  the  result. Their behavior is
-                     identical to that described with <b>query</b>,  and
-                     in  fact  because  the input key is known in
-                     advance, queries whose key does not  contain
-                     all  the information specified in the result
-                     template  are  suppressed  and   return   no
-                     results.
+                     The  upper-case  and decimal digit expansions interpolate
+                     the parts of the input key rather than the result.  Their
+                     behavior  is  identical to that described with <b>query</b>, and
+                     in fact because  the  input  key  is  known  in  advance,
+                     queries  whose  key  does not contain all the information
+                     specified in  the  result  template  are  suppressed  and
+                     return no results.
 
-              For  example,  using  "result_format  =  <a href="smtp.8.html">smtp</a>:[%s]"
-              allows one to use a mailHost attribute as the basis
-              of  a <a href="transport.5.html">transport(5)</a> table. After applying the result
-              format, multiple values are concatenated  as  comma
-              separated  strings. The expansion_limit and parame-
-              ter explained below allows one to restrict the num-
-              ber  of  values  in the result, which is especially
-              useful for maps that must return at most one value.
+              For example, using "result_format = <a href="smtp.8.html">smtp</a>:[%s]" allows one to use
+              a mailHost attribute as the basis of a <a href="transport.5.html">transport(5)</a> table. After
+              applying  the result format, multiple values are concatenated as
+              comma  separated  strings.  The  expansion_limit  and  parameter
+              explained  below  allows one to restrict the number of values in
+              the result, which is especially useful for maps that must return
+              at most one value.
 
-              The  default  value  <b>%s</b>  specifies that each result
-              value should be used as is.
+              The  default value <b>%s</b> specifies that each result value should be
+              used as is.
 
-              This parameter is available with  Postfix  2.2  and
-              later.
+              This parameter is available with Postfix 2.2 and later.
 
               NOTE: DO NOT put quotes around the result format!
 
        <b>domain (default: no domain list)</b>
-              This  is a list of domain names, paths to files, or
-              dictionaries. When specified, only fully  qualified
-              search  keys  with  a  *non-empty*  localpart and a
-              matching domain are  eligible  for  lookup:  'user'
-              lookups,  bare domain lookups and "@domain" lookups
-              are not performed. This  can  significantly  reduce
-              the query load on the PostgreSQL server.
-                  domain = postfix.org, hash:/etc/postfix/searchdomains
+              This is a list of domain names, paths to files, or dictionaries.
+              When  specified,  only  fully qualified search keys with a *non-
+              empty* localpart and a matching domain are eligible for  lookup:
+              'user'  lookups,  bare  domain lookups and "@domain" lookups are
+              not performed. This can significantly reduce the query  load  on
+              the PostgreSQL server.
+                  domain = postfix.org, <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/searchdomains
 
-              It is best not to use SQL to store the domains eli-
-              gible for SQL lookups.
+              It  is best not to use SQL to store the domains eligible for SQL
+              lookups.
 
-              This parameter is available with  Postfix  2.2  and
-              later.
+              This parameter is available with Postfix 2.2 and later.
 
-              NOTE:  DO  NOT  define  this parameter for <a href="local.8.html">local(8)</a>
-              aliases, because the input keys are always unquali-
-              fied.
+              NOTE: DO NOT define this parameter for <a href="local.8.html">local(8)</a> aliases, because
+              the input keys are always unqualified.
 
        <b>expansion_limit (default: 0)</b>
-              A  limit  on  the  total  number of result elements
-              returned (as a comma separated list)  by  a  lookup
-              against  the  map.   A setting of zero disables the
-              limit. Lookups fail with a temporary error  if  the
-              limit  is exceeded.  Setting the limit to 1 ensures
-              that lookups do not return multiple values.
+              A  limit  on  the total number of result elements returned (as a
+              comma separated list) by a lookup against the map.  A setting of
+              zero  disables the limit. Lookups fail with a temporary error if
+              the limit is exceeded.  Setting the  limit  to  1  ensures  that
+              lookups do not return multiple values.
 
 <b>OBSOLETE QUERY INTERFACES</b>
-       This section describes query interfaces  that  are  depre-
-       cated  as of Postfix 2.2.  Please migrate to the new <b>query</b>
-       interface as the old interfaces are slated  to  be  phased
-       out.
+       This section describes query interfaces that are deprecated as of Post-
+       fix 2.2.  Please migrate to the new <b>query</b> interface as the  old  inter-
+       faces are slated to be phased out.
 
        <b>select_function</b>
-              This  parameter specifies a database function name.
-              Example:
+              This parameter specifies a database function name. Example:
                   select_function = my_lookup_user_alias
 
               This is equivalent to:
                   query = SELECT my_lookup_user_alias('%s')
 
-              This parameter overrides the  legacy  table-related
-              fields  (described  below).  With  Postfix versions
-              prior to 2.2, it also overrides the  <b>query</b>  parame-
-              ter. Starting with Postfix 2.2, the <b>query</b> parameter
-              has highest  precedence,  and  the  <b>select_function</b>
+              This   parameter   overrides  the  legacy  table-related  fields
+              (described below). With Postfix versions prior to 2.2,  it  also
+              overrides  the  <b>query</b>  parameter. Starting with Postfix 2.2, the
+              <b>query</b> parameter has highest precedence, and the  <b>select_function</b>
               parameter is deprecated.
 
-       The  following  parameters (with lower precedence than the
-       <b>select_function</b> interface described above) can be used  to
-       build the SQL select statement as follows:
+       The  following  parameters (with lower precedence than the <b>select_func-</b>
+       <b>tion</b> interface described above) can be used to  build  the  SQL  select
+       statement as follows:
 
            SELECT [<b>select_field</b>]
            FROM [<b>table</b>]
            WHERE [<b>where_field</b>] = '%s'
                  [<b>additional_conditions</b>]
 
-       The  specifier  %s  is  replaced  with  each lookup by the
-       lookup key and is escaped so if it contains single  quotes
-       or  other odd characters, it will not cause a parse error,
-       or worse, a security problem.
+       The  specifier %s is replaced with each lookup by the lookup key and is
+       escaped so if it contains single quotes or  other  odd  characters,  it
+       will not cause a parse error, or worse, a security problem.
 
-       Starting with Postfix 2.2, this interface is obsoleted  by
-       the  more  general  <b>query</b>  interface  described  above. If
-       higher precedence the <b>query</b> or <b>select_function</b>  parameters
-       described above are defined, the parameters described here
-       are ignored.
+       Starting with Postfix 2.2, this interface is obsoleted by the more gen-
+       eral <b>query</b> interface described above. If higher precedence the <b>query</b> or
+       <b>select_function</b>  parameters described above are defined, the parameters
+       described here are ignored.
 
        <b>select_field</b>
               The SQL "select" parameter. Example:
@@ -327,8 +290,7 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
        <a href="PGSQL_README.html">PGSQL_README</a>, Postfix PostgreSQL client guide
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>HISTORY</b>
        PgSQL support was introduced with Postfix version 2.1.

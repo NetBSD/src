@@ -1,7 +1,8 @@
-.TH SLAPD.BACKENDS 5 "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 2006-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH SLAPD.BACKENDS 5 "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 2006-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd.backends.5,v 1.3.2.7 2010/04/13 20:22:42 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapd.backends \- backends for slapd, the stand-alone LDAP daemon
 .SH DESCRIPTION
@@ -20,8 +21,10 @@ corresponding
 manual pages.
 .TP
 .B bdb
-This is the recommended primary backend for a normal slapd database.
-It takes care to configure it properly.
+This was the recommended primary backend through OpenLDAP 2.3, but it has
+since been superseded by the
+.BR hdb
+backend.  It takes care to configure it properly.
 It uses the transactional database interface of the Oracle Berkeley
 DB (BDB) package to store data.
 .TP
@@ -40,10 +43,13 @@ It serves up referrals based upon SRV resource records held in the
 Domain Name System.
 .TP
 .B hdb
-This is a variant of the
+This is the recommended primary backend for a normal slapd database.
+.B hdb
+is a variant of the
 .B bdb
 backend that uses a hierarchical database
-layout. This layout stores entry DNs more efficiently than the
+layout.
+This layout stores entry DNs more efficiently than the
 .B bdb
 backend,
 using less space and requiring less work to create, delete, and rename
@@ -58,6 +64,16 @@ This database uses the filesystem to build the tree structure
 of the database, using plain ascii files to store data.
 Its usage should be limited to very simple databases, where performance
 is not a requirement. This backend also supports subtree renames.
+.TP
+.B mdb
+This will soon be the recommended primary backend, superseding
+.BR hdb .
+This backend uses OpenLDAP's own MDB transactional database
+library. It is extremely compact and extremely efficient, delivering
+much higher performance than the Berkeley DB backends while using
+significantly less memory.  Also, unlike Berkeley DB, MDB is crash proof,
+and requires no special tuning or maintenance.
+This backend also supports subtree renames.
 .TP
 .B meta
 This backend performs basic LDAP proxying with respect to a set of
@@ -74,7 +90,8 @@ backend may be defined.
 .B ndb
 This backend is experimental.
 It uses the transactional database interface of the MySQL Cluster Engine
-(NDB) to store data.
+(NDB) to store data. Note that Oracle, which now owns MySQL, has withdrawn
+support for NDB and this backend is unlikely to be developed any further.
 .TP
 .B null
 Operations in this backend succeed but do nothing.
@@ -125,8 +142,10 @@ default slapd configuration directory
 .BR slapd\-hdb (5),
 .BR slapd\-ldap (5),
 .BR slapd\-ldif (5),
+.BR slapd\-mdb (5),
 .BR slapd\-meta (5),
 .BR slapd\-monitor (5),
+.BR slapd\-ndb (5),
 .BR slapd\-null (5),
 .BR slapd\-passwd (5),
 .BR slapd\-perl (5),
@@ -138,8 +157,10 @@ default slapd configuration directory
 .BR slapd (8).
 "OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
 .SH ACKNOWLEDGEMENTS
+.lf 1 ./../Project
 .\" Shared Project Acknowledgement Text
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from University of Michigan LDAP 3.3 Release.  
+.lf 160 stdin

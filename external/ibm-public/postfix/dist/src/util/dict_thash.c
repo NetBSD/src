@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_thash.c,v 1.1.1.2 2013/01/02 18:59:12 tron Exp $	*/
+/*	$NetBSD: dict_thash.c,v 1.1.1.2.6.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -147,7 +147,7 @@ static void dict_thash_close(DICT *dict)
 DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 {
     DICT_THASH *dict_thash;
-    VSTREAM *fp;
+    VSTREAM *fp = 0;
     struct stat st;
     time_t  before;
     time_t  after;
@@ -159,12 +159,25 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
     HTABLE_INFO *ht;
 
     /*
+     * Let the optimizer worry about eliminating redundant code.
+     */
+#define DICT_THASH_OPEN_RETURN(d) { \
+	DICT *__d = (d); \
+	if (fp != 0) \
+	    vstream_fclose(fp); \
+	if (line_buffer != 0) \
+	    vstring_free(line_buffer); \
+	return (__d); \
+    } while (0)
+
+    /*
      * Sanity checks.
      */
     if (open_flags != O_RDONLY)
-	return (dict_surrogate(DICT_TYPE_THASH, path, open_flags, dict_flags,
-			       "%s:%s map requires O_RDONLY access mode",
-			       DICT_TYPE_THASH, path));
+	DICT_THASH_OPEN_RETURN(dict_surrogate(DICT_TYPE_THASH, path,
+					      open_flags, dict_flags,
+				  "%s:%s map requires O_RDONLY access mode",
+					      DICT_TYPE_THASH, path));
 
     /*
      * Read the flat text file into in-memory hash. Read the file again if it
@@ -172,8 +185,9 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
      */
     for (before = time((time_t *) 0); /* see below */ ; before = after) {
 	if ((fp = vstream_fopen(path, open_flags, 0644)) == 0) {
-	    return (dict_surrogate(DICT_TYPE_THASH, path, open_flags, dict_flags,
-				   "open database %s: %m", path));
+	    DICT_THASH_OPEN_RETURN(dict_surrogate(DICT_TYPE_THASH, path,
+						  open_flags, dict_flags,
+					     "open database %s: %m", path));
 	}
 	if (line_buffer == 0)
 	    line_buffer = vstring_alloc(100);
@@ -242,6 +256,7 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 	    msg_fatal("fstat %s: %m", path);
 	if (vstream_fclose(fp))
 	    msg_fatal("read %s: %m", path);
+	fp = 0;					/* DICT_THASH_OPEN_RETURN() */
 	after = time((time_t *) 0);
 	if (st.st_mtime < before - 1 || st.st_mtime > after)
 	    break;
@@ -254,7 +269,6 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 	    msg_info("pausing to let file %s cool down", path);
 	doze(300000);
     }
-    vstring_free(line_buffer);
 
     /*
      * Create the in-memory table.
@@ -272,5 +286,5 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
     dict_thash->dict.owner.uid = st.st_uid;
     dict_thash->dict.owner.status = (st.st_uid != 0);
 
-    return (DICT_DEBUG (&dict_thash->dict));
+    DICT_THASH_OPEN_RETURN(DICT_DEBUG (&dict_thash->dict));
 }

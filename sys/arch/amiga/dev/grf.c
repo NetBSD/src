@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.61 2014/03/29 12:54:27 mlelstv Exp $ */
+/*	$NetBSD: grf.c,v 1.61.2.1 2014/08/10 06:53:49 tls Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.61 2014/03/29 12:54:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.61.2.1 2014/08/10 06:53:49 tls Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -126,6 +126,7 @@ const struct cdevsw grf_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = grfmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

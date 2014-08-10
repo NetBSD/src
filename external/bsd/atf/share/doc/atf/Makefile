@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2014/02/12 04:08:31 jmmv Exp $
+# $NetBSD: Makefile,v 1.6.2.1 2014/08/10 07:06:27 tls Exp $
 
 .include <bsd.init.mk>
 
@@ -10,7 +10,7 @@
 .PATH:	${SRCDIR}/tools
 
 .if ${MKDOC} != "no"
-FILESDIR=	/usr/share/doc/atf
+FILESDIR=	/usr/share/doc/reference/ref1/atf
 FILES=		AUTHORS COPYING NEWS README
 .endif
 

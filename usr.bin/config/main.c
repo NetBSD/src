@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2013/11/01 21:39:13 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.51.2.1 2014/08/10 06:57:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 int	vflag;				/* verbose output */
 int	Pflag;				/* pack locators */
 int	Lflag;				/* lint config generation */
+int	handling_cmdlineopts;		/* currently processing -D/-U options */
 
 int	yyparse(void);
 
@@ -100,6 +101,7 @@ static struct nvlist **nextmkopt;
 static struct nvlist **nextappmkopt;
 static struct nvlist **nextcndmkopt;
 static struct nvlist **nextfsopt;
+static struct nvlist *cmdlinedefs, *cmdlineundefs;
 
 static	void	usage(void) __dead;
 static	void	dependopts(void);
@@ -119,6 +121,9 @@ static	int	mkident(void);
 static	int	devbase_has_dead_instances(const char *, void *, void *);
 static	int	devbase_has_any_instance(struct devbase *, int, int, int);
 static	int	check_dead_devi(const char *, void *, void *);
+static	void	add_makeopt(const char *);
+static	void	remove_makeopt(const char *);
+static	void	handle_cmdline_makeoptions(void);
 static	void	kill_orphans(void);
 static	void	do_kill_orphans(struct devbase *, struct attr *,
     struct devbase *, int);
@@ -155,11 +160,11 @@ main(int argc, char **argv)
 
 	pflag = 0;
 	xflag = 0;
-	while ((ch = getopt(argc, argv, "DLPgpvb:s:x")) != -1) {
+	while ((ch = getopt(argc, argv, "D:LPU:dgpvb:s:x")) != -1) {
 		switch (ch) {
 
 #ifndef MAKE_BOOTSTRAP
-		case 'D':
+		case 'd':
 			yydebug = 1;
 			break;
 #endif
@@ -179,7 +184,7 @@ main(int argc, char **argv)
 			 * do that for you, but you really should just
 			 * put them in the config file.
 			 */
-			warnx("-g is obsolete (use makeoptions DEBUG=\"-g\")");
+			warnx("-g is obsolete (use -D DEBUG=\"-g\")");
 			usage();
 			/*NOTREACHED*/
 
@@ -211,6 +216,14 @@ main(int argc, char **argv)
 
 		case 'x':
 			xflag = 1;
+			break;
+
+		case 'D':
+			add_makeopt(optarg);
+			break;
+
+		case 'U':
+			remove_makeopt(optarg);
 			break;
 
 		case '?':
@@ -386,6 +399,11 @@ main(int argc, char **argv)
 		unlink(cname);
 
 	/*
+	 * Handle command line overrides
+	 */
+	handle_cmdline_makeoptions();
+
+	/*
 	 * Detect and properly ignore orphaned devices
 	 */
 	kill_orphans();
@@ -468,7 +486,8 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-Ppv] [-s srcdir] [-b builddir] "
+	(void)fprintf(stderr, "Usage: %s [-Ppv] [-b builddir] [-D var=value] "
+	    "[-s srcdir] [-U var] "
 	    "[config-file]\n\t%s -x [kernel-file]\n"
 	    "\t%s -L [-v] [-s srcdir] [config-file]\n", 
 	    getprogname(), getprogname(), getprogname());
@@ -1071,6 +1090,11 @@ undo_option(struct hashtab *ht, struct nvlist **npp,
 	struct nvlist *nv;
 	
 	if (ht_remove(ht, name)) {
+		/*
+		 * -U command line option removals are always silent
+		 */
+		if (handling_cmdlineopts)
+			return 0;
 		cfgerror("%s `%s' is not defined", type, name);
 		return (1);
 	}
@@ -1769,4 +1793,57 @@ static void
 kill_orphans(void)
 {
 	ht_enumerate(devroottab, kill_orphans_cb, NULL);
+}
+
+static void
+add_makeopt(const char *opt)
+{
+	struct nvlist *p;
+	char *buf = estrdup(opt);
+	char *eq = strchr(buf, '=');
+
+	if (!eq)
+		errx(EXIT_FAILURE, "-D %s is not in var=value format", opt);
+
+	*eq = 0;
+	p = newnv(estrdup(buf), estrdup(eq+1), NULL, 0, NULL);
+	free(buf);
+	p->nv_next = cmdlinedefs;
+	cmdlinedefs = p;
+}
+
+static void
+remove_makeopt(const char *opt)
+{
+	struct nvlist *p;
+
+	p = newnv(estrdup(opt), NULL, NULL, 0, NULL);
+	p->nv_next = cmdlineundefs;
+	cmdlineundefs = p;
+}
+
+static void
+handle_cmdline_makeoptions(void)
+{
+	struct nvlist *p, *n;
+
+	handling_cmdlineopts = 1;
+	for (p = cmdlineundefs; p; p = n) {
+		n = p->nv_next;
+		delmkoption(intern(p->nv_name));
+		free(__UNCONST(p->nv_name));
+		nvfree(p);
+	}
+	for (p = cmdlinedefs; p; p = n) {
+		const char *name = intern(p->nv_name);
+
+		n = p->nv_next;
+		delmkoption(name);
+		addmkoption(name, intern(p->nv_str));
+		free(__UNCONST(p->nv_name));
+		free(__UNCONST(p->nv_str));
+
+		nvfree(p);
+	}
+	handling_cmdlineopts = 0;
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: socket_test.c,v 1.1.1.3 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: socket_test.c,v 1.1.1.3.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
- * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -114,7 +114,7 @@ waitfor(completion_t *completion) {
 #endif
 
 static void
-waitbody() {
+waitbody(void) {
 #ifndef ISC_PLATFORM_USETHREADS
 	struct timeval tv;
 	isc_socketwait_t *swait = NULL;

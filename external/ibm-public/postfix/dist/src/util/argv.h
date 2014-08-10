@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.h,v 1.1.1.2 2013/01/02 18:59:11 tron Exp $	*/
+/*	$NetBSD: argv.h,v 1.1.1.2.6.1 2014/08/10 07:12:50 tls Exp $	*/
 
 #ifndef _ARGV_H_INCLUDED_
 #define _ARGV_H_INCLUDED_
@@ -23,12 +23,14 @@ typedef struct ARGV {
 } ARGV;
 
 extern ARGV *argv_alloc(ssize_t);
+extern ARGV *argv_sort(ARGV *);
 extern void argv_add(ARGV *,...);
 extern void argv_addn(ARGV *,...);
 extern void argv_terminate(ARGV *);
 extern void argv_truncate(ARGV *, ssize_t);
 extern void argv_insert_one(ARGV *, ssize_t, const char *);
 extern void argv_replace_one(ARGV *, ssize_t, const char *);
+extern void argv_delete(ARGV *, ssize_t, ssize_t);
 extern ARGV *argv_free(ARGV *);
 
 extern ARGV *argv_split(const char *, const char *);

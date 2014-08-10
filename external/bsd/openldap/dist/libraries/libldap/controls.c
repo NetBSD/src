@@ -1,9 +1,9 @@
-/*	$NetBSD: controls.c,v 1.1.1.3 2010/12/12 15:21:30 adam Exp $	*/
+/*	$NetBSD: controls.c,v 1.1.1.3.24.1 2014/08/10 07:09:47 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/controls.c,v 1.48.2.7 2010/04/13 20:22:56 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -535,7 +535,7 @@ int ldap_int_client_controls( LDAP *ld, LDAPControl **ctrls )
 	assert( LDAP_VALID( ld ) );
 
 	if( ctrls == NULL ) {
-		/* use default server controls */
+		/* use default client controls */
 		ctrls = ld->ld_cctrls;
 	}
 

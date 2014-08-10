@@ -1,10 +1,10 @@
-/*	$NetBSD: map.c,v 1.1.1.3 2010/12/12 15:23:11 adam Exp $	*/
+/*	$NetBSD: map.c,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
 /* map.c - ldap backend mapping routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/map.c,v 1.15.2.14 2010/04/15 22:22:28 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,9 +62,6 @@
 #include "lutil.h"
 #include "../back-ldap/back-ldap.h"
 #include "back-meta.h"
-
-#undef ldap_debug	/* silence a warning in ldap-int.h */
-#include "../../../libraries/libldap/ldap-int.h"
 
 int
 mapping_cmp ( const void *c1, const void *c2 )
@@ -176,42 +173,73 @@ ldap_back_map ( struct ldapmap *map, struct berval *s, struct berval *bv,
 
 int
 ldap_back_map_attrs(
+		Operation *op,
 		struct ldapmap *at_map,
 		AttributeName *an,
 		int remap,
-		char ***mapped_attrs,
-		void *memctx )
+		char ***mapped_attrs )
 {
-	int i, j;
+	int i, x, j;
 	char **na;
 	struct berval mapped;
 
-	if ( an == NULL ) {
+	if ( an == NULL && op->o_bd->be_extra_anlist == NULL ) {
 		*mapped_attrs = NULL;
 		return LDAP_SUCCESS;
 	}
 
-	for ( i = 0; !BER_BVISNULL( &an[i].an_name ); i++ )
-		/*  */ ;
+	i = 0;
+	if ( an != NULL ) {
+		for ( ; !BER_BVISNULL( &an[i].an_name ); i++ )
+			/*  */ ;
+	}
 
-	na = (char **)ber_memcalloc_x( i + 1, sizeof(char *), memctx );
+	x = 0;
+	if ( op->o_bd->be_extra_anlist != NULL ) {
+		for ( ; !BER_BVISNULL( &op->o_bd->be_extra_anlist[x].an_name ); x++ )
+			/*  */ ;
+	}
+
+	assert( i > 0 || x > 0 );
+	
+	na = (char **)ber_memcalloc_x( i + x + 1, sizeof(char *), op->o_tmpmemctx );
 	if ( na == NULL ) {
 		*mapped_attrs = NULL;
 		return LDAP_NO_MEMORY;
 	}
 
-	for ( i = j = 0; !BER_BVISNULL( &an[i].an_name ); i++ ) {
-		ldap_back_map( at_map, &an[i].an_name, &mapped, remap );
-		if ( !BER_BVISNULL( &mapped ) && !BER_BVISEMPTY( &mapped ) ) {
-			na[j++] = mapped.bv_val;
+	j = 0;
+	if ( i > 0 ) {
+		for ( i = 0; !BER_BVISNULL( &an[i].an_name ); i++ ) {
+			ldap_back_map( at_map, &an[i].an_name, &mapped, remap );
+			if ( !BER_BVISNULL( &mapped ) && !BER_BVISEMPTY( &mapped ) ) {
+				na[j++] = mapped.bv_val;
+			}
 		}
 	}
-	if ( j == 0 && i != 0 ) {
+
+	if ( x > 0 ) {
+		for ( x = 0; !BER_BVISNULL( &op->o_bd->be_extra_anlist[x].an_name ); x++ ) {
+			if ( op->o_bd->be_extra_anlist[x].an_desc &&
+				ad_inlist( op->o_bd->be_extra_anlist[x].an_desc, an ) )
+			{
+				continue;
+			}
+
+			ldap_back_map( at_map, &op->o_bd->be_extra_anlist[x].an_name, &mapped, remap );
+			if ( !BER_BVISNULL( &mapped ) && !BER_BVISEMPTY( &mapped ) ) {
+				na[j++] = mapped.bv_val;
+			}
+		}
+	}
+
+	if ( j == 0 && ( i > 0 || x > 0 ) ) {
 		na[j++] = LDAP_NO_ATTRS;
 	}
 	na[j] = NULL;
 
 	*mapped_attrs = na;
+
 	return LDAP_SUCCESS;
 }
 
@@ -272,7 +300,9 @@ map_attr_value(
 			return -1;
 		}
 
-	} else if ( ad->ad_type->sat_equality->smr_usage & SLAP_MR_MUTATION_NORMALIZER ) {
+	} else if ( ad->ad_type->sat_equality && 
+		ad->ad_type->sat_equality->smr_usage & SLAP_MR_MUTATION_NORMALIZER )
+	{
 		if ( ad->ad_type->sat_equality->smr_normalize(
 			(SLAP_MR_DENORMALIZE|SLAP_MR_VALUE_OF_ASSERTION_SYNTAX),
 			NULL, NULL, value, &vtmp, memctx ) )
@@ -713,7 +743,7 @@ ldap_back_referral_result_rewrite(
 			 * legal to trim values when adding/modifying;
 			 * it should be when searching (e.g. ACLs).
 			 */
-			LBER_FREE( a_vals[ i ].bv_val );
+			ber_memfree( a_vals[ i ].bv_val );
 			if ( last > i ) {
 				a_vals[ i ] = a_vals[ last ];
 			}
@@ -740,7 +770,7 @@ ldap_back_referral_result_rewrite(
 
 				ber_memfree_x( a_vals[ i ].bv_val, memctx );
 				ber_str2bv_x( newurl, 0, 1, &a_vals[ i ], memctx );
-				LDAP_FREE( newurl );
+				ber_memfree( newurl );
 				ludp->lud_dn = olddn.bv_val;
 			}
 			break;
@@ -826,7 +856,7 @@ ldap_dnattr_result_rewrite(
 			 * legal to trim values when adding/modifying;
 			 * it should be when searching (e.g. ACLs).
 			 */
-			LBER_FREE( a_vals[i].bv_val );
+			ber_memfree( a_vals[i].bv_val );
 			if ( last > i ) {
 				a_vals[i] = a_vals[last];
 			}
@@ -837,7 +867,7 @@ ldap_dnattr_result_rewrite(
 		default:
 			/* leave attr untouched if massage failed */
 			if ( !BER_BVISNULL( &bv ) && a_vals[i].bv_val != bv.bv_val ) {
-				LBER_FREE( a_vals[i].bv_val );
+				ber_memfree( a_vals[i].bv_val );
 				a_vals[i] = bv;
 			}
 			break;

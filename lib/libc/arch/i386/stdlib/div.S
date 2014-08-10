@@ -1,4 +1,4 @@
-/*	$NetBSD: div.S,v 1.9 2011/06/12 20:29:25 plunky Exp $	*/
+/*	$NetBSD: div.S,v 1.9.18.1 2014/08/10 06:51:49 tls Exp $	*/
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -7,7 +7,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-RCSID("$NetBSD: div.S,v 1.9 2011/06/12 20:29:25 plunky Exp $")
+RCSID("$NetBSD: div.S,v 1.9.18.1 2014/08/10 06:51:49 tls Exp $")
 #endif
 
 ENTRY(div)
@@ -22,3 +22,4 @@ ENTRY(div)
 	movl	%ebx,%eax
 	popl	%ebx
 	ret	$4
+END(div)

@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhclient.8,v 1.2 2013/06/20 12:15:38 christos Exp $
+.\"	$NetBSD: dhclient.8,v 1.2.6.1 2014/08/10 07:06:54 tls Exp $
 .\"
-.\"	Id: dhclient.8,v 1.32.24.4 2011/04/15 22:12:50 sar Exp 
+.\"	Id: dhclient.8,v 1.36 2011/04/15 21:58:12 sar Exp 
 .\"
-.\" Copyright (c) 2004,2007-2012 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004,2007-2014 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -58,6 +58,12 @@ dhclient - Dynamic Host Configuration Protocol Client
 ]
 ]
 [
+.B -i
+]
+[
+.B -I
+]
+[
 .B -D
 .I LL|LLT
 ]
@@ -73,10 +79,10 @@ dhclient - Dynamic Host Configuration Protocol Client
 .I VAR=value
 ]
 [
-.B -q
+.B -m
 ]
 [
-.B -m
+.B -q
 ]
 [
 .B -1
@@ -250,7 +256,7 @@ inittab on System V systems.  This implies \fB-v\fR.
 .TP
 .BI \-nw
 Become a daemon immediately (nowait) rather than waiting until an
-an IP address has been acquired.
+IP address has been acquired.
 .TP
 .BI \-m
 Don't require that the responding ethernet address of the dhcp server
@@ -328,8 +334,19 @@ feature is not supported in DHCPv6 (\fB-6\fR) mode.
 .BI \-g \ relay
 .\" mockup relay
 Set the giaddr field of all packets to the \fIrelay\fR IP address
-simulating a relay agent.  This is for testing pruposes only and
+simulating a relay agent.  This is for testing purposes only and
 should not be expected to work in any consistent or useful way.
+.TP
+.BI \-i
+Use a DUID with DHCPv4 clients.  If no DUID is available in the
+lease file one will be constructed and saved.  The DUID will be
+used to construct a RFC4361 style client id that will be included
+in the client's messages.  This client id can be overridden by
+setting a client id in the configuration file.  Overridding the
+client id in this fashion is discouraged.
+.TP
+.BI \-I
+Use the standard DDNS scheme from RFCs 4701 & 4702.  
 .TP
 .BI \--version
 Print version number and exit.
@@ -360,8 +377,10 @@ DHCPv6 \fBdhclient\fR creates an identifier based on the link-layer address
 (DUID-LL) if it is running in stateless mode (with \fB\-S\fR, not
 requesting an address), or it creates an identifier based on the
 link-layer address plus a timestamp (DUID-LLT) if it is running in
-stateful mode (without \fB\-S\fR, requesting an address).  \fB\-D\fR
-overrides this default, with a value of either \fILL\fR or \fILLT\fR.
+stateful mode (without \fB\-S\fR, requesting an address).  When DHCPv4
+is configured to use a DUID using \fB\-i\fR option the default is to use
+a DUID-LLT.  \fB\-D\fR
+overrides these default, with a value of either \fILL\fR or \fILLT\fR.
 .TP
 .BI \-N
 .\" TODO: is this for telling an already running dhclient?
@@ -370,7 +389,7 @@ It is used to restore normal operation after using \fB-T\fR or \fB-P\fR.
 .PP
 .I Modifying default file locations:
 The following options can be used to modify the locations a client uses
-for it's files.  They can be particularly useful if, for example,
+for its files.  They can be particularly useful if, for example,
 .B DBDIR
 or
 .B RUNDIR
@@ -468,14 +487,9 @@ dhcpd(8), dhcrelay(8), dhclient-script(8), dhclient.conf(5),
 dhclient.leases(5), dhcp-eval(5).
 .SH AUTHOR
 .B dhclient(8)
-has been written for Internet Systems Consortium
-by Ted Lemon in cooperation with Vixie
-Enterprises.  To learn more about Internet Systems Consortium,
+To learn more about Internet Systems Consortium,
 see
 .B https://www.isc.org
-To learn more about Vixie
-Enterprises, see
-.B http://www.vix.com.
 .PP
 This client was substantially modified and enhanced by Elliot Poger
 for use on Linux while he was working on the MosquitoNet project at

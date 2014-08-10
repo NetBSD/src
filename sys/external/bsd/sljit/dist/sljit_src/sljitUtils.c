@@ -1,3 +1,5 @@
+/*	$NetBSD: sljitUtils.c,v 1.5.2.1 2014/08/10 06:55:41 tls Exp $	*/
+
 /*
  *    Stack-less Just-In-Time compiler
  *
@@ -186,7 +188,7 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
 /*  Stack                                                                   */
 /* ------------------------------------------------------------------------ */
 
-#if (defined SLJIT_UTIL_STACK && SLJIT_UTIL_STACK)
+#if (defined SLJIT_UTIL_STACK && SLJIT_UTIL_STACK) || (defined SLJIT_EXECUTABLE_ALLOCATOR && SLJIT_EXECUTABLE_ALLOCATOR)
 
 #ifdef _KERNEL
 #include <sys/param.h>
@@ -194,12 +196,52 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
 #elif defined(_WIN32)
 #include "windows.h"
 #else
+/* Provides mmap function. */
 #include <sys/mman.h>
+/* For detecting the page size. */
 #include <unistd.h>
+
+#ifndef MAP_ANON
+
+#include <fcntl.h>
+
+/* Some old systems does not have MAP_ANON. */
+static sljit_si dev_zero = -1;
+
+#if (defined SLJIT_SINGLE_THREADED && SLJIT_SINGLE_THREADED)
+
+static SLJIT_INLINE sljit_si open_dev_zero(void)
+{
+	dev_zero = open("/dev/zero", O_RDWR);
+	return dev_zero < 0;
+}
+
+#else /* SLJIT_SINGLE_THREADED */
+
+#include <pthread.h>
+
+static pthread_mutex_t dev_zero_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static SLJIT_INLINE sljit_si open_dev_zero(void)
+{
+	pthread_mutex_lock(&dev_zero_mutex);
+	dev_zero = open("/dev/zero", O_RDWR);
+	pthread_mutex_unlock(&dev_zero_mutex);
+	return dev_zero < 0;
+}
+
+#endif /* SLJIT_SINGLE_THREADED */
+
 #endif
 
+#endif
+
+#endif /* SLJIT_UTIL_STACK || SLJIT_EXECUTABLE_ALLOCATOR */
+
+#if (defined SLJIT_UTIL_STACK && SLJIT_UTIL_STACK)
+
 /* Planning to make it even more clever in the future. */
-static sljit_w sljit_page_align = 0;
+static sljit_sw sljit_page_align = 0;
 
 SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(sljit_uw limit, sljit_uw max_limit)
 {
@@ -255,7 +297,7 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 	stack->limit = stack->base + limit;
 	stack->max_limit = stack->base + max_limit;
 #elif defined(_WIN32)
-	base.ptr = VirtualAlloc(0, max_limit, MEM_RESERVE, PAGE_READWRITE);
+	base.ptr = VirtualAlloc(NULL, max_limit, MEM_RESERVE, PAGE_READWRITE);
 	if (!base.ptr) {
 		SLJIT_FREE(stack);
 		return NULL;
@@ -268,7 +310,17 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 		return NULL;
 	}
 #else
-	base.ptr = mmap(0, max_limit, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+#ifdef MAP_ANON
+	base.ptr = mmap(NULL, max_limit, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+#else
+	if (dev_zero < 0) {
+		if (open_dev_zero()) {
+			SLJIT_FREE(stack);
+			return NULL;
+		}
+	}
+	base.ptr = mmap(NULL, max_limit, PROT_READ | PROT_WRITE, MAP_PRIVATE, dev_zero, 0);
+#endif
 	if (base.ptr == MAP_FAILED) {
 		SLJIT_FREE(stack);
 		return NULL;
@@ -296,7 +348,7 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_free_stack(struct sljit_stack* st
 	SLJIT_FREE(stack);
 }
 
-SLJIT_API_FUNC_ATTRIBUTE sljit_w SLJIT_CALL sljit_stack_resize(struct sljit_stack* stack, sljit_uw new_limit)
+SLJIT_API_FUNC_ATTRIBUTE sljit_sw SLJIT_CALL sljit_stack_resize(struct sljit_stack* stack, sljit_uw new_limit)
 {
 	if ((new_limit > stack->max_limit) || (new_limit < stack->base))
 		return -1;

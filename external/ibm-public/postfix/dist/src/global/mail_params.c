@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.c,v 1.1.1.3 2013/01/02 18:58:58 tron Exp $	*/
+/*	$NetBSD: mail_params.c,v 1.1.1.3.6.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -98,6 +98,8 @@
 /*	char   *var_proxywrite_service;
 /*	int	var_db_create_buf;
 /*	int	var_db_read_buf;
+/*	long	var_lmdb_map_size;
+/*	int	var_proc_limit;
 /*	int	var_mime_maxdepth;
 /*	int	var_mime_bound_len;
 /*	int	var_header_limit;
@@ -178,6 +180,9 @@
 #include <dict.h>
 #ifdef HAS_DB
 #include <dict_db.h>
+#endif
+#ifdef HAS_LMDB
+#include <dict_lmdb.h>
 #endif
 #include <inet_proto.h>
 #include <vstring_vstream.h>
@@ -286,6 +291,8 @@ char   *var_proxymap_service;
 char   *var_proxywrite_service;
 int     var_db_create_buf;
 int     var_db_read_buf;
+long    var_lmdb_map_size;
+int     var_proc_limit;
 int     var_mime_maxdepth;
 int     var_mime_bound_len;
 int     var_header_limit;
@@ -482,14 +489,17 @@ static char *read_param_from_file(const char *path)
     /*
      * Ugly macros to make complex expressions less unreadable.
      */
-#define SKIP(start, var, cond) \
-	for (var = start; *var && (cond); var++);
+#define SKIP(start, var, cond) do { \
+	for (var = start; *var && (cond); var++) \
+	    /* void */; \
+    } while (0)
 
-#define TRIM(s) { \
+#define TRIM(s) do { \
 	char *p; \
-	for (p = (s) + strlen(s); p > (s) && ISSPACE(p[-1]); p--); \
+	for (p = (s) + strlen(s); p > (s) && ISSPACE(p[-1]); p--) \
+	    /* void */; \
 	*p = 0; \
-    }
+    } while (0)
 
     fp = safe_open(path, O_RDONLY, 0, (struct stat *) 0, -1, -1, why);
     if (fp == 0)
@@ -554,7 +564,7 @@ void    mail_params_init()
 	VAR_MAIL_VERSION, DEF_MAIL_VERSION, &var_mail_version, 1, 0,
 	VAR_DB_TYPE, DEF_DB_TYPE, &var_db_type, 1, 0,
 	VAR_HASH_QUEUE_NAMES, DEF_HASH_QUEUE_NAMES, &var_hash_queue_names, 1, 0,
-	VAR_RCPT_DELIM, DEF_RCPT_DELIM, &var_rcpt_delim, 0, 1,
+	VAR_RCPT_DELIM, DEF_RCPT_DELIM, &var_rcpt_delim, 0, 0,
 	VAR_RELAY_DOMAINS, DEF_RELAY_DOMAINS, &var_relay_domains, 0, 0,
 	VAR_FFLUSH_DOMAINS, DEF_FFLUSH_DOMAINS, &var_fflush_domains, 0, 0,
 	VAR_EXPORT_ENVIRON, DEF_EXPORT_ENVIRON, &var_export_environ, 0, 0,
@@ -588,6 +598,7 @@ void    mail_params_init()
 	0,
     };
     static const CONFIG_INT_TABLE other_int_defaults[] = {
+	VAR_PROC_LIMIT, DEF_PROC_LIMIT, &var_proc_limit, 1, 0,
 	VAR_MAX_USE, DEF_MAX_USE, &var_use_limit, 1, 0,
 	VAR_DONT_REMOVE, DEF_DONT_REMOVE, &var_dont_remove, 0, 0,
 	VAR_LINE_LIMIT, DEF_LINE_LIMIT, &var_line_limit, 512, 0,
@@ -608,6 +619,7 @@ void    mail_params_init()
     };
     static const CONFIG_LONG_TABLE long_defaults[] = {
 	VAR_MESSAGE_LIMIT, DEF_MESSAGE_LIMIT, &var_message_limit, 0, 0,
+	VAR_LMDB_MAP_SIZE, DEF_LMDB_MAP_SIZE, &var_lmdb_map_size, 1, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE time_defaults[] = {
@@ -714,6 +726,9 @@ void    mail_params_init()
     check_overlap();
 #ifdef HAS_DB
     dict_db_cache_size = var_db_read_buf;
+#endif
+#ifdef HAS_LMDB
+    dict_lmdb_map_size = var_lmdb_map_size;
 #endif
     inet_windowsize = var_inet_windowsize;
 

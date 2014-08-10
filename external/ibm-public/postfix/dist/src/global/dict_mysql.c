@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_mysql.c,v 1.1.1.3 2013/01/02 18:58:57 tron Exp $	*/
+/*	$NetBSD: dict_mysql.c,v 1.1.1.3.6.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -93,6 +93,25 @@
 /*	releases.
 /* .IP hosts
 /*	List of hosts to connect to.
+/* .IP option_file
+/*      Read options from the given file instead of the default my.cnf
+/*      location.
+/* .IP option_group
+/*      Read options from the given group.
+/* .IP tls_cert_file
+/*      File containing client's X509 certificate.
+/* .IP tls_key_file
+/*      File containing the private key corresponding to \fItls_cert_file\fR.
+/* .IP tls_CAfile
+/*      File containing certificates for all of the X509 Certificate
+/*      Authorities the client will recognize.  Takes precedence over
+/*      \fItls_CApath\fR.
+/* .IP tls_CApath
+/*      Directory containing X509 Certificate Authority certificates
+/*      in separate individual files.
+/* .IP tls_verify_cert
+/*      Verify that the server's name matches the common name of the
+/*      certficate.
 /* .PP
 /*	For example, if you want the map to reference databases of
 /*	the name "your_db" and execute a query like this: select
@@ -219,6 +238,8 @@ typedef struct {
     CFG_PARSER *parser;
     char   *query;
     char   *result_format;
+    char   *option_file;
+    char   *option_group;
     void   *ctx;
     int     expansion_limit;
     char   *username;
@@ -228,6 +249,14 @@ typedef struct {
     PLMYSQL *pldb;
 #if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
     HOST   *active_host;
+    char   *tls_cert_file;
+    char   *tls_key_file;
+    char   *tls_CAfile;
+    char   *tls_CApath;
+    char   *tls_ciphers;
+#if MYSQL_VERSION_ID >= 50023
+    int     tls_verify_cert;
+#endif
 #endif
 } DICT_MYSQL;
 
@@ -244,12 +273,11 @@ typedef struct {
 
 /* internal function declarations */
 static PLMYSQL *plmysql_init(ARGV *);
-static MYSQL_RES *plmysql_query(DICT_MYSQL *, const char *, VSTRING *, char *,
-				        char *, char *);
+static MYSQL_RES *plmysql_query(DICT_MYSQL *, const char *, VSTRING *);
 static void plmysql_dealloc(PLMYSQL *);
 static void plmysql_close_host(HOST *);
 static void plmysql_down_host(HOST *);
-static void plmysql_connect_single(HOST *, char *, char *, char *);
+static void plmysql_connect_single(DICT_MYSQL *, HOST *);
 static const char *dict_mysql_lookup(DICT *, const char *);
 DICT   *dict_mysql_open(const char *, int, int);
 static void dict_mysql_close(DICT *);
@@ -351,10 +379,7 @@ static const char *dict_mysql_lookup(DICT *dict, const char *name)
 	return (0);
 
     /* do the query - set dict->error & cleanup if there's an error */
-    if ((query_res = plmysql_query(dict_mysql, name, query,
-				   dict_mysql->dbname,
-				   dict_mysql->username,
-				   dict_mysql->password)) == 0) {
+    if ((query_res = plmysql_query(dict_mysql, name, query)) == 0) {
 	dict->error = DICT_ERR_RETRY;
 	return (0);
     }
@@ -430,10 +455,10 @@ static HOST *dict_mysql_find_host(PLMYSQL *PLDB, unsigned stat, unsigned type)
 
 /* dict_mysql_get_active - get an active connection */
 
-static HOST *dict_mysql_get_active(PLMYSQL *PLDB, char *dbname,
-				           char *username, char *password)
+static HOST *dict_mysql_get_active(DICT_MYSQL *dict_mysql)
 {
     const char *myname = "dict_mysql_get_active";
+    PLMYSQL *PLDB = dict_mysql->pldb;
     HOST   *host;
     int     count = RETRY_CONN_MAX;
 
@@ -459,7 +484,7 @@ static HOST *dict_mysql_get_active(PLMYSQL *PLDB, char *dbname,
 	if (msg_verbose)
 	    msg_info("%s: attempting to connect to host %s", myname,
 		     host->hostname);
-	plmysql_connect_single(host, dbname, username, password);
+	plmysql_connect_single(dict_mysql, host);
 	if (host->stat == STATACTIVE)
 	    return host;
     }
@@ -487,17 +512,12 @@ static void dict_mysql_event(int unused_event, char *context)
 
 static MYSQL_RES *plmysql_query(DICT_MYSQL *dict_mysql,
 				        const char *name,
-				        VSTRING *query,
-				        char *dbname,
-				        char *username,
-				        char *password)
+				        VSTRING *query)
 {
-    PLMYSQL *PLDB = dict_mysql->pldb;
     HOST   *host;
     MYSQL_RES *res = 0;
 
-    while ((host = dict_mysql_get_active(PLDB, dbname, username, password)) != NULL) {
-
+    while ((host = dict_mysql_get_active(dict_mysql)) != NULL) {
 #if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
 
 	/*
@@ -536,15 +556,32 @@ static MYSQL_RES *plmysql_query(DICT_MYSQL *dict_mysql,
  * used to reconnect to a single database when one is down or none is
  * connected yet. Log all errors and set the stat field of host accordingly
  */
-static void plmysql_connect_single(HOST *host, char *dbname, char *username, char *password)
+static void plmysql_connect_single(DICT_MYSQL *dict_mysql, HOST *host)
 {
     if ((host->db = mysql_init(NULL)) == NULL)
 	msg_fatal("dict_mysql: insufficient memory");
+    if (dict_mysql->option_file)
+	mysql_options(host->db, MYSQL_READ_DEFAULT_FILE, dict_mysql->option_file);
+    if (dict_mysql->option_group)
+	mysql_options(host->db, MYSQL_READ_DEFAULT_GROUP, dict_mysql->option_group);
+#if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
+    if (dict_mysql->tls_key_file || dict_mysql->tls_cert_file ||
+	dict_mysql->tls_CAfile || dict_mysql->tls_CApath || dict_mysql->tls_ciphers)
+	mysql_ssl_set(host->db,
+		      dict_mysql->tls_key_file, dict_mysql->tls_cert_file,
+		      dict_mysql->tls_CAfile, dict_mysql->tls_CApath,
+		      dict_mysql->tls_ciphers);
+#if MYSQL_VERSION_ID >= 50023
+    if (dict_mysql->tls_verify_cert != -1)
+	mysql_options(host->db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
+		      &dict_mysql->tls_verify_cert);
+#endif
+#endif
     if (mysql_real_connect(host->db,
 			   (host->type == TYPEINET ? host->name : 0),
-			   username,
-			   password,
-			   dbname,
+			   dict_mysql->username,
+			   dict_mysql->password,
+			   dict_mysql->dbname,
 			   host->port,
 			   (host->type == TYPEUNIX ? host->name : 0),
 			   0)) {
@@ -584,7 +621,7 @@ static void plmysql_down_host(HOST *host)
 
 static void mysql_parse_config(DICT_MYSQL *dict_mysql, const char *mysqlcf)
 {
-    const char *myname = "mysqlname_parse";
+    const char *myname = "mysql_parse_config";
     CFG_PARSER *p = dict_mysql->parser;
     VSTRING *buf;
     char   *hosts;
@@ -593,6 +630,18 @@ static void mysql_parse_config(DICT_MYSQL *dict_mysql, const char *mysqlcf)
     dict_mysql->password = cfg_get_str(p, "password", "", 0, 0);
     dict_mysql->dbname = cfg_get_str(p, "dbname", "", 1, 0);
     dict_mysql->result_format = cfg_get_str(p, "result_format", "%s", 1, 0);
+    dict_mysql->option_file = cfg_get_str(p, "option_file", NULL, 0, 0);
+    dict_mysql->option_group = cfg_get_str(p, "option_group", NULL, 0, 0);
+#if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
+    dict_mysql->tls_key_file = cfg_get_str(p, "tls_key_file", NULL, 0, 0);
+    dict_mysql->tls_cert_file = cfg_get_str(p, "tls_cert_file", NULL, 0, 0);
+    dict_mysql->tls_CAfile = cfg_get_str(p, "tls_CAfile", NULL, 0, 0);
+    dict_mysql->tls_CApath = cfg_get_str(p, "tls_CApath", NULL, 0, 0);
+    dict_mysql->tls_ciphers = cfg_get_str(p, "tls_ciphers", NULL, 0, 0);
+#if MYSQL_VERSION_ID >= 50023
+    dict_mysql->tls_verify_cert = cfg_get_bool(p, "tls_verify_cert", -1);
+#endif
+#endif
 
     /*
      * XXX: The default should be non-zero for safety, but that is not
@@ -761,6 +810,22 @@ static void dict_mysql_close(DICT *dict)
     myfree(dict_mysql->dbname);
     myfree(dict_mysql->query);
     myfree(dict_mysql->result_format);
+    if (dict_mysql->option_file)
+	myfree(dict_mysql->option_file);
+    if (dict_mysql->option_group)
+	myfree(dict_mysql->option_group);
+#if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
+    if (dict_mysql->tls_key_file)
+	myfree(dict_mysql->tls_key_file);
+    if (dict_mysql->tls_cert_file)
+	myfree(dict_mysql->tls_cert_file);
+    if (dict_mysql->tls_CAfile)
+	myfree(dict_mysql->tls_CAfile);
+    if (dict_mysql->tls_CApath)
+	myfree(dict_mysql->tls_CApath);
+    if (dict_mysql->tls_ciphers)
+	myfree(dict_mysql->tls_ciphers);
+#endif
     if (dict_mysql->hosts)
 	argv_free(dict_mysql->hosts);
     if (dict_mysql->ctx)

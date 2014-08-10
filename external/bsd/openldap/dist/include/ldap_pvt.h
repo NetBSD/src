@@ -1,9 +1,9 @@
-/*	$NetBSD: ldap_pvt.h,v 1.1.1.3 2010/12/12 15:21:23 adam Exp $	*/
+/*	$NetBSD: ldap_pvt.h,v 1.1.1.3.24.1 2014/08/10 07:09:46 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.91.2.13 2010/04/19 16:53:01 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

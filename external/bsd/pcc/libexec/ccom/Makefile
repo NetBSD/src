@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/03/14 00:06:52 christos Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2014/08/10 07:10:08 tls Exp $
 
 WARNS?=	2
 
@@ -15,7 +15,7 @@ SRCS+=	scan.l
 SRCS+=	optim.c pftn.c trees.c inline.c symtabs.c
 SRCS+=	gcc_compat.c init.c local.c code.c stabs.c builtins.c
 SRCS+=	match.c reader.c optim2.c regs.c local2.c order.c table.c
-SRCS+=	common.c main.c external.c
+SRCS+=	common.c main.c external.c unicode.c
 
 MAN=    ccom.1
 
@@ -28,7 +28,7 @@ CPPFLAGS+=	-I${PCC_DIST}/os/${TARGOS}
 CPPFLAGS+=	-I${PCC_DIST}/arch/${TARGMACH}
 CPPFLAGS+=	-I${PCC_DIST}/cc/ccom
 
-COPTS.pftn.c+=	-Wno-uninitialized
+COPTS.pftn.c+=	${${ACTIVE_CC} == "gcc" :? -Wno-uninitialized :}
 
 DPSRCS=	external.c
 

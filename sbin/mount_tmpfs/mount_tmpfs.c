@@ -1,5 +1,5 @@
 
-/*	$NetBSD: mount_tmpfs.c,v 1.27 2013/12/04 15:10:11 martin Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.27.2.1 2014/08/10 06:52:59 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.27 2013/12/04 15:10:11 martin Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.27.2.1 2014/08/10 06:52:59 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: mount_tmpfs.c,v 1.27 2013/12/04 15:10:11 martin Exp $");
 /* --------------------------------------------------------------------- */
 
 static const struct mntopt mopts[] = {
+	MOPT_UPDATE,
 	MOPT_STDOPTS,
 	MOPT_GETARGS,
 	MOPT_NULL,

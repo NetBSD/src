@@ -1,5 +1,5 @@
-/*	Id: init.c,v 1.78 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: init.c,v 1.1.1.6 2012/03/26 14:26:48 plunky Exp $	*/
+/*	Id: init.c,v 1.90 2014/05/17 20:42:15 plunky Exp 	*/	
+/*	$NetBSD: init.c,v 1.1.1.6.10.1 2014/08/10 07:10:07 tls Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -63,6 +63,7 @@
  */
 
 #include "pass1.h"
+#include "unicode.h"
 #include <string.h>
 
 /*
@@ -222,6 +223,18 @@ inval(CONSZ off, int fsz, NODE *p)
 	CONSZ val;
 	TWORD t;
 
+#ifndef NO_COMPLEX
+	if (ANYCX(p) && p->n_left->n_right->n_right->n_op == FCON &&
+	    p->n_left->n_left->n_right->n_op == FCON) {
+		NODE *r = p->n_left->n_right->n_right;
+		int sz = (int)tsize(r->n_type, r->n_df, r->n_ap);
+		ninval(off, sz, p->n_left->n_left->n_right);
+		ninval(off, sz, r);
+		tfree(p);
+		return;
+	}
+#endif
+
 	if (p->n_op != ICON && p->n_op != FCON) {
 		uerror("constant required");
 		return;
@@ -247,7 +260,9 @@ inval(CONSZ off, int fsz, NODE *p)
 			printf("+");
 		if (sp != NULL) {
 			if ((sp->sclass == STATIC && sp->slevel > 0)) {
-				printf(LABFMT, sp->soffset);
+				/* fix problem with &&label not defined yet */
+				int o = sp->soffset;
+				printf(LABFMT, o < 0 ? -o : o);
 			} else
 				printf("%s", sp->soname ?
 				    sp->soname : exname(sp->sname));
@@ -270,7 +285,7 @@ infld(CONSZ off, int fsz, CONSZ val)
 {
 #ifdef PCC_DEBUG
 	if (idebug)
-		printf("infld off %lld, fsz %d, val %lld inbits %d\n",
+		printf("infld off " CONFMT ", fsz %d, val " CONFMT " inbits %d\n",
 		    off, fsz, val, inbits);
 #endif
 	val &= SZMASK(fsz);
@@ -293,7 +308,7 @@ infld(CONSZ off, int fsz, CONSZ val)
 		int shsz = SZCHAR-inbits;
 		xinval |= (val << inbits);
 		printf("%s " CONFMT "\n",
-		    astypnames[CHAR], xinval & SZMASK(SZCHAR));
+		    astypnames[CHAR], (CONSZ)(xinval & SZMASK(SZCHAR)));
 		fsz -= shsz;
 		val >>= shsz;
 		xinval = inbits = 0;
@@ -317,7 +332,7 @@ zbits(OFFSZ off, int fsz)
 
 #ifdef PCC_DEBUG
 	if (idebug)
-		printf("zbits off %lld, fsz %d inbits %d\n", off, fsz, inbits);
+		printf("zbits off " CONFMT ", fsz %d inbits %d\n", off, fsz, inbits);
 #endif
 #if TARGET_ENDIAN == TARGET_BE
 	if ((m = (inbits % SZCHAR))) {
@@ -343,7 +358,7 @@ zbits(OFFSZ off, int fsz)
 		} else {
 			fsz -= m;
 			printf("%s " CONFMT "\n", 
-			    astypnames[CHAR], xinval & SZMASK(SZCHAR));
+			    astypnames[CHAR], (CONSZ)(xinval & SZMASK(SZCHAR)));
 			xinval = inbits = 0;
 		}
 	}
@@ -445,7 +460,7 @@ stkpush(void)
 #ifdef PCC_DEBUG
 	if (idebug) {
 		printf("stkpush: '%s' %s ", sp->sname, scnames(sp->sclass));
-		tprint(stdout, t, 0);
+		tprint(t, 0);
 	}
 #endif
 
@@ -491,7 +506,7 @@ stkpush(void)
 #ifdef PCC_DEBUG
 	if (idebug) {
 		printf(" newtype ");
-		tprint(stdout, is->in_t, 0);
+		tprint(is->in_t, 0);
 		printf("\n");
 	}
 #endif
@@ -587,7 +602,7 @@ findoff(void)
 	}
 #ifdef PCC_DEBUG
 	if (idebug>1) {
-		printf("findoff: off %lld\n", off);
+		printf("findoff: off " CONFMT "\n", off);
 		prtstk(pstk);
 	}
 #endif
@@ -606,7 +621,7 @@ nsetval(CONSZ off, int fsz, NODE *p)
 	struct ilist *il;
 
 	if (idebug>1)
-		printf("setval: off %lld fsz %d p %p\n", off, fsz, p);
+		printf("setval: off " CONFMT " fsz %d p %p\n", off, fsz, p);
 
 	if (fsz == 0)
 		return;
@@ -678,8 +693,10 @@ scalinit(NODE *p)
 		stkpush();
 		/* If we are doing auto struct init */
 		if (ISSOU(pstk->in_t) && ISSOU(p->n_type) &&
-		    suemeq(pstk->in_sym->sap, p->n_ap))
+		    suemeq(pstk->in_sym->sap, p->n_ap)) {
+			pstk->in_lnk = NULL; /* this elem is initialized */
 			break;
+		}
 	}
 
 	if (ISSOU(pstk->in_t) == 0) {
@@ -692,11 +709,8 @@ scalinit(NODE *p)
 		nfree(p);
 	} else
 		q = p;
-#ifndef WORD_ADDRESSED
-	if (csym->sclass != AUTO)
-		q = rmpconv(optim(rmpconv(q)));
-#endif
-	q = optim(q);
+
+	q = optloop(q);
 
 	woff = findoff();
 
@@ -730,7 +744,7 @@ insbf(OFFSZ off, int fsz, int val)
 
 #ifdef PCC_DEBUG
 	if (idebug > 1)
-		printf("insbf: off %lld fsz %d val %d\n", off, fsz, val);
+		printf("insbf: off " CONFMT " fsz %d val %d\n", off, fsz, val);
 #endif
 
 	if (fsz == 0)
@@ -818,9 +832,9 @@ endinit(int seg)
 		for (il = ll->il; il; il = il->next) {
 #ifdef PCC_DEBUG
 			if (idebug > 1) {
-				printf("off %lld size %d val %lld type ",
+				printf("off " CONFMT " size %d val " CONFMT " type ",
 				    ll->begsz+il->off, il->fsz, il->n->n_lval);
-				tprint(stdout, il->n->n_type, 0);
+				tprint(il->n->n_type, 0);
 				printf("\n");
 			}
 #endif
@@ -897,9 +911,8 @@ endictx(void)
  * process an initializer's left brace
  */
 void
-ilbrace()
+ilbrace(void)
 {
-
 #ifdef PCC_DEBUG
 	if (idebug)
 		printf("ilbrace()\n");
@@ -920,7 +933,7 @@ ilbrace()
  * called when a '}' is seen
  */
 void
-irbrace()
+irbrace(void)
 {
 #ifdef PCC_DEBUG
 	if (idebug)
@@ -1047,10 +1060,8 @@ strcvt(NODE *p)
 #endif
 
 	for (s = p->n_sp->sname; *s != 0; ) {
-		if (*s++ == '\\') {
-			i = esccon(&s);  
-		} else
-			i = (unsigned char)s[-1];
+		if(p->n_type==ARY+WCHAR_TYPE) i=u82cp(&s);
+		else i=(unsigned char)*s++;
 		asginit(bcon(i));
 	} 
 	tfree(q);
@@ -1123,7 +1134,7 @@ prtstk(struct instk *in)
 		for (i = 0; i < o; i++)
 			printf("  ");
 		printf("%p) '%s' ", in, in->in_sym->sname);
-		tprint(stdout, in->in_t, 0);
+		tprint(in->in_t, 0);
 		printf(" %s ", scnames(in->in_sym->sclass));
 		if (in->in_df /* && in->in_df->ddim */)
 		    printf("arydim=%d ", in->in_df->ddim);
@@ -1194,10 +1205,23 @@ simpleinit(struct symtab *sp, NODE *p)
 			break;
 		}
 #endif
-		p = optim(buildtree(ASSIGN, nt, p));
-#ifndef WORD_ADDRESSED
-		p = optim(rmpconv(p));
+#ifdef TARGET_TIMODE
+		struct attr *ap;
+		if ((ap = attr_find(sp->sap, GCC_ATYP_MODE)) &&
+		    strcmp(ap->aa[0].sarg, "TI") == 0) {
+			if (p->n_op != ICON)
+				uerror("need to handle TImode initializer ");
+			sz = (int)tsize(sp->stype, sp->sdf, sp->sap);
+			p->n_type = ctype(LONGLONG);
+			inval(0, sz/2, p);
+			p->n_lval = 0; /* XXX fix signed types */
+			inval(0, sz/2, p);
+			tfree(p);
+			tfree(q);
+			break;
+		}
 #endif
+		p = optloop(buildtree(ASSIGN, nt, p));
 		q = p->n_right;
 		t = q->n_type;
 		sz = (int)tsize(t, q->n_df, q->n_ap);
@@ -1210,6 +1234,11 @@ simpleinit(struct symtab *sp, NODE *p)
 		if (ISARY(sp->stype))
 			cerror("no array init");
 		q = nt;
+#ifdef TARGET_TIMODE
+		if ((r = gcc_eval_timode(ASSIGN, q, p)) != NULL)
+			;
+		else
+#endif
 #ifndef NO_COMPLEX
 
 		if (ANYCX(q) || ANYCX(p))

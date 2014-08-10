@@ -39,11 +39,15 @@ protected:
   /// non-.globl label.  This defaults to true.
   bool IsFunctionEHFrameSymbolPrivate;
 
-  /// PersonalityEncoding, LSDAEncoding, FDEEncoding, TTypeEncoding - Some
-  /// encoding values for EH.
+  /// SupportsCompactUnwindWithoutEHFrame - True if the target object file
+  /// supports emitting a compact unwind section without an associated EH frame
+  /// section.
+  bool SupportsCompactUnwindWithoutEHFrame;
+
+  /// PersonalityEncoding, LSDAEncoding, TTypeEncoding - Some encoding values
+  /// for EH.
   unsigned PersonalityEncoding;
   unsigned LSDAEncoding;
-  unsigned FDEEncoding;
   unsigned FDECFIEncoding;
   unsigned TTypeEncoding;
 
@@ -203,15 +207,16 @@ public:
   bool getSupportsWeakOmittedEHFrame() const {
     return SupportsWeakOmittedEHFrame;
   }
+  bool getSupportsCompactUnwindWithoutEHFrame() const {
+    return SupportsCompactUnwindWithoutEHFrame;
+  }
   bool getCommDirectiveSupportsAlignment() const {
     return CommDirectiveSupportsAlignment;
   }
 
   unsigned getPersonalityEncoding() const { return PersonalityEncoding; }
   unsigned getLSDAEncoding() const { return LSDAEncoding; }
-  unsigned getFDEEncoding(bool CFI) const {
-    return CFI ? FDECFIEncoding : FDEEncoding;
-  }
+  unsigned getFDEEncoding() const { return FDECFIEncoding; }
   unsigned getTTypeEncoding() const { return TTypeEncoding; }
 
   unsigned getCompactUnwindDwarfEHFrameOnly() const {

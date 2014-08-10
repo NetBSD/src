@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.43 2013/01/10 17:19:33 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.43.10.1 2014/08/10 06:54:58 tls Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.43 2013/01/10 17:19:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.43.10.1 2014/08/10 06:54:58 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1229,8 +1229,10 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	DPRINTF(1,("%s: writing cmd: blksize=%d blkcnt=%d mode=%04x cmd=%04x\n",
 	    HDEVNAME(hp), blksize, blkcount, mode, command));
 
-	blksize |= (MAX(0, PAGE_SHIFT - 12) & SDHC_DMA_BOUNDARY_MASK) <<
-	    SDHC_DMA_BOUNDARY_SHIFT;	/* PAGE_SIZE DMA boundary */
+	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+		blksize |= (MAX(0, PAGE_SHIFT - 12) & SDHC_DMA_BOUNDARY_MASK) <<
+		    SDHC_DMA_BOUNDARY_SHIFT;	/* PAGE_SIZE DMA boundary */
+	}
 
 	mutex_enter(&hp->host_mtx);
 

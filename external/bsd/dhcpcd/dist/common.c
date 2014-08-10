@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.1.1.14 2014/02/25 13:14:27 roy Exp $");
+ __RCSID("$NetBSD: common.c,v 1.1.1.14.2.1 2014/08/10 07:06:59 tls Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -33,7 +33,9 @@
 #  define _GNU_SOURCE
 #endif
 
-#include <sys/cdefs.h>
+#ifndef __sun
+#  include <sys/cdefs.h>
+#endif
 
 #ifdef __APPLE__
 #  include <mach/mach_time.h>
@@ -43,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -100,7 +103,7 @@ get_monotonic(struct timeval *tp)
 
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
 		tp->tv_sec = ts.tv_sec;
-		tp->tv_usec = ts.tv_nsec / 1000;
+		tp->tv_usec = (suseconds_t)(ts.tv_nsec / 1000);
 		return 0;
 	}
 #elif defined(__APPLE__)
@@ -160,15 +163,15 @@ setvar(char ***e, const char *prefix, const char *var, const char *value)
 	else
 		snprintf(**e, len, "%s=%s", var, value);
 	(*e)++;
-	return len;
+	return (ssize_t)len;
 }
 
 ssize_t
-setvard(char ***e, const char *prefix, const char *var, int value)
+setvard(char ***e, const char *prefix, const char *var, size_t value)
 {
 	char buffer[32];
 
-	snprintf(buffer, sizeof(buffer), "%d", value);
+	snprintf(buffer, sizeof(buffer), "%zu", value);
 	return setvar(e, prefix, var, buffer);
 }
 
@@ -183,3 +186,65 @@ uptime(void)
 	return tv.tv_sec;
 }
 
+char *
+hwaddr_ntoa(const unsigned char *hwaddr, size_t hwlen, char *buf, size_t buflen)
+{
+	char *p;
+	size_t i;
+
+	if (buf == NULL) {
+		return NULL;
+	}
+
+	if (hwlen * 3 > buflen) {
+		errno = ENOBUFS;
+		return 0;
+	}
+
+	p = buf;
+	for (i = 0; i < hwlen; i++) {
+		if (i > 0)
+			*p ++= ':';
+		p += snprintf(p, 3, "%.2x", hwaddr[i]);
+	}
+	*p ++= '\0';
+	return buf;
+}
+
+size_t
+hwaddr_aton(unsigned char *buffer, const char *addr)
+{
+	char c[3];
+	const char *p = addr;
+	unsigned char *bp = buffer;
+	size_t len = 0;
+
+	c[2] = '\0';
+	while (*p) {
+		c[0] = *p++;
+		c[1] = *p++;
+		/* Ensure that digits are hex */
+		if (isxdigit((unsigned char)c[0]) == 0 ||
+		    isxdigit((unsigned char)c[1]) == 0)
+		{
+			errno = EINVAL;
+			return 0;
+		}
+		/* We should have at least two entries 00:01 */
+		if (len == 0 && *p == '\0') {
+			errno = EINVAL;
+			return 0;
+		}
+		/* Ensure that next data is EOL or a seperator with data */
+		if (!(*p == '\0' || (*p == ':' && *(p + 1) != '\0'))) {
+			errno = EINVAL;
+			return 0;
+		}
+		if (*p)
+			p++;
+		if (bp)
+			*bp++ = (unsigned char)strtol(c, NULL, 16);
+		len++;
+	}
+	return len;
+}

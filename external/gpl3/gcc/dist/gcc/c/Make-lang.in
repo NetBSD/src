@@ -70,7 +70,7 @@ cc1-checksum.c : build/genchecksum$(build_exeext) checksum-options \
 	$(C_OBJS) $(BACKEND) $(LIBDEPS) 
 	build/genchecksum$(build_exeext) $(C_OBJS) $(BACKEND) $(LIBDEPS) \
                      checksum-options > cc1-checksum.c.tmp && 		 \
-	$(srcdir)/../move-if-change cc1-checksum.c.tmp cc1-checksum.c
+	$(SHELL) $(srcdir)/../move-if-change cc1-checksum.c.tmp cc1-checksum.c
 
 cc1-checksum.o : cc1-checksum.c $(CONFIG_H) $(SYSTEM_H)
 

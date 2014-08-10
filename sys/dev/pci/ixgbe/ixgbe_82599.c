@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_82599.c,v 1.6 2011/01/19 19:36:27 jfv Exp $*/
-/*$NetBSD: ixgbe_82599.c,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$NetBSD: ixgbe_82599.c,v 1.1.26.1 2014/08/10 06:54:57 tls Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_api.h"
@@ -434,6 +434,7 @@ enum ixgbe_media_type ixgbe_get_media_type_82599(struct ixgbe_hw *hw)
 		break;
 	case IXGBE_DEV_ID_82599_SFP:
 	case IXGBE_DEV_ID_82599_SFP_FCOE:
+	case IXGBE_DEV_ID_82599_SFP_DELL:
 		media_type = ixgbe_media_type_fiber;
 		break;
 	case IXGBE_DEV_ID_82599_CX4:
@@ -1676,6 +1677,7 @@ s32 ixgbe_fdir_add_perfect_filter_82599(struct ixgbe_hw *hw,
 	case IXGBE_ATR_FLOW_TYPE_IPV4:
 		/* use the L4 protocol mask for raw IPv4/IPv6 traffic */
 		fdirm |= IXGBE_FDIRM_L4P;
+		break;
 	case IXGBE_ATR_FLOW_TYPE_SCTPV4:
 		if (input_masks->dst_port_mask || input_masks->src_port_mask) {
 			DEBUGOUT(" Error on src/dst port mask\n");
@@ -1704,6 +1706,7 @@ s32 ixgbe_fdir_add_perfect_filter_82599(struct ixgbe_hw *hw,
 	case 0xEFFF:
 		/* Unmask VLAN ID - bit 0 and fall through to unmask prio */
 		fdirm &= ~IXGBE_FDIRM_VLANID;
+		/*FALLTHROUGH*/
 	case 0xE000:
 		/* Unmask VLAN prio - bit 1 */
 		fdirm &= ~IXGBE_FDIRM_VLANP;

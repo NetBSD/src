@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.151 2014/01/10 18:37:18 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.151.2.1 2014/08/10 06:53:05 tls Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.151 2014/01/10 18:37:18 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.151.2.1 2014/08/10 06:53:05 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ static const struct handlespec {
 
 struct sysctlnode my_root = {
 	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
-	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
+	.sysctl_size = sizeof(struct sysctlnode),
 	.sysctl_num = 0,
 	.sysctl_name = "(prog_root)",
 };
@@ -1616,7 +1616,7 @@ getdesc(int *name, u_int namelen, struct sysctlnode *pnode)
 	struct sysctlnode *node = pnode->sysctl_child;
 	struct sysctldesc *d, *p, *plim;
 	char *desc;
-	size_t i, sz;
+	size_t i, sz, child_cnt;
 	int rc;
 
 	sz = 128 * pnode->sysctl_clen;
@@ -1647,7 +1647,9 @@ getdesc(int *name, u_int namelen, struct sysctlnode *pnode)
 	 * suffice for now
 	 */
 	plim = /*LINTED ptr cast*/(struct sysctldesc *)((char*)d + sz);
-	for (i = 0; i < pnode->sysctl_clen; i++) {
+	child_cnt = (pnode->sysctl_flags & CTLTYPE_NODE) ? pnode->sysctl_clen
+	    : 0;
+	for (i = 0; i < child_cnt; i++) {
 		node = &pnode->sysctl_child[i];
 		for (p = d; p < plim; p = NEXT_DESCR(p))
 			if (node->sysctl_num == p->descr_num)

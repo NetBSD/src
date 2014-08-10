@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.24 2010/04/05 07:21:47 joerg Exp $ */
+/* $NetBSD: if_plip.c,v 1.24.32.1 2014/08/10 06:54:57 tls Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.24 2010/04/05 07:21:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.24.32.1 2014/08/10 06:54:57 tls Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -636,17 +636,18 @@ end:
 		top = m_devget(sc->sc_ifbuf + LPIPHDRLEN, len, 0, ifp, NULL);
 	}
 
-	/* Do nothing if mbuf was not created or the queue is full */
-	if((top == NULL) || (IF_QFULL(&ipintrq))) {
-		IF_DROP(&ipintrq);
+	if (top == NULL) {
 		ifp->if_iqdrops++;
-		LP_PRINTF("DROP");
 		goto err;
 	}
-	if(ifp->if_bpf)
+	if (ifp->if_bpf) {
 		lptap(ifp, top);
-	IF_ENQUEUE(&ipintrq, top);
-	schednetisr(NETISR_IP);
+	}
+	if (__predict_false(!pktq_enqueue(ip_pktq, top, 0))) {
+		ifp->if_iqdrops++;
+		m_freem(top);
+		goto err;
+	}
 	ifp->if_ipackets++;
 	ifp->if_ibytes += len;
 	sc->sc_iferrs = 0;

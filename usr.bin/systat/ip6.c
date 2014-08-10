@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.c,v 1.15 2008/04/10 17:16:39 thorpej Exp $	*/
+/*	$NetBSD: ip6.c,v 1.15.40.1 2014/08/10 06:58:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip6.c,v 1.15 2008/04/10 17:16:39 thorpej Exp $");
+__RCSID("$NetBSD: ip6.c,v 1.15.40.1 2014/08/10 06:58:59 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,11 +60,6 @@ static enum update update = UPDATE_TIME;
 static uint64_t curstat[IP6_NSTATS];
 static uint64_t newstat[IP6_NSTATS];
 static uint64_t oldstat[IP6_NSTATS];
-
-static struct nlist namelist[] = {
-	{ .n_name = "_ip6stat" },
-	{ .n_name = NULL }
-};
 
 WINDOW *
 openip6(void)
@@ -184,37 +179,17 @@ showip6(void)
 int
 initip6(void)
 {
-	int n;
 
-	if (! use_sysctl) {
-		if (namelist[0].n_type == 0) {
-			n = kvm_nlist(kd, namelist);
-			if (n < 0) {
-				nlisterr(namelist);
-				return(0);
-			} else if (n == sizeof(namelist) / sizeof(namelist[0]) - 1) {
-				error("No namelist");
-				return(0);
-			}
-		}
-	}
 	return 1;
 }
 
 void
 fetchip6(void)
 {
-	int i;
+	size_t i, size = sizeof(newstat);
 
-	if (use_sysctl) {
-		size_t size = sizeof(newstat);
-
-		if (sysctlbyname("net.inet6.ip6.stats", newstat, &size,
-				 NULL, 0) == -1)
-			return;
-	} else {
-		KREAD((void *)namelist[0].n_value, newstat, sizeof(newstat));
-	}
+	if (sysctlbyname("net.inet6.ip6.stats", newstat, &size, NULL, 0) == -1)
+		return;
 
 	for (i = 0; i < IP6_NSTATS; i++)
 		xADJINETCTR(curstat, oldstat, newstat, i);

@@ -1,9 +1,9 @@
-/*	$NetBSD: modrdn.c,v 1.1.1.3 2010/12/12 15:22:33 adam Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/modrdn.c,v 1.170.2.8 2010/06/10 17:48:07 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -394,7 +394,9 @@ slap_modrdn2mods(
 	LDAPRDN		new_rdn = NULL;
 
 	assert( !BER_BVISEMPTY( &op->oq_modrdn.rs_newrdn ) );
-	assert( !op->orr_deleteoldrdn || !BER_BVISEMPTY( &op->o_req_dn ) );
+
+	/* if requestDN is empty, silently reset deleteOldRDN */
+	if ( BER_BVISEMPTY( &op->o_req_dn ) ) op->orr_deleteoldrdn = 0;
 
 	if ( ldap_bv2rdn_x( &op->oq_modrdn.rs_newrdn, &new_rdn,
 		(char **)&rs->sr_text, LDAP_DN_FORMAT_LDAP, op->o_tmpmemctx ) ) {
@@ -403,7 +405,7 @@ slap_modrdn2mods(
 			"type(s)/value(s) of newrdn\n",
 			op->o_log_prefix, 0, 0 );
 		rs->sr_err = LDAP_INVALID_DN_SYNTAX;
-		rs->sr_text = "unknown type(s) used in RDN";
+		rs->sr_text = "unknown type(s)/value(s) used in RDN";
 		goto done;
 	}
 

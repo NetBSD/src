@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11gost_link.c,v 1.1.1.1 2014/02/28 17:40:13 christos Exp $	*/
+/*	$NetBSD: pkcs11gost_link.c,v 1.1.1.1.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -84,7 +84,8 @@ isc_gost_init(isc_gost_t *ctx) {
 	CK_MECHANISM mech = { CKM_GOSTR3411, NULL, 0 };
 	int ret = ISC_R_SUCCESS;
 
-	ret = pk11_get_session(ctx, OP_GOST, ISC_FALSE, ISC_FALSE, NULL, 0);
+	ret = pk11_get_session(ctx, OP_GOST, ISC_TRUE, ISC_FALSE,
+			       ISC_FALSE, NULL, 0);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 	PK11_CALL(pkcs_C_DigestInit, (ctx->session, &mech), ISC_R_FAILURE);
@@ -169,8 +170,8 @@ pkcs11gost_createctx_sign(dst_key_t *key, dst_context_t *dctx) {
 						  sizeof(*pk11_ctx));
 	if (pk11_ctx == NULL)
 		return (ISC_R_NOMEMORY);
-	ret = pk11_get_session(pk11_ctx, OP_GOST, ISC_FALSE, ISC_FALSE, NULL,
-			       pk11_get_best_token(OP_GOST));
+	ret = pk11_get_session(pk11_ctx, OP_GOST, ISC_TRUE, ISC_FALSE,
+			       ISC_FALSE, NULL, pk11_get_best_token(OP_GOST));
 	if (ret != ISC_R_SUCCESS)
 		goto err;
 
@@ -270,8 +271,8 @@ pkcs11gost_createctx_verify(dst_key_t *key, dst_context_t *dctx) {
 						  sizeof(*pk11_ctx));
 	if (pk11_ctx == NULL)
 		return (ISC_R_NOMEMORY);
-	ret = pk11_get_session(pk11_ctx, OP_GOST, ISC_FALSE, ISC_FALSE, NULL,
-			       pk11_get_best_token(OP_GOST));
+	ret = pk11_get_session(pk11_ctx, OP_GOST, ISC_TRUE, ISC_FALSE,
+			       ISC_FALSE, NULL, pk11_get_best_token(OP_GOST));
 	if (ret != ISC_R_SUCCESS)
 		goto err;
 
@@ -507,8 +508,8 @@ pkcs11gost_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 						  sizeof(*pk11_ctx));
 	if (pk11_ctx == NULL)
 		return (ISC_R_NOMEMORY);
-	ret = pk11_get_session(pk11_ctx, OP_GOST, ISC_FALSE, ISC_FALSE, NULL,
-			       pk11_get_best_token(OP_GOST));
+	ret = pk11_get_session(pk11_ctx, OP_GOST, ISC_TRUE, ISC_FALSE,
+			       ISC_FALSE, NULL, pk11_get_best_token(OP_GOST));
 	if (ret != ISC_R_SUCCESS)
 		goto err;
 

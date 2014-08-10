@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.3 2011/07/17 01:14:25 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.3.20.1 2014/08/10 07:06:51 tls Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 1.9 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.3 2011/07/17 01:14:25 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.3.20.1 2014/08/10 07:06:51 tls Exp $");
 #endif
 #endif
 
@@ -71,7 +71,7 @@ static void
 child_process(entry *e) {
 	int stdin_pipe[2], stdout_pipe[2];
 	char * volatile input_data;
-	char *usernm, * volatile mailto;
+	char *homedir, *usernm, * volatile mailto;
 	int children = 0;
 
 	Debug(DPROC, ("[%ld] child_process('%s')\n", (long)getpid(), e->cmd));
@@ -243,28 +243,33 @@ child_process(entry *e) {
 		}
 #else
 		if (setgid(e->pwd->pw_gid) != 0) {
-			syslog(LOG_ERR, "setgid failed");
+			syslog(LOG_ERR, "setgid(%d) failed for %s: %m",
+			    e->pwd->pw_gid, e->pwd->pw_name);
 			_exit(ERROR_EXIT);
 		}
 		if (initgroups(usernm, e->pwd->pw_gid) != 0) {
-			syslog(LOG_ERR, "initgroups failed");
+			syslog(LOG_ERR, "initgroups(%s, %d) failed for %s: %m",
+			    usernm, e->pwd->pw_gid, e->pwd->pw_name);
 			_exit(ERROR_EXIT);
 		}
 #if (defined(BSD)) && (BSD >= 199103)
 		if (setlogin(usernm) < 0) {
-			syslog(LOG_ERR, "setlogin() failure: %m");
+			syslog(LOG_ERR, "setlogin(%s) failure for %s: %m",
+			    usernm, e->pwd->pw_name);
 			_exit(ERROR_EXIT);
 		}
 #endif /* BSD */
 		if (setuid(e->pwd->pw_uid) != 0) {
-			syslog(LOG_ERR, "setuid failed");
+			syslog(LOG_ERR, "setuid(%d) failed for %s: %m",
+			    e->pwd->pw_uid, e->pwd->pw_name);
 			_exit(ERROR_EXIT);
 		}
 		/* we aren't root after this... */
 #endif /* LOGIN_CAP */
-
-		if (chdir(env_get("HOME", e->envp)) != 0) {
-			syslog(LOG_ERR, "chdir $HOME failed");
+		homedir = env_get("HOME", e->envp);
+		if (chdir(homedir) != 0) {
+			syslog(LOG_ERR, "chdir(%s) $HOME failed for %s: %m",
+			    homedir, e->pwd->pw_name);
 			_exit(ERROR_EXIT);
 		}
 

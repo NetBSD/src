@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.86.2.1 2014/04/07 03:37:32 tls Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.86.2.2 2014/08/10 06:54:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.86.2.1 2014/04/07 03:37:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.86.2.2 2014/08/10 06:54:52 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -331,6 +331,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 		 * even if the PHY does.
 		 */
 		miicapabilities &= ~(BMSR_100TXFDX | BMSR_10TFDX);
+		/*FALLTHROUGH*/
 	case CHIP_91100FD:
 	case CHIP_91C111:
 		if (tmp & CR_MII_SELECT) {

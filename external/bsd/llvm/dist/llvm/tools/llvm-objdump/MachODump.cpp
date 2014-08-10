@@ -12,12 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-objdump.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
@@ -65,7 +65,7 @@ static const Target *GetTarget(const MachOObjectFile *MachOObj) {
 
   errs() << "llvm-objdump: error: unable to get target for '" << TripleName
          << "', see --version and --triple.\n";
-  return 0;
+  return nullptr;
 }
 
 struct SymbolSorter {
@@ -147,29 +147,23 @@ static void DumpDataInCode(const char *bytes, uint64_t Size,
   }
 }
 
-static void
-getSectionsAndSymbols(const MachO::mach_header Header,
-                      MachOObjectFile *MachOObj,
-                      std::vector<SectionRef> &Sections,
-                      std::vector<SymbolRef> &Symbols,
-                      SmallVectorImpl<uint64_t> &FoundFns,
-                      uint64_t &BaseSegmentAddress) {
-  for (symbol_iterator SI = MachOObj->symbol_begin(),
-                       SE = MachOObj->symbol_end();
-       SI != SE; ++SI)
-    Symbols.push_back(*SI);
+static void getSectionsAndSymbols(const MachO::mach_header Header,
+                                  MachOObjectFile *MachOObj,
+                                  std::vector<SectionRef> &Sections,
+                                  std::vector<SymbolRef> &Symbols,
+                                  SmallVectorImpl<uint64_t> &FoundFns,
+                                  uint64_t &BaseSegmentAddress) {
+  for (const SymbolRef &Symbol : MachOObj->symbols())
+    Symbols.push_back(Symbol);
 
-  for (section_iterator SI = MachOObj->section_begin(),
-                        SE = MachOObj->section_end();
-       SI != SE; ++SI) {
-    SectionRef SR = *SI;
+  for (const SectionRef &Section : MachOObj->sections()) {
     StringRef SectName;
-    SR.getName(SectName);
-    Sections.push_back(*SI);
+    Section.getName(SectName);
+    Sections.push_back(Section);
   }
 
   MachOObjectFile::LoadCommandInfo Command =
-    MachOObj->getFirstLoadCommandInfo();
+      MachOObj->getFirstLoadCommandInfo();
   bool BaseSegmentAddressSet = false;
   for (unsigned i = 0; ; ++i) {
     if (Command.C.cmd == MachO::LC_FUNCTION_STARTS) {
@@ -201,15 +195,15 @@ static void DisassembleInputMachO2(StringRef Filename,
                                    MachOObjectFile *MachOOF);
 
 void llvm::DisassembleInputMachO(StringRef Filename) {
-  OwningPtr<MemoryBuffer> Buff;
+  std::unique_ptr<MemoryBuffer> Buff;
 
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
     errs() << "llvm-objdump: " << Filename << ": " << ec.message() << "\n";
     return;
   }
 
-  OwningPtr<MachOObjectFile> MachOOF(static_cast<MachOObjectFile *>(
-      ObjectFile::createMachOObjectFile(Buff.take()).get()));
+  std::unique_ptr<MachOObjectFile> MachOOF(static_cast<MachOObjectFile *>(
+      ObjectFile::createMachOObjectFile(Buff.release()).get()));
 
   DisassembleInputMachO2(Filename, MachOOF.get());
 }
@@ -221,21 +215,23 @@ static void DisassembleInputMachO2(StringRef Filename,
     // GetTarget prints out stuff.
     return;
   }
-  OwningPtr<const MCInstrInfo> InstrInfo(TheTarget->createMCInstrInfo());
-  OwningPtr<MCInstrAnalysis>
-    InstrAnalysis(TheTarget->createMCInstrAnalysis(InstrInfo.get()));
+  std::unique_ptr<const MCInstrInfo> InstrInfo(TheTarget->createMCInstrInfo());
+  std::unique_ptr<MCInstrAnalysis> InstrAnalysis(
+      TheTarget->createMCInstrAnalysis(InstrInfo.get()));
 
   // Set up disassembler.
-  OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
-  OwningPtr<const MCAsmInfo> AsmInfo(
+  std::unique_ptr<const MCRegisterInfo> MRI(
+      TheTarget->createMCRegInfo(TripleName));
+  std::unique_ptr<const MCAsmInfo> AsmInfo(
       TheTarget->createMCAsmInfo(*MRI, TripleName));
-  OwningPtr<const MCSubtargetInfo>
-    STI(TheTarget->createMCSubtargetInfo(TripleName, "", ""));
-  OwningPtr<const MCDisassembler> DisAsm(TheTarget->createMCDisassembler(*STI));
+  std::unique_ptr<const MCSubtargetInfo> STI(
+      TheTarget->createMCSubtargetInfo(TripleName, "", ""));
+  MCContext Ctx(AsmInfo.get(), MRI.get(), nullptr);
+  std::unique_ptr<const MCDisassembler> DisAsm(
+    TheTarget->createMCDisassembler(*STI, Ctx));
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
-  OwningPtr<MCInstPrinter>
-    IP(TheTarget->createMCInstPrinter(AsmPrinterVariant, *AsmInfo, *InstrInfo,
-                                      *MRI, *STI));
+  std::unique_ptr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
+      AsmPrinterVariant, *AsmInfo, *InstrInfo, *MRI, *STI));
 
   if (!InstrAnalysis || !AsmInfo || !STI || !DisAsm || !IP) {
     errs() << "error: couldn't initialize disassembler for target "
@@ -285,19 +281,19 @@ static void DisassembleInputMachO2(StringRef Filename,
   raw_ostream &DebugOut = nulls();
 #endif
 
-  OwningPtr<DIContext> diContext;
+  std::unique_ptr<DIContext> diContext;
   ObjectFile *DbgObj = MachOOF;
   // Try to find debug info and set up the DIContext for it.
   if (UseDbg) {
     // A separate DSym file path was specified, parse it as a macho file,
     // get the sections and supply it to the section name parsing machinery.
     if (!DSYMFile.empty()) {
-      OwningPtr<MemoryBuffer> Buf;
+      std::unique_ptr<MemoryBuffer> Buf;
       if (error_code ec = MemoryBuffer::getFileOrSTDIN(DSYMFile, Buf)) {
         errs() << "llvm-objdump: " << Filename << ": " << ec.message() << '\n';
         return;
       }
-      DbgObj = ObjectFile::createMachOObjectFile(Buf.take()).get();
+      DbgObj = ObjectFile::createMachOObjectFile(Buf.release()).get();
     }
 
     // Setup the DIContext
@@ -328,16 +324,14 @@ static void DisassembleInputMachO2(StringRef Filename,
     bool symbolTableWorked = false;
 
     // Parse relocations.
-    std::vector<std::pair<uint64_t, SymbolRef> > Relocs;
-    for (relocation_iterator RI = Sections[SectIdx].relocation_begin(),
-                             RE = Sections[SectIdx].relocation_end();
-         RI != RE; ++RI) {
+    std::vector<std::pair<uint64_t, SymbolRef>> Relocs;
+    for (const RelocationRef &Reloc : Sections[SectIdx].relocations()) {
       uint64_t RelocOffset, SectionAddress;
-      RI->getOffset(RelocOffset);
+      Reloc.getOffset(RelocOffset);
       Sections[SectIdx].getAddress(SectionAddress);
       RelocOffset -= SectionAddress;
 
-      symbol_iterator RelocSym = RI->getSymbol();
+      symbol_iterator RelocSym = Reloc.getSymbol();
 
       Relocs.push_back(std::make_pair(RelocOffset, *RelocSym));
     }
@@ -427,9 +421,9 @@ static void DisassembleInputMachO2(StringRef Filename,
             DILineInfo dli =
               diContext->getLineInfoForAddress(SectAddress + Index);
             // Print valid line info if it changed.
-            if (dli != lastLine && dli.getLine() != 0)
-              outs() << "\t## " << dli.getFileName() << ':'
-                << dli.getLine() << ':' << dli.getColumn();
+            if (dli != lastLine && dli.Line != 0)
+              outs() << "\t## " << dli.FileName << ':' << dli.Line << ':'
+                     << dli.Column;
             lastLine = dli;
           }
           outs() << "\n";

@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.15 2014/02/28 05:39:49 matt Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.15.2.1 2014/08/10 06:54:05 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -331,7 +331,7 @@ ENTRY(outs8)
 	addi	%r4,%r4,-1	/* pre-decrement */
 1:	lbzu	%r0,1(%r4)	/* load and increment */
 	stb	%r0,0(%r3)	/* store */
-	cmpl	0,%r4,%r5	/* at the end? */
+	cmplw	%r4,%r5		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -357,7 +357,7 @@ ENTRY(outs16)
 	addi	%r4,%r4,-2	/* pre-decrement */
 1:	lhzu	%r0,2(%r4)	/* load and increment */
 	sth	%r0,0(%r3)	/* store */
-	cmpl	0,%r4,%r5	/* at the end? */
+	cmplw	%r4,%r5		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -383,7 +383,7 @@ ENTRY(outs32)
 	addi	%r4,%r4,-4	/* pre-decrement */
 1:	lwzu	%r0,4(%r4)	/* load and increment */
 	stw	%r0,0(%r3)	/* store */
-	cmpl	0,%r4,%r5	/* at the end? */
+	cmplw	%r4,%r5		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -409,7 +409,7 @@ ENTRY(outs64)
 	addi	%r4,%r4,-4	/* pre-decrement */
 1:	ldu	%r0,4(%r4)	/* load and increment */
 	std	%r0,0(%r3)	/* store */
-	cmpl	0,%r4,%r5	/* at the end? */
+	cmplw	%r4,%r5		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -440,7 +440,7 @@ ENTRY(outs16rb)
 	addi	%r4,%r4,-2	/* pre-decrement */
 1:	lwzu	%r0,2(%r4)	/* load and increment */
 	sthbrx	%r0,0,%r3	/* store (byte-reversed) */
-	cmpl	0,%r4,%r5	/* at the end? */
+	cmplw	%r4,%r5		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -466,7 +466,7 @@ ENTRY(outs32rb)
 	addi	%r4,%r4,-4	/* pre-decrement */
 1:	lwzu	%r0,4(%r4)	/* load and increment */
 	stwbrx	%r0,0,%r3	/* store (byte-reversed) */
-	cmpl	0,%r4,%r5	/* at the end? */
+	cmplw	%r4,%r5		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -497,7 +497,7 @@ ENTRY(ins8)
 	addi	%r4,%r4,-1	/* pre-decrement */
 1:	lbz	%r0,0(%r3)	/* load value */
 	stbu	%r0,1(%r4)	/* store and increment */
-	cmpl	0,%r4,%r5	/* at the end? */
+	cmplw	%r4,%r5		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -523,7 +523,7 @@ ENTRY(ins16)
 	addi	%r4,%r4,-2	/* pre-decrement */
 1:	lhz	%r0,0(%r3)	/* load value */
 	sthu	%r0,2(%r4)	/* store and increment */
-	cmpl	0,%r4,%r5	/* at the end? */
+	cmplw	%r4,%r5		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -549,7 +549,7 @@ ENTRY(ins32)
 	addi	%r4,%r4,-4	/* pre-decrement */
 1:	lwz	%r0,0(%r3)	/* load value */
 	stwu	%r0,4(%r4)	/* store and increment */
-	cmpl	0,%r4,%r5	/* at the end? */
+	cmplw	%r4,%r5		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -580,7 +580,7 @@ ENTRY(ins16rb)
 	addi	%r4,%r4,-2	/* pre-decrement */
 1:	lhbrx	%r0,0,%r3	/* load value (byte reversed) */
 	sthu	%r0,2(%r4)	/* store and increment */
-	cmpl	0,%r4,%r5	/* at the end? */
+	cmplw	%r4,%r5		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -605,7 +605,7 @@ ENTRY(ins32rb)
 	addi	%r4,%r4,-4	/* pre-decrement */
 1:	lwbrx	%r0,0,%r3	/* load value (byte reversed) */
 	stwu	%r0,4(%r4)	/* store and increment */
-	cmpl	0,%r4,%r5	/* at the end? */
+	cmplw	%r4,%r5		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -637,7 +637,7 @@ ENTRY(bswr1)
 	sub	%r3,%r3,%r8
 1:	lbzu	%r0,1(%r6)	/* load and increment */
 	stbux	%r0,%r3,%r8	/* store and add distance */
-	cmpl	0,%r6,%r7	/* at the end? */
+	cmplw	%r6,%r7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -664,7 +664,7 @@ ENTRY(bswr2)
 	sub	%r3,%r3,%r8
 1:	lhzu	%r0,2(%r6)	/* load and increment */
 	sthux	%r0,%r3,%r8	/* store and add distance */
-	cmpl	0,%r6,%r7	/* at the end? */
+	cmplw	%r6,%r7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -691,7 +691,7 @@ ENTRY(bswr2rb)
 1:	lhzu	%r0,2(%r6)	/* load and increment */
 	sthbrx	%r0,0,%r3	/* store (reversed) */
 	add	%r3,%r3,%r8	/* dst += distance */
-	cmpl	0,%r6,%r7	/* at the end? */
+	cmplw	%r6,%r7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -718,7 +718,7 @@ ENTRY(bswr4)
 	sub	%r3,%r3,%r8
 1:	lwzu	%r0,4(%r6)	/* load and increment */
 	stwux	%r0,%r3,%r8	/* store and add distance */
-	cmpl	0,%r6,%r7	/* at the end? */
+	cmplw	%r6,%r7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -745,7 +745,7 @@ ENTRY(bswr4rb)
 1:	lwzu	%r0,4(%r6)	/* load and increment */
 	stwbrx	%r0,0,%r3	/* store (reversed) */
 	add	%r3,%r3,%r8	/* dst += distance */
-	cmpl	0,%r6,%r7	/* at the end? */
+	cmplw	%r6,%r7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -783,7 +783,7 @@ ENTRY(bsrr1)
 	sub	%r3,%r3,%r8
 1:	lbzux	%r0,%r3,%r8	/* load value and add distance */
 	stbu	%r0,1(%r6)	/* store and increment */
-	cmpl	0,%r6,%r7	/* at the end? */
+	cmplw	%r6,%r7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -810,7 +810,7 @@ ENTRY(bsrr2)
 	sub	%r3,%r3,%r8
 1:	lhzux	%r0,%r3,%r8	/* load value and add distance */
 	sthu	%r0,2(%r6)	/* store and increment */
-	cmpl	0,%r6,%r7	/* at the end? */
+	cmplw	%r6,%r7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -837,7 +837,7 @@ ENTRY(bsrr2rb)
 1:	lhbrx	%r0,0,%r3	/* load value (reversed) */
 	add	%r3,%r3,%r8	/* src += distance */
 	sthu	%r0,2(%r6)	/* store and increment */
-	cmpl	0,%r6,%r7	/* at the end? */
+	cmplw	%r6,%r7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -864,7 +864,7 @@ ENTRY(bsrr4)
 	sub	%r3,%r3,%r8
 1:	lwzux	%r0,%r3,%r8	/* load value and add distance */
 	stwu	%r0,4(%r6)	/* store and increment */
-	cmpl	0,%r6,%r7	/* at the end? */
+	cmplw	%r6,%r7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */
@@ -892,7 +892,7 @@ ENTRY(bsrr4rb)
 1:	lwbrx	%r0,0,%r3	/* load value (reversed) */
 	add	%r3,%r3,%r8	/* src += distance */
 	sthu	%r0,4(%r6)	/* store and increment */
-	cmpl	0,%r6,%r7	/* at the end? */
+	cmplw	%r6,%r7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
 	eieio			/* memory barrier (reorder protection) */
 	DBGSYNC			/* force exceptions */

@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.17 2014/03/16 05:20:24 dholland Exp $ */
+/* $NetBSD: tslcd.c,v 1.17.2.1 2014/08/10 06:53:56 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.17 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.17.2.1 2014/08/10 06:53:56 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,7 @@ const struct cdevsw tslcd_cdevsw = {
 	.d_poll = tslcdpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

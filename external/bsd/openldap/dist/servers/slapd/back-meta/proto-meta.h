@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-meta.h,v 1.1.1.3 2010/12/12 15:23:12 adam Exp $	*/
+/*	$NetBSD: proto-meta.h,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/proto-meta.h,v 1.5.2.5 2010/04/13 20:23:31 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -48,6 +48,8 @@ extern BI_op_delete		meta_back_delete;
 extern BI_op_abandon		meta_back_abandon;
 
 extern BI_connection_destroy	meta_back_conn_destroy;
+
+int meta_back_init_cf( BackendInfo *bi );
 
 LDAP_END_DECL
 

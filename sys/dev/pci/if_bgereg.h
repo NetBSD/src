@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.86 2013/10/31 06:01:39 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.86.2.1 2014/08/10 06:54:54 tls Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -85,6 +85,7 @@
 #define	BGE_SRAM_DATA_CFG_2		0x00000D38
 #define	BGE_SRAM_DATA_CFG_3		0x00000D3C
 #define	BGE_SRAM_DATA_CFG_4		0x00000D60
+#define	BGE_SRAM_DATA_CFG_5		0x00000E0C
 #define BGE_SOFTWARE_GENCOMM_END	0x00000FFF
 #define BGE_UNMAPPED			0x00001000
 #define BGE_UNMAPPED_END		0x00001FFF
@@ -2607,7 +2608,7 @@ struct vpd_key {
 #define VPD_RES_WRITE	0x81	/* start of read/write area */
 #define VPD_RES_END	0x78	/* end tag */
 
-/* Flags for bge_lags  */
+/* Flags for bge_flags  */
 #define BGEF_FIBER_TBI		0x00000001
 #define BGEF_JUMBO_CAPABLE	0x00000002
 #define BGEF_FIBER_MII		0x00000004

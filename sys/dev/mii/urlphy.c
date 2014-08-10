@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.29 2013/06/09 09:56:17 msaitoh Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.29.6.1 2014/08/10 06:54:53 tls Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.29 2013/06/09 09:56:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.29.6.1 2014/08/10 06:54:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,8 +268,11 @@ urlphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_100_TX;
 		else
 			mii->mii_media_active |= IFM_10_T;
+
 		if (msr & URLPHY_MSR_DUPLEX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

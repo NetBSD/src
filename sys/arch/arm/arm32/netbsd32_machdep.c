@@ -29,7 +29,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep.c,v 1.5 2014/01/28 18:56:46 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep.c,v 1.5.4.1 2014/08/10 06:53:50 tls Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/core.h>
@@ -91,7 +93,39 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap,
 }
 
 vaddr_t
-netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
+netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz)
 {
-	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
+	if (p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN)
+		return VM_DEFAULT_ADDRESS_TOPDOWN(base, sz);
+	else    
+		return VM_DEFAULT_ADDRESS_BOTTOMUP(base, sz);
 }
+
+
+#ifdef COMPAT_13
+int
+compat_13_netbsd32_sigreturn(struct lwp *l,
+	const struct compat_13_netbsd32_sigreturn_args *uap,
+	register_t *retval)
+{
+	struct compat_13_sys_sigreturn_args ua;
+
+	NETBSD32TOP_UAP(sigcntxp, struct sigcontext13 *);
+
+	return compat_13_sys_sigreturn(l, &ua, retval);
+}
+#endif
+
+#ifdef COMPAT_16
+int
+compat_16_netbsd32___sigreturn14(struct lwp *l,
+	const struct compat_16_netbsd32___sigreturn14_args *uap,
+	register_t *retval)
+{
+	struct compat_16_sys___sigreturn14_args ua;
+
+	NETBSD32TOP_UAP(sigcntxp, struct sigcontext *);
+
+	return compat_16_sys___sigreturn14(l, &ua, retval);
+}
+#endif

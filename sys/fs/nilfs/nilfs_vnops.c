@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.27 2014/02/07 15:29:21 hannken Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.27.2.1 2014/08/10 06:55:54 tls Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.27 2014/02/07 15:29:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.27.2.1 2014/08/10 06:55:54 tls Exp $");
 #endif /* not lint */
 
 
@@ -1572,6 +1572,8 @@ const struct vnodeopv_entry_desc nilfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, nilfs_setattr },	/* setattr */	/* TODO chflags */
 	{ &vop_read_desc, nilfs_read },		/* read */
 	{ &vop_write_desc, nilfs_write },	/* write */	/* WRITE */
+	{ &vop_fallocate_desc, genfs_eopnotsupp }, /* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp }, /* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },	/* fcntl */	/* TODO? */
 	{ &vop_ioctl_desc, genfs_enoioctl },	/* ioctl */	/* TODO? */
 	{ &vop_poll_desc, genfs_poll },		/* poll */	/* TODO/OK? */

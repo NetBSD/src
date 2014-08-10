@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.35 2013/10/05 02:39:06 kiyohara Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.35.2.1 2014/08/10 06:53:55 tls Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -99,6 +99,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
@@ -152,7 +153,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
@@ -163,7 +164,7 @@ options 	DDB		# in-kernel debugger
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 #makeoptions	COPTS="-O1"
-options 	SYMTAB_SPACE=800000
+options 	SYMTAB_SPACE=840000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
@@ -464,7 +465,7 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

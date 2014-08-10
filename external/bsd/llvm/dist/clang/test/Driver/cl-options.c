@@ -24,6 +24,18 @@
 // RUN: %clang_cl /GR- -### -- %s 2>&1 | FileCheck -check-prefix=GR_ %s
 // GR_: -fno-rtti
 
+// RUN: %clang_cl /Gy -### -- %s 2>&1 | FileCheck -check-prefix=Gy %s
+// Gy: -ffunction-sections
+
+// RUN: %clang_cl /Gy /Gy- -### -- %s 2>&1 | FileCheck -check-prefix=Gy_ %s
+// Gy_-NOT: -ffunction-sections
+
+// RUN: %clang_cl /Gw -### -- %s 2>&1 | FileCheck -check-prefix=Gw %s
+// Gw: -fdata-sections
+
+// RUN: %clang_cl /Gw /Gw- -### -- %s 2>&1 | FileCheck -check-prefix=Gw_ %s
+// Gw_-NOT: -fdata-sections
+
 // RUN: %clang_cl /Imyincludedir -### -- %s 2>&1 | FileCheck -check-prefix=SLASH_I %s
 // RUN: %clang_cl /I myincludedir -### -- %s 2>&1 | FileCheck -check-prefix=SLASH_I %s
 // SLASH_I: "-I" "myincludedir"
@@ -66,6 +78,9 @@
 // RUN: %clang_cl /Umymacro -### -- %s 2>&1 | FileCheck -check-prefix=U %s
 // RUN: %clang_cl /U mymacro -### -- %s 2>&1 | FileCheck -check-prefix=U %s
 // U: "-U" "mymacro"
+
+// RUN: %clang_cl /vd2 -### -- %s 2>&1 | FileCheck -check-prefix=VD2 %s
+// VD2: -vtordisp-mode=2
 
 // RUN: %clang_cl /vmg -### -- %s 2>&1 | FileCheck -check-prefix=VMG %s
 // VMG: "-fms-memptr-rep=virtual"
@@ -118,10 +133,22 @@
 // WJoined: "-cc1"
 // WJoined: "-Wunused-pragmas"
 
+// We recognize -f[no-]strict-aliasing.
+// RUN: %clang_cl -c -### -- %s 2>&1 | FileCheck -check-prefix=DEFAULTSTRICT %s
+// DEFAULTSTRICT: "-relaxed-aliasing"
+// RUN: %clang_cl -c -fstrict-aliasing -### -- %s 2>&1 | FileCheck -check-prefix=STRICT %s
+// STRICT-NOT: "-relaxed-aliasing"
+// RUN: %clang_cl -c -fno-strict-aliasing -### -- %s 2>&1 | FileCheck -check-prefix=NOSTRICT %s
+// NOSTRICT: "-relaxed-aliasing"
+
+// For some warning ids, we can map from MSVC warning to Clang warning.
+// RUN: %clang_cl -wd4005 -### -- %s 2>&1 | FileCheck -check-prefix=wd4005 %s
+// wd4005: "-cc1"
+// wd4005: "-Wno-macro-redefined"
 
 // Ignored options. Check that we don't get "unused during compilation" errors.
-// (/Zs is for syntax-only, /WX is for -Werror)
-// RUN: %clang_cl /Zs /WX \
+// (/Zs is for syntax-only)
+// RUN: %clang_cl /Zs \
 // RUN:    /analyze- \
 // RUN:    /errorReport:foo \
 // RUN:    /FS \
@@ -139,7 +166,8 @@
 // RUN:    /wd1234 \
 // RUN:    /Zc:forScope \
 // RUN:    /Zc:wchar_t \
-// RUN:    -- %s
+// RUN:    -### -- %s 2>&1 | FileCheck -check-prefix=IGNORED %s
+// IGNORED-NOT: argument unused during compilation
 
 // Ignored options and compile-only options are ignored for link jobs.
 // RUN: touch %t.obj
@@ -150,7 +178,7 @@
 
 // Support ignoring warnings about unused arguments.
 // RUN: %clang_cl /Abracadabra -Qunused-arguments -### -- %s 2>&1 | FileCheck -check-prefix=UNUSED %s
-// UNUSED-NOT: warning
+// UNUSED-NOT: argument unused during compilation
 
 // Unsupported but parsed options. Check that we don't error on them.
 // (/Zs is for syntax-only)
@@ -195,8 +223,6 @@
 // RUN:     /Gs1000 \
 // RUN:     /GT \
 // RUN:     /GX \
-// RUN:     /Gy \
-// RUN:     /Gy- \
 // RUN:     /Gz \
 // RUN:     /GZ \
 // RUN:     /H \
@@ -215,7 +241,6 @@
 // RUN:     /Qvec-report:2 \
 // RUN:     /u \
 // RUN:     /V \
-// RUN:     /vd2 \
 // RUN:     /volatile \
 // RUN:     /wfoo \
 // RUN:     /WL \
@@ -248,7 +273,8 @@
 // Xclang: "hellocc1"
 
 // We support -m32 and -m64.
-// RUN: %clang_cl /Zs /WX -m32 -m64 -- %s
+// RUN: %clang_cl /Zs /WX -m32 -m64 -### -- 2>&1 %s | FileCheck -check-prefix=MFLAGS %s
+// MFLAGS-NOT: argument unused during compilation
 
 // Use -fno-rtti by default.
 // RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=NoRTTI %s

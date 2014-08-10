@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.38 2013/06/30 21:38:56 rmind Exp $
+# $NetBSD: HDL_G,v 1.38.4.1 2014/08/10 06:53:54 tls Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -85,6 +85,7 @@ options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 options 	COMPAT_09	# NetBSD 0.9 compatibility.
 options 	COMPAT_10	# NetBSD 1.0 compatibility.
 options 	COMPAT_11	# NetBSD 1.1 compatibility.
@@ -128,7 +129,7 @@ options 	USERCONF	# userconf(4) support
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-#options 	DIAGNOSTIC	# internally consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

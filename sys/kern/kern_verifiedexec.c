@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.133 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.133.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.133 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.133.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include "opt_veriexec.h"
 
@@ -580,9 +580,6 @@ static void
 veriexec_file_report(struct veriexec_file_entry *vfe, const u_char *msg,
     const u_char *filename, struct lwp *l, int f)
 {
-	if (msg == NULL)
-		return;
-
 	if (vfe != NULL && vfe->filename != NULL)
 		filename = vfe->filename;
 

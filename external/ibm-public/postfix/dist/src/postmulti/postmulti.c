@@ -1,4 +1,4 @@
-/*	$NetBSD: postmulti.c,v 1.1.1.4 2013/01/02 18:59:04 tron Exp $	*/
+/*	$NetBSD: postmulti.c,v 1.1.1.4.6.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -362,8 +362,12 @@
 /*	postfix(1), Postfix control program
 /*	postfix-wrapper(5), Postfix multi-instance API
 /* README FILES
+/* .ad
+/* .fi
 /*	Use "\fBpostconf readme_directory\fR" or "\fBpostconf
 /*	html_directory\fR" to locate this information.
+/* .nf
+/* .na
 /*	MULTI_INSTANCE_README, Postfix multi-instance management
 /* HISTORY
 /* .ad

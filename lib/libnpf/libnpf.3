@@ -1,0 +1,304 @@
+.\"	$NetBSD: libnpf.3,v 1.2.2.2 2014/08/10 06:52:04 tls Exp $
+.\"
+.\" Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This material is based upon work partially supported by The
+.\" NetBSD Foundation under a contract with Mindaugas Rasiukevicius.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 2, 2014
+.Dt LIBNPF 3
+.Os
+.Sh NAME
+.Nm libnpf
+.Nd NPF packet filter library
+.Sh LIBRARY
+.Lb libnpf
+.Sh SYNOPSIS
+.In npf.h
+.\" ---
+.Ft nl_config_t *
+.Fn npf_config_create "void"
+.Ft int
+.Fn npf_config_submit "nl_config_t *ncf" "int fd"
+.Ft void
+.Fn npf_config_destroy "nl_config_t *ncf"
+.Ft int
+.Fn npf_config_flush "int fd"
+.\" ---
+.Ft nl_rule_t *
+.Fn npf_rule_create "char *name" "uint32_t attr" "const char *ifname"
+.Ft int
+.Fn npf_rule_setcode "nl_rule_t *rl" "int type" "const void *code" "size_t len"
+.Ft int
+.Fn npf_rule_setkey "nl_rule_t *rl" "int type" "const void *code" "size_t len"
+.Ft bool
+.Fn npf_rule_exists_p "nl_config_t *ncf" "const char *name"
+.Ft int
+.Fn npf_rule_insert "nl_config_t *ncf" "nl_rule_t *parent" "nl_rule_t *rl"
+.Ft int
+.Fn npf_rule_setprio "nl_rule_t *rl" "pri_t pri"
+.Ft int
+.Fn npf_rule_setproc "nl_config_t *ncf" "nl_rule_t *rl" "const char *name"
+.Ft void
+.Fn npf_rule_destroy "nl_rule_t *rl"
+.\" ---
+.Ft nl_rproc_t *
+.Fn npf_rproc_create "char *name"
+.Ft bool
+.Fn npf_rproc_exists_p "nl_config_t *ncf" "const char *name"
+.Ft int
+.Fn npf_rproc_insert "nl_config_t *ncf" "nl_rproc_t *rp"
+.\" ---
+.Ft nl_nat_t *
+.Fn npf_nat_create "int type" "u_int flags" "const char *ifname" \
+"npf_addr_t *addr" "int af" "in_port_t port"
+.Ft int
+.Fn npf_nat_insert "nl_config_t *ncf" "nl_nat_t *nt" "pri_t pri"
+.\" ---
+.Ft nl_table_t *
+.Fn npf_table_create "const char *name" "u_int id" "int type"
+.Ft int
+.Fn npf_table_add_entry "nl_table_t *tl" "int af" \
+"in_addr_t addr" "in_addr_t mask"
+.Ft int
+.Fn npf_table_insert "nl_config_t *ncf" "nl_table_t *tl"
+.Ft void
+.Fn npf_table_destroy "nl_table_t *tl"
+.\" -----
+.Sh DESCRIPTION
+The
+.Nm
+library provides an interface to create an NPF configuration having rules,
+tables, procedures, or translation policies.
+The configuration can be submitted to the kernel.
+.\" -----
+.Sh FUNCTIONS
+.Ss Configuration
+.Bl -tag -width 4n
+.It Fn npf_config_create
+Create a configuration.
+.It Fn npf_config_submit "ncf" "fd"
+Submit configuration
+.Fa ncf
+to the kernel.
+.It Fn npf_config_destroy "ncf"
+Destroy the configuration
+.Fa ncf .
+.It Fn npf_config_flush "fd"
+Flush the current configuration.
+.El
+.\" ---
+.Ss Rule interface
+.Bl -tag -width 4n
+.It Fn npf_rule_create "name" "attr" "ifname"
+Create a rule with a given name, attribute and priorty.
+Name can be
+.Dv NULL ,
+in which case rule has no unique identifier.
+Otherwise, rules shall not have duplicate names.
+The following attributes, which can be ORed, are available:
+.Bl -tag -width indent
+.It Dv NPF_RULE_PASS
+Decision of this rule is "pass".
+If this attribute is not
+specified, then packet "block" (drop) is the default.
+.It Dv NPF_RULE_FINAL
+Indicates that on rule match, further processing of the
+ruleset should be stopped and this rule applied instantly.
+.It Dv NPF_RULE_STATEFUL
+Create a state (session) on match, track the connection and
+therefore pass the backwards stream without inspection.
+.It Dv NPF_RULE_RETRST
+Return TCP RST packet in a case of packet block.
+.It Dv NPF_RULE_RETICMP
+Return ICMP destination unreachable in a case of packet block.
+.It Dv NPF_RULE_IN
+Rule may match only if incoming packet.
+.It Dv NPF_RULE_OUT
+Rule may match only if outgoing packet.
+.El
+.Pp
+Interface is specified by
+.Fa ifname ,
+which is a string.
+.Dv NULL
+indicates any interface.
+.\" ---
+.It Fn npf_rule_setcode "rl" "type" "code" "len"
+Assign compiled code for the rule specified by
+.Fa rl ,
+used for filter criteria.
+Pointer to the binary code is specified by
+.Fa code ,
+and size of the memory area by
+.Fa len .
+Type of the code is specified by
+.Fa type .
+Currently, only n-code is supported and
+.Dv NPF_CODE_NC
+should be passed.
+.\" ---
+.It Fn npf_rule_setkey "rl" "type" "key" "len"
+Assign a key for the rule specified by
+.Fa rl .
+Binary key is specified by
+.Fa key ,
+and its size by
+.Fa len .
+The size shall not exceed
+.Dv NPF_RULE_MAXKEYLEN .
+.\" ---
+.It Fn npf_rule_insert "ncf" "parent" "rl"
+Insert the rule into the set of parent rule specified by
+.Fa parent .
+If value of
+.Fa parent
+is
+.Dv NULL ,
+then insert into the main ruleset.
+.\" ---
+.It Fn npf_rule_setprio "rl" "pri"
+Set priority to the rule.
+Negative priorities are invalid.
+.Pp
+Priority is the order of the rule in the ruleset.
+Lower value means first to process, higher value - last to process.
+If multiple rules are inserted with the same priority,
+the order is unspecified.
+.Pp
+The special constants
+.Dv NPF_PRI_FIRST
+and
+.Dv NPF_PRI_LAST
+can be passed to indicate that the rule should be inserted into the
+beginning or the end of the priority level 0 in the ruleset.
+All rules inserted using these constants will have the priority 0
+assigned and will share this level in the ordered way.
+.It Fn npf_rule_setproc "ncf" "rl" "name"
+Set a procedure for the specified rule.
+.It Fn npf_rule_destroy "rl"
+Destroy the given rule.
+.El
+.\" -----
+.Ss Rule procedure interface
+.Bl -tag -width 4n
+.It Fn npf_rproc_create "name"
+Create a rule procedure with a given
+.Fa name .
+Name must be unique for each procedure.
+.It Fn npf_rproc_insert "ncf" "rp"
+Insert rule procedure into the specified configuration.
+.El
+.\" -----
+.Ss Translation interface
+.Bl -tag -width 4n
+.It Fn npf_nat_create "type" "flags" "ifname" "addr" "af" "port"
+Create a NAT translation policy of a specified type.
+There are two types:
+.Bl -tag -width "NPF_NAT_PORTMAP "
+.It Dv NPF_NATIN
+Inbound NAT policy.
+.It Dv NPF_NATOUT
+Outbound NAT policy.
+.El
+.Pp
+A bi-directional NAT is obtained by combining two policies.
+The following
+.Fa flags
+are supported:
+.Bl -tag -width "NPF_NAT_PORTMAP "
+.It Dv NPF_NAT_PORTS
+Indicates to perform port translation.
+Otherwise, port translation is not performed and
+.Fa port
+is ignored.
+.It Dv NPF_NAT_PORTMAP
+Effective only if
+.Dv NPF_NAT_PORTS
+flag is set.
+Indicates to create a port map and select a random port for translation.
+Otherwise, port is translated to the value specified by
+.Fa port
+is used.
+.El
+.Pp
+Translation address is specified by
+.Fa addr ,
+and its family by
+.Fa af .
+Family must be either
+.Dv AF_INET
+for IPv4 or
+.Dv AF_INET6
+for IPv6 address.
+.It Fn npf_nat_insert "ncf" "nt" "pri"
+Insert NAT policy, its rule, into the specified configuration.
+.El
+.\" -----
+.Ss Table interface
+.Bl -tag -width 4n
+.It Fn npf_table_create "name" "index" "type"
+Create NPF table of specified type.
+The following types are supported:
+.Bl -tag -width "NPF_TABLE_TREE "
+.It Dv NPF_TABLE_HASH
+Indicates to use hash table for storage.
+.It Dv NPF_TABLE_TREE
+Indicates to use red-black tree for storage.
+Table is identified by the
+.Fa name
+and
+.Fa index ,
+which should be in the range between 1 and
+.Dv NPF_MAX_TABLE_ID .
+.El
+.It Fn npf_table_add_entry "tl" "af" "addr" "mask"
+Add an entry of IP address and mask, specified by
+.Fa addr
+and
+.Fa mask ,
+to the table specified by
+.Fa tl .
+Family, specified by
+.Fa af ,
+must be either
+.Dv AF_INET
+for IPv4 or
+.Dv AF_INET6
+for IPv6 address.
+.It Fn npf_table_insert "ncf" "tl"
+Insert table into set of configuration.
+Routine performs a check for duplicate table ID.
+.It Fn npf_table_destroy "tl"
+Destroy the specified table.
+.El
+.\" -----
+.Sh SEE ALSO
+.Xr bpf 4 ,
+.Xr npf 7 ,
+.Xr npfctl 8
+.Sh HISTORY
+The NPF library first appeared in
+.Nx 6.0 .

@@ -58,6 +58,9 @@ struct FormatStyle {
   /// \brief The maximum number of consecutive empty lines to keep.
   unsigned MaxEmptyLinesToKeep;
 
+  /// \brief If true, empty lines at the start of blocks are kept.
+  bool KeepEmptyLinesAtTheStartOfBlocks;
+
   /// \brief The penalty for each line break introduced inside a comment.
   unsigned PenaltyBreakComment;
 
@@ -117,7 +120,11 @@ struct FormatStyle {
   /// \brief The indentation used for namespaces.
   NamespaceIndentationKind NamespaceIndentation;
 
-  /// \brief The number of spaces to before trailing line comments.
+  /// \brief The number of spaces before trailing line comments
+  /// (\c // - comments).
+  ///
+  /// This does not affect trailing block comments (\c /**/ - comments) as those
+  /// commonly have different usage patterns and a number of special cases.
   unsigned SpacesBeforeTrailingComments;
 
   /// \brief If \c false, a function call's or function definition's parameters
@@ -152,6 +159,11 @@ struct FormatStyle {
   /// the commas with the colon.
   bool BreakConstructorInitializersBeforeComma;
 
+  /// \brief Allows contracting simple braced statements to a single line.
+  ///
+  /// E.g., this allows <tt>if (a) { return; }</tt> to be put on a single line.
+  bool AllowShortBlocksOnASingleLine;
+
   /// \brief If \c true, <tt>if (a) return;</tt> can be put on a single
   /// line.
   bool AllowShortIfStatementsOnASingleLine;
@@ -160,12 +172,23 @@ struct FormatStyle {
   /// single line.
   bool AllowShortLoopsOnASingleLine;
 
-  /// \brief If \c true, <tt>int f() { return 0; }</tt> can be put on a single
-  /// line.
-  bool AllowShortFunctionsOnASingleLine;
+  /// \brief Different styles for merging short functions containing at most one
+  /// statement.
+  enum ShortFunctionStyle {
+    /// \brief Never merge functions into a single line.
+    SFS_None,
+    /// \brief Only merge functions defined inside a class.
+    SFS_Inline,
+    /// \brief Merge all functions fitting on a single line.
+    SFS_All,
+  };
+
+  /// \brief Dependent on the value, <tt>int f() { return 0; }</tt> can be put
+  /// on a single line.
+  ShortFunctionStyle AllowShortFunctionsOnASingleLine;
 
   /// \brief Add a space after \c @property in Objective-C, i.e. use
-  /// <tt>@property (readonly)</tt> instead of <tt>@property(readonly)</tt>.
+  /// <tt>\@property (readonly)</tt> instead of <tt>\@property(readonly)</tt>.
   bool ObjCSpaceAfterProperty;
 
   /// \brief Add a space in front of an Objective-C protocol list, i.e. use
@@ -299,6 +322,21 @@ struct FormatStyle {
   /// which should not be split into lines or otherwise changed.
   std::string CommentPragmas;
 
+  /// \brief Disables formatting at all.
+  bool DisableFormat;
+
+  /// \brief A vector of macros that should be interpreted as foreach loops
+  /// instead of as function calls.
+  ///
+  /// These are expected to be macros of the form:
+  /// \code
+  /// FOREACH(<variable-declaration>, ...)
+  ///   <loop-body>
+  /// \endcode
+  ///
+  /// For example: BOOST_FOREACH.
+  std::vector<std::string> ForEachMacros;
+
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            ConstructorInitializerIndentWidth ==
@@ -309,6 +347,7 @@ struct FormatStyle {
                R.AllowAllParametersOfDeclarationOnNextLine &&
            AllowShortFunctionsOnASingleLine ==
                R.AllowShortFunctionsOnASingleLine &&
+           AllowShortBlocksOnASingleLine == R.AllowShortBlocksOnASingleLine &&
            AllowShortIfStatementsOnASingleLine ==
                R.AllowShortIfStatementsOnASingleLine &&
            AllowShortLoopsOnASingleLine == R.AllowShortLoopsOnASingleLine &&
@@ -333,6 +372,8 @@ struct FormatStyle {
                R.IndentFunctionDeclarationAfterType &&
            IndentWidth == R.IndentWidth && Language == R.Language &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
+           KeepEmptyLinesAtTheStartOfBlocks ==
+               R.KeepEmptyLinesAtTheStartOfBlocks &&
            NamespaceIndentation == R.NamespaceIndentation &&
            ObjCSpaceAfterProperty == R.ObjCSpaceAfterProperty &&
            ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
@@ -353,7 +394,8 @@ struct FormatStyle {
            SpaceBeforeParens == R.SpaceBeforeParens &&
            SpaceBeforeAssignmentOperators == R.SpaceBeforeAssignmentOperators &&
            ContinuationIndentWidth == R.ContinuationIndentWidth &&
-           CommentPragmas == R.CommentPragmas;
+           CommentPragmas == R.CommentPragmas &&
+           ForEachMacros == R.ForEachMacros;
   }
 };
 
@@ -382,6 +424,9 @@ FormatStyle getWebKitStyle();
 /// \brief Returns a format style complying with GNU Coding Standards:
 /// http://www.gnu.org/prep/standards/standards.html
 FormatStyle getGNUStyle();
+
+/// \brief Returns style indicating formatting should be not applied at all.
+FormatStyle getNoStyle();
 
 /// \brief Gets a predefined style for the specified language by name.
 ///
@@ -428,8 +473,8 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
 ///
 /// \param Standard determines lexing mode: LC_Cpp11 and LS_Auto turn on C++11
 /// lexing mode, LS_Cpp03 - C++03 mode.
-LangOptions getFormattingLangOpts(FormatStyle::LanguageStandard Standard =
-                                      FormatStyle::LS_Cpp11);
+LangOptions getFormattingLangOpts(
+    FormatStyle::LanguageStandard Standard = FormatStyle::LS_Cpp11);
 
 /// \brief Description to be used for help text for a llvm::cl option for
 /// specifying format style. The description is closely related to the operation

@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi_dn.c,v 1.1.1.3 2010/12/12 15:23:51 adam Exp $	*/
+/*	$NetBSD: slapi_dn.c,v 1.1.1.3.24.1 2014/08/10 07:09:51 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_dn.c,v 1.5.2.5 2010/04/13 20:23:50 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

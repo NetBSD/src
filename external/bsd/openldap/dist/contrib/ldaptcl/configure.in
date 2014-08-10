@@ -2,7 +2,9 @@ dnl	This file is an input file used by the GNU "autoconf" program to
 dnl	generate the file "configure", which is run during Tk installation
 dnl	to configure the system for the local environment.
 AC_INIT(neoXldap.c)
-# OpenLDAP: pkg/ldap/contrib/ldaptcl/configure.in,v 1.8.2.1 2007/08/31 23:13:51 quanah Exp
+# $OpenLDAP$
+
+AC_REVISION([Id: 16b135293616700c63077e9a1a601681d4442fdd ])
 
 NEO_VERSION=2.0
 NEO_MAJOR_VERSION=2

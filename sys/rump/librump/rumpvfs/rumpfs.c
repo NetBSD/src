@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.126 2014/03/16 10:16:15 njoly Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.126.2.1 2014/08/10 06:56:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.126 2014/03/16 10:16:15 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.126.2.1 2014/08/10 06:56:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -324,7 +324,7 @@ etfs_find(const char *key, struct etfs **etp, bool forceprefix)
 #define REGDIR(ftype) \
     ((ftype) == RUMP_ETFS_DIR || (ftype) == RUMP_ETFS_DIR_SUBDIRS)
 static int
-doregister(const char *key, const char *hostpath, 
+etfsregister(const char *key, const char *hostpath, 
 	enum rump_etfs_type ftype, uint64_t begin, uint64_t size)
 {
 	char buf[9];
@@ -422,29 +422,13 @@ doregister(const char *key, const char *hostpath,
 }
 #undef REGDIR
 
-int
-rump_etfs_register(const char *key, const char *hostpath,
-	enum rump_etfs_type ftype)
-{
-
-	return doregister(key, hostpath, ftype, 0, RUMP_ETFS_SIZE_ENDOFF);
-}
-
-int
-rump_etfs_register_withsize(const char *key, const char *hostpath,
-	enum rump_etfs_type ftype, uint64_t begin, uint64_t size)
-{
-
-	return doregister(key, hostpath, ftype, begin, size);
-}
-
 /* remove etfs mapping.  caller's responsibility to make sure it's not in use */
-int
-rump_etfs_remove(const char *key)
+static int
+etfsremove(const char *key)
 {
 	struct etfs *et;
 	size_t keylen;
-	int rv;
+	int rv __diagused;
 
 	if (key[0] != '/') {
 		return EINVAL;
@@ -1831,11 +1815,23 @@ rumpfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 void
 rumpfs_init()
 {
+	extern rump_etfs_register_withsize_fn rump__etfs_register;
+	extern rump_etfs_remove_fn rump__etfs_remove;
+	extern struct rump_boot_etfs *ebstart;
+	struct rump_boot_etfs *eb;
 
 	CTASSERT(RUMP_ETFS_SIZE_ENDOFF == RUMPBLK_SIZENOTSET);
 
 	mutex_init(&reclock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&etfs_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	rump__etfs_register = etfsregister;
+	rump__etfs_remove = etfsremove;
+
+	for (eb = ebstart; eb; eb = eb->_eb_next) {
+		eb->eb_status = etfsregister(eb->eb_key, eb->eb_hostpath,
+		    eb->eb_type, eb->eb_begin, eb->eb_size);
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.289 2014/03/31 11:25:49 martin Exp $
+#	$NetBSD: DEVNAMES,v 1.289.2.1 2014/08/10 06:54:50 tls Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -902,6 +902,7 @@ mmem			dreamcast
 mms			bebox
 mms			dreamcast
 mms			i386
+motg			MI
 motoi2c			MI		Attribute
 moxa			MI
 mppb			amiga
@@ -1326,6 +1327,8 @@ tea5757			MI
 tfb			MI
 tga			MI
 ti			MI
+tiotg			arm
+tifb			arm
 timer			news68k
 timer			sparc
 timer			sparc64

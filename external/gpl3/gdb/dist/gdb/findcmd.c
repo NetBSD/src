@@ -1,6 +1,6 @@
 /* The find command.
 
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #include "defs.h"
 #include "arch-utils.h"
 #include <ctype.h>
-#include "gdb_string.h"
+#include <string.h>
 #include "gdbcmd.h"
 #include "value.h"
 #include "target.h"

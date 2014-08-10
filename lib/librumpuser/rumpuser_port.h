@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.32 2014/04/02 17:09:23 justin Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.32.2.1 2014/08/10 06:52:26 tls Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -58,7 +58,6 @@
 #define _XOPEN_SOURCE 600
 #define _BSD_SOURCE
 #define _GNU_SOURCE
-#include <features.h>
 #endif
 
 #ifdef __ANDROID__
@@ -218,11 +217,9 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define __STRING(x)	#x
 #endif
 
-#if defined(__linux__) || defined(__sun__) || defined (__CYGWIN__)
-#define RUMPUSER_RANDOM() random()
-#define RUMPUSER_USE_DEVRANDOM
-#else
-#define RUMPUSER_RANDOM() arc4random()
+#if (defined(__NetBSD__) && __NetBSD_Version__ > 600000000) || \
+  defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+#define PLATFORM_HAS_ARC4RANDOM_BUF
 #endif
 
 #ifndef __NetBSD_Prereq__

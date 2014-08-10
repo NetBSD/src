@@ -1,4 +1,4 @@
-.\"	$NetBSD: etcupdate.8,v 1.20 2012/08/15 16:26:41 apb Exp $
+.\"	$NetBSD: etcupdate.8,v 1.20.8.1 2014/08/10 06:59:29 tls Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 15, 2012
+.Dd June 12, 2014
 .Dt ETCUPDATE 8
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl ahlv
+.Op Fl d Ar destdir
 .Op Fl p Ar pager
 .Op Fl s Brq Ar srcdir | Ar tgzdir | Ar tgzfile
 .Op Fl t Ar temproot
@@ -136,6 +137,16 @@ to store MD5 checksums in
 .Pa /var/etcupdate
 and use these checksums to determine if there have been any
 local modifications.
+.It Fl d Ar destdir
+Use
+.Ar destdir
+instead of
+.Pa /
+as the top of the file system hierarchy to be updated.
+For example,
+.Ar destdir Ns Pa /etc
+will be used instead of
+.Pa /etc .
 .It Fl h
 Prints a help text.
 .It Fl l
@@ -387,10 +398,12 @@ In
 .Nx 7.0 ,
 the ability to specify multiple colon-separated files with a single
 .Fl s
-option was removed.
-Multiple
+option was removed (multiple
 .Fl s
-options must be used instead.
+options must be used instead),
+and the
+.Fl d Ar destdir
+option was added.
 .Sh AUTHORS
 The script was written by
 .An Martti Kuparinen

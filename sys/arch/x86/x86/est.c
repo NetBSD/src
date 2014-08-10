@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.29 2014/03/27 18:22:56 christos Exp $	*/
+/*	$NetBSD: est.c,v 1.29.2.1 2014/08/10 06:54:11 tls Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -76,7 +76,7 @@
  *   http://www.codemonkey.org.uk/projects/cpufreq/cpufreq-2.4.22-pre6-1.gz
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.29 2014/03/27 18:22:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.29.2.1 2014/08/10 06:54:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1272,12 +1272,11 @@ est_tables(device_t self)
 		return false;
 
 	for (i = len = 0; i < sc->sc_fqlist->n; i++) {
-
+		if (len >= sc->sc_freqs_len)
+			break;
 		len += snprintf(sc->sc_freqs + len, sc->sc_freqs_len - len,
 		    "%d%s", MSR2MHZ(sc->sc_fqlist->table[i], sc->sc_bus_clock),
 		    i < sc->sc_fqlist->n - 1 ? " " : "");
-		if (len > sc->sc_freqs_len)
-			break;
 	}
 
 	aprint_debug_dev(self, "%d mV, %d (MHz): %s\n", mv,

@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.4 2010/12/12 15:23:05 adam Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.4.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
 /* config.c - ldap backend configuration file routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.115.2.23 2010/04/19 19:28:15 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2010 The OpenLDAP Foundation.
+ * Copyright 2003-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -36,9 +36,6 @@
 #include "back-ldap.h"
 #include "lutil.h"
 #include "ldif.h"
-#undef ldap_debug
-/* for advanced URL parsing */
-#include "../../../libraries/libldap/ldap-int.h"
 
 static SLAP_EXTOP_MAIN_FN ldap_back_exop_whoami;
 
@@ -76,8 +73,10 @@ enum {
 	LDAP_BACK_CFG_ST_REQUEST,
 	LDAP_BACK_CFG_NOREFS,
 	LDAP_BACK_CFG_NOUNDEFFILTER,
+	LDAP_BACK_CFG_ONERR,
 
 	LDAP_BACK_CFG_REWRITE,
+	LDAP_BACK_CFG_KEEPALIVE,
 
 	LDAP_BACK_CFG_LAST
 };
@@ -330,6 +329,14 @@ static ConfigTable ldapcfg[] = {
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
+	{ "onerr", "CONTINUE|report|stop", 2, 2, 0,
+		ARG_MAGIC|LDAP_BACK_CFG_ONERR,
+		ldap_back_cf_gen, "( OLcfgDbAt:3.108 "
+			"NAME 'olcDbOnErr' "
+			"DESC 'error handling' "
+			"SYNTAX OMsDirectoryString "
+			"SINGLE-VALUE )",
+		NULL, NULL },
 	{ "idassert-passThru", "authzRule", 2, 2, 0,
 		ARG_MAGIC|LDAP_BACK_CFG_IDASSERT_PASSTHRU,
 		ldap_back_cf_gen, "( OLcfgDbAt:3.27 "
@@ -349,6 +356,14 @@ static ConfigTable ldapcfg[] = {
 	{ "rewrite", "<arglist>", 2, 4, STRLENOF( "rewrite" ),
 		ARG_STRING|ARG_MAGIC|LDAP_BACK_CFG_REWRITE,
 		ldap_back_cf_gen, NULL, NULL, NULL },
+	{ "keepalive", "keepalive", 2, 2, 0,
+		ARG_MAGIC|LDAP_BACK_CFG_KEEPALIVE,
+		ldap_back_cf_gen, "( OLcfgDbAt:3.29 "
+			"NAME 'olcDbKeepalive' "
+			"DESC 'TCP keepalive' "
+			"SYNTAX OMsDirectoryString "
+			"SINGLE-VALUE )",
+		NULL, NULL },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED,
 		NULL, NULL, NULL, NULL }
 };
@@ -388,6 +403,8 @@ static ConfigOCs ldapocs[] = {
 #endif /* SLAP_CONTROL_X_SESSION_TRACKING */
 			"$ olcDbNoRefs "
 			"$ olcDbNoUndefFilter "
+			"$ olcDbOnErr "
+			"$ olcDbKeepalive "
 		") )",
 		 	Cft_Database, ldapcfg},
 	{ NULL, 0, NULL }
@@ -474,6 +491,13 @@ static slap_verbmasks cancel_mode[] = {
 	{ BER_BVC( "exop" ),		LDAP_BACK_F_CANCEL_EXOP },
 	{ BER_BVC( "exop-discover" ),	LDAP_BACK_F_CANCEL_EXOP_DISCOVER },
 	{ BER_BVC( "abandon" ),		LDAP_BACK_F_CANCEL_ABANDON },
+	{ BER_BVNULL,			0 }
+};
+
+static slap_verbmasks onerr_mode[] = {
+	{ BER_BVC( "stop" ),		LDAP_BACK_F_ONERR_STOP },
+	{ BER_BVC( "report" ),		LDAP_BACK_F_ONERR_STOP }, /* same behavior */
+	{ BER_BVC( "continue" ),	LDAP_BACK_F_NONE },
 	{ BER_BVNULL,			0 }
 };
 
@@ -645,7 +669,7 @@ slap_retry_info_destroy(
 	ri->ri_num = NULL;
 }
 
-static int
+int
 slap_idassert_authzfrom_parse( ConfigArgs *c, slap_idassert_t *si )
 {
 	struct berval	bv;
@@ -764,7 +788,7 @@ slap_idassert_passthru_parse( ConfigArgs *c, slap_idassert_t *si )
 	return 0;
 }
 
-static int
+int
 slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 {
 	int		i;
@@ -916,22 +940,6 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 
 /* NOTE: temporary, until back-meta is ported to back-config */
 int
-slap_idassert_authzfrom_parse_cf( const char *fname, int lineno, const char *arg, slap_idassert_t *si )
-{
-	ConfigArgs	c = { 0 };
-	char		*argv[ 3 ];
-
-	snprintf( c.log, sizeof( c.log ), "%s: line %d", fname, lineno );
-	c.argc = 2;
-	c.argv = argv;
-	argv[ 0 ] = "idassert-authzFrom";
-	argv[ 1 ] = (char *)arg;
-	argv[ 2 ] = NULL;
-
-	return slap_idassert_authzfrom_parse( &c, si );
-}
-
-int
 slap_idassert_passthru_parse_cf( const char *fname, int lineno, const char *arg, slap_idassert_t *si )
 {
 	ConfigArgs	c = { 0 };
@@ -945,18 +953,6 @@ slap_idassert_passthru_parse_cf( const char *fname, int lineno, const char *arg,
 	argv[ 2 ] = NULL;
 
 	return slap_idassert_passthru_parse( &c, si );
-}
-
-int
-slap_idassert_parse_cf( const char *fname, int lineno, int argc, char *argv[], slap_idassert_t *si )
-{
-	ConfigArgs	c = { 0 };
-
-	snprintf( c.log, sizeof( c.log ), "%s: line %d", fname, lineno );
-	c.argc = argc;
-	c.argv = argv;
-
-	return slap_idassert_parse( &c, si );
 }
 
 static int
@@ -1374,6 +1370,25 @@ ldap_back_cf_gen( ConfigArgs *c )
 			c->value_int = LDAP_BACK_NOUNDEFFILTER( li );
 			break;
 
+		case LDAP_BACK_CFG_ONERR:
+			enum_to_verb( onerr_mode, li->li_flags & LDAP_BACK_F_ONERR_STOP, &bv );
+			if ( BER_BVISNULL( &bv )) {
+				rc = 1;
+			} else {
+				value_add_one( &c->rvalue_vals, &bv );
+			}
+			break;
+
+		case LDAP_BACK_CFG_KEEPALIVE: {
+			struct berval bv;
+			char buf[AC_LINE_MAX];
+			bv.bv_len = AC_LINE_MAX;
+			bv.bv_val = &buf[0];
+			slap_keepalive_parse(&bv, &li->li_tls.sb_keepalive, 0, 0, 1);
+			value_add_one( &c->rvalue_vals, &bv );
+			break;
+			}
+
 		default:
 			/* FIXME: we need to handle all... */
 			assert( 0 );
@@ -1535,6 +1550,16 @@ ldap_back_cf_gen( ConfigArgs *c )
 
 		case LDAP_BACK_CFG_NOUNDEFFILTER:
 			li->li_flags &= ~LDAP_BACK_F_NOUNDEFFILTER;
+			break;
+
+		case LDAP_BACK_CFG_ONERR:
+			li->li_flags &= ~LDAP_BACK_F_ONERR_STOP;
+			break;
+
+		case LDAP_BACK_CFG_KEEPALIVE:
+			li->li_tls.sb_keepalive.sk_idle = 0;
+			li->li_tls.sb_keepalive.sk_probes = 0;
+			li->li_tls.sb_keepalive.sk_interval = 0;
 			break;
 
 		default:
@@ -2203,6 +2228,20 @@ done_url:;
 		}
 		break;
 
+	case LDAP_BACK_CFG_ONERR:
+	/* onerr? */
+		i = verb_to_mask( c->argv[1], onerr_mode );
+		if ( BER_BVISNULL( &onerr_mode[i].word ) ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				"%s unknown argument \"%s\"",
+				c->argv[0], c->argv[1] );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+			return 1;
+		}
+		li->li_flags &= ~LDAP_BACK_F_ONERR_STOP;
+		li->li_flags |= onerr_mode[i].mask;
+		break;
+
 	case LDAP_BACK_CFG_REWRITE:
 		snprintf( c->cr_msg, sizeof( c->cr_msg ),
 			"rewrite/remap capabilities have been moved "
@@ -2211,6 +2250,11 @@ done_url:;
 			"and prefix all directives with \"rwm-\")" );
 		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
 		return 1;
+
+	case LDAP_BACK_CFG_KEEPALIVE:
+		slap_keepalive_parse( ber_bvstrdup(c->argv[1]),
+				 &li->li_tls.sb_keepalive, 0, 0, 0);
+		break;
 		
 	default:
 		/* FIXME: try to catch inconsistencies */
@@ -2341,8 +2385,7 @@ retry:
 		rs->sr_err = ldap_whoami( lc->lc_ld, ctrls, NULL, &msgid );
 		if ( rs->sr_err == LDAP_SUCCESS ) {
 			/* by now, make sure no timeout is used (ITS#6282) */
-			struct timeval tv;
-			tv.tv_sec = -1;
+			struct timeval tv = { -1, 0 };
 			if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, &tv, &res ) == -1 ) {
 				ldap_get_option( lc->lc_ld, LDAP_OPT_ERROR_NUMBER,
 					&rs->sr_err );

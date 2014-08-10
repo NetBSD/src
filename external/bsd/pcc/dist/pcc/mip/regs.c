@@ -1,5 +1,5 @@
-/*	Id: regs.c,v 1.228 2012/03/22 18:51:41 plunky Exp 	*/	
-/*	$NetBSD: regs.c,v 1.1.1.5 2012/03/26 14:27:16 plunky Exp $	*/
+/*	Id: regs.c,v 1.239 2014/07/03 15:58:28 ragge Exp 	*/	
+/*	$NetBSD: regs.c,v 1.1.1.5.10.1 2014/08/10 07:10:07 tls Exp $	*/
 /*
  * Copyright (c) 2005 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -133,9 +133,7 @@ typedef struct regw {
 	int r_color;		/* final node color */
 	struct regw *r_onlist;	/* which work list this node belongs to */
 	MOVL *r_moveList;	/* moves associated with this node */
-#ifdef PCC_DEBUG
-	int nodnum;		/* Debug number */
-#endif
+	int nodnum;		/* Human-readable node number */
 } REGW;
 
 /*
@@ -147,14 +145,11 @@ static REGW initial, *nblock;
 static void insnwalk(NODE *p);
 #ifdef PCC_DEBUG
 int use_regw;
+#endif
 int nodnum = 100;
 int ntsz, stktemp;
 #define	SETNUM(x)	(x)->nodnum = nodnum++
 #define	ASGNUM(x)	(x)->nodnum
-#else
-#define SETNUM(x)
-#define ASGNUM(x)
-#endif
 
 #define	ALLNEEDS (NACOUNT|NBCOUNT|NCCOUNT|NDCOUNT|NECOUNT|NFCOUNT|NGCOUNT)
 
@@ -238,9 +233,10 @@ nsucomp(NODE *p)
 
 		p->n_regw = NULL;
 		if (o == LTYPE ) {
-			if (p->n_op == TEMP)
+			if (p->n_op == TEMP) {
 				p->n_regw = newblock(p);
-			else if (p->n_op == REG)
+				a = 1;
+			} else if (p->n_op == REG)
 				p->n_regw = &ablock[regno(p)];
 		} else
 			a = nsucomp(p->n_left);
@@ -304,9 +300,12 @@ nsucomp(NODE *p)
 			if (right > left) {
 				p->n_su |= DORIGHT;
 			} else if (right == left) {
+#if 0
+	/* XXX - need something more clever when large left trees */
 				/* A favor to 2-operand architectures */
 				if ((q->rewrite & RRIGHT) == 0)
 					p->n_su |= DORIGHT;
+#endif
 			}
 		}
 	} else if (o != LTYPE) {
@@ -1381,6 +1380,21 @@ deldead(NODE *p, bittype *lvar)
 }
 
 /*
+ * Ensure that the su field is empty before generating instructions.
+ */
+static void
+clrsu(NODE *p)
+{
+	int o = optype(p->n_op);
+
+	p->n_su = 0;
+	if (o != LTYPE)
+		clrsu(p->n_left);
+	if (o == BITYPE)
+		clrsu(p->n_right);
+}
+
+/*
  * Do dead code elimination.
  */
 static int
@@ -1440,22 +1454,19 @@ dce(struct p2env *p2e)
 					    bbnum, ip));
 					break;
 				} else while (!DLIST_ISEMPTY(&prepole, qelem)) {
+					struct interpass *tipp;
 
 					BDEBUG(("bb %d: DCE doing ip prepend\n", bbnum));
-#ifdef notyet
-					struct interpass *tipp;
 					tipp = DLIST_NEXT(&prepole, qelem);
 					DLIST_REMOVE(tipp, qelem);
 					DLIST_INSERT_BEFORE(ip, tipp, qelem);
 					if (ip == bb->first)
 						bb->first = tipp;
 					fix++;
-#else
-					comperr("dce needs bb fixup");
-#endif
 					BDEBUG(("DCE ip prepended\n"));
 				}
 				if (ip->type == IP_NODE) {
+					clrsu(p);
 					geninsn(p, FOREFF);
 					nsucomp(p);
 					ip->ip_node = p;
@@ -1595,7 +1606,7 @@ Build(struct p2env *p2e)
 		bbfake.first = DLIST_NEXT(ipole, qelem);
 		DLIST_INIT(&p2e->bblocks, bbelem);
 		DLIST_INSERT_AFTER(&p2e->bblocks, &bbfake, bbelem);
-		bbfake.ch[0] = bbfake.ch[1] = NULL;
+		SLIST_INIT(&bbfake.child);
 	}
 
 	/* Just fetch space for the temporaries from stack */
@@ -1629,15 +1640,15 @@ livagain:
 
 	/* do liveness analysis on basic block level */
 	do {
+		struct cfgnode *cn;
 		again = 0;
 		/* XXX - loop should be in reversed execution-order */
 		DLIST_FOREACH_REVERSE(bb, &p2e->bblocks, bbelem) {
 			i = bb->bbnum;
 			SETCOPY(saved, out[i], j, xbits);
-			if (bb->ch[0])
-				SETSET(out[i], in[bb->ch[0]->bblock->bbnum], j, xbits);
-			if (bb->ch[1])
-				SETSET(out[i], in[bb->ch[1]->bblock->bbnum], j, xbits);
+			SLIST_FOREACH(cn, &bb->child, chld) {
+				SETSET(out[i], in[cn->bblock->bbnum], j, xbits);
+			}
 			SETCMP(again, saved, out[i], j, xbits);
 			SETCOPY(saved, in[i], j, xbits);
 			SETCOPY(in[i], out[i], j, xbits);
@@ -1794,7 +1805,8 @@ DecrementDegree(REGW *w, int c)
 #endif
 
 	wast = trivially_colorable(w);
-	NCLASS(w, c)--;
+	if (NCLASS(w, c) > 0)
+		NCLASS(w, c)--;
 	if (wast == trivially_colorable(w))
 		return;
 
@@ -2207,6 +2219,7 @@ SelectSpill(void)
 			break;
 	}
 
+	RRDEBUG(("SelectSpill: trying longrange\n"));
 	if (w == &spillWorklist) {
 		/* try to find another long-range variable */
 		DLIST_FOREACH(w, &spillWorklist, link) {
@@ -2218,6 +2231,7 @@ SelectSpill(void)
 	}
 
 	if (w == &spillWorklist) {
+		RRDEBUG(("SelectSpill: trying not leaf\n"));
 		/* no heuristics, just fetch first element */
 		/* but not if leaf */
 		DLIST_FOREACH(w, &spillWorklist, link) {
@@ -2230,6 +2244,7 @@ SelectSpill(void)
 		/* Eh, only leaves :-/ Try anyway */
 		/* May not be useable */
 		w = DLIST_NEXT(&spillWorklist, link);
+		RRDEBUG(("SelectSpill: need leaf\n"));
 	}
  
         DLIST_REMOVE(w, link);
@@ -2426,7 +2441,6 @@ static REGW *spole;
 static void
 longtemp(NODE *p, void *arg)
 {
-	NODE *l, *r;
 	REGW *w;
 
 	if (p->n_op != TEMP)
@@ -2436,19 +2450,58 @@ longtemp(NODE *p, void *arg)
 		if (w != &nblock[regno(p)])
 			continue;
 		if (w->r_class == 0) {
-			w->r_color = BITOOR(freetemp(szty(p->n_type)));
-			w->r_class = FPREG;
+			w->r_color = freetemp(szty(p->n_type));
+			w->r_class = FPREG; /* just something */
 		}
-		l = mklnode(REG, 0, w->r_class, INCREF(p->n_type));
-		r = mklnode(ICON, w->r_color, 0, INT);
-		p->n_left = mkbinode(PLUS, l, r, INCREF(p->n_type));
-		p->n_op = UMUL;
-		p->n_regw = NULL;
+		storemod(p, w->r_color);
 		break;
 	}
 }
 
+/*
+ * Check if this node is just something directly addressable.
+ * XXX - should use target canaddr() when we knows that it is OK
+ * for all targets. Can currently be a little too optimistic.
+ */
+static int
+regcanaddr(NODE *p)
+{
+	int o = p->n_op;
+
+	if (o==NAME || o==ICON || o==OREG )
+		return 1;
+	if (o == UMUL) {
+		if (p->n_left->n_op == REG)
+			return 1;
+		if ((p->n_left->n_op == PLUS || p->n_left->n_op == MINUS) &&
+		    p->n_left->n_left->n_op == REG &&
+		    p->n_left->n_right->n_op == ICON)
+			return 1;
+	}
+	return 0;
+}
+
 static struct interpass *cip;
+
+static NODE *
+findparent(NODE *pp, NODE *p)
+{
+	NODE *q;
+
+	if (optype(pp->n_op) == BITYPE) {
+		if (pp->n_left == p || pp->n_right == p)
+			return pp;
+		if ((q = findparent(pp->n_left, p)) != NULL)
+			return q;
+		return findparent(pp->n_right, p);
+	} else if (optype(pp->n_op) == UTYPE) {
+		if (pp->n_left == p)
+			return pp;
+		return findparent(pp->n_left, p);
+	} else
+		return NULL;
+}
+
 /*
  * Rewrite a tree by storing a variable in memory.
  * XXX - must check if basic block structure is destroyed!
@@ -2466,45 +2519,58 @@ shorttemp(NODE *p, void *arg)
 	DLIST_FOREACH(w, spole, link) {
 		if (w != p->n_regw)
 			continue;
-		/* XXX - use canaddr() */
-		if (p->n_op == OREG || p->n_op == NAME) {
+		if (regcanaddr(p)) {
 			DLIST_REMOVE(w, link);
 #ifdef PCC_DEBUG
 			RDEBUG(("Node %d already in memory\n", ASGNUM(w)));
 #endif
+			/*
+			 * If we end up here it's our parent that needs
+			 * to be stored, because this node is already in
+			 * memory and we must be in regs for the instruction.
+			 */
+			if ((p = findparent(cip->ip_node, p)) == NULL)
+				comperr("shorttemp: parent missing");
+			off = freetemp(szty(p->n_type));
+			l = storenode(p->n_type, off);
+			r = talloc();
+			*r = *p;
+			nip = ipnode(mkbinode(ASSIGN, l, r, p->n_type));
+			storemod(p, off);
+			DLIST_INSERT_BEFORE(cip, nip, qelem);
 			break;
 		}
 #ifdef PCC_DEBUG
 		RDEBUG(("rewriting node %d\n", ASGNUM(w)));
 #endif
 
-		off = BITOOR(freetemp(szty(p->n_type)));
-		l = mklnode(OREG, off, FPREG, p->n_type);
-		r = talloc();
+		off = freetemp(szty(p->n_type));
+		l = storenode(p->n_type, off);
 		/*
 		 * If this is a binode which reclaim a leg, and it had
 		 * to walk down the other leg first, then it must be
 		 * split below this node instead.
+		 * Be careful not to store a node that do not involve 
+		 * any evaluation (meaningless).
 		 */
 		q = &table[TBLIDX(p->n_su)];
 		if (optype(p->n_op) == BITYPE &&
 		    (q->rewrite & RLEFT && (p->n_su & DORIGHT) == 0) &&
-		    (TBLIDX(p->n_right->n_su) != 0)) {
-			*r = *l;
-			nip = ipnode(mkbinode(ASSIGN, l,
+		    regcanaddr(p->n_left) == 0) {
+			nip = ipnode(mkbinode(ASSIGN, storenode(p->n_type, off),
 			    p->n_left, p->n_type));
-			p->n_left = r;
+			p->n_left = l;
 		} else if (optype(p->n_op) == BITYPE &&
 		    (q->rewrite & RRIGHT && (p->n_su & DORIGHT) != 0) &&
-		    (TBLIDX(p->n_left->n_su) != 0)) {
-			*r = *l;
-			nip = ipnode(mkbinode(ASSIGN, l,
+		    regcanaddr(p->n_right) == 0) {
+			nip = ipnode(mkbinode(ASSIGN, storenode(p->n_type, off),
 			    p->n_right, p->n_type));
-			p->n_right = r;
+			p->n_right = l;
 		} else {
+			r = talloc();
 			*r = *p;
 			nip = ipnode(mkbinode(ASSIGN, l, r, p->n_type));
-			*p = *l;
+			storemod(p, off);
 		}
 		DLIST_INSERT_BEFORE(cip, nip, qelem);
 		DLIST_REMOVE(w, link);
@@ -2589,7 +2655,7 @@ temparg(struct interpass *ipole, REGW *w)
 		/* Cannot DLIST_REMOVE here, would break basic blocks */
 		/* Make it a nothing instead */
 		ip->type = IP_ASM;
-		ip->ip_asm="";
+		ip->ip_asm = "";
 		return reg;
 	}
 	return 0;
@@ -2685,29 +2751,29 @@ RewriteProgram(struct interpass *ip)
  * Print TEMP/REG contents in a node.
  */
 void
-prtreg(FILE *fp, NODE *p)
+prtreg(NODE *p)
 {
 	int i, n = p->n_su == -1 ? 0 : ncnt(table[TBLIDX(p->n_su)].needs);
 if (p->n_reg == -1) goto foo;
 	if (use_regw || p->n_reg > 0x40000000 || p->n_reg < 0) {
-		fprintf(fp, "TEMP ");
+		printf("TEMP ");
 		if (p->n_regw != NULL) {
 			for (i = 0; i < n+1; i++)
-				fprintf(fp, "%d ", p->n_regw[i].nodnum);
+				printf("%d ", p->n_regw[i].nodnum);
 		} else
-			fprintf(fp, "<undef>");
+			printf("<undef>");
 	} else {
-foo:		fprintf(fp, "REG ");
+foo:		printf("REG ");
 		if (p->n_reg != -1) {
 			for (i = 0; i < n+1; i++) {
 				int r = DECRA(p->n_reg, i);
 				if (r >= MAXREGS)
-					fprintf(fp, "<badreg> ");
+					printf("<badreg> ");
 				else
-					fprintf(fp, "%s ", rnames[r]);
+					printf("%s ", rnames[r]);
 			}
 		} else
-			fprintf(fp, "<undef>");
+			printf("<undef>");
 	}
 }
 #endif
@@ -2720,6 +2786,7 @@ foo:		fprintf(fp, "REG ");
 static void
 insgen()
 {
+	clrsu(p);
 	geninsn(); /* instruction assignment */
 	sucomp();  /* set evaluation order */
 	slong();   /* set long temp types */
@@ -2807,6 +2874,11 @@ recalc:
 onlyperm: /* XXX - should not have to redo all */
 	memset(edgehash, 0, sizeof(edgehash));
 
+	/* clear adjacent node list */
+	for (i = 0; i < MAXREGS; i++)
+		for (j = 0; j < NUMCLASS+1; j++)
+			NCLASS(&ablock[i], j) = 0;
+
 	if (tbits) {
 		memset(nblock+tempmin, 0, tbits * sizeof(REGW));
 #ifdef PCC_DEBUG
@@ -2824,8 +2896,10 @@ onlyperm: /* XXX - should not have to redo all */
 			continue;
 		nodepole = ip->ip_node;
 		thisline = ip->lineno;
-		if (ip->ip_node->n_op != XASM)
+		if (ip->ip_node->n_op != XASM) {
+			clrsu(ip->ip_node);
 			geninsn(ip->ip_node, FOREFF);
+		}
 		nsucomp(ip->ip_node);
 		walkf(ip->ip_node, traclass, 0);
 	}
@@ -2927,19 +3001,19 @@ onlyperm: /* XXX - should not have to redo all */
 		    mklnode(REG, 0, nblock[i+tempmin].r_color, type),
 		    mklnode(REG, 0, permregs[i], type), type);
 		p->n_reg = p->n_left->n_reg = p->n_right->n_reg = -1;
-		p->n_left->n_su = p->n_right->n_su = 0;
+		clrsu(p);
 		geninsn(p, FOREFF);
 		ip = ipnode(p);
 		DLIST_INSERT_AFTER(ipole->qelem.q_forw, ip, qelem);
 		p = mkbinode(ASSIGN, mklnode(REG, 0, permregs[i], type),
 		    mklnode(REG, 0, nblock[i+tempmin].r_color, type), type);
 		p->n_reg = p->n_left->n_reg = p->n_right->n_reg = -1;
-		p->n_left->n_su = p->n_right->n_su = 0;
+		clrsu(p);
 		geninsn(p, FOREFF);
 		ip = ipnode(p);
 		DLIST_INSERT_BEFORE(ipole->qelem.q_back, ip, qelem);
 	}
-	stktemp = BITOOR(freetemp(ntsz));
+	stktemp = freetemp(ntsz);
 	memcpy(p2e->epp->ipp_regs, p2e->ipp->ipp_regs, sizeof(p2e->epp->ipp_regs));
 	/* Done! */
 }

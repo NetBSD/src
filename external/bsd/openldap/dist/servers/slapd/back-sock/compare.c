@@ -1,10 +1,10 @@
-/*	$NetBSD: compare.c,v 1.1.1.3 2010/12/12 15:23:22 adam Exp $	*/
+/*	$NetBSD: compare.c,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
 /* compare.c - sock backend compare function */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sock/compare.c,v 1.4.2.3 2010/04/13 20:23:40 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "slap.h"
 #include "back-sock.h"
+#include "ldif.h"
 
 int
 sock_back_compare(
@@ -39,6 +40,7 @@ sock_back_compare(
 	AttributeDescription *entry = slap_schema.si_ad_entry;
 	Entry e;
 	FILE			*fp;
+	char *text;
 
 	e.e_id = NOID;
 	e.e_name = op->o_req_dn;
@@ -62,21 +64,23 @@ sock_back_compare(
 		return( -1 );
 	}
 
-	/*
-	 * FIX ME:  This should use LDIF routines so that binary
-	 *	values are properly dealt with
-	 */
-
 	/* write out the request to the compare process */
 	fprintf( fp, "COMPARE\n" );
 	fprintf( fp, "msgid: %ld\n", (long) op->o_msgid );
 	sock_print_conn( fp, op->o_conn, si );
 	sock_print_suffixes( fp, op->o_bd );
 	fprintf( fp, "dn: %s\n", op->o_req_dn.bv_val );
-	fprintf( fp, "%s: %s\n",
-		op->oq_compare.rs_ava->aa_desc->ad_cname.bv_val,
-		op->oq_compare.rs_ava->aa_value.bv_val /* could be binary! */ );
-	fclose( fp );
+	/* could be binary */
+	text = ldif_put_wrap( LDIF_PUT_VALUE,
+		op->orc_ava->aa_desc->ad_cname.bv_val,
+		op->orc_ava->aa_value.bv_val,
+		op->orc_ava->aa_value.bv_len, LDIF_LINE_WIDTH_MAX );
+	if ( text ) {
+		fprintf( fp, "%s\n", text );
+		ber_memfree( text );
+	} else {
+		fprintf( fp, "\n\n" );
+	}
 
 	/* read in the result and send it along */
 	sock_read_and_send_results( op, rs, fp );

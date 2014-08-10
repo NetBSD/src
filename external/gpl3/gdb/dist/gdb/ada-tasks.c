@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2013 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -433,7 +433,7 @@ read_fat_string_value (char *dest, struct value *val, int max_len)
 
   /* Extract LEN characters from the fat string.  */
   array_val = value_ind (value_field (val, array_fieldno));
-  read_memory (value_address (array_val), dest, len);
+  read_memory (value_address (array_val), (gdb_byte *) dest, len);
 
   /* Add the NUL character to close the string.  */
   dest[len] = '\0';
@@ -635,12 +635,12 @@ read_atcb (CORE_ADDR task_id, struct ada_task_info *task_info)
                                sizeof (task_info->name) - 1);
       else
 	{
-	  struct minimal_symbol *msym;
+	  struct bound_minimal_symbol msym;
 
 	  msym = lookup_minimal_symbol_by_pc (task_id);
-	  if (msym)
+	  if (msym.minsym)
 	    {
-	      const char *full_name = SYMBOL_LINKAGE_NAME (msym);
+	      const char *full_name = SYMBOL_LINKAGE_NAME (msym.minsym);
 	      const char *task_name = full_name;
 	      const char *p;
 
@@ -1310,7 +1310,8 @@ task_command_1 (char *taskno_str, int from_tty, struct inferior *inf)
   ada_find_printable_frame (get_selected_frame (NULL));
   printf_filtered (_("[Switching to task %d]\n"), taskno);
   print_stack_frame (get_selected_frame (NULL),
-                     frame_relative_level (get_selected_frame (NULL)), 1);
+                     frame_relative_level (get_selected_frame (NULL)),
+		     SRC_AND_LOC, 1);
 }
 
 

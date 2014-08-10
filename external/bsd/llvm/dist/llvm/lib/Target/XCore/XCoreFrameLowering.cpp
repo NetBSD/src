@@ -27,7 +27,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
-
 #include <algorithm>    // std::sort
 
 using namespace llvm;
@@ -63,29 +62,30 @@ static void EmitDefCfaRegister(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator MBBI, DebugLoc dl,
                                const TargetInstrInfo &TII,
                                MachineModuleInfo *MMI, unsigned DRegNum) {
-  MCSymbol *Label = MMI->getContext().CreateTempSymbol();
-  BuildMI(MBB, MBBI, dl, TII.get(XCore::PROLOG_LABEL)).addSym(Label);
-  MMI->addFrameInst(MCCFIInstruction::createDefCfaRegister(Label, DRegNum));
+  unsigned CFIIndex = MMI->addFrameInst(
+      MCCFIInstruction::createDefCfaRegister(nullptr, DRegNum));
+  BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
 }
 
 static void EmitDefCfaOffset(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator MBBI, DebugLoc dl,
                              const TargetInstrInfo &TII,
                              MachineModuleInfo *MMI, int Offset) {
-  MCSymbol *Label = MMI->getContext().CreateTempSymbol();
-  BuildMI(MBB, MBBI, dl, TII.get(XCore::PROLOG_LABEL)).addSym(Label);
-  MMI->addFrameInst(MCCFIInstruction::createDefCfaOffset(Label, -Offset));
+  unsigned CFIIndex =
+      MMI->addFrameInst(MCCFIInstruction::createDefCfaOffset(nullptr, -Offset));
+  BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
 }
 
 static void EmitCfiOffset(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MBBI, DebugLoc dl,
                           const TargetInstrInfo &TII, MachineModuleInfo *MMI,
-                          unsigned DRegNum, int Offset, MCSymbol *Label) {
-  if (!Label) {
-    Label = MMI->getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, dl, TII.get(XCore::PROLOG_LABEL)).addSym(Label);
-  }
-  MMI->addFrameInst(MCCFIInstruction::createOffset(Label, DRegNum, Offset));
+                          unsigned DRegNum, int Offset) {
+  unsigned CFIIndex = MMI->addFrameInst(
+      MCCFIInstruction::createOffset(nullptr, DRegNum, Offset));
+  BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
 }
 
 /// The SP register is moved in steps of 'MaxImmU16' towards the bottom of the
@@ -116,7 +116,8 @@ static void IfNeededExtSP(MachineBasicBlock &MBB,
 /// IfNeededLDAWSP emits the necessary LDAWSP instructions to move the SP only
 /// as far as to make 'OffsetFromTop' reachable using an LDAWSP_lru6.
 /// \param OffsetFromTop the spill offset from the top of the frame.
-/// \param [in,out] RemainingAdj the current SP offset from the top of the frame.
+/// \param [in,out] RemainingAdj the current SP offset from the top of the
+/// frame.
 static void IfNeededLDAWSP(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, DebugLoc dl,
                            const TargetInstrInfo &TII, int OffsetFromTop,
@@ -263,7 +264,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
     if (emitFrameMoves) {
       EmitDefCfaOffset(MBB, MBBI, dl, TII, MMI, Adjusted*4);
       unsigned DRegNum = MRI->getDwarfRegNum(XCore::LR, true);
-      EmitCfiOffset(MBB, MBBI, dl, TII, MMI, DRegNum, 0, NULL);
+      EmitCfiOffset(MBB, MBBI, dl, TII, MMI, DRegNum, 0);
     }
   }
 
@@ -288,7 +289,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
                                       MachineMemOperand::MOStore));
     if (emitFrameMoves) {
       unsigned DRegNum = MRI->getDwarfRegNum(SpillList[i].Reg, true);
-      EmitCfiOffset(MBB,MBBI,dl,TII,MMI, DRegNum, SpillList[i].Offset, NULL);
+      EmitCfiOffset(MBB, MBBI, dl, TII, MMI, DRegNum, SpillList[i].Offset);
     }
   }
 
@@ -307,14 +308,14 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   if (emitFrameMoves) {
     // Frame moves for callee saved.
-    std::vector<std::pair<MCSymbol*, CalleeSavedInfo> >&SpillLabels =
-        XFI->getSpillLabels();
+    auto SpillLabels = XFI->getSpillLabels();
     for (unsigned I = 0, E = SpillLabels.size(); I != E; ++I) {
-      MCSymbol *SpillLabel = SpillLabels[I].first;
+      MachineBasicBlock::iterator Pos = SpillLabels[I].first;
+      ++Pos;
       CalleeSavedInfo &CSI = SpillLabels[I].second;
       int Offset = MFI->getObjectOffset(CSI.getFrameIdx());
       unsigned DRegNum = MRI->getDwarfRegNum(CSI.getReg(), true);
-      EmitCfiOffset(MBB, MBBI, dl, TII, MMI, DRegNum, Offset, SpillLabel);
+      EmitCfiOffset(MBB, Pos, dl, TII, MMI, DRegNum, Offset);
     }
     if (XFI->hasEHSpillSlot()) {
       // The unwinder requires stack slot & CFI offsets for the exception info.
@@ -324,10 +325,10 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
       assert(SpillList.size()==2 && "Unexpected SpillList size");
       EmitCfiOffset(MBB, MBBI, dl, TII, MMI,
                     MRI->getDwarfRegNum(SpillList[0].Reg, true),
-                    SpillList[0].Offset, NULL);
+                    SpillList[0].Offset);
       EmitCfiOffset(MBB, MBBI, dl, TII, MMI,
                     MRI->getDwarfRegNum(SpillList[1].Reg, true),
-                    SpillList[1].Offset, NULL);
+                    SpillList[1].Offset);
     }
   }
 }
@@ -349,7 +350,8 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
   RemainingAdj /= 4;
 
   if (RetOpcode == XCore::EH_RETURN) {
-    // 'Restore' the exception info the unwinder has placed into the stack slots.
+    // 'Restore' the exception info the unwinder has placed into the stack
+    // slots.
     SmallVector<StackSlotInfo,2> SpillList;
     GetEHSpillList(SpillList, MFI, XFI, MF.getTarget().getTargetLowering());
     RestoreSpillList(MBB, MBBI, dl, TII, RemainingAdj, SpillList);
@@ -428,9 +430,9 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
     TII.storeRegToStackSlot(MBB, MI, Reg, true, it->getFrameIdx(), RC, TRI);
     if (emitFrameMoves) {
-      MCSymbol *SaveLabel = MF->getContext().CreateTempSymbol();
-      BuildMI(MBB, MI, DL, TII.get(XCore::PROLOG_LABEL)).addSym(SaveLabel);
-      XFI->getSpillLabels().push_back(std::make_pair(SaveLabel, *it));
+      auto Store = MI;
+      --Store;
+      XFI->getSpillLabels().push_back(std::make_pair(Store, *it));
     }
   }
   return true;
@@ -498,7 +500,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         errs() << "eliminateCallFramePseudoInstr size too big: "
                << Amount << "\n";
 #endif
-        llvm_unreachable(0);
+        llvm_unreachable(nullptr);
       }
 
       MachineInstr *New;
@@ -517,7 +519,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       MBB.insert(I, New);
     }
   }
-  
+
   MBB.erase(I);
 }
 

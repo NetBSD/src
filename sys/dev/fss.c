@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.88 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: fss.c,v 1.88.2.1 2014/08/10 06:54:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.88 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.88.2.1 2014/08/10 06:54:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,11 @@ static struct vfs_hooks fss_vfs_hooks = {
 const struct bdevsw fss_bdevsw = {
 	.d_open = fss_open,
 	.d_close = fss_close,
-	.d_strategy = fss_strategy, fss_ioctl,
+	.d_strategy = fss_strategy,
+	.d_ioctl = fss_ioctl,
 	.d_dump = fss_dump,
 	.d_psize = fss_size,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -118,6 +120,7 @@ const struct cdevsw fss_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -1154,7 +1157,7 @@ fss_bs_thread(void *arg)
 				fss_error(sc, "write error on backing store");
 
 			scp->fc_type = FSS_CACHE_FREE;
-			cv_signal(&sc->sc_cache_cv);
+			cv_broadcast(&sc->sc_cache_cv);
 			break;
 		}
 

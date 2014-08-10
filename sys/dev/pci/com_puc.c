@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.22 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.22.2.1 2014/08/10 06:54:54 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.22 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.22.2.1 2014/08/10 06:54:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,17 @@ struct com_puc_softc {
 
 	/* puc-specific goo. */
 	void	*sc_ih;			/* interrupt handler */
+};
+
+/* Interface field in PCI Class register */
+static const char *serialtype[] = {
+	"Generic XT",
+	"16450",
+	"16550",
+	"16650",
+	"16750",
+	"16850",
+	"16950",
 };
 
 static int
@@ -82,10 +93,14 @@ com_puc_attach(device_t parent, device_t self, void *aux)
 	struct puc_attach_args *aa = aux;
 	const char *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
+	unsigned int iface;
 
 	sc->sc_dev = self;
 
+	iface = PCI_INTERFACE(pci_conf_read(aa->pc, aa->tag, PCI_CLASS_REG));
 	aprint_naive(": Serial port");
+	if (iface < __arraycount(serialtype))
+		aprint_normal(" (%s-compatible)", serialtype[iface]);
 	aprint_normal(": ");
 
 	COM_INIT_REGS(sc->sc_regs, aa->t, aa->h, aa->a);

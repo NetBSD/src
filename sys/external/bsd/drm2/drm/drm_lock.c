@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lock.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: drm_lock.c,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -90,7 +90,6 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file)
 
 	/* Count it in the file and device statistics (XXX why here?).  */
 	file->lock_count++;
-	atomic_inc(&dev->counts[_DRM_STAT_LOCKS]);
 
 	/* Wait until the hardware lock is gone or we can acquire it.   */
 	spin_lock(&master->lock.spinlock);
@@ -173,9 +172,6 @@ drm_unlock(struct drm_device *dev, void *data, struct drm_file *file)
 		error = -EINVAL;
 		goto out0;
 	}
-
-	/* Count it in the device statistics.  */
-	atomic_inc(&dev->counts[_DRM_STAT_UNLOCKS]);
 
 	/* Lock the internal spin lock to make changes.  */
 	spin_lock(&master->lock.spinlock);

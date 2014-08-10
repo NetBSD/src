@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.111 2013/11/04 16:54:56 christos Exp $ */
+/* $NetBSD: vga.c,v 1.111.2.1 2014/08/10 06:54:52 tls Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,8 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.111 2013/11/04 16:54:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.111.2.1 2014/08/10 06:54:52 tls Exp $");
 
+#include "opt_vga.h"
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
 /* for WSDISPLAY_CUSTOM_BORDER */
@@ -727,8 +728,13 @@ vga_cndetach(void)
 	vh = &vc->hdl;
 
 	if (vgaconsole) {
+		wsdisplay_cndetach();
+
 		bus_space_unmap(vh->vh_iot, vh->vh_ioh_vga, 0x10);
 		bus_space_unmap(vh->vh_iot, vh->vh_ioh_6845, 0x10);
+
+		vga_console_attached = 0;
+		vgaconsole = 0;
 
 		return 1;
 	}

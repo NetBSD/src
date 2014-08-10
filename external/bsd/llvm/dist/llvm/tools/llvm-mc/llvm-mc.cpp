@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Disassembler.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -26,7 +25,9 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetAsmParser.h"
+#include "llvm/MC/MCTargetOptionsCommandFlags.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compression.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
@@ -51,6 +52,9 @@ static cl::opt<bool>
 ShowEncoding("show-encoding", cl::desc("Show instruction encodings"));
 
 static cl::opt<bool>
+CompressDebugSections("compress-debug-sections", cl::desc("Compress DWARF debug sections"));
+
+static cl::opt<bool>
 ShowInst("show-inst", cl::desc("Show internal instruction representation"));
 
 static cl::opt<bool>
@@ -60,15 +64,6 @@ ShowInstOperands("show-inst-operands",
 static cl::opt<unsigned>
 OutputAsmVariant("output-asm-variant",
                  cl::desc("Syntax variant to use for output printing"));
-
-static cl::opt<bool>
-RelaxAll("mc-relax-all", cl::desc("Relax all fixups"));
-
-static cl::opt<bool>
-DisableCFI("disable-cfi", cl::desc("Do not use .cfi_* directives"));
-
-static cl::opt<bool>
-NoExecStack("mc-no-exec-stack", cl::desc("File doesn't need an exec stack"));
 
 enum OutputFileType {
   OFT_Null,
@@ -147,11 +142,11 @@ NoInitialTextSection("n", cl::desc("Don't assume assembly file starts "
                                    "in the text section"));
 
 static cl::opt<bool>
-SaveTempLabels("L", cl::desc("Don't discard temporary labels"));
-
-static cl::opt<bool>
 GenDwarfForAssembly("g", cl::desc("Generate dwarf debugging info for assembly "
                                   "source files"));
+
+static cl::opt<int>
+DwarfVersion("dwarf-version", cl::desc("Dwarf version"), cl::init(4));
 
 static cl::opt<std::string>
 DebugCompilationDir("fdebug-compilation-dir",
@@ -160,6 +155,12 @@ DebugCompilationDir("fdebug-compilation-dir",
 static cl::opt<std::string>
 MainFileName("main-file-name",
              cl::desc("Specifies the name we should consider the input file"));
+
+static cl::opt<bool> SaveTempLabels("save-temp-labels",
+                                    cl::desc("Don't discard temporary labels"));
+
+static cl::opt<bool> NoExecStack("no-exec-stack",
+                                 cl::desc("File doesn't need an exec stack"));
 
 enum ActionType {
   AC_AsLex,
@@ -197,7 +198,7 @@ static const Target *GetTarget(const char *ProgName) {
                                                          Error);
   if (!TheTarget) {
     errs() << ProgName << ": " << Error;
-    return 0;
+    return nullptr;
   }
 
   // Update the triple name and return the found target.
@@ -215,7 +216,7 @@ static tool_output_file *GetOutputStream() {
   if (!Err.empty()) {
     errs() << Err << '\n';
     delete Out;
-    return 0;
+    return nullptr;
   }
 
   return Out;
@@ -320,9 +321,11 @@ static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI, tool_output_file *Out) 
 static int AssembleInput(const char *ProgName, const Target *TheTarget,
                          SourceMgr &SrcMgr, MCContext &Ctx, MCStreamer &Str,
                          MCAsmInfo &MAI, MCSubtargetInfo &STI, MCInstrInfo &MCII) {
-  OwningPtr<MCAsmParser> Parser(createMCAsmParser(SrcMgr, Ctx,
-                                                  Str, MAI));
-  OwningPtr<MCTargetAsmParser> TAP(TheTarget->createMCAsmParser(STI, *Parser, MCII));
+  std::unique_ptr<MCAsmParser> Parser(
+      createMCAsmParser(SrcMgr, Ctx, Str, MAI));
+  std::unique_ptr<MCTargetAsmParser> TAP(
+      TheTarget->createMCAsmParser(STI, *Parser, MCII,
+                                   InitMCTargetOptionsFromFlags()));
   if (!TAP) {
     errs() << ProgName
            << ": error: this target does not support assembly parsing.\n";
@@ -363,12 +366,12 @@ int main(int argc, char **argv) {
   if (!TheTarget)
     return 1;
 
-  OwningPtr<MemoryBuffer> BufferPtr;
+  std::unique_ptr<MemoryBuffer> BufferPtr;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr)) {
     errs() << ProgName << ": " << ec.message() << '\n';
     return 1;
   }
-  MemoryBuffer *Buffer = BufferPtr.take();
+  MemoryBuffer *Buffer = BufferPtr.release();
 
   SourceMgr SrcMgr;
 
@@ -379,15 +382,23 @@ int main(int argc, char **argv) {
   // it later.
   SrcMgr.setIncludeDirs(IncludeDirs);
 
-  llvm::OwningPtr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
+  std::unique_ptr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
   assert(MRI && "Unable to create target register info!");
 
-  llvm::OwningPtr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(*MRI, TripleName));
+  std::unique_ptr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(*MRI, TripleName));
   assert(MAI && "Unable to create target asm info!");
+
+  if (CompressDebugSections) {
+    if (!zlib::isAvailable()) {
+      errs() << ProgName << ": build tools with zlib to enable -compress-debug-sections";
+      return 1;
+    }
+    MAI->setCompressDebugSections(true);
+  }
 
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
-  OwningPtr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
+  std::unique_ptr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
   MCContext Ctx(MAI.get(), MRI.get(), MOFI.get(), &SrcMgr);
   MOFI->InitMCObjectFileInfo(TripleName, RelocModel, CMModel, Ctx);
 
@@ -395,6 +406,12 @@ int main(int argc, char **argv) {
     Ctx.setAllowTemporaryLabels(false);
 
   Ctx.setGenDwarfForAssembly(GenDwarfForAssembly);
+  if (DwarfVersion < 2 || DwarfVersion > 4) {
+    errs() << ProgName << ": Dwarf version " << DwarfVersion
+           << " is not supported." << '\n';
+    return 1;
+  }
+  Ctx.setDwarfVersion(DwarfVersion);
   if (!DwarfDebugFlags.empty())
     Ctx.setDwarfDebugFlags(StringRef(DwarfDebugFlags));
   if (!DwarfDebugProducer.empty())
@@ -413,31 +430,30 @@ int main(int argc, char **argv) {
     FeaturesStr = Features.getString();
   }
 
-  OwningPtr<tool_output_file> Out(GetOutputStream());
+  std::unique_ptr<tool_output_file> Out(GetOutputStream());
   if (!Out)
     return 1;
 
   formatted_raw_ostream FOS(Out->os());
-  OwningPtr<MCStreamer> Str;
+  std::unique_ptr<MCStreamer> Str;
 
-  OwningPtr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
-  OwningPtr<MCSubtargetInfo>
-    STI(TheTarget->createMCSubtargetInfo(TripleName, MCPU, FeaturesStr));
+  std::unique_ptr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
+  std::unique_ptr<MCSubtargetInfo> STI(
+      TheTarget->createMCSubtargetInfo(TripleName, MCPU, FeaturesStr));
 
-  MCInstPrinter *IP = NULL;
+  MCInstPrinter *IP = nullptr;
   if (FileType == OFT_AssemblyFile) {
     IP =
       TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *MCII, *MRI, *STI);
-    MCCodeEmitter *CE = 0;
-    MCAsmBackend *MAB = 0;
+    MCCodeEmitter *CE = nullptr;
+    MCAsmBackend *MAB = nullptr;
     if (ShowEncoding) {
       CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, *STI, Ctx);
       MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, MCPU);
     }
-    bool UseCFI = !DisableCFI;
-    Str.reset(TheTarget->createAsmStreamer(
-        Ctx, FOS, /*asmverbose*/ true, UseCFI,
-        /*useDwarfDirectory*/ true, IP, CE, MAB, ShowInst));
+    Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/ true,
+                                           /*useDwarfDirectory*/ true, IP, CE,
+                                           MAB, ShowInst));
 
   } else if (FileType == OFT_Null) {
     Str.reset(createNullStreamer(Ctx));

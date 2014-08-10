@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.15 2011/06/05 10:19:25 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.3 2011/09/01 12:46:49 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.16 2014/06/01 11:35:03 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.3.20.1 2014/08/10 07:10:06 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 David Crawshaw <david@zentus.com>
@@ -106,7 +106,6 @@ typedef long long OFFSZ;
 #define TARGET_ENDIAN TARGET_BE
 
 #define BYTEOFF(x) 	((x)&03)
-#define BITOOR(x)	(x)
 
 #define	szty(t)	((ISPTR(t) || (t) == DOUBLE || \
 	         (t) == LONG || (t) == ULONG || \

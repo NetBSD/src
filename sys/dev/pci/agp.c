@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.81 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: agp.c,v 1.81.2.1 2014/08/10 06:54:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.81 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.81.2.1 2014/08/10 06:54:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -658,7 +658,16 @@ agp_generic_free_memory(struct agp_softc *sc, struct agp_memory *mem)
 
 int
 agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
-			off_t offset)
+    off_t offset)
+{
+
+	return agp_generic_bind_memory_bounded(sc, mem, offset,
+	    0, AGP_GET_APERTURE(sc));
+}
+
+int
+agp_generic_bind_memory_bounded(struct agp_softc *sc, struct agp_memory *mem,
+    off_t offset, off_t start, off_t end)
 {
 	off_t i, k;
 	bus_size_t done, j;
@@ -675,9 +684,10 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		return EINVAL;
 	}
 
-	if (offset < 0
+	if (offset < start
 	    || (offset & (AGP_PAGE_SIZE - 1)) != 0
-	    || offset + mem->am_size > AGP_GET_APERTURE(sc)) {
+	    || offset > end
+	    || mem->am_size > (end - offset)) {
 		aprint_error_dev(sc->as_dev,
 			      "binding memory at bad offset %#lx\n",
 			      (unsigned long) offset);
@@ -1112,6 +1122,7 @@ const struct cdevsw agp_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = agpmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

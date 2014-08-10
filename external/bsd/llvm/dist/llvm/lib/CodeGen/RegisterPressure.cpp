@@ -154,8 +154,8 @@ const LiveRange *RegPressureTracker::getLiveRange(unsigned Reg) const {
 }
 
 void RegPressureTracker::reset() {
-  MBB = 0;
-  LIS = 0;
+  MBB = nullptr;
+  LIS = nullptr;
 
   CurrSetPressure.clear();
   LiveThruPressure.clear();
@@ -882,9 +882,9 @@ static bool findUseBetween(unsigned Reg,
                            SlotIndex PriorUseIdx, SlotIndex NextUseIdx,
                            const MachineRegisterInfo *MRI,
                            const LiveIntervals *LIS) {
-  for (MachineRegisterInfo::use_nodbg_iterator
-         UI = MRI->use_nodbg_begin(Reg), UE = MRI->use_nodbg_end();
-         UI != UE; UI.skipInstruction()) {
+  for (MachineRegisterInfo::use_instr_nodbg_iterator
+       UI = MRI->use_instr_nodbg_begin(Reg),
+       UE = MRI->use_instr_nodbg_end(); UI != UE; ++UI) {
       const MachineInstr* MI = &*UI;
       if (MI->isDebugValue())
         continue;

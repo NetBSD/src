@@ -76,13 +76,10 @@ implemented in the LLVM namespace following the expected standard interface.
 
 There are some exceptions such as the standard I/O streams library which are
 avoided. Also, there is much more detailed information on these subjects in the
-`Programmer's Manual`_.
-
-.. _Programmer's Manual:
-  http://llvm.org/docs/ProgrammersManual.html
+:doc:`ProgrammersManual`.
 
 Supported C++11 Language and Library Features
--------------------------------------------
+---------------------------------------------
 
 While LLVM, Clang, and LLD use C++11, not all features are available in all of
 the toolchains which we support. The set of features supported for use in LLVM
@@ -109,6 +106,12 @@ unlikely to be supported by our host compilers.
 * ``auto`` type deduction: N1984_, N1737_
 * Trailing return types: N2541_
 * Lambdas: N2927_
+
+  * But *not* ``std::function``, until Clang implements `MSVC-compatible RTTI`_.
+    In many cases, you may be able to use ``llvm::function_ref`` instead, and it
+    is a superior choice in those cases.
+  * And *not* lambdas with default arguments.
+
 * ``decltype``: N2343_
 * Nested closing right angle brackets: N1757_
 * Extern templates: N1987_
@@ -116,6 +119,11 @@ unlikely to be supported by our host compilers.
 * Strongly-typed and forward declarable enums: N2347_, N2764_
 * Local and unnamed types as template arguments: N2657_
 * Range-based for-loop: N2930_
+
+  * But ``{}`` are required around inner ``do {} while()`` loops.  As a result,
+    ``{}`` are required around function-like macros inside range-based for
+    loops.
+
 * ``override`` and ``final``: N2928_, N3206_, N3272_
 * Atomic operations and the C++11 memory model: N2429_
 
@@ -138,6 +146,7 @@ unlikely to be supported by our host compilers.
 .. _N3206: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3206.htm
 .. _N3272: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3272.htm
 .. _N2429: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2429.htm
+.. _MSVC-compatible RTTI: http://llvm.org/PR18951
 
 The supported features in the C++11 standard libraries are less well tracked,
 but also much greater. Most of the standard libraries implement most of C++11's
@@ -153,6 +162,9 @@ being aware of:
 * While most of the atomics library is well implemented, the fences are
   missing. Fortunately, they are rarely needed.
 * The locale support is incomplete.
+* ``std::initializer_list`` (and the constructors and functions that take it as
+  an argument) are not always available, so you cannot (for example) initialize
+  a ``std::vector`` with a braced initializer list.
 
 Other than these areas you should assume the standard library is available and
 working as expected until some build bot tells you otherwise. If you're in an
@@ -457,11 +469,88 @@ Indent Code Consistently
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Okay, in your first year of programming you were told that indentation is
-important.  If you didn't believe and internalize this then, now is the time.
-Just do it.
+important. If you didn't believe and internalize this then, now is the time.
+Just do it. With the introduction of C++11, there are some new formatting
+challenges that merit some suggestions to help have consistent, maintainable,
+and tool-friendly formatting and indentation.
 
-Compiler Issues
----------------
+Format Lambdas Like Blocks Of Code
+""""""""""""""""""""""""""""""""""
+
+When formatting a multi-line lambda, format it like a block of code, that's
+what it is. If there is only one multi-line lambda in a statement, and there
+are no expressions lexically after it in the statement, drop the indent to the
+standard two space indent for a block of code, as if it were an if-block opened
+by the preceding part of the statement:
+
+.. code-block:: c++
+
+  std::sort(foo.begin(), foo.end(), [&](Foo a, Foo b) -> bool {
+    if (a.blah < b.blah)
+      return true;
+    if (a.baz < b.baz)
+      return true;
+    return a.bam < b.bam;
+  });
+
+To take best advantage of this formatting, if you are designing an API which
+accepts a continuation or single callable argument (be it a functor, or
+a ``std::function``), it should be the last argument if at all possible.
+
+If there are multiple multi-line lambdas in a statement, or there is anything
+interesting after the lambda in the statement, indent the block two spaces from
+the indent of the ``[]``:
+
+.. code-block:: c++
+
+  dyn_switch(V->stripPointerCasts(),
+             [] (PHINode *PN) {
+               // process phis...
+             },
+             [] (SelectInst *SI) {
+               // process selects...
+             },
+             [] (LoadInst *LI) {
+               // process loads...
+             },
+             [] (AllocaInst *AI) {
+               // process allocas...
+             });
+
+Braced Initializer Lists
+""""""""""""""""""""""""
+
+With C++11, there are significantly more uses of braced lists to perform
+initialization. These allow you to easily construct aggregate temporaries in
+expressions among other niceness. They now have a natural way of ending up
+nested within each other and within function calls in order to build up
+aggregates (such as option structs) from local variables. To make matters
+worse, we also have many more uses of braces in an expression context that are
+*not* performing initialization.
+
+The historically common formatting of braced initialization of aggregate
+variables does not mix cleanly with deep nesting, general expression contexts,
+function arguments, and lambdas. We suggest new code use a simple rule for
+formatting braced initialization lists: act as-if the braces were parentheses
+in a function call. The formatting rules exactly match those already well
+understood for formatting nested function calls. Examples:
+
+.. code-block:: c++
+
+  foo({a, b, c}, {1, 2, 3});
+
+  llvm::Constant *Mask[] = {
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 0),
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 1),
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 2)};
+
+This formatting scheme also makes it particularly easy to get predictable,
+consistent, and automatic formatting with tools like `Clang Format`_.
+
+.. _Clang Format: http://clang.llvm.org/docs/ClangFormat.html
+
+Language and Compiler Issues
+----------------------------
 
 Treat Compiler Warnings Like Errors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -521,7 +610,7 @@ is never used for a class.  Because of this, we turn them off globally in the
 code.
 
 That said, LLVM does make extensive use of a hand-rolled form of RTTI that use
-templates like `isa<>, cast<>, and dyn_cast<> <ProgrammersManual.html#isa>`_.
+templates like :ref:`isa\<>, cast\<>, and dyn_cast\<> <isa>`.
 This form of RTTI is opt-in and can be
 :doc:`added to any class <HowToSetUpLLVMStyleRTTI>`. It is also
 substantially more efficient than ``dynamic_cast<>``.
@@ -573,12 +662,110 @@ members public by default.
 
 Unfortunately, not all compilers follow the rules and some will generate
 different symbols based on whether ``class`` or ``struct`` was used to declare
-the symbol.  This can lead to problems at link time.
+the symbol (e.g., MSVC).  This can lead to problems at link time.
 
-So, the rule for LLVM is to always use the ``class`` keyword, unless **all**
-members are public and the type is a C++ `POD
-<http://en.wikipedia.org/wiki/Plain_old_data_structure>`_ type, in which case
-``struct`` is allowed.
+* All declarations and definitions of a given ``class`` or ``struct`` must use
+  the same keyword.  For example:
+
+.. code-block:: c++
+
+  class Foo;
+
+  // Breaks mangling in MSVC.
+  struct Foo { int Data; };
+
+* As a rule of thumb, ``struct`` should be kept to structures where *all*
+  members are declared public.
+
+.. code-block:: c++
+
+  // Foo feels like a class... this is strange.
+  struct Foo {
+  private:
+    int Data;
+  public:
+    Foo() : Data(0) { }
+    int getData() const { return Data; }
+    void setData(int D) { Data = D; }
+  };
+
+  // Bar isn't POD, but it does look like a struct.
+  struct Bar {
+    int Data;
+    Foo() : Data(0) { }
+  };
+
+Do not use Braced Initializer Lists to Call a Constructor
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In C++11 there is a "generalized initialization syntax" which allows calling
+constructors using braced initializer lists. Do not use these to call
+constructors with any interesting logic or if you care that you're calling some
+*particular* constructor. Those should look like function calls using
+parentheses rather than like aggregate initialization. Similarly, if you need
+to explicitly name the type and call its constructor to create a temporary,
+don't use a braced initializer list. Instead, use a braced initializer list
+(without any type for temporaries) when doing aggregate initialization or
+something notionally equivalent. Examples:
+
+.. code-block:: c++
+
+  class Foo {
+  public:
+    // Construct a Foo by reading data from the disk in the whizbang format, ...
+    Foo(std::string filename);
+
+    // Construct a Foo by looking up the Nth element of some global data ...
+    Foo(int N);
+
+    // ...
+  };
+
+  // The Foo constructor call is very deliberate, no braces.
+  std::fill(foo.begin(), foo.end(), Foo("name"));
+
+  // The pair is just being constructed like an aggregate, use braces.
+  bar_map.insert({my_key, my_value});
+
+If you use a braced initializer list when initializing a variable, use an equals before the open curly brace:
+
+.. code-block:: c++
+
+  int data[] = {0, 1, 2, 3};
+
+Use ``auto`` Type Deduction to Make Code More Readable
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some are advocating a policy of "almost always ``auto``" in C++11, however LLVM
+uses a more moderate stance. Use ``auto`` if and only if it makes the code more
+readable or easier to maintain. Don't "almost always" use ``auto``, but do use
+``auto`` with initializers like ``cast<Foo>(...)`` or other places where the
+type is already obvious from the context. Another time when ``auto`` works well
+for these purposes is when the type would have been abstracted away anyways,
+often behind a container's typedef such as ``std::vector<T>::iterator``.
+
+Beware unnecessary copies with ``auto``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The convenience of ``auto`` makes it easy to forget that its default behavior
+is a copy.  Particularly in range-based ``for`` loops, careless copies are
+expensive.
+
+As a rule of thumb, use ``auto &`` unless you need to copy the result, and use
+``auto *`` when copying pointers.
+
+.. code-block:: c++
+
+  // Typically there's no reason to copy.
+  for (const auto &Val : Container) { observe(Val); }
+  for (auto &Val : Container) { Val.change(); }
+
+  // Remove the reference if you really want a new copy.
+  for (auto Val : Container) { Val.change(); saveSomewhere(Val); }
+
+  // Copy pointers, but make it clear that they're pointers.
+  for (const auto *Ptr : Container) { observe(*Ptr); }
+  for (auto *Ptr : Container) { Ptr->change(); }
 
 Style Issues
 ============
@@ -1099,9 +1286,9 @@ method will never be implemented. This enables other checks like
 ``-Wunused-private-field`` to run correctly on classes that contain these
 methods.
 
-To maintain compatibility with C++03, ``LLVM_DELETED_FUNCTION`` should be used
-which will expand to ``= delete`` if the compiler supports it. These methods
-should still be declared private. Example of the uncopyable pattern:
+For compatibility with MSVC, ``LLVM_DELETED_FUNCTION`` should be used which
+will expand to ``= delete`` on compilers that support it. These methods should
+still be declared private. Example of the uncopyable pattern:
 
 .. code-block:: c++
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.103.2.1 2014/04/07 03:37:33 tls Exp $	*/
+/*	$NetBSD: ucom.c,v 1.103.2.2 2014/08/10 06:54:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.103.2.1 2014/04/07 03:37:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.103.2.2 2014/08/10 06:54:59 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.103.2.1 2014/04/07 03:37:33 tls Exp $");
 #include <sys/poll.h>
 #include <sys/queue.h>
 #include <sys/kauth.h>
+#include <sys/timepps.h>
 #include <sys/rnd.h>
 
 #include <dev/usb/usb.h>
@@ -141,6 +142,8 @@ struct ucom_softc {
 	int			sc_refcnt;
 	u_char			sc_dying;	/* disconnecting */
 
+	struct pps_state	sc_pps_state;	/* pps state */
+
 	krndsource_t	sc_rndsource;	/* random source */
 };
 
@@ -164,6 +167,7 @@ const struct cdevsw ucom_cdevsw = {
 	.d_poll = ucompoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 
@@ -368,10 +372,6 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s, i;
 	int error;
 
-	/* XXX This is a hopefully temporary stopgap for kern/42848. */
-	if ((flag & (FREAD|FWRITE)) != (FREAD|FWRITE))
-		return (EINVAL);
-
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -420,6 +420,13 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 
 		ucom_status_change(sc);
+
+		/* Clear PPS capture state on first open. */
+		mutex_spin_enter(&timecounter_lock);
+		memset(&sc->sc_pps_state, 0, sizeof(sc->sc_pps_state));
+		sc->sc_pps_state.ppscap = PPS_CAPTUREASSERT | PPS_CAPTURECLEAR;
+		pps_init(&sc->sc_pps_state);
+		mutex_spin_exit(&timecounter_lock);
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
@@ -778,6 +785,20 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data,
 		*(int *)data = ucom_to_tiocm(sc);
 		break;
 
+	case PPS_IOC_CREATE:
+	case PPS_IOC_DESTROY:
+	case PPS_IOC_GETPARAMS:
+	case PPS_IOC_SETPARAMS:
+	case PPS_IOC_GETCAP:
+	case PPS_IOC_FETCH:
+#ifdef PPS_SYNC
+	case PPS_IOC_KCBIND:
+#endif
+		mutex_spin_enter(&timecounter_lock);
+		error = pps_ioctl(cmd, data, &sc->sc_pps_state);
+		mutex_spin_exit(&timecounter_lock);
+		break;
+
 	default:
 		error = EPASSTHROUGH;
 		break;
@@ -891,9 +912,18 @@ ucom_status_change(struct ucom_softc *sc)
 		old_msr = sc->sc_msr;
 		sc->sc_methods->ucom_get_status(sc->sc_parent, sc->sc_portno,
 		    &sc->sc_lsr, &sc->sc_msr);
-		if (ISSET((sc->sc_msr ^ old_msr), UMSR_DCD))
+		if (ISSET((sc->sc_msr ^ old_msr), UMSR_DCD)) {
+			mutex_spin_enter(&timecounter_lock);
+			pps_capture(&sc->sc_pps_state);
+			pps_event(&sc->sc_pps_state,
+			    (sc->sc_msr & UMSR_DCD) ?
+			    PPS_CAPTUREASSERT :
+			    PPS_CAPTURECLEAR);
+			mutex_spin_exit(&timecounter_lock);
+
 			(*tp->t_linesw->l_modem)(tp,
 			    ISSET(sc->sc_msr, UMSR_DCD));
+		}
 	} else {
 		sc->sc_lsr = 0;
 		/* Assume DCD is present, if we have no chance to check it. */

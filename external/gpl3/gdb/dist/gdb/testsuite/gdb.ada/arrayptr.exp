@@ -1,4 +1,4 @@
-# Copyright 2008-2013 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,3 +45,9 @@ gdb_test "print arr_ptr (3..4)" "= \\(3 => 23, 24\\)"
 
 gdb_test "ptype string_access" "= access array \\(<>\\) of character"
 
+gdb_test "print pa_ptr.all" \
+         " = \\(10, 20, 30, 40, 50, 60, 62, 63, -23, 42\\)"
+
+gdb_test "print pa_ptr(3)" " = 30"
+
+gdb_test "print pa_ptr.all(3)" " = 30"

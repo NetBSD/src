@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 1998/01/09 06:55:27 perry Exp $
+#	$NetBSD: Makefile,v 1.7.84.1 2014/08/10 06:53:13 tls Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
-DIR=	smm/04.quotas
+SECTION=reference/ref7
+ARTICLE=quotas
 SRCS=	quotas.ms
 MACROS=	-ms
 

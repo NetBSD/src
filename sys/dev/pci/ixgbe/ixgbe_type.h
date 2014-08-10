@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_type.h,v 1.12 2011/01/19 19:36:27 jfv Exp $*/
-/*$NetBSD: ixgbe_type.h,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$NetBSD: ixgbe_type.h,v 1.1.26.1 2014/08/10 06:54:57 tls Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -73,6 +73,7 @@
 #define IXGBE_DEV_ID_82599_XAUI_LOM	PCI_PRODUCT_INTEL_82599_XAUI_LOM
 #define IXGBE_DEV_ID_82599_T3_LOM        0x151C
 #define IXGBE_DEV_ID_82599_VF   0x10ED
+#define IXGBE_DEV_ID_82599_SFP_DELL	0x154d
 
 /* General Registers */
 #define IXGBE_CTRL      0x00000

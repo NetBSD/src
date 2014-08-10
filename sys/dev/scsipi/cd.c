@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.318.2.1 2014/04/07 03:37:33 tls Exp $	*/
+/*	$NetBSD: cd.c,v 1.318.2.2 2014/08/10 06:54:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.318.2.1 2014/04/07 03:37:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.318.2.2 2014/08/10 06:54:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,6 +210,7 @@ const struct bdevsw cd_bdevsw = {
 	.d_ioctl = cdioctl,
 	.d_dump = cddump,
 	.d_psize = cdsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -224,6 +225,7 @@ const struct cdevsw cd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -312,6 +314,9 @@ cddetach(device_t self, int flags)
 {
 	struct cd_softc *cd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
+
+	if (cd->sc_dk.dk_openmask != 0 && (flags & DETACH_FORCE) == 0)
+		return EBUSY;
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&cd_bdevsw);
@@ -1807,7 +1812,12 @@ static int
 read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *last_lba)
 {
 	struct scsipi_read_cd_capacity    cap_cmd;
-	struct scsipi_read_cd_cap_data    cap;
+	/*
+	 * XXX: see PR 48550 and PR 48754:
+	 * the ahcisata(4) driver can not deal with unaligned
+	 * data, so align this "a bit"
+	 */
+	struct scsipi_read_cd_cap_data    cap __aligned(2);
 	struct scsipi_read_discinfo       di_cmd;
 	struct scsipi_read_discinfo_data  di;
 	struct scsipi_read_trackinfo      ti_cmd;

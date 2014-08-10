@@ -1,4 +1,4 @@
-#	$NetBSD: RPI_INSTALL,v 1.2 2013/06/28 06:00:30 matt Exp $
+#	$NetBSD: RPI_INSTALL,v 1.2.6.1 2014/08/10 06:53:55 tls Exp $
 #
 #	RPI_INSTALL -- RPI kernel with installation-sized
 #	ramdisk
@@ -8,3 +8,4 @@ include "arch/evbarm/conf/RPI"
 include "arch/evbarm/conf/INSTALL"
 
 makeoptions	RAMDISKNAME=sshramdisk
+no makeoptions	DEBUG

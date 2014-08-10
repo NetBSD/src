@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.49 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.49.36.1 2014/08/10 06:54:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.49 2009/10/19 18:41:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.49.36.1 2014/08/10 06:54:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,6 +264,8 @@ sqphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_10_T;
 		if (status & STATUS_DPLX_DET)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

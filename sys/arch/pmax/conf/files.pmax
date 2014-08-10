@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.114 2012/10/02 23:54:54 christos Exp $
+#	$NetBSD: files.pmax,v 1.114.10.1 2014/08/10 06:54:04 tls Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -41,6 +41,11 @@ file	arch/pmax/pmax/dec_5100.c	dec_5100	# kn230, mipsmate
 # handlers for memory subsystems shared across models..
 file	arch/pmax/pmax/memc_3max.c	dec_3max|dec_3maxplus
 file	arch/pmax/pmax/memc_3min.c	dec_3min|dec_maxine
+
+#
+# Stack-less Just-In-Time compiler
+#
+include	"external/bsd/sljit/conf/files.sljit"
 
 #
 # Bus-independent support for DEC devices

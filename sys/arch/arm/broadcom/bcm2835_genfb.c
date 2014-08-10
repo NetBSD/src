@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_genfb.c,v 1.5 2013/05/11 07:42:34 skrll Exp $ */
+/* $NetBSD: bcm2835_genfb.c,v 1.5.6.1 2014/08/10 06:53:51 tls Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.5 2013/05/11 07:42:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.5.6.1 2014/08/10 06:53:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -82,7 +82,8 @@ bcmgenfb_attach(device_t parent, device_t self, void *aux)
 	struct bcmgenfb_softc *sc = device_private(self);
 	struct amba_attach_args *aaa = aux;
 	prop_dictionary_t dict = device_properties(self);
-	struct genfb_ops ops;
+	static const struct genfb_ops zero_ops;
+	struct genfb_ops ops = zero_ops;
 	bool is_console = false;
 	int error;
 
@@ -113,7 +114,6 @@ bcmgenfb_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_gen.sc_fbaddr = bus_space_vaddr(sc->sc_iot, sc->sc_ioh);
 
-	memset(&ops, 0, sizeof(ops));
 	ops.genfb_ioctl = bcmgenfb_ioctl;
 	ops.genfb_mmap = bcmgenfb_mmap;
 

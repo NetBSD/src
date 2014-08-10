@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.91 2014/03/23 09:34:42 christos Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.91.2.1 2014/08/10 06:55:54 tls Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.91 2014/03/23 09:34:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.91.2.1 2014/08/10 06:55:54 tls Exp $");
 #endif /* not lint */
 
 
@@ -67,6 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.91 2014/03/23 09:34:42 christos Exp 
 
 #define VTOI(vnode) ((struct udf_node *) (vnode)->v_data)
 
+/* forward declarations */
+static int udf_do_readlink(struct udf_node *udf_node, uint64_t filesize,
+	uint8_t *targetbuf, int *length);
 
 /* externs */
 extern int prtactive;
@@ -865,10 +868,10 @@ udf_getattr(void *v)
 	uint64_t filesize, blkssize;
 	uint32_t nlink;
 	uint32_t offset, a_l;
-	uint8_t *filedata;
+	uint8_t *filedata, *targetbuf;
 	uid_t uid;
 	gid_t gid;
-	int error;
+	int length, error;
 
 	DPRINTF(CALL, ("udf_getattr called\n"));
 
@@ -938,6 +941,22 @@ udf_getattr(void *v)
 	 */
 	if (vap->va_type == VDIR)
 		vap->va_nlink++;
+
+	/*
+	 * BUG-ALERT: Posix requires the va_size to be pathlength for symbolic
+	 * links.
+	 */
+	if (vap->va_type == VLNK) {
+		/* claim temporary buffers for translation */
+		targetbuf = malloc(PATH_MAX+1, M_UDFTEMP, M_WAITOK);
+		error = udf_do_readlink(udf_node, filesize, targetbuf, &length);
+		if (!error) {
+			vap->va_size = length;
+			KASSERT(length == strlen(targetbuf));
+		}
+		free(targetbuf, M_UDFTEMP);
+		/* XXX return error? */
+	}
 
 	/* access times */
 	udf_timestamp_to_timespec(ump, atime,    &vap->va_atime);
@@ -1020,8 +1039,6 @@ udf_chown(struct vnode *vp, uid_t new_uid, gid_t new_gid,
 
 	/* mark node changed */
 	udf_node->i_flags |= IN_CHANGE;
-	if (vp->v_mount->mnt_flag & MNT_RELATIME)
-		udf_node->i_flags |= IN_ACCESS;
 
 	return 0;
 }
@@ -1059,8 +1076,6 @@ udf_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred)
 
 	/* mark node changed */
 	udf_node->i_flags |= IN_CHANGE;
-	if (vp->v_mount->mnt_flag & MNT_RELATIME)
-		udf_node->i_flags |= IN_ACCESS;
 
 	return 0;
 }
@@ -1734,49 +1749,30 @@ udf_symlink(void *v)
 
 /* --------------------------------------------------------------------- */
 
-int
-udf_readlink(void *v)
+static int
+udf_do_readlink(struct udf_node *udf_node, uint64_t filesize,
+	uint8_t *targetbuf, int *length)
 {
-	struct vop_readlink_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		kauth_cred_t a_cred;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct uio *uio = ap->a_uio;
-	kauth_cred_t cred = ap->a_cred;
-	struct udf_node *udf_node;
 	struct pathcomp pathcomp;
-	struct vattr vattr;
-	uint8_t *pathbuf, *targetbuf, *tmpname;
+	uint8_t *pathbuf, *tmpname;
 	uint8_t *pathpos, *targetpos;
 	char *mntonname;
 	int pathlen, targetlen, namelen, mntonnamelen, len, l_ci;
 	int first, error;
 
-	DPRINTF(CALL, ("udf_readlink called\n"));
-
-	udf_node = VTOI(vp);
-	error = VOP_GETATTR(vp, &vattr, cred);
-	if (error)
-		return error;
-
-	/* claim temporary buffers for translation */
 	pathbuf   = malloc(UDF_SYMLINKBUFLEN, M_UDFTEMP, M_WAITOK);
-	targetbuf = malloc(PATH_MAX+1, M_UDFTEMP, M_WAITOK);
 	tmpname   = malloc(PATH_MAX+1, M_UDFTEMP, M_WAITOK);
 	memset(pathbuf, 0, UDF_SYMLINKBUFLEN);
 	memset(targetbuf, 0, PATH_MAX);
 
 	/* read contents of file in our temporary buffer */
 	error = vn_rdwr(UIO_READ, udf_node->vnode,
-		pathbuf, vattr.va_size, 0,
+		pathbuf, filesize, 0,
 		UIO_SYSSPACE, IO_NODELOCKED | IO_ALTSEMANTICS,
 		FSCRED, NULL, NULL);
 	if (error) {
 		/* failed to read in symlink contents */
 		free(pathbuf, M_UDFTEMP);
-		free(targetbuf, M_UDFTEMP);
 		free(tmpname, M_UDFTEMP);
 		return error;
 	}
@@ -1791,7 +1787,7 @@ udf_readlink(void *v)
 
 	error = 0;
 	first = 1;
-	while (vattr.va_size - pathlen >= UDF_PATH_COMP_SIZE) {
+	while (filesize - pathlen >= UDF_PATH_COMP_SIZE) {
 		len = UDF_PATH_COMP_SIZE;
 		memcpy(&pathcomp, pathpos, len);
 		l_ci = pathcomp.l_ci;
@@ -1812,7 +1808,7 @@ udf_readlink(void *v)
 			}
 			memcpy(targetpos, mntonname, mntonnamelen);
 			targetpos += mntonnamelen; targetlen -= mntonnamelen;
-			if (vattr.va_size-pathlen > UDF_PATH_COMP_SIZE+l_ci) {
+			if (filesize-pathlen > UDF_PATH_COMP_SIZE+l_ci) {
 				/* more follows, so must be directory */
 				*targetpos++ = '/'; targetlen--;
 			}
@@ -1853,7 +1849,7 @@ udf_readlink(void *v)
 			}
 			memcpy(targetpos, tmpname, namelen);
 			targetpos += namelen; targetlen -= namelen;
-			if (vattr.va_size-pathlen > UDF_PATH_COMP_SIZE+l_ci) {
+			if (filesize-pathlen > UDF_PATH_COMP_SIZE+l_ci) {
 				/* more follows, so must be directory */
 				*targetpos++ = '/'; targetlen--;
 			}
@@ -1870,17 +1866,54 @@ udf_readlink(void *v)
 
 	}
 	/* all processed? */
-	if (vattr.va_size - pathlen > 0)
+	if (filesize - pathlen > 0)
 		error = EINVAL;
+
+	free(pathbuf, M_UDFTEMP);
+	free(tmpname, M_UDFTEMP);
+
+	*length = PATH_MAX - targetlen;
+	return error;
+}
+
+
+int
+udf_readlink(void *v)
+{
+	struct vop_readlink_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct udf_node *udf_node = VTOI(vp);
+	struct file_entry    *fe  = udf_node->fe;
+	struct extfile_entry *efe = udf_node->efe;
+	struct uio *uio = ap->a_uio;
+	uint64_t filesize;
+	uint8_t *targetbuf;
+	int length;
+	int error;
+
+	DPRINTF(CALL, ("udf_readlink called\n"));
+
+	if (fe) {
+		filesize = udf_rw64(fe->inf_len);
+	} else {
+		assert(udf_node->efe);
+		filesize = udf_rw64(efe->inf_len);
+	}
+
+	/* claim temporary buffers for translation */
+	targetbuf = malloc(PATH_MAX+1, M_UDFTEMP, M_WAITOK);
+
+	error = udf_do_readlink(udf_node, filesize, targetbuf, &length);
 
 	/* uiomove() to destination */
 	if (!error)
-		uiomove(targetbuf, PATH_MAX - targetlen, uio);
+		uiomove(targetbuf, length, uio);
 
-	free(pathbuf, M_UDFTEMP);
 	free(targetbuf, M_UDFTEMP);
-	free(tmpname, M_UDFTEMP);
-
 	return error;
 }
 
@@ -2143,6 +2176,8 @@ const struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
 	{ &vop_setattr_desc, udf_setattr },	/* setattr */	/* TODO chflags */
 	{ &vop_read_desc, udf_read },		/* read */
 	{ &vop_write_desc, udf_write },		/* write */	/* WRITE */
+	{ &vop_fallocate_desc, genfs_eopnotsupp }, /* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp }, /* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },	/* fcntl */	/* TODO? */
 	{ &vop_ioctl_desc, genfs_enoioctl },	/* ioctl */	/* TODO? */
 	{ &vop_poll_desc, genfs_poll },		/* poll */	/* TODO/OK? */

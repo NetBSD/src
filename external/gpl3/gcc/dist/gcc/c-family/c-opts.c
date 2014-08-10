@@ -284,6 +284,10 @@ c_common_handle_option (size_t scode, const char *arg, int value,
       cpp_opts->discard_comments_in_macro_exp = 0;
       break;
 
+    case OPT_cxx_isystem:
+      add_path (xstrdup (arg), SYSTEM, 1, true);
+      break;
+
     case OPT_D:
       defer_opt (code, arg);
       break;
@@ -606,6 +610,10 @@ c_common_handle_option (size_t scode, const char *arg, int value,
       add_path (xstrdup (arg), QUOTE, 0, true);
       break;
 
+    case OPT_iremap:
+      add_cpp_remap_path (arg);
+      break;
+
     case OPT_isysroot:
       sysroot = arg;
       break;
@@ -839,6 +847,12 @@ c_common_post_options (const char **pfilename)
     flag_objc_sjlj_exceptions = flag_next_runtime;
   if (flag_objc_exceptions && !flag_objc_sjlj_exceptions)
     flag_exceptions = 1;
+
+  /* If -ffreestanding, -fno-hosted or -fno-builtin then disable
+     pattern recognition.  */
+  if (!global_options_set.x_flag_tree_loop_distribute_patterns
+      && flag_no_builtin)
+    flag_tree_loop_distribute_patterns = 0;
 
   /* -Woverlength-strings is off by default, but is enabled by -Wpedantic.
      It is never enabled in C++, as the minimum limit is not normative
@@ -1258,17 +1272,18 @@ c_finish_options (void)
     {
       size_t i;
 
-      {
-	/* Make sure all of the builtins about to be declared have
-	  BUILTINS_LOCATION has their source_location.  */
-	source_location builtins_loc = BUILTINS_LOCATION;
-	cpp_force_token_locations (parse_in, &builtins_loc);
+      cb_file_change (parse_in,
+		      linemap_add (line_table, LC_RENAME, 0,
+				   _("<built-in>"), 0));
+      /* Make sure all of the builtins about to be declared have
+	 BUILTINS_LOCATION has their source_location.  */
+      source_location builtins_loc = BUILTINS_LOCATION;
+      cpp_force_token_locations (parse_in, &builtins_loc);
 
-	cpp_init_builtins (parse_in, flag_hosted);
-	c_cpp_builtins (parse_in);
+      cpp_init_builtins (parse_in, flag_hosted);
+      c_cpp_builtins (parse_in);
 
-	cpp_stop_forcing_token_locations (parse_in);
-      }
+      cpp_stop_forcing_token_locations (parse_in);
 
       /* We're about to send user input to cpplib, so make it warn for
 	 things that we previously (when we sent it internal definitions)

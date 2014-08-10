@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.83 2014/03/28 21:52:53 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.83.2.1 2014/08/10 06:53:50 tls Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.83 2014/03/28 21:52:53 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.83.2.1 2014/08/10 06:53:50 tls Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -139,7 +139,7 @@ ENTRY(cpu_switchto)
 #ifdef TPIDRPRW_IS_CURCPU
 	GET_CURCPU(r3)
 #elif defined(TPIDRPRW_IS_CURLWP)
-	mcr	p15, 0, r0, c13, c0, 4		/* get old lwp (r4 maybe 0) */
+	mrc	p15, 0, r0, c13, c0, 4		/* get old lwp (r4 maybe 0) */
 	ldr	r3, [r0, #(L_CPU)]		/* get cpu from old lwp */
 #elif !defined(MULTIPROCESSOR) 
 	ldr	r3, [r6, #L_CPU]		/* get cpu from new lwp */

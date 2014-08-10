@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile.rumpdevcomp,v 1.8 2014/04/04 14:49:40 pooka Exp $
+#	$NetBSD: Makefile.rumpdevcomp,v 1.8.2.1 2014/08/10 06:56:49 tls Exp $
 #
 
 RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb pad pud	\
-		putter raidframe rnd scsipi scsitest sysmon wscons	\
+		putter raidframe rnd scsipi sysmon vnd wscons		\
 		opencrypto
 
 RUMPUSBDEVS=	ubt ucom ugenhc ulpt umass usb
 
-RUMPPCIDEVS=	pci pci_if_wm
+RUMPPCIDEVS=	pci pci_if_iwn pci_if_wm
 # Not really a PCI device, but ....
-RUMPPCIDEVS=	miiphy
+RUMPPCIDEVS+=	miiphy
 
 .for var in ${RUMPDEVCOMP}
 RUMPDEVLIBS+=lib${var}

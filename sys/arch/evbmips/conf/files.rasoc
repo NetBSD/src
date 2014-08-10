@@ -1,4 +1,6 @@
-#	$NetBSD: files.rasoc,v 1.2 2011/07/28 15:50:13 matt Exp $
+#	$NetBSD: files.rasoc,v 1.2.26.1 2014/08/10 06:53:56 tls Exp $
+
+defflag opt_rasoc.h				RT3050 RT3052 RT3883 MT7620
 
 file	arch/mips/mips/bus_dma.c
 file	arch/mips/mips/mips3_clock.c
@@ -20,6 +22,9 @@ file	arch/mips/ralink/ralink_mainbus.c	mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/evbmips/evbmips/cpu.c		cpu
+
+# Stack-less Just-In-Time compiler
+include	"external/bsd/sljit/conf/files.sljit"
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"

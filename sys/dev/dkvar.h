@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.18 2013/05/29 23:25:55 christos Exp $ */
+/* $NetBSD: dkvar.h,v 1.18.6.1 2014/08/10 06:54:50 tls Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ struct dk_intf {
 	int	(*di_open)(dev_t, int, int, struct lwp *);
 	int	(*di_close)(dev_t, int, int, struct lwp *);
 	void	(*di_strategy)(struct buf *);
-	int	(*di_diskstart)(struct dk_softc *, struct buf *);
+	void	(*di_diskstart)(struct dk_softc *);
 };
 
 #define DK_BUSY(_dksc, _pmask)				\
@@ -93,8 +93,6 @@ int	dk_open(struct dk_intf *, struct dk_softc *, dev_t,
 int	dk_close(struct dk_intf *, struct dk_softc *, dev_t,
 		 int, int, struct lwp *);
 void	dk_strategy(struct dk_intf *, struct dk_softc *, struct buf *);
-void	dk_start(struct dk_intf *, struct dk_softc *);
-void	dk_iodone(struct dk_intf *, struct dk_softc *);
 int	dk_size(struct dk_intf *, struct dk_softc *, dev_t);
 int	dk_ioctl(struct dk_intf *, struct dk_softc *, dev_t,
 		 u_long, void *, int, struct lwp *);

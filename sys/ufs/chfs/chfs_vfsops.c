@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.10 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.10.2.1 2014/08/10 06:56:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -123,6 +123,8 @@ chfs_mount(struct mount *mp,
 
 	dbg("mount()\n");
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

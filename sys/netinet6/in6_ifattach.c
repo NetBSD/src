@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.89 2013/10/25 15:44:39 martin Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.89.2.1 2014/08/10 06:56:30 tls Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.89 2013/10/25 15:44:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.89.2.1 2014/08/10 06:56:30 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,7 @@ get_ifid(struct ifnet *ifp0, struct ifnet *altifp,
 	}
 
 	/* next, try to get it from some other hardware interface */
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		if (ifp == ifp0)
 			continue;
 		if (in6_get_hw_ifid(ifp, in6) != 0)
@@ -754,6 +754,8 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 #ifdef IFT_PFSYNC
 	case IFT_PFSYNC:
 #endif
+		ND_IFINFO(ifp)->flags &= ~ND6_IFF_AUTO_LINKLOCAL;
+		ND_IFINFO(ifp)->flags |= ND6_IFF_IFDISABLED;
 		return;
 	}
 
@@ -784,6 +786,7 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 		 * linklocals for 6to4 interface, but there's no use and
 		 * it is rather harmful to have one.
 		 */
+		ND_IFINFO(ifp)->flags &= ~ND6_IFF_AUTO_LINKLOCAL;
 		return;
 #endif
 	case IFT_CARP:
@@ -817,7 +820,9 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 	/*
 	 * assign a link-local address, if there's none.
 	 */
-	if (ip6_auto_linklocal) {
+	if (!(ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED) &&
+	    ND_IFINFO(ifp)->flags & ND6_IFF_AUTO_LINKLOCAL)
+	{
 		ia = in6ifa_ifpforlinklocal(ifp, 0);
 		if (ia == NULL && in6_ifattach_linklocal(ifp, altifp) != 0) {
 			printf("%s: cannot assign link-local address\n",
@@ -962,7 +967,7 @@ in6_tmpaddrtimer(void *ignored_arg)
 	    ip6_temp_regen_advance) * hz, in6_tmpaddrtimer, NULL);
 
 	memset(nullbuf, 0, sizeof(nullbuf));
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		ndi = ND_IFINFO(ifp);
 		if (memcmp(ndi->randomid, nullbuf, sizeof(nullbuf)) != 0) {
 			/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11-list.c,v 1.5 2014/03/01 03:24:33 christos Exp $	*/
+/*	$NetBSD: pkcs11-list.c,v 1.5.2.1 2014/08/10 07:06:36 tls Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -60,6 +60,7 @@
 #include <isc/types.h>
 
 #include <pk11/pk11.h>
+#include <pk11/result.h>
 
 #if !(defined(HAVE_GETPASSPHRASE) || (defined (__SVR4) && defined (__sun)))
 #define getpassphrase(x)		getpass(x)
@@ -143,6 +144,8 @@ main(int argc, char *argv[]) {
 		search_template[0].ulValueLen = strlen(label);
 	}
 
+	pk11_result_register();
+
 	/* Initialize the CRYPTOKI library */
 	if (lib_name != NULL)
 		pk11_set_lib_name(lib_name);
@@ -150,11 +153,19 @@ main(int argc, char *argv[]) {
 	if (logon && pin == NULL)
 		pin = getpassphrase("Enter Pin: ");
 
-	result = pk11_get_session(&pctx, OP_ANY, ISC_FALSE, logon,
-				  pin, slot);
-	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "Error initializing PKCS#11: %s\n",
-			isc_result_totext(result));
+	result = pk11_get_session(&pctx, OP_ANY, ISC_FALSE, ISC_FALSE,
+				  logon, pin, slot);
+	if (result == PK11_R_NORANDOMSERVICE ||
+	    result == PK11_R_NODIGESTSERVICE ||
+	    result == PK11_R_NOAESSERVICE) {
+		fprintf(stderr, "Warning: %s\n", isc_result_totext(result));
+		fprintf(stderr, "This HSM will not work with BIND 9 "
+				"using native PKCS#11.\n");
+	} else if (result != ISC_R_SUCCESS) {
+		fprintf(stderr, "Unrecoverable error initializing "
+			"PKCS#11: %s\n", isc_result_totext(result));
+		fprintf(stderr, "Unrecoverable error initializing "
+				"PKCS#11: %s\n", isc_result_totext(result));
 		exit(1);
 	}
 
@@ -248,7 +259,7 @@ main(int argc, char *argv[]) {
 
  exit_session:
 	pk11_return_session(&pctx);
-	pk11_shutdown();
+	(void) pk11_finalize();
 
 	exit(error);
 }

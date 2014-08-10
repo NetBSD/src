@@ -1,5 +1,48 @@
 ; RUN: llc -split-dwarf=Enable -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
-; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck %s
+; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-objdump -h %t | FileCheck --check-prefix=HDR %s
+
+; CHECK: .debug_info contents:
+; CHECK: DW_TAG_compile_unit
+; CHECK-NEXT: DW_AT_stmt_list
+; CHECK-NEXT: DW_AT_GNU_dwo_name
+; CHECK-NEXT: DW_AT_comp_dir
+; CHECK-NEXT: DW_AT_GNU_dwo_id
+; CHECK-NEXT: DW_AT_GNU_addr_base [DW_FORM_sec_offset]                   (0x00000000)
+
+
+; CHECK: .debug_info.dwo contents:
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[A:0x[0-9a-z]*]])
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[E:0x[0-9a-z]*]])
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[B:0x[0-9a-z]*]])
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[D:0x[0-9a-z]*]])
+; CHECK: DW_AT_ranges [DW_FORM_sec_offset]   (0x000000a0)
+; CHECK: .debug_loc contents:
+; CHECK-NOT: Beginning address offset
+; CHECK: .debug_loc.dwo contents:
+
+; Don't assume these locations are entirely correct - feel free to update them
+; if they've changed due to a bugfix, change in register allocation, etc.
+
+; CHECK: [[A]]: Beginning address index: 2
+; CHECK-NEXT:                    Length: 199
+; CHECK-NEXT:      Location description: 11 00
+; CHECK-NEXT: {{^$}}
+; CHECK-NEXT:   Beginning address index: 3
+; CHECK-NEXT:                    Length: 23
+; CHECK-NEXT:      Location description: 50 93 04
+; CHECK: [[E]]: Beginning address index: 4
+; CHECK-NEXT:                    Length: 21
+; CHECK-NEXT:      Location description: 50 93 04
+; CHECK: [[B]]: Beginning address index: 5
+; CHECK-NEXT:                    Length: 19
+; CHECK-NEXT:      Location description: 50 93 04
+; CHECK: [[D]]: Beginning address index: 6
+; CHECK-NEXT:                    Length: 23
+; CHECK-NEXT:      Location description: 50 93 04
+
+; Make sure we don't produce any relocations in any .dwo section (though in particular, debug_info.dwo)
+; HDR-NOT: .rela.{{.*}}.dwo
 
 ; From the code:
 
@@ -28,8 +71,6 @@
 ; compiled with:
 
 ; clang -g -S -gsplit-dwarf -O1 small.c
-
-; CHECK: DW_AT_ranges
 
 @c = external global i32
 

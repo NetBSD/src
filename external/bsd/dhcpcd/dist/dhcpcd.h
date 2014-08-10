@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.1.1.17 2014/02/25 13:14:30 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.1.1.17.2.1 2014/08/10 07:06:59 tls Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -38,9 +38,10 @@
 #include "control.h"
 #include "if-options.h"
 
-#define HWADDR_LEN 20
-#define IF_SSIDSIZE 33
-#define PROFILE_LEN 64
+#define HWADDR_LEN	20
+#define IF_SSIDSIZE	33
+#define PROFILE_LEN	64
+#define SECRET_LEN	64
 
 #define LINK_UP		1
 #define LINK_UNKNOWN	0
@@ -58,11 +59,11 @@ struct interface {
 	TAILQ_ENTRY(interface) next;
 	char name[IF_NAMESIZE];
 	unsigned int index;
-	int flags;
+	unsigned int flags;
 	sa_family_t family;
 	unsigned char hwaddr[HWADDR_LEN];
-	size_t hwlen;
-	int metric;
+	uint8_t hwlen;
+	unsigned int metric;
 	int carrier;
 	int wireless;
 	char ssid[IF_SSIDSIZE];
@@ -98,6 +99,7 @@ struct dhcpcd_ctx {
 	int control_fd;
 	struct fd_list *control_fds;
 	char control_sock[sizeof(CONTROLSOCKET) + IF_NAMESIZE];
+	gid_t control_group;
 
 	/* DHCP Enterprise options, RFC3925 */
 	struct dhcp_opt *vivso;
@@ -117,15 +119,14 @@ struct dhcpcd_ctx {
 	uint8_t *opt_buffer;
 #endif
 #ifdef INET6
+	unsigned char secret[SECRET_LEN];
+	size_t secret_len;
+
 	struct dhcp_opt *dhcp6_opts;
 	size_t dhcp6_opts_len;
 	struct ipv6_ctx *ipv6;
-#ifdef __linux__
-	char **ra_restore;
-	ssize_t ra_restore_len;
-#else /* __linux__ */
+#ifndef __linux__
 	int ra_global;
-	int ra_kernel_set;
 #endif
 #endif /* INET6 */
 
@@ -138,20 +139,20 @@ struct dhcpcd_ctx {
 };
 
 #ifdef USE_SIGNALS
-extern const int handle_sigs[];
+extern const int dhcpcd_handlesigs[];
 #endif
 
-pid_t daemonise(struct dhcpcd_ctx *);
+pid_t dhcpcd_daemonise(struct dhcpcd_ctx *);
 
-struct interface *find_interface(struct dhcpcd_ctx *, const char *);
-int handle_args(struct dhcpcd_ctx *, struct fd_list *, int, char **);
-void handle_carrier(struct dhcpcd_ctx *, int, int, const char *);
-void handle_interface(void *, int, const char *);
-void handle_hwaddr(struct dhcpcd_ctx *, const char *,
-    const unsigned char *, size_t);
-void drop_interface(struct interface *, const char *);
-int select_profile(struct interface *, const char *);
+int dhcpcd_handleargs(struct dhcpcd_ctx *, struct fd_list *, int, char **);
+void dhcpcd_handlecarrier(struct dhcpcd_ctx *, int, unsigned int, const char *);
+int dhcpcd_handleinterface(void *, int, const char *);
+void dhcpcd_handlehwaddr(struct dhcpcd_ctx *, const char *,
+    const unsigned char *, uint8_t);
+void dhcpcd_dropinterface(struct interface *, const char *);
+int dhcpcd_selectprofile(struct interface *, const char *);
 
-void start_interface(void *);
+void dhcpcd_startinterface(void *);
+void dhcpcd_initstate(struct interface *);
 
 #endif

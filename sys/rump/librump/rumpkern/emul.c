@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.164 2014/03/11 00:59:38 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.164.2.1 2014/08/10 06:56:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.164 2014/03/11 00:59:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.164.2.1 2014/08/10 06:56:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.164 2014/03/11 00:59:38 pooka Exp $");
 #include <uvm/uvm_map.h>
 
 #include "rump_private.h"
+
+void (*rump_vfs_fini)(void) = (void *)nullop;
 
 /*
  * physmem is largely unused (except for nmbcluster calculations),
@@ -155,7 +157,7 @@ int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
 	extern int hz;
-	int rv;
+	int rv __diagused;
 	uint64_t sec, nsec;
 
 	if (mtx)
@@ -307,3 +309,45 @@ turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
 	/* nada */
 }
 #endif
+
+void
+cpu_reboot(int howto, char *bootstr)
+{
+	int ruhow = 0;
+	void *finiarg;
+
+	printf("rump kernel halting...\n");
+
+	if (!RUMP_LOCALPROC_P(curproc))
+		finiarg = curproc->p_vmspace->vm_map.pmap;
+	else
+		finiarg = NULL;
+
+	/* dump means we really take the dive here */
+	if ((howto & RB_DUMP) || panicstr) {
+		ruhow = RUMPUSER_PANIC;
+		goto out;
+	}
+
+	/* try to sync */
+	if (!((howto & RB_NOSYNC) || panicstr)) {
+		rump_vfs_fini();
+	}
+
+	doshutdownhooks();
+
+	/* your wish is my command */
+	if (howto & RB_HALT) {
+		printf("rump kernel halted\n");
+		rumpuser_sp_fini(finiarg);
+		for (;;) {
+			rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, 10, 0);
+		}
+	}
+
+	/* this function is __dead, we must exit */
+ out:
+	printf("halted\n");
+	rumpuser_sp_fini(finiarg);
+	rumpuser_exit(ruhow);
+}

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.50 2012/10/11 20:05:50 christos Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.50.10.1 2014/08/10 06:56:15 tls Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.50 2012/10/11 20:05:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.50.10.1 2014/08/10 06:56:15 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -226,9 +226,8 @@ void
 atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
     void *rxhand)
 {
-	struct ifqueue *inq;
+	pktqueue_t *pktq = NULL;
 	uint16_t etype = ETHERTYPE_IP; /* default */
-	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -239,17 +238,31 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 	if (rxhand) {
 #ifdef NATM
 	  struct natmpcb *npcb = rxhand;
+	  struct ifqueue *inq;
+	  int s, isr = 0;
+
 	  s = splnet();			/* in case 2 atm cards @ diff lvls */
 	  npcb->npcb_inq++;			/* count # in queue */
 	  splx(s);
-	  schednetisr(NETISR_NATM);
+	  isr = NETISR_NATM;
 	  inq = &natmintrq;
 	  m->m_pkthdr.rcvif = rxhand; /* XXX: overload */
+
+	  s = splnet();
+	  if (IF_QFULL(inq)) {
+	  	IF_DROP(inq);
+	  	m_freem(m);
+	  } else {
+	  	IF_ENQUEUE(inq, m);
+	  	schednetisr(isr);
+	  }
+	  splx(s);
 #else
 	  printf("atm_input: NATM detected but not configured in kernel\n");
 	  m_freem(m);
-	  return;
 #endif
+	  return;
+
 	} else {
 	  /*
 	   * handle LLC/SNAP header, if present
@@ -278,12 +291,11 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 #ifdef INET
 	  case ETHERTYPE_IP:
 #ifdef GATEWAY
-		  if (ipflow_fastforward(m))
+		if (ipflow_fastforward(m))
 			return;
 #endif
-		  schednetisr(NETISR_IP);
-		  inq = &ipintrq;
-		  break;
+		pktq = ip_pktq;
+		break;
 #endif /* INET */
 #ifdef INET6
 	  case ETHERTYPE_IPV6:
@@ -291,9 +303,8 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 		if (ip6flow_fastforward(&m))
 			return;
 #endif
-		  schednetisr(NETISR_IPV6);
-		  inq = &ip6intrq;
-		  break;
+		pktq = ip6_pktq;
+		break;
 #endif
 	  default:
 	      m_freem(m);
@@ -301,13 +312,9 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 	  }
 	}
 
-	s = splnet();
-	if (IF_QFULL(inq)) {
-		IF_DROP(inq);
+	if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
 		m_freem(m);
-	} else
-		IF_ENQUEUE(inq, m);
-	splx(s);
+	}
 }
 
 /*

@@ -1,7 +1,7 @@
-/*	$NetBSD: aclconf.h,v 1.5 2014/03/01 03:24:40 christos Exp $	*/
+/*	$NetBSD: aclconf.h,v 1.5.2.1 2014/08/10 07:06:44 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -66,13 +66,16 @@ cfg_aclconfctx_attach(cfg_aclconfctx_t *src, cfg_aclconfctx_t **dest);
  */
 
 isc_result_t
-cfg_acl_fromconfig(const cfg_obj_t *caml,
-		   const cfg_obj_t *cctx,
-		   isc_log_t *lctx,
-		   cfg_aclconfctx_t *ctx,
-		   isc_mem_t *mctx,
-		   unsigned int nest_level,
+cfg_acl_fromconfig(const cfg_obj_t *caml, const cfg_obj_t *cctx,
+		   isc_log_t *lctx, cfg_aclconfctx_t *ctx,
+		   isc_mem_t *mctx, unsigned int nest_level,
 		   dns_acl_t **target);
+
+isc_result_t
+cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
+		   isc_log_t *lctx, cfg_aclconfctx_t *ctx,
+		   isc_mem_t *mctx, unsigned int nest_level,
+		   isc_uint16_t family, dns_acl_t **target);
 /*
  * Construct a new dns_acl_t from configuration data in 'caml' and
  * 'cctx'.  Memory is allocated through 'mctx'.
@@ -82,6 +85,11 @@ cfg_acl_fromconfig(const cfg_obj_t *caml,
  * named ACLs will be converted into shared references to a single
  * nested dns_acl_t object when the referring objects were created
  * passing the same ACL configuration context 'ctx'.
+ *
+ * cfg_acl_fromconfig() is a backward-compatible version of
+ * cfg_acl_fromconfig2(), which allows an address family to be
+ * specified.  If 'family' is not zero, then only addresses/prefixes
+ * of a matching family (AF_INET or AF_INET6) may be configured.
  *
  * On success, attach '*target' to the new dns_acl_t object.
  */

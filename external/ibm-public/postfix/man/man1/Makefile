@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/23 15:02:52 tron Exp $
+#	$NetBSD: Makefile,v 1.1.26.1 2014/08/10 07:12:51 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ DIST=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist/man/man1
 MAN=	postalias.1 postcat.1 postconf.1 postfix.1 \
 	postkick.1 postlock.1 postlog.1 postdrop.1 \
 	postmap.1 sendmail.1 \
-	postqueue.1 postsuper.1 postmulti.1
+	postqueue.1 postsuper.1 postmulti.1 posttls-finger.1
 
 MLINKS=	sendmail.1 mailq.1 sendmail.1 newaliases.1
 

@@ -1,5 +1,5 @@
-/*	Id: inline.c,v 1.47 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: inline.c,v 1.1.1.5 2012/03/26 14:26:49 plunky Exp $	*/
+/*	Id: inline.c,v 1.54 2014/05/29 19:20:03 plunky Exp 	*/	
+/*	$NetBSD: inline.c,v 1.1.1.5.10.1 2014/08/10 07:10:07 tls Exp $	*/
 /*
  * Copyright (c) 2003, 2008 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -64,7 +64,7 @@ static struct istat {
 } *cifun;
 
 static SLIST_HEAD(, istat) ipole = { NULL, &ipole.q_forw };
-static int nlabs;
+static int nlabs, svclass;
 
 #define	IP_REF	(MAXIP+1)
 #ifdef PCC_DEBUG
@@ -78,6 +78,22 @@ int inlnodecnt, inlstatcnt;
 
 #define	SZSI	sizeof(struct istat)
 #define	ialloc() memset(permalloc(SZSI), 0, SZSI); inlstatcnt++
+
+/*
+ * Get prolog/epilog for a function.
+ */
+static struct interpass_prolog *
+getprol(struct istat *is, int type)
+{
+	struct interpass *ip;
+
+	DLIST_FOREACH(ip, &is->shead, qelem)
+		if (ip->type == type)
+			return (struct interpass_prolog *)ip;
+	cerror("getprol: %d not found", type);
+	return 0; /* XXX */
+}
+
 
 static void
 tcnt(NODE *p, void *arg)
@@ -135,7 +151,7 @@ inline_addarg(struct interpass *ip)
  * Called to setup for inlining of a new function.
  */
 void
-inline_start(struct symtab *sp)
+inline_start(struct symtab *sp, int class)
 {
 	struct istat *is;
 
@@ -144,6 +160,7 @@ inline_start(struct symtab *sp)
 	if (isinlining)
 		cerror("already inlining function");
 
+	svclass = class;
 	if ((is = findfun(sp)) != 0) {
 		if (!DLIST_ISEMPTY(&is->shead, qelem))
 			uerror("inline function already defined");
@@ -174,11 +191,14 @@ inline_start(struct symtab *sp)
  *	gcc 4.1.3:	nej	nej	nej
  *	gcc 4.3.1	nej	nej	ja	
  *
+ * The above is only true if extern is given on the same line as the
+ * function declaration.  If given as a separate definition it do not count.
+ *
  * The attribute gnu_inline sets gnu89 behaviour.
  * Since pcc mimics gcc 4.3.1 that is the behaviour we emulate.
  */
 void
-inline_end()
+inline_end(void)
 {
 	struct symtab *sp = cifun->sp;
 
@@ -187,13 +207,18 @@ inline_end()
 	if (sdebug)printip(&cifun->shead);
 	isinlining = 0;
 
+	if (xgnu89 && svclass == SNULL)
+		sp->sclass = EXTERN;
+
+#ifdef GCC_COMPAT
 	if (sp->sclass != STATIC &&
 	    (attr_find(sp->sap, GCC_ATYP_GNU_INLINE) || xgnu89)) {
 		if (sp->sclass == EXTDEF)
-			sp->sclass = 0;
+			sp->sclass = EXTERN;
 		else
 			sp->sclass = EXTDEF;
 	}
+#endif
 
 	if (sp->sclass == EXTDEF) {
 		cifun->flags |= REFD;
@@ -292,7 +317,7 @@ puto(struct istat *w)
  * printout functions that are referenced.
  */
 void
-inline_prtout()
+inline_prtout(void)
 {
 	struct istat *w;
 	int gotone = 0;
@@ -346,7 +371,7 @@ printip(struct interpass *pole)
 			break;
 		case IP_DEFLAB: printf(LABFMT "\n", ip->ip_lbl); break;
 		case IP_DEFNAM: printf("\n"); break;
-		case IP_ASM: printf("%s\n", ip->ip_asm); break;
+		case IP_ASM: printf("%s", ip->ip_asm); break;
 		default:
 			break;
 		}
@@ -398,7 +423,8 @@ inlinetree(struct symtab *sp, NODE *f, NODE *ap)
 	extern int crslab, tvaloff;
 	struct istat *is = findfun(sp);
 	struct interpass *ip, *ipf, *ipl;
-	int lmin, l0, l1, l2, gainl;
+	struct interpass_prolog *ipp, *ipe;
+	int lmin, l0, l1, l2, gainl, n;
 	NODE *p, *rp;
 
 	if (is == NULL || nerrors) {
@@ -408,10 +434,16 @@ inlinetree(struct symtab *sp, NODE *f, NODE *ap)
 
 	SDEBUG(("inlinetree(%p,%p) OK %d\n", f, ap, is->flags & CANINL));
 
+#ifdef GCC_COMPAT
 	gainl = attr_find(sp->sap, GCC_ATYP_ALW_INL) != NULL;
+#else
+	gainl = 0;
+#endif
 
+	n = nerrors;
 	if ((is->flags & CANINL) == 0 && gainl)
 		werror("cannot inline but always_inline");
+	nerrors = n;
 
 	if ((is->flags & CANINL) == 0 || (xinline == 0 && gainl == 0)) {
 		if (is->sp->sclass == STATIC || is->sp->sclass == USTATIC)
@@ -438,30 +470,36 @@ inlinetree(struct symtab *sp, NODE *f, NODE *ap)
 	l2 = getlab();
 	SDEBUG(("branch labels %d,%d,%d\n", l0, l1, l2));
 
-	ipf = DLIST_NEXT(&is->shead, qelem); /* prolog */
-	ipl = DLIST_PREV(&is->shead, qelem); /* epilog */
+	ipp = getprol(is, IP_PROLOG);
+	ipe = getprol(is, IP_EPILOG);
 
 	/* Fix label & temp offsets */
-#define	IPP(x) ((struct interpass_prolog *)x)
+
 	SDEBUG(("pre-offsets crslab %d tvaloff %d\n", crslab, tvaloff));
-	lmin = crslab - IPP(ipf)->ip_lblnum;
-	crslab += (IPP(ipl)->ip_lblnum - IPP(ipf)->ip_lblnum) + 1;
-	toff = tvaloff - IPP(ipf)->ip_tmpnum;
-	tvaloff += (IPP(ipl)->ip_tmpnum - IPP(ipf)->ip_tmpnum) + 1;
+	lmin = crslab - ipp->ip_lblnum;
+	crslab += (ipe->ip_lblnum - ipp->ip_lblnum) + 1;
+	toff = tvaloff - ipp->ip_tmpnum;
+	tvaloff += (ipe->ip_tmpnum - ipp->ip_tmpnum) + 1;
 	SDEBUG(("offsets crslab %d lmin %d tvaloff %d toff %d\n",
 	    crslab, lmin, tvaloff, toff));
 
 	/* traverse until first real label */
-	ipf = DLIST_NEXT(ipf, qelem);
-	do
-		ipf = DLIST_NEXT(ipf, qelem);
-	while (ipf->type != IP_DEFLAB);
+	n = 0;
+	DLIST_FOREACH(ipf, &is->shead, qelem) {
+		if (ipf->type == IP_REF)
+			inline_ref((struct symtab *)ipf->ip_name);
+		if (ipf->type == IP_DEFLAB && n++ == 1)
+			break;
+	}
 
 	/* traverse backwards to last label */
-	do
-		ipl = DLIST_PREV(ipl, qelem);
-	while (ipl->type != IP_DEFLAB);
-
+	DLIST_FOREACH_REVERSE(ipl, &is->shead, qelem) {
+		if (ipl->type == IP_REF)
+			inline_ref((struct symtab *)ipl->ip_name);
+		if (ipl->type == IP_DEFLAB)
+			break;
+	}
+		
 	/* So, walk over all statements and emit them */
 	for (ip = ipf; ip != ipl; ip = DLIST_NEXT(ip, qelem)) {
 		switch (ip->type) {

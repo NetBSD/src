@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.106 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.106.2.1 2014/08/10 06:56:30 tls Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.106 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.106.2.1 2014/08/10 06:56:30 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -658,13 +658,7 @@ add_m6if(struct mif6ctl *mifcp)
 	mifp = mif6table + mifcp->mif6c_mifi;
 	if (mifp->m6_ifp)
 		return EADDRINUSE; /* XXX: is it appropriate? */
-	if (mifcp->mif6c_pifi == 0 || mifcp->mif6c_pifi >= if_indexlim)
-		return ENXIO;
-	/*
-	 * XXX: some OSes can remove ifp and clear ifindex2ifnet[id]
-	 * even for id between 0 and if_index.
-	 */
-	if ((ifp = ifindex2ifnet[mifcp->mif6c_pifi]) == NULL)
+	if (!mifcp->mif6c_pifi || (ifp = if_byindex(mifcp->mif6c_pifi)) == NULL)
 		return ENXIO;
 
 	if (mifcp->mif6c_flags & MIFF_REGISTER) {

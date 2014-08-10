@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.8 2009/09/11 22:06:29 dyoung Exp $	*/
+/*	$NetBSD: scope6.c,v 1.8.36.1 2014/08/10 06:56:30 tls Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.8 2009/09/11 22:06:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.8.36.1 2014/08/10 06:56:30 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -130,7 +130,7 @@ scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
 				return (EINVAL);
 
 			if (i == IPV6_ADDR_SCOPE_LINKLOCAL &&
-			    idlist->s6id_list[i] >= if_indexlim) {
+			    !if_byindex(idlist->s6id_list[i])) {
 				/*
 				 * XXX: theoretically, there should be no
 				 * relationship between link IDs and interface
@@ -309,14 +309,8 @@ sa6_embedscope(struct sockaddr_in6 *sin6, int defaultok)
 		 * zone IDs assuming a one-to-one mapping between interfaces
 		 * and links.
 		 */
-		if (if_indexlim <= zoneid)
-			return (ENXIO);
-#ifdef __FreeBSD__
-		ifp = ifnet_byindex(zoneid);
-#else
-		ifp = ifindex2ifnet[zoneid];
-#endif
-		if (ifp == NULL) /* XXX: this can happen for some OS */
+		ifp = if_byindex(zoneid);
+		if (ifp == NULL)
 			return (ENXIO);
 
 		/* XXX assignment to 16bit from 32bit variable */
@@ -363,14 +357,7 @@ sa6_recoverscope(struct sockaddr_in6 *sin6)
 		 */
 		zoneid = ntohs(sin6->sin6_addr.s6_addr16[1]);
 		if (zoneid) {
-			/* sanity check */
-			if (/* zoneid < 0 || */ if_indexlim <= zoneid)
-				return (ENXIO);
-#ifdef __FreeBSD__
-			if (!ifnet_byindex(zoneid))
-#else
-			if (!ifindex2ifnet[zoneid])
-#endif
+			if (!if_byindex(zoneid))
 				return (ENXIO);
 			sin6->sin6_addr.s6_addr16[1] = 0;
 			sin6->sin6_scope_id = zoneid;

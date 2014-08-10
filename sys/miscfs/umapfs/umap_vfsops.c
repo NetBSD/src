@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.91 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.91.2.1 2014/08/10 06:56:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.91 2014/03/23 15:21:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.91.2.1 2014/08/10 06:56:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,8 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int i;
 #endif
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -195,12 +197,7 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	amp->umapm_size = sizeof(struct umap_node);
 	amp->umapm_tag = VT_UMAP;
 	amp->umapm_bypass = umap_bypass;
-	amp->umapm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	amp->umapm_vnodeop_p = umap_vnodeop_p;
-	mutex_init(&amp->umapm_hashlock, MUTEX_DEFAULT, IPL_NONE);
-	amp->umapm_node_hashtbl = hashinit(NUMAPNODECACHE, HASH_LIST, true,
-	    &amp->umapm_node_hash);
-
 
 	/*
 	 * fix up umap node for root vnode.
@@ -212,8 +209,6 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 */
 	if (error) {
 		vrele(lowerrootvp);
-		hashdone(amp->umapm_node_hashtbl, HASH_LIST,
-		    amp->umapm_node_hash);
 		kmem_free(amp, sizeof(struct umap_mount));
 		return error;
 	}
@@ -269,8 +264,6 @@ umapfs_unmount(struct mount *mp, int mntflags)
 	/*
 	 * Finally, throw away the umap_mount structure
 	 */
-	mutex_destroy(&amp->umapm_hashlock);
-	hashdone(amp->umapm_node_hashtbl, HASH_LIST, amp->umapm_node_hash);
 	kmem_free(amp, sizeof(struct umap_mount));
 	mp->mnt_data = NULL;
 	return 0;
@@ -293,6 +286,7 @@ struct vfsops umapfs_vfsops = {
 	.vfs_quotactl = layerfs_quotactl,
 	.vfs_statvfs = layerfs_statvfs,
 	.vfs_sync = layerfs_sync,
+	.vfs_loadvnode = layerfs_loadvnode,
 	.vfs_vget = layerfs_vget,
 	.vfs_fhtovp = layerfs_fhtovp,
 	.vfs_vptofh = layerfs_vptofh,

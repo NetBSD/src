@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.14 2014/03/20 20:43:12 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.14.2.1 2014/08/10 06:55:40 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.14 2014/03/20 20:43:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.14.2.1 2014/08/10 06:55:40 tls Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -3787,6 +3787,8 @@ memstr(const char *src, char *dst, size_t slen, size_t dlen)
 	}
 	return s;
 }
+
+
 /* ------------------------------------------------------------------------ */
 /* Function:    ipf_fixskip                                                 */
 /* Returns:     Nil                                                         */
@@ -4357,7 +4359,15 @@ frrequest(ipf_main_softc_t *softc, int unit, ioctlcmd_t req, void *data,
 
 		fp = f;
 		f = NULL;
+		fp->fr_next = NULL;
 		fp->fr_dnext = NULL;
+		fp->fr_pnext = NULL;
+		fp->fr_pdnext = NULL;
+		fp->fr_grp = NULL;
+		fp->fr_grphead = NULL;
+		fp->fr_icmpgrp = NULL;
+		fp->fr_isc = (void *)-1;
+		fp->fr_ptr = NULL;
 		fp->fr_ref = 0;
 		fp->fr_flags |= FR_COPIED;
 	} else {
@@ -4860,7 +4870,9 @@ frrequest(ipf_main_softc_t *softc, int unit, ioctlcmd_t req, void *data,
 				if (f->fr_collect > fp->fr_collect)
 					break;
 				ftail = &f->fr_next;
+				fprev = ftail;
 			}
+			ftail = fprev;
 			f = NULL;
 			ptr = NULL;
 		} else if (req == (ioctlcmd_t)SIOCINAFR ||
@@ -4951,6 +4963,8 @@ frrequest(ipf_main_softc_t *softc, int unit, ioctlcmd_t req, void *data,
 			fp->fr_ref = 1;
 		fp->fr_pnext = ftail;
 		fp->fr_next = *ftail;
+		if (fp->fr_next != NULL)
+			fp->fr_next->fr_pnext = &fp->fr_next;
 		*ftail = fp;
 		if (addrem == 0)
 			ipf_fixskip(ftail, fp, 1);

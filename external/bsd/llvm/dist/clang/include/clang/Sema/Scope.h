@@ -15,13 +15,21 @@
 #define LLVM_CLANG_SEMA_SCOPE_H
 
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+
+namespace llvm {
+
+class raw_ostream;
+
+}
 
 namespace clang {
 
 class Decl;
 class UsingDirectiveDecl;
+class VarDecl;
 
 /// Scope - A scope is a transient data structure that is used while parsing the
 /// program.  It assists with resolving identifiers to the appropriate
@@ -109,6 +117,10 @@ private:
   /// interrelates with other control flow statements.
   unsigned short Flags;
 
+  /// \brief Declarations with static linkage are mangled with the number of
+  /// scopes seen as a component.
+  unsigned short MSLocalManglingNumber;
+
   /// PrototypeDepth - This is the number of function prototype scopes
   /// enclosing this scope, including this scope.
   unsigned short PrototypeDepth;
@@ -120,6 +132,7 @@ private:
   /// FnParent - If this scope has a parent scope that is a function body, this
   /// pointer is non-null and points to it.  This is used for label processing.
   Scope *FnParent;
+  Scope *MSLocalManglingParent;
 
   /// BreakParent/ContinueParent - This is a direct link to the innermost
   /// BreakScope/ContinueScope which contains the contents of this scope
@@ -156,7 +169,11 @@ private:
 
   /// \brief Used to determine if errors occurred in this scope.
   DiagnosticErrorTrap ErrorTrap;
-  
+
+  /// A lattice consisting of undefined, a single NRVO candidate variable in
+  /// this scope, or over-defined. The bit is true when over-defined.
+  llvm::PointerIntPair<VarDecl *, 1, bool> NRVO;
+
 public:
   Scope(Scope *Parent, unsigned ScopeFlags, DiagnosticsEngine &Diag)
     : ErrorTrap(Diag) {
@@ -180,6 +197,11 @@ public:
   ///
   const Scope *getFnParent() const { return FnParent; }
   Scope *getFnParent() { return FnParent; }
+
+  const Scope *getMSLocalManglingParent() const {
+    return MSLocalManglingParent;
+  }
+  Scope *getMSLocalManglingParent() { return MSLocalManglingParent; }
 
   /// getContinueParent - Return the closest scope that a continue statement
   /// would be affected by.
@@ -219,10 +241,11 @@ public:
     return PrototypeIndex++;
   }
 
-  typedef DeclSetTy::iterator decl_iterator;
-  decl_iterator decl_begin() const { return DeclsInScope.begin(); }
-  decl_iterator decl_end()   const { return DeclsInScope.end(); }
-  bool decl_empty()          const { return DeclsInScope.empty(); }
+  typedef llvm::iterator_range<DeclSetTy::iterator> decl_range;
+  decl_range decls() const {
+    return decl_range(DeclsInScope.begin(), DeclsInScope.end());
+  }
+  bool decl_empty() const { return DeclsInScope.empty(); }
 
   void AddDecl(Decl *D) {
     DeclsInScope.insert(D);
@@ -230,6 +253,22 @@ public:
 
   void RemoveDecl(Decl *D) {
     DeclsInScope.erase(D);
+  }
+
+  void incrementMSLocalManglingNumber() {
+    if (Scope *MSLMP = getMSLocalManglingParent())
+      MSLMP->MSLocalManglingNumber += 1;
+  }
+
+  void decrementMSLocalManglingNumber() {
+    if (Scope *MSLMP = getMSLocalManglingParent())
+      MSLMP->MSLocalManglingNumber -= 1;
+  }
+
+  unsigned getMSLocalManglingNumber() const {
+    if (const Scope *MSLMP = getMSLocalManglingParent())
+      return MSLMP->MSLocalManglingNumber;
+    return 1;
   }
 
   /// isDeclScope - Return true if this is the scope that the specified decl is
@@ -328,28 +367,35 @@ public:
   /// is a FunctionPrototypeScope.
   bool containedInPrototypeScope() const;
 
-  typedef UsingDirectivesTy::iterator udir_iterator;
-  typedef UsingDirectivesTy::const_iterator const_udir_iterator;
-
   void PushUsingDirective(UsingDirectiveDecl *UDir) {
     UsingDirectives.push_back(UDir);
   }
 
-  udir_iterator using_directives_begin() {
-    return UsingDirectives.begin();
+  typedef llvm::iterator_range<UsingDirectivesTy::iterator>
+    using_directives_range;
+
+  using_directives_range using_directives() {
+    return using_directives_range(UsingDirectives.begin(),
+                                  UsingDirectives.end());
   }
 
-  udir_iterator using_directives_end() {
-    return UsingDirectives.end();
+  void addNRVOCandidate(VarDecl *VD) {
+    if (NRVO.getInt())
+      return;
+    if (NRVO.getPointer() == nullptr) {
+      NRVO.setPointer(VD);
+      return;
+    }
+    if (NRVO.getPointer() != VD)
+      setNoNRVO();
   }
 
-  const_udir_iterator using_directives_begin() const {
-    return UsingDirectives.begin();
+  void setNoNRVO() {
+    NRVO.setInt(1);
+    NRVO.setPointer(nullptr);
   }
 
-  const_udir_iterator using_directives_end() const {
-    return UsingDirectives.end();
-  }
+  void mergeNRVOIntoParent();
 
   /// Init - This is used by the parser to implement scope caching.
   ///
@@ -359,6 +405,9 @@ public:
   /// variables accordingly.
   ///
   void AddFlags(unsigned Flags);
+
+  void dumpImpl(raw_ostream &OS) const;
+  void dump() const;
 };
 
 }  // end namespace clang

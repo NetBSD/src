@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.109 2014/03/23 15:21:15 hannken Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.109.2.1 2014/08/10 06:55:54 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.109 2014/03/23 15:21:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.109.2.1 2014/08/10 06:55:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,6 +102,8 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	int error = 0, i;
 	pid_t mntpid = curlwp->l_proc->p_pid;
 
+	if (data == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -115,12 +117,6 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	/* update is not supported currently */
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
-
-	/*
-	 * We need the file system name
-	 */
-	if (!data)
-		return EINVAL;
 
 	args = (struct puffs_kargs *)data;
 
@@ -514,6 +510,13 @@ puffs_vfsop_statvfs(struct mount *mp, struct statvfs *sbp)
 	return error;
 }
 
+static bool
+pageflush_selector(void *cl, struct vnode *vp)
+{
+	return vp->v_type == VREG &&
+	    !(LIST_EMPTY(&vp->v_dirtyblkhd) && UVM_OBJ_IS_CLEAN(&vp->v_uobj));
+}
+
 static int
 pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 {
@@ -532,7 +535,9 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 	 * all the nodes it knows to exist.
 	 */
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
+	while ((vp = vfs_vnode_iterator_next(marker, pageflush_selector,
+	    NULL)))
+	{
 		/*
 		 * Here we try to get a reference to the vnode and to
 		 * lock it.  This is mostly cargo-culted, but I will
@@ -554,11 +559,6 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 			continue;
 		}
 		pn = VPTOPP(vp);
-		if (vp->v_type != VREG || UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
-			vput(vp);
-			continue;
-		}
-
 		/* hmm.. is the FAF thing entirely sensible? */
 		if (waitfor == MNT_LAZY) {
 			mutex_enter(vp->v_interlock);

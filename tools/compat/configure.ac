@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.81 2014/01/09 11:26:58 apb Exp $
+#	$NetBSD: configure.ac,v 1.81.2.1 2014/08/10 06:57:39 tls Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -174,6 +174,12 @@ AC_CHECK_DECLS([strsuftoll],,,[#include <stdlib.h>])
 AC_CHECK_DECLS([lchflags, lchmod, lchown],,,[
 #include <sys/stat.h>
 #include <unistd.h>
+])
+
+AC_CHECK_DECLS([errc, verrc, warnc, vwarnc],,, [
+#ifdef HAVE_ERR_H
+#include <err.h>
+#endif
 ])
 
 AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64,

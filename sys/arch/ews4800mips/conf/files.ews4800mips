@@ -1,4 +1,4 @@
-#	$NetBSD: files.ews4800mips,v 1.6 2012/10/02 23:54:52 christos Exp $
+#	$NetBSD: files.ews4800mips,v 1.6.10.1 2014/08/10 06:53:57 tls Exp $
 
 maxpartitions 16
 
@@ -50,6 +50,11 @@ file arch/ews4800mips/ews4800mips/mainbus.c		mainbus
 device cpu
 attach cpu at mainbus
 file arch/ews4800mips/ews4800mips/cpu.c			cpu
+
+#
+# Stack-less Just-In-Time compiler
+#
+include	"external/bsd/sljit/conf/files.sljit"
 
 #
 # Machine-independent SCSI drivers

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2012/11/05 00:34:28 alnsn Exp $
+# $NetBSD: Makefile,v 1.1.10.1 2014/08/10 06:57:22 tls Exp $
 
 TESTSDIR=	${TESTSBASE}/lib/libsljit
 

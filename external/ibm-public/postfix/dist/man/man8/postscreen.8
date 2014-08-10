@@ -1,4 +1,4 @@
-.\"	$NetBSD: postscreen.8,v 1.1.1.3 2013/09/25 19:06:25 tron Exp $
+.\"	$NetBSD: postscreen.8,v 1.1.1.3.2.1 2014/08/10 07:12:47 tls Exp $
 .\"
 .TH POSTSCREEN 8 
 .ad
@@ -198,7 +198,7 @@ which would introduce a common point of failure.
 A list of local \fBpostscreen\fR(8) server IP addresses where a
 non-whitelisted remote SMTP client can obtain \fBpostscreen\fR(8)'s temporary
 whitelist status.
-.SH "BEFORE-GREETING TESTS"
+.SH "BEFORE 220 GREETING TESTS"
 .na
 .nf
 .ad
@@ -244,7 +244,13 @@ up to 6 seconds otherwise).
 .IP "\fBsmtpd_service_name (smtpd)\fR"
 The internal service that \fBpostscreen\fR(8) hands off allowed
 connections to.
-.SH "AFTER-GREETING TESTS"
+.PP
+Available in Postfix version 2.11 and later:
+.IP "\fBpostscreen_dnsbl_whitelist_threshold (0)\fR"
+Allow a remote SMTP client to skip "before" and "after 220
+greeting" protocol tests, based on its combined DNSBL score as
+defined with the postscreen_dnsbl_sites parameter.
+.SH "AFTER 220 GREETING TESTS"
 .na
 .nf
 .ad
@@ -252,9 +258,9 @@ connections to.
 These tests are executed after the remote SMTP client
 receives the "220 servername" greeting. If a client passes
 all tests during this phase, it will receive a 4XX response
-to RCPT TO commands until the client hangs up. After this,
-the client will be allowed to talk directly to a Postfix
-SMTP server process.
+to all RCPT TO commands. After the client reconnects, it
+will be allowed to talk directly to a Postfix SMTP server
+process.
 .IP "\fBpostscreen_bare_newline_action (ignore)\fR"
 The action that \fBpostscreen\fR(8) takes when a remote SMTP client sends
 a bare newline character, that is, a newline not preceded by carriage

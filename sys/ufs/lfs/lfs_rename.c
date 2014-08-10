@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.6 2014/02/06 10:57:12 hannken Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.6.2.1 2014/08/10 06:56:58 tls Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.6 2014/02/06 10:57:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.6.2.1 2014/08/10 06:56:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1079,7 +1079,7 @@ lfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE);
 	KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
 
-	error = SET_DIROP_REMOVE(tdvp, tvp);
+	error = lfs_set_dirop(tdvp, tvp);
 	if (error != 0)
 		return error;
 
@@ -1092,7 +1092,15 @@ lfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 
 	UNMARK_VNODE(fdvp);
 	UNMARK_VNODE(fvp);
-	SET_ENDOP_REMOVE(VFSTOULFS(mp)->um_lfs, tdvp, tvp, "rename");
+	UNMARK_VNODE(tdvp);
+	if (tvp) {
+		UNMARK_VNODE(tvp);
+	}
+	lfs_unset_dirop(VFSTOULFS(mp)->um_lfs, tdvp, "rename");
+	vrele(tdvp);
+	if (tvp) {
+		vrele(tvp);
+	}
 
 	return error;
 }

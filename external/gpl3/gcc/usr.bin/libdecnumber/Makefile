@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2014/03/01 10:00:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2014/08/10 07:10:59 tls Exp $
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
 LIBISPRIVATE=   yes

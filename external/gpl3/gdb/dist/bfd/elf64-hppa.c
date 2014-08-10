@@ -194,9 +194,6 @@ static bfd_boolean elf64_hppa_finish_dynamic_symbol
   (bfd *, struct bfd_link_info *,
    struct elf_link_hash_entry *, Elf_Internal_Sym *);
 
-static enum elf_reloc_type_class elf64_hppa_reloc_type_class
-  (const Elf_Internal_Rela *);
-
 static bfd_boolean elf64_hppa_finish_dynamic_sections
   (bfd *, struct bfd_link_info *);
 
@@ -647,6 +644,9 @@ elf64_hppa_check_relocs (bfd *abfd,
 		 || hh->eh.root.type == bfd_link_hash_warning)
 	    hh = hppa_elf_hash_entry (hh->eh.root.u.i.link);
 
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  hh->eh.root.non_ir_ref = 1;
 	  hh->eh.ref_regular = 1;
 	}
       else
@@ -2446,7 +2446,9 @@ elf64_hppa_finalize_dynreloc (struct elf_link_hash_entry *eh,
    dynamic linker, before writing them out.  */
 
 static enum elf_reloc_type_class
-elf64_hppa_reloc_type_class (const Elf_Internal_Rela *rela)
+elf64_hppa_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			     const asection *rel_sec ATTRIBUTE_UNUSED,
+			     const Elf_Internal_Rela *rela)
 {
   if (ELF64_R_SYM (rela->r_info) == STN_UNDEF)
     return reloc_class_relative;
@@ -2522,6 +2524,8 @@ elf64_hppa_finish_dynamic_sections (bfd *output_bfd,
 		 area at the start of the .data section.  So all we have to
 		 to is find the start of the .data section.  */
 	      s = bfd_get_section_by_name (output_bfd, ".data");
+	      if (!s)
+		return FALSE;
 	      dyn.d_un.d_ptr = s->vma;
 	      bfd_elf64_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
@@ -3273,7 +3277,7 @@ elf_hppa_final_link_relocate (Elf_Internal_Rela *rel,
 	    && value + addend + max_branch_offset >= 2*max_branch_offset)
 	  {
 	    (*_bfd_error_handler)
-	      (_("%B(%A+0x" BFD_VMA_FMT "x): cannot reach %s"),
+	      (_("%B(%A+0x%" BFD_VMA_FMT "x): cannot reach %s"),
 	      input_bfd,
 	      input_section,
 	      offset,
@@ -4099,8 +4103,6 @@ const struct elf_size_info hppa64_elf_size_info =
 #define TARGET_BIG_NAME			"elf64-hppa-linux"
 #undef ELF_OSABI
 #define ELF_OSABI			ELFOSABI_GNU
-#undef elf_backend_post_process_headers
-#define elf_backend_post_process_headers _bfd_elf_set_osabi
 #undef elf64_bed
 #define elf64_bed			elf64_hppa_linux_bed
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.43 2014/01/23 10:13:56 hannken Exp $	*/
+/*	$NetBSD: advnops.c,v 1.43.2.1 2014/08/10 06:55:53 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.43 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.43.2.1 2014/08/10 06:55:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,8 @@ const struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, adosfs_setattr },		/* setattr */
 	{ &vop_read_desc, adosfs_read },		/* read */
 	{ &vop_write_desc, adosfs_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, adosfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, adosfs_poll },		/* poll */
@@ -878,7 +880,7 @@ adosfs_reclaim(void *v)
 #endif
 	vp = sp->a_vp;
 	ap = VTOA(vp);
-	LIST_REMOVE(ap, link);
+	vcache_remove(vp->v_mount, &ap->block, sizeof(ap->block));
 	if (vp->v_type == VDIR && ap->tab)
 		free(ap->tab, M_ANODE);
 	else if (vp->v_type == VLNK && ap->slinkto)

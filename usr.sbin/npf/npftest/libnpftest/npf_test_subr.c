@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test_subr.c,v 1.9.2.1 2014/08/09 06:19:50 tls Exp $	*/
+/*	$NetBSD: npf_test_subr.c,v 1.9.2.2 2014/08/10 07:00:01 tls Exp $	*/
 
 /*
  * NPF initialisation and handler routines.
@@ -40,7 +40,7 @@ int
 npf_test_load(const void *xml)
 {
 	prop_dictionary_t npf_dict = prop_dictionary_internalize(xml);
-	return npfctl_reload(0, npf_dict);
+	return npfctl_load(0, npf_dict);
 }
 
 ifnet_t *

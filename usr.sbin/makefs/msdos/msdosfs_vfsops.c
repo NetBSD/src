@@ -50,7 +50,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.7 2013/01/30 19:19:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.7.8.1 2014/08/10 06:59:43 tls Exp $");
 
 #include <sys/param.h>
 
@@ -407,7 +407,7 @@ error_exit:
 		free(pmp);
 	}
 	errno = error;
-	return pmp;
+	return NULL;
 }
 
 int

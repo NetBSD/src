@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.65 2011/04/14 00:59:06 christos Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.65.28.1 2014/08/10 06:54:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.65 2011/04/14 00:59:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.65.28.1 2014/08/10 06:54:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.65 2011/04/14 00:59:06 christos Exp
  * Linux directly passes the pointer.
  */
 static int
-linux_pipe_return(struct lwp *l, int *pfds, register_t *retval, int flags)
+linux_pipe_return(struct lwp *l, int *pfds, register_t *retval)
 {
 	int error;
 
@@ -78,10 +78,6 @@ linux_pipe_return(struct lwp *l, int *pfds, register_t *retval, int flags)
 	} else {
 		if ((error = copyout(retval, pfds, 2 * sizeof(*pfds))))
 			return error;
-	}
-	if (flags & LINUX_O_CLOEXEC) {
-		fd_set_exclose(l, retval[0], true);
-		fd_set_exclose(l, retval[1], true);
 	}
 	retval[0] = 0;
 	return 0;
@@ -99,7 +95,7 @@ linux_sys_pipe(struct lwp *l, const struct linux_sys_pipe_args *uap,
 	if ((error = pipe1(l, retval, 0)))
 		return error;
 
-	return linux_pipe_return(l, SCARG(uap, pfds), retval, 0);
+	return linux_pipe_return(l, SCARG(uap, pfds), retval);
 }
 
 int
@@ -110,23 +106,14 @@ linux_sys_pipe2(struct lwp *l, const struct linux_sys_pipe2_args *uap,
 		syscallarg(int *) pfds;
 		syscallarg(int) flags;
 	} */
-	int error;
-	int flag = 0;
+	int error, flags;
 
-	switch (SCARG(uap, flags)) {
-	case LINUX_O_CLOEXEC:
-		break;
-	case LINUX_O_NONBLOCK:
-	case LINUX_O_NONBLOCK|LINUX_O_CLOEXEC:
-		flag = O_NONBLOCK;
-		break;
-	default:
+	flags = linux_to_bsd_ioflags(SCARG(uap, flags));
+	if ((flags & ~(O_CLOEXEC|O_NONBLOCK)) != 0)
 		return EINVAL;
-	}
 
-	if ((error = pipe1(l, retval, flag)))
+	if ((error = pipe1(l, retval, flags)))
 		return error;
 
-	return linux_pipe_return(l, SCARG(uap, pfds), retval,
-	    SCARG(uap, flags));
+	return linux_pipe_return(l, SCARG(uap, pfds), retval);
 }

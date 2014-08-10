@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/03/22 17:57:48 tron Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2014/08/10 07:10:56 tls Exp $
 
 PROG=		gcc
 SRCS=		gccspec.c ${G_GCC_OBJS:.o=.c}
@@ -23,6 +23,8 @@ LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 
 .include "../Makefile.frontend"
+
+${SRCS}: ${GCCARCH}/defs.mk
 
 .include <bsd.info.mk>
 

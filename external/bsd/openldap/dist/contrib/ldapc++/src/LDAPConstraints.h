@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPConstraints.h,v 1.1.1.3 2010/12/12 15:18:45 adam Exp $	*/
+/*	$NetBSD: LDAPConstraints.h,v 1.1.1.3.24.1 2014/08/10 07:09:42 tls Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPConstraints.h,v 1.4.10.2 2010/04/14 23:34:42 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

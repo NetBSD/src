@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/11/11 23:51:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2014/08/10 07:09:11 tls Exp $
 
 LIB=	lldbTarget
 
@@ -11,6 +11,8 @@ CPPFLAGS.Thread.cpp+=	-I${LLDB_SRCDIR}/source/Plugins/Process/Utility
 SRCS+=	ABI.cpp \
 	CPPLanguageRuntime.cpp \
 	ExecutionContext.cpp \
+	JITLoader.cpp \
+	JITLoaderList.cpp \
 	LanguageRuntime.cpp \
 	Memory.cpp \
 	ObjCLanguageRuntime.cpp \
@@ -18,7 +20,11 @@ SRCS+=	ABI.cpp \
 	PathMappingList.cpp \
 	Platform.cpp \
 	Process.cpp \
+	Queue.cpp \
+	QueueItem.cpp \
+	QueueList.cpp \
 	RegisterContext.cpp \
+	SectionLoadHistory.cpp \
 	SectionLoadList.cpp \
 	StackFrame.cpp \
 	StackFrameList.cpp \

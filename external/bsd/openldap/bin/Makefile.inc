@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2013/09/11 23:04:10 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.4.2.1 2014/08/10 07:09:41 tls Exp $
 
 .include "../openldap.mk"
 
@@ -24,7 +24,7 @@ version.c: ../openldap.mk
 LDADD+=	-L${LDAPOBJDIR.lutil} -llutil
 DPADD+=	${LDAPLIB.lutil}
 
-LDADD+= -lldap
+LDADD+= -L${LDAPOBJDIR.ldap} -lldap
 DPADD+= ${LIBLDAP}
 LDADD+=	-llber
 DPADD+=	${LIBLBER}

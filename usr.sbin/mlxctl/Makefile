@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2011/08/14 17:57:44 christos Exp $
+#	$NetBSD: Makefile,v 1.3.18.1 2014/08/10 06:59:51 tls Exp $
 
 PROG=	mlxctl
 SRCS=	cmds.c config.c dklist.c main.c util.c
 MAN=	mlxctl.8
 
-LDADD=	-lkvm
-DPADD=	${LIBKVM}
+LDADD=	-lutil
+DPADD=	${LIButil}
 
 .include <bsd.prog.mk>

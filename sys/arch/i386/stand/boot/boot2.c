@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.62 2014/03/26 17:58:57 christos Exp $	*/
+/*	$NetBSD: boot2.c,v 1.62.2.1 2014/08/10 06:53:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #include <sys/bootblock.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/bootcfg.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libkern/libkern.h>
 
@@ -239,7 +240,7 @@ static void
 clearit(void)
 {
 
-	if (bootconf.clear)
+	if (bootcfg_info.clear)
 		clear_pc_screen();
 }
 
@@ -268,9 +269,10 @@ print_banner(void)
 	clearit();
 #ifndef SMALL
 	int n;
-	if (bootconf.banner[0]) {
-		for (n = 0; bootconf.banner[n] && n < MAXBANNER; n++) 
-			printf("%s\n", bootconf.banner[n]);
+	if (bootcfg_info.banner[0]) {
+		for (n = 0; bootcfg_info.banner[n]
+		    && n < BOOTCFG_MAXBANNER; n++) 
+			printf("%s\n", bootcfg_info.banner[n]);
 	} else {
 #endif /* !SMALL */
 		printf("\n"
@@ -326,9 +328,9 @@ boot2(int biosdev, uint64_t biossector)
 
 #ifndef SMALL
 	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
-		parsebootconf(BOOTCONF);
+		parsebootconf(BOOTCFG_FILENAME);
 	} else {
-		bootconf.timeout = boot_params.bp_timeout;
+		bootcfg_info.timeout = boot_params.bp_timeout;
 	}
 	
 
@@ -336,14 +338,14 @@ boot2(int biosdev, uint64_t biossector)
 	 * If console set in boot.cfg, switch to it.
 	 * This will print the banner, so we don't need to explicitly do it
 	 */
-	if (bootconf.consdev)
-		command_consdev(bootconf.consdev);
+	if (bootcfg_info.consdev)
+		command_consdev(bootcfg_info.consdev);
 	else 
 		print_banner();
 
 	/* Display the menu, if applicable */
 	twiddle_toggle = 0;
-	if (bootconf.nummenu > 0) {
+	if (bootcfg_info.nummenu > 0) {
 		/* Does not return */
 		doboottypemenu();
 	}
@@ -361,7 +363,8 @@ boot2(int biosdev, uint64_t biossector)
 #ifdef SMALL
 		c = awaitkey(boot_params.bp_timeout, 1);
 #else
-		c = awaitkey((bootconf.timeout < 0) ? 0 : bootconf.timeout, 1);
+		c = awaitkey((bootcfg_info.timeout < 0) ? 0
+		    : bootcfg_info.timeout, 1);
 #endif
 		if ((c != '\r') && (c != '\n') && (c != '\0')) {
 		    if ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0) {
@@ -533,7 +536,7 @@ void
 command_menu(char *arg)
 {
 
-	if (bootconf.nummenu > 0) {
+	if (bootcfg_info.nummenu > 0) {
 		/* Does not return */
 		doboottypemenu();
 	} else {

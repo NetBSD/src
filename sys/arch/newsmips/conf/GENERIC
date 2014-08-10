@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.124 2013/06/30 21:38:58 rmind Exp $
+# $NetBSD: GENERIC,v 1.124.4.1 2014/08/10 06:54:04 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.124 $"
+#ident 		"GENERIC-$Revision: 1.124.4.1 $"
 
 maxusers	16
 
@@ -130,6 +130,10 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 options 	NFS_BOOT_BOOTPARAM
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # wscons options
 options 	WSEMUL_VT100		# VT100 / VT220 emulation

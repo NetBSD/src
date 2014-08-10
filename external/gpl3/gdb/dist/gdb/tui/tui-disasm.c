@@ -1,6 +1,6 @@
 /* Disassembly display.
 
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -27,7 +27,7 @@
 #include "value.h"
 #include "source.h"
 #include "disasm.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "tui/tui-win.h"
@@ -121,7 +121,7 @@ tui_find_disassembly_address (struct gdbarch *gdbarch, CORE_ADDR pc, int from)
       pos = max_lines - 1;
       do {
          new_low -= 1 * max_lines;
-         msymbol = lookup_minimal_symbol_by_pc_section (new_low, 0);
+         msymbol = lookup_minimal_symbol_by_pc_section (new_low, 0).minsym;
 
          if (msymbol)
             new_low = SYMBOL_VALUE_ADDRESS (msymbol);

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.14 2014/02/24 16:57:57 christos Exp $	*/
+/*	$NetBSD: int_types.h,v 1.14.2.1 2014/08/10 06:53:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
 #ifndef _ARM_INT_TYPES_H_
 #define _ARM_INT_TYPES_H_
 
+#ifdef __UINTPTR_TYPE__
+#include <sys/common_int_types.h>
+#else
 #include <sys/cdefs.h>
 
 /*
@@ -42,9 +45,6 @@
 
 #ifndef __UINT8_TYPE__
 # define __UINT8_TYPE__		unsigned char
-# ifdef __CHAR_UNSIGNED__
-#  undef __INT8_TYPE__
-# endif
 #endif
 #ifndef __INT8_TYPE__
 # define __INT8_TYPE__		signed char
@@ -68,7 +68,11 @@
 # define __UINT64_TYPE__	unsigned __INT64_TYPE__
 #endif
 
+#ifdef __clang__
+typedef	signed __INT8_TYPE__	   __int8_t;
+#else
 typedef	__INT8_TYPE__		   __int8_t;
+#endif
 typedef	__UINT8_TYPE__		  __uint8_t;
 typedef	__INT16_TYPE__		  __int16_t;
 typedef	__UINT16_TYPE__		 __uint16_t;
@@ -90,5 +94,6 @@ typedef	__UINT64_TYPE__		 __uint64_t;
 
 typedef	__INTPTR_TYPE__		 __intptr_t;
 typedef	__UINTPTR_TYPE__	__uintptr_t;
+#endif
 
 #endif	/* !_ARM_INT_TYPES_H_ */

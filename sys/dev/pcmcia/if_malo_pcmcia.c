@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.4 2014/02/21 02:10:40 christos Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.4.2.1 2014/08/10 06:54:57 tls Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.4 2014/02/21 02:10:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.4.2.1 2014/08/10 06:54:57 tls Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.4 2014/02/21 02:10:40 christos 
 int cmalo_d = 1;
 #define DPRINTF(l, x...)	do { if ((l) <= cmalo_d) printf(x); } while (0)
 #else
-#define DPRINTF(l, x...)
+#define DPRINTF(l, x...)	do {} while (0)
 #endif
 
 static int	malo_pcmcia_match(device_t, cfdata_t, void *);
@@ -1033,7 +1033,7 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	/* prepare TX descriptor */
 	txdesc->pkgoffset = htole32(sizeof(*txdesc));
 	txdesc->pkglen = htole16(m->m_pkthdr.len);
-	memcpy(txdesc->dstaddrhigh, data, ETHER_ADDR_LEN);
+	memcpy(txdesc->dstaddr, data, ETHER_ADDR_LEN);
 
 	/* copy mbuf data to the buffer */
 	m_copydata(m, 0, m->m_pkthdr.len, sc->sc_data + sizeof(*txdesc));

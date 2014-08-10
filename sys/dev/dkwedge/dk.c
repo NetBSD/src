@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.69 2014/04/03 15:24:20 christos Exp $	*/
+/*	$NetBSD: dk.c,v 1.69.2.1 2014/08/10 06:54:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.69 2014/04/03 15:24:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.69.2.1 2014/08/10 06:54:50 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -108,6 +108,7 @@ static dev_type_ioctl(dkioctl);
 static dev_type_strategy(dkstrategy);
 static dev_type_dump(dkdump);
 static dev_type_size(dksize);
+static dev_type_discard(dkdiscard);
 
 const struct bdevsw dk_bdevsw = {
 	.d_open = dkopen,
@@ -116,6 +117,7 @@ const struct bdevsw dk_bdevsw = {
 	.d_ioctl = dkioctl,
 	.d_dump = dkdump,
 	.d_psize = dksize,
+	.d_discard = dkdiscard,
 	.d_flag = D_DISK
 };
 
@@ -130,6 +132,7 @@ const struct cdevsw dk_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = dkdiscard,
 	.d_flag = D_DISK
 };
 
@@ -1336,6 +1339,26 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	return (error);
+}
+
+/*
+ * dkdiscard:		[devsw entry point]
+ *
+ *	Perform a discard-range request on a wedge.
+ */
+static int
+dkdiscard(dev_t dev, off_t pos, off_t len)
+{
+	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+
+	if (sc == NULL)
+		return (ENODEV);
+	if (sc->sc_state != DKW_STATE_RUNNING)
+		return (ENXIO);
+	if (sc->sc_parent->dk_rawvp == NULL)
+		return (ENXIO);
+
+	return VOP_FDISCARD(sc->sc_parent->dk_rawvp, pos, len);
 }
 
 /*

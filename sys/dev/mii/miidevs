@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.118 2014/02/26 04:13:44 ozaki-r Exp $
+$NetBSD: miidevs,v 1.118.2.1 2014/08/10 06:54:53 tls Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -161,6 +161,7 @@ model BROADCOM BCM5462		0x000d BCM5462 1000BASE-T media interface
 model BROADCOM BCM5421		0x000e BCM5421 1000BASE-T media interface
 model BROADCOM BCM5752		0x0010 BCM5752 1000BASE-T media interface
 model BROADCOM BCM5701		0x0011 BCM5701 1000BASE-T media interface
+model BROADCOM BCM5706		0x0015 BCM5706 1000BASE-T/SX media interface
 model BROADCOM BCM5703		0x0016 BCM5703 1000BASE-T media interface
 model BROADCOM BCM5750		0x0018 BCM5750 1000BASE-T media interface
 model BROADCOM BCM5704		0x0019 BCM5704 1000BASE-T media interface
@@ -249,17 +250,30 @@ model LEVEL1 LXT1000_OLD	0x0003 LXT1000 1000BASE-T media interface
 model LEVEL1 LXT1000		0x000c LXT1000 1000BASE-T media interface
 
 /* Marvell Semiconductor PHYs */
+model xxMARVELL E1000		0x0000 Marvell 88E1000 Gigabit PHY
 model xxMARVELL E1011		0x0002 Marvell 88E1011 Gigabit PHY
 model xxMARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
+model xxMARVELL E1000S		0x0004 Marvell 88E1000S Gigabit PHY
 model xxMARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
-model xxMARVELL E6060		0x0008 Marvell 88E6060 10/100 5-port PHY switch
+model xxMARVELL E1101		0x0006 Marvell 88E1101 Gigabit PHY
+model xxMARVELL E3082		0x0008 Marvell 88E3082 10/100 Fast Ethernet PHY
+model xxMARVELL E1112		0x0009 Marvell 88E1112 Gigabit PHY
 model xxMARVELL E1149		0x000b Marvell 88E1149 Gigabit PHY
 model xxMARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
 model xxMARVELL E1145		0x000d Marvell 88E1145 Quad Gigabit PHY
 model xxMARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
+model xxMARVELL E1118		0x0022 Marvell 88E1118 Gigabit PHY
 model xxMARVELL E1116R		0x0024 Marvell 88E1116R Gigabit PHY
+model xxMARVELL E1149R		0x0025 Marvell 88E1149R Quad Gigabit PHY
+model xxMARVELL E3016		0x0026 Marvell 88E3016 10/100 Fast Ethernet PHY
+model xxMARVELL PHYG65G		0x0027 Marvell PHYG65G Gigabit PHY
 model xxMARVELL E1116R_29	0x0029 Marvell 88E1116R Gigabit PHY
 model xxMARVELL E1543		0x002a Marvell 88E1543 Alaska Quad Port Gb PHY
+model MARVELL E1000		0x0000 Marvell 88E1000 Gigabit PHY
+model MARVELL E1011		0x0002 Marvell 88E1011 Gigabit PHY
+model MARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
+model MARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
+model MARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
 
 /* Micrel PHYs */
 model MICREL KSZ9021RNI		0x0021 Micrel KSZ9021RNI 10/100/1000 PHY

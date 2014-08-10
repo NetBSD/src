@@ -1,10 +1,10 @@
-/*	$NetBSD: delete.c,v 1.1.1.3 2010/12/12 15:22:54 adam Exp $	*/
+/*	$NetBSD: delete.c,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
 /* delete.c - bdb backend delete routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.155.2.13 2010/04/19 16:53:03 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -145,6 +145,8 @@ retry:	/* transaction retry */
 	/* begin transaction */
 	rs->sr_err = TXN_BEGIN( bdb->bi_dbenv, NULL, &ltid, 
 		bdb->bi_db_opflags );
+	Debug( LDAP_DEBUG_TRACE, LDAP_XSTRING(bdb_delete) ": txn1 id: %x\n",
+		ltid->id(ltid), 0, 0 );
 	rs->sr_text = NULL;
 	if( rs->sr_err != 0 ) {
 		Debug( LDAP_DEBUG_TRACE,
@@ -370,6 +372,8 @@ retry:	/* transaction retry */
 		rs->sr_text = "internal error";
 		goto return_results;
 	}
+	Debug( LDAP_DEBUG_TRACE, LDAP_XSTRING(bdb_delete) ": txn2 id: %x\n",
+		lt2->id(lt2), 0, 0 );
 
 	BDB_LOG_PRINTF( bdb->bi_dbenv, lt2, "slapd Starting delete %s(%d)",
 		e->e_nname.bv_val, e->e_id );

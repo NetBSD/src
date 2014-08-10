@@ -1,4 +1,4 @@
-.\" $NetBSD: 2.t,v 1.1 2007/12/18 03:35:52 garbled Exp $
+.\" $NetBSD: 2.t,v 1.1.46.1 2014/08/10 06:53:14 tls Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -56,7 +56,8 @@ available hardware
 .PP
 .I Config
 allows multiple system images to be generated from a single
-configuration description.  Each system image is configured
+configuration description.
+Each system image is configured
 for identical hardware, but may have different locations for the root
 file system and, possibly, other system devices.
 .NH 2
@@ -69,7 +70,8 @@ indicates if the system is going to operate on a DEC VAX-11\(dg computer,
 \(dg DEC, VAX, UNIBUS, MASSBUS and MicroVAX are trademarks of Digital
 Equipment Corporation.
 .FE
-or some other machine on which 4.4BSD operates.  The machine type
+or some other machine on which NetBSD operates.
+The machine type
 is used to locate certain data files which are machine specific, and
 also to select rules used in constructing the resultant
 configuration files.
@@ -85,7 +87,8 @@ be running on a VAX 8600, VAX-11/780, VAX-11/750, VAX-11/730 or MicroVAX II.
 the cpu designation for compatible machines introduced earlier.)
 Specifying
 more than one cpu type implies that the system should be configured to run
-on any of the cpu's specified.  For some types of machines this is not
+on any of the cpu's specified.
+For some types of machines this is not
 possible and 
 .I config
 will print a diagnostic indicating such.
@@ -95,11 +98,15 @@ System identification
 The
 .I "system identification"
 is a moniker attached to the system, and often the machine on which the
-system is to run.  For example, at Berkeley we have machines named Ernie
-(Co-VAX), Kim (No-VAX), and so on.  The system identifier selected is used to
+system is to run.
+For example, at Berkeley we have machines named Ernie
+(Co-VAX), Kim (No-VAX), and so on.
+The system identifier selected is used to
 create a global C ``#define'' which may be used to isolate system dependent
-pieces of code in the kernel.  For example, Ernie's Varian driver used
-to be special cased because its interrupt vectors were wired together.  The
+pieces of code in the kernel.
+For example, Ernie's Varian driver used
+to be special cased because its interrupt vectors were wired together.
+The
 code in the driver which understood how to handle this non-standard hardware
 configuration was conditionally compiled in only if the system
 was for Ernie.  
@@ -112,8 +119,10 @@ Timezone
 .PP
 The timezone in which the system is to run is used to define the
 information returned by the \fIgettimeofday\fP\|(2)
-system call.  This value is specified as the number of hours east
-or west of GMT.  Negative numbers indicate a value east of GMT.
+system call.
+This value is specified as the number of hours east
+or west of GMT.
+Negative numbers indicate a value east of GMT.
 The timezone specification may also indicate the
 type of daylight savings time rules to be applied.
 .NH 2
@@ -122,7 +131,8 @@ Maximum number of users
 The system allocates many system data structures at boot time
 based on the maximum number of users the system will support.
 This number is normally between 8 and 40, depending
-on the hardware and expected job mix.  The rules
+on the hardware and expected job mix.
+The rules
 used to calculate system data structures are discussed in
 Appendix D.
 .NH 2
@@ -130,7 +140,8 @@ Root file system location
 .PP
 When the system boots it must know the location of
 the root of the file system
-tree.  This location and the part(s) of the disk(s) to be used
+tree.
+This location and the part(s) of the disk(s) to be used
 for paging and swapping must be specified in order to create
 a complete configuration description.  
 .I Config
@@ -138,20 +149,25 @@ uses many rules to calculate default locations for these items;
 these are described in Appendix B.
 .PP
 When a generic system is configured, the root file system is left
-undefined until the system is booted.  In this case, the root file
+undefined until the system is booted.
+In this case, the root file
 system need not be specified, only that the system is a generic system.
 .NH 2
 Hardware devices
 .PP
 When the system boots it goes through an
 .I autoconfiguration
-phase.  During this period, the system searches for all
+phase.
+During this period, the system searches for all
 those hardware devices
-which the system builder has indicated might be present.  This probing
+which the system builder has indicated might be present.
+This probing
 sequence requires certain pieces of information such as register
-addresses, bus interconnects, etc.  A system's hardware may be configured
+addresses, bus interconnects, etc.
+A system's hardware may be configured
 in a very flexible manner or be specified without any flexibility
-whatsoever.  Most people do not configure hardware devices into the
+whatsoever.
+Most people do not configure hardware devices into the
 system unless they are currently present on the machine, expect
 them to be present in the near future, or are simply guarding
 against a hardware
@@ -160,8 +176,10 @@ extra disks in case an emergency requires moving one off a machine which
 has hardware problems).
 .PP
 The specification of hardware devices usually occupies the majority of
-the configuration file.  As such, a large portion of this document will
-be spent understanding it.  Section 6.3 contains a description of
+the configuration file.
+As such, a large portion of this document will
+be spent understanding it.
+Section 6.3 contains a description of
 the autoconfiguration process, as it applies to those planning to
 write, or modify existing, device drivers.
 .NH 2
@@ -179,11 +197,14 @@ System options
 Other than the mandatory pieces of information described above, it
 is also possible to include various optional system facilities
 or to modify system behavior and/or limits.
-For example, 4.4BSD can be configured to support binary compatibility for
-programs built under 4.3BSD.  Also, optional support is provided
+For example, NetBSD can be configured to support binary compatibility for
+programs built under Linux and FreeBSD.
+Also, optional support is provided
 for disk quotas and tracing the performance of the virtual memory
-subsystem.  Any optional facilities to be configured into
-the system are specified in the configuration file.  The resultant
+subsystem.
+Any optional facilities to be configured into
+the system are specified in the configuration file.
+The resultant
 files generated by
 .I config
 will automatically include the necessary pieces of the system.

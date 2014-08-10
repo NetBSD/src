@@ -1,5 +1,4 @@
-/*	$NetBSD: base64.c,v 1.5 2013/03/27 00:38:08 christos Exp $	*/
-
+/*	$NetBSD: base64.c,v 1.5.8.1 2014/08/10 07:06:55 tls Exp $	*/
 /*
  * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
@@ -24,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: base64.c,v 1.5 2013/03/27 00:38:08 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.5.8.1 2014/08/10 07:06:55 tls Exp $");
 
 /*
  * Portions Copyright (c) 1995 by International Business Machines, Inc.
@@ -52,7 +51,7 @@ __RCSID("$NetBSD: base64.c,v 1.5 2013/03/27 00:38:08 christos Exp $");
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: base64.c,v 1.5.6.1 2009/11/20 01:49:01 sar Exp ";
+static const char rcsid[] = "Id: base64.c,v 1.6 2009/11/24 02:06:56 sar Exp ";
 #endif /* not lint */
 
 #include <sys/types.h>

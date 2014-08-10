@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -60,6 +60,11 @@ trace_i915_gem_evict_everything(struct drm_device *dev __unused)
 }
 
 static inline void
+trace_i915_gem_evict_vm(struct i915_address_space *vm __unused)
+{
+}
+
+static inline void
 trace_i915_gem_object_bind(struct drm_i915_gem_object *obj __unused,
     bool map_and_fenceable __unused)
 {
@@ -116,8 +121,7 @@ trace_i915_gem_request_add(struct intel_ring_buffer *ring __unused,
 }
 
 static inline void
-trace_i915_gem_request_complete(struct intel_ring_buffer *ring __unused,
-    uint32_t seqno __unused)
+trace_i915_gem_request_complete(struct intel_ring_buffer *ring __unused)
 {
 }
 
@@ -152,8 +156,14 @@ trace_i915_gem_ring_flush(struct intel_ring_buffer *ring __unused,
 }
 
 static inline void
+trace_i915_gem_ring_sync_to(struct intel_ring_buffer *from __unused,
+    struct intel_ring_buffer *to __unused, u32 seqno __unused)
+{
+}
+
+static inline void
 trace_i915_reg_rw(bool write __unused, uint32_t reg __unused,
-    uint64_t value __unused, size_t len __unused)
+    uint64_t value __unused, size_t len __unused, bool trace __unused)
 {
 }
 
@@ -164,6 +174,16 @@ trace_i915_ring_wait_begin(struct intel_ring_buffer *ring __unused)
 
 static inline void
 trace_i915_ring_wait_end(struct intel_ring_buffer *ring __unused)
+{
+}
+
+static inline void
+trace_i915_vma_bind(struct i915_vma *vma __unused, uint64_t flags __unused)
+{
+}
+
+static inline void
+trace_i915_vma_unbind(struct i915_vma *vma __unused)
 {
 }
 

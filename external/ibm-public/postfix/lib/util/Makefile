@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/09/25 19:25:08 tron Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2014/08/10 07:12:50 tls Exp $
 
 LIBISPRIVATE=	yes
 
@@ -28,7 +28,7 @@ SRCS=	alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	mymalloc.c myrand.c mystrtok.c name_code.c name_mask.c netstring.c \
 	neuter.c non_blocking.c nvtable.c open_as.c open_limit.c open_lock.c \
 	peekfd.c percentm.c posix_signals.c printable.c rand_sleep.c \
-	read_wait.c readable.c readlline.c ring.c safe_getenv.c safe_open.c \
+	readlline.c ring.c safe_getenv.c safe_open.c \
 	sane_accept.c sane_connect.c sane_link.c sane_rename.c \
 	sane_socketpair.c sane_time.c scan_dir.c set_eugid.c set_ugid.c \
 	sigdelay.c skipblanks.c sock_addr.c spawn_command.c split_at.c \
@@ -38,14 +38,14 @@ SRCS=	alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	translit.c trimblanks.c unescape.c unix_connect.c unix_listen.c \
 	unix_recv_fd.c unix_send_fd.c unix_trigger.c unsafe.c uppercase.c \
 	username.c valid_hostname.c vbuf.c vbuf_print.c vstream.c \
-	vstream_popen.c vstring.c vstring_vstream.c watchdog.c writable.c \
-	write_buf.c write_wait.c sane_basename.c format_tv.c allspace.c \
+	vstream_popen.c vstring.c vstring_vstream.c watchdog.c \
+	write_buf.c sane_basename.c format_tv.c allspace.c \
 	allascii.c load_file.c killme_after.c vstream_tweak.c edit_file.c \
 	inet_windowsize.c unix_pass_fd_fix.c dict_cache.c dict_thash.c \
 	ip_match.c nbbio.c valid_utf_8.c myrand.c base32_code.c dict_fail.c \
 	dict_surrogate.c dict_test.c msg_rate_delay.c warn_stat.c \
 	dict_sockmap.c line_number.c pass_accept.c pass_trigger.c \
-	recv_pass_attr.c
+	recv_pass_attr.c slmdb.c dict_lmdb.c poll_fd.c timecmp.c
 
 COPTS.unix_recv_fd.c = -Wno-stack-protector
 COPTS.unix_send_fd.c = -Wno-stack-protector

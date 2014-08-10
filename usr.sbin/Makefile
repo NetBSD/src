@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.268 2013/11/28 22:34:44 christos Exp $
+#	$NetBSD: Makefile,v 1.268.2.1 2014/08/10 07:04:09 tls Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -25,7 +25,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.lockd \
 	rpc.pcnfsd rpc.statd rpcbind rwhod \
 	sa screenblank sdpd services_mkdb sesd schedctl sliplogin spray \
-	srtconfig sti sunlabel sup syslogd \
+	srtconfig sti sunlabel sup sysinst syslogd \
 	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
 	unlink usbdevs user \
 	videomode vipw veriexecgen vnconfig \

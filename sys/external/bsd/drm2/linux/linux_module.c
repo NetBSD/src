@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_module.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.2.2.1 2014/08/10 06:55:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,58 +30,100 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.2.2.1 2014/08/10 06:55:40 tls Exp $");
 
 #include <sys/module.h>
+#ifndef _MODULE
+#include <sys/once.h>
+#endif
 
 #include <linux/highmem.h>
+#include <linux/idr.h>
+#include <linux/io.h>
 #include <linux/mutex.h>
+#include <linux/reservation.h>
 #include <linux/workqueue.h>
 
 MODULE(MODULE_CLASS_MISC, drmkms_linux, NULL);
 
-#ifndef _MODULE
-/*
- * XXX Mega-kludge.  See drm_init in drm_drv.c for details.
- */
-int linux_suppress_init = 0;
+DEFINE_WW_CLASS(reservation_ww_class __cacheline_aligned);
+
+static int
+linux_init(void)
+{
+	int error;
+
+	error = linux_idr_module_init();
+	if (error) {
+		printf("linux: unable to initialize idr: %d\n", error);
+		goto fail0;
+	}
+
+	error = linux_kmap_init();
+	if (error) {
+		printf("linux: unable to initialize kmap: %d\n", error);
+		goto fail1;
+	}
+
+	error = linux_workqueue_init();
+	if (error) {
+		printf("linux: unable to initialize workqueues: %d\n", error);
+		goto fail2;
+	}
+
+	error = linux_writecomb_init();
+	if (error) {
+		printf("linux: unable to initialize write-combining: %d\n",
+		    error);
+		goto fail3;
+	}
+
+	return 0;
+
+fail4: __unused
+	linux_writecomb_fini();
+fail3:	linux_workqueue_fini();
+fail2:	linux_kmap_fini();
+fail1:	linux_idr_module_fini();
+fail0:	return error;
+}
+
+int	linux_guarantee_initialized(void); /* XXX */
+int
+linux_guarantee_initialized(void)
+{
+#ifdef _MODULE
+	return 0;
+#else
+	static ONCE_DECL(linux_init_once);
+
+	return RUN_ONCE(&linux_init_once, &linux_init);
 #endif
+}
+
+static void
+linux_fini(void)
+{
+
+	linux_writecomb_fini();
+	linux_workqueue_fini();
+	linux_kmap_fini();
+}
 
 static int
 drmkms_linux_modcmd(modcmd_t cmd, void *arg __unused)
 {
-	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-#ifndef _MODULE
-		if (linux_suppress_init)
-			return 0;
+#ifdef _MODULE
+		return linux_init();
+#else
+		return linux_guarantee_initialized();
 #endif
-		error = linux_kmap_init();
-		if (error) {
-			aprint_error("drmkms_linux:"
-			    " unable to initialize linux kmap: %d",
-			    error);
-			goto init_fail0;
-		}
-		error = linux_workqueue_init();
-		if (error) {
-			aprint_error("drmkms_linux:"
-			    " unable to initialize workqueues: %d",
-			    error);
-			goto init_fail1;
-		}
-		return 0;
-
-init_fail1:	linux_kmap_fini();
-init_fail0:	return error;
-
 	case MODULE_CMD_FINI:
-		linux_workqueue_fini();
-		linux_kmap_fini();
+		linux_fini();
 		return 0;
-
 	default:
 		return ENOTTY;
 	}

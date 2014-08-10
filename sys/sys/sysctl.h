@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.211 2014/02/25 18:30:13 pooka Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.211.2.1 2014/08/10 06:56:55 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1143,6 +1143,7 @@ typedef int (*sysctlfn)(SYSCTLFN_PROTO);
  * used in more than just sysctl
  */
 void	fill_eproc(struct proc *, struct eproc *, bool);
+void	fill_kproc2(struct proc *, struct kinfo_proc2 *, bool);
 
 /*
  * subsystem setup
@@ -1261,6 +1262,8 @@ int	sysctlgetmibinfo(const char *, int *, u_int *,
 int	sysctlnametomib(const char *, int *, size_t *);
 int	proc_compare(const struct kinfo_proc2 *, const struct kinfo_lwp *,
     const struct kinfo_proc2 *, const struct kinfo_lwp *);
+void	*asysctl(const int *, size_t, size_t *);
+void	*asysctlbyname(const char *, size_t *);
 __END_DECLS
 
 #endif	/* !_KERNEL */

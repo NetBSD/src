@@ -23,10 +23,10 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
+using namespace llvm;
+
 #define GET_INSTRINFO_CTOR_DTOR
 #include "AMDGPUGenDFAPacketizer.inc"
-
-using namespace llvm;
 
 R600InstrInfo::R600InstrInfo(AMDGPUTargetMachine &tm)
   : AMDGPUInstrInfo(tm),
@@ -677,7 +677,7 @@ findFirstPredicateSetterFrom(MachineBasicBlock &MBB,
       return MI;
   }
 
-  return NULL;
+  return nullptr;
 }
 
 static
@@ -717,8 +717,8 @@ R600InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   }
 
   // Remove successive JUMP
-  while (I != MBB.begin() && llvm::prior(I)->getOpcode() == AMDGPU::JUMP) {
-      MachineBasicBlock::iterator PriorI = llvm::prior(I);
+  while (I != MBB.begin() && std::prev(I)->getOpcode() == AMDGPU::JUMP) {
+      MachineBasicBlock::iterator PriorI = std::prev(I);
       if (AllowModify)
         I->removeFromParent();
       I = PriorI;
@@ -784,7 +784,7 @@ MachineBasicBlock::iterator FindLastAluClause(MachineBasicBlock &MBB) {
       It != E; ++It) {
     if (It->getOpcode() == AMDGPU::CF_ALU ||
         It->getOpcode() == AMDGPU::CF_ALU_PUSH_BEFORE)
-      return llvm::prior(It.base());
+      return std::prev(It.base());
   }
   return MBB.end();
 }
@@ -797,7 +797,7 @@ R600InstrInfo::InsertBranch(MachineBasicBlock &MBB,
                             DebugLoc DL) const {
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
 
-  if (FBB == 0) {
+  if (!FBB) {
     if (Cond.empty()) {
       BuildMI(&MBB, DL, get(AMDGPU::JUMP)).addMBB(TBB);
       return 1;

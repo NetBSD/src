@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.10 2011/09/27 01:01:43 christos Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.10.26.1 2014/08/10 06:55:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.10 2011/09/27 01:01:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.10.26.1 2014/08/10 06:55:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,6 @@ isofncmp(const u_char *fn, size_t fnlen, const u_char *isofn, size_t isolen,
 			case ';':
 				break;
 			}
-			fn++;
 			for (i = 0; fnlen-- != 0; i = i * 10 + *fn++ - '0') {
 				if (*fn < '0' || *fn > '9') {
 					return -1;

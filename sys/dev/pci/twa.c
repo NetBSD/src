@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.49 2014/03/29 19:28:25 christos Exp $ */
+/*	$NetBSD: twa.c,v 1.49.2.1 2014/08/10 06:54:56 tls Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.49 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.49.2.1 2014/08/10 06:54:56 tls Exp $");
 
 //#define TWA_DEBUG
 
@@ -2284,6 +2284,7 @@ const struct cdevsw twa_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

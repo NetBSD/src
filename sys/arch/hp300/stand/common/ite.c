@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.16 2011/02/12 05:08:40 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.16.28.1 2014/08/10 06:53:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,8 @@
 
 #include <hp300/stand/common/grfreg.h>
 #include <hp300/dev/intioreg.h>
+#include <hp300/dev/sgcreg.h>
+#include <dev/ic/stireg.h>
 
 #include <hp300/stand/common/device.h>
 #include <hp300/stand/common/itevar.h>
@@ -59,6 +61,8 @@
 static void iteconfig(void);
 static void ite_clrtoeol(struct ite_data *, struct itesw *, int, int);
 static void itecheckwrap(struct ite_data *, struct itesw *);
+
+#define GID_STI		0x100	/* any value which is not a DIO fb, really */
 
 struct itesw itesw[] = {
 	{ GID_TOPCAT,
@@ -104,6 +108,10 @@ struct itesw itesw[] = {
 	{ GID_A147xVGA,
 	dumb_init,	dumb_clear,	dumb_putc,
 	dumb_cursor,	dumb_scroll },
+
+	{ GID_STI,
+	sti_iteinit_sgc, sti_clear,	sti_putc,
+	sti_cursor,	sti_scroll },
 };
 int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
@@ -118,7 +126,8 @@ int	ite_scode[NITE] = { 0 };
 static void
 iteconfig(void)
 {
-	int dtype, fboff, i;
+	int dtype, fboff, slotno, i;
+	uint8_t *va;
 	struct hp_hw *hw;
 	struct grfreg *gr;
 	struct ite_data *ip;
@@ -164,6 +173,50 @@ iteconfig(void)
 			ip->dheight = ip->fbheight;
 		ip->alive = 1;
 		i++;
+	}
+
+	/*
+	 * Now probe for SGC frame buffers.
+	 */
+	switch (machineid) {
+	case HP_400:
+	case HP_425:
+	case HP_433:
+		break;
+	default:
+		return;
+	}
+
+	/* SGC frame buffers can only be STI... */
+	for (dtype = 0; dtype < __arraycount(itesw); dtype++) {
+		if (itesw[dtype].ite_hwid == GID_STI)
+			break;
+	}
+	if (dtype == __arraycount(itesw))
+		return;
+
+	for (slotno = 0; slotno < SGC_NSLOTS; slotno++) {
+		va = (uint8_t *)IIOV(SGC_BASE + (slotno * SGC_DEVSIZE));
+
+		/* Check to see if hardware exists. */
+		if (badaddr(va) != 0)
+			continue;
+
+		/* Check hardware. */
+		if (va[3] == STI_DEVTYPE1) {
+			if (i >= NITE)
+				break;
+			ip = &ite_data[i];
+			ip->scode = slotno;
+			ip->isw = &itesw[dtype];
+			/* to get CN_MIDPRI */
+			ip->regbase = (uint8_t *)(INTIOBASE + FB_BASE);
+			/* ...and do not need an ite_probe() check */
+			ip->alive = 1;
+			i++;
+			/* we only support one SGC frame buffer at the moment */
+			break;
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1 2013/09/05 15:28:07 skrll Exp $	*/
+/*	$NetBSD: list.h,v 1.1.2.1 2014/08/10 06:55:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -27,6 +27,18 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Notes on porting:
+ *
+ * - LIST_HEAD(x) means a declaration `struct list_head x =
+ *   LIST_HEAD_INIT(x)' in Linux, but something else in NetBSD.
+ *   Replace by the expansion.
+ *
+ * - The `_rcu' routines here are not actually pserialize(9)-safe.
+ *   They need dependent read memory barriers added.  Please fix this
+ *   if you need to use them with pserialize(9).
  */
 
 #ifndef _LINUX_LIST_H_
@@ -77,6 +89,17 @@ static inline int
 list_empty(const struct list_head *head)
 {
 	return (head->next == head);
+}
+
+static inline int
+list_is_singular(const struct list_head *head)
+{
+
+	if (list_empty(head))
+		return false;
+	if (head->next != head->prev)
+		return false;
+	return true;
 }
 
 static inline void
@@ -169,6 +192,8 @@ list_del_init(struct list_head *node)
 #define	list_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
 #define	list_first_entry(PTR, TYPE, FIELD)				\
 	list_entry(list_first((PTR)), TYPE, FIELD)
+#define	list_next_entry(ENTRY, FIELD)					\
+	list_entry(list_next(&(ENTRY)->FIELD), typeof(*(ENTRY)), FIELD)
 
 #define	list_for_each(VAR, HEAD)					\
 	for ((VAR) = list_first((HEAD));				\
@@ -191,6 +216,17 @@ list_del_init(struct list_head *node)
 		(&(VAR)->FIELD != (HEAD)) &&				\
 		    ((NEXT) = list_entry(list_next(&(VAR)->FIELD),	\
 			typeof(*(VAR)), FIELD), 1);			\
+		(VAR) = (NEXT))
+
+#define	list_for_each_entry_continue(VAR, HEAD, FIELD)			\
+	for ((VAR) = list_next_entry((VAR), FIELD);			\
+		&(VAR)->FIELD != (HEAD);				\
+		(VAR) = list_next_entry((VAR), FIELD))
+
+#define	list_for_each_entry_safe_from(VAR, NEXT, HEAD, FIELD)		\
+	for (;								\
+		(&(VAR)->FIELD != (HEAD)) &&				\
+		    ((NEXT) = list_next_entry((VAR), FIELD));		\
 		(VAR) = (NEXT))
 
 /*
@@ -243,11 +279,11 @@ hlist_del_init(struct hlist_node *node)
 #define	hlist_for_each_safe(VAR, NEXT, HEAD)				\
 	LIST_FOREACH_SAFE(VAR, HEAD, hln_entry, NEXT)
 
-#define	hlist_for_each_entry(VAR, HLIST, HEAD, FIELD)			\
-	for ((HLIST) = LIST_FIRST((HEAD));				\
-		((HLIST) != NULL) &&					\
-		    ((VAR) = hlist_entry((HLIST), typeof(*(VAR)), FIELD), 1); \
-		(HLIST) = LIST_NEXT((HLIST), hln_entry))
+#define	hlist_for_each_entry(VAR, HEAD, FIELD)				\
+	for ((VAR) = hlist_entry(LIST_FIRST((HEAD)), typeof(*(VAR)), FIELD);  \
+		&(VAR)->FIELD != NULL;					      \
+	        (VAR) = hlist_entry(LIST_NEXT(&(VAR)->FIELD, hln_entry),      \
+		    typeof(*(VAR)), FIELD))
 
 /*
  * XXX The nominally RCU-safe APIs below lack dependent read barriers,

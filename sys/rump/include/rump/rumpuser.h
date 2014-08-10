@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.110 2014/03/16 15:30:05 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.110.2.1 2014/08/10 06:56:50 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -227,7 +227,6 @@ typedef void (*rump_modinit_fn)(const struct modinfo *const *, size_t);
 typedef int (*rump_symload_fn)(void *, uint64_t, char *, uint64_t);
 typedef void (*rump_compload_fn)(const struct rump_component *);
 void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn, rump_compload_fn);
-void *rumpuser_dl_globalsym(const char *);
 
 /*
  * misc management

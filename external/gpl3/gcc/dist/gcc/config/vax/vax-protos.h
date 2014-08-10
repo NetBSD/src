@@ -18,6 +18,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 extern bool legitimate_constant_address_p (rtx);
+extern bool legitimate_pic_operand_p (rtx);
 extern void vax_expand_prologue (void);
 
 #ifdef RTX_CODE
@@ -28,6 +29,7 @@ extern void print_operand_address (FILE *, rtx);
 extern void print_operand (FILE *, rtx, int);
 extern void vax_notice_update_cc (rtx, rtx);
 extern void vax_expand_addsub_di_operands (rtx *, enum rtx_code);
+extern bool vax_decomposed_dimode_operand_p (rtx, rtx);
 extern const char * vax_output_int_move (rtx, rtx *, enum machine_mode);
 extern const char * vax_output_int_add (rtx, rtx *, enum machine_mode);
 extern const char * vax_output_int_subtract (rtx, rtx *, enum machine_mode);

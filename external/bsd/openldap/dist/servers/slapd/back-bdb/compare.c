@@ -1,10 +1,10 @@
-/*	$NetBSD: compare.c,v 1.1.1.3 2010/12/12 15:22:54 adam Exp $	*/
+/*	$NetBSD: compare.c,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
 /* compare.c - bdb backend compare routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/compare.c,v 1.51.2.8 2010/04/13 20:23:23 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,6 @@ bdb_compare( Operation *op, SlapReply *rs )
 	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	Entry		*e = NULL;
 	EntryInfo	*ei;
-	Attribute	*a;
 	int		manageDSAit = get_manageDSAit( op );
 
 	DB_TXN		*rtxn;
@@ -124,52 +123,7 @@ dn2entry_retry:
 		goto done;
 	}
 
-	if ( get_assert( op ) &&
-		( test_filter( op, e, get_assertion( op )) != LDAP_COMPARE_TRUE ))
-	{
-		if ( !access_allowed( op, e, slap_schema.si_ad_entry,
-			NULL, ACL_DISCLOSE, NULL ) )
-		{
-			rs->sr_err = LDAP_NO_SUCH_OBJECT;
-		} else {
-			rs->sr_err = LDAP_ASSERTION_FAILED;
-		}
-		goto return_results;
-	}
-
-	if ( !access_allowed( op, e, op->oq_compare.rs_ava->aa_desc,
-		&op->oq_compare.rs_ava->aa_value, ACL_COMPARE, NULL ) )
-	{
-		/* return error only if "disclose"
-		 * is granted on the object */
-		if ( !access_allowed( op, e, slap_schema.si_ad_entry,
-					NULL, ACL_DISCLOSE, NULL ) )
-		{
-			rs->sr_err = LDAP_NO_SUCH_OBJECT;
-		} else {
-			rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
-		}
-		goto return_results;
-	}
-
-	rs->sr_err = LDAP_NO_SUCH_ATTRIBUTE;
-
-	for ( a = attrs_find( e->e_attrs, op->oq_compare.rs_ava->aa_desc );
-		a != NULL;
-		a = attrs_find( a->a_next, op->oq_compare.rs_ava->aa_desc ) )
-	{
-		rs->sr_err = LDAP_COMPARE_FALSE;
-
-		if ( attr_valfind( a,
-			SLAP_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH |
-				SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH,
-			&op->oq_compare.rs_ava->aa_value, NULL,
-			op->o_tmpmemctx ) == 0 )
-		{
-			rs->sr_err = LDAP_COMPARE_TRUE;
-			break;
-		}
-	}
+	rs->sr_err = slap_compare_entry( op, e, op->orc_ava );
 
 return_results:
 	send_ldap_result( op, rs );

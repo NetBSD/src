@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.38 2013/08/04 07:05:15 kiyohara Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.38.2.1 2014/08/10 06:56:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.38 2013/08/04 07:05:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.38.2.1 2014/08/10 06:56:15 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -353,8 +353,10 @@ eco_interestingp(struct ifnet *ifp, struct mbuf *m)
 static void
 eco_input(struct ifnet *ifp, struct mbuf *m)
 {
+	pktqueue_t *pktq = NULL;
 	struct ifqueue *inq;
 	struct eco_header ehdr, *eh;
+	int isr = 0;
 	int s;
 #ifdef INET
 	int i;
@@ -380,8 +382,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 	case ECO_PORT_IP:
 		switch (eh->eco_control) {
 		case ECO_CTL_IP:
-			schednetisr(NETISR_IP);
-			inq = &ipintrq;
+			pktq = ip_pktq;
 			break;
 		case ECO_CTL_ARP_REQUEST:
 		case ECO_CTL_ARP_REPLY:
@@ -426,7 +427,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 			memcpy(ar_tpa(ah), ecah->ecar_tpa, ah->ar_pln);
 			m_freem(m);
 			m = m1;
-			schednetisr(NETISR_ARP);
+			isr = NETISR_ARP;
 			inq = &arpintrq;
 			break;
 		case ECO_CTL_IPBCAST_REQUEST:
@@ -472,12 +473,21 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
+	if (__predict_true(pktq)) {
+		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			m_freem(m);
+		}
+		return;
+	}
+
 	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);
-	} else
+	} else {
 		IF_ENQUEUE(inq, m);
+		schednetisr(isr);
+	}
 	splx(s);
 }
 

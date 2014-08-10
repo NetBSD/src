@@ -1,11 +1,10 @@
-/*	$NetBSD: hash.c,v 1.1.1.1 2013/03/24 15:45:57 christos Exp $	*/
-
+/*	$NetBSD: hash.c,v 1.1.1.1.8.1 2014/08/10 07:06:56 tls Exp $	*/
 /* hash.c
 
    Routines for manipulating hash tables... */
 
 /*
- * Copyright (c) 2009-2010 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009-2010,2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
@@ -27,16 +26,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.1.1.1 2013/03/24 15:45:57 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.1.1.1.8.1 2014/08/10 07:06:56 tls Exp $");
 
 #include "dhcpd.h"
 

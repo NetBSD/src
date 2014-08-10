@@ -1,4 +1,4 @@
-/*	$NetBSD: split_nameval.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: split_nameval.c,v 1.1.1.1.26.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -70,14 +70,17 @@ const char *split_nameval(char *buf, char **name, char **value)
     /*
      * Ugly macros to make complex expressions less unreadable.
      */
-#define SKIP(start, var, cond) \
-	for (var = start; *var && (cond); var++);
+#define SKIP(start, var, cond) do { \
+	for (var = start; *var && (cond); var++) \
+	    /* void */; \
+    } while (0)
 
-#define TRIM(s) { \
+#define TRIM(s) do { \
 	char *p; \
-	for (p = (s) + strlen(s); p > (s) && ISSPACE(p[-1]); p--); \
+	for (p = (s) + strlen(s); p > (s) && ISSPACE(p[-1]); p--) \
+	    /* void */; \
 	*p = 0; \
-    }
+    } while (0)
 
     SKIP(buf, np, ISSPACE(*np));		/* find name begin */
     if (*np == 0)

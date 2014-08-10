@@ -1,9 +1,9 @@
-/*	$NetBSD: perl_back.h,v 1.1.1.3 2010/12/12 15:23:21 adam Exp $	*/
+/*	$NetBSD: perl_back.h,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-perl/perl_back.h,v 1.15.2.5 2010/04/13 20:23:37 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -48,6 +48,10 @@ extern ldap_pvt_thread_mutex_t  perl_interpreter_mutex;
 /* All the old style variables are prefixed with PL_ now */
 # define errgv	PL_errgv
 # define na	PL_na
+#else
+# define call_method(m, f)	perl_call_method(m, f)
+# define eval_pv(m, f)	perl_eval_pv(m, f)
+# define ERRSV	GvSV(errgv)
 #endif
 
 #if defined( HAVE_WIN32_ASPERL ) || defined( USE_ITHREADS )
@@ -59,13 +63,16 @@ extern ldap_pvt_thread_mutex_t  perl_interpreter_mutex;
 # define PERL_INTERPRETER			perl_interpreter
 # define PERL_BACK_XS_INIT_PARAMS		void
 # define PERL_BACK_BOOT_DYNALOADER_PARAMS	CV *cv
+# define PERL_SET_CONTEXT(i)
 #endif
 
 extern PerlInterpreter *PERL_INTERPRETER;
 
 
 typedef struct perl_backend_instance {
-	char	*pb_module_name;
+	char *pb_module_name;
+	BerVarray pb_module_path;
+	BerVarray pb_module_config;
 	SV	*pb_obj_ref;
 	int	pb_filter_search_results;
 } PerlBackend;

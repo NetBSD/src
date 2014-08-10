@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.3 2014/03/07 01:33:43 christos Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.3.2.1 2014/08/10 06:54:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.3 2014/03/07 01:33:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.3.2.1 2014/08/10 06:54:33 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
-#define	MODDEPS	"compat"
+# define	DEPS1	"compat"
 #else
-#define	MODDEPS	"compat,ksem"
+# define	DEPS1	"compat,ksem"
 #endif
 
 #ifndef ELFSIZE
@@ -51,10 +51,16 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.3 2014/03/07 01:33:43 christos Ex
 #include <compat/netbsd32/netbsd32_sysctl.h>
 #include <compat/netbsd32/netbsd32_exec.h>
 
+#if defined(EXEC_ELF32)
+# define	DEPS2	",exec_elf32"
+#else
+# define	DEPS2	""
+#endif
+
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
 
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32, MODDEPS);
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32, DEPS1 DEPS2);
 
 static struct execsw netbsd32_execsw[] = {
 #ifdef EXEC_AOUT
@@ -81,7 +87,7 @@ static struct execsw netbsd32_execsw[] = {
 			.elf_probe_func = netbsd32_elf32_probe,
 		},
 		.es_emul = &emul_netbsd32,
-		.es_prio = EXECSW_PRIO_FIRST,
+		.es_prio = EXECSW_PRIO_ANY,
 		.es_arglen = ELF32_AUXSIZE,
 		.es_copyargs = netbsd32_elf32_copyargs,
 		.es_setregs = NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.13 2013/11/30 21:07:59 joerg Exp $	*/
+/*	$NetBSD: profile.h,v 1.13.2.1 2014/08/10 06:53:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -77,6 +77,47 @@
 	 * Restore registers that were trashed during mcount		\
 	 */								\
 	__asm("pop	{r0-r3, pc}");					\
+	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
+#elif defined(__ARM_DWARF_EH__)
+#define	MCOUNT								\
+	__asm(".text");							\
+	__asm(".align	0");						\
+	__asm(".arm");							\
+	__asm(".type	" MCOUNT_ASM_NAME ",%function");		\
+	__asm(".global	" MCOUNT_ASM_NAME);				\
+	__asm(MCOUNT_ASM_NAME ":");					\
+	__asm(".cfi_startproc");					\
+	/*								\
+	 * Preserve registers that are trashed during mcount		\
+	 */								\
+	__asm("push	{r0-r4, ip, lr}");				\
+	__asm(".cfi_def_cfa_offset 24");				\
+	__asm(".cfi_offset 14, -4");					\
+	__asm(".cfi_offset 4, -8");					\
+	__asm(".cfi_offset 3, -12");					\
+	__asm(".cfi_offset 2, -16");					\
+	__asm(".cfi_offset 1, -20");					\
+	__asm(".cfi_offset 0, -24");					\
+	/*								\
+	 * find the return address for mcount,				\
+	 * and the return address for mcount's caller.			\
+	 *								\
+	 * frompcindex = pc pushed by call into self.			\
+	 */								\
+	__asm("mov	r0, ip");					\
+	/*								\
+	 * selfpc = pc pushed by mcount call				\
+	 */								\
+	__asm("mov	r1, lr");					\
+	/*								\
+	 * Call the real mcount code					\
+	 */								\
+	__asm("bl	" ___STRING(_C_LABEL(_mcount)) PLTSYM);		\
+	/*								\
+	 * Restore registers that were trashed during mcount		\
+	 */								\
+	__asm("pop	{r0-r4, lr, pc}");				\
+	__asm(".cfi_endproc");						\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
 #else
 #define	MCOUNT								\

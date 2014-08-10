@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.12 2014/03/01 22:49:08 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.12.2.1 2014/08/10 07:06:35 tls Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -87,6 +87,10 @@
 #include <dns/time.h>
 
 #include <dst/dst.h>
+
+#ifdef PKCS11CRYPTO
+#include <pk11/result.h>
+#endif
 
 #include "dnssectool.h"
 
@@ -3138,6 +3142,9 @@ main(int argc, char *argv[]) {
 	if (result != ISC_R_SUCCESS)
 		fatal("out of memory");
 
+#ifdef PKCS11CRYPTO
+	pk11_result_register();
+#endif
 	dns_result_register();
 
 	isc_commandline_errprint = ISC_FALSE;

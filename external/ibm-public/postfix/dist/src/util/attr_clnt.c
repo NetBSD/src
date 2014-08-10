@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_clnt.c,v 1.1.1.1 2009/06/23 10:08:58 tron Exp $	*/
+/*	$NetBSD: attr_clnt.c,v 1.1.1.1.26.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -87,6 +87,7 @@
 #include <htable.h>
 #include <attr.h>
 #include <iostuff.h>
+#include <compat_va_copy.h>
 #include <auto_clnt.h>
 #include <attr_clnt.h>
 
@@ -127,6 +128,7 @@ int     attr_clnt_request(ATTR_CLNT *client, int send_flags,...)
     const char *myname = "attr_clnt_request";
     VSTREAM *stream;
     int     count = 0;
+    va_list saved_ap;
     va_list ap;
     int     type;
     int     recv_flags;
@@ -149,17 +151,19 @@ int     attr_clnt_request(ATTR_CLNT *client, int send_flags,...)
 	(void) va_arg(ap, t2); \
     }
 
+    /* Finalize argument lists before returning. */
+    va_start(saved_ap, send_flags);
     for (;;) {
 	errno = 0;
 	if ((stream = auto_clnt_access(client->auto_clnt)) != 0
 	    && readable(vstream_fileno(stream)) == 0) {
 	    errno = 0;
-	    va_start(ap, send_flags);
+	    VA_COPY(ap, saved_ap);
 	    err = (client->print(stream, send_flags, ap) != 0
 		   || vstream_fflush(stream) != 0);
 	    va_end(ap);
 	    if (err == 0) {
-		va_start(ap, send_flags);
+		VA_COPY(ap, saved_ap);
 		while ((type = va_arg(ap, int)) != ATTR_TYPE_END) {
 		    switch (type) {
 		    case ATTR_TYPE_STR:
@@ -185,8 +189,9 @@ int     attr_clnt_request(ATTR_CLNT *client, int send_flags,...)
 		recv_flags = va_arg(ap, int);
 		ret = client->scan(stream, recv_flags, ap);
 		va_end(ap);
+		/* Finalize argument lists before returning. */
 		if (ret > 0)
-		    return (ret);
+		    break;
 	    }
 	}
 	if (++count >= 2
@@ -194,11 +199,17 @@ int     attr_clnt_request(ATTR_CLNT *client, int send_flags,...)
 	    || (errno && errno != EPIPE && errno != ENOENT && errno != ECONNRESET))
 	    msg_warn("problem talking to server %s: %m",
 		     auto_clnt_name(client->auto_clnt));
-	if (count >= 2)
-	    return (-1);
+	/* Finalize argument lists before returning. */
+	if (count >= 2) {
+	    ret = -1;
+	    break;
+	}
 	sleep(1);				/* XXX make configurable */
 	auto_clnt_recover(client->auto_clnt);
     }
+    /* Finalize argument lists before returning. */
+    va_end(saved_ap);
+    return (ret);
 }
 
 /* attr_clnt_control - fine control */

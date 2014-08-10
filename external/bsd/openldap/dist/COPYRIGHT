@@ -1,4 +1,4 @@
-Copyright 1998-2010 The OpenLDAP Foundation
+Copyright 1998-2014 The OpenLDAP Foundation
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@ Additional information about OpenLDAP can be obtained at
 
 ---
 
-Portions Copyright 1998-2008 Kurt D. Zeilenga.
+Portions Copyright 1998-2012 Kurt D. Zeilenga.
 Portions Copyright 1998-2006 Net Boolean Incorporated.
 Portions Copyright 2001-2006 IBM Corporation.
 All rights reserved.
@@ -39,8 +39,8 @@ Public License.
 Portions Copyright 1999-2008 Howard Y.H. Chu.
 Portions Copyright 1999-2008 Symas Corporation.
 Portions Copyright 1998-2003 Hallvard B. Furuseth.
-Portions Copyright 2008-2009 Gavin Henry.
-Portions Copyright 2008-2009 Suretec Systems Ltd.
+Portions Copyright 2007-2011 Gavin Henry.
+Portions Copyright 2007-2011 Suretec Systems Ltd.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.58 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.58.2.1 2014/08/10 06:54:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.58 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.58.2.1 2014/08/10 06:54:50 tls Exp $");
 
 #include "sequencer.h"
 
@@ -167,6 +167,7 @@ const struct cdevsw sequencer_cdevsw = {
 	.d_poll = sequencerpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = sequencerkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 static LIST_HEAD(, sequencer_softc) sequencers = LIST_HEAD_INITIALIZER(sequencers);
@@ -1605,6 +1606,7 @@ const struct cdevsw midi_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

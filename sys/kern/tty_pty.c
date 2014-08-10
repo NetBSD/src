@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.138 2014/04/04 18:11:58 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.138.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.138 2014/04/04 18:11:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.138.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include "opt_ptm.h"
+
+#define TTY_ALLOW_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +121,7 @@ const struct cdevsw ptc_cdevsw = {
 	.d_poll = ptcpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ptckqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 
@@ -133,6 +136,7 @@ const struct cdevsw pts_cdevsw = {
 	.d_poll = ptspoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 
@@ -153,6 +157,7 @@ const struct cdevsw ptc_ultrix_cdevsw = {
 	.d_poll = ptcpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ptckqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 
@@ -167,6 +172,7 @@ const struct cdevsw pts_ultrix_cdevsw = {
 	.d_poll = ptspoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 #endif /* defined(pmax) */

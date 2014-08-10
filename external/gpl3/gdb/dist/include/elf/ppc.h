@@ -176,7 +176,8 @@ END_RELOC_NUMBERS (R_PPC_max)
 #define DT_PPC_GOT		(DT_LOPROC)
 
 /* Specify that tls descriptors should be optimized.  */
-#define DT_PPC_TLSOPT		(DT_LOPROC + 1)
+#define DT_PPC_OPT		(DT_LOPROC + 1)
+#define PPC_OPT_TLS		1
 
 /* Processor specific flags for the ELF header e_flags field.  */
 

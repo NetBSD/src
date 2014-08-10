@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.39 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.39.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.39 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.39.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,5 +167,6 @@ const struct cdevsw ctty_cdevsw = {
 	.d_poll = cttypoll,
 	.d_mmap = nommap,
 	.d_kqfilter = cttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };

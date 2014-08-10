@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.64 2012/09/24 03:05:53 msaitoh Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.64.10.1 2014/08/10 06:56:15 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.64 2012/09/24 03:05:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.64.10.1 2014/08/10 06:56:15 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -524,9 +524,11 @@ arc_isphds(uint8_t type)
 static void
 arc_input(struct ifnet *ifp, struct mbuf *m)
 {
+	pktqueue_t *pktq = NULL;
 	struct arc_header *ah;
 	struct ifqueue *inq;
 	uint8_t atype;
+	int isr = 0;
 	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -553,19 +555,17 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 #ifdef INET
 	case ARCTYPE_IP:
 		m_adj(m, ARC_HDRNEWLEN);
-		schednetisr(NETISR_IP);
-		inq = &ipintrq;
+		pktq = ip_pktq;
 		break;
 
 	case ARCTYPE_IP_OLD:
 		m_adj(m, ARC_HDRLEN);
-		schednetisr(NETISR_IP);
-		inq = &ipintrq;
+		pktq = ip_pktq;
 		break;
 
 	case ARCTYPE_ARP:
 		m_adj(m, ARC_HDRNEWLEN);
-		schednetisr(NETISR_ARP);
+		isr = NETISR_ARP;
 		inq = &arpintrq;
 #ifdef ARCNET_ALLOW_BROKEN_ARP
 		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_IP);
@@ -574,7 +574,7 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 
 	case ARCTYPE_ARP_OLD:
 		m_adj(m, ARC_HDRLEN);
-		schednetisr(NETISR_ARP);
+		isr = NETISR_ARP;
 		inq = &arpintrq;
 #ifdef ARCNET_ALLOW_BROKEN_ARP
 		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_IP);
@@ -584,8 +584,7 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 #ifdef INET6
 	case ARCTYPE_INET6:
 		m_adj(m, ARC_HDRNEWLEN);
-		schednetisr(NETISR_IPV6);
-		inq = &ip6intrq;
+		pktq = ip6_pktq;
 		break;
 #endif
 	default:
@@ -594,11 +593,20 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	s = splnet();
+	if (__predict_true(pktq)) {
+		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			m_freem(m);
+		}
+		splx(s);
+		return;
+	}
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);
-	} else
+	} else {
 		IF_ENQUEUE(inq, m);
+		schednetisr(isr);
+	}
 	splx(s);
 }
 

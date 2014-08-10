@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.5 2014/01/25 13:49:27 njoly Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.5.2.1 2014/08/10 06:54:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,5 +88,11 @@
 #define LINUX_SO_WIFI_STATUS	41
 #define LINUX_SO_PEEK_OFF	42
 #define LINUX_SO_NOFCS		43
+
+/*
+ * Flags for socket().
+ * These are provided in the "type" parameter.
+ */
+#define LINUX_SOCK_NONBLOCK	0x40000000
 
 #endif /* !_ALPHA_LINUX_SOCKET_H */

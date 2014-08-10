@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.17 2014/03/01 23:03:58 christos Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.17.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
-
 /*! \file */
 
 /*
@@ -28,6 +26,10 @@
 #include <config.h>
 
 /* #define inline */
+
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h> /* uintptr_t */
+#endif
 
 #include <isc/crc64.h>
 #include <isc/event.h>
@@ -98,7 +100,7 @@
 #define CHECK(op) \
 	do { result = (op); \
 		if (result != ISC_R_SUCCESS) goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*
  * This is the map file header for RBTDB images.  It is populated, and then
@@ -748,16 +750,25 @@ static unsigned int init_count;
 #ifdef DEBUG
 static void
 hexdump(const char *desc, unsigned char *data, size_t size) {
-	char hexdump[BUFSIZ];
+	char hexdump[BUFSIZ * 2 + 1];
 	isc_buffer_t b;
 	isc_region_t r;
+	isc_result_t result;
+	size_t bytes;
 
-	isc_buffer_init(&b, hexdump, sizeof(hexdump));
-	r.base = data;
-	r.length = size;
-	isc_hex_totext(&r, 0, "", &b);
-	isc_buffer_putuint8(&b, 0);
-	fprintf(stderr, "%s: %s\n", desc, hexdump);
+	fprintf(stderr, "%s: ", desc);
+	do {
+		isc_buffer_init(&b, hexdump, sizeof(hexdump));
+		r.base = data;
+		r.length = bytes = (size > BUFSIZ) ? BUFSIZ : size;
+		result = isc_hex_totext(&r, 0, "", &b);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		isc_buffer_putuint8(&b, 0);
+		fprintf(stderr, "%s", hexdump);
+		data += bytes;
+		size -= bytes;
+	} while (size > 0);
+	fprintf(stderr, "\n");
 }
 #endif
 
@@ -5949,8 +5960,8 @@ add(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, rbtdb_version_t *rbtversion,
 					(newheader->type == sigtype &&
 					topheader->type ==
 					RBTDB_RDATATYPE_VALUE(0, covers))) {
-					break;
-				}
+						break;
+					}
 			}
 			if (topheader != NULL && EXISTS(topheader) &&
 			    topheader->rdh_ttl >= now) {

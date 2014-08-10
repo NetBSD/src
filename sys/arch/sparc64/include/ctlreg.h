@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.60 2013/12/16 20:17:35 palle Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.60.2.1 2014/08/10 06:54:08 tls Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -54,6 +54,8 @@
 
 #define	ASI_PHYS_CACHED_LITTLE		0x1c	/* [4u] MMU bypass to main memory, little endian */
 #define	ASI_PHYS_NON_CACHED_LITTLE	0x1d	/* [4u] MMU bypass to I/O location, little endian */
+
+#define ASI_MMU				0x21	/* [4v] MMU context control - both IMMU and DMMU */
 
 #define	ASI_NUCLEUS_QUAD_LDD		0x24	/* [4u] use w/LDDA to load 128-bit item */
 #define	ASI_NUCLEUS_QUAD_LDD_LITTLE	0x2c	/* [4u] use w/LDDA to load 128-bit item, little endian */

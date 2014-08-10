@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.8 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.8.2.1 2014/08/10 07:06:35 tls Exp $	*/
 
 /*
  * Copyright (C) 2008-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -108,7 +108,7 @@ static const char *dnssecstats_xmldesc[dns_dnssecstats_max];
 #define dnssecstats_xmldesc NULL
 #endif	/* HAVE_LIBXML2 */
 
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
 
 /*%
  * Mapping arrays to represent statistics counters in the order of our
@@ -321,6 +321,7 @@ init_desc(void) {
 	SET_RESSTATDESC(sitin, "SIT replies received", "SitIn");
 	SET_RESSTATDESC(sitok, "SIT client cookie ok", "SitClientOk");
 #endif
+	SET_RESSTATDESC(badvers, "bad EDNS version", "BadEDNSVersion");
 
 	INSIST(i == dns_resstatscounter_max);
 
@@ -337,7 +338,7 @@ init_desc(void) {
 		set_desc(dns_adbstats_ ## id, dns_adbstats_max, \
 			 desc, adbstats_desc, xmldesc, adbstats_xmldesc); \
 		adbstats_index[i++] = dns_adbstats_ ## id; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 	i = 0;
 	SET_ADBSTATDESC(nentries, "Address hash table size", "nentries");
 	SET_ADBSTATDESC(entriescnt, "Addresses in hash table", "entriescnt");
@@ -1421,7 +1422,7 @@ render_xml_mem(const char *url, isc_httpdurl_t *urlinfo,
 		result = ISC_R_NOMEMORY;\
 		goto error;\
 	} \
-} while(0)
+} while(/*CONSTCOND*/0)
 
 static void
 wrap_jsonfree(isc_buffer_t *buffer, void *arg) {

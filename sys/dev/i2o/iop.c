@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.85 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: iop.c,v 1.85.2.1 2014/08/10 06:54:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.85 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.85.2.1 2014/08/10 06:54:51 tls Exp $");
 
 #include "iop.h"
 
@@ -106,6 +106,7 @@ const struct cdevsw iop_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
 

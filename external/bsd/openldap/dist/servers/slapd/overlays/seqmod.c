@@ -1,9 +1,9 @@
-/*	$NetBSD: seqmod.c,v 1.1.1.3 2010/12/12 15:23:43 adam Exp $	*/
+/*	$NetBSD: seqmod.c,v 1.1.1.3.24.1 2014/08/10 07:09:51 tls Exp $	*/
 
 /* seqmod.c - sequenced modifies */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2010 The OpenLDAP Foundation.
+ * Copyright 2004-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

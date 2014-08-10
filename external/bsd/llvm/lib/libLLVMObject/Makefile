@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/03/04 21:05:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2014/08/10 07:09:09 tls Exp $
 
 LIB=	LLVMObject
 NOGCCERROR=	yes
@@ -20,6 +20,7 @@ SRCS+=	Archive.cpp \
 	MachOUniversal.cpp \
 	Object.cpp \
 	ObjectFile.cpp \
+	StringTableBuilder.cpp \
 	SymbolicFile.cpp \
 	YAML.cpp
 

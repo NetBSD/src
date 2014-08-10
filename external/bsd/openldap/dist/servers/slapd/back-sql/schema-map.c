@@ -1,9 +1,9 @@
-/*	$NetBSD: schema-map.c,v 1.1.1.3 2010/12/12 15:23:26 adam Exp $	*/
+/*	$NetBSD: schema-map.c,v 1.1.1.3.24.1 2014/08/10 07:09:50 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/schema-map.c,v 1.59.2.10 2010/04/13 20:23:43 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -162,7 +162,12 @@ backsql_make_attr_query(
 	at_map->bam_query = bb.bb_val.bv_val;
 
 #ifdef BACKSQL_COUNTQUERY
-	/* Query to count how many rows will be returned. */
+	/* Query to count how many rows will be returned.
+
+	SELECT COUNT(*) FROM <from_tbls> WHERE <keytbl>.<keycol>=?
+		[ AND <join_where> ]
+
+	 */
 	BER_BVZERO( &bb.bb_val );
 	bb.bb_len = 0;
 	backsql_strfcat_x( &bb, NULL, "lblbcbl", 
@@ -196,7 +201,7 @@ backsql_add_sysmaps( backsql_info *bi, backsql_oc_map_rec *oc_map )
 	struct berbuf		bb;
 	
 	sbv.bv_val = s;
-	sbv.bv_len = snprintf( s, sizeof( s ), "%ld", oc_map->bom_id );
+	sbv.bv_len = snprintf( s, sizeof( s ), BACKSQL_IDNUMFMT, oc_map->bom_id );
 
 	/* extra objectClasses */
 	at_map = (backsql_at_map_rec *)ch_calloc(1, 
@@ -239,7 +244,7 @@ backsql_add_sysmaps( backsql_info *bi, backsql_oc_map_rec *oc_map )
 			"INSERT INTO ldap_entry_objclasses "
 			"(entry_id,oc_name) VALUES "
 			"((SELECT id FROM ldap_entries "
-			"WHERE oc_map_id=%lu "
+			"WHERE oc_map_id=" BACKSQL_IDNUMFMT " "
 			"AND keyval=?),?)", oc_map->bom_id );
 		at_map->bam_add_proc = ch_strdup( tmp );
 	}
@@ -253,7 +258,7 @@ backsql_add_sysmaps( backsql_info *bi, backsql_oc_map_rec *oc_map )
 		snprintf( tmp, sizeof(tmp), 
 			"DELETE FROM ldap_entry_objclasses "
 			"WHERE entry_id=(SELECT id FROM ldap_entries "
-			"WHERE oc_map_id=%lu "
+			"WHERE oc_map_id=" BACKSQL_IDNUMFMT " "
 			"AND keyval=?) AND oc_name=?",
 			oc_map->bom_id );
 		at_map->bam_delete_proc = ch_strdup( tmp );
@@ -294,7 +299,7 @@ struct backsql_attr_schema_info {
 	backsql_info	*bas_bi;
 	SQLHDBC		bas_dbh;
 	SQLHSTMT	bas_sth;
-	unsigned long	*bas_oc_id;
+	backsql_key_t	*bas_oc_id;
 	int		bas_rc;
 };
 
@@ -314,7 +319,7 @@ backsql_oc_get_attr_mapping( void *v_oc, void *v_bas )
 		"executing at_query\n"
 		"    \"%s\"\n"
 		"    for objectClass \"%s\"\n"
-		"    with param oc_id=\"%lu\"\n",
+		"    with param oc_id=" BACKSQL_IDNUMFMT "\n",
 		bas->bas_bi->sql_at_query,
 		BACKSQL_OC_NAME( oc_map ),
 		*bas->bas_oc_id );
@@ -325,7 +330,7 @@ backsql_oc_get_attr_mapping( void *v_oc, void *v_bas )
 			"error executing at_query\n"
 			"    \"%s\"\n"
 			"    for objectClass \"%s\"\n"
-			"    with param oc_id=\"%lu\"\n",
+			"    with param oc_id=" BACKSQL_IDNUMFMT "\n",
 			bas->bas_bi->sql_at_query,
 			BACKSQL_OC_NAME( oc_map ),
 			*bas->bas_oc_id );
@@ -500,7 +505,7 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 	SQLHSTMT 			sth = SQL_NULL_HSTMT;
 	RETCODE				rc;
 	BACKSQL_ROW_NTS			oc_row;
-	unsigned long			oc_id;
+	backsql_key_t			oc_id;
 	backsql_oc_map_rec		*oc_map;
 	struct backsql_attr_schema_info	bas;
 
@@ -566,10 +571,12 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 				{ 1, "name" },
 				{ 2, "keytbl" },
 				{ 3, "keycol" },
-				{ delete_proc_idx + 1, "expect_return" },
+				{ -1, "expect_return" },
 				{ -1, NULL },
 			};
 			int i;
+
+			required[4].idx = delete_proc_idx + 1;
 
 			for ( i = 0; required[ i ].name != NULL; i++ ) {
 				if ( oc_row.value_len[ required[ i ].idx ] <= 0 ) {
@@ -611,7 +618,7 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 		oc_map = (backsql_oc_map_rec *)ch_calloc( 1,
 				sizeof( backsql_oc_map_rec ) );
 
-		if ( lutil_atoulx( &oc_map->bom_id, oc_row.cols[ 0 ], 0 ) != 0 ) {
+		if ( BACKSQL_STR2ID( &oc_map->bom_id, oc_row.cols[ 0 ], 0 ) != 0 ) {
 			Debug( LDAP_DEBUG_TRACE, "backsql_load_schema_map(): "
 				"unable to parse id=\"%s\"\n", 
 				oc_row.cols[ 0 ], 0, 0 );
@@ -727,7 +734,7 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 		return LDAP_OTHER;
 	}
 
-	rc = backsql_BindParamInt( sth, 1, SQL_PARAM_INPUT, &oc_id );
+	rc = backsql_BindParamNumID( sth, 1, SQL_PARAM_INPUT, &oc_id );
 	if ( rc != SQL_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_load_schema_map(): "
 			"error binding param \"oc_id\" for at_query\n", 0, 0, 0 );
@@ -819,7 +826,7 @@ backsql_id2oc( backsql_info *bi, unsigned long id )
  
 #ifdef BACKSQL_TRACE
 	Debug( LDAP_DEBUG_TRACE, "==>oc_with_id(): "
-		"searching for objectclass with id='%d'\n", id, 0, 0 );
+		"searching for objectclass with id=%lu\n", id, 0, 0 );
 #endif /* BACKSQL_TRACE */
 
 	tmp.bom_id = id;
@@ -828,12 +835,12 @@ backsql_id2oc( backsql_info *bi, unsigned long id )
 
 #ifdef BACKSQL_TRACE
 	if ( res != NULL ) {
-		Debug( LDAP_DEBUG_TRACE, "<==oc_with_name(): "
-			"found name=\"%s\", id=%d\n",
+		Debug( LDAP_DEBUG_TRACE, "<==oc_with_id(): "
+			"found name=\"%s\", id=%lu\n",
 			BACKSQL_OC_NAME( res ), res->bom_id, 0 );
 	} else {
-		Debug( LDAP_DEBUG_TRACE, "<==oc_with_name(): "
-			"not found\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_TRACE, "<==oc_with_id(): "
+			"id=%lu not found\n", res->bom_id, 0, 0 );
 	}
 #endif /* BACKSQL_TRACE */
 	

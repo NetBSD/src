@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.133 2014/03/16 05:20:29 dholland Exp $ */
+/* $NetBSD: wskbd.c,v 1.133.2.1 2014/08/10 06:54:59 tls Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.133 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.133.2.1 2014/08/10 06:54:59 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -307,6 +307,7 @@ const struct cdevsw wskbd_cdevsw = {
 	.d_poll = wskbdpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = wskbdkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.c,v 1.1.1.7 2013/09/25 19:06:36 tron Exp $	*/
+/*	$NetBSD: smtpd_proxy.c,v 1.1.1.7.2.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -31,9 +31,6 @@
 /*	SMTPD_STATE *state;
 /*	int	expect;
 /*	const char *format;
-/*
-/*	void	smtpd_proxy_disconnect(state)
-/*	SMTPD_STATE *state;
 /*
 /*	void	smtpd_proxy_free(state)
 /*	SMTPD_STATE *state;
@@ -93,10 +90,6 @@
 /*	error response to avoid support problems.
 /*	In case of error, proxy->cmd() updates the state->error_mask
 /*	and state->err fields.
-/*
-/*	smtpd_proxy_disconnect() disconnects from a proxy server.
-/*	The last proxy server reply or error description remains
-/*	available via the proxy->buffer field.
 /*
 /*	smtpd_proxy_free() destroys a proxy server handle and resets
 /*	the state->proxy field.
@@ -397,7 +390,7 @@ static int smtpd_proxy_connect(SMTPD_STATE *state)
      * Parse the EHLO reply and see if we can forward logging information.
      */
     server_xforward_features = 0;
-    lines = STR(proxy->buffer);
+    lines = STR(proxy->reply);
     while ((words = mystrtok(&lines, "\n")) != 0) {
 	if (mystrtok(&words, "- ") && (word = mystrtok(&words, " \t")) != 0) {
 	    if (strcasecmp(word, XFORWARD_CMD) == 0)
@@ -481,7 +474,7 @@ static void smtpd_proxy_fake_server_reply(SMTPD_STATE *state, int status)
      * response instead.
      */
     detail = cleanup_stat_detail(status);
-    vstring_sprintf(state->proxy->buffer,
+    vstring_sprintf(state->proxy->reply,
 		    "%d %s Error: %s",
 		    detail->smtp, detail->dsn, detail->text);
 }
@@ -701,27 +694,6 @@ static int smtpd_proxy_save_cmd(SMTPD_STATE *state, int expect, const char *fmt,
     return (strcmp(fmt, ".") ? 0 : smtpd_proxy_replay_send(state));
 }
 
-/* smtpd_proxy_cmd_warn - report unexpected proxy reply */
-
-static void smtpd_proxy_cmd_warn(SMTPD_STATE *state, const char *fmt,
-				         va_list ap)
-{
-    SMTPD_PROXY *proxy = state->proxy;
-    VSTRING *buf;
-
-    /*
-     * The command can be omitted at the start of an SMTP session. A null
-     * format string is not documented as part of the official interface
-     * because it is used only internally to this module.
-     */
-    buf = vstring_alloc(100);
-    vstring_vsprintf(buf, fmt == SMTPD_PROXY_CONN_FMT ?
-		     "connection request" : fmt, ap);
-    msg_warn("proxy %s rejected \"%s\": \"%s\"",
-	     proxy->service_name, STR(buf), STR(proxy->buffer));
-    vstring_free(buf);
-}
-
 /* smtpd_proxy_cmd - send command to proxy, receive reply */
 
 static int smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
@@ -753,7 +725,7 @@ static int smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
 	 * Format the command.
 	 */
 	va_start(ap, fmt);
-	vstring_vsprintf(proxy->buffer, fmt, ap);
+	vstring_vsprintf(proxy->request, fmt, ap);
 	va_end(ap);
 
 	/*
@@ -761,13 +733,13 @@ static int smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
 	 * what the program is trying to do.
 	 */
 	if (msg_verbose)
-	    msg_info("> %s: %s", proxy->service_name, STR(proxy->buffer));
+	    msg_info("> %s: %s", proxy->service_name, STR(proxy->request));
 
 	/*
 	 * Send the command to the proxy server. Since we're going to read a
 	 * reply immediately, there is no need to flush buffers.
 	 */
-	smtp_fputs(STR(proxy->buffer), LEN(proxy->buffer),
+	smtp_fputs(STR(proxy->request), LEN(proxy->request),
 		   proxy->service_stream);
     }
 
@@ -785,7 +757,7 @@ static int smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
      * We can't parse or store input that exceeds var_line_limit, so we just
      * skip over it to simplify the remainder of the code below.
      */
-    VSTRING_RESET(proxy->buffer);
+    VSTRING_RESET(proxy->reply);
     if (buffer == 0)
 	buffer = vstring_alloc(10);
     for (;;) {
@@ -803,10 +775,10 @@ static int smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
 	 * Defend against a denial of service attack by limiting the amount
 	 * of multi-line text that we are willing to store.
 	 */
-	if (LEN(proxy->buffer) < var_line_limit) {
-	    if (VSTRING_LEN(proxy->buffer))
-		vstring_strcat(proxy->buffer, "\r\n");
-	    vstring_strcat(proxy->buffer, STR(buffer));
+	if (LEN(proxy->reply) < var_line_limit) {
+	    if (VSTRING_LEN(proxy->reply))
+		vstring_strcat(proxy->reply, "\r\n");
+	    vstring_strcat(proxy->reply, STR(buffer));
 	}
 
 	/*
@@ -835,12 +807,13 @@ static int smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
      * proxy replies. They are a source of support problems, so we replace
      * them by generic server error replies.
      */
-    if (expect != SMTPD_PROX_WANT_ANY && expect != *STR(proxy->buffer)) {
-	va_start(ap, fmt);
-	smtpd_proxy_cmd_warn(state, fmt, ap);
-	va_end(ap);
-	if (*STR(proxy->buffer) == SMTPD_PROX_WANT_OK
-	    || *STR(proxy->buffer) == SMTPD_PROX_WANT_MORE) {
+    if (expect != SMTPD_PROX_WANT_ANY && expect != *STR(proxy->reply)) {
+	msg_warn("proxy %s rejected \"%s\": \"%s\"",
+		 proxy->service_name, fmt == SMTPD_PROXY_CONN_FMT ?
+		 "connection request" : STR(proxy->request),
+		 STR(proxy->reply));
+	if (*STR(proxy->reply) == SMTPD_PROX_WANT_OK
+	    || *STR(proxy->reply) == SMTPD_PROX_WANT_MORE) {
 	    smtpd_proxy_rdwr_error(state, 0);
 	}
 	return (-1);
@@ -1047,10 +1020,10 @@ int     smtpd_proxy_create(SMTPD_STATE *state, int flags, const char *service,
      * When an operation has many arguments it is safer to use named
      * parameters, and have the compiler enforce the argument count.
      */
-#define SMTPD_PROXY_ALLOC(p, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) \
+#define SMTPD_PROXY_ALLOC(p, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) \
 	((p) = (SMTPD_PROXY *) mymalloc(sizeof(*(p))), (p)->a1, (p)->a2, \
 	 (p)->a3, (p)->a4, (p)->a5, (p)->a6, (p)->a7, (p)->a8, (p)->a9, \
-	 (p)->a10, (p)->a11, (p))
+	 (p)->a10, (p)->a11, (p)->a12, (p))
 
     /*
      * Sanity check.
@@ -1063,7 +1036,8 @@ int     smtpd_proxy_create(SMTPD_STATE *state, int flags, const char *service,
      */
     if ((flags & SMTPD_PROXY_FLAG_SPEED_ADJUST) == 0) {
 	state->proxy =
-	    SMTPD_PROXY_ALLOC(proxy, stream = 0, buffer = vstring_alloc(10),
+	    SMTPD_PROXY_ALLOC(proxy, stream = 0, request = vstring_alloc(10),
+			      reply = vstring_alloc(10),
 			      cmd = smtpd_proxy_cmd,
 			      rec_fprintf = smtpd_proxy_rec_fprintf,
 			      rec_put = smtpd_proxy_rec_put,
@@ -1071,7 +1045,7 @@ int     smtpd_proxy_create(SMTPD_STATE *state, int flags, const char *service,
 			      service_name = service, timeout = timeout,
 			      ehlo_name = ehlo_name, mail_from = mail_from);
 	if (smtpd_proxy_connect(state) < 0) {
-	    /* NOT: smtpd_proxy_free(state); we still need proxy->buffer. */
+	    /* NOT: smtpd_proxy_free(state); we still need proxy->reply. */
 	    return (-1);
 	}
 	proxy->stream = proxy->service_stream;
@@ -1092,7 +1066,8 @@ int     smtpd_proxy_create(SMTPD_STATE *state, int flags, const char *service,
 	    return (-1);
 	state->proxy =
 	    SMTPD_PROXY_ALLOC(proxy, stream = smtpd_proxy_replay_stream,
-			      buffer = vstring_alloc(10),
+			      request = vstring_alloc(10),
+			      reply = vstring_alloc(10),
 			      cmd = smtpd_proxy_save_cmd,
 			      rec_fprintf = smtpd_proxy_save_rec_fprintf,
 			      rec_put = smtpd_proxy_save_rec_put,
@@ -1111,18 +1086,14 @@ void    smtpd_proxy_close(SMTPD_STATE *state)
     SMTPD_PROXY *proxy = state->proxy;
 
     /*
-     * XXX We can't send QUIT if the stream is still good, because that would
-     * overwrite the last server reply in proxy->buffer. We probably should
-     * just bite the bullet and allocate separate buffers for sending and
-     * receiving.
+     * Specify SMTPD_PROX_WANT_NONE so that the server reply will not clobber
+     * the END-OF-DATA reply.
      */
     if (proxy->service_stream != 0) {
-#if 0
 	if (vstream_feof(proxy->service_stream) == 0
 	    && vstream_ferror(proxy->service_stream) == 0)
 	    (void) smtpd_proxy_cmd(state, SMTPD_PROX_WANT_NONE,
 				   SMTPD_CMD_QUIT);
-#endif
 	(void) vstream_fclose(proxy->service_stream);
 	if (proxy->stream == proxy->service_stream)
 	    proxy->stream = 0;
@@ -1141,8 +1112,10 @@ void    smtpd_proxy_free(SMTPD_STATE *state)
      */
     if (proxy->service_stream != 0)
 	(void) smtpd_proxy_close(state);
-    if (proxy->buffer != 0)
-	vstring_free(proxy->buffer);
+    if (proxy->request != 0)
+	vstring_free(proxy->request);
+    if (proxy->reply != 0)
+	vstring_free(proxy->reply);
     myfree((char *) proxy);
     state->proxy = 0;
 

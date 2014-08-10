@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.9 2013/11/23 13:35:36 christos Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.9.2.1 2014/08/10 06:55:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.9 2013/11/23 13:35:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.9.2.1 2014/08/10 06:55:54 tls Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -88,6 +88,8 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	DPRINTF("mnt_flag=%x %s\n", mp->mnt_flag, update ? "update" : "");
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof(*args))
 		return EINVAL;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.56 2013/04/27 21:43:43 christos Exp $
+#	$NetBSD: GENERIC,v 1.56.8.1 2014/08/10 06:54:11 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -85,6 +85,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 
 # Compatibility options
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9,
 #options 	COMPAT_10	# NetBSD 1.0,
 #options 	COMPAT_11	# NetBSD 1.1,

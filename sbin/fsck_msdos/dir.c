@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.25 2011/02/20 21:42:50 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.25.20.1 2014/08/10 06:52:54 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.25 2011/02/20 21:42:50 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.25.20.1 2014/08/10 06:52:54 tls Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -420,12 +420,14 @@ checksize(struct bootblock *boot, struct fatEntry *fat, u_char *p,
 		      fullpath(dir));
 		if (ask(1, "Drop superfluous clusters")) {
 			cl_t cl;
-			u_int32_t sz = 0;
+			u_int32_t sz, len;
 
-			for (cl = dir->head; (sz += boot->ClusterSize) < dir->size;)
+			for (cl = dir->head, len = sz = 0;
+			    (sz += boot->ClusterSize) < dir->size; len++)
 				cl = fat[cl].next;
 			clearchain(boot, fat, fat[cl].next);
 			fat[cl].next = CLUST_EOF;
+			fat[dir->head].length = len;
 			return FSFATMOD;
 		} else
 			return FSERROR;

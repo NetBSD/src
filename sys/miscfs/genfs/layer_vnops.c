@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.57 2014/03/24 13:42:40 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.57.2.1 2014/08/10 06:56:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.57 2014/03/24 13:42:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.57.2.1 2014/08/10 06:56:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -694,11 +694,9 @@ layer_reclaim(void *v)
 		 */
 		lmp->layerm_rootvp = NULL;
 	}
+	vcache_remove(vp->v_mount, &lowervp, sizeof(lowervp));
 	/* After this assignment, this node will not be re-used. */
 	xp->layer_lowervp = NULL;
-	mutex_enter(&lmp->layerm_hashlock);
-	LIST_REMOVE(xp, layer_hash);
-	mutex_exit(&lmp->layerm_hashlock);
 	kmem_free(vp->v_data, lmp->layerm_size);
 	vp->v_data = NULL;
 	vrele(lowervp);

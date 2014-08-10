@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndc.8,v 1.5 2014/03/01 03:24:33 christos Exp $
+.\"	$NetBSD: rndc.8,v 1.5.2.1 2014/08/10 07:06:36 tls Exp $
 .\"
 .\" Copyright (C) 2004, 2005, 2007, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001 Internet Software Consortium.
@@ -22,11 +22,11 @@
 .\"     Title: rndc
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
-.\"      Date: June 7, 2013
+.\"      Date: February 07, 2014
 .\"    Manual: BIND9
 .\"    Source: BIND9
 .\"
-.TH "RNDC" "8" "June 7, 2013" "BIND9" "BIND9"
+.TH "RNDC" "8" "February 07, 2014" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -35,7 +35,7 @@
 rndc \- name server control utility
 .SH "SYNOPSIS"
 .HP 5
-\fBrndc\fR [\fB\-b\ \fR\fB\fIsource\-address\fR\fR] [\fB\-c\ \fR\fB\fIconfig\-file\fR\fR] [\fB\-k\ \fR\fB\fIkey\-file\fR\fR] [\fB\-s\ \fR\fB\fIserver\fR\fR] [\fB\-p\ \fR\fB\fIport\fR\fR] [\fB\-V\fR] [\fB\-y\ \fR\fB\fIkey_id\fR\fR] {command}
+\fBrndc\fR [\fB\-b\ \fR\fB\fIsource\-address\fR\fR] [\fB\-c\ \fR\fB\fIconfig\-file\fR\fR] [\fB\-k\ \fR\fB\fIkey\-file\fR\fR] [\fB\-s\ \fR\fB\fIserver\fR\fR] [\fB\-p\ \fR\fB\fIport\fR\fR] [\fB\-q\fR] [\fB\-V\fR] [\fB\-y\ \fR\fB\fIkey_id\fR\fR] {command}
 .SH "DESCRIPTION"
 .PP
 \fBrndc\fR
@@ -96,6 +96,11 @@ configuration file will be used.
 Send commands to TCP port
 \fIport\fR
 instead of BIND 9's default control channel port, 953.
+.RE
+.PP
+\-q
+.RS 4
+Quiet mode: Message text returned by the server will not be printed except when there is an error.
 .RE
 .PP
 \-V
@@ -386,7 +391,7 @@ command.)
 .PP
 \fBsigning \fR\fB[( \-list | \-clear \fIkeyid/algorithm\fR | \-clear all | \-nsec3param ( \fIparameters\fR | none ) ) ]\fR\fB \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR\fB \fR
 .RS 4
-List, edit, or remove the DNSSEC signing state for the specified zone. The status of ongoing DNSSEC operations (such as signing or generating NSEC3 chains) is stored in the zone in the form of DNS resource records of type
+List, edit, or remove the DNSSEC signing state records for the specified zone. The status of ongoing DNSSEC operations (such as signing or generating NSEC3 chains) is stored in the zone in the form of DNS resource records of type
 \fBsig\-signing\-type\fR.
 \fBrndc signing \-list\fR
 converts these records into a human\-readable form, indicating which keys are currently signing or have finished signing the zone, and which NSEC3 chains are being created or removed.
@@ -411,7 +416,10 @@ or
 \fBiterations\fR
 defines the number of additional times to apply the algorithm when generating an NSEC3 hash. The
 \fBsalt\fR
-is a string of data expressed in hexadecimal, or a hyphen (`\-') if no salt is to be used.
+is a string of data expressed in hexadecimal, a hyphen (`\-') if no salt is to be used, or the keyword
+auto, which causes
+\fBnamed\fR
+to generate a random 64\-bit salt.
 .sp
 So, for example, to create an NSEC3 chain using the SHA\-1 hash algorithm, no opt\-out flag, 10 iterations, and a salt value of "FFFF", use:
 \fBrndc signing \-nsec3param 1 0 10 FFFF \fR\fB\fIzone\fR\fR. To set the opt\-out flag, 15 iterations, and no salt, use:

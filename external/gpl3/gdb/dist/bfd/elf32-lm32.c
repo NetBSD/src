@@ -875,12 +875,12 @@ lm32_elf_relocate_section (bfd *output_bfd,
         {
           /* It's a global symbol.  */
           bfd_boolean unresolved_reloc;
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 	  name = h->root.root.string;
         }
 
@@ -1305,6 +1305,10 @@ lm32_elf_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       /* Some relocs require a global offset table.  */
@@ -1741,7 +1745,9 @@ lm32_elf_finish_dynamic_symbol (bfd *output_bfd,
 }
 
 static enum elf_reloc_type_class
-lm32_elf_reloc_type_class (const Elf_Internal_Rela *rela)
+lm32_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			   const asection *rel_sec ATTRIBUTE_UNUSED,
+			   const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {
@@ -2621,26 +2627,6 @@ lm32_elf_always_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 }
 
 static bfd_boolean
-lm32_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
-{
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
-
-  BFD_ASSERT (!elf_flags_init (obfd)
-	      || elf_elfheader (obfd)->e_flags == elf_elfheader (ibfd)->e_flags);
-
-  elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
-  elf_flags_init (obfd) = TRUE;
-
-  /* Copy object attributes.  */
-  _bfd_elf_copy_obj_attributes (ibfd, obfd);
-
-  return TRUE;
-}
-
-
-static bfd_boolean
 lm32_elf_fdpic_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   unsigned i;
@@ -2649,7 +2635,7 @@ lm32_elf_fdpic_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return TRUE;
 
-  if (! lm32_elf_copy_private_bfd_data (ibfd, obfd))
+  if (! _bfd_elf_copy_private_bfd_data (ibfd, obfd))
     return FALSE;
 
   if (! elf_tdata (ibfd) || ! elf_tdata (ibfd)->phdr

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.12 2014/01/02 08:21:38 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.12.2.1 2014/08/10 06:52:40 tls Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -74,7 +74,11 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 	}
 	request->hr_authrealm = bozostrdup(httpd, dir);
 
-	snprintf(authfile, sizeof(authfile), "%s/%s", dir, AUTH_FILE);
+	if ((size_t)snprintf(authfile, sizeof(authfile), "%s/%s", dir, AUTH_FILE) >= 
+	  sizeof(authfile)) {
+		return bozo_http_error(httpd, 404, request,
+			"authfile path too long");
+	}
 	if (stat(authfile, &sb) < 0) {
 		debug((httpd, DEBUG_NORMAL,
 		    "bozo_auth_check realm `%s' dir `%s' authfile `%s' missing",

@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.147 2014/04/05 17:06:44 tron Exp $
+# $NetBSD: HACKS,v 1.147.2.1 2014/08/10 07:03:02 tls Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -815,6 +815,18 @@ port	i386
 		the i387 FPU without rounding the intermediate results
 	kcah
 
+port	x86
+	hack	turn off optimization for biosdisk_ll.c because otherwise
+		we are pass the wrong arguments to biosdisk_read(). 
+		$ cd /usr/src/sys/arch/i386/floppies/bootflopp-com
+		$ qemu-system-i386 -nographic -fda boot-com1.fs -boot a
+	who	christos
+	file	src/sys/arch/i386/stand/lib/Makefile : 1.38
+	descr
+		Turning on DISK_DEBUG shows the problem. We should find
+		out which option is causing this.
+	hcah
+
 port	powerpc
 
 	hack	avoid using __builtin_return_address(0) because it fails in
@@ -949,3 +961,24 @@ port	hp700
 	descr
 		workaround for unanalysed codegen bug affecting md5c.c.
 	kcah
+
+port	mips64*
+hack	compiler crashes on mips64* with optimization enabled
+cdate	Tue May 13 18:46:48 UTC 2014
+who	macallan
+file	src/external/lgpl3/gmp/lib/libgmp/arch/mips64eb/Makefile.inc: 1.6
+	src/external/lgpl3/gmp/lib/libgmp/arch/mips64eb/config.h: 1.5
+	src/external/lgpl3/gmp/lib/libgmp/arch/mips64el/Makefile.inc: 1.6
+	src/external/lgpl3/gmp/lib/libgmp/arch/mips64el/config.h: 1.5
+descr	workaround for n32 gcc doing unaligned 64bit accesses when optimizing
+pr	48696
+kcah
+
+port	vax
+hack	compile boot with -O1
+cdate	Sat May 24 09:40:58 CEST 2014
+who	martin
+file	src/sys/arch/vax/boot/boot/Makefile: 1.41
+descr	/boot does not work when compiled with -O2 and gcc 4.8
+kcah
+

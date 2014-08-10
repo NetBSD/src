@@ -213,9 +213,6 @@ namespace clang {
       /// types and decls used within the AST file.
       DECLTYPES_BLOCK_ID,
 
-      /// \brief The block containing DECL_UPDATES records.
-      DECL_UPDATES_BLOCK_ID,
-      
       /// \brief The block containing the detailed preprocessing record.
       PREPROCESSOR_DETAIL_BLOCK_ID,
       
@@ -284,7 +281,14 @@ namespace clang {
       HEADER_SEARCH_OPTIONS = 11,
 
       /// \brief Record code for the preprocessor options table.
-      PREPROCESSOR_OPTIONS = 12
+      PREPROCESSOR_OPTIONS = 12,
+
+      /// \brief Record code for the module name.
+      MODULE_NAME = 13,
+
+      /// \brief Record code for the module map file that was used to build this
+      /// AST file.
+      MODULE_MAP_FILE = 14
     };
 
     /// \brief Record types that occur within the input-files block
@@ -538,7 +542,10 @@ namespace clang {
       UNDEFINED_BUT_USED = 49,
 
       /// \brief Record code for late parsed template functions.
-      LATE_PARSED_TEMPLATE = 50
+      LATE_PARSED_TEMPLATE = 50,
+
+      /// \brief Record code for \#pragma optimize options.
+      OPTIMIZE_PRAGMA_OPTIONS = 51
     };
 
     /// \brief Record types used within a source manager block.

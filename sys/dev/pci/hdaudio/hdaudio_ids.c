@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_ids.c,v 1.7 2013/12/17 17:13:46 jakllsch Exp $ */
+/* $NetBSD: hdaudio_ids.c,v 1.7.2.1 2014/08/10 06:54:57 tls Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.7 2013/12/17 17:13:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.7.2.1 2014/08/10 06:54:57 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -267,7 +267,7 @@ hdaudio_id2name(uint16_t vendor, uint16_t product, char *buf, size_t len)
 	if (name)
 		snprintf(buf, len - 1, "%s", name);
 	else if (product == HDA_PRODUCT_ANY)
-		snprintf(buf, len - 1, "vendor %04x", vendor);
+		snprintf(buf, len - 1, "vendor 0x%04x", vendor);
 	else
-		snprintf(buf, len - 1, "product %04x", product);
+		snprintf(buf, len - 1, "product 0x%04x", product);
 }

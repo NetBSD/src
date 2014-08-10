@@ -1,4 +1,4 @@
-/*	$NetBSD: devnull.c,v 1.5 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: devnull.c,v 1.5.2.1 2014/08/10 06:56:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.5 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.5.2.1 2014/08/10 06:56:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -56,6 +56,7 @@ static struct cdevsw null_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

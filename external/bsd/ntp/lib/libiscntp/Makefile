@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2014/01/23 14:06:28 joerg Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2014/08/10 07:09:33 tls Exp $
 
 LIBISPRIVATE=yes
 
@@ -43,8 +43,6 @@ SRCS=   assertions.c               \
         time.c                     \
         sockaddr.c
 
-.if !defined(HAVE_GCC) || ${HAVE_GCC} >= 45
 COPTS.log.c+=	-Wno-error=format-nonliteral
-.endif
 
 .include <bsd.lib.mk>

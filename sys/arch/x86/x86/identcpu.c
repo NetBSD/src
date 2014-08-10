@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.44 2014/03/24 20:06:33 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.44.2.1 2014/08/10 06:54:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.44 2014/03/24 20:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.44.2.1 2014/08/10 06:54:11 tls Exp $");
 
 #include "opt_xen.h"
 
@@ -666,6 +666,9 @@ cpu_probe_vortex86(struct cpu_info *ci)
 		break;
 	case 0x33504d44:
 		strcpy(cpu_brand_string, "Vortex86MX");
+		break;
+	case 0x37504d44:
+		strcpy(cpu_brand_string, "Vortex86EX");
 		break;
 	default:
 		strcpy(cpu_brand_string, "Unknown Vortex86");

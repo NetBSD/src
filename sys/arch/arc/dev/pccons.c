@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.60 2014/03/16 05:20:22 dholland Exp $	*/
+/*	$NetBSD: pccons.c,v 1.60.2.1 2014/08/10 06:53:50 tls Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.60 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.60.2.1 2014/08/10 06:53:50 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -196,6 +196,7 @@ const struct cdevsw pc_cdevsw = {
 	.d_poll = pcpoll,
 	.d_mmap = pcmmap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

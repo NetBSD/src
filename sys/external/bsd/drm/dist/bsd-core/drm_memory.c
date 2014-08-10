@@ -146,7 +146,8 @@ drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 			{
 				dev->pci_map_data[i].mapped--;
 #if NAGP_I810 > 0 /* XXX horrible kludge: agp might have mapped it */
-				if (agp_i810_borrow(map->offset, &map->bsh))
+				if (agp_i810_borrow(map->offset, map->size,
+					&map->bsh))
 					return bus_space_vaddr(map->bst, map->bsh);
 #endif
 #if NGENFB > 0

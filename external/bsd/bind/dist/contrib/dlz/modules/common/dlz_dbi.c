@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dbi.c,v 1.1.1.1 2014/02/28 17:40:09 christos Exp $	*/
+/*	$NetBSD: dlz_dbi.c,v 1.1.1.1.2.1 2014/08/10 07:06:40 tls Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -293,13 +293,11 @@ build_querystring(query_list_t *querylist) {
 		tseg = DLZ_LIST_NEXT(tseg, link);
 	}
 
-	/* allocate memory for the string */
 	qs = malloc(length + 1);
-	/* couldn't allocate memory,  We need more ram! */
 	if (qs == NULL)
 		return (NULL);
 
-	*qs = 0;
+	*qs = '\0';
 	/* start at the top of the list again */
 	tseg = DLZ_LIST_HEAD(*querylist);
 	while (tseg != NULL) {

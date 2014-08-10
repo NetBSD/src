@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.1.1.4 2010/12/12 15:22:32 adam Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.4.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.239.2.21 2010/04/13 20:23:16 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -100,6 +100,9 @@ static struct {
 const char Versionstr[] =
 	OPENLDAP_PACKAGE " " OPENLDAP_VERSION " Standalone LDAP Server (slapd)";
 #endif
+
+extern OverlayInit slap_oinfo[];
+extern BackendInfo slap_binfo[];
 
 #define	CHECK_NONE	0x00
 #define	CHECK_CONFIG	0x01
@@ -342,7 +345,8 @@ usage( char *name )
 #if defined(HAVE_SETUID) && defined(HAVE_SETGID)
 		"\t-u user\t\tUser (id or name) to run as\n"
 #endif
-		"\t-V\t\tprint version info (-VV only)\n"
+		"\t-V\t\tprint version info (-VV exit afterwards, -VVV print\n"
+		"\t\t\tinfo about static overlays and backends)\n"
     );
 }
 
@@ -366,6 +370,9 @@ int main( int argc, char **argv )
 	int syslogUser = SLAP_DEFAULT_SYSLOG_USER;
 #endif
 	
+#ifndef HAVE_WINSOCK
+	int pid, waitfds[2];
+#endif
 	int g_argc = argc;
 	char **g_argv = argv;
 
@@ -441,13 +448,13 @@ int main( int argc, char **argv )
 
 		newConfigFile = (char*)lutil_getRegParam( regService, "ConfigFile" );
 		if ( newConfigFile != NULL ) {
-			configfile = newConfigFile;
+			configfile = ch_strdup(newConfigFile);
 			Debug ( LDAP_DEBUG_ANY, "new config file from registry is: %s\n", configfile, 0, 0 );
 		}
 
 		newConfigDir = (char*)lutil_getRegParam( regService, "ConfigDir" );
 		if ( newConfigDir != NULL ) {
-			configdir = newConfigDir;
+			configdir = ch_strdup(newConfigDir);
 			Debug ( LDAP_DEBUG_ANY, "new config dir from registry is: %s\n", configdir, 0, 0 );
 		}
 	}
@@ -680,12 +687,30 @@ unhandled_option:;
 		}
 	}
 
+	if ( optind != argc )
+		goto unhandled_option;
+
 	ber_set_option(NULL, LBER_OPT_DEBUG_LEVEL, &slap_debug);
 	ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &slap_debug);
 	ldif_debug = slap_debug;
 
 	if ( version ) {
 		fprintf( stderr, "%s\n", Versionstr );
+		if ( version > 2 ) {
+			if ( slap_oinfo[0].ov_type ) {
+				fprintf( stderr, "Included static overlays:\n");
+				for ( i= 0 ; slap_oinfo[i].ov_type; i++ ) {
+					fprintf( stderr, "    %s\n", slap_oinfo[i].ov_type );
+				}
+			}
+			if ( slap_binfo[0].bi_type ) {
+				fprintf( stderr, "Included static backends:\n");
+				for ( i= 0 ; slap_binfo[i].bi_type; i++ ) {
+					fprintf( stderr, "    %s\n", slap_binfo[i].bi_type );
+				}
+			}
+		}
+
 		if ( version > 1 ) goto stop;
 	}
 
@@ -828,7 +853,7 @@ unhandled_option:;
 	if( rc != 0) {
 		Debug( LDAP_DEBUG_ANY,
 		    "main: TLS init failed: %d\n",
-		    0, 0, 0 );
+		    rc, 0, 0 );
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
 		goto destroy;
@@ -883,7 +908,26 @@ unhandled_option:;
 #endif
 
 #ifndef HAVE_WINSOCK
-	lutil_detach( no_detach, 0 );
+	if ( !no_detach ) {
+		if ( lutil_pair( waitfds ) < 0 ) {
+			Debug( LDAP_DEBUG_ANY,
+				"main: lutil_pair failed: %d\n",
+				0, 0, 0 );
+			rc = 1;
+			goto destroy;
+		}
+		pid = lutil_detach( no_detach, 0 );
+		if ( pid ) {
+			char buf[4];
+			rc = EXIT_SUCCESS;
+			close( waitfds[1] );
+			if ( read( waitfds[0], buf, 1 ) != 1 )
+				rc = EXIT_FAILURE;
+			_exit( rc );
+		} else {
+			close( waitfds[0] );
+		}
+	}
 #endif /* HAVE_WINSOCK */
 
 #ifdef CSRIMALLOC
@@ -953,6 +997,13 @@ unhandled_option:;
 	}
 
 	Debug( LDAP_DEBUG_ANY, "slapd starting\n", 0, 0, 0 );
+
+#ifndef HAVE_WINSOCK
+	if ( !no_detach ) {
+		write( waitfds[1], "1", 1 );
+		close( waitfds[1] );
+	}
+#endif
 
 #ifdef HAVE_NT_EVENT_LOG
 	if (is_NT_Service)

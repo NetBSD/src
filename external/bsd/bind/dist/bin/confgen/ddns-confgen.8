@@ -1,6 +1,6 @@
-.\"	$NetBSD: ddns-confgen.8,v 1.3 2012/06/05 00:38:50 christos Exp $
+.\"	$NetBSD: ddns-confgen.8,v 1.3.10.1 2014/08/10 07:06:34 tls Exp $
 .\"
-.\" Copyright (C) 2009 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2009, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -21,11 +21,11 @@
 .\"     Title: ddns\-confgen
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
-.\"      Date: Jan 29, 2009
+.\"      Date: March 6, 2014
 .\"    Manual: BIND9
 .\"    Source: BIND9
 .\"
-.TH "DDNS\-CONFGEN" "8" "Jan 29, 2009" "BIND9" "BIND9"
+.TH "DDNS\-CONFGEN" "8" "March 6, 2014" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -33,34 +33,39 @@
 .SH "NAME"
 ddns\-confgen \- ddns key generation tool
 .SH "SYNOPSIS"
+.HP 12
+\fBtsig\-keygen\fR [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-h\fR] [\fB\-r\ \fR\fB\fIrandomfile\fR\fR] [name]
 .HP 13
-\fBddns\-confgen\fR [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-h\fR] [\fB\-k\ \fR\fB\fIkeyname\fR\fR] [\fB\-r\ \fR\fB\fIrandomfile\fR\fR] [\-s\ \fIname\fR | \-z\ \fIzone\fR] [\fB\-q\fR] [name]
+\fBddns\-confgen\fR [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-h\fR] [\fB\-k\ \fR\fB\fIkeyname\fR\fR] [\fB\-q\fR] [\fB\-r\ \fR\fB\fIrandomfile\fR\fR] [\-s\ \fIname\fR | \-z\ \fIzone\fR]
 .SH "DESCRIPTION"
 .PP
+\fBtsig\-keygen\fR
+and
 \fBddns\-confgen\fR
-generates a key for use by
-\fBnsupdate\fR
-and
-\fBnamed\fR. It simplifies configuration of dynamic zones by generating a key and providing the
-\fBnsupdate\fR
-and
-\fBnamed.conf\fR
-syntax that will be needed to use it, including an example
-\fBupdate\-policy\fR
-statement.
+are invokation methods for a utility that generates keys for use in TSIG signing. The resulting keys can be used, for example, to secure dynamic DNS updates to a zone or for the
+\fBrndc\fR
+command channel.
 .PP
-If a domain name is specified on the command line, it will be used in the name of the generated key and in the sample
-\fBnamed.conf\fR
-syntax. For example,
-\fBddns\-confgen example.com\fR
-would generate a key called "ddns\-key.example.com", and sample
-\fBnamed.conf\fR
-command that could be used in the zone definition for "example.com".
+When run as
+\fBtsig\-keygen\fR, a domain name can be specified on the command line which will be used as the name of the generated key. If no name is specified, the default is
+\fBtsig\-key\fR.
+.PP
+When run as
+\fBddns\-confgen\fR, the generated key is accompanied by configuration text and instructions that can be used with
+\fBnsupdate\fR
+and
+\fBnamed\fR
+when setting up dynamic DNS, including an example
+\fBupdate\-policy\fR
+statement. (This usage similar to the
+\fBrndc\-confgen\fR
+command for setting up command channel security.)
 .PP
 Note that
 \fBnamed\fR
 itself can configure a local DDNS key for use with
-\fBnsupdate \-l\fR.
+\fBnsupdate \-l\fR: it does this when a zone is configured with
+\fBupdate\-policy local;\fR.
 \fBddns\-confgen\fR
 is only needed when a more elaborate configuration is required: for instance, if
 \fBnsupdate\fR
@@ -69,13 +74,12 @@ is to be used from a remote system.
 .PP
 \-a \fIalgorithm\fR
 .RS 4
-Specifies the algorithm to use for the TSIG key. Available choices are: hmac\-md5, hmac\-sha1, hmac\-sha224, hmac\-sha256, hmac\-sha384 and hmac\-sha512. The default is hmac\-sha256.
+Specifies the algorithm to use for the TSIG key. Available choices are: hmac\-md5, hmac\-sha1, hmac\-sha224, hmac\-sha256, hmac\-sha384 and hmac\-sha512. The default is hmac\-sha256. Options are case\-insensitive, and the "hmac\-" prefix may be omitted.
 .RE
 .PP
 \-h
 .RS 4
-Prints a short summary of the options and arguments to
-\fBddns\-confgen\fR.
+Prints a short summary of options and arguments.
 .RE
 .PP
 \-k \fIkeyname\fR
@@ -95,7 +99,9 @@ The key name must have the format of a valid domain name, consisting of letters,
 .PP
 \-q
 .RS 4
-Quiet mode: Print only the key, with no explanatory text or usage examples.
+(\fBddns\-confgen\fR
+only.) Quiet mode: Print only the key, with no explanatory text or usage examples; This is essentially identical to
+\fBtsig\-keygen\fR.
 .RE
 .PP
 \-r \fIrandomfile\fR
@@ -111,7 +117,8 @@ indicates that keyboard input should be used.
 .PP
 \-s \fIname\fR
 .RS 4
-Single host mode: The example
+(\fBddns\-confgen\fR
+only.) Generate configuration example to allow dynamic updates of a single hostname. The example
 \fBnamed.conf\fR
 text shows how to set an update policy for the specified
 \fIname\fR
@@ -122,7 +129,8 @@ option.
 .PP
 \-z \fIzone\fR
 .RS 4
-zone mode: The example
+(\fBddns\-confgen\fR
+only.) Generate configuration example to allow dynamic updates of a zone: The example
 \fBnamed.conf\fR
 text shows how to set an update policy for the specified
 \fIzone\fR
@@ -141,5 +149,5 @@ BIND 9 Administrator Reference Manual.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2009 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2009, 2014 Internet Systems Consortium, Inc. ("ISC")
 .br

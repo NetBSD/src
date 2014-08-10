@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.148 2014/03/20 13:34:35 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.148.2.1 2014/08/10 06:56:30 tls Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.148 2014/03/20 13:34:35 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.148.2.1 2014/08/10 06:56:30 tls Exp $");
 
 #include "opt_ipsec.h"
 
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.148 2014/03/20 13:34:35 roy Exp $");
 #include <netinet6/ip6_var.h>
 #include <netinet6/scope6_var.h>
 #include <netinet6/nd6.h>
+#include <netinet6/in6_ifattach.h>
 #include <netinet/icmp6.h>
 #include <netinet6/icmp6_private.h>
 
@@ -177,12 +178,23 @@ nd6_ifattach(struct ifnet *ifp)
 	nd->basereachable = REACHABLE_TIME;
 	nd->reachable = ND_COMPUTE_RTIME(nd->basereachable);
 	nd->retrans = RETRANS_TIMER;
-	/*
-	 * Note that the default value of ip6_accept_rtadv is 0.
-	 * Because we do not set ND6_IFF_OVERRIDE_RTADV here, we won't
-	 * accept RAs by default.
-	 */
+
 	nd->flags = ND6_IFF_PERFORMNUD | ND6_IFF_ACCEPT_RTADV;
+
+	/* A loopback interface always has ND6_IFF_AUTO_LINKLOCAL.
+	 * A bridge interface should not have ND6_IFF_AUTO_LINKLOCAL
+	 * because one of it's members should. */
+	if ((ip6_auto_linklocal && ifp->if_type != IFT_BRIDGE) ||
+	    (ifp->if_flags & IFF_LOOPBACK))
+		nd->flags |= ND6_IFF_AUTO_LINKLOCAL;
+
+	/* A loopback interface does not need to accept RTADV.
+	 * A bridge interface should not accept RTADV
+	 * because one of it's members should. */
+	if (ip6_accept_rtadv &&
+	    !(ifp->if_flags & IFF_LOOPBACK) &&
+	    !(ifp->if_type != IFT_BRIDGE))
+		nd->flags |= ND6_IFF_ACCEPT_RTADV;
 
 	/* XXX: we cannot call nd6_setmtu since ifp is not fully initialized */
 	nd6_setmtu0(ifp, nd);
@@ -835,7 +847,7 @@ nd6_lookup1(const struct in6_addr *addr6, int create, struct ifnet *ifp,
 		 * interface route.
 		 */
 		if (create) {
-			RTFREE(rt);
+			rtfree(rt);
 			rt = NULL;
 		}
 	}
@@ -1698,8 +1710,38 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 				ia->ia6_flags |= IN6_IFF_TENTATIVE;
 			}
 		}
-	}
 
+		if (ND.flags & ND6_IFF_AUTO_LINKLOCAL) {
+			if (!(ND_IFINFO(ifp)->flags & ND6_IFF_AUTO_LINKLOCAL)) {
+				/* auto_linklocal 0->1 transition */
+
+				ND_IFINFO(ifp)->flags |= ND6_IFF_AUTO_LINKLOCAL;
+				in6_ifattach(ifp, NULL);
+			} else if (!(ND.flags & ND6_IFF_IFDISABLED) &&
+			    ifp->if_flags & IFF_UP)
+			{
+				/*
+				 * When the IF already has
+				 * ND6_IFF_AUTO_LINKLOCAL, no link-local
+				 * address is assigned, and IFF_UP, try to
+				 * assign one.
+				 */
+				 int haslinklocal = 0;
+
+				 IFADDR_FOREACH(ifa, ifp) {
+					if (ifa->ifa_addr->sa_family !=AF_INET6)
+						continue;
+					ia = (struct in6_ifaddr *)ifa;
+					if (IN6_IS_ADDR_LINKLOCAL(IA6_IN6(ia))){
+						haslinklocal = 1;
+						break;
+					}
+				 }
+				 if (!haslinklocal)
+					in6_ifattach(ifp, NULL);
+			}
+		}
+	}
 		ND_IFINFO(ifp)->flags = ND.flags;
 		break;
 #undef ND
@@ -2047,7 +2089,7 @@ nd6_slowtimo(void *ignored_arg)
 	KERNEL_LOCK(1, NULL);
       	callout_reset(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz,
 	    nd6_slowtimo, NULL);
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		nd6if = ND_IFINFO(ifp);
 		if (nd6if->basereachable && /* already initialized */
 		    (nd6if->recalctm -= ND6_SLOWTIMER_INTERVAL) <= 0) {
@@ -2257,9 +2299,13 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 		goto bad;
 	}
 
+	KERNEL_LOCK(1, NULL);
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
-		return (*ifp->if_output)(origifp, m, sin6tocsa(dst), rt);
-	return (*ifp->if_output)(ifp, m, sin6tocsa(dst), rt);
+		error = (*ifp->if_output)(origifp, m, sin6tocsa(dst), rt);
+	else
+		error = (*ifp->if_output)(ifp, m, sin6tocsa(dst), rt);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 
   bad:
 	if (m != NULL)

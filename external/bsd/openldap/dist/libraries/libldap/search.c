@@ -1,9 +1,9 @@
-/*	$NetBSD: search.c,v 1.1.1.3 2010/12/12 15:21:36 adam Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.3.24.1 2014/08/10 07:09:47 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.76.2.11 2010/04/14 18:08:23 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -184,6 +184,11 @@ ldap_pvt_search_s(
 
 	if( rc <= 0 ) {
 		/* error(-1) or timeout(0) */
+		if ( ld->ld_errno == LDAP_TIMEOUT ) {
+			/* cleanup request */
+			(void) ldap_abandon( ld, msgid );
+			ld->ld_errno = LDAP_TIMEOUT;
+		}
 		return( ld->ld_errno );
 	}
 
@@ -302,9 +307,9 @@ ldap_build_search_req(
 	LDAP_NEXT_MSGID( ld, *idp );
 #ifdef LDAP_CONNECTIONLESS
 	if ( LDAP_IS_UDP(ld) ) {
-		struct sockaddr sa = {0};
+		struct sockaddr_storage sa = {0};
 		/* dummy, filled with ldo_peer in request.c */
-	    err = ber_write( ber, &sa, sizeof( sa ), 0 );
+	    err = ber_write( ber, (char *) &sa, sizeof( sa ), 0 );
 	}
 	if ( LDAP_IS_UDP(ld) && ld->ld_options.ldo_version == LDAP_VERSION2) {
 	    char *dn = ld->ld_options.ldo_cldapdn;

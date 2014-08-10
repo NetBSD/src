@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.30 2011/02/12 22:48:04 tsutsui Exp $	*/
+/*	$NetBSD: frodo.c,v 1.30.28.1 2014/08/10 06:53:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.30 2011/02/12 22:48:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.30.28.1 2014/08/10 06:53:57 tls Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -117,6 +117,7 @@ static const struct frodo_device frodo_subdevs[] = {
 	{ "com",	FRODO_APCI_OFFSET(1),	FRODO_INTR_APCI1 },
 	{ "com",	FRODO_APCI_OFFSET(2),	FRODO_INTR_APCI2 },
 	{ "com",	FRODO_APCI_OFFSET(3),	FRODO_INTR_APCI3 },
+	{ "mcclock",	FRODO_CALENDAR,		FRODO_INTR_CALENDAR },
 	{ NULL,		0,			0 }
 };
 
@@ -195,6 +196,11 @@ frodoattach(device_t parent, device_t self, void *aux)
 		 */
 		if (fd->fd_offset == FRODO_APCI_OFFSET(1) &&
 		    mmuid != MMUID_425_E)
+			continue;
+		/*
+		 * The mcclock is available only on a 425e.
+		 */
+		if (fd->fd_offset == FRODO_CALENDAR && mmuid != MMUID_425_E)
 			continue;
 		fa.fa_name = fd->fd_name;
 		fa.fa_bst = bst;

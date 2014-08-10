@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.160 2013/11/30 12:16:14 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.160.2.1 2014/08/10 06:54:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.160 2013/11/30 12:16:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.160.2.1 2014/08/10 06:54:59 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -548,7 +548,6 @@ usbd_status
 usbd_abort_pipe(usbd_pipe_handle pipe)
 {
 	usbd_status err;
-	usbd_xfer_handle intrxfer = pipe->intrxfer;
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
@@ -559,8 +558,6 @@ usbd_abort_pipe(usbd_pipe_handle pipe)
 	usbd_lock_pipe(pipe);
 	err = usbd_ar_pipe(pipe);
 	usbd_unlock_pipe(pipe);
-	if (pipe->intrxfer != intrxfer)
-		usbd_free_xfer(intrxfer);
 	return (err);
 }
 

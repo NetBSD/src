@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.3 2014/02/26 22:37:56 joerg Exp $
+# $NetBSD: prepare-import.sh,v 1.3.2.1 2014/08/10 06:55:27 tls Exp $
 #
 # Checkout compiler_rt into dist.
 # Run this script and check for additional files and directories to prune,
@@ -9,7 +9,7 @@ set -e
 
 cd dist
 rm -rf .svn
-rm -rf SDKs cmake include make third_party unittests www
+rm -rf SDKs android cmake include make third_party unittests www
 rm -f .arcconfig .gitignore CMakeLists.txt Makefile
 rm -rf lib/BlocksRuntime lib/asan lib/dfsan lib/interception lib/lsan
 rm -rf lib/msan lib/msandr lib/sanitizer_common lib/tsan lib/ubsan

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2014/02/15 19:42:10 jmmv Exp $
+# $NetBSD: Makefile.inc,v 1.3.2.1 2014/08/10 07:07:20 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ KYUA_LIBS?=
 # Layout of installed files.
 KYUA_BINDIR=		/usr/bin
 KYUA_CONFDIR=		/etc/kyua
-KYUA_DOCDIR=		/usr/share/doc/kyua-cli
+KYUA_DOCDIR=		/usr/share/doc/reference/ref1/kyua/kyua-cli
 KYUA_EXAMPLESDIR=	/usr/share/examples/kyua-cli
 KYUA_MISCDIR=		/usr/share/kyua-cli/misc
 KYUA_STOREDIR=		/usr/share/kyua-cli/store

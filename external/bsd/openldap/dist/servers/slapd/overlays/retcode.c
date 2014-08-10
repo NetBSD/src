@@ -1,10 +1,10 @@
-/*	$NetBSD: retcode.c,v 1.1.1.3 2010/12/12 15:23:41 adam Exp $	*/
+/*	$NetBSD: retcode.c,v 1.1.1.3.24.1 2014/08/10 07:09:51 tls Exp $	*/
 
 /* retcode.c - customizable response for client testing purposes */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.18.2.12 2010/04/13 20:23:45 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2014 The OpenLDAP Foundation.
  * Portions Copyright 2005 Pierangelo Masarati <ando@sys-net.it>
  * All rights reserved.
  *
@@ -167,7 +167,9 @@ retcode_send_onelevel( Operation *op, SlapReply *rs )
 			rs->sr_entry = &rdi->rdi_e;
 
 			rs->sr_err = send_search_entry( op, rs );
+			rs->sr_flags = 0;
 			rs->sr_entry = NULL;
+			rs->sr_attrs = NULL;
 
 			switch ( rs->sr_err ) {
 			case LDAP_UNAVAILABLE:	/* connection closed */
@@ -771,6 +773,12 @@ retcode_item_destroy( retcode_item_t *rdi )
 	BER_BVZERO( &rdi->rdi_e.e_nname );
 
 	entry_clean( &rdi->rdi_e );
+
+	if ( !BER_BVISNULL( &rdi->rdi_unsolicited_oid ) ) {
+		ber_memfree( rdi->rdi_unsolicited_oid.bv_val );
+		if ( !BER_BVISNULL( &rdi->rdi_unsolicited_data ) )
+			ber_memfree( rdi->rdi_unsolicited_data.bv_val );
+	}
 
 	ch_free( rdi );
 }

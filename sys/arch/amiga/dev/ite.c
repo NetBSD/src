@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.97 2014/03/22 01:52:44 christos Exp $ */
+/*	$NetBSD: ite.c,v 1.97.2.1 2014/08/10 06:53:49 tls Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.97 2014/03/22 01:52:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.97.2.1 2014/08/10 06:53:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -172,6 +172,7 @@ const struct cdevsw ite_cdevsw = {
 	.d_poll = itepoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

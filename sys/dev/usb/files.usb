@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.131 2014/03/16 09:34:45 martin Exp $
+#	$NetBSD: files.usb,v 1.131.2.1 2014/08/10 06:54:58 tls Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -108,7 +108,7 @@ device	uep: wsmousedev, tpcalib
 attach	uep at usbdevif
 file	dev/usb/uep.c			uep			needs-flag
 
-# Cypress microcontroller based serial adpaters
+# Cypress microcontroller based serial adapters
 device	ucycom: hid
 attach	ucycom at uhidbus
 file	dev/usb/ucycom.c		ucycom			needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.23 2014/03/29 19:28:29 christos Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.23.2.1 2014/08/10 06:54:05 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.23 2014/03/29 19:28:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.23.2.1 2014/08/10 06:54:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.23 2014/03/29 19:28:29 christos Exp 
 #include <sys/atomic.h>
 #include <sys/bus.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 #include <sys/bitops.h>
 
 #include <uvm/uvm_extern.h>
@@ -1217,6 +1218,7 @@ e500_ipi_kpreempt(void)
 
 static const ipifunc_t e500_ipifuncs[] = {
 	[ilog2(IPI_XCALL)] =	xc_ipi_handler,
+	[ilog2(IPI_GENERIC)] =	ipi_cpu_handler,
 	[ilog2(IPI_HALT)] =	e500_ipi_halt,
 #ifdef __HAVE_PREEMPTION
 	[ilog2(IPI_KPREEMPT)] =	e500_ipi_kpreempt,

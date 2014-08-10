@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,17 +32,30 @@
 #ifndef _LINUX_BITOPS_H_
 #define _LINUX_BITOPS_H_
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/atomic.h>
-#include <sys/cdefs.h>
+#include <sys/bitops.h>
 
 #include <machine/limits.h>
 
 #include <lib/libkern/libkern.h>
 
+static inline unsigned long
+__ffs64(uint64_t x)
+{
+	return ffs64(x);
+}
+
 static inline unsigned int
 hweight16(uint16_t n)
+{
+	return popcount32(n);
+}
+
+static inline unsigned int
+hweight32(uint16_t n)
 {
 	return popcount32(n);
 }
@@ -55,6 +68,8 @@ hweight16(uint16_t n)
 
 #define	BITS_TO_LONGS(n)						\
 	roundup2((n), (sizeof(unsigned long) * CHAR_BIT))
+
+#define	BIT(n)	((uintmax_t)1 << (n))
 
 static inline int
 test_bit(unsigned int n, const volatile unsigned long *p)
@@ -86,6 +101,64 @@ __change_bit(unsigned int n, volatile unsigned long *p)
 	const unsigned units = (sizeof(unsigned long) * CHAR_BIT);
 
 	p[n / units] ^= (1UL << (n % units));
+}
+
+static inline unsigned long
+__test_and_set_bit(unsigned int bit, volatile unsigned long *ptr)
+{
+	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
+	volatile unsigned long *const p = &ptr[bit / units];
+	const unsigned long mask = (1UL << (bit % units));
+	unsigned long v;
+
+	v = *p;
+	*p |= mask;
+
+	return ((v & mask) != 0);
+}
+
+static inline unsigned long
+__test_and_clear_bit(unsigned int bit, volatile unsigned long *ptr)
+{
+	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
+	volatile unsigned long *const p = &ptr[bit / units];
+	const unsigned long mask = (1UL << (bit % units));
+	unsigned long v;
+
+	v = *p;
+	*p &= ~mask;
+
+	return ((v & mask) != 0);
+}
+
+static inline unsigned long
+__test_and_change_bit(unsigned int bit, volatile unsigned long *ptr)
+{
+	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
+	volatile unsigned long *const p = &ptr[bit / units];
+	const unsigned long mask = (1UL << (bit % units));
+	unsigned long v;
+
+	v = *p;
+	*p ^= mask;
+
+	return ((v & mask) != 0);
+}
+
+static inline unsigned long
+find_first_zero_bit(const unsigned long *ptr, unsigned long nbits)
+{
+	const size_t bpl = (CHAR_BIT * sizeof(*ptr));
+	const unsigned long *p;
+	unsigned long result = 0;
+
+	for (p = ptr; bpl < nbits; nbits -= bpl, p++, result += bpl) {
+		if (~*p)
+			break;
+	}
+
+	result += ffs(~*p | (~0UL << MIN(nbits, bpl)));
+	return result;
 }
 
 #endif  /* _LINUX_BITOPS_H_ */

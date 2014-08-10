@@ -1,4 +1,4 @@
-/*	$NetBSD: netstring.c,v 1.1.1.2 2013/09/25 19:06:37 tron Exp $	*/
+/*	$NetBSD: netstring.c,v 1.1.1.2.2.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -166,6 +166,7 @@
 #include <msg.h>
 #include <vstream.h>
 #include <vstring.h>
+#include <compat_va_copy.h>
 #include <netstring.h>
 
 /* Application-specific. */
@@ -293,41 +294,41 @@ void    netstring_put_multi(VSTREAM *stream,...)
     char   *data;
     ssize_t data_len;
     va_list ap;
+    va_list ap2;
+
+    /*
+     * Initialize argument lists.
+     */
+    va_start(ap, stream);
+    VA_COPY(ap2, ap);
 
     /*
      * Figure out the total result size.
      */
-    va_start(ap, stream);
     for (total = 0; (data = va_arg(ap, char *)) != 0; total += data_len)
 	if ((data_len = va_arg(ap, ssize_t)) < 0)
-	    msg_panic("netstring_put_multi: bad data length %ld", (long) data_len);
+	    msg_panic("%s: bad data length %ld", myname, (long) data_len);
     va_end(ap);
-
-    /*
-     * Debugging support.
-     */
-    if (msg_verbose > 1) {
-	va_start(ap, stream);
-	data = va_arg(ap, char *);
-	data_len = va_arg(ap, ssize_t);
-	msg_info("%s: write netstring len %ld data %.*s",
-	 myname, (long) total, (int) (data_len < 30 ? data_len : 30), data);
-	va_end(ap);
-    }
+    if (total < 0)
+	msg_panic("%s: bad total length %ld", myname, (long) total);
+    if (msg_verbose > 1)
+	msg_info("%s: write total length %ld", myname, (long) total);
 
     /*
      * Send the length, content and terminator.
      */
     vstream_fprintf(stream, "%ld:", (long) total);
-    va_start(ap, stream);
-    while ((data = va_arg(ap, char *)) != 0) {
-	data_len = va_arg(ap, ssize_t);
-	if (data_len > 0)
-	    if (vstream_fwrite(stream, data, data_len) != data_len)
-		netstring_except(stream, vstream_ftimeout(stream) ?
-				 NETSTRING_ERR_TIME : NETSTRING_ERR_EOF);
+    while ((data = va_arg(ap2, char *)) != 0) {
+	data_len = va_arg(ap2, ssize_t);
+	if (msg_verbose > 1)
+	    msg_info("%s: write netstring len %ld data %.*s",
+		     myname, (long) data_len,
+		     (int) (data_len < 30 ? data_len : 30), data);
+	if (vstream_fwrite(stream, data, data_len) != data_len)
+	    netstring_except(stream, vstream_ftimeout(stream) ?
+			     NETSTRING_ERR_TIME : NETSTRING_ERR_EOF);
     }
-    va_end(ap);
+    va_end(ap2);
     vstream_fwrite(stream, ",", 1);
 }
 

@@ -19,7 +19,7 @@ sh clean.sh
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-test -e $RANDFILE || $GENRANDOM 400 $RANDFILE
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 cp ns1/named1.conf ns1/named.conf
 cp ns2/named1.conf ns2/named.conf

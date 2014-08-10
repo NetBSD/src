@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.18 2011/05/13 22:35:51 rmind Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.18.28.1 2014/08/10 06:54:57 tls Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.18 2011/05/13 22:35:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.18.28.1 2014/08/10 06:54:57 tls Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -506,7 +506,7 @@ search_token(char *str, int slen, const char *token)
 	return (NULL);
 }
 
-/* Stores the class ID of the peripherial in soft config data */
+/* Stores the class ID of the peripheral in soft config data */
 void
 ppbus_pnp_detect(device_t dev)
 {

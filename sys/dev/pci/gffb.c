@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.8 2014/03/14 21:59:41 mrg Exp $	*/
+/*	$NetBSD: gffb.c,v 1.8.2.1 2014/08/10 06:54:54 tls Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.8 2014/03/14 21:59:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.8.2.1 2014/08/10 06:54:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("%s: %d MB aperture at 0x%08x\n", device_xname(self),
 	    (int)(sc->sc_fbsize >> 20), (uint32_t)sc->sc_fb);
 	aprint_normal_dev(sc->sc_dev, "%d MB video memory\n",
-	    sc->sc_vramsize >> 20);
+	    (int)(sc->sc_vramsize >> 20));
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",

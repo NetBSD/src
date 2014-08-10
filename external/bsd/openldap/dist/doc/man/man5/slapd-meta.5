@@ -1,8 +1,8 @@
 .TH SLAPD-META 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2010 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2014 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.46.2.19 2010/04/19 19:28:14 quanah Exp
+.\" $OpenLDAP$
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
@@ -312,12 +312,44 @@ If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
 
 .TP
+.B client\-pr {accept-unsolicited|DISABLE|<size>}
+This feature allows to use RFC 2696 Paged Results control when performing
+search operations with a specific target,
+irrespective of the client's request.
+When set to a numeric value, Paged Results control is always
+used with \fIsize\fP as the page size.
+When set to \fIaccept-unsolicited\fP, unsolicited Paged Results
+control responses are accepted and honored
+for compatibility with broken remote DSAs.
+The client is not exposed to paged results handling
+between
+.BR slapd\-meta (5)
+and the remote servers.
+By default (disabled), Paged Results control is not used
+and responses are not accepted.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.TP
 .B default\-target [<target>]
 The "default\-target" directive can also be used during target specification.
 With no arguments it marks the current target as the default.
 The optional number marks target <target> as the default one, starting
 from 1.
 Target <target> must be defined.
+
+.TP
+.B filter <pattern>
+This directive allows specifying a
+.BR regex (5)
+pattern to indicate what search filter terms are actually served by a target.
+
+In a search request, if the search filter matches the \fIpattern\fP
+the target is considered while fulfilling the request; otherwise
+the target is ignored. There may be multiple occurrences of
+the
+.B filter
+directive for each target.
 
 .TP
 .B idassert\-authzFrom <authz-regexp>
@@ -349,7 +381,7 @@ for details on the syntax of this field.
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
 .B [tls_ciphersuite=<ciphers>]
-.B [tls_protocol_min=<version>]
+.B [tls_protocol_min=<major>[.<minor>]]
 .B [tls_crlcheck=none|peer|all]
 .RS
 Allows to define the parameters of the authentication method that is 
@@ -519,6 +551,25 @@ If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
 
 .TP
+.B keepalive  <idle>:<probes>:<interval>
+The
+.B keepalive
+parameter sets the values of \fIidle\fP, \fIprobes\fP, and \fIinterval\fP
+used to check whether a socket is alive;
+.I idle
+is the number of seconds a connection needs to remain idle before TCP
+starts sending keepalive probes;
+.I probes
+is the maximum number of keepalive probes TCP should send before dropping
+the connection;
+.I interval
+is interval in seconds between individual keepalive probes.
+Only some systems support the customization of these values;
+the
+.B keepalive
+parameter is ignored otherwise, and system-wide settings are used.
+
+.TP
 .B map "{attribute|objectclass} [<local name>|*] {<foreign name>|*}"
 This maps object classes and attributes as in the LDAP backend.
 See
@@ -547,29 +598,62 @@ the global value can be overridden by redefinitions inside each target
 specification.
 
 .TP
-.B pseudorootdn "<substitute DN in case of rootdn bind>"
-Deprecated; use
-.B idassert\-bind
-instead.
-
-.TP
-.B pseudorootpw "<substitute password in case of rootdn bind>"
-Deprecated; use
-.B idassert\-bind
-instead.
-
-.TP
 .B rewrite* ...
 The rewrite options are described in the "REWRITING" section.
 
 .TP
-.B subtree\-exclude "<DN>"
-This directive instructs back-meta to ignore the current target
-for operations whose requestDN is subordinate to
-.BR DN .
+.B subtree\-{exclude|include} "<rule>"
+This directive allows to indicate what subtrees are actually served
+by a target.
+The syntax of the supported rules is
+
+\fB<rule>: [dn[.<style>]:]<pattern>\fP
+
+\fB<style>: subtree|children|regex\fP
+
+When \fB<style>\fP is either \fBsubtree\fP or \fBchildren\fP
+the \fB<pattern>\fP is a DN that must be within the naming context
+served by the target.
+When \fB<style>\fP is \fBregex\fP the \fB<pattern>\fP is a
+.BR regex (5)
+pattern.
+If the \fBdn.<style>:\fP prefix is omitted, \fBdn.subtree:\fP
+is implicitly assumed for backward compatibility.
+
+In the
+.B subtree\-exclude
+form if the \fIrequest DN\fP matches at least one rule,
+the target is not considered while fulfilling the request;
+otherwise, the target is considered based on the value of the \fIrequest DN\fP.
+When the request is a search, also the \fIscope\fP is considered.
+
+In the
+.B subtree\-include
+form if the \fIrequest DN\fP matches at least one rule,
+the target is considered while fulfilling the request;
+otherwise the target is ignored.
+
+.LP
+.RS
+.nf
+    |  match  | exclude |
+    +---------+---------+-------------------+
+    |    T    |    T    | not candidate     |
+    |    F    |    T    | continue checking |
+    +---------+---------+-------------------+
+    |    T    |    F    | candidate         |
+    |    F    |    F    | not candidate     |
+    +---------+---------+-------------------+
+.fi
+
+.RE
+.RS
 There may be multiple occurrences of the
 .B subtree\-exclude
-directive for each of the targets.
+or
+.B subtree\-include
+directive for each of the targets, but they are mutually exclusive.
+.RE
 
 .TP
 .B suffixmassage "<virtual naming context>" "<real naming context>"
@@ -587,7 +671,7 @@ of the rewrite rules it implies.
 .TP
 .B t\-f\-support {NO|yes|discover}
 enable if the remote server supports absolute filters
-(see \fIdraft-zeilenga-ldap-t-f\fP for details).
+(see \fIRFC 4526\fP for details).
 If set to
 .BR discover ,
 support is detected by reading the remote server's root DSE.
@@ -750,8 +834,8 @@ that connects it to the internet may impose additional constraints.
 To this purpose, the proxy should be able to comply with all the ACL
 matching criteria that the server supports.
 This has been achieved with regard to all the criteria supported by
-slapd except a special subtle case (please drop me a note if you can
-find other exceptions: <ando@openldap.org>).
+slapd except a special subtle case (please file an ITS if you can
+find other exceptions: <http://www.openldap.org/its/>).
 The rule
 .LP
 .RS
@@ -1206,6 +1290,24 @@ allows caching of LDAP search requests (queries) in a local database.
 See 
 .BR slapo\-pcache (5)
 for details.
+
+.SH DEPRECATED STATEMENTS
+The following statements have been deprecated and should no longer be used.
+
+.TP
+.B pseudorootdn "<substitute DN in case of rootdn bind>"
+Use
+.B idassert\-bind
+instead.
+
+.TP
+.B pseudorootpw "<substitute password in case of rootdn bind>"
+Use
+.B idassert\-bind
+instead.
+
+
+
 .SH FILES
 .TP
 ETCDIR/slapd.conf

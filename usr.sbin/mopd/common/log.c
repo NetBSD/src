@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.2 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: log.c,v 1.2.38.1 2014/08/10 06:59:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: log.c,v 1.2 2008/04/28 20:24:17 martin Exp $");
+__RCSID("$NetBSD: log.c,v 1.2.38.1 2014/08/10 06:59:53 tls Exp $");
 #endif
 
 #include <err.h>
@@ -47,13 +47,15 @@ mopLogErr(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[1024];
+	int error;
 
 	va_start(ap, fmt);
 	if (mopInteractive)
 		verr(1, fmt, ap);
 	else {
-		snprintf(buf, sizeof(buf), "%s: %%m", buf);
-		vsyslog(LOG_ERR, buf, ap);
+		error = errno;
+		vsnprintf(buf, sizeof(buf), fmt, ap);
+		syslog(LOG_ERR, "%s: %s", buf, strerror(error));
 	}
 	va_end(ap);
 	exit(1);
@@ -64,13 +66,15 @@ mopLogWarn(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[1024];
+	int error;
 
 	va_start(ap, fmt);
 	if (mopInteractive)
 		vwarn(fmt, ap);
 	else {
-		snprintf(buf, sizeof(buf), "%s: %%m", buf);
-		vsyslog(LOG_WARNING, buf, ap);
+		error = errno;
+		vsnprintf(buf, sizeof(buf), fmt, ap);
+		syslog(LOG_WARNING, "%s: %s", buf, strerror(error));
 	}
 	va_end(ap);
 }

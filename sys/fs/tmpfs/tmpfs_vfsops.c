@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.58 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.58.2.1 2014/08/10 06:55:54 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.58 2014/03/23 15:21:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.58.2.1 2014/08/10 06:55:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -103,6 +103,9 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	ino_t nodes;
 	int error;
 
+	if (args == NULL)
+		return EINVAL;
+
 	/* Validate the version. */
 	if (*data_len < sizeof(*args) ||
 	    args->ta_version != TMPFS_ARGS_VERSION)
@@ -127,13 +130,17 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return 0;
 	}
 
-	if (mp->mnt_flag & MNT_UPDATE) {
-		/* TODO */
-		return EOPNOTSUPP;
-	}
 
 	/* Prohibit mounts if there is not enough memory. */
-	if (tmpfs_mem_info(true) < TMPFS_PAGES_RESERVED)
+	if (tmpfs_mem_info(true) < uvmexp.freetarg)
+		return EINVAL;
+
+	/* Check for invalid uid and gid arguments */
+	if (args->ta_root_uid == VNOVAL || args->ta_root_gid == VNOVAL)
+		return EINVAL;
+
+	/* This can never happen? */
+	if ((args->ta_root_mode & ALLPERMS) == VNOVAL)
 		return EINVAL;
 
 	/* Get the memory usage limit for this file-system. */
@@ -151,6 +158,20 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	}
 	nodes = MIN(nodes, INT_MAX);
 	KASSERT(nodes >= 3);
+
+	if (mp->mnt_flag & MNT_UPDATE) {
+		tmp = VFS_TO_TMPFS(mp);
+		if (nodes < tmp->tm_nodes_cnt)
+			return EBUSY;
+		if ((error = tmpfs_mntmem_set(tmp, memlimit)) != 0)
+			return error;
+		tmp->tm_nodes_max = nodes;
+		root = tmp->tm_root;
+		root->tn_uid = args->ta_root_uid;
+		root->tn_gid = args->ta_root_gid;
+		root->tn_mode = args->ta_root_mode;
+		return 0;
+	}
 
 	/* Allocate the tmpfs mount structure and fill it. */
 	tmp = kmem_zalloc(sizeof(tmpfs_mount_t), KM_SLEEP);

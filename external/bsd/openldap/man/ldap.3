@@ -1,6 +1,7 @@
-.TH LDAP 3 "2010/06/30" "OpenLDAP 2.4.23"
-.\" OpenLDAP: pkg/ldap/doc/man/man3/ldap.3,v 1.40.2.7 2010/04/13 20:22:37 kurt Exp
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH LDAP 3 "2014/01/26" "OpenLDAP 2.4.39"
+.\" $OpenLDAP$
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap \- OpenLDAP Lightweight Directory Access Protocol API
@@ -119,6 +120,7 @@ the ldap search routines.
 .SH DEPRECATED INTERFACES
 A number of interfaces are now considered deprecated.  For instance,
 ldap_add(3) is deprecated in favor of ldap_add_ext(3).
+.lf 1 ./Deprecated
 Deprecated interfaces generally remain in the library.  The macro
 LDAP_DEPRECATED can be defined to a non-zero value
 (e.g., -DLDAP_DEPRECATED=1) when compiling program designed to use
@@ -126,6 +128,7 @@ deprecated interfaces.  It is recommended that developers writing new
 programs, or updating old programs, avoid use of deprecated interfaces.
 Over time, it is expected that documentation (and, eventually, support) for
 deprecated interfaces to be eliminated.
+.lf 123 stdin
 .SH BER LIBRARY
 Also included in the distribution is a set of lightweight Basic
 Encoding Rules routines.  These routines are used by the LDAP library
@@ -276,11 +279,13 @@ case insensitive string comparison
 .BR slapd (8),
 .BR draft-ietf-ldapext-ldap-c-api-xx.txt \ <http://www.ietf.org>
 .SH ACKNOWLEDGEMENTS
+.lf 1 ./../Project
 .\" Shared Project Acknowledgement Text
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from University of Michigan LDAP 3.3 Release.  
+.lf 274 stdin
 .LP
 These API manual pages are loosely based upon descriptions provided
 in the IETF/LDAPEXT C LDAP API Internet Draft, a (orphaned) work

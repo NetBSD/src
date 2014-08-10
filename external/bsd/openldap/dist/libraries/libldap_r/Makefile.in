@@ -1,8 +1,8 @@
 # Makefile.in for LDAP -lldap
-# OpenLDAP: pkg/ldap/libraries/libldap_r/Makefile.in,v 1.79.2.11 2010/04/13 20:23:02 kurt Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -30,12 +30,12 @@ XXSRCS    = apitest.c test.c \
 	charray.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
 	tls2.c tls_o.c tls_g.c tls_m.c \
 	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c \
-	assertion.c deref.c
+	assertion.c deref.c ldif.c fetch.c
 SRCS	= threads.c rdwr.c rmutex.c tpool.c rq.c \
-	thr_posix.c thr_cthreads.c thr_thr.c thr_lwp.c thr_nt.c \
+	thr_posix.c thr_cthreads.c thr_thr.c thr_nt.c \
 	thr_pth.c thr_stub.c thr_debug.c
 OBJS	= threads.lo rdwr.lo rmutex.lo tpool.lo  rq.lo \
-	thr_posix.lo thr_cthreads.lo thr_thr.lo thr_lwp.lo thr_nt.lo \
+	thr_posix.lo thr_cthreads.lo thr_thr.lo thr_nt.lo \
 	thr_pth.lo thr_stub.lo thr_debug.lo \
 	bind.lo open.lo result.lo error.lo compare.lo search.lo \
 	controls.lo messages.lo references.lo extended.lo cyrus.lo \
@@ -48,7 +48,7 @@ OBJS	= threads.lo rdwr.lo rmutex.lo tpool.lo  rq.lo \
 	charray.lo os-local.lo dnssrv.lo utf-8.lo utf-8-conv.lo \
 	tls2.lo tls_o.lo tls_g.lo tls_m.lo \
 	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo \
-	assertion.lo deref.lo
+	assertion.lo deref.lo ldif.lo fetch.lo
 
 LDAP_INCDIR= ../../include       
 LDAP_LIBDIR= ../../libraries

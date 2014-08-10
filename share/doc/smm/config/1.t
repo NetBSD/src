@@ -1,4 +1,4 @@
-.\" $NetBSD: 1.t,v 1.1 2007/12/18 03:35:51 garbled Exp $
+.\" $NetBSD: 1.t,v 1.1.46.1 2014/08/10 06:53:14 tls Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -39,10 +39,10 @@
 INTRODUCTION
 .PP
 .I Config
-is a tool used in building 4.4BSD system images (the UNIX kernel).
-It takes a file describing a system's tunable parameters and
-hardware support, and generates a collection
-of files which are then used to build a copy of UNIX appropriate
+is a tool used in building BSD kernel images.
+It takes a file describing the tunable parameter settings, features,
+and drivers to include, and generates a collection
+of files which are then used to build a copy of the kernel appropriate
 to that configuration.
 .I Config
 simplifies system maintenance by isolating system dependencies
@@ -51,12 +51,14 @@ in a single, easy to understand, file.
 This document describes the content and 
 format of system configuration
 files and the rules which must be followed when creating 
-these files.  Example configuration files are constructed
+these files.
+Example configuration files are constructed
 and discussed.
 .PP
 Later sections suggest guidelines to be used in modifying
 system source and explain some of the inner workings of the
-autoconfiguration process.  Appendix D summarizes the rules
+autoconfiguration process.
+Appendix D summarizes the rules
 used in calculating the most important system data structures
 and indicates some inherent system data structure size
 limitations (and how to go about modifying them).

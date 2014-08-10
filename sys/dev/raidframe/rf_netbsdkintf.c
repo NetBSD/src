@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.308 2014/04/03 18:55:26 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.308.2.1 2014/08/10 06:54:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.308 2014/04/03 18:55:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.308.2.1 2014/08/10 06:54:57 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -211,6 +211,7 @@ const struct bdevsw raid_bdevsw = {
 	.d_ioctl = raidioctl,
 	.d_dump = raiddump,
 	.d_psize = raidsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -225,6 +226,7 @@ const struct cdevsw raid_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -343,7 +345,7 @@ raidcreate(int unit) {
 		return NULL;
 	}
 	sc->sc_unit = unit;
-	bufq_alloc(&sc->buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->buf_queue, "fcfs", BUFQ_SORT_RAWBLOCK);
 	return sc;
 }
 
@@ -527,11 +529,22 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 
 	/* we found something bootable... */
 
+	/*
+	 * XXX: The following code assumes that the root raid
+	 * is the first ('a') partition. This is about the best
+	 * we can do with a BSD disklabel, but we might be able
+	 * to do better with a GPT label, by setting a specified
+	 * attribute to indicate the root partition. We can then
+	 * stash the partition number in the r->root_partition
+	 * high bits (the bottom 2 bits are already used). For
+	 * now we just set booted_partition to 0 when we override
+	 * root.
+	 */
 	if (num_root == 1) {
 		device_t candidate_root;
 		if (rsc->sc_dkdev.dk_nwedges != 0) {
-			/* XXX: How do we find the real root partition? */
 			char cname[sizeof(cset->ac->devname)];
+			/* XXX: assume 'a' */
 			snprintf(cname, sizeof(cname), "%s%c",
 			    device_xname(rsc->sc_dev), 'a');
 			candidate_root = dkwedge_find_by_wname(cname);
@@ -539,8 +552,10 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			candidate_root = rsc->sc_dev;
 		if (booted_device == NULL ||
 		    rsc->sc_r.root_partition == 1 ||
-		    rf_containsboot(&rsc->sc_r, booted_device))
+		    rf_containsboot(&rsc->sc_r, booted_device)) {
 			booted_device = candidate_root;
+			booted_partition = 0;	/* XXX assume 'a' */
+		}
 	} else if (num_root > 1) {
 
 		/* 
@@ -571,6 +586,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 
 		if (num_root == 1) {
 			booted_device = rsc->sc_dev;
+			booted_partition = 0;	/* XXX assume 'a' */
 		} else {
 			/* we can't guess.. require the user to answer... */
 			boothowto |= RB_ASKNAME;

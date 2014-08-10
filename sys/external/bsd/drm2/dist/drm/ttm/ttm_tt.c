@@ -38,12 +38,14 @@
 #include <linux/swap.h>
 #include <linux/slab.h>
 #include <linux/export.h>
+#include <linux/printk.h>
 #include <drm/drm_cache.h>
 #include <drm/drm_mem_util.h>
 #include <drm/ttm/ttm_module.h>
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
 #include <drm/ttm/ttm_page_alloc.h>
+#include <drm/bus_dma_hacks.h>
 
 /**
  * Allocates storage for pointers to the pages that back the ttm.
@@ -56,8 +58,10 @@ static void ttm_tt_alloc_page_directory(struct ttm_tt *ttm)
 static void ttm_dma_tt_alloc_page_directory(struct ttm_dma_tt *ttm)
 {
 	ttm->ttm.pages = drm_calloc_large(ttm->ttm.num_pages, sizeof(void*));
+#ifndef __NetBSD__
 	ttm->dma_address = drm_calloc_large(ttm->ttm.num_pages,
 					    sizeof(*ttm->dma_address));
+#endif
 }
 
 #ifdef CONFIG_X86
@@ -65,6 +69,9 @@ static inline int ttm_tt_set_page_caching(struct page *p,
 					  enum ttm_caching_state c_old,
 					  enum ttm_caching_state c_new)
 {
+#ifdef __NetBSD__
+	return 0;
+#else
 	int ret = 0;
 
 	if (PageHighMem(p))
@@ -85,6 +92,7 @@ static inline int ttm_tt_set_page_caching(struct page *p,
 		ret = set_pages_uc(p, 1);
 
 	return ret;
+#endif
 }
 #else /* CONFIG_X86 */
 static inline int ttm_tt_set_page_caching(struct page *p,
@@ -170,15 +178,16 @@ void ttm_tt_destroy(struct ttm_tt *ttm)
 		ttm_tt_unbind(ttm);
 	}
 
-	if (likely(ttm->pages != NULL)) {
-		ttm->bdev->driver->ttm_tt_unpopulate(ttm);
-	}
+	if (ttm->state == tt_unbound)
+		ttm_tt_unpopulate(ttm);
 
+#ifndef __NetBSD__
 	if (!(ttm->page_flags & TTM_PAGE_FLAG_PERSISTENT_SWAP) &&
 	    ttm->swap_storage)
 		fput(ttm->swap_storage);
 
 	ttm->swap_storage = NULL;
+#endif
 	ttm->func->destroy(ttm);
 }
 
@@ -193,7 +202,13 @@ int ttm_tt_init(struct ttm_tt *ttm, struct ttm_bo_device *bdev,
 	ttm->page_flags = page_flags;
 	ttm->dummy_read_page = dummy_read_page;
 	ttm->state = tt_unpopulated;
+#ifdef __NetBSD__
+	ttm->swap_storage = uao_create(roundup2(size, PAGE_SIZE), 0);
+	uao_set_pgfl(ttm->swap_storage, bus_dmamem_pgfl(bdev->dmat));
+#else
 	ttm->swap_storage = NULL;
+#endif
+	TAILQ_INIT(&ttm->pglist);
 
 	ttm_tt_alloc_page_directory(ttm);
 	if (!ttm->pages) {
@@ -207,6 +222,10 @@ EXPORT_SYMBOL(ttm_tt_init);
 
 void ttm_tt_fini(struct ttm_tt *ttm)
 {
+#ifdef __NetBSD__
+	uao_detach(ttm->swap_storage);
+	ttm->swap_storage = NULL;
+#endif
 	drm_free_large(ttm->pages);
 	ttm->pages = NULL;
 }
@@ -225,16 +244,52 @@ int ttm_dma_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_bo_device *bdev,
 	ttm->page_flags = page_flags;
 	ttm->dummy_read_page = dummy_read_page;
 	ttm->state = tt_unpopulated;
+#ifdef __NetBSD__
+	ttm->swap_storage = uao_create(roundup2(size, PAGE_SIZE), 0);
+	uao_set_pgfl(ttm->swap_storage, bus_dmamem_pgfl(bdev->dmat));
+#else
 	ttm->swap_storage = NULL;
+#endif
+	TAILQ_INIT(&ttm->pglist);
 
 	INIT_LIST_HEAD(&ttm_dma->pages_list);
 	ttm_dma_tt_alloc_page_directory(ttm_dma);
+#ifdef __NetBSD__
+    {
+	int error;
+
+	if (ttm->num_pages > (SIZE_MAX /
+		MIN(sizeof(ttm_dma->dma_segs[0]), PAGE_SIZE))) {
+		error = ENOMEM;
+		goto fail0;
+	}
+	ttm_dma->dma_segs = kmem_alloc((ttm->num_pages *
+		sizeof(ttm_dma->dma_segs[0])), KM_SLEEP);
+	error = bus_dmamap_create(ttm->bdev->dmat,
+	    (ttm->num_pages * PAGE_SIZE), ttm->num_pages, PAGE_SIZE, 0,
+	    BUS_DMA_WAITOK, &ttm_dma->dma_address);
+	if (error)
+		goto fail1;
+
+	return 0;
+
+fail2: __unused
+	bus_dmamap_destroy(ttm->bdev->dmat, ttm_dma->dma_address);
+fail1:	kmem_free(ttm_dma->dma_segs, (ttm->num_pages *
+		sizeof(ttm_dma->dma_segs[0])));
+fail0:	KASSERT(error);
+	ttm_tt_destroy(ttm);
+	/* XXX errno NetBSD->Linux */
+	return -error;
+    }
+#else
 	if (!ttm->pages || !ttm_dma->dma_address) {
 		ttm_tt_destroy(ttm);
 		pr_err("Failed allocating page table\n");
 		return -ENOMEM;
 	}
 	return 0;
+#endif
 }
 EXPORT_SYMBOL(ttm_dma_tt_init);
 
@@ -242,16 +297,26 @@ void ttm_dma_tt_fini(struct ttm_dma_tt *ttm_dma)
 {
 	struct ttm_tt *ttm = &ttm_dma->ttm;
 
+#ifdef __NetBSD__
+	uao_detach(ttm->swap_storage);
+	ttm->swap_storage = NULL;
+#endif
 	drm_free_large(ttm->pages);
 	ttm->pages = NULL;
+#ifdef __NetBSD__
+	bus_dmamap_destroy(ttm->bdev->dmat, ttm_dma->dma_address);
+	kmem_free(ttm_dma->dma_segs, (ttm->num_pages *
+		sizeof(ttm_dma->dma_segs[0])));
+#else
 	drm_free_large(ttm_dma->dma_address);
 	ttm_dma->dma_address = NULL;
+#endif
 }
 EXPORT_SYMBOL(ttm_dma_tt_fini);
 
 void ttm_tt_unbind(struct ttm_tt *ttm)
 {
-	int ret;
+	int ret __diagused;
 
 	if (ttm->state == tt_bound) {
 		ret = ttm->func->unbind(ttm);
@@ -286,6 +351,31 @@ EXPORT_SYMBOL(ttm_tt_bind);
 
 int ttm_tt_swapin(struct ttm_tt *ttm)
 {
+#ifdef __NetBSD__
+	struct uvm_object *uobj = ttm->swap_storage;
+	struct vm_page *page;
+	unsigned i;
+	int error;
+
+	KASSERT(uobj != NULL);
+	error = uvm_obj_wirepages(uobj, 0, (ttm->num_pages << PAGE_SHIFT),
+	    &ttm->pglist);
+	if (error)
+		/* XXX errno NetBSD->Linux */
+		return -error;
+
+	i = 0;
+	TAILQ_FOREACH(page, &ttm->pglist, pageq.queue) {
+		KASSERT(i < ttm->num_pages);
+		KASSERT(ttm->pages[i] == NULL);
+		ttm->pages[i] = container_of(page, struct page, p_vmp);
+		i++;
+	}
+	KASSERT(i == ttm->num_pages);
+
+	/* Success!  */
+	return 0;
+#else
 	struct address_space *swap_space;
 	struct file *swap_storage;
 	struct page *from_page;
@@ -296,7 +386,7 @@ int ttm_tt_swapin(struct ttm_tt *ttm)
 	swap_storage = ttm->swap_storage;
 	BUG_ON(swap_storage == NULL);
 
-	swap_space = swap_storage->f_path.dentry->d_inode->i_mapping;
+	swap_space = file_inode(swap_storage)->i_mapping;
 
 	for (i = 0; i < ttm->num_pages; ++i) {
 		from_page = shmem_read_mapping_page(swap_space, i);
@@ -320,8 +410,33 @@ int ttm_tt_swapin(struct ttm_tt *ttm)
 	return 0;
 out_err:
 	return ret;
+#endif
 }
 
+#ifdef __NetBSD__
+int ttm_tt_swapout(struct ttm_tt *ttm, struct file *persistent_swap_storage)
+{
+	struct uvm_object *uobj = ttm->swap_storage;
+	unsigned i;
+
+	KASSERT((ttm->state == tt_unbound) || (ttm->state == tt_unpopulated));
+	KASSERT(ttm->caching_state == tt_cached);
+	KASSERT(uobj != NULL);
+
+	/*
+	 * XXX Dunno what this persistent swap storage business is all
+	 * about, but I see nothing using it and it doesn't make sense.
+	 */
+	KASSERT(persistent_swap_storage == NULL);
+
+	uvm_obj_unwirepages(uobj, 0, (ttm->num_pages << PAGE_SHIFT));
+	for (i = 0; i < ttm->num_pages; i++)
+		ttm->pages[i] = NULL;
+
+	/* Success!  */
+	return 0;
+}
+#else
 int ttm_tt_swapout(struct ttm_tt *ttm, struct file *persistent_swap_storage)
 {
 	struct address_space *swap_space;
@@ -345,7 +460,7 @@ int ttm_tt_swapout(struct ttm_tt *ttm, struct file *persistent_swap_storage)
 	} else
 		swap_storage = persistent_swap_storage;
 
-	swap_space = swap_storage->f_path.dentry->d_inode->i_mapping;
+	swap_space = file_inode(swap_storage)->i_mapping;
 
 	for (i = 0; i < ttm->num_pages; ++i) {
 		from_page = ttm->pages[i];
@@ -362,7 +477,7 @@ int ttm_tt_swapout(struct ttm_tt *ttm, struct file *persistent_swap_storage)
 		page_cache_release(to_page);
 	}
 
-	ttm->bdev->driver->ttm_tt_unpopulate(ttm);
+	ttm_tt_unpopulate(ttm);
 	ttm->swap_storage = swap_storage;
 	ttm->page_flags |= TTM_PAGE_FLAG_SWAPPED;
 	if (persistent_swap_storage)
@@ -374,4 +489,30 @@ out_err:
 		fput(swap_storage);
 
 	return ret;
+}
+#endif
+
+static void ttm_tt_clear_mapping(struct ttm_tt *ttm)
+{
+#ifndef __NetBSD__
+	pgoff_t i;
+	struct page **page = ttm->pages;
+
+	if (ttm->page_flags & TTM_PAGE_FLAG_SG)
+		return;
+
+	for (i = 0; i < ttm->num_pages; ++i) {
+		(*page)->mapping = NULL;
+		(*page++)->index = 0;
+	}
+#endif
+}
+
+void ttm_tt_unpopulate(struct ttm_tt *ttm)
+{
+	if (ttm->state == tt_unpopulated)
+		return;
+
+	ttm_tt_clear_mapping(ttm);
+	ttm->bdev->driver->ttm_tt_unpopulate(ttm);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.27 2014/03/16 05:20:25 dholland Exp $ */
+/*	$NetBSD: openprom.c,v 1.27.2.1 2014/08/10 06:54:08 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.27 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.27.2.1 2014/08/10 06:54:08 tls Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -73,6 +73,7 @@ const struct cdevsw openprom_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

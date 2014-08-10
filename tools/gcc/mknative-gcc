@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.78 2014/03/02 04:58:20 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.78.2.1 2014/08/10 06:57:41 tls Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -219,8 +219,6 @@ get_libstdcxx_v3 () {
 			<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/$_PLATFORM/bits/$h
 	done
 
-	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/config.h \
-		<$_TMPDIR/$_PLATFORM/libstdc++-v3/config.h
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/gstdint.h \
 		<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/gstdint.h
 

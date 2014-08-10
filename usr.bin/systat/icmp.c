@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp.c,v 1.12 2008/04/10 17:16:39 thorpej Exp $	*/
+/*	$NetBSD: icmp.c,v 1.12.40.1 2014/08/10 06:58:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: icmp.c,v 1.12 2008/04/10 17:16:39 thorpej Exp $");
+__RCSID("$NetBSD: icmp.c,v 1.12.40.1 2014/08/10 06:58:59 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,11 +64,6 @@ static enum update update = UPDATE_TIME;
 static uint64_t curstat[ICMP_NSTATS];
 static uint64_t newstat[ICMP_NSTATS];
 static uint64_t oldstat[ICMP_NSTATS];
-
-static struct nlist namelist[] = {
-	{ .n_name = "_icmpstat" },
-	{ .n_name = NULL }
-};
 
 WINDOW *
 openicmp(void)
@@ -160,36 +155,16 @@ int
 initicmp(void)
 {
 
-	if (! use_sysctl) {
-		if (namelist[0].n_type == 0) {
-			if (kvm_nlist(kd, namelist)) {
-				nlisterr(namelist);
-				return(0);
-			}
-			if (namelist[0].n_type == 0) {
-				error("No namelist");
-				return(0);
-			}
-		}
-	}
-	
 	return (1);
 }
 
 void
 fetchicmp(void)
 {
-	int i;
+	size_t i, size = sizeof(newstat);
 
-	if (use_sysctl) {
-		size_t size = sizeof(newstat);
-
-		if (sysctlbyname("net.inet.icmp.stats", newstat, &size,
-				 NULL, 0) == -1)
-			return;
-	} else {
-		KREAD((void *)namelist[0].n_value, newstat, sizeof(newstat));
-	}
+	if (sysctlbyname("net.inet.icmp.stats", newstat, &size, NULL, 0) == -1)
+		return;
 
 	xADJINETCTR(curstat, oldstat, newstat, ICMP_STAT_BADCODE);
 	xADJINETCTR(curstat, oldstat, newstat, ICMP_STAT_BADLEN);

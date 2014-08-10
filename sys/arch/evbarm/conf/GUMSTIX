@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.79 2013/08/13 12:11:02 pgoyette Exp $
+#	$NetBSD: GUMSTIX,v 1.79.2.1 2014/08/10 06:53:54 tls Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -97,6 +97,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
@@ -146,7 +147,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

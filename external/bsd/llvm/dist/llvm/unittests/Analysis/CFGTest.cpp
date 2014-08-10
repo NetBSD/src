@@ -8,17 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CFG.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/InstIterator.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
 
@@ -116,7 +115,7 @@ protected:
     PM.run(*M);
   }
 
-  OwningPtr<Module> M;
+  std::unique_ptr<Module> M;
   Instruction *A, *B;
 };
 

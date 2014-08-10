@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.77 2014/03/16 05:20:25 dholland Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.77.2.1 2014/08/10 06:54:08 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -130,6 +130,7 @@ const struct cdevsw cgfourteen_cdevsw = {
 	.d_poll = cgfourteenpoll,
 	.d_mmap = cgfourteenmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 
@@ -782,6 +783,7 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 		NULL
 	};
+	cg14_set_depth(sc, 8);
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
@@ -1229,20 +1231,20 @@ cg14_rectfill(struct cgfourteen_softc *sc, int x, int y, int wi, int he,
 		pptr = addr;
 		cnt = wi;
 		if (pre) {
-			sta(pptr, ASI_SX, SX_STBS(8, pre - 1, pptr & 7));
+			sta(pptr & ~7, ASI_SX, SX_STBS(8, pre - 1, pptr & 7));
 			pptr += pre;
 			cnt -= pre;
 		}
 		/* now do the aligned pixels in 32bit chunks */
 		while(cnt > 31) {
 			words = min(32, cnt >> 2);
-			sta(pptr, ASI_SX, SX_STS(8, words - 1, pptr & 7));
+			sta(pptr & ~7, ASI_SX, SX_STS(8, words - 1, pptr & 7));
 			pptr += words << 2;
 			cnt -= words << 2;
 		}
 		/* do any remaining pixels byte-wise again */
 		if (cnt > 0)
-			sta(pptr, ASI_SX, SX_STBS(8, cnt - 1, pptr & 7));
+			sta(pptr & ~7, ASI_SX, SX_STBS(8, cnt - 1, pptr & 7));
 		addr += stride;
 	}
 }
@@ -1268,29 +1270,29 @@ cg14_invert(struct cgfourteen_softc *sc, int x, int y, int wi, int he)
 		pptr = addr;
 		cnt = wi;
 		if (pre) {
-			sta(pptr, ASI_SX, SX_LDB(8, pre - 1, pptr & 7));
+			sta(pptr & ~7, ASI_SX, SX_LDB(8, pre - 1, pptr & 7));
 			sx_write(sc->sc_sx, SX_INSTRUCTIONS,
 			    SX_ROP(8, 8, 32, pre - 1));
-			sta(pptr, ASI_SX, SX_STB(32, pre - 1, pptr & 7));
+			sta(pptr & ~7, ASI_SX, SX_STB(32, pre - 1, pptr & 7));
 			pptr += pre;
 			cnt -= pre;
 		}
 		/* now do the aligned pixels in 32bit chunks */
 		while(cnt > 15) {
 			words = min(16, cnt >> 2);
-			sta(pptr, ASI_SX, SX_LD(8, words - 1, pptr & 7));
+			sta(pptr & ~7, ASI_SX, SX_LD(8, words - 1, pptr & 7));
 			sx_write(sc->sc_sx, SX_INSTRUCTIONS,
 			    SX_ROP(8, 8, 32, words - 1));
-			sta(pptr, ASI_SX, SX_ST(32, words - 1, pptr & 7));
+			sta(pptr & ~7, ASI_SX, SX_ST(32, words - 1, pptr & 7));
 			pptr += words << 2;
 			cnt -= words << 2;
 		}
 		/* do any remaining pixels byte-wise again */
 		if (cnt > 0)
-			sta(pptr, ASI_SX, SX_LDB(8, cnt - 1, pptr & 7));
+			sta(pptr & ~7, ASI_SX, SX_LDB(8, cnt - 1, pptr & 7));
 			sx_write(sc->sc_sx, SX_INSTRUCTIONS,
 			    SX_ROP(8, 8, 32, cnt - 1));
-			sta(pptr, ASI_SX, SX_STB(32, cnt - 1, pptr & 7));
+			sta(pptr & ~7, ASI_SX, SX_STB(32, cnt - 1, pptr & 7));
 		addr += stride;
 	}
 }
@@ -1301,7 +1303,7 @@ cg14_slurp(int reg, uint32_t addr, int cnt)
 	int num;
 	while (cnt > 0) {
 		num = min(32, cnt);
-		sta(addr, ASI_SX, SX_LD(reg, num - 1, addr & 7));
+		sta(addr & ~7, ASI_SX, SX_LD(reg, num - 1, addr & 7));
 		cnt -= num;
 		reg += num;
 		addr += (num << 2);
@@ -1314,7 +1316,7 @@ cg14_spit(int reg, uint32_t addr, int cnt)
 	int num;
 	while (cnt > 0) {
 		num = min(32, cnt);
-		sta(addr, ASI_SX, SX_ST(reg, num - 1, addr & 7));
+		sta(addr & ~7, ASI_SX, SX_ST(reg, num - 1, addr & 7));
 		cnt -= num;
 		reg += num;
 		addr += (num << 2);
@@ -1349,9 +1351,9 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 			dptr = daddr;
 			cnt = wi;
 			if (pre > 0) {
-				sta(sptr, ASI_SX,
+				sta(sptr & ~7, ASI_SX,
 				    SX_LDB(32, pre - 1, sptr & 7));
-				sta(dptr, ASI_SX,
+				sta(dptr & ~7, ASI_SX,
 				    SX_STB(32, pre - 1, dptr & 7));
 				cnt -= pre;
 				sptr += pre;
@@ -1367,9 +1369,9 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 				cnt -= num << 2;
 			}
 			if (cnt > 0) {
-				sta(sptr, ASI_SX,
+				sta(sptr & ~7, ASI_SX,
 				    SX_LDB(32, cnt - 1, sptr & 7));
-				sta(dptr, ASI_SX,
+				sta(dptr & ~7, ASI_SX,
 				    SX_STB(32, cnt - 1, dptr & 7));
 			}
 			saddr += skip;
@@ -1383,16 +1385,16 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 			dptr = daddr;
 			cnt = wi;
 			while(cnt > 31) {
-				sta(sptr, ASI_SX, SX_LDB(32, 31, sptr & 7));
-				sta(dptr, ASI_SX, SX_STB(32, 31, dptr & 7));
+				sta(sptr & ~7, ASI_SX, SX_LDB(32, 31, sptr & 7));
+				sta(dptr & ~7, ASI_SX, SX_STB(32, 31, dptr & 7));
 				sptr += 32;
 				dptr += 32;
 				cnt -= 32;
 			}
 			if (cnt > 0) {
-				sta(sptr, ASI_SX,
+				sta(sptr & ~7, ASI_SX,
 				    SX_LDB(32, cnt - 1, sptr & 7));
-				sta(dptr, ASI_SX,
+				sta(dptr & ~7, ASI_SX,
 				    SX_STB(32, cnt - 1, dptr & 7));
 			}
 			saddr += skip;
@@ -1448,7 +1450,7 @@ cg14_putchar(void *cookie, int row, int col, u_int c, long attr)
 				reg = *data8;
 				sx_write(sc->sc_sx, SX_QUEUED(R_MASK),
 				    reg << 24);
-				sta(addr, ASI_SX, SX_STBS(8, wi - 1, addr & 7));
+				sta(addr & ~7, ASI_SX, SX_STBS(8, wi - 1, addr & 7));
 				data8++;
 				addr += stride;
 			}
@@ -1461,7 +1463,7 @@ cg14_putchar(void *cookie, int row, int col, u_int c, long attr)
 				reg = *data16;
 				sx_write(sc->sc_sx, SX_QUEUED(R_MASK),
 				    reg << 16);
-				sta(addr, ASI_SX, SX_STBS(8, wi - 1, addr & 7));
+				sta(addr & ~7, ASI_SX, SX_STBS(8, wi - 1, addr & 7));
 				data16++;
 				addr += stride;
 			}

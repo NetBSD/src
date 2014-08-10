@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.10 2014/03/15 18:28:22 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.10.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -367,7 +367,7 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 	}
 	presult = sigprocmask(SIG_UNBLOCK, &sset, NULL);
 	if (presult != 0) {
-		isc__strerror(presult, strbuf, sizeof(strbuf));
+		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_app_start() sigprocmask: %s", strbuf);
 		result = ISC_R_UNEXPECTED;
@@ -752,7 +752,7 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 }
 
 isc_result_t
-isc__app_run() {
+isc__app_run(void) {
 	return (isc__app_ctxrun((isc_appctx_t *)&isc_g_appctx));
 }
 
@@ -829,7 +829,7 @@ isc__app_ctxshutdown(isc_appctx_t *ctx0) {
 }
 
 isc_result_t
-isc__app_shutdown() {
+isc__app_shutdown(void) {
 	return (isc__app_ctxshutdown((isc_appctx_t *)&isc_g_appctx));
 }
 
@@ -1032,7 +1032,7 @@ isc__appctx_settimermgr(isc_appctx_t *ctx0, isc_timermgr_t *timermgr) {
 }
 
 isc_result_t
-isc__app_register() {
+isc__app_register(void) {
 	return (isc_app_register(isc__appctx_create));
 }
 

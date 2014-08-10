@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.117 2014/03/20 06:48:54 skrll Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.117.2.1 2014/08/10 06:56:15 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.117 2014/03/20 06:48:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.117.2.1 2014/08/10 06:56:15 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -106,6 +106,7 @@ const struct cdevsw tun_cdevsw = {
 	.d_poll = tunpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = tunkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 
@@ -822,9 +823,9 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
 	struct mbuf	*top, **mp, *m;
-	struct ifqueue	*ifq;
+	pktqueue_t	*pktq;
 	struct sockaddr	dst;
-	int		isr, error = 0, s, tlen, mlen;
+	int		error = 0, s, tlen, mlen;
 	uint32_t	family;
 
 	s = splnet();
@@ -882,14 +883,12 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	switch (dst.sa_family) {
 #ifdef INET
 	case AF_INET:
-		ifq = &ipintrq;
-		isr = NETISR_IP;
+		pktq = ip_pktq;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		ifq = &ip6intrq;
-		isr = NETISR_IPV6;
+		pktq = ip6_pktq;
 		break;
 #endif
 	default:
@@ -942,19 +941,15 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		error = ENXIO;
 		goto out;
 	}
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
+	if (__predict_false(!pktq_enqueue(pktq, top, 0))) {
 		ifp->if_collisions++;
 		mutex_exit(&tp->tun_lock);
-		m_freem(top);
 		error = ENOBUFS;
+		m_freem(top);
 		goto out_nolock;
 	}
-
-	IF_ENQUEUE(ifq, top);
 	ifp->if_ipackets++;
 	ifp->if_ibytes += tlen;
-	schednetisr(isr);
 out:
 	mutex_exit(&tp->tun_lock);
 out_nolock:

@@ -1,7 +1,7 @@
-/*	$NetBSD: ntservice.c,v 1.4 2013/12/31 20:24:39 christos Exp $	*/
+/*	$NetBSD: ntservice.c,v 1.4.2.1 2014/08/10 07:06:36 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007, 2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -46,7 +46,7 @@ int bindmain(int, char *[]); /* From main.c */
  * Initialize the Service by registering it.
  */
 void
-ntservice_init() {
+ntservice_init(void) {
 	if (!foreground) {
 		/* Register handler with the SCM */
 		hServiceStatus = RegisterServiceCtrlHandler(BIND_SERVICE_NAME,
@@ -66,14 +66,14 @@ ntservice_init() {
 }
 
 void
-ntservice_shutdown() {
+ntservice_shutdown(void) {
 	UpdateSCM(SERVICE_STOPPED);
 }
 /*
  * Routine to check if this is a service or a foreground program
  */
 BOOL
-ntservice_isservice() {
+ntservice_isservice(void) {
 	return(!foreground);
 }
 /*

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33.4.1 2014/04/07 19:32:15 tls Exp $
+# $NetBSD: Makefile,v 1.33.4.2 2014/08/10 06:57:19 tls Exp $
 
 NOMAN=		# defined
 
@@ -14,6 +14,7 @@ TESTS_C+=	t_mqueue
 TESTS_C+=	t_sysv
 TESTS_C+=	t_subr_prf
 TESTS_C+=	t_kauth_pr_47598
+TESTS_C+=	t_sysctl
 
 TESTS_SH=	t_umount
 TESTS_SH+=	t_umountstress
@@ -32,9 +33,11 @@ TESTS_SUBDIRS+=	tty
 TESTS_C+=	t_extattrctl
 TESTS_C+=	t_filedesc
 TESTS_C+=	t_rnd
-LDADD.t_extattrctl+= -lrumpvfs -lrump -lrumpuser -lpthread
+LDADD.t_extattrctl+= -lrumpvfs -lrump -lrumpuser
+LDADD.t_extattrctl+= -lrump -lpthread
 LDADD.t_filedesc+=  ${LDADD.t_rnd}
-LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser -lpthread
+LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser
+LDADD.t_rnd+=  -lrump -lpthread
 
 .endif
 

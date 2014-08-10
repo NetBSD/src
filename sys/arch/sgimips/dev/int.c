@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.25 2012/10/27 17:18:09 chs Exp $	*/
+/*	$NetBSD: int.c,v 1.25.10.1 2014/08/10 06:54:07 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.25 2012/10/27 17:18:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.25.10.1 2014/08/10 06:54:07 tls Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -479,7 +479,7 @@ int2_cal_timer(void)
 	int s;
 	int roundtime;
 	int sampletime;
-	int startmsb, lsb, msb;
+	int msb;
 	unsigned long startctr, endctr;
 
 	/*
@@ -489,7 +489,6 @@ int2_cal_timer(void)
 	 */
 	roundtime = (1000000 / hz) / 2;
 	sampletime = (1000000 / hz) + 0xff;
-	startmsb = (sampletime >> 8);
 
 	s = splhigh();
 
@@ -503,7 +502,7 @@ int2_cal_timer(void)
 	/* Wait for the MSB to count down to zero */
 	do {
 		bus_space_write_1(iot, ioh, INT2_TIMER_CONTROL, TIMER_SEL2);
-		lsb = bus_space_read_1(iot, ioh, INT2_TIMER_2) & 0xff;
+		(void)bus_space_read_1(iot, ioh, INT2_TIMER_2);
 		msb = bus_space_read_1(iot, ioh, INT2_TIMER_2) & 0xff;
 
 		endctr = mips3_cp0_count_read();

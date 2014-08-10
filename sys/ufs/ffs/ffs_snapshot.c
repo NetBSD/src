@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.133 2014/03/17 09:29:20 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.133.2.1 2014/08/10 06:56:58 tls Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.133 2014/03/17 09:29:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.133.2.1 2014/08/10 06:56:58 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -399,7 +399,7 @@ out:
 #endif
 	}
 	if (error) {
-		if (!UFS_WAPBL_BEGIN(mp)) {
+		if (UFS_WAPBL_BEGIN(mp) == 0) {
 			(void) ffs_truncate(vp, (off_t)0, 0, NOCRED);
 			UFS_WAPBL_END(mp);
 		}
@@ -423,11 +423,11 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 	struct inode *ip = VTOI(vp);
 
 	/*
-	 * Check mount, exclusive reference and owner.
+	 * Check mount, readonly reference and owner.
 	 */
 	if (vp->v_mount != mp)
 		return EXDEV;
-	if (vp->v_usecount != 1 || vp->v_writecount != 0)
+	if (vp->v_writecount != 0)
 		return EBUSY;
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_SNAPSHOT,
 	    0, mp, vp, NULL);
@@ -600,6 +600,42 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 	return 0;
 }
 
+struct snapshot_expunge_ctx {
+	struct vnode *logvp;
+	struct lwp *l;
+	struct vnode *vp;
+	struct fs *copy_fs;
+};
+
+static bool
+snapshot_expunge_selector(void *cl, struct vnode *xvp)
+{
+	struct vattr vat;
+	struct snapshot_expunge_ctx *c = cl;
+	struct inode *xp;
+
+	xp = VTOI(xvp);
+	if (xvp->v_type == VNON || VTOI(xvp) == NULL ||
+	    (xp->i_flags & SF_SNAPSHOT))
+		return false;
+#ifdef DEBUG
+	if (snapdebug)
+		vprint("ffs_snapshot: busy vnode", xvp);
+#endif
+
+	if (xvp == c->logvp)
+		return true;
+
+	if (VOP_GETATTR(xvp, &vat, c->l->l_cred) == 0 &&
+	    vat.va_nlink > 0)
+		return false;
+
+	if (ffs_checkfreefile(c->copy_fs, c->vp, xp->i_number))
+		return false;
+
+	return true;
+}
+
 /*
  * We must check for active files that have been unlinked (e.g., with a zero
  * link count). We have to expunge all trace of these files from the snapshot
@@ -616,9 +652,9 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	struct fs *fs = VFSTOUFS(mp)->um_fs;
 	struct inode *xp;
 	struct lwp *l = curlwp;
-	struct vattr vat;
 	struct vnode *logvp = NULL, *xvp;
 	struct vnode_iterator *marker;
+	struct snapshot_expunge_ctx ctx;
 
 	*snaplist = NULL;
 	/*
@@ -638,31 +674,17 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	    FSMAXSNAP + 1 /* superblock */ + 1 /* last block */ + 1 /* size */;
 
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &xvp)) {
-		if (xvp->v_type == VNON || VTOI(xvp) == NULL ||
-		    (VTOI(xvp)->i_flags & SF_SNAPSHOT)) {
-			vrele(xvp);
-			continue;
-		}
-#ifdef DEBUG
-		if (snapdebug)
-			vprint("ffs_snapshot: busy vnode", xvp);
-#endif
-		xp = VTOI(xvp);
-		if (xvp != logvp) {
-			if (VOP_GETATTR(xvp, &vat, l->l_cred) == 0 &&
-			    vat.va_nlink > 0) {
-				vrele(xvp);
-				continue;
-			}
-			if (ffs_checkfreefile(copy_fs, vp, xp->i_number)) {
-				vrele(xvp);
-				continue;
-			}
-		}
+	ctx.logvp = logvp;
+	ctx.l = l;
+	ctx.vp = vp;
+	ctx.copy_fs = copy_fs;
+	while ((xvp = vfs_vnode_iterator_next(marker, snapshot_expunge_selector,
+	    &ctx)))
+	{
 		/*
 		 * If there is a fragment, clear it here.
 		 */
+		xp = VTOI(xvp);
 		blkno = 0;
 		loc = howmany(xp->i_size, fs->fs_bsize) - 1;
 		if (loc < UFS_NDADDR) {

@@ -54,6 +54,8 @@ using llvm::opt::ArgStringList;
     void AddARMTargetArgs(const llvm::opt::ArgList &Args,
                           llvm::opt::ArgStringList &CmdArgs,
                           bool KernelOrKext) const;
+    void AddARM64TargetArgs(const llvm::opt::ArgList &Args,
+                            llvm::opt::ArgStringList &CmdArgs) const;
     void AddMIPSTargetArgs(const llvm::opt::ArgList &Args,
                            llvm::opt::ArgStringList &CmdArgs) const;
     void AddR600TargetArgs(const llvm::opt::ArgList &Args,
@@ -79,15 +81,14 @@ using llvm::opt::ArgStringList;
   public:
     Clang(const ToolChain &TC) : Tool("clang", "clang frontend", TC) {}
 
-    virtual bool hasGoodDiagnostics() const { return true; }
-    virtual bool hasIntegratedAssembler() const { return true; }
-    virtual bool hasIntegratedCPP() const { return true; }
+    bool hasGoodDiagnostics() const override { return true; }
+    bool hasIntegratedAssembler() const override { return true; }
+    bool hasIntegratedCPP() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 
   /// \brief Clang integrated assembler tool.
@@ -96,15 +97,14 @@ using llvm::opt::ArgStringList;
     ClangAs(const ToolChain &TC) : Tool("clang::as",
                                         "clang integrated assembler", TC) {}
 
-    virtual bool hasGoodDiagnostics() const { return true; }
-    virtual bool hasIntegratedAssembler() const { return false; }
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasGoodDiagnostics() const override { return true; }
+    bool hasIntegratedAssembler() const override { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 
   /// gcc - Generic GCC tool implementations.
@@ -114,11 +114,11 @@ namespace gcc {
     Common(const char *Name, const char *ShortName,
            const ToolChain &TC) : Tool(Name, ShortName, TC) {}
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output,
+                      const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
 
     /// RenderExtraToolArgs - Render any arguments necessary to force
     /// the particular tool mode.
@@ -132,11 +132,11 @@ namespace gcc {
     Preprocess(const ToolChain &TC) : Common("gcc::Preprocess",
                                              "gcc preprocessor", TC) {}
 
-    virtual bool hasGoodDiagnostics() const { return true; }
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasGoodDiagnostics() const override { return true; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     llvm::opt::ArgStringList &CmdArgs) const;
+    void RenderExtraToolArgs(const JobAction &JA,
+                             llvm::opt::ArgStringList &CmdArgs) const override;
   };
 
   class LLVM_LIBRARY_VISIBILITY Compile : public Common  {
@@ -144,11 +144,11 @@ namespace gcc {
     Compile(const ToolChain &TC) : Common("gcc::Compile",
                                           "gcc frontend", TC) {}
 
-    virtual bool hasGoodDiagnostics() const { return true; }
-    virtual bool hasIntegratedCPP() const { return true; }
+    bool hasGoodDiagnostics() const override { return true; }
+    bool hasIntegratedCPP() const override { return true; }
 
-    virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     llvm::opt::ArgStringList &CmdArgs) const;
+    void RenderExtraToolArgs(const JobAction &JA,
+                             llvm::opt::ArgStringList &CmdArgs) const override;
   };
 
   class LLVM_LIBRARY_VISIBILITY Link : public Common  {
@@ -156,11 +156,11 @@ namespace gcc {
     Link(const ToolChain &TC) : Common("gcc::Link",
                                        "linker (via gcc)", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     llvm::opt::ArgStringList &CmdArgs) const;
+    void RenderExtraToolArgs(const JobAction &JA,
+                             llvm::opt::ArgStringList &CmdArgs) const override;
   };
 } // end namespace gcc
 
@@ -172,15 +172,14 @@ namespace hexagon {
     Assemble(const ToolChain &TC) : Tool("hexagon::Assemble",
       "hexagon-as", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     llvm::opt::ArgStringList &CmdArgs) const;
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void RenderExtraToolArgs(const JobAction &JA,
+                             llvm::opt::ArgStringList &CmdArgs) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 
   class LLVM_LIBRARY_VISIBILITY Link : public Tool {
@@ -188,16 +187,15 @@ namespace hexagon {
     Link(const ToolChain &TC) : Tool("hexagon::Link",
       "hexagon-ld", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
                                      llvm::opt::ArgStringList &CmdArgs) const;
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 } // end namespace hexagon.
 
@@ -237,13 +235,12 @@ namespace darwin {
     Assemble(const ToolChain &TC) : MachOTool("darwin::Assemble",
                                               "assembler", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 
   class LLVM_LIBRARY_VISIBILITY Link : public MachOTool  {
@@ -255,27 +252,25 @@ namespace darwin {
   public:
     Link(const ToolChain &TC) : MachOTool("darwin::Link", "linker", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 
   class LLVM_LIBRARY_VISIBILITY Lipo : public MachOTool  {
   public:
     Lipo(const ToolChain &TC) : MachOTool("darwin::Lipo", "lipo", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 
   class LLVM_LIBRARY_VISIBILITY Dsymutil : public MachOTool  {
@@ -283,14 +278,14 @@ namespace darwin {
     Dsymutil(const ToolChain &TC) : MachOTool("darwin::Dsymutil",
                                               "dsymutil", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isDsymutilJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isDsymutilJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output,
+                      const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 
   class LLVM_LIBRARY_VISIBILITY VerifyDebug : public MachOTool  {
@@ -298,13 +293,12 @@ namespace darwin {
     VerifyDebug(const ToolChain &TC) : MachOTool("darwin::VerifyDebug",
                                                  "dwarfdump", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 
 }
@@ -316,26 +310,25 @@ namespace openbsd {
     Assemble(const ToolChain &TC) : Tool("openbsd::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output,
+                      const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
     Link(const ToolChain &TC) : Tool("openbsd::Link", "linker", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 } // end namespace openbsd
 
@@ -346,26 +339,24 @@ namespace bitrig {
     Assemble(const ToolChain &TC) : Tool("bitrig::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
     Link(const ToolChain &TC) : Tool("bitrig::Link", "linker", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 } // end namespace bitrig
 
@@ -376,26 +367,24 @@ namespace freebsd {
     Assemble(const ToolChain &TC) : Tool("freebsd::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
     Link(const ToolChain &TC) : Tool("freebsd::Link", "linker", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 } // end namespace freebsd
 
@@ -407,13 +396,12 @@ namespace netbsd {
     Assemble(const ToolChain &TC)
       : Tool("netbsd::Assemble", "assembler", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
 
@@ -421,14 +409,13 @@ namespace netbsd {
     Link(const ToolChain &TC)
       : Tool("netbsd::Link", "linker", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 } // end namespace netbsd
 
@@ -438,26 +425,26 @@ namespace gnutools {
   public:
     Assemble(const ToolChain &TC) : Tool("GNU::Assemble", "assembler", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output,
+                      const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
     Link(const ToolChain &TC) : Tool("GNU::Link", "linker", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output,
+                      const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 }
   /// minix -- Directly call GNU Binutils assembler and linker
@@ -467,26 +454,26 @@ namespace minix {
     Assemble(const ToolChain &TC) : Tool("minix::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output,
+                      const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
     Link(const ToolChain &TC) : Tool("minix::Link", "linker", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output,
+                      const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 } // end namespace minix
 
@@ -497,26 +484,24 @@ namespace solaris {
     Assemble(const ToolChain &TC) : Tool("solaris::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
     Link(const ToolChain &TC) : Tool("solaris::Link", "linker", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 } // end namespace solaris
 
@@ -527,26 +512,24 @@ namespace auroraux {
     Assemble(const ToolChain &TC) : Tool("auroraux::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
     Link(const ToolChain &TC) : Tool("auroraux::Link", "linker", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 } // end namespace auroraux
 
@@ -557,26 +540,25 @@ namespace dragonfly {
     Assemble(const ToolChain &TC) : Tool("dragonfly::Assemble", "assembler",
                                          TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
+    bool hasIntegratedCPP() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
   public:
     Link(const ToolChain &TC) : Tool("dragonfly::Link", "linker", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output,
+                      const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 } // end namespace dragonfly
 
@@ -586,29 +568,27 @@ namespace visualstudio {
   public:
     Link(const ToolChain &TC) : Tool("visualstudio::Link", "linker", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 
   class LLVM_LIBRARY_VISIBILITY Compile : public Tool {
   public:
     Compile(const ToolChain &TC) : Tool("visualstudio::Compile", "compiler", TC) {}
 
-    virtual bool hasIntegratedAssembler() const { return true; }
-    virtual bool hasIntegratedCPP() const { return true; }
-    virtual bool isLinkJob() const { return false; }
+    bool hasIntegratedAssembler() const override { return true; }
+    bool hasIntegratedCPP() const override { return true; }
+    bool isLinkJob() const override { return false; }
 
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
 
     Command *GetCommand(Compilation &C, const JobAction &JA,
                         const InputInfo &Output,
@@ -630,12 +610,11 @@ namespace XCore {
     Assemble(const ToolChain &TC) : Tool("XCore::Assemble",
       "XCore-as", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    bool hasIntegratedCPP() const override { return false; }
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 
   class LLVM_LIBRARY_VISIBILITY Link : public Tool {
@@ -643,13 +622,12 @@ namespace XCore {
     Link(const ToolChain &TC) : Tool("XCore::Link",
       "XCore-ld", TC) {}
 
-    virtual bool hasIntegratedCPP() const { return false; }
-    virtual bool isLinkJob() const { return true; }
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const llvm::opt::ArgList &TCArgs,
-                              const char *LinkingOutput) const;
+    bool hasIntegratedCPP() const override { return false; }
+    bool isLinkJob() const override { return true; }
+    void ConstructJob(Compilation &C, const JobAction &JA,
+                      const InputInfo &Output, const InputInfoList &Inputs,
+                      const llvm::opt::ArgList &TCArgs,
+                      const char *LinkingOutput) const override;
   };
 } // end namespace XCore.
 

@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.79 2014/03/24 14:15:38 szptvlfn Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.79.2.1 2014/08/10 06:54:03 tls Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,9 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.79 $"
+#ident 		"GENERIC_TINY-$Revision: 1.79.2.1 $"
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 maxusers	4
 

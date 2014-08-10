@@ -1159,6 +1159,10 @@ bind_arrow_keys_internal (map)
   rl_bind_keyseq_if_unbound ("\340P", rl_get_next_history);
   rl_bind_keyseq_if_unbound ("\340M", rl_forward_char);
   rl_bind_keyseq_if_unbound ("\340K", rl_backward_char);
+  rl_bind_keyseq_if_unbound ("\340G", rl_beg_of_line);
+  rl_bind_keyseq_if_unbound ("\340O", rl_end_of_line);
+  rl_bind_keyseq_if_unbound ("\340S", rl_delete);
+  rl_bind_keyseq_if_unbound ("\340R", rl_overwrite_mode);
 #endif
 
   _rl_keymap = xkeymap;

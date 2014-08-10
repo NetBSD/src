@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp6.h,v 1.1.1.5 2014/02/25 13:14:30 roy Exp $ */
+/* $NetBSD: dhcp6.h,v 1.1.1.5.2.1 2014/08/10 07:06:59 tls Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -91,6 +91,7 @@
 #define D6_OPTION_FQDN			39
 #define D6_OPTION_POSIX_TIMEZONE	41
 #define D6_OPTION_TZDB_TIMEZONE		42
+#define D6_OPTION_PD_EXCLUDE		67
 #define D6_OPTION_SOL_MAX_RT		82
 #define D6_OPTION_INF_MAX_RT		83
 
@@ -174,14 +175,14 @@ struct dhcp6_state {
 
 	/* Message retransmission timings */
 	struct timeval RT;
-	int IMD;
-	int RTC;
-	int IRT;
-	int MRC;
-	int MRT;
+	unsigned int IMD;
+	unsigned int RTC;
+	time_t IRT;
+	unsigned int MRC;
+	time_t MRT;
 	void (*MRCcallback)(void *);
-	int sol_max_rt;
-	int inf_max_rt;
+	time_t sol_max_rt;
+	time_t inf_max_rt;
 
 	struct dhcp6_message *send;
 	size_t send_len;
@@ -198,8 +199,6 @@ struct dhcp6_state {
 	struct in6_addr unicast;
 	struct ipv6_addrhead addrs;
 	uint32_t lowpl;
-	uint32_t sla;
-	uint8_t sla_set;
 	char leasefile[sizeof(LEASEFILE6) + IF_NAMESIZE];
 	const char *reason;
 
@@ -229,26 +228,28 @@ struct dhcp6_state {
     ((const uint8_t *)(o) + sizeof(struct dhcp6_option))
 
 #ifdef INET6
-void dhcp6_printoptions(const struct dhcpcd_ctx *);
+void dhcp6_printoptions(const struct dhcpcd_ctx *,
+    const struct dhcp_opt *, size_t);
 int dhcp6_addrexists(struct dhcpcd_ctx *, const struct ipv6_addr *);
-int dhcp6_find_delegates(struct interface *);
+size_t dhcp6_find_delegates(struct interface *);
 int dhcp6_start(struct interface *, enum DH6S);
 void dhcp6_reboot(struct interface *);
 ssize_t dhcp6_env(char **, const char *, const struct interface *,
-    const struct dhcp6_message *, ssize_t);
+    const struct dhcp6_message *, size_t);
 void dhcp6_free(struct interface *);
 void dhcp6_handleifa(struct dhcpcd_ctx *, int, const char *,
     const struct in6_addr *addr, int);
 void dhcp6_drop(struct interface *, const char *);
+int dhcp6_dump(struct interface *);
 #else
-#define dhcp6_printoptions()
 #define dhcp6_addrexists(a, b) (0)
-#define dhcp6_find_delegates(a) (0)
+#define dhcp6_find_delegates(a)
 #define dhcp6_start(a, b) (0)
 #define dhcp6_reboot(a)
 #define dhcp6_env(a, b, c, d, e)
 #define dhcp6_free(a)
 #define dhcp6_drop(a, b)
+#define dhcp6_dump(a) -1
 #endif
 
 #endif

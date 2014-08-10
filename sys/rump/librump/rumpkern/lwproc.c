@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.28 2014/03/16 15:30:05 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.28.2.1 2014/08/10 06:56:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.28 2014/03/16 15:30:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.28.2.1 2014/08/10 06:56:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -83,6 +83,7 @@ static void
 lwproc_proc_free(struct proc *p)
 {
 	kauth_cred_t cred;
+	struct proc *child;
 
 	KASSERT(p->p_stat == SDYING || p->p_stat == SDEAD);
 
@@ -96,6 +97,14 @@ lwproc_proc_free(struct proc *p)
 
 	mutex_enter(proc_lock);
 
+	/* childranee eunt initus */
+	while ((child = LIST_FIRST(&p->p_children)) != NULL) {
+		LIST_REMOVE(child, p_sibling);
+		child->p_pptr = initproc;
+		child->p_ppid = 1;
+		LIST_INSERT_HEAD(&initproc->p_children, child, p_sibling);
+	}
+
 	KASSERT(p->p_nlwps == 0);
 	KASSERT(LIST_EMPTY(&p->p_lwps));
 
@@ -106,9 +115,9 @@ lwproc_proc_free(struct proc *p)
 
 	cred = p->p_cred;
 	chgproccnt(kauth_cred_getuid(cred), -1);
-	if (rump_proc_vfs_release)
-		rump_proc_vfs_release(p);
+	rump_proc_vfs_release(p);
 
+	doexithooks(p);
 	lim_free(p->p_limit);
 	pstatsfree(p->p_stats);
 	kauth_cred_free(p->p_cred);
@@ -206,8 +215,7 @@ lwproc_newproc(struct proc *parent, int flags)
 	kauth_proc_fork(parent, p);
 
 	/* initialize cwd in rump kernels with vfs */
-	if (rump_proc_vfs_init)
-		rump_proc_vfs_init(p);
+	rump_proc_vfs_init(p);
 
 	chgproccnt(uid, 1); /* not enforced */
 

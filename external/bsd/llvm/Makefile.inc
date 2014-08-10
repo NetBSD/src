@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.72 2014/03/04 21:05:05 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.72.2.1 2014/08/10 07:08:02 tls Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -8,7 +8,7 @@ LLVM_TOPLEVEL_MK=
 SVN_ROOT=		http://llvm.org/svn/llvm-project
 SVN_BRANCH=		trunk
 
-COMMON_REVISION=	202566
+COMMON_REVISION=	209886
 CLANG_REVISION=		${COMMON_REVISION}
 LLD_REVISION=		${COMMON_REVISION}
 LLDB_REVISION=		${COMMON_REVISION}
@@ -41,18 +41,14 @@ LLVM_INCLUDE_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm-include && ${PRINTOBJDIR}
 LLVM_TOOLCONF_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm && ${PRINTOBJDIR}
 HOST_CPPFLAGS+=	${CPPFLAGS}
 HOST_CXXFLAGS+=	-O2 -fno-rtti -fno-exceptions
-.if ${MKLLD:Uno} == "yes"
 HOST_CPPFLAGS+=	-std=c++11
-.endif
 .else
 LLVM_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
 CLANG_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
 MCLINKER_INCLUDE_CONFIG= ${LLVM_TOPLEVEL}/config/mclinker
 LLVM_INCLUDE_OBJDIR!=	cd ${LLVM_TOPLEVEL}/include && ${PRINTOBJDIR}
 
-.if ${MKLLD:Uno} == "yes" || ${MKLLDB:Uno} == "yes"
 CPPFLAGS+=	-std=c++11
-.endif
 .if ${MKLLDB:Uno} == "yes"
 CPPFLAGS+=	-DLLDB_DISABLE_PYTHON
 .endif

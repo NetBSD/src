@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.15 2013/06/16 06:29:08 msaitoh Exp $ */
+/*	$NetBSD: atphy.c,v 1.15.6.1 2014/08/10 06:54:53 tls Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.15 2013/06/16 06:29:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.15.6.1 2014/08/10 06:54:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,7 @@ atphy_mii_phy_auto(struct mii_softc *sc)
 	sc->mii_ticks = 0;
 	anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA;
 	if (sc->mii_flags & MIIF_DOPAUSE)
-		anar |= ANAR_X_PAUSE_TOWARDS;
+		anar |= ANAR_PAUSE_TOWARDS;
 	PHY_WRITE(sc, MII_ANAR, anar);
 	if (sc->mii_extcapabilities & (EXTSR_1000TFDX | EXTSR_1000THDX))
 		PHY_WRITE(sc, MII_100T2CR, GTCR_ADV_1000TFDX |

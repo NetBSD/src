@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen.c,v 1.1.1.4 2013/09/25 19:06:33 tron Exp $	*/
+/*	$NetBSD: postscreen.c,v 1.1.1.4.2.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -172,7 +172,7 @@
 /*	A list of local \fBpostscreen\fR(8) server IP addresses where a
 /*	non-whitelisted remote SMTP client can obtain \fBpostscreen\fR(8)'s temporary
 /*	whitelist status.
-/* BEFORE-GREETING TESTS
+/* BEFORE 220 GREETING TESTS
 /* .ad
 /* .fi
 /*	These tests are executed before the remote SMTP client
@@ -216,15 +216,21 @@
 /* .IP "\fBsmtpd_service_name (smtpd)\fR"
 /*	The internal service that \fBpostscreen\fR(8) hands off allowed
 /*	connections to.
-/* AFTER-GREETING TESTS
+/* .PP
+/*	Available in Postfix version 2.11 and later:
+/* .IP "\fBpostscreen_dnsbl_whitelist_threshold (0)\fR"
+/*	Allow a remote SMTP client to skip "before" and "after 220
+/*	greeting" protocol tests, based on its combined DNSBL score as
+/*	defined with the postscreen_dnsbl_sites parameter.
+/* AFTER 220 GREETING TESTS
 /* .ad
 /* .fi
 /*	These tests are executed after the remote SMTP client
 /*	receives the "220 servername" greeting. If a client passes
 /*	all tests during this phase, it will receive a 4XX response
-/*	to RCPT TO commands until the client hangs up. After this,
-/*	the client will be allowed to talk directly to a Postfix
-/*	SMTP server process.
+/*	to all RCPT TO commands. After the client reconnects, it
+/*	will be allowed to talk directly to a Postfix SMTP server
+/*	process.
 /* .IP "\fBpostscreen_bare_newline_action (ignore)\fR"
 /*	The action that \fBpostscreen\fR(8) takes when a remote SMTP client sends
 /*	a bare newline character, that is, a newline not preceded by carriage
@@ -420,7 +426,6 @@
  /*
   * Configuration parameters.
   */
-int     var_proc_limit;
 char   *var_smtpd_service;
 char   *var_smtpd_banner;
 bool    var_disable_vrfy_cmd;
@@ -467,6 +472,7 @@ int     var_psc_pregr_ttl;
 char   *var_psc_dnsbl_sites;
 char   *var_psc_dnsbl_reply;
 int     var_psc_dnsbl_thresh;
+int     var_psc_dnsbl_wthresh;
 char   *var_psc_dnsbl_action;
 int     var_psc_dnsbl_ttl;
 
@@ -1095,8 +1101,8 @@ int     main(int argc, char **argv)
 	0,
     };
     static const CONFIG_INT_TABLE int_table[] = {
-	VAR_PROC_LIMIT, DEF_PROC_LIMIT, &var_proc_limit, 1, 0,
 	VAR_PSC_DNSBL_THRESH, DEF_PSC_DNSBL_THRESH, &var_psc_dnsbl_thresh, 0, 0,
+	VAR_PSC_DNSBL_WTHRESH, DEF_PSC_DNSBL_WTHRESH, &var_psc_dnsbl_wthresh, 0, 0,
 	VAR_PSC_CMD_COUNT, DEF_PSC_CMD_COUNT, &var_psc_cmd_count, 1, 0,
 	VAR_SMTPD_CCONN_LIMIT, DEF_SMTPD_CCONN_LIMIT, &var_smtpd_cconn_limit, 0, 0,
 	0,

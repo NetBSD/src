@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.12 2014/03/30 01:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.12.2.1 2014/08/10 06:53:50 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -29,11 +29,8 @@
  * SUCH DAMAGE.
  *
  * ARM11 assembly functions for CPU / MMU / TLB specific operations
- *
- * XXX We make no attempt at present to take advantage of the v6 memory
- * architecture or physically tagged cache.
  */
- 
+
 #include "assym.h"
 #include <machine/asm.h>
 #include <arm/locore.h>
@@ -50,9 +47,9 @@ ENTRY(arm11_setttb)
 #endif
 
 	cmp	r1, #0
-	mcr	p15, 0, r0, c2, c0, 0	/* TTBR0 set */
+	mcr	p15, 0, r0, c2, c0, 0	/* set the new TTBR0 */
 #ifdef ARM_MMU_EXTENDED
-	mcreq	p15, 0, r0, c2, c0, 1	/* TTBR1 set */
+	mcreq	p15, 0, r0, c2, c0, 1	/* set the new TTBR1 */
 #else
 	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
 	mcrne	p15, 0, r0, c7, c10, 4	/* drain write buffer */
@@ -75,9 +72,9 @@ ENTRY(arm11_context_switch)
 	cmp	r1, #0
 #endif
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	mcr	p15, 0, r0, c2, c0, 0	/* TTBR0 set */
+	mcr	p15, 0, r0, c2, c0, 0	/* set the new TTBR0 */
 #ifdef ARM_MMU_EXTENDED
-	mcreq	p15, 0, r0, c2, c0, 1	/* TTBR1 set is asid 0 */
+	mcreq	p15, 0, r0, c2, c0, 1	/* set the new TTBR1 */
 #else
 	mcr	p15, 0, r0, c8, c7, 0	/* and flush the I+D tlbs */
 #endif

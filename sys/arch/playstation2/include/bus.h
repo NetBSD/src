@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.14.2.1 2014/08/10 06:54:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -301,7 +301,7 @@ __write_8(bus_addr_t a, u_int64_t v)
 	__asm volatile(
 		".set noreorder;"
 		".set push;"
-		".set r5900;"
+		".set arch = r5900;"
 		"pextlw	$8, %0, %1;"
 		"sd	$8, 0(%2);"
 		"sync.l;"

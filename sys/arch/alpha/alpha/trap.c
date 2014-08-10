@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.130 2014/03/20 20:51:40 christos Exp $ */
+/* $NetBSD: trap.c,v 1.130.2.1 2014/08/10 06:53:49 tls Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.130 2014/03/20 20:51:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.130.2.1 2014/08/10 06:53:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,7 +323,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			if (framep->tf_regs[FRAME_A0] == -2) { /* weird! */
 				KSI_INIT_TRAP(&ksi);
 				ksi.ksi_signo = SIGFPE;
-				ksi.ksi_code =  alpha_ucode_to_ksiginfo(ucode);
+				ksi.ksi_code = FPE_INTDIV;
 				ksi.ksi_addr =
 					(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
 				ksi.ksi_trap =  a0;	/* exception summary */

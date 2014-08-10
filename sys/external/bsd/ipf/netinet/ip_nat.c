@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.11 2014/02/27 01:40:07 joerg Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.11.2.1 2014/08/10 06:55:40 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.11 2014/02/27 01:40:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.11.2.1 2014/08/10 06:55:40 tls Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -2894,10 +2894,11 @@ ipf_nat_newrdr(fr_info_t *fin, nat_t *nat, natinfo_t *ni)
 	 */
 	if (np->in_flags & IPN_SPLIT) {
 		in.s_addr = np->in_dnip;
+		inb.s_addr = htonl(in.s_addr);
 
 		if ((np->in_flags & (IPN_ROUNDR|IPN_STICKY)) == IPN_STICKY) {
 			hm = ipf_nat_hostmap(softn, NULL, fin->fin_src,
-					     fin->fin_dst, in, (u_32_t)dport);
+					     fin->fin_dst, inb, (u_32_t)dport);
 			if (hm != NULL) {
 				in.s_addr = hm->hm_ndstip.s_addr;
 				move = 0;
@@ -3004,7 +3005,7 @@ ipf_nat_newrdr(fr_info_t *fin, nat_t *nat, natinfo_t *ni)
 	nat->nat_osrcip = fin->fin_src;
 	if ((nat->nat_hm == NULL) && ((np->in_flags & IPN_STICKY) != 0))
 		nat->nat_hm = ipf_nat_hostmap(softn, np, fin->fin_src,
-					      fin->fin_dst, in, (u_32_t)dport);
+					      fin->fin_dst, inb, (u_32_t)dport);
 
 	if (flags & IPN_TCPUDP) {
 		nat->nat_odport = dport;
@@ -3442,7 +3443,7 @@ ipf_nat_insert(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
 	}
 
 	ret = ipf_nat_hashtab_add(softc, softn, nat);
-	if (ret == -1)
+	if (ret != 0)
 		MUTEX_DESTROY(&nat->nat_lock);
 	return ret;
 }
@@ -4080,7 +4081,7 @@ ipf_nat_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 					continue;
 
 			} else if (p == IPPROTO_ICMP) {
-				if (nat->nat_osport != dport) {
+				if (nat->nat_oicmpid != dport) {
 					continue;
 				}
 			}
@@ -4105,7 +4106,7 @@ ipf_nat_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 					continue;
 
 			} else if (p == IPPROTO_ICMP) {
-				if (nat->nat_osport != dport) {
+				if (nat->nat_nicmpid != dport) {
 					continue;
 				}
 			}
@@ -4407,7 +4408,7 @@ ipf_nat_outlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 					continue;
 
 			} else if (p == IPPROTO_ICMP) {
-				if (nat->nat_osport != dport) {
+				if (nat->nat_nicmpid != dport) {
 					continue;
 				}
 			}
@@ -4427,7 +4428,7 @@ ipf_nat_outlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 					continue;
 
 			} else if (p == IPPROTO_ICMP) {
-				if (nat->nat_osport != dport) {
+				if (nat->nat_oicmpid != dport) {
 					continue;
 				}
 			}
@@ -4817,7 +4818,6 @@ ipf_nat_checkout(fr_info_t *fin, u_32_t *passp)
 			nflags = IPN_UDP;
 			break;
 		case IPPROTO_ICMP :
-
 			/*
 			 * This is an incoming packet, so the destination is
 			 * the icmp_id and the source port equals 0
@@ -5184,9 +5184,18 @@ ipf_nat_out(fr_info_t *fin, nat_t *nat, int natadd, u_32_t nflags)
 			}
 		}
 
-		if ((nat->nat_nsport != 0) && (nflags & IPN_ICMPQUERY)) {
+		if ((nat->nat_oicmpid != 0) && (nflags & IPN_ICMPQUERY)) {
 			icmp = fin->fin_dp;
-			icmp->icmp_id = nat->nat_nicmpid;
+
+			switch (nat->nat_dir)
+			{
+			case NAT_OUTBOUND :
+				icmp->icmp_id = nat->nat_nicmpid;
+				break;
+			case NAT_INBOUND :
+				icmp->icmp_id = nat->nat_oicmpid;
+				break;
+			}
 		}
 
 		csump = ipf_nat_proto(fin, nat, nflags);
@@ -5652,10 +5661,18 @@ ipf_nat_in(fr_info_t *fin, nat_t *nat, int natadd, u_32_t nflags)
 		}
 
 
-		if ((nat->nat_odport != 0) && (nflags & IPN_ICMPQUERY)) {
+		if ((nat->nat_oicmpid != 0) && (nflags & IPN_ICMPQUERY)) {
 			icmp = fin->fin_dp;
 
-			icmp->icmp_id = nat->nat_nicmpid;
+			switch (nat->nat_dir)
+			{
+			case NAT_INBOUND :
+				icmp->icmp_id = nat->nat_nicmpid;
+				break;
+			case NAT_OUTBOUND :
+				icmp->icmp_id = nat->nat_oicmpid;
+				break;
+			}
 		}
 
 		csump = ipf_nat_proto(fin, nat, nflags);

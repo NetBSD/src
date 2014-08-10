@@ -1,4 +1,4 @@
-/*	$NetBSD: copyout.c,v 1.3 2011/06/20 05:17:24 matt Exp $	*/
+/*	$NetBSD: copyout.c,v 1.3.26.1 2014/08/10 06:54:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.3 2011/06/20 05:17:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.3.26.1 2014/08/10 06:54:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -58,6 +58,7 @@ copyout_uint8(uint8_t *udaddr, uint8_t data, register_t ds_msr)
 	    : [ds_msr] "r" (ds_msr), [data] "r" (data), [udaddr] "b" (udaddr));
 }
 
+#if 0
 static inline void
 copyout_uint16(uint8_t *udaddr, uint8_t data, register_t ds_msr)
 {
@@ -70,6 +71,7 @@ copyout_uint16(uint8_t *udaddr, uint8_t data, register_t ds_msr)
 	    : [msr] "=&r" (msr)
 	    : [ds_msr] "r" (ds_msr), [data] "r" (data), [udaddr] "b" (udaddr));
 }
+#endif
 
 static inline void
 copyout_uint32(uint32_t * const udaddr, uint32_t data, register_t ds_msr)
@@ -84,6 +86,7 @@ copyout_uint32(uint32_t * const udaddr, uint32_t data, register_t ds_msr)
 	    : [ds_msr] "r" (ds_msr), [data] "r" (data), [udaddr] "b" (udaddr));
 }
 
+#if 0
 static inline void
 copyout_le32(uint32_t * const udaddr, uint32_t data, register_t ds_msr)
 {
@@ -116,6 +119,7 @@ copyout_le32_with_mask(uint32_t * const udaddr, uint32_t data,
 	    : [ds_msr] "r" (ds_msr), [data] "r" (data),
 	      [mask] "r" (mask), [udaddr] "b" (udaddr));
 }
+#endif
 
 static inline void
 copyout_16uint8s(const uint8_t *ksaddr8, uint8_t *udaddr8, register_t ds_msr)

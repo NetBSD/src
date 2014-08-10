@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.15 2014/03/16 05:20:28 dholland Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.15.2.1 2014/08/10 06:54:57 tls Exp $ */
 
 /*
  * ported to timecounters by Frank Kardel 2006
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.15 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.15.2.1 2014/08/10 06:54:57 tls Exp $");
 
 #include "opt_ntp.h"
 
@@ -72,6 +72,7 @@ const struct cdevsw pps_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2014/02/14 20:23:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.17.2.1 2014/08/10 07:09:09 tls Exp $
 
 LIB=	LLVMAnalysis
 
@@ -14,9 +14,11 @@ SRCS+=	AliasAnalysis.cpp \
 	Analysis.cpp \
 	BasicAliasAnalysis.cpp \
 	BlockFrequencyInfo.cpp \
+	BlockFrequencyInfoImpl.cpp \
 	BranchProbabilityInfo.cpp \
 	CFG.cpp \
 	CFGPrinter.cpp \
+	CGSCCPassManager.cpp \
 	CaptureTracking.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \

@@ -1,10 +1,10 @@
-/*	$NetBSD: entry.c,v 1.1.1.3 2010/12/12 15:22:29 adam Exp $	*/
+/*	$NetBSD: entry.c,v 1.1.1.3.24.1 2014/08/10 07:09:48 tls Exp $	*/
 
 /* entry.c - routines for dealing with entries */
-/* OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.148.2.14 2010/04/16 15:03:36 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -428,10 +428,20 @@ fail:
 		} \
 	}
 
+/* NOTE: only preserved for binary compatibility */
 char *
 entry2str(
 	Entry	*e,
 	int		*len )
+{
+	return entry2str_wrap( e, len, LDIF_LINE_WIDTH );
+}
+
+char *
+entry2str_wrap(
+	Entry		*e,
+	int			*len,
+	ber_len_t	wrap )
 {
 	Attribute	*a;
 	struct berval	*bv;
@@ -453,7 +463,7 @@ entry2str(
 		/* put "dn: <dn>" */
 		tmplen = e->e_name.bv_len;
 		MAKE_SPACE( LDIF_SIZE_NEEDED( 2, tmplen ));
-		ldif_sput( &ecur, LDIF_PUT_VALUE, "dn", e->e_dn, tmplen );
+		ldif_sput_wrap( &ecur, LDIF_PUT_VALUE, "dn", e->e_dn, tmplen, wrap );
 	}
 
 	/* put the attributes */
@@ -463,9 +473,9 @@ entry2str(
 			bv = &a->a_vals[i];
 			tmplen = a->a_desc->ad_cname.bv_len;
 			MAKE_SPACE( LDIF_SIZE_NEEDED( tmplen, bv->bv_len ));
-			ldif_sput( &ecur, LDIF_PUT_VALUE,
+			ldif_sput_wrap( &ecur, LDIF_PUT_VALUE,
 				a->a_desc->ad_cname.bv_val,
-				bv->bv_val, bv->bv_len );
+				bv->bv_val, bv->bv_len, wrap );
 		}
 	}
 	MAKE_SPACE( 1 );
@@ -806,18 +816,11 @@ int entry_header(EntryHeader *eh)
 {
 	unsigned char *ptr = (unsigned char *)eh->bv.bv_val;
 
+	/* Some overlays can create empty entries
+	 * so don't check for zeros here.
+	 */
 	eh->nattrs = entry_getlen(&ptr);
-	if ( !eh->nattrs ) {
-		Debug( LDAP_DEBUG_ANY,
-			"entry_header: attribute count was zero\n", 0, 0, 0);
-		return LDAP_OTHER;
-	}
 	eh->nvals = entry_getlen(&ptr);
-	if ( !eh->nvals ) {
-		Debug( LDAP_DEBUG_ANY,
-			"entry_header: value count was zero\n", 0, 0, 0);
-		return LDAP_OTHER;
-	}
 	eh->data = (char *)ptr;
 	return LDAP_SUCCESS;
 }

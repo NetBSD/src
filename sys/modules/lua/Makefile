@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/12/27 22:09:43 christos Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2014/08/10 06:56:10 tls Exp $
 
 .include "../Makefile.inc"
 
@@ -8,42 +8,16 @@
 KMOD=		lua
 SRCS=		lua.c
 
-WARNS=		1
+WARNS=		0
 
 # Lua core source code
-SRCS+=		lapi.c \
-		lcode.c \
-		ldebug.c \
-		ldo.c \
-		ldump.c \
-		lfunc.c \
-		lgc.c \
-		llex.c \
-		lmem.c \
-		lobject.c \
-		lopcodes.c \
-		lparser.c \
-		lstate.c \
-		lstring.c \
-		ltable.c \
-		ltm.c \
-		lundump.c \
-		lvm.c \
-		lzio.c
-
-# Lua auxlib source code
-SRCS+=		lauxlib.c
+SRCS+=		lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c lfunc.c lgc.c \
+		llex.c lmem.c lobject.c lopcodes.c lparser.c lstate.c \
+		lstring.c ltable.c ltm.c lundump.c lvm.c lzio.c
 
 # Lua stdlibs source code
-SRCS+=		lbaselib.c \
-		lstrlib.c \
-		ltablib.c \
-		linit.c
-
-# Compatability code
-SRCS+=		strcspn.c \
-		strpbrk.c \
-		strspn.c
+SRCS+=		lauxlib.c lbaselib.c lbitlib.c lcorolib.c ldblib.c \
+		lstrlib.c ltablib.c lutf8lib.c linit.c
 
 CPPFLAGS+=	-I${S}/../external/mit/lua/dist/src \
 		-I${S}/sys

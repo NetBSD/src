@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.76 2014/03/27 18:22:56 christos Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.76.2.1 2014/08/10 06:54:11 tls Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.76 2014/03/27 18:22:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.76.2.1 2014/08/10 06:54:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1150,11 +1150,11 @@ acpicpu_md_pstate_sysctl_all(SYSCTLFN_ARGS)
 		if (sc->sc_pstate[i].ps_freq == 0)
 			continue;
 
+		if (len >= sizeof(buf))
+			break;
 		len += snprintf(buf + len, sizeof(buf) - len, "%u%s",
 		    sc->sc_pstate[i].ps_freq,
 		    i < (sc->sc_pstate_count - 1) ? " " : "");
-		if (len > sizeof(buf))
-			break;
 	}
 
 	mutex_exit(&sc->sc_mtx);

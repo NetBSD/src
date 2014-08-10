@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810var.h,v 1.2 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: agp_i810var.h,v 1.2.2.1 2014/08/10 06:54:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -35,22 +35,38 @@
 #include <dev/pci/agpvar.h>
 
 struct agp_i810_softc {
-	u_int32_t initial_aperture;	/* aperture size at startup */
-	struct agp_gatt *gatt;
-	int chiptype;			/* i810-like or i830 */
-	u_int32_t dcache_size;		/* i810 only */
-	u_int32_t stolen;		/* number of i830/845 gtt entries
-					   for stolen memory */
-	bus_space_tag_t bst;		/* register bus_space tag */
-	bus_space_handle_t bsh;		/* register bus_space handle */
-	bus_space_tag_t gtt_bst;	/* GTT bus_space tag */
-	bus_space_handle_t gtt_bsh;	/* GTT bus_space handle */
-	struct pci_attach_args vga_pa;
+	struct pci_attach_args vga_pa;	/* integrated graphics device args */
+	int chiptype;			/* chipset family: i810, i830, &c. */
+	uint32_t stolen;		/* pages of stolen graphics memory */
 
-	u_int32_t pgtblctl;
+	/* Memory-mapped I/O for integrated graphics device registers.  */
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+
+	/* Graphics translation table.  */
+	bus_space_tag_t gtt_bst;
+	bus_space_handle_t gtt_bsh;
+	bus_size_t gtt_size;
+
+	/* Chipset flush page.  */
+	bus_space_tag_t flush_bst;
+	bus_space_handle_t flush_bsh;
+	bus_addr_t flush_addr;
+
+	/* i810-only fields.  */
+	struct agp_gatt *gatt;		/* i810-only OS-allocated GTT */
+	uint32_t dcache_size;		/* i810-only on-chip memory size */
+
+	/* XXX Kludge to work around broken X servers.  */
+	pcireg_t pgtblctl;
+
+	/* XXX Vestige of unfinished powerhook?  */
+	uint32_t pgtblctl_resume_hack;
 };
 
 extern struct agp_softc	*agp_i810_sc;
 
 int	agp_i810_write_gtt_entry(struct agp_i810_softc *, off_t, bus_addr_t);
 void	agp_i810_post_gtt_entry(struct agp_i810_softc *, off_t);
+void	agp_i810_chipset_flush(struct agp_i810_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.8 2012/01/27 15:41:02 christos Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.8.20.1 2014/08/10 06:53:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #ifndef _AMD64_INT_LIMITS_H_
 #define _AMD64_INT_LIMITS_H_
+
+#ifdef __SIG_ATOMIC_MAX__
+#include <sys/common_int_limits.h>
+#else
 
 #ifdef __x86_64__
 
@@ -131,5 +135,7 @@
 #include <i386/int_limits.h>
 
 #endif	/*	__x86_64__	*/
+
+#endif
 
 #endif /* !_AMD64_INT_LIMITS_H_ */

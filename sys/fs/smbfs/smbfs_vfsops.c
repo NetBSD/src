@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.99 2014/03/23 15:21:15 hannken Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.99.2.1 2014/08/10 06:55:54 tls Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.99 2014/03/23 15:21:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.99.2.1 2014/08/10 06:55:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.99 2014/03/23 15:21:15 hannken Ex
 #include <fs/smbfs/smbfs_node.h>
 #include <fs/smbfs/smbfs_subr.h>
 
-MODULE(MODULE_CLASS_VFS, smbfs, NULL);
+MODULE(MODULE_CLASS_VFS, smbfs, "nsmb");
 
 VFS_PROTOS(smbfs);
 
@@ -156,6 +156,8 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	char *fromname;
 	int error;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -398,6 +400,23 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	return 0;
 }
 
+static bool
+smbfs_sync_selector(void *cl, struct vnode *vp)
+{
+	struct smbnode *np;
+
+	np = VTOSMB(vp);
+	if (np == NULL)
+		return false;
+
+	if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
+	     LIST_EMPTY(&vp->v_dirtyblkhd) &&
+	     UVM_OBJ_IS_CLEAN(&vp->v_uobj))
+		return false;
+
+	return true;
+}
+
 /*
  * Flush out the buffer cache
  */
@@ -406,25 +425,15 @@ smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct vnode *vp;
 	struct vnode_iterator *marker;
-	struct smbnode *np;
 	int error, allerror = 0;
 
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
+	while ((vp = vfs_vnode_iterator_next(marker, smbfs_sync_selector,
+	    NULL)))
+	{
 		error = vn_lock(vp, LK_EXCLUSIVE);
 		if (error) {
 			vrele(vp);
-			continue;
-		}
-		np = VTOSMB(vp);
-		if (np == NULL) {
-			vput(vp);
-			continue;
-		}
-		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
-		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uobj.uo_npages == 0) {
-			vput(vp);
 			continue;
 		}
 		error = VOP_FSYNC(vp, cred,

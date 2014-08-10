@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.1.1.4 2013/09/25 19:06:32 tron Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.1.1.4.2.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -234,8 +234,9 @@
 /* .IP "\fBmaximal_backoff_time (4000s)\fR"
 /*	The maximal time between attempts to deliver a deferred message.
 /* .IP "\fBmaximal_queue_lifetime (5d)\fR"
-/*	The maximal time a message is queued before it is sent back as
-/*	undeliverable.
+/*	Consider a message as undeliverable, when delivery fails with a
+/*	temporary error, and the time in the queue has reached the
+/*	maximal_queue_lifetime limit.
 /* .IP "\fBqueue_run_delay (300s)\fR"
 /*	The time between deferred queue scans by the queue manager;
 /*	prior to Postfix 2.4 the default value was 1000s.
@@ -245,8 +246,9 @@
 /* .PP
 /*	Available in Postfix version 2.1 and later:
 /* .IP "\fBbounce_queue_lifetime (5d)\fR"
-/*	The maximal time a bounce message is queued before it is considered
-/*	undeliverable.
+/*	Consider a bounce message as undeliverable, when delivery fails
+/*	with a temporary error, and the time in the queue has reached the
+/*	bounce_queue_lifetime limit.
 /* .PP
 /*	Available in Postfix version 2.5 and later:
 /* .IP "\fBdefault_destination_rate_delay (0s)\fR"
@@ -375,7 +377,6 @@ char   *var_defer_xports;
 int     var_qmgr_fudge;
 int     var_local_rcpt_lim;		/* XXX */
 int     var_local_con_lim;		/* XXX */
-int     var_proc_limit;
 bool    var_verp_bounce_off;
 int     var_qmgr_clog_warn_time;
 char   *var_conc_pos_feedback;
@@ -643,7 +644,6 @@ int     main(int argc, char **argv)
 	VAR_QMGR_FUDGE, DEF_QMGR_FUDGE, &var_qmgr_fudge, 10, 100,
 	VAR_LOCAL_RCPT_LIMIT, DEF_LOCAL_RCPT_LIMIT, &var_local_rcpt_lim, 0, 0,
 	VAR_LOCAL_CON_LIMIT, DEF_LOCAL_CON_LIMIT, &var_local_con_lim, 0, 0,
-	VAR_PROC_LIMIT, DEF_PROC_LIMIT, &var_proc_limit, 1, 0,
 	VAR_CONC_COHORT_LIM, DEF_CONC_COHORT_LIM, &var_conc_cohort_limit, 0, 0,
 	0,
     };

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.13.2.1 2014/08/10 07:06:35 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: main.c,v 1.187 2012/02/06 23:46:44 tbox Exp  */
 
 /*! \file */
 
@@ -52,8 +50,12 @@
 #include <dns/view.h>
 
 #include <dst/result.h>
+#ifdef PKCS11CRYPTO
+#include <pk11/result.h>
+#endif
 
 #include <dlz/dlz_dlopen_driver.h>
+
 
 /*
  * Defining NS_MAIN provides storage declarations (rather than extern)
@@ -414,16 +416,16 @@ static void
 parse_command_line(int argc, char *argv[]) {
 	int ch;
 	int port;
+	const char *p;
 	isc_boolean_t disable6 = ISC_FALSE;
 	isc_boolean_t disable4 = ISC_FALSE;
 
 	save_command_line(argc, argv);
 
 	/* PLEASE keep options synchronized when main is hooked! */
+#define CMDLINE_FLAGS "46c:C:d:D:E:fFgi:lm:n:N:p:P:sS:t:T:U:u:vVx:"
 	isc_commandline_errprint = ISC_FALSE;
-	while ((ch = isc_commandline_parse(argc, argv,
-					   "46c:C:d:D:E:fFgi:lm:n:N:p:P:"
-					   "sS:t:T:U:u:vVx:")) != -1) {
+	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (ch) {
 		case '4':
 			if (disable4)
@@ -612,8 +614,14 @@ parse_command_line(int argc, char *argv[]) {
 			usage();
 			if (isc_commandline_option == '?')
 				exit(0);
-			ns_main_earlyfatal("unknown option '-%c'",
-					   isc_commandline_option);
+			p = strchr(CMDLINE_FLAGS, isc_commandline_option);
+			if (p == NULL || *++p != ':')
+				ns_main_earlyfatal("unknown option '-%c'",
+						   isc_commandline_option);
+			else
+				ns_main_earlyfatal("option '-%c' requires "
+						   "an argument",
+						   isc_commandline_option);
 			/* FALLTHROUGH */
 		default:
 			ns_main_earlyfatal("parsing options returned %d", ch);
@@ -1133,6 +1141,9 @@ main(int argc, char *argv[]) {
 	dns_result_register();
 	dst_result_register();
 	isccc_result_register();
+#ifdef PKCS11CRYPTO
+	pk11_result_register();
+#endif
 
 	parse_command_line(argc, argv);
 

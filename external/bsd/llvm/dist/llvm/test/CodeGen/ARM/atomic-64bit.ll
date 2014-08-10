@@ -1,12 +1,16 @@
-; RUN: llc < %s -mtriple=armv7-apple-ios | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv7-none-linux-gnueabihf -verify-machineinstrs | FileCheck %s --check-prefix=CHECK-THUMB
+; RUN: llc < %s -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-LE
+; RUN: llc < %s -mtriple=thumbv7-none-linux-gnueabihf | FileCheck %s --check-prefix=CHECK-THUMB --check-prefix=CHECK-THUMB-LE
+; RUN: llc < %s -mtriple=armebv7 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-BE
+; RUN: llc < %s -mtriple=thumbebv7-none-linux-gnueabihf | FileCheck %s --check-prefix=CHECK-THUMB --check-prefix=CHECK-THUMB-BE
 
 define i64 @test1(i64* %ptr, i64 %val) {
 ; CHECK-LABEL: test1:
 ; CHECK: dmb {{ish$}}
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
-; CHECK: adds [[REG3:(r[0-9]?[02468])]], [[REG1]]
-; CHECK: adc [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-LE: adds [[REG3:(r[0-9]?[02468])]], [[REG1]]
+; CHECK-LE: adc [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-BE: adds [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-BE: adc [[REG3:(r[0-9]?[02468])]], [[REG1]]
 ; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
@@ -15,8 +19,10 @@ define i64 @test1(i64* %ptr, i64 %val) {
 ; CHECK-THUMB-LABEL: test1:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
-; CHECK-THUMB: adds.w [[REG3:[a-z0-9]+]], [[REG1]]
-; CHECK-THUMB: adc.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-LE: adds.w [[REG3:[a-z0-9]+]], [[REG1]]
+; CHECK-THUMB-LE: adc.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-BE: adds.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-BE: adc.w [[REG3:[a-z0-9]+]], [[REG1]]
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK-THUMB: cmp
 ; CHECK-THUMB: bne
@@ -30,8 +36,10 @@ define i64 @test2(i64* %ptr, i64 %val) {
 ; CHECK-LABEL: test2:
 ; CHECK: dmb {{ish$}}
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
-; CHECK: subs [[REG3:(r[0-9]?[02468])]], [[REG1]]
-; CHECK: sbc [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-LE: subs [[REG3:(r[0-9]?[02468])]], [[REG1]]
+; CHECK-LE: sbc [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-BE: subs [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-BE: sbc [[REG3:(r[0-9]?[02468])]], [[REG1]]
 ; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
@@ -40,8 +48,10 @@ define i64 @test2(i64* %ptr, i64 %val) {
 ; CHECK-THUMB-LABEL: test2:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
-; CHECK-THUMB: subs.w [[REG3:[a-z0-9]+]], [[REG1]]
-; CHECK-THUMB: sbc.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-LE: subs.w [[REG3:[a-z0-9]+]], [[REG1]]
+; CHECK-THUMB-LE: sbc.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-BE: subs.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-BE: sbc.w [[REG3:[a-z0-9]+]], [[REG1]]
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK-THUMB: cmp
 ; CHECK-THUMB: bne
@@ -55,8 +65,10 @@ define i64 @test3(i64* %ptr, i64 %val) {
 ; CHECK-LABEL: test3:
 ; CHECK: dmb {{ish$}}
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
-; CHECK: and [[REG3:(r[0-9]?[02468])]], [[REG1]]
-; CHECK: and [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-LE-DAG: and [[REG3:(r[0-9]?[02468])]], [[REG1]]
+; CHECK-LE-DAG: and [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-BE-DAG: and [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-BE-DAG: and [[REG3:(r[0-9]?[02468])]], [[REG1]]
 ; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
@@ -65,8 +77,10 @@ define i64 @test3(i64* %ptr, i64 %val) {
 ; CHECK-THUMB-LABEL: test3:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
-; CHECK-THUMB: and.w [[REG3:[a-z0-9]+]], [[REG1]]
-; CHECK-THUMB: and.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-LE-DAG: and.w [[REG3:[a-z0-9]+]], [[REG1]]
+; CHECK-THUMB-LE-DAG: and.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-BE-DAG: and.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-BE-DAG: and.w [[REG3:[a-z0-9]+]], [[REG1]]
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK-THUMB: cmp
 ; CHECK-THUMB: bne
@@ -80,8 +94,10 @@ define i64 @test4(i64* %ptr, i64 %val) {
 ; CHECK-LABEL: test4:
 ; CHECK: dmb {{ish$}}
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
-; CHECK: orr [[REG3:(r[0-9]?[02468])]], [[REG1]]
-; CHECK: orr [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-LE-DAG: orr [[REG3:(r[0-9]?[02468])]], [[REG1]]
+; CHECK-LE-DAG: orr [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-BE-DAG: orr [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-BE-DAG: orr [[REG3:(r[0-9]?[02468])]], [[REG1]]
 ; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
@@ -90,8 +106,10 @@ define i64 @test4(i64* %ptr, i64 %val) {
 ; CHECK-THUMB-LABEL: test4:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
-; CHECK-THUMB: orr.w [[REG3:[a-z0-9]+]], [[REG1]]
-; CHECK-THUMB: orr.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-LE-DAG: orr.w [[REG3:[a-z0-9]+]], [[REG1]]
+; CHECK-THUMB-LE-DAG: orr.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-BE-DAG: orr.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-BE-DAG: orr.w [[REG3:[a-z0-9]+]], [[REG1]]
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK-THUMB: cmp
 ; CHECK-THUMB: bne
@@ -105,8 +123,10 @@ define i64 @test5(i64* %ptr, i64 %val) {
 ; CHECK-LABEL: test5:
 ; CHECK: dmb {{ish$}}
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
-; CHECK: eor [[REG3:(r[0-9]?[02468])]], [[REG1]]
-; CHECK: eor [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-LE-DAG: eor [[REG3:(r[0-9]?[02468])]], [[REG1]]
+; CHECK-LE-DAG: eor [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-BE-DAG: eor [[REG4:(r[0-9]?[13579])]], [[REG2]]
+; CHECK-BE-DAG: eor [[REG3:(r[0-9]?[02468])]], [[REG1]]
 ; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
@@ -115,8 +135,10 @@ define i64 @test5(i64* %ptr, i64 %val) {
 ; CHECK-THUMB-LABEL: test5:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
-; CHECK-THUMB: eor.w [[REG3:[a-z0-9]+]], [[REG1]]
-; CHECK-THUMB: eor.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-LE-DAG: eor.w [[REG3:[a-z0-9]+]], [[REG1]]
+; CHECK-THUMB-LE-DAG: eor.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-BE-DAG: eor.w [[REG4:[a-z0-9]+]], [[REG2]]
+; CHECK-THUMB-BE-DAG: eor.w [[REG3:[a-z0-9]+]], [[REG1]]
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK-THUMB: cmp
 ; CHECK-THUMB: bne
@@ -151,8 +173,11 @@ define i64 @test7(i64* %ptr, i64 %val1, i64 %val2) {
 ; CHECK-LABEL: test7:
 ; CHECK: dmb {{ish$}}
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
-; CHECK: cmp [[REG1]]
-; CHECK: cmpeq [[REG2]]
+; CHECK-LE-DAG: eor     [[MISMATCH_LO:r[0-9]+]], [[REG1]], r1
+; CHECK-LE-DAG: eor     [[MISMATCH_HI:r[0-9]+]], [[REG2]], r2
+; CHECK-BE-DAG: eor     [[MISMATCH_LO:r[0-9]+]], [[REG2]], r2
+; CHECK-BE-DAG: eor     [[MISMATCH_HI:r[0-9]+]], [[REG1]], r1
+; CHECK: orrs    {{r[0-9]+}}, [[MISMATCH_LO]], [[MISMATCH_HI]]
 ; CHECK: bne
 ; CHECK: strexd {{[a-z0-9]+}}, {{r[0-9]?[02468]}}, {{r[0-9]?[13579]}}
 ; CHECK: cmp
@@ -162,16 +187,18 @@ define i64 @test7(i64* %ptr, i64 %val1, i64 %val2) {
 ; CHECK-THUMB-LABEL: test7:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
-; CHECK-THUMB: cmp [[REG1]]
-; CHECK-THUMB: it eq
-; CHECK-THUMB: cmpeq [[REG2]]
+; CHECK-THUMB-LE-DAG: eor.w     [[MISMATCH_LO:[a-z0-9]+]], [[REG1]], r2
+; CHECK-THUMB-LE-DAG: eor.w     [[MISMATCH_HI:[a-z0-9]+]], [[REG2]], r3
+; CHECK-THUMB-BE-DAG: eor.w     [[MISMATCH_HI:[a-z0-9]+]], [[REG1]], r2
+; CHECK-THUMB-BE-DAG: eor.w     [[MISMATCH_LO:[a-z0-9]+]], [[REG2]], r3
+; CHECK-THUMB-LE: orrs    [[MISMATCH_HI]], [[MISMATCH_LO]]
 ; CHECK-THUMB: bne
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, {{[a-z0-9]+}}, {{[a-z0-9]+}}
 ; CHECK-THUMB: cmp
 ; CHECK-THUMB: bne
 ; CHECK-THUMB: dmb {{ish$}}
 
-  %r = cmpxchg i64* %ptr, i64 %val1, i64 %val2 seq_cst
+  %r = cmpxchg i64* %ptr, i64 %val1, i64 %val2 seq_cst seq_cst
   ret i64 %r
 }
 
@@ -216,9 +243,20 @@ define i64 @test10(i64* %ptr, i64 %val) {
 ; CHECK-LABEL: test10:
 ; CHECK: dmb {{ish$}}
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
-; CHECK: subs {{[a-z0-9]+}}, [[REG1]], [[REG3:(r[0-9]?[02468])]]
-; CHECK: sbcs {{[a-z0-9]+}}, [[REG2]], [[REG4:(r[0-9]?[13579])]]
-; CHECK: blt
+; CHECK: mov     [[CARRY_LO:[a-z0-9]+]], #0
+; CHECK: mov     [[CARRY_HI:[a-z0-9]+]], #0
+; CHECK: mov     [[OUT_HI:[a-z0-9]+]], r2
+; CHECK-LE: cmp     [[REG1]], r1
+; CHECK-BE: cmp     [[REG2]], r2
+; CHECK: movwls  [[CARRY_LO]], #1
+; CHECK-LE: cmp     [[REG2]], r2
+; CHECK-BE: cmp     [[REG1]], r1
+; CHECK: movwle  [[CARRY_HI]], #1
+; CHECK: moveq   [[CARRY_HI]], [[CARRY_LO]]
+; CHECK: cmp     [[CARRY_HI]], #0
+; CHECK: movne   [[OUT_HI]], [[REG2]]
+; CHECK: mov     [[OUT_LO:[a-z0-9]+]], r1
+; CHECK: movne   [[OUT_LO]], [[REG1]]
 ; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
@@ -227,9 +265,20 @@ define i64 @test10(i64* %ptr, i64 %val) {
 ; CHECK-THUMB-LABEL: test10:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
-; CHECK-THUMB: subs.w {{[a-z0-9]+}}, [[REG1]], [[REG3:[a-z0-9]+]]
-; CHECK-THUMB: sbcs.w {{[a-z0-9]+}}, [[REG2]], [[REG4:[a-z0-9]+]]
-; CHECK-THUMB: blt
+; CHECK-THUMB: mov.w     [[CARRY_LO:[a-z0-9]+|lr]], #0
+; CHECK-THUMB: movs     [[CARRY_HI:[a-z0-9]+|lr]], #0
+; CHECK-THUMB-LE: cmp     [[REG1]], r2
+; CHECK-THUMB-BE: cmp     [[REG2]], r3
+; CHECK-THUMB: movls.w  [[CARRY_LO]], #1
+; CHECK-THUMB-LE: cmp     [[REG2]], r3
+; CHECK-THUMB-BE: cmp     [[REG1]], r2
+; CHECK-THUMB: movle  [[CARRY_HI]], #1
+; CHECK-THUMB: moveq   [[CARRY_HI]], [[CARRY_LO]]
+; CHECK-THUMB: mov     [[OUT_HI:[a-z0-9]+]], r3
+; CHECK-THUMB: cmp     [[CARRY_HI]], #0
+; CHECK-THUMB: mov     [[OUT_LO:[a-z0-9]+]], r2
+; CHECK-THUMB: movne   [[OUT_HI]], [[REG2]]
+; CHECK-THUMB: movne   [[OUT_LO]], [[REG1]]
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK-THUMB: cmp
 ; CHECK-THUMB: bne
@@ -243,21 +292,42 @@ define i64 @test11(i64* %ptr, i64 %val) {
 ; CHECK-LABEL: test11:
 ; CHECK: dmb {{ish$}}
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
-; CHECK: subs {{[a-z0-9]+}}, [[REG1]], [[REG3:(r[0-9]?[02468])]]
-; CHECK: sbcs {{[a-z0-9]+}}, [[REG2]], [[REG4:(r[0-9]?[13579])]]
-; CHECK: blo
+; CHECK: mov     [[CARRY_LO:[a-z0-9]+]], #0
+; CHECK: mov     [[CARRY_HI:[a-z0-9]+]], #0
+; CHECK: mov     [[OUT_HI:[a-z0-9]+]], r2
+; CHECK-LE: cmp     [[REG1]], r1
+; CHECK-BE: cmp     [[REG2]], r2
+; CHECK: movwls  [[CARRY_LO]], #1
+; CHECK-LE: cmp     [[REG2]], r2
+; CHECK-BE: cmp     [[REG1]], r1
+; CHECK: movwls  [[CARRY_HI]], #1
+; CHECK: moveq   [[CARRY_HI]], [[CARRY_LO]]
+; CHECK: cmp     [[CARRY_HI]], #0
+; CHECK: movne   [[OUT_HI]], [[REG2]]
+; CHECK: mov     [[OUT_LO:[a-z0-9]+]], r1
+; CHECK: movne   [[OUT_LO]], [[REG1]]
 ; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-
 ; CHECK-THUMB-LABEL: test11:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
-; CHECK-THUMB: subs.w {{[a-z0-9]+}}, [[REG1]], [[REG3:[a-z0-9]+]]
-; CHECK-THUMB: sbcs.w {{[a-z0-9]+}}, [[REG2]], [[REG4:[a-z0-9]+]]
-; CHECK-THUMB: blo
+; CHECK-THUMB: mov.w     [[CARRY_LO:[a-z0-9]+]], #0
+; CHECK-THUMB: movs     [[CARRY_HI:[a-z0-9]+]], #0
+; CHECK-THUMB-LE: cmp     [[REG1]], r2
+; CHECK-THUMB-BE: cmp     [[REG2]], r3
+; CHECK-THUMB: movls.w  [[CARRY_LO]], #1
+; CHECK-THUMB-LE: cmp     [[REG2]], r3
+; CHECK-THUMB-BE: cmp     [[REG1]], r2
+; CHECK-THUMB: movls  [[CARRY_HI]], #1
+; CHECK-THUMB: moveq   [[CARRY_HI]], [[CARRY_LO]]
+; CHECK-THUMB: mov     [[OUT_HI:[a-z0-9]+]], r3
+; CHECK-THUMB: cmp     [[CARRY_HI]], #0
+; CHECK-THUMB: mov     [[OUT_LO:[a-z0-9]+]], r2
+; CHECK-THUMB: movne   [[OUT_HI]], [[REG2]]
+; CHECK-THUMB: movne   [[OUT_LO]], [[REG1]]
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK-THUMB: cmp
 ; CHECK-THUMB: bne
@@ -271,9 +341,20 @@ define i64 @test12(i64* %ptr, i64 %val) {
 ; CHECK-LABEL: test12:
 ; CHECK: dmb {{ish$}}
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
-; CHECK: subs {{[a-z0-9]+}}, [[REG1]], [[REG3:(r[0-9]?[02468])]]
-; CHECK: sbcs {{[a-z0-9]+}}, [[REG2]], [[REG4:(r[0-9]?[13579])]]
-; CHECK: bge
+; CHECK: mov     [[CARRY_LO:[a-z0-9]+]], #0
+; CHECK: mov     [[CARRY_HI:[a-z0-9]+]], #0
+; CHECK: mov     [[OUT_HI:[a-z0-9]+]], r2
+; CHECK-LE: cmp     [[REG1]], r1
+; CHECK-BE: cmp     [[REG2]], r2
+; CHECK: movwhi  [[CARRY_LO]], #1
+; CHECK-LE: cmp     [[REG2]], r2
+; CHECK-BE: cmp     [[REG1]], r1
+; CHECK: movwgt  [[CARRY_HI]], #1
+; CHECK: moveq   [[CARRY_HI]], [[CARRY_LO]]
+; CHECK: cmp     [[CARRY_HI]], #0
+; CHECK: movne   [[OUT_HI]], [[REG2]]
+; CHECK: mov     [[OUT_LO:[a-z0-9]+]], r1
+; CHECK: movne   [[OUT_LO]], [[REG1]]
 ; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
@@ -282,9 +363,20 @@ define i64 @test12(i64* %ptr, i64 %val) {
 ; CHECK-THUMB-LABEL: test12:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
-; CHECK-THUMB: subs.w {{[a-z0-9]+}}, [[REG1]], [[REG3:[a-z0-9]+]]
-; CHECK-THUMB: sbcs.w {{[a-z0-9]+}}, [[REG2]], [[REG4:[a-z0-9]+]]
-; CHECK-THUMB: bge
+; CHECK-THUMB: mov.w     [[CARRY_LO:[a-z0-9]+]], #0
+; CHECK-THUMB: movs     [[CARRY_HI:[a-z0-9]+]], #0
+; CHECK-THUMB-LE: cmp     [[REG1]], r2
+; CHECK-THUMB-BE: cmp     [[REG2]], r3
+; CHECK-THUMB: movhi.w  [[CARRY_LO]], #1
+; CHECK-THUMB-LE: cmp     [[REG2]], r3
+; CHECK-THUMB-BE: cmp     [[REG1]], r2
+; CHECK-THUMB: movgt  [[CARRY_HI]], #1
+; CHECK-THUMB: moveq   [[CARRY_HI]], [[CARRY_LO]]
+; CHECK-THUMB: mov     [[OUT_HI:[a-z0-9]+]], r3
+; CHECK-THUMB: cmp     [[CARRY_HI]], #0
+; CHECK-THUMB: mov     [[OUT_LO:[a-z0-9]+]], r2
+; CHECK-THUMB: movne   [[OUT_HI]], [[REG2]]
+; CHECK-THUMB: movne   [[OUT_LO]], [[REG1]]
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK-THUMB: cmp
 ; CHECK-THUMB: bne
@@ -298,9 +390,20 @@ define i64 @test13(i64* %ptr, i64 %val) {
 ; CHECK-LABEL: test13:
 ; CHECK: dmb {{ish$}}
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
-; CHECK: subs {{[a-z0-9]+}}, [[REG1]], [[REG3:(r[0-9]?[02468])]]
-; CHECK: sbcs {{[a-z0-9]+}}, [[REG2]], [[REG4:(r[0-9]?[13579])]]
-; CHECK: bhs
+; CHECK: mov     [[CARRY_LO:[a-z0-9]+]], #0
+; CHECK: mov     [[CARRY_HI:[a-z0-9]+]], #0
+; CHECK: mov     [[OUT_HI:[a-z0-9]+]], r2
+; CHECK-LE: cmp     [[REG1]], r1
+; CHECK-BE: cmp     [[REG2]], r2
+; CHECK: movwhi  [[CARRY_LO]], #1
+; CHECK-LE: cmp     [[REG2]], r2
+; CHECK-BE: cmp     [[REG1]], r1
+; CHECK: movwhi  [[CARRY_HI]], #1
+; CHECK: moveq   [[CARRY_HI]], [[CARRY_LO]]
+; CHECK: cmp     [[CARRY_HI]], #0
+; CHECK: movne   [[OUT_HI]], [[REG2]]
+; CHECK: mov     [[OUT_LO:[a-z0-9]+]], r1
+; CHECK: movne   [[OUT_LO]], [[REG1]]
 ; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
@@ -309,9 +412,20 @@ define i64 @test13(i64* %ptr, i64 %val) {
 ; CHECK-THUMB-LABEL: test13:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
-; CHECK-THUMB: subs.w {{[a-z0-9]+}}, [[REG1]], [[REG3:[a-z0-9]+]]
-; CHECK-THUMB: sbcs.w {{[a-z0-9]+}}, [[REG2]], [[REG4:[a-z0-9]+]]
-; CHECK-THUMB: bhs
+; CHECK-THUMB: mov.w     [[CARRY_LO:[a-z0-9]+]], #0
+; CHECK-THUMB: movs     [[CARRY_HI:[a-z0-9]+]], #0
+; CHECK-THUMB-LE: cmp     [[REG1]], r2
+; CHECK-THUMB-BE: cmp     [[REG2]], r3
+; CHECK-THUMB: movhi.w  [[CARRY_LO]], #1
+; CHECK-THUMB-LE: cmp     [[REG2]], r3
+; CHECK-THUMB-BE: cmp     [[REG1]], r2
+; CHECK-THUMB: movhi  [[CARRY_HI]], #1
+; CHECK-THUMB: moveq   [[CARRY_HI]], [[CARRY_LO]]
+; CHECK-THUMB: mov     [[OUT_HI:[a-z0-9]+]], r3
+; CHECK-THUMB: cmp     [[CARRY_HI]], #0
+; CHECK-THUMB: mov     [[OUT_LO:[a-z0-9]+]], r2
+; CHECK-THUMB: movne   [[OUT_HI]], [[REG2]]
+; CHECK-THUMB: movne   [[OUT_LO]], [[REG1]]
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK-THUMB: cmp
 ; CHECK-THUMB: bne

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c-algo-bit.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: i2c-algo-bit.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _LINUX_I2C_ALGO_BIT_H_
 #define _LINUX_I2C_ALGO_BIT_H_
 
-struct i2c_adapter;
+#include <linux/i2c.h>
 
 struct i2c_algo_bit_data {
 	void		*data;
@@ -47,11 +47,16 @@ struct i2c_algo_bit_data {
 };
 
 /* XXX Make the nm output a little more greppable...  */
-#define	i2c_bit_add_bus	linux_i2c_bit_add_bus
 #define	i2c_bit_algo	linux_i2c_bit_algo
 
-int	i2c_bit_add_bus(struct i2c_adapter *);
-
 extern const struct i2c_algorithm i2c_bit_algo;
+
+static inline int
+i2c_bit_add_bus(struct i2c_adapter *adapter)
+{
+
+	adapter->algo = &i2c_bit_algo;
+	return 0;
+}
 
 #endif  /* _LINUX_I2C_ALGO_BIT_H_ */

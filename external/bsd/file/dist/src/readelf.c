@@ -1,5 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.7 2013/12/01 19:32:15 christos Exp $	*/
-
+/*	$NetBSD: readelf.c,v 1.7.2.1 2014/08/10 07:07:11 tls Exp $	*/
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -30,9 +29,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readelf.c,v 1.99 2013/11/05 15:44:01 christos Exp $")
+FILE_RCSID("@(#)$File: readelf.c,v 1.103 2014/05/02 02:25:10 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.7 2013/12/01 19:32:15 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.7.2.1 2014/08/10 07:07:11 tls Exp $");
 #endif
 #endif
 
@@ -474,8 +473,8 @@ private size_t
 donote(struct magic_set *ms, void *vbuf, size_t offset, size_t size,
     int clazz, int swap, size_t align, int *flags)
 {
-	Elf32_Nhdr nh32;
-	Elf64_Nhdr nh64;
+	Elf32_Nhdr nh32 = { 0, 0, 0 };
+	Elf64_Nhdr nh64 = { 0, 0, 0 };
 	size_t noff, doff;
 #ifdef ELFCORE
 	int os_style = -1;
@@ -743,7 +742,6 @@ core:
 
 	default:
 		if (xnh_type == NT_PRPSINFO && *flags & FLAGS_IS_CORE) {
-/*###709 [cc] warning: declaration of 'i' shadows previous non-variable%%%*/
 			size_t i, j;
 			unsigned char c;
 			/*
@@ -1011,6 +1009,36 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 				    (ssize_t)xcap_sizeof) {
 					file_badread(ms);
 					return -1;
+				}
+				if (cbuf[0] == 'A') {
+#ifdef notyet
+					char *p = cbuf + 1;
+					uint32_t len, tag;
+					memcpy(&len, p, sizeof(len));
+					p += 4;
+					len = getu32(swap, len);
+					if (memcmp("gnu", p, 3) != 0) {
+					    if (file_printf(ms,
+						", unknown capability %.3s", p)
+						== -1)
+						return -1;
+					    break;
+					}
+					p += strlen(p) + 1;
+					tag = *p++;
+					memcpy(&len, p, sizeof(len));
+					p += 4;
+					len = getu32(swap, len);
+					if (tag != 1) {
+					    if (file_printf(ms, ", unknown gnu"
+						" capability tag %d", tag)
+						== -1)
+						return -1;
+					    break;
+					}
+					// gnu attributes 
+#endif
+					break;
 				}
 				(void)memcpy(xcap_addr, cbuf, xcap_sizeof);
 				switch (xcap_tag) {

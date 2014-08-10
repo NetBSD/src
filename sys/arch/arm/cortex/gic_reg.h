@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_reg.h,v 1.2 2014/03/28 21:39:09 matt Exp $	*/
+/*	$NetBSD: gic_reg.h,v 1.2.2.1 2014/08/10 06:53:51 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -90,6 +90,8 @@
 
 #define	GICC_PMR_PRIORITY		__BITS(7,0)
 #define	GICC_PMR_PRIORITIES		256
+#define	GICC_PMR_NS_PRIORITIES		128
+#define	GICC_PMR_NONSECURE		0x80
 #define	GICC_PMR_8_LEVELS		0x1f
 #define	GICC_PMR_16_LEVELS		0x0f
 #define	GICC_PMR_32_LEVELS		0x07

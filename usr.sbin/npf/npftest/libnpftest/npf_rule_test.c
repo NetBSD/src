@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rule_test.c,v 1.10 2013/09/24 02:04:21 rmind Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.10.2.1 2014/08/10 07:00:01 tls Exp $	*/
 
 /*
  * NPF ruleset test.
@@ -80,10 +80,11 @@ npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
 	int retfl, error;
 
 	nbuf_init(&nbuf, m, ifp);
-	npf_cache_all(&npc, &nbuf);
+	npc.npc_nbuf = &nbuf;
+	npf_cache_all(&npc);
 
 	int slock = npf_config_read_enter();
-	rl = npf_ruleset_inspect(&npc, &nbuf, npf_config_ruleset(),
+	rl = npf_ruleset_inspect(&npc, npf_config_ruleset(),
 	    di, NPF_LAYER_3);
 	if (rl) {
 		error = npf_rule_conclude(rl, &retfl);

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "agp_i810.h"
@@ -58,11 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.2 2014/03/18 18:20:42 riastradh Exp
  * XXX drm_bus_borrow is a horrible kludge!
  */
 static bool
-drm_bus_borrow(bus_addr_t base, bus_space_handle_t *handlep)
+drm_bus_borrow(bus_addr_t base, bus_size_t size, bus_space_handle_t *handlep)
 {
 
 #if NAGP_I810 > 0
-	if (agp_i810_borrow(base, handlep))
+	if (agp_i810_borrow(base, size, handlep))
 		return true;
 #endif
 
@@ -85,6 +85,7 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 	 */
 	for (unit = 0; unit < dev->bus_nmaps; unit++) {
 		struct drm_bus_map *const bm = &dev->bus_maps[unit];
+		int flags = bm->bm_flags;
 
 		/* Reject maps starting after the request.  */
 		if (map->offset < bm->bm_base)
@@ -100,12 +101,16 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 			continue;
 
 		/* Ensure we can map the space into virtual memory.  */
-		if (!ISSET(bm->bm_flags, BUS_SPACE_MAP_LINEAR))
+		if (!ISSET(flags, BUS_SPACE_MAP_LINEAR))
 			continue;
 
+		/* Reflect requested flags in the bus_space map.  */
+		if (ISSET(map->flags, _DRM_WRITE_COMBINING))
+			flags |= BUS_SPACE_MAP_PREFETCHABLE;
+
 		/* Map it.  */
-		if (bus_space_map(bst, map->offset, map->size,
-			bm->bm_flags, &map->lm_data.bus_space.bsh))
+		if (bus_space_map(bst, map->offset, map->size, flags,
+			&map->lm_data.bus_space.bsh))
 			break;
 
 		map->lm_data.bus_space.bus_map = bm;
@@ -113,7 +118,8 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 	}
 
 	/* Couldn't map it.  Try borrowing from someone else.  */
-	if (drm_bus_borrow(map->offset, &map->lm_data.bus_space.bsh)) {
+	if (drm_bus_borrow(map->offset, map->size,
+		&map->lm_data.bus_space.bsh)) {
 		map->lm_data.bus_space.bus_map = NULL;
 		goto win;
 	}
@@ -173,11 +179,6 @@ drm_pci_alloc(struct drm_device *dev, size_t size, size_t align)
 	if (error)
 		goto fail0;
 	KASSERT(nsegs == 1);
-
-	/*
-	 * XXX Old drm passed BUS_DMA_NOWAIT below but BUS_DMA_WAITOK
-	 * above.  WTF?
-	 */
 
 	/*
 	 * Map the DMA-safe memory into kernel virtual address space.
@@ -253,7 +254,7 @@ int
 drm_limit_dma_space(struct drm_device *dev, resource_size_t min_addr,
     resource_size_t max_addr)
 {
-	int error;
+	int ret;
 
 	KASSERT(min_addr <= max_addr);
 
@@ -274,11 +275,13 @@ drm_limit_dma_space(struct drm_device *dev, resource_size_t min_addr,
 	 * the caller should try to allocate DMA-safe memory on failure
 	 * anyway, but...paranoia).
 	 */
-	error = bus_dmatag_subregion(dev->bus_dmat, min_addr, max_addr,
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmatag_subregion(dev->bus_dmat, min_addr, max_addr,
 	    &dev->dmat, BUS_DMA_WAITOK);
-	if (error) {
+	if (ret) {
 		dev->dmat = dev->bus_dmat;
-		return error;
+		dev->dmat_subregion_p = false;
+		return ret;
 	}
 
 	/*

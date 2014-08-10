@@ -13,14 +13,26 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+# Copyright (C) 1998-2003  Internet Software Consortium.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
 dnl
 AC_DIVERT_PUSH(1)dnl
 esyscmd([sed -e 's/^/# /' -e '/Portions of this code/,$d' COPYRIGHT])dnl
 AC_DIVERT_POP()dnl
 
-AC_REVISION(Revision: 1.533.34.1 )
-
-AC_INIT(lib/dns/name.c)
+AC_INIT(BIND, [9.10], [bind9-bugs@isc.org], [], [https://www.isc.org/downloads/BIND/])
 AC_PREREQ(2.59)
 
 AC_CONFIG_HEADER(config.h)
@@ -630,12 +642,11 @@ case "$use_geoip" in
 		then
 			CFLAGS="$CFLAGS -I$use_geoip/include"
 			CPPFLAGS="$CPPFLAGS -I$use_geoip/include"
+			LIBS="$LIBS -L$use_geoip/lib"
 			case "$host_os" in
 				netbsd*|openbsd*|solaris*)
 					LIBS="$LIBS -Wl,-rpath=$use_geoip/lib"
 					;;
-				*)
-					LIBS="$LIBS -L$use_geoip/lib"
 			esac
 		elif test "$use_geoip" = "yes"
 		then
@@ -750,23 +761,24 @@ case "$use_gssapi" in
 		saved_cppflags="$CPPFLAGS"
 		CPPFLAGS="-I$use_gssapi/include $CPPFLAGS"
 		AC_CHECK_HEADERS(gssapi.h gssapi/gssapi.h,
-		    [ISC_PLATFORM_GSSAPIHEADER="#define ISC_PLATFORM_GSSAPIHEADER <$ac_header>"])
+		    [ISC_PLATFORM_GSSAPIHEADER="#define ISC_PLATFORM_GSSAPIHEADER <$ac_header>"
+		     gssapi_hack="#include <$ac_header>"])
 
 		if test "$ISC_PLATFORM_GSSAPIHEADER" = ""; then
 		    AC_MSG_ERROR([gssapi.h not found])
 		fi
 
 		AC_CHECK_HEADERS(gssapi_krb5.h gssapi/gssapi_krb5.h,
-		    [ISC_PLATFORM_GSSAPI_KRB5_HEADER="#define ISC_PLATFORM_GSSAPI_KRB5_HEADER <$ac_header>"])
+		    [ISC_PLATFORM_GSSAPI_KRB5_HEADER="#define ISC_PLATFORM_GSSAPI_KRB5_HEADER <$ac_header>"
+		     gssapi_krb5_hack="#include <$ac_header>"])
 
 		AC_CHECK_HEADERS(krb5.h krb5/krb5.h kerberosv5/krb5.h,
-		    [ISC_PLATFORM_KRB5HEADER="#define ISC_PLATFORM_KRB5HEADER <$ac_header>"])
+		    [ISC_PLATFORM_KRB5HEADER="#define ISC_PLATFORM_KRB5HEADER <$ac_header>"
+		    krb5_hack="#include <$ac_header>"])
 
 		if test "$ISC_PLATFORM_KRB5HEADER" = ""; then
 		    AC_MSG_ERROR([krb5.h not found])
 		fi
-
-		CPPFLAGS="$saved_cppflags"
 
 		#
 		# XXXDCL This probably doesn't work right on all systems.
@@ -796,6 +808,7 @@ case "$use_gssapi" in
 		    "-lgssapi" \
 		    "-lgssapi -lkrb5 -ldes -lcrypt -lasn1 -lroken -lcom_err" \
 		    "-lgssapi -lkrb5 -lcrypto -lcrypt -lasn1 -lroken -lcom_err" \
+		    "-lgssapi -lkrb5 -lgssapi_krb5 -lcrypto -lcrypt -lasn1 -lroken -lcom_err" \
 		    "-lgssapi -lkrb5 -lhx509 -lcrypto -lcrypt -lasn1 -lroken -lcom_err" \
 		    "-lgss -lkrb5"
 		do
@@ -811,13 +824,23 @@ case "$use_gssapi" in
 			    LIBS="-L$use_gssapi/lib $TRY_LIBS"
 		    fi
 		    AC_MSG_CHECKING(linking as $TRY_LIBS)
-		    AC_TRY_LINK( , [gss_acquire_cred();krb5_init_context()],
+		    AC_TRY_LINK([
+#include <sys/types.h>
+$gssapi_hack
+$gssapi_krb5_hack
+$krb5_hack
+				] , [gss_acquire_cred(NULL, NULL, 0, NULL, 0, NULL, NULL, NULL);krb5_init_context(NULL);
+#if defined(HAVE_GSSAPI_KRB5_H) || defined(HAVE_GSSAPI_GSSAPI_KRB5_H)
+gsskrb5_register_acceptor_identity(NULL);
+#endif],
 				gssapi_linked=yes, gssapi_linked=no)
 		    case $gssapi_linked in
 		    yes) AC_MSG_RESULT(yes); break ;;
 		    no)  AC_MSG_RESULT(no) ;;
 		    esac
 		done
+
+		CPPFLAGS="$saved_cppflags"
 
 		case $gssapi_linked in
 		no) AC_MSG_ERROR(could not determine proper GSSAPI linkage) ;;
@@ -907,7 +930,7 @@ case "$use_randomdev" in
 				devrandom=/dev/arandom
 				;;
 			*)
-				devrandom=/dev/random
+				devrandom=/dev/urandom
 				;;
 		esac
 		AC_MSG_RESULT($devrandom)
@@ -1022,6 +1045,33 @@ then
 	AC_CHECK_FUNC(pthread_attr_setstacksize,
 		      AC_DEFINE(HAVE_PTHREAD_ATTR_SETSTACKSIZE),)
 
+        AC_ARG_WITH(locktype,
+                [  --with-locktype=ARG       Specify mutex lock type (adaptive or standard)],
+                locktype="$withval", locktype="adaptive")
+
+        case "$locktype" in
+                adaptive)
+                        AC_MSG_CHECKING([for PTHREAD_MUTEX_ADAPTIVE_NP])
+
+                        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+                          #define _GNU_SOURCE
+                          #include <pthread.h>
+                        ]], [[
+                          return (PTHREAD_MUTEX_ADAPTIVE_NP);
+                        ]])],
+                        [ AC_MSG_RESULT(using adaptive lock type)
+                          AC_DEFINE([HAVE_PTHREAD_MUTEX_ADAPTIVE_NP], 1,
+                                    [Support for PTHREAD_MUTEX_ADAPTIVE_NP]) ],
+                        [ AC_MSG_RESULT(using standard lock type) ])
+                        ;;
+                standard)
+                        AC_MSG_RESULT(using standard lock type)
+                        ;;
+                *)
+                        AC_MSG_ERROR([You must specify "adaptive" or "standard" for --with-locktype.])
+                        ;;
+        esac
+
 	AC_CHECK_HEADERS(sched.h)
 
 	case "$host" in
@@ -1103,12 +1153,14 @@ AC_SUBST(THREADOPTSRCS)
 ISC_THREAD_DIR=$thread_dir
 AC_SUBST(ISC_THREAD_DIR)
 
+AC_MSG_CHECKING(for libtool)
 AC_ARG_WITH(libtool,
 	    [  --with-libtool          use GNU libtool],
 	    use_libtool="$withval", use_libtool="no")
 
 case $use_libtool in
 	yes)
+		AC_MSG_RESULT(yes)
 		AM_PROG_LIBTOOL
 		O=lo
 		A=la
@@ -1125,6 +1177,7 @@ case $use_libtool in
 		esac;
 		;;
 	*)
+		AC_MSG_RESULT(no)
 		O=o
 		A=a
 		LIBTOOL=
@@ -1149,8 +1202,6 @@ AC_ARG_ENABLE(native-pkcs11,
 #
 # was --with-openssl specified?
 #
-OPENSSL_WARNING=
-AC_MSG_CHECKING(for OpenSSL library)
 AC_ARG_WITH(openssl,
 [  --with-openssl[=PATH]     Build with OpenSSL [yes|no|path].
 			  (Crypto is required for DNSSEC)],
@@ -1164,6 +1215,87 @@ AC_ARG_WITH(pkcs11,
 			  (PATH is for the PKCS11 provider)],
    use_pkcs11="$withval", use_pkcs11="auto")
 
+#
+# were --with-ecdsa, --with-gost, --with-aes specified
+#
+AC_ARG_WITH(ecdsa, [  --with-ecdsa            Crypto ECDSA],
+	    with_ecdsa="$withval", with_ecdsa="auto")
+AC_ARG_WITH(gost, [  --with-gost             Crypto GOST [yes|no|raw|asn1].],
+	    with_gost="$withval", with_gost="auto")
+AC_ARG_WITH(aes, [  --with-aes              Crypto AES],
+	    with_aes="$withval", with_aes="checksit")
+
+#
+# was --enable-openssl-hash specified?
+#
+AC_ARG_ENABLE(openssl-hash,
+	[  --enable-openssl-hash   use OpenSSL for hash functions [[default=no]]],
+	want_openssl_hash="$enableval", want_openssl_hash="checksit")
+
+#
+# Enable Source Identity Token support
+#
+AC_MSG_CHECKING(for Source Identity Token support)
+AC_ARG_ENABLE(sit,
+	[  --enable-sit            enable source identity token [[default=no]]],
+	enable_sit="$enableval", enable_sit="no")
+HAVE_SIT=
+ISC_PLATFORM_USESIT="#undef ISC_PLATFORM_USESIT"
+
+case "$enable_sit" in
+yes)
+	AC_MSG_RESULT(yes)
+	ISC_PLATFORM_USESIT="#define ISC_PLATFORM_USESIT 1"
+	HAVE_SIT=1
+	;;
+no)
+	AC_MSG_RESULT(no)
+	;;
+*)
+	AC_MSG_ERROR("enable-sit requires yes or no")
+	;;
+esac
+AC_SUBST(ISC_PLATFORM_USESIT)
+AC_SUBST(HAVE_SIT)
+
+#
+# Source Identity Token algorithm choice
+#
+AC_ARG_WITH(sit-alg,
+	[  --with-sit-alg=ALG      choose the algorithm for SIT [[aes|sha1|sha256]]],
+	with_sit_alg="$withval", with_sit_alg="auto")
+
+if test "$enable_sit" = "yes"
+then
+	case $with_sit_alg in
+		*1)
+			with_sit_alg="sha1"
+			;;
+		*2*)
+			with_sit_alg="sha256"
+			;;
+		auto)
+			if test "$with_aes" != "no"
+			then
+				with_aes="yes"
+			fi
+			;;
+		*)
+			with_sit_alg="aes"
+			if test "$with_aes" != "no"
+			then
+				with_aes="yes"
+			fi
+			;;
+	esac
+fi
+if test "with_aes" = "checksit"
+then
+	with_aes="no"
+fi
+
+AC_MSG_CHECKING(for OpenSSL library)
+OPENSSL_WARNING=
 openssldirs="/usr /usr/local /usr/local/ssl /usr/pkg /usr/sfw"
 if test "$use_openssl" = "auto"
 then
@@ -1183,11 +1315,6 @@ then
 fi
 OPENSSL_ECDSA=""
 OPENSSL_GOST=""
-AC_ARG_WITH(ecdsa, [  --with-ecdsa            Crypto ECDSA],
-	    with_ecdsa="$withval", with_ecdsa="auto")
-AC_ARG_WITH(gost,
-[  --with-gost             Crypto GOST [yes|no|raw|asn1].],
-	    with_gost="$withval", with_gost="auto")
 gosttype="raw"
 case "$with_gost" in
 	raw)
@@ -1210,7 +1337,7 @@ case "$use_openssl" in
 	native_pkcs11)
 		AC_MSG_RESULT(disabled because of native PKCS11)
 		DST_OPENSSL_INC=""
-		CRYPTO=""
+		CRYPTO="-DPKCS11CRYPTO"
 		OPENSSLGOSTLINKOBJS=""
 		OPENSSLGOSTLINKSRS=""
 		OPENSSLLINKOBJS=""
@@ -1237,6 +1364,11 @@ case "$use_openssl" in
 If you don't want OpenSSL, use --without-openssl])
 		;;
 	*)
+		if test "$want_native_pkcs11" = "yes"
+		then
+                        AC_MSG_RESULT()
+			AC_MSG_ERROR([OpenSSL and native PKCS11 cannot be used together.])
+		fi
 		if test "$use_openssl" = "yes"
 		then
 			# User did not specify a path - guess it
@@ -1380,7 +1512,6 @@ esac
 	AC_MSG_CHECKING(for OpenSSL ECDSA support)
 	have_ecdsa=""
 	AC_TRY_RUN([
-#include <stdio.h>
 #include <openssl/ecdsa.h>
 #include <openssl/objects.h>
 int main() {
@@ -1492,6 +1623,52 @@ int main() {
 	*)
 		;;
 	esac
+
+	have_aes="no"
+	AC_MSG_CHECKING(for OpenSSL AES support)
+	AC_TRY_RUN([
+#include <openssl/evp.h>
+int main() {
+	EVP_CIPHER *aes128, *aes192, *aes256;
+
+	aes128 = EVP_aes_128_ecb();
+	aes192 = EVP_aes_192_ecb();
+	aes256 = EVP_aes_256_ecb();
+	if (aes128 == NULL || aes192 == NULL || aes256 == NULL)
+		return (1);
+	return (0);
+}
+],
+	[AC_MSG_RESULT(yes)
+	 have_aes="evp"],
+	[AC_CHECK_FUNC(AES_encrypt,
+	[AC_MSG_RESULT(yes)
+	 have_aes="yes"],
+	[AC_MSG_RESULT(no)])],
+	[AC_MSG_RESULT(using --with-aes)])
+
+	ISC_OPENSSL_INC=""
+	ISC_OPENSSL_LIBS=""
+	if test "$with_aes" = "yes"
+	then
+		case "$have_aes" in
+		evp)
+			AC_DEFINE(HAVE_OPENSSL_EVP_AES, 1,
+				  [Define if your OpenSSL version supports EVP AES])
+			ISC_OPENSSL_INC="$DST_OPENSSL_INC"
+			ISC_OPENSSL_LIBS="$DST_OPENSSL_LIBS"
+			;;
+		yes)	
+			AC_DEFINE(HAVE_OPENSSL_AES, 1,
+				  [Define if your OpenSSL version supports AES])
+			ISC_OPENSSL_INC="$DST_OPENSSL_INC"
+			ISC_OPENSSL_LIBS="$DST_OPENSSL_LIBS"
+			;;
+		*)
+			;;
+		esac
+	fi
+
 	CC="$saved_cc"
 	CFLAGS="$saved_cflags"
 	LIBS="$saved_libs"
@@ -1516,75 +1693,98 @@ AC_SUBST(OPENSSL_GOST)
 
 DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DST_OPENSSL_LIBS"
 
-#
-# Use OpenSSL for hash functions and/or aes
-#
-
-saved_libs="$LIBS"
-LIBS="$LIBS $DNS_CRYPTO_LIBS"
-AC_CHECK_FUNCS(AES_encrypt)
-LIBS="$saved_libs"
-
-AC_MSG_CHECKING(for using OpenSSL for hash functions)
-AC_ARG_ENABLE(openssl-hash,
-	[  --enable-openssl-hash   use OpenSSL for hash functions [[default=no]]],
-	want_openssl_hash="$enableval", want_openssl_hash="no")
-
-AC_ARG_ENABLE(openssl-aes,
-	[  --enable-openssl-aes    use OpenSSL for aes [[default=no]]],
-	want_openssl_aes="$enableval", want_openssl_aes="no")
+ISC_PLATFORM_WANTAES="#undef ISC_PLATFORM_WANTAES"
+if test "$with_aes" = "yes"
+then
+	if test "X$CRYPTO" = "X"
+	then
+		with_aes="no"
+	fi
+fi
+if test "$with_aes" = "yes"
+then
+	ISC_PLATFORM_WANTAES="#define ISC_PLATFORM_WANTAES 1"
+fi
+AC_SUBST(ISC_PLATFORM_WANTAES)
 
 #
-# Source Identity Token algorithm choice
+# Choose SIT algorithm
 #
-AC_ARG_WITH(sit-alg,
-	[  --with-sit-alg=ALG      choose the algorithm for SIT [[aes|sha1|sha256]]],
-	with_sit_alg="$withval", with_sit_alg="auto")
 
-case $with_sit_alg in
-	*1)
-		with_sit_alg="sha1"
-		want_openssl_hash="yes"
-		AC_DEFINE(HMAC_SHA1_SIT, 1,
-			  [Use HMAC-SHA1 for Source Identity Token generation])
-		;;
-	*2*)
-		with_sit_alg="sha256"
-		want_openssl_hash="yes"
-		AC_DEFINE(HMAC_SHA256_SIT, 1,
-			  [Use HMAC-SHA256 for Source Identity Token generation])
-		;;
-	auto)
-		if test "$ac_cv_func_AES_encrypt" = "yes"
+if test "$enable_sit" = "yes"
+then
+	AC_MSG_CHECKING(for the Algorithm for SIT)
+	if test "$with_sit_alg" = "auto"
+	then
+		if test "$with_aes" = "yes"
 		then
 			with_sit_alg="aes"
-			if test "$CRYPTO" = "-DOPENSSL"
-			then
-				want_openssl_aes="yes"
-			fi
-			AC_DEFINE(AES_SIT, 1,
-				 [Use AES for Source Identity Token generation])
 		else
 			with_sit_alg="sha256"
-			if test "$CRYPTO" = "-DOPENSSL"
+		fi
+	fi
+fi
+case $with_sit_alg in
+	sha1)
+		if test "$enable_sit" != "yes"
+		then
+			AC_MSG_ERROR("with-sit-alg requires enable-sit");
+		fi
+		AC_MSG_RESULT(sha1)
+		if test "$CRYPTO" = "-DOPENSSL"
+		then
+			if test "$want_openssl_hash" = "checksit"
 			then
 				want_openssl_hash="yes"
 			fi
-			AC_DEFINE(HMAC_SHA256_SIT, 1,
-		         [Use HMAC-SHA256 for Source Identity Token generation])
 		fi
+		AC_DEFINE(HMAC_SHA1_SIT, 1,
+			  [Use HMAC-SHA1 for Source Identity Token generation])
 		;;
-	*)
-		with_sit_alg="aes"
-		want_openssl_aes="yes"
+	sha256)
+		if test "$enable_sit" != "yes"
+		then
+			AC_MSG_ERROR("with-sit-alg requires enable-sit");
+		fi
+		AC_MSG_RESULT(sha256)
+		if test "$CRYPTO" = "-DOPENSSL"
+		then
+			if test "$want_openssl_hash" = "checksit"
+			then
+				want_openssl_hash="yes"
+			fi
+		fi
+		AC_DEFINE(HMAC_SHA256_SIT, 1,
+			  [Use HMAC-SHA256 for Source Identity Token generation])
+		;;
+	aes)
+		if test "$enable_sit" != "yes"
+		then
+			AC_MSG_ERROR("with-sit-alg requires enable-sit");
+		fi
+		AC_MSG_RESULT(aes)
+		if test "$with_aes" != "yes"
+		then
+			AC_MSG_ERROR("SIT wants to use unavailable AES");
+		fi
 		AC_DEFINE(AES_SIT, 1,
 			  [Use AES for Source Identity Token generation])
 		;;
 esac
+if test "$want_openssl_hash" = "checksit"
+then
+	want_openssl_hash="no"
+fi
 
+#
+# Use OpenSSL for hash functions
+#
+
+AC_MSG_CHECKING(for using OpenSSL for hash functions)
+ISC_PLATFORM_OPENSSLHASH="#undef ISC_PLATFORM_OPENSSLHASH"
 case $want_openssl_hash in
 	yes)
-		if test "$CRYPTO" = ""
+		if test "$CRYPTO" != "-DOPENSSL"
 		then
 			AC_MSG_ERROR([No OpenSSL for hash functions])
 		fi
@@ -1595,27 +1795,9 @@ case $want_openssl_hash in
 		;;
 	no)
 		AC_MSG_RESULT(no)
-		ISC_PLATFORM_OPENSSLHASH="#undef ISC_PLATFORM_OPENSSLHASH"
-		ISC_OPENSSL_INC=""
-		ISC_OPENSSL_LIBS=""
-		;;
-esac
-case $want_openssl_aes in
-	yes)
-		if test "$CRYPTO" = ""
-		then
-			AC_MSG_ERROR([No OpenSSL for AES])
-		fi
-		ISC_PLATFORM_OPENSSLAES="#define ISC_PLATFORM_OPENSSLAES 1"
-		ISC_OPENSSL_INC="$DST_OPENSSL_INC"
-		ISC_OPENSSL_LIBS="$DST_OPENSSL_LIBS"
-		;;
-	no)
-		ISC_PLATFORM_OPENSSLAES="#undef ISC_PLATFORM_OPENSSLAES"
 		;;
 esac
 AC_SUBST(ISC_PLATFORM_OPENSSLHASH)
-AC_SUBST(ISC_PLATFORM_OPENSSLAES)
 AC_SUBST(ISC_OPENSSL_INC)
 AC_SUBST(ISC_OPENSSL_LIBS)
 
@@ -1644,6 +1826,8 @@ case "$use_pkcs11" in
 		ISC_PK11_O=""
 		ISC_PK11_API_C=""
 		ISC_PK11_API_O=""
+		ISC_PK11_RESULT_C=""
+		ISC_PK11_RESULT_O=""
 		ISC_ISCPK11_API_C=""
 		ISC_ISCPK11_API_O=""
 		;;
@@ -1652,7 +1836,7 @@ case "$use_pkcs11" in
 		if ! $use_threads; then
 			AC_MSG_ERROR([PKCS11 requires thread support])
 		fi
-		if test "$CRYPTO" != ""
+		if test "$CRYPTO" = "-DOPENSSL"
 		then
 			AC_MSG_CHECKING(for OpenSSL with PKCS11 support)
 			saved_cc="$CC"
@@ -1700,6 +1884,8 @@ int main() {
 		ISC_PK11_O="pk11.$O"
 		ISC_PK11_API_C="pk11_api.c"
 		ISC_PK11_API_O="pk11_api.$O"
+		ISC_PK11_RESULT_C="pk11_result.c"
+		ISC_PK11_RESULT_O="pk11_result.$O"
 		ISC_ISCPK11_API_C="unix/pk11_api.c"
 		ISC_ISCPK11_API_O="unix/pk11_api.$O"
 		;;
@@ -1711,6 +1897,8 @@ AC_SUBST(ISC_PK11_C)
 AC_SUBST(ISC_PK11_O)
 AC_SUBST(ISC_PK11_API_C)
 AC_SUBST(ISC_PK11_API_O)
+AC_SUBST(ISC_PK11_RESULT_C)
+AC_SUBST(ISC_PK11_RESULT_O)
 AC_SUBST(ISC_ISCPK11_API_C)
 AC_SUBST(ISC_ISCPK11_API_O)
 
@@ -1739,28 +1927,31 @@ AC_MSG_CHECKING(for native PKCS11)
 case "$want_native_pkcs11" in
 	yes)
 		AC_MSG_RESULT(using native PKCS11 crypto)
-		CRYPTO="-DPKCS11CRYPTO"
 		PKCS11LINKOBJS='${PKCS11LINKOBJS}'
 		PKCS11LINKSRCS='${PKCS11LINKSRCS}'
 		PKCS11_TEST=pkcs11
+		AC_MSG_CHECKING(for PKCS11 ECDSA)
 		case "$with_ecdsa" in
 		no)
-			AC_MSG_RESULT([disabled PKCS11 ECDSA])
+			AC_MSG_RESULT(disabled)
 			;;
 		*)
+			AC_MSG_RESULT(enabled)
 			PKCS11_ECDSA="yes"
 			AC_DEFINE(HAVE_PKCS11_ECDSA, 1,
 				  [Define if your PKCS11 provider supports ECDSA.])
 			;;
 		esac
+		AC_MSG_CHECKING(for PKCS11 GOST)
 		case "$with_gost" in
 		yes)
+			AC_MSG_RESULT(enabled)
 			PKCS11_GOST="yes"
 			AC_DEFINE(HAVE_PKCS11_GOST, 1,
 				  [Define if your PKCS11 provider supports GOST.])
 			;;
 		*)
-			AC_MSG_RESULT([disabled PKCS11 GOST])
+			AC_MSG_RESULT(disabled)
 			;;
 		esac
 		;;
@@ -1778,15 +1969,18 @@ AC_SUBST(PKCS11_TEST)
 
 # for PKCS11 benchmarks
 
-AC_MSG_CHECKING(clock_gettime)
 have_clock_gt=no
 AC_CHECK_FUNC(clock_gettime,have_clock_gt=yes,)
 if test "$have_clock_gt" = "no"; then
-	AC_CHECK_LIB(rt,clock_gettime,have_clock_gt=yes,)
+	AC_CHECK_LIB(rt,clock_gettime,have_clock_gt=rt,)
 fi
 
-if test "$have_clock_gt" = "yes"; then
+if test "$have_clock_gt" != "no"; then
 	AC_DEFINE(HAVE_CLOCK_GETTIME, 1, [Define if clock_gettime is available.])
+fi
+
+if test "$have_clock_gt" = "rt"; then
+	LIBS="-lrt $LIBS"
 fi
 
 #
@@ -1936,17 +2130,32 @@ MKDEPCFLAGS="-M"
 IRIX_DNSSEC_WARNINGS_HACK=""
 
 if test "X$GCC" = "Xyes"; then
+	STD_CWARNINGS="$STD_CWARNINGS -W -Wall -Wmissing-prototypes -Wcast-qual -Wwrite-strings -Wformat -Wpointer-arith"
 	AC_MSG_CHECKING(if "$CC" supports -fno-strict-aliasing)
-	SAVE_CFLAGS=$CFLAGS
+	SAVE_CFLAGS="$CFLAGS"
 	CFLAGS="$CFLAGS -fno-strict-aliasing"
 	AC_TRY_COMPILE(,, [FNOSTRICTALIASING=yes],[FNOSTRICTALIASING=no])
-	CFLAGS=$SAVE_CFLAGS
+	CFLAGS="$SAVE_CFLAGS"
 	if test "$FNOSTRICTALIASING" = "yes"; then
 		AC_MSG_RESULT(yes)
-	STD_CWARNINGS="$STD_CWARNINGS -W -Wall -Wmissing-prototypes -Wcast-qual -Wwrite-strings -Wformat -Wpointer-arith -fno-strict-aliasing"
+		STD_CWARNINGS="$STD_CWARNINGS -fno-strict-aliasing"
 	else
 		AC_MSG_RESULT(no)
-	STD_CWARNINGS="$STD_CWARNINGS -W -Wall -Wmissing-prototypes -Wcast-qual -Wwrite-strings -Wformat -Wpointer-arith"
+	fi
+	#
+	# turn off delete null pointer checks
+	#
+	AC_MSG_CHECKING(if "$CC" supports -fno-delete-null-pointer-checks)
+	SAVE_CFLAGS="$CFLAGS"
+	CFLAGS="$CFLAGS -fno-delete-null-pointer-checks"
+	AC_TRY_COMPILE(,, [FNODELETENULLPOINTERCHECKS=yes],
+			  [FNODELETENULLPOINTERCHECKS=no])
+	CFLAGS="$SAVE_CFLAGS"
+	if test "$FNODELETENULLPOINTERCHECKS" = "yes"; then
+		AC_MSG_RESULT(yes)
+		STD_CWARNINGS="$STD_CWARNINGS -fno-delete-null-pointer-checks"
+	else
+		AC_MSG_RESULT(no)
 	fi
 	case "$host" in
 	*-hp-hpux*)
@@ -3437,31 +3646,6 @@ case "$enable_filter" in
 esac
 
 #
-# Enable Source Identity Token support
-#
-AC_ARG_ENABLE(sit,
-	[  --enable-sit            enable source identity token [[default=no]]],
-	enable_sit="$enableval", enable_sit="no")
-
-ISC_PLATFORM_USESIT="#undef ISC_PLATFORM_USESIT"
-HAVE_SIT=
-
-case "$enable_sit" in
-yes)
-	AC_DEFINE(ENABLE_SIT, 1, [Define to enable 'sit' support.])
-	ISC_PLATFORM_USESIT="#define ISC_PLATFORM_USESIT 1"
-        HAVE_SIT=1
-	;;
-no)
-	;;
-*)
-	AC_MSG_ERROR("enable-sit requires yes or no")
-	;;
-esac
-AC_SUBST(ISC_PLATFORM_USESIT)
-AC_SUBST(HAVE_SIT)
-
-#
 #  The following sets up how non-blocking i/o is established.
 #  Sunos, cygwin and solaris 2.x (x<5) require special handling.
 #
@@ -3758,14 +3942,14 @@ case "$use_tuning" in
 		if ! $use_threads; then
 			AC_MSG_ERROR([Large-system tuning requires threads.])
 		fi
-                AC_DEFINE(TUNE_LARGE, 1, [Define to use large-system tuning.])
+		AC_DEFINE(TUNE_LARGE, 1, [Define to use large-system tuning.])
 		AC_MSG_RESULT(using large-system tuning)
 		;;
 	no|default)
 		AC_MSG_RESULT(using default tuning)
 		;;
 	yes|*)
-                AC_MSG_ERROR([You must specify "large" or "default" for --with-tuning.])
+		AC_MSG_ERROR([You must specify "large" or "default" for --with-tuning.])
 		;;
 esac
 
@@ -4162,7 +4346,7 @@ AC_CONFIG_FILES([
 	bin/check/Makefile
 	bin/confgen/Makefile
 	bin/confgen/unix/Makefile
-	bin/delve/Makefile
+	bin/delv/Makefile
 	bin/dig/Makefile
 	bin/dnssec/Makefile
 	bin/named/Makefile
@@ -4318,14 +4502,19 @@ echo "========================================================================"
 echo "Configuration summary:"
 echo "------------------------------------------------------------------------"
 echo "Optional features enabled:"
-$use_threads && echo "    Multiprocessing support (--enable-threads)"
+if $use_threads; then
+    echo "    Multiprocessing support (--enable-threads)"
+    if test "$enable_full_report" = "yes" -o "$locktype" = "standard"; then
+        echo "        Mutex lock type: $locktype"
+    fi
+fi
 test "$use_tuning" = "large" && echo "    Large-system tuning (--with-tuning)"
 test "$use_geoip" = "no" || echo "    GeoIP access control (--with-geoip)"
 test "$use_gssapi" = "no" || echo "    GSS-API (--with-gssapi)"
 if test "$enable_sit" != "no"; then
     echo "    Source Identity Token support (--enable-sit)"
     if test "$enable_full_report" = "yes" -o "$with_sit_alg" != "aes"; then
-        echo "        Algorithm: $with_sit_alg"
+	echo "        Algorithm: $with_sit_alg"
     fi
 fi
 

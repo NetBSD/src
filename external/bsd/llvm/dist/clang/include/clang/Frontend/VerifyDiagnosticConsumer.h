@@ -13,10 +13,10 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/STLExtras.h"
 #include <climits>
+#include <memory>
 
 namespace clang {
 
@@ -34,12 +34,12 @@ class FileEntry;
 /// comment on the line that has the diagnostic, use:
 ///
 /// \code
-///   expected-{error,warning,note}
+///   expected-{error,warning,remark,note}
 /// \endcode
 ///
-/// to tag if it's an expected error or warning, and place the expected text
-/// between {{ and }} markers. The full text doesn't have to be included, only
-/// enough to ensure that the correct diagnostic was emitted.
+/// to tag if it's an expected error, remark or warning, and place the expected
+/// text between {{ and }} markers. The full text doesn't have to be included,
+/// only enough to ensure that the correct diagnostic was emitted.
 ///
 /// Here's an example:
 ///
@@ -184,13 +184,17 @@ public:
   struct ExpectedData {
     DirectiveList Errors;
     DirectiveList Warnings;
+    DirectiveList Remarks;
     DirectiveList Notes;
 
-    ~ExpectedData() {
+    void Reset() {
       llvm::DeleteContainerPointers(Errors);
       llvm::DeleteContainerPointers(Warnings);
+      llvm::DeleteContainerPointers(Remarks);
       llvm::DeleteContainerPointers(Notes);
     }
+
+    ~ExpectedData() { Reset(); }
   };
 
   enum DirectiveStatus {
@@ -204,7 +208,7 @@ private:
   DiagnosticsEngine &Diags;
   DiagnosticConsumer *PrimaryClient;
   bool OwnsPrimaryClient;
-  OwningPtr<TextDiagnosticBuffer> Buffer;
+  std::unique_ptr<TextDiagnosticBuffer> Buffer;
   const Preprocessor *CurrentPreprocessor;
   const LangOptions *LangOpts;
   SourceManager *SrcManager;
@@ -239,10 +243,10 @@ public:
   VerifyDiagnosticConsumer(DiagnosticsEngine &Diags);
   ~VerifyDiagnosticConsumer();
 
-  virtual void BeginSourceFile(const LangOptions &LangOpts,
-                               const Preprocessor *PP);
+  void BeginSourceFile(const LangOptions &LangOpts,
+                       const Preprocessor *PP) override;
 
-  virtual void EndSourceFile();
+  void EndSourceFile() override;
 
   enum ParsedStatus {
     /// File has been processed via HandleComment.
@@ -258,10 +262,10 @@ public:
   /// \brief Update lists of parsed and unparsed files.
   void UpdateParsedFileStatus(SourceManager &SM, FileID FID, ParsedStatus PS);
 
-  virtual bool HandleComment(Preprocessor &PP, SourceRange Comment);
+  bool HandleComment(Preprocessor &PP, SourceRange Comment) override;
 
-  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const Diagnostic &Info);
+  void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
+                        const Diagnostic &Info) override;
 };
 
 } // end namspace clang

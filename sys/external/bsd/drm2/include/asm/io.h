@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,33 +32,21 @@
 #ifndef _ASM_IO_H_
 #define _ASM_IO_H_
 
-#include <sys/bus.h>
-
-#include <uvm/uvm_page.h>
-
-#include <linux/mm_types.h>
+#include <sys/cdefs.h>
+#include <sys/systm.h>
 
 /*
  * XXX This is bollocks, and is wrong on various architectures (should
  * work for x86; who knows what else), but bus_space_barrier won't work
  * because we have no bus space tag or handle or offset or anything.
  */
-#define	mmiowb()	__insn_barrier()
+#define	mmiowb()	membar_sync()
 
 #define	memcpy_fromio	memcpy
 #define	memcpy_toio	memcpy
 #define	memset_io	memset
 
-/*
- * XXX Not sure why this is here, but so it is in Linux...  Also, not
- * sure what the right type is: Linux uses dma_addr_t, but I don't
- * think bus_addr_t is right here -- paddr_t sounds more appropriate.
- */
-
-static inline bus_addr_t
-page_to_phys(struct page *page)
-{
-	return VM_PAGE_TO_PHYS(&page->p_vmp);
-}
+/* XXX wrong place */
+#define	__force
 
 #endif  /* _ASM_IO_H_ */

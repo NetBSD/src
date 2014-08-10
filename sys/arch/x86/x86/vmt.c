@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.8 2013/03/16 01:26:53 jmmv Exp $ */
+/* $NetBSD: vmt.c,v 1.8.10.1 2014/08/10 06:54:11 tls Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -806,7 +806,7 @@ vmt_tclo_tick(void *xarg)
 
 		/* find first available ipv4 address */
 		guest_ip = NULL;
-		TAILQ_FOREACH(iface, &ifnet, if_list) {
+		IFNET_FOREACH(iface) {
 			struct ifaddr *iface_addr;
 
 			/* skip loopback */
@@ -815,7 +815,7 @@ vmt_tclo_tick(void *xarg)
 				continue;
 			}
 
-			TAILQ_FOREACH(iface_addr, &iface->if_addrlist, ifa_list) {
+			IFADDR_FOREACH(iface_addr, iface) {
 				if (iface_addr->ifa_addr->sa_family != AF_INET) {
 					continue;
 				}

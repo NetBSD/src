@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.9 2013/03/11 01:56:37 christos Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.9.10.1 2014/08/10 06:56:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -330,12 +330,12 @@ npf_rproc_assign(npf_rproc_t *rp, void *params)
  *
  * => Reference on the rule procedure must be held.
  */
-void
-npf_rproc_run(npf_cache_t *npc, nbuf_t *nbuf, npf_rproc_t *rp, int *decision)
+bool
+npf_rproc_run(npf_cache_t *npc, npf_rproc_t *rp, int *decision)
 {
 	const unsigned extcount = rp->rp_ext_count;
 
-	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
+	KASSERT(!nbuf_flag_p(npc->npc_nbuf, NBUF_DATAREF_RESET));
 	KASSERT(rp->rp_refcnt > 0);
 
 	for (unsigned i = 0; i < extcount; i++) {
@@ -343,10 +343,14 @@ npf_rproc_run(npf_cache_t *npc, nbuf_t *nbuf, npf_rproc_t *rp, int *decision)
 		const npf_ext_ops_t *extops = ext->ext_ops;
 
 		KASSERT(ext->ext_refcnt > 0);
-		extops->proc(npc, nbuf, rp->rp_ext_meta[i], decision);
+		if (!extops->proc(npc, rp->rp_ext_meta[i], decision)) {
+			return false;
+		}
 
-		if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
-			npf_recache(npc, nbuf);
+		if (nbuf_flag_p(npc->npc_nbuf, NBUF_DATAREF_RESET)) {
+			npf_recache(npc);
 		}
 	}
+
+	return true;
 }

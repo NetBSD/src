@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.18 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.18.36.1 2014/08/10 06:54:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -177,6 +177,8 @@ int agp_generic_enable(struct agp_softc *, u_int32_t);
 struct agp_memory *agp_generic_alloc_memory(struct agp_softc *, int, vsize_t);
 int agp_generic_free_memory(struct agp_softc *, struct agp_memory *);
 int agp_generic_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
+int agp_generic_bind_memory_bounded(struct agp_softc *, struct agp_memory *,
+	off_t, off_t, off_t);
 int agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
 
 /* The vendor has already been matched when these functions are called */
@@ -268,6 +270,6 @@ void agp_memory_info(void *, void *, struct agp_memory_info *);
  * XXX horrible hack to allow drm code to use our mapping
  * of VGA chip registers
  */
-int agp_i810_borrow(bus_addr_t, bus_space_handle_t *);
+int agp_i810_borrow(bus_addr_t, bus_size_t, bus_space_handle_t *);
 
 #endif /* !_PCI_AGPPRIV_H_ */

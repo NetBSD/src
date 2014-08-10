@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.20 2014/02/19 03:51:31 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.20.2.1 2014/08/10 06:56:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.20 2014/02/19 03:51:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.20.2.1 2014/08/10 06:56:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.20 2014/02/19 03:51:31 rmind Exp 
 #include <net/pfil.h>
 
 #include "npf_impl.h"
+#include "npf_conn.h"
 
 MODULE(MODULE_CLASS_MISC, npf_alg_icmp, "npf");
 
@@ -66,11 +67,11 @@ MODULE(MODULE_CLASS_MISC, npf_alg_icmp, "npf");
 static npf_alg_t *	alg_icmp	__read_mostly;
 
 /*
- * npfa_icmp_match: matching insperctor determines ALG case and associates
+ * npfa_icmp_match: matching inspector determines ALG case and associates
  * our ALG with the NAT entry.
  */
 static bool
-npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
+npfa_icmp_match(npf_cache_t *npc, npf_nat_t *nt, int di)
 {
 	const int proto = npc->npc_proto;
 	const struct ip *ip = npc->npc_ip.v4;
@@ -120,8 +121,9 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
  */
 
 static bool
-npfa_icmp4_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
+npfa_icmp4_inspect(const int type, npf_cache_t *npc)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	u_int offby;
 
 	/* Per RFC 792. */
@@ -138,7 +140,7 @@ npfa_icmp4_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
 		if (!nbuf_advance(nbuf, offsetof(struct icmp, icmp_ip), 0)) {
 			return false;
 		}
-		return (npf_cache_all(npc, nbuf) & NPC_LAYER4) != 0;
+		return (npf_cache_all(npc) & NPC_LAYER4) != 0;
 
 	case ICMP_ECHOREPLY:
 	case ICMP_ECHO:
@@ -160,8 +162,9 @@ npfa_icmp4_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
 }
 
 static bool
-npfa_icmp6_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
+npfa_icmp6_inspect(const int type, npf_cache_t *npc)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	u_int offby;
 
 	/* Per RFC 4443. */
@@ -177,7 +180,7 @@ npfa_icmp6_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
 		if (!nbuf_advance(nbuf, sizeof(struct icmp6_hdr), 0)) {
 			return false;
 		}
-		return (npf_cache_all(npc, nbuf) & NPC_LAYER4) != 0;
+		return (npf_cache_all(npc) & NPC_LAYER4) != 0;
 
 	case ICMP6_ECHO_REQUEST:
 	case ICMP6_ECHO_REPLY:
@@ -195,13 +198,14 @@ npfa_icmp6_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
 }
 
 /*
- * npfa_icmp_session: ALG ICMP inspector.
+ * npfa_icmp_inspect: ALG ICMP inspector.
  *
  * => Returns true if "enpc" is filled.
  */
 static bool
-npfa_icmp_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *enpc)
+npfa_icmp_inspect(npf_cache_t *npc, npf_cache_t *enpc)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	bool ret;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
@@ -212,6 +216,7 @@ npfa_icmp_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *enpc)
 	if (!nbuf_advance(nbuf, npc->npc_hlen, 0)) {
 		return false;
 	}
+	enpc->npc_nbuf = nbuf;
 	enpc->npc_info = 0;
 
 	/*
@@ -220,10 +225,10 @@ npfa_icmp_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *enpc)
 	 */
 	if (npf_iscached(npc, NPC_IP4)) {
 		const struct icmp *ic = npc->npc_l4.icmp;
-		ret = npfa_icmp4_inspect(ic->icmp_type, enpc, nbuf);
+		ret = npfa_icmp4_inspect(ic->icmp_type, enpc);
 	} else if (npf_iscached(npc, NPC_IP6)) {
 		const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
-		ret = npfa_icmp6_inspect(ic6->icmp6_type, enpc, nbuf);
+		ret = npfa_icmp6_inspect(ic6->icmp6_type, enpc);
 	} else {
 		ret = false;
 	}
@@ -241,15 +246,15 @@ npfa_icmp_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *enpc)
 	return true;
 }
 
-static npf_session_t *
-npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
+static npf_conn_t *
+npfa_icmp_conn(npf_cache_t *npc, int di)
 {
 	npf_cache_t enpc;
 
 	/* Inspect ICMP packet for an embedded packet. */
 	if (!npf_iscached(npc, NPC_ICMP))
 		return NULL;
-	if (!npfa_icmp_inspect(npc, nbuf, &enpc))
+	if (!npfa_icmp_inspect(npc, &enpc))
 		return NULL;
 
 	/*
@@ -278,14 +283,14 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 		break;
 	case IPPROTO_ICMP: {
 		const struct icmp *ic = enpc.npc_l4.icmp;
-		ret = npfa_icmp4_inspect(ic->icmp_type, &enpc, nbuf);
+		ret = npfa_icmp4_inspect(ic->icmp_type, &enpc);
 		if (!ret || !npf_iscached(&enpc, NPC_ICMP_ID))
 			return false;
 		break;
 	}
 	case IPPROTO_ICMPV6: {
 		const struct icmp6_hdr *ic6 = enpc.npc_l4.icmp6;
-		ret = npfa_icmp6_inspect(ic6->icmp6_type, &enpc, nbuf);
+		ret = npfa_icmp6_inspect(ic6->icmp6_type, &enpc);
 		if (!ret || !npf_iscached(&enpc, NPC_ICMP_ID))
 			return false;
 		break;
@@ -294,8 +299,8 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 		return false;
 	}
 
-	/* Lookup for a session using embedded packet. */
-	return npf_session_lookup(&enpc, nbuf, di, &forw);
+	/* Lookup a connection using the embedded packet. */
+	return npf_conn_lookup(&enpc, di, &forw);
 }
 
 /*
@@ -303,14 +308,14 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
  * which is embedded in ICMP packet.  Note: backwards stream only.
  */
 static bool
-npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
+npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 {
 	const u_int which = NPF_SRC;
 	npf_cache_t enpc;
 
 	if (forw || !npf_iscached(npc, NPC_ICMP))
 		return false;
-	if (!npfa_icmp_inspect(npc, nbuf, &enpc))
+	if (!npfa_icmp_inspect(npc, &enpc))
 		return false;
 
 	KASSERT(npf_iscached(&enpc, NPC_IP46));
@@ -414,7 +419,7 @@ npf_alg_icmp_init(void)
 	static const npfa_funcs_t icmp = {
 		.match		= npfa_icmp_match,
 		.translate	= npfa_icmp_nat,
-		.inspect	= npfa_icmp_session,
+		.inspect	= npfa_icmp_conn,
 	};
 	alg_icmp = npf_alg_register("icmp", &icmp);
 	return alg_icmp ? 0 : ENOMEM;

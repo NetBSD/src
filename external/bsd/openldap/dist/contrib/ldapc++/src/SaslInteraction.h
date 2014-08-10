@@ -1,8 +1,8 @@
-/*	$NetBSD: SaslInteraction.h,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: SaslInteraction.h,v 1.1.1.2.24.1 2014/08/10 07:09:43 tls Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/SaslInteraction.h,v 1.1.2.2 2008/04/14 23:09:26 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2007, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2007-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

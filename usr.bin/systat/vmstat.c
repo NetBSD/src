@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.77 2010/04/30 16:21:05 njoly Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.77.22.1 2014/08/10 06:58:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.77 2010/04/30 16:21:05 njoly Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.77.22.1 2014/08/10 06:58:59 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.77 2010/04/30 16:21:05 njoly Exp $");
 static struct Info {
 	struct	uvmexp_sysctl uvmexp;
 	struct	vmtotal Total;
-	struct	nchstats nchstats;
+	struct	nchstats_sysctl nchstats;
 	long	nchcount;
 	long	*intrcnt;
 	u_int64_t	*evcnt;
@@ -106,17 +106,15 @@ closevmstat(WINDOW *w)
 
 
 static struct nlist namelist[] = {
-#define	X_NCHSTATS	0
-	{ .n_name = "_nchstats" },
-#define	X_INTRNAMES	1
+#define	X_INTRNAMES	0
 	{ .n_name = "_intrnames" },
-#define	X_EINTRNAMES	2
+#define	X_EINTRNAMES	1
 	{ .n_name = "_eintrnames" },
-#define	X_INTRCNT	3
+#define	X_INTRCNT	2
 	{ .n_name = "_intrcnt" },
-#define	X_EINTRCNT	4
+#define	X_EINTRCNT	3
 	{ .n_name = "_eintrcnt" },
-#define	X_ALLEVENTS	5
+#define	X_ALLEVENTS	4
 	{ .n_name = "_allevents" },
 	{ .n_name = NULL }
 };
@@ -210,13 +208,8 @@ initvmstat(void)
 
 	if (namelist[0].n_type == 0) {
 		if (kvm_nlist(kd, namelist) &&
-		    (namelist[X_NCHSTATS].n_type == 0 ||
-		     namelist[X_ALLEVENTS].n_type == 0)) {
+		    namelist[X_ALLEVENTS].n_type == 0) {
 			nlisterr(namelist);
-			return(0);
-		}
-		if (namelist[0].n_type == 0) {
-			error("No namelist");
 			return(0);
 		}
 	}
@@ -776,7 +769,12 @@ getinfo(struct Info *stats)
 
 	cpureadstats();
 	drvreadstats();
-	NREAD(X_NCHSTATS, &stats->nchstats, sizeof stats->nchstats);
+	size = sizeof(stats->nchstats);
+	if (sysctlbyname("vfs.namecache_stats", &stats->nchstats, &size,
+	    NULL, 0) < 0) {
+		error("can't get namecache statistics: %s\n", strerror(errno));
+		memset(&stats->nchstats, 0, sizeof(stats->nchstats));
+	}
 	if (nintr)
 		NREAD(X_INTRCNT, stats->intrcnt, nintr * LONG);
 	for (i = 0; i < nevcnt; i++)

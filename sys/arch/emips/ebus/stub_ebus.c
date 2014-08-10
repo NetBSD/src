@@ -1,4 +1,4 @@
-/*	$NetBSD: stub_ebus.c,v 1.3 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: stub_ebus.c,v 1.3.2.1 2014/08/10 06:53:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -108,6 +108,7 @@ const struct cdevsw stub_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

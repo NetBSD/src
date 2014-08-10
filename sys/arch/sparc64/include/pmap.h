@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.57 2013/12/27 21:11:19 palle Exp $	*/
+/*	$NetBSD: pmap.h,v 1.57.2.1 2014/08/10 06:54:08 tls Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -192,8 +192,27 @@ int pmap_count_wired(struct pmap *);
 void pmap_activate_pmap(struct pmap *);
 void pmap_update(struct pmap *);
 void pmap_bootstrap(u_long, u_long);
+
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
-#define	PMAP_PREFER(pa, va, sz, td)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT))))
+#define	PMAP_PREFER(fo, va, sz, td)	pmap_prefer((fo), (va), (td))
+static inline void
+pmap_prefer(vaddr_t fo, vaddr_t *va, int td)
+{
+	vaddr_t newva;
+	vaddr_t m;
+
+	m = 2 * PAGE_SIZE;
+	newva = (*va & ~(m - 1)) | (fo & (m - 1));
+
+	if (td) {
+		if (newva > *va)
+			newva -= m;
+	} else {
+		if (newva < *va)
+			newva += m;
+	}
+	*va = newva;
+}
 
 #define	PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
 #define PMAP_NEED_PROCWR

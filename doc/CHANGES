@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1910 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1910.2.1 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -53,6 +53,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	kernel: Add support for 256 CPUs on amd64. [rmind 20120420]
 	OpenSSH: Imported 6.0 [christos 20120501]
 	bzip2: Imported 1.0.6 [wiz 20120507]
+	kernel: Add a genfs_rename abstraction to help file systems correctly
+		implement rename, and use it for tmpfs, ffs, and ext2fs.
+		[riastradh 20120508]
 	amiga: Rework X-Surf driver as xsurf(4). Add support for clockport(4)
 		on top of xsurf(4). [rkujawa 20120515]
 	backtrace(3): Add <execinfo.h> and the backtrace family of functions
@@ -98,7 +101,10 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		can be loaded. [jnemeth 20120803]
 	modstat(8): Add -A, -a, and -e options for testing module loadability.
 		[jnemeth 20120803]
+	uatp(4): Add driver for USB Apple trackpads. [riastradh 20120804]
 	libc: Update to tzcode2012e. [christos 20120809]
+	arm: Add support for the Beaglebone (TI AM335x-based board).
+		[matt 20120820]
 	arm: Add support for BEAGLEBOARDXM (TI DM37XX cpus) boards.
 		[matt 20120822]
 	mfi(8): Added tagged queuing support.  [bouyer 20120823]
@@ -170,6 +176,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		ported from FreeBSD. [skrll 20130109]
 	kernel: Add usmsc(4), a driver for SMSC LAN95xx USB LAN devices, 
 		ported from OpenBSD. [skrll 20130109]
+	atactl(8): Add support for ATA SECURITY commands including setting
+		firmware passwords and erasing disks. [riastradh 20130109]
 	hp300: Add support for sti(4) framebuffer at sgc bus on some 425t.
 		Ported by kiyohara@ from OpenBSD. [tsutsui 20130111]
 	arm: kill userland FPA support, replace with VFP. [matt 20130111]
@@ -240,6 +248,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		userspace.  All sets are the same except for etc.tgz.
 		[matt 20130501]
 	disklabel: this is now a MI tool like installboot.  [matt 20130503]
+	vndcompress(1): Add support for restarting after interrupt.
+		[riastradh 20130503]
 	mcp980x(4): Add driver for Microchip MCP9800/1/2/3 I2C temperature
 		sensor. [rkujawa 20130507]
 	zoneinfo: Import tzdata2013c. [apb 20130508]
@@ -277,6 +287,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	xsh(4): Add driver for Individual Computers X-Surf 100 network interface
 		card. [rkujawa 20130808]
 	postfix(1): Import version 2.9.7 [tron 20130821]
+	libc: Add consttime_memequal and explicit_memset for crypto
+		applications. [riastradh 20130828]
 	kernel: Add BPF coprocessor support (BPF_COP/BPF_COPX instructions).
 		[rmind 20130829]
 	npf: Convert NPF to use BPF byte-code by default.  Many other
@@ -289,6 +301,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		PR port-alpha/48148 by nullnilaki. [tsutsui 20130923]
 	postfix(1): Import version 2.10.2 [tron 20130925]
 	binutils: updated to FSF binutils 2.23.2.  [christos 20130929]
+	getaddrinfo(1): Add utility for querying the system's name resolver.
+		[riastradh 20130929]
 	gdb(1): Updated to 7.6.1.  [christos 20131003]
 	httpd(8): Added Lua scripting for content creation. [mbalmer 20131012]
 	lutok: Update to 0.3.  [jmmv 20131018]
@@ -343,6 +357,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	postfix(1): Import version 2.10.3 [tron 20140118]
 	igmafb(4): Added framebuffer driver for Intel Graphics
 		[mlelstv 20140121]
+	vndcompress(1): Add support for constant memory, so 32-bit systems
+		should in theory now be able to compress or uncompress
+		multi-terabyte disks. [riastradh 20140122]
 	ohci(4): Support the National Semiconductor PC87560 as found in
 		many hppa machines. [skrll 20140128]
 	ews4800mips: Switch to X11FLAVOUR=Xorg. Untested. [tsutsui 20140131]
@@ -359,6 +376,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	dhcpcd(8): Import dhcpcd-6.3.0 [roy 20140225]
 	mcp48x1dac(4): Add preliminary support for Microchip MCP48x1 family of
 		Digital-to-Analog converters. [rkujawa 20140225]
+	micphy(4): Add Micrel PHY (KSZ9021RN) [ozaki-r 20140226]
 	bind: update to 9.10.0b1 [christos 20130228]
 	dhcpcd(8): Import dhcpcd-6.3.1 [roy 20140301]
 	x68k: Switch to X11FLAVOUR=Xorg, including X68k monolithic server.
@@ -378,7 +396,71 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	mdnsd(8), dns-sd(1), libdns_sd: import mDNSResponder 258.14
 		[pettai 20140324]
 	arm: add support for ARMv6+ MMU features ASIDS, XN, split TTBR.
-	     add support for SMP. [matt 20140330]
+		add support for SMP. [matt 20140330]
+	applesmc(4): Add drivers for the Apple System Management Controller.
+		[riastradh 20140401]
 	ptyfs: Allow multiple mounts and support proper device visibility
-	     in chroots (Ilya Zykov) [christos 20140404]
+		in chroots (Ilya Zykov) [christos 20140404]
 	i386: Switched to GCC 4.8.  [christos 20140404]
+	mcp23s17gpio(4): Add Microchip MCP23S17 16-bit GPIO chip driver.
+		e.g. Raspberry Pi interface boards [kardel 20140406]
+	OpenSSL: Imported 1.0.1g [christos 20140407]
+	sparc64: Switched to TOPDOWN_VM [martin 20140414]
+	hp300: Fix broken apci console support of bootloader. [tsutsui 20140410]
+	hp300: Add sti(4) at sgc screen console support to bootloader.
+		[tsutsui 20140413]
+	hp300: Add HP9000/425e RTC support. [tsutsui 20140419]
+	ubsec(4): Add support for AES-CBC modes and BCM586x chips.
+		[bad 20140419]
+	bcmgpio(4): Add BCM2835 GPIO obio driver.
+		[kardel 20140422]
+	kerberos(8): Update to latest Heimdal-1-5-branch.
+		[pettai 20140424]
+	libc: Update to tzcode2014c. [christos 20140513]
+	zoneinfo: Import tzdata2014c. [apb 20140515]
+	hythygtemp(4): Add HYT-221/271/939 humidity/temperature iic sensor
+		driver.	[kardel 20140518]
+	envsys(4): Add %rH (relative Humidity) to sensor framework. 
+		[kardel 20140518]
+	gcc(1): Import version 4.8.3.  [skrll 20140527]
+	openldap: Import 2.4.39 [tron 20140528]
+	libc: Update to tzcode2014d. [christos 20140528]
+	OpenSSL: Imported 1.0.1h [christos 20140605]
+	vax: Switch to GCC 4.8 [matt 20140605]
+	vmx(4): Add VMware VMXNET3 driver, from OpenBSD [hikaru 20140610]
+	etcupdate(8): Add destdir support.  [apb 20140612]
+	file(1): upgraded to 5.19 [christos 20140612]
+	zoneinfo: Import tzdata2014e. [apb 20140613]
+	libc: Update to tzcode2014e. [christos 20140614]
+	dhcpcd(8): Import dhcpcd-6.4.0 [roy 20140614]
+	pigz(1): Update to pigz-2.3.1 [tls 20140615]
+	gdb(1): Updated to 7.7.1.  [christos 20140622]
+	/usr/share/doc: Install formatted docs instead of nroff sources,
+		and reorganize. [dholland 20140705]
+	postfix(1): Import version 2.11.1 [tron 20140706]
+	bind: Import version 9.10.0-P2 [spz 20140708]
+	dhcp: Import version 4.3.0 [spz 20140712]
+	dhcpcd(8): Import dhcpcd-6.4.2 [roy 20140714]
+	wskbd(4): Added belgian keyboard layouts (KB_BE) to pckbd(4) and
+		ukbd(4). [mbalmer 20140714]
+	tiotg(4): added a driver for the Texas Instruments AM335x SoC's
+		USB OTG controller. [bouyer 20140716]
+	tifb(4): added an experimental driver for the Texas Instruments AM335x
+		SoC's graphic controller. [bouyer 20140716]
+	lua: Updated to 5.3 work3 [lneto 20140719]
+	urtwn(4): Add support for Realtek RTL8188EUS and RTL8188ETV chipsets.
+		Ported from FreeBSD. [nonaka 20140720]
+	wm(4): Add internal SERDES support older than 82575.
+		[msaitoh 20140722]
+	tmux(1): Import of tmux 1.9a.  [christos 20140724]
+	kernel: Added fdiscard and posix_fallocate system calls.
+		[dholland 20140725]
+	arm: Add support for the Kobo touch (i.MX50). [hkenken 20140725]
+	dhcpcd(8): Import dhcpcd-6.4.3 [roy 20140730]
+	timeout(1): Import from FreeBSD [christos 20140801]
+	build: New BUILDINFO variable may be passed to build.sh, and exposed
+		in /etc/release, as well as in sysctl kern.buildinfo.
+		[apb 20140803]
+	zoneinfo: Import tzdata2014f. [apb 20140806]
+	ekermit(1): Add BSD-licenced ekermit, and remove GPL-licenced
+		gkermit. [apb 20140808]

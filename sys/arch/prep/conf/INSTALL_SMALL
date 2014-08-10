@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.14 2012/08/17 20:11:41 abs Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.14.12.1 2014/08/10 06:54:06 tls Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -7,7 +7,7 @@ include "arch/prep/conf/std.prep"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
+makeoptions	COPTS="-Os"	# Reduce size.
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS

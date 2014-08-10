@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.85 2014/03/25 16:19:14 christos Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.85.2.1 2014/08/10 06:54:57 tls Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.85 2014/03/25 16:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.85.2.1 2014/08/10 06:54:57 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.85 2014/03/25 16:19:14 christos Exp $
 #include <sys/vnode.h>
 #include <sys/namei.h> /* for pathbuf */
 #include <sys/kauth.h>
+#include <miscfs/specfs/specdev.h> /* for v_rdev */
 
 static int rf_AllocDiskStructures(RF_Raid_t *, RF_Config_t *);
 static void rf_print_label_status( RF_Raid_t *, int, char *,
@@ -576,7 +577,6 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 	char   *p;
 	struct pathbuf *pb;
 	struct vnode *vp;
-	struct vattr va;
 	int     error;
 
 	p = rf_find_non_white(bf);
@@ -631,18 +631,12 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		raidPtr->bytesPerSector = diskPtr->blockSize;
 
 	if (diskPtr->status == rf_ds_optimal) {
-		vn_lock(vp, LK_SHARED | LK_RETRY);
-		error = VOP_GETATTR(vp, &va, curlwp->l_cred);
-		VOP_UNLOCK(vp);
-		if (error != 0)
-			return (error);
-
 		raidPtr->raid_cinfo[col].ci_vp = vp;
-		raidPtr->raid_cinfo[col].ci_dev = va.va_rdev;
+		raidPtr->raid_cinfo[col].ci_dev = vp->v_rdev;
 
 		/* This component was not automatically configured */
 		diskPtr->auto_configured = 0;
-		diskPtr->dev = va.va_rdev;
+		diskPtr->dev = vp->v_rdev;
 
 		/* we allow the user to specify that only a fraction of the
 		 * disks should be used this is just for debug:  it speeds up

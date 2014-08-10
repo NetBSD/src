@@ -1,5 +1,4 @@
-/*	$NetBSD: compress.c,v 1.8 2013/12/01 19:32:15 christos Exp $	*/
-
+/*	$NetBSD: compress.c,v 1.8.2.1 2014/08/10 07:07:11 tls Exp $	*/
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -38,9 +37,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: compress.c,v 1.72 2013/11/18 17:54:58 christos Exp $")
+FILE_RCSID("@(#)$File: compress.c,v 1.73 2014/01/05 15:55:21 christos Exp $")
 #else
-__RCSID("$NetBSD: compress.c,v 1.8 2013/12/01 19:32:15 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.8.2.1 2014/08/10 07:07:11 tls Exp $");
 #endif
 #endif
 
@@ -86,6 +85,7 @@ private const struct {
 	{ "LZIP",     4, { "lzip", "-cdq", NULL }, 1 },
  	{ "\3757zXZ\0",6,{ "xz", "-cd", NULL }, 1 },		/* XZ Utils */
  	{ "LRZI",     4, { "lrzip", "-dqo-", NULL }, 1 },	/* LRZIP */
+ 	{ "\004\"M\030", 4, { "lz4", "-cd", NULL }, 1 },	/* LZ4 */
 };
 
 #define NODATA ((size_t)~0)

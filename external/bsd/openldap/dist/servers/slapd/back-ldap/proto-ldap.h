@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-ldap.h,v 1.1.1.4 2010/12/12 15:23:06 adam Exp $	*/
+/*	$NetBSD: proto-ldap.h,v 1.1.1.4.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.15.2.12 2010/04/15 20:25:48 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2010 The OpenLDAP Foundation.
+ * Copyright 2003-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -103,9 +103,9 @@ extern int slap_retry_info_parse( char *in, slap_retry_info_t *ri,
 	char *buf, ber_len_t buflen );
 extern int slap_retry_info_unparse( slap_retry_info_t *ri, struct berval *bvout );
 
-extern int slap_idassert_authzfrom_parse_cf( const char *fname, int lineno, const char *arg, slap_idassert_t *si );
+extern int slap_idassert_authzfrom_parse( struct config_args_s *ca, slap_idassert_t *si );
 extern int slap_idassert_passthru_parse_cf( const char *fname, int lineno, const char *arg, slap_idassert_t *si );
-extern int slap_idassert_parse_cf( const char *fname, int lineno, int argc, char *argv[], slap_idassert_t *si );
+extern int slap_idassert_parse( struct config_args_s *ca, slap_idassert_t *si );
 
 extern int chain_initialize( void );
 extern int pbind_initialize( void );

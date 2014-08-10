@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.190 2013/09/14 22:29:08 martin Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.190.2.1 2014/08/10 06:56:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.190 2013/09/14 22:29:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.190.2.1 2014/08/10 06:56:45 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -805,11 +805,11 @@ nfs_timer(void *arg)
 		    nmp->nm_sent < nmp->nm_cwnd) &&
 		   (m = m_copym(rep->r_mreq, 0, M_COPYALL, M_DONTWAIT))){
 		        if (so->so_state & SS_ISCONNECTED)
-			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    NULL, NULL, NULL);
+			    error = (*so->so_proto->pr_usrreqs->pr_send)(so,
+			    m, NULL, NULL, NULL);
 			else
-			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    nmp->nm_nam, NULL, NULL);
+			    error = (*so->so_proto->pr_usrreqs->pr_send)(so,
+			    m, nmp->nm_nam, NULL, NULL);
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
 #ifdef DEBUG

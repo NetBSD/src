@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.10 2013/07/28 01:22:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.10.2.1 2014/08/10 06:56:58 tls Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -75,8 +75,6 @@ int	ulfs_inactive(void *);
 int	ulfs_link(void *);
 #define	ulfs_lock	genfs_lock
 int	ulfs_lookup(void *);
-int	ulfs_mkdir(void *);
-int	ulfs_mknod(void *);
 #define	ulfs_mmap	genfs_mmap
 #define	ulfs_revoke	genfs_revoke
 int	ulfs_open(void *);
@@ -90,7 +88,6 @@ int	ulfs_rmdir(void *);
 #define	ulfs_poll	genfs_poll
 int	ulfs_setattr(void *);
 int	ulfs_strategy(void *);
-int	ulfs_symlink(void *);
 #define	ulfs_unlock	genfs_unlock
 int	ulfs_whiteout(void *);
 int	ulfsspec_close(void *);
@@ -134,9 +131,6 @@ int	ulfs_dirremove(struct vnode *, const struct ulfs_lookup_results *,
 int	ulfs_dirrewrite(struct inode *, off_t,
 		       struct inode *, ino_t, int, int, int);
 int	ulfs_dirempty(struct inode *, ino_t, kauth_cred_t);
-int	ulfs_checkpath(struct inode *, struct inode *, kauth_cred_t);
-int	ulfs_parentcheck(struct vnode *, struct vnode *, kauth_cred_t,
-			int *, struct vnode **);
 int	ulfs_blkatoff(struct vnode *, off_t, char **, struct buf **, bool);
 
 /* ulfs_quota.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.57 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.57.2.1 2014/08/10 06:54:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.57 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.57.2.1 2014/08/10 06:54:59 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
@@ -134,6 +134,7 @@ const struct cdevsw wsmux_cdevsw = {
 	.d_poll = wsmuxpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = wsmuxkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

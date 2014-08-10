@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.192 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.192.2.1 2014/08/10 06:55:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.192 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.192.2.1 2014/08/10 06:55:58 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -212,7 +212,6 @@ static const int	maxuprc	= MAXUPRC;
 
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
-static void fill_kproc2(struct proc *, struct kinfo_proc2 *, bool);
 
 /*
  * The process list descriptors, used during pid allocation and
@@ -2200,7 +2199,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 /*
  * Fill in a kinfo_proc2 structure for the specified process.
  */
-static void
+void
 fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 {
 	struct tty *tp;

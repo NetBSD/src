@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.70 2013/10/20 21:05:47 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.70.2.1 2014/08/10 06:55:09 tls Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.70 2013/10/20 21:05:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.70.2.1 2014/08/10 06:55:09 tls Exp $");
 
 #include "pflog.h"
 
@@ -5822,7 +5822,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ipintrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -5852,7 +5852,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ipintrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -5876,7 +5876,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ipintrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -5900,7 +5900,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif, m, off, h,
-			    &pd, &a, &ruleset, &ipintrq);
+			    &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -5963,6 +5963,7 @@ done:
 #endif /* !__NetBSD__ */
 
 	if (log) {
+#if NPFLOG > 0
 		struct pf_rule *lr;
 
 		if (s != NULL && s->nat_rule.ptr != NULL &&
@@ -5972,6 +5973,7 @@ done:
 			lr = r;
 		PFLOG_PACKET(kif, h, m, AF_INET, dir, reason, lr, a, ruleset,
 		    &pd);
+#endif
 	}
 
 	kif->pfik_bytes[0][dir == PF_OUT][action != PF_PASS] += pd.tot_len;
@@ -6241,7 +6243,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -6271,7 +6273,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -6304,7 +6306,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -6319,7 +6321,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif, m, off, h,
-			    &pd, &a, &ruleset, &ip6intrq);
+			    &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -6383,6 +6385,7 @@ done:
 #endif /* !__NetBSD__ */
 
 	if (log) {
+#if NPFLOG > 0
 		struct pf_rule *lr;
 
 		if (s != NULL && s->nat_rule.ptr != NULL &&
@@ -6392,6 +6395,7 @@ done:
 			lr = r;
 		PFLOG_PACKET(kif, h, m, AF_INET6, dir, reason, lr, a, ruleset,
 		    &pd);
+#endif
 	}
 
 	kif->pfik_bytes[1][dir == PF_OUT][action != PF_PASS] += pd.tot_len;
@@ -6476,6 +6480,8 @@ int
 pf_check_congestion(struct ifqueue *ifq)
 {
 #ifdef __NetBSD__
+	// XXX: not handled anyway
+	KASSERT(ifq == NULL);
 	return (0);
 #else
 	if (ifq->ifq_congestion)

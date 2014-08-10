@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.176 2013/08/04 16:48:15 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.176.2.1 2014/08/10 06:58:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.176 2013/08/04 16:48:15 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.176.2.1 2014/08/10 06:58:27 tls Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.176 2013/08/04 16:48:15 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.176.2.1 2014/08/10 06:58:27 tls Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1346,7 +1346,7 @@ JobExec(Job *job, char **argv)
 	(void)fcntl(0, F_SETFD, 0);
 	(void)lseek(0, (off_t)0, SEEK_SET);
 
-	if (job->node->type & OP_MAKE) {
+	if (job->node->type & (OP_MAKE | OP_SUBMAKE)) {
 		/*
 		 * Pass job token pipe to submakes.
 		 */

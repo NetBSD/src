@@ -1,6 +1,6 @@
 /* Native-dependent code for BSD Unix running on ARM's, for GDB.
 
-   Copyright (C) 1988-2013 Free Software Foundation, Inc.
+   Copyright (C) 1988-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,6 @@
 #include "target.h"
 
 #include "nbsd-nat.h"
-#include "gdb_string.h"
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
@@ -202,8 +201,8 @@ fetch_register (struct regcache *regcache, int regno)
   struct reg inferior_registers;
   int ret;
 
-  ret = ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid));
+  ret = ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -255,8 +254,8 @@ fetch_regs (struct regcache *regcache)
   int ret;
   int regno;
 
-  ret = ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid));
+  ret = ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -273,8 +272,8 @@ fetch_fp_register (struct regcache *regcache, int regno)
   struct fpreg inferior_fp_registers;
   int ret;
 
-  ret = ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
+  ret = ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -303,8 +302,8 @@ fetch_fp_regs (struct regcache *regcache)
   int ret;
   int regno;
 
-  ret = ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
+  ret = ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -341,8 +340,8 @@ store_register (const struct regcache *regcache, int regno)
   struct reg inferior_registers;
   int ret;
 
-  ret = ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid));
+  ret = ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -404,8 +403,8 @@ store_register (const struct regcache *regcache, int regno)
       break;
     }
 
-  ret = ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid));
+  ret = ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -452,8 +451,8 @@ store_regs (const struct regcache *regcache)
       inferior_registers.r_pc = pc_val | psr_val;
     }
 
-  ret = ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid));
+  ret = ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to store general registers"));
@@ -465,8 +464,8 @@ store_fp_register (const struct regcache *regcache, int regno)
   struct fpreg inferior_fp_registers;
   int ret;
 
-  ret = ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
+  ret = ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -488,8 +487,8 @@ store_fp_register (const struct regcache *regcache, int regno)
       break;
     }
 
-  ret = ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
+  ret = ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -511,8 +510,8 @@ store_fp_regs (const struct regcache *regcache)
   regcache_raw_collect (regcache, ARM_FPSCR_REGNUM,
 			(char *) &inferior_fp_registers.fpr_vfp.vfp_fpscr);
 
-  ret = ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
+  ret = ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to store floating-point registers"));

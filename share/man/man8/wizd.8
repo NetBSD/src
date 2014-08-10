@@ -1,6 +1,6 @@
-.\"	$NetBSD: wizd.8,v 1.6 2008/04/30 13:10:57 martin Exp $
+.\"	$NetBSD: wizd.8,v 1.6.38.1 2014/08/10 06:53:25 tls Exp $
 .\"
-.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2003, 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 1, 2003
+.Dd July 20, 2014
 .Dt WIZD 8
 .Os
 .Sh NAME
@@ -45,6 +45,11 @@ is invoked by any
 commit to a man page.
 A standalone mode is also available by sending mail to
 .Aq wiz@NetBSD.org .
+.Pp
+.Nm
+also performs periodic sanity checks on the distribution set lists.
+E-mail alerts will be triggered if the build installs files that are marked
+as obsolete and therefore get automatically removed.
 .Sh SEE ALSO
 .Xr cvs 1 ,
 .Xr intro 1 ,

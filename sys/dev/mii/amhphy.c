@@ -1,4 +1,4 @@
-/*	$NetBSD: amhphy.c,v 1.19 2008/11/17 03:04:27 dyoung Exp $	*/
+/*	$NetBSD: amhphy.c,v 1.19.40.1 2014/08/10 06:54:53 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.19 2008/11/17 03:04:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.19.40.1 2014/08/10 06:54:53 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,6 +230,8 @@ amhphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_10_T;
 		if (ssr & SSR_FD)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

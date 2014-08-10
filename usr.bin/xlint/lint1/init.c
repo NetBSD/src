@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.24 2009/10/02 18:17:16 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.24.22.1 2014/08/10 06:59:20 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.24 2009/10/02 18:17:16 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.24.22.1 2014/08/10 06:59:20 tls Exp $");
 #endif
 
 #include <stdlib.h>
@@ -500,7 +500,7 @@ mkinit(tnode_t *tn)
 	DPRINTF(("mkinit(%s %s)\n", tyname(buf, sizeof(buf), tn->tn_type),
 	   prtnode(sbuf, sizeof(sbuf), tn)));
 	if (initerr || tn == NULL)
-		goto end;
+		return;
 
 	sc = initsym->s_scl;
 
@@ -521,8 +521,8 @@ mkinit(tnode_t *tn)
 		ln->tn_type = tduptyp(ln->tn_type);
 		ln->tn_type->t_const = 0;
 		tn = build(ASSIGN, ln, tn);
-		expr(tn, 0, 0, 1);
-		goto end;
+		expr(tn, 0, 0, 0);
+		return;
 	}
 
 	/*
@@ -533,11 +533,11 @@ mkinit(tnode_t *tn)
 
 	/* Initialisations by strings are done in strginit(). */
 	if (strginit(tn))
-		goto end;
+		return;
 
 	nextinit(0);
 	if (initerr || tn == NULL)
-		goto end;
+		return;
 
 	initstk->i_cnt--;
 	DPRINTF(("mkinit() cnt=%d tn=%p\n", initstk->i_cnt, tn));
@@ -558,7 +558,7 @@ mkinit(tnode_t *tn)
 		LERROR("mkinit()");
 
 	if (!typeok(INIT, 0, ln, tn))
-		goto end;
+		return;
 
 	/*
 	 * Store the tree memory. This is nessesary because otherwise
@@ -594,15 +594,6 @@ mkinit(tnode_t *tn)
 			}
 		}
 	}
-
- end:
-	/*
-	 * We only free the block, if we are not a compound declaration
-	 * We know that the only symbols that start with a digit are the
-	 * ones we allocate with mktempsym() for compound declarations
-	 */
-	if (!isdigit((unsigned char)initsym->s_name[0]))
-		tfreeblk();
 }
 
 

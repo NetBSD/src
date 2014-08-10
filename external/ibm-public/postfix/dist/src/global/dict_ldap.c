@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.1.1.6 2013/01/02 18:58:57 tron Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.1.1.6.6.1 2014/08/10 07:12:48 tls Exp $	*/
 
 /*++
 /* NAME
@@ -154,7 +154,7 @@
 /*	Wietse Venema
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
-/*	Yorktown Heights, NY 10532, USA
+/*	Yorktown Heights, NY 10598, USA
 /*
 /*	John Hensley
 /*	john@sunislelodge.com

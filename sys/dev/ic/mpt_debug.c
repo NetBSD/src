@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_debug.c,v 1.9 2014/03/27 18:28:26 christos Exp $	*/
+/*	$NetBSD: mpt_debug.c,v 1.9.2.1 2014/08/10 06:54:52 tls Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.9 2014/03/27 18:28:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.9.2.1 2014/08/10 06:54:52 tls Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -201,10 +201,10 @@ mpt_ioc_diag(u_int32_t code)
 		return tbuf;
 	while (status->Error_Code >= 0) {
 		if ((status->Error_Code & code) != 0) {
+			if (len >= sizeof(tbuf))
+				return tbuf;
 			len += snprintf(tbuf + len, sizeof(tbuf) - len, "%s ",
 			    status->Error_String);
-			if (len > sizeof(tbuf))
-				return tbuf;
 		}
 		status++;
 	}
@@ -248,10 +248,10 @@ mpt_scsi_state(int code)
 		return tbuf;
 	while (status->Error_Code >= 0) {
 		if ((status->Error_Code & code) != 0) {
+			if (len >= sizeof(tbuf))
+				return tbuf;
 			len += snprintf(tbuf + len, sizeof(tbuf) - len, "%s ",
 				status->Error_String);
-			if (len > sizeof(tbuf))
-				return tbuf;
 		}
 		status++;
 	}

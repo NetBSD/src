@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.5 2014/01/29 04:27:26 kiyohara Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.5.2.1 2014/08/10 06:53:55 tls Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <evbarm/marvell/marvellreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: marvell_start.S,v 1.5 2014/01/29 04:27:26 kiyohara Exp $")
+RCSID("$NetBSD: marvell_start.S,v 1.5.2.1 2014/08/10 06:53:55 tls Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
@@ -124,6 +124,15 @@ sheeva_l2_disable:
 	mrc	p15, 1, r5, c15, c1, 0	@ Get Marvell Extra Features Register
 	bic	r5, r5, #0x00400000	@ disable L2 cache
 	mcr	p15, 1, r5, c15, c1, 0
+
+#ifdef SHEEVA_L2_CACHE_WT
+	/* L2 WT Mode */
+	ldr	r2, =0xf1020128		/* CPU L2 Configuration Register */
+	ldr	r3, [r2]
+	bic	r3, r3, #0x10		/* Force Write Through */
+	str	r3, [r2]
+#endif
+
 1:
 
 	/* save u-boot's args */

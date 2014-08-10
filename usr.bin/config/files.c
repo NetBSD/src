@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.11 2012/03/11 08:21:53 dholland Exp $	*/
+/*	$NetBSD: files.c,v 1.11.8.1 2014/08/10 06:57:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -160,7 +160,9 @@ addfile(const char *path, struct condexpr *optx, int flags, const char *rule)
 	TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
 	return;
  bad:
-	condexpr_destroy(optx);
+	if (optx != NULL) {
+		condexpr_destroy(optx);
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.6 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.6.2.1 2014/08/10 07:06:42 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -108,9 +108,10 @@
 /*%< EDNS0 extended OPT codes */
 #define DNS_OPT_NSID		0x0003		/*%< NSID opt code */
 #define DNS_OPT_CLIENT_SUBNET	0x0008		/*%< client subnet opt code */
+#define DNS_OPT_EXPIRE		0x0009		/*%< EXPIRE opt code */
+
 /*%< Experimental options [65001...65534] as per RFC6891 */
 #define DNS_OPT_SIT		65001		/*%< SIT opt code */
-#define DNS_OPT_EXPIRE		65002		/*%< EXPIRE opt code */
 
 /*%< The number of EDNS options we know about. */
 #define DNS_EDNSOPTIONS	4

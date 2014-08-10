@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.12 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.12.2.1 2014/08/10 07:06:35 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -813,6 +813,7 @@ make_empty_lookup(void) {
 #ifdef ISC_PLATFORM_USESIT
 	looknew->sitvalue = NULL;
 #endif
+	dns_fixedname_init(&looknew->fdomain);
 	ISC_LINK_INIT(looknew, link);
 	ISC_LIST_INIT(looknew->q);
 	ISC_LIST_INIT(looknew->connecting);
@@ -900,6 +901,9 @@ clone_lookup(dig_lookup_t *lookold, isc_boolean_t servers) {
 		looknew->ecs_addr = isc_mem_allocate(mctx, len);
 		memmove(looknew->ecs_addr, lookold->ecs_addr, len);
 	}
+
+	dns_name_copy(dns_fixedname_name(&lookold->fdomain),
+		      dns_fixedname_name(&looknew->fdomain), NULL);
 
 	if (servers)
 		clone_server_list(lookold->my_server_list,
@@ -1885,7 +1889,6 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 				lookup->trace_root = ISC_FALSE;
 				if (lookup->ns_search_only)
 					lookup->recurse = ISC_FALSE;
-				dns_fixedname_init(&lookup->fdomain);
 				domain = dns_fixedname_name(&lookup->fdomain);
 				dns_name_copy(name, domain, NULL);
 			}

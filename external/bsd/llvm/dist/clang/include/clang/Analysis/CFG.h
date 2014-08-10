@@ -21,7 +21,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Casting.h"
@@ -29,6 +28,7 @@
 #include <bitset>
 #include <cassert>
 #include <iterator>
+#include <memory>
 
 namespace clang {
   class CXXDestructorDecl;
@@ -47,6 +47,7 @@ namespace clang {
   class CXXRecordDecl;
   class CXXDeleteExpr;
   class CXXNewExpr;
+  class BinaryOperator;
 
 /// CFGElement - Represents a top-level expression in a basic block.
 class CFGElement {
@@ -71,7 +72,7 @@ protected:
   llvm::PointerIntPair<void *, 2> Data1;
   llvm::PointerIntPair<void *, 2> Data2;
 
-  CFGElement(Kind kind, const void *Ptr1, const void *Ptr2 = 0)
+  CFGElement(Kind kind, const void *Ptr1, const void *Ptr2 = nullptr)
     : Data1(const_cast<void*>(Ptr1), ((unsigned) kind) & 0x3),
       Data2(const_cast<void*>(Ptr2), (((unsigned) kind) >> 2) & 0x3) {
     assert(getKind() == kind);
@@ -170,7 +171,7 @@ private:
 class CFGImplicitDtor : public CFGElement {
 protected:
   CFGImplicitDtor() {}
-  CFGImplicitDtor(Kind kind, const void *data1, const void *data2 = 0)
+  CFGImplicitDtor(Kind kind, const void *data1, const void *data2 = nullptr)
     : CFGElement(kind, data1, data2) {
     assert(kind >= DTOR_BEGIN && kind <= DTOR_END);
   }
@@ -261,7 +262,7 @@ private:
 class CFGMemberDtor : public CFGImplicitDtor {
 public:
   CFGMemberDtor(const FieldDecl *field)
-      : CFGImplicitDtor(MemberDtor, field, 0) {}
+      : CFGImplicitDtor(MemberDtor, field, nullptr) {}
 
   const FieldDecl *getFieldDecl() const {
     return static_cast<const FieldDecl*>(Data1.getPointer());
@@ -280,7 +281,7 @@ private:
 class CFGTemporaryDtor : public CFGImplicitDtor {
 public:
   CFGTemporaryDtor(CXXBindTemporaryExpr *expr)
-      : CFGImplicitDtor(TemporaryDtor, expr, 0) {}
+      : CFGImplicitDtor(TemporaryDtor, expr, nullptr) {}
 
   const CXXBindTemporaryExpr *getBindTemporaryExpr() const {
     return static_cast<const CXXBindTemporaryExpr *>(Data1.getPointer());
@@ -489,7 +490,7 @@ private:
 
 public:
   explicit CFGBlock(unsigned blockid, BumpVectorContext &C, CFG *parent)
-    : Elements(C), Label(NULL), Terminator(NULL), LoopTarget(NULL), 
+    : Elements(C), Label(nullptr), Terminator(nullptr), LoopTarget(nullptr), 
       BlockID(blockid), Preds(C, 1), Succs(C, 1), HasNoReturnElement(false),
       Parent(parent) {}
   ~CFGBlock() {}
@@ -615,7 +616,7 @@ public:
 
   // Manipulation of block contents
 
-  void setTerminator(Stmt *Statement) { Terminator = Statement; }
+  void setTerminator(CFGTerminator Term) { Terminator = Term; }
   void setLabel(Stmt *Statement) { Label = Statement; }
   void setLoopTarget(const Stmt *loopTarget) { LoopTarget = loopTarget; }
   void setHasNoReturnElement() { HasNoReturnElement = true; }
@@ -623,10 +624,10 @@ public:
   CFGTerminator getTerminator() { return Terminator; }
   const CFGTerminator getTerminator() const { return Terminator; }
 
-  Stmt *getTerminatorCondition();
+  Stmt *getTerminatorCondition(bool StripParens = true);
 
-  const Stmt *getTerminatorCondition() const {
-    return const_cast<CFGBlock*>(this)->getTerminatorCondition();
+  const Stmt *getTerminatorCondition(bool StripParens = true) const {
+    return const_cast<CFGBlock*>(this)->getTerminatorCondition(StripParens);
   }
 
   const Stmt *getLoopTarget() const { return LoopTarget; }
@@ -690,12 +691,24 @@ public:
   // the elements beginning at the last position in prepared space.
   iterator beginAutomaticObjDtorsInsert(iterator I, size_t Cnt,
       BumpVectorContext &C) {
-    return iterator(Elements.insert(I.base(), Cnt, CFGAutomaticObjDtor(0, 0), C));
+    return iterator(Elements.insert(I.base(), Cnt,
+                                    CFGAutomaticObjDtor(nullptr, 0), C));
   }
   iterator insertAutomaticObjDtor(iterator I, VarDecl *VD, Stmt *S) {
     *I = CFGAutomaticObjDtor(VD, S);
     return ++I;
   }
+};
+
+/// \brief CFGCallback defines methods that should be called when a logical
+/// operator error is found when building the CFG.
+class CFGCallback {
+public:
+  CFGCallback() {}
+  virtual void compareAlwaysTrue(const BinaryOperator *B, bool isAlwaysTrue) {}
+  virtual void compareBitwiseEquality(const BinaryOperator *B,
+                                      bool isAlwaysTrue) {}
+  virtual ~CFGCallback() {}
 };
 
 /// CFG - Represents a source-level, intra-procedural CFG that represents the
@@ -716,7 +729,7 @@ public:
   public:
     typedef llvm::DenseMap<const Stmt *, const CFGBlock*> ForcedBlkExprs;
     ForcedBlkExprs **forcedBlkExprs;
-
+    CFGCallback *Observer;
     bool PruneTriviallyFalseEdges;
     bool AddEHEdges;
     bool AddInitializers;
@@ -740,13 +753,11 @@ public:
     }
 
     BuildOptions()
-    : forcedBlkExprs(0), PruneTriviallyFalseEdges(true)
-      ,AddEHEdges(false)
-      ,AddInitializers(false)
-      ,AddImplicitDtors(false)
-      ,AddTemporaryDtors(false)
-      ,AddStaticInitBranches(false)
-      ,AddCXXNewAllocator(false) {}
+      : forcedBlkExprs(nullptr), Observer(nullptr),
+        PruneTriviallyFalseEdges(true), AddEHEdges(false),
+        AddInitializers(false), AddImplicitDtors(false),
+        AddTemporaryDtors(false), AddStaticInitBranches(false),
+        AddCXXNewAllocator(false) {}
   };
 
   /// \brief Provides a custom implementation of the iterator class to have the
@@ -936,8 +947,9 @@ public:
   // Internal: constructors and data.
   //===--------------------------------------------------------------------===//
 
-  CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0),
-          Blocks(BlkBVC, 10) {}
+  CFG()
+    : Entry(nullptr), Exit(nullptr), IndirectGotoBlock(nullptr), NumBlockIDs(0),
+      Blocks(BlkBVC, 10) {}
 
   llvm::BumpPtrAllocator& getAllocator() {
     return BlkBVC.getAllocator();

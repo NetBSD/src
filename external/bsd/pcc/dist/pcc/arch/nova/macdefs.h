@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.5 2011/06/05 10:19:24 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.3 2011/09/01 12:46:41 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.8 2014/06/03 20:19:50 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.3.20.1 2014/08/10 07:10:06 tls Exp $	*/
 /*
  * Copyright (c) 2006 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -34,26 +34,25 @@
  */
 #define makecc(val,i)	lastcon = (lastcon<<8)|(val);
 
-#define ARGINIT		16	/* adjusted in MD code */
-#define AUTOINIT	16	/* adjusted in MD code */
-
 /*
  * Storage space requirements
  */
 #define SZCHAR		8
+#define SZBOOL		8
 #define SZINT		16
 #define SZFLOAT		32
 #define SZDOUBLE	64
 #define SZLDOUBLE	64
 #define SZLONG		32
 #define SZSHORT		16
-#define SZLONGLONG	32
+#define SZLONGLONG	64
 #define SZPOINT(t)	16	/* Actually 15 */
 
 /*
  * Alignment constraints
  */
 #define ALCHAR		8
+#define ALBOOL		8
 #define ALINT		16
 #define ALFLOAT		16
 #define ALDOUBLE	16
@@ -80,13 +79,15 @@
 #define	MIN_LONG	0x80000000L
 #define	MAX_LONG	0x7fffffffL
 #define	MAX_ULONG	0xffffffffUL
-#define	MIN_LONGLONG	MIN_LONG
-#define	MAX_LONGLONG	MAX_LONG
-#define	MAX_ULONGLONG	MAX_ULONG
+#define	MIN_LONGLONG	0x8000000000000000LL
+#define	MAX_LONGLONG	0x7fffffffffffffffLL
+#define	MAX_ULONGLONG	0xffffffffffffffffULL
 
 /* Default char is unsigned */
 #define	CHAR_UNSIGNED
-#define	WORD_ADDRESSED
+#define WORD_ADDRESSED
+#define	BOOL_TYPE	UCHAR
+#define	MYALIGN		/* provide private alignment function */
 
 /*
  * Use large-enough types.
@@ -95,86 +96,57 @@ typedef	long CONSZ;
 typedef	unsigned long U_CONSZ;
 typedef long OFFSZ;
 
-#define CONFMT	"%ld"		/* format for printing constants */
-#define LABFMT	".L%d"		/* format for printing labels */
-#define	STABLBL	".LL%d"		/* format for stab (debugging) labels */
-#ifdef FORTRAN
-#define XL 8
-#define	FLABELFMT "%s:\n"
-#define USETEXT ".text"
-#define USECONST ".data\t0" 	/* XXX - fix */
-#define USEBSS  ".data\t1" 	/* XXX - fix */
-#define USEINIT ".data\t2" 	/* XXX - fix */
-#define MAXREGVAR 3             /* XXX - fix */
-#define BLANKCOMMON "_BLNK_"
-#define MSKIREG  (M(TYSHORT)|M(TYLONG))
-#define TYIREG TYLONG
-#define FSZLENG  FSZLONG
-#define FUDGEOFFSET 1
-#define	AUTOREG	EBP
-#define	ARGREG	EBP
-#define ARGOFFSET 4
-#endif
+#define CONFMT	"0%lo"		/* format for printing constants */
+#define LABFMT	"L%d"		/* format for printing labels */
+#define	STABLBL	"LL%d"		/* format for stab (debugging) labels */
 
 #define BACKAUTO 		/* stack grows negatively for automatics */
 #define BACKTEMP 		/* stack grows negatively for temporaries */
+#define ARGINIT		0	/* first arg at 0 offset */
+#define AUTOINIT	32	/* first var below 32-bit offset */
 
-#undef	FIELDOPS		/* no bit-field instructions */
-#define TARGET_ENDIAN TARGET_LE
+
+#undef	FIELDOPS	/* no bit-field instructions */
+#define TARGET_ENDIAN	TARGET_BE
 
 /* Definitions mostly used in pass2 */
 
 #define BYTEOFF(x)	((x)&01)
 #define wdal(k)		(BYTEOFF(k)==0)
-#define BITOOR(x)	(x)	/* bit offset to oreg offset XXX die! */
 
-#define STOARG(p)
-#define STOFARG(p)
-#define STOSTARG(p)
-#define genfcall(a,b)	gencall(a,b)
-
-#define	szty(t)	(((t) == DOUBLE || (t) == LDOUBLE) ? 4 : \
-	((t) == LONGLONG || (t) == ULONGLONG || \
-	 (t) == LONG || (t) == ULONG) ? 2 : 1)
+#define	szty(t)	((t) == DOUBLE || (t) == LDOUBLE || \
+	(t) == LONGLONG || (t) == ULONGLONG ? 4 : \
+	((t) == LONG || (t) == ULONG || (t) == FLOAT) ? 2 : 1)
 
 /*
- * The Nova has three register classes.  Note that the space used in 
- * zero page is considered registers.
- * Register 28 and 29 are FP and SP.
+ * The Nova has two register classes.  Note that the space used in 
+ * zero page is considered stack.
+ * Register 6 and 7 are FP and SP (in zero page).
  *
  * The classes used on Nova are:
  *	A - AC0-AC3 (as non-index registers)	: reg 0-3
- *	B - AC2-AC3 (as index registers)	: reg 2-3
- *	C - address 50-77 in memory		: reg 4-27
+ *	B - AC2-AC3 (as index registers)	: reg 4-5
+ * FP/SP as 6/7.
  */
-#define	MAXREGS	30	/* 0-29 */
+#define	MAXREGS	8	/* 0-29 */
 
 #define	RSTATUS	\
-	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|SBREG|TEMPREG, SAREG|SBREG|TEMPREG,\
-	SCREG|TEMPREG, SCREG|TEMPREG, SCREG|TEMPREG, SCREG|TEMPREG,	\
-	SCREG|TEMPREG, SCREG|TEMPREG, SCREG|TEMPREG, SCREG|TEMPREG,	\
-	SCREG|PERMREG, SCREG|PERMREG, SCREG|PERMREG, SCREG|PERMREG,	\
-	SCREG|PERMREG, SCREG|PERMREG, SCREG|PERMREG, SCREG|PERMREG,	\
-	SCREG|PERMREG, SCREG|PERMREG, SCREG|PERMREG, SCREG|PERMREG,	\
-	SCREG|PERMREG, SCREG|PERMREG, SCREG|PERMREG, SCREG|PERMREG,	\
-	0,	0
+	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG,	\
+	SBREG|TEMPREG, SBREG|TEMPREG, 0, 0
 
 #define	ROVERLAP \
-	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 },	\
-	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 },	\
-	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 },	\
-	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 },
-
+	{ -1 }, { -1 }, { 4, -1 }, { 5, -1 }, { 2, -1 }, { 3, -1 },	\
+	{ -1 }, { -1 }
 
 /* Return a register class based on the type of the node */
-/* all types in all classes */
-#define PCLASS(p) (SAREG|SBREG|SCREG)
+/* Used in tshape, avoid matching fp/sp as reg */
+#define PCLASS(p) (p->n_op == REG && regno(p) > 5 ? 0 :	\
+	ISPTR(p->n_type) ? SBREG : SAREG)
 
-#define	NUMCLASS 	4	/* highest number of reg classes used */
-				/* XXX - must be 4 */
+#define	NUMCLASS 	2	/* highest number of reg classes used */
 
 int COLORMAP(int c, int *r);
-#define	GCLASS(x) (x < 4 ? CLASSA : CLASSC)
+#define	GCLASS(x) (x < 4 ? CLASSA : CLASSB)
 #define DECRA(x,y)	(((x) >> (y*6)) & 63)	/* decode encoded regs */
 #define	ENCRD(x)	(x)		/* Encode dest reg in n_reg */
 #define ENCRA1(x)	((x) << 6)	/* A1 */
@@ -182,6 +154,27 @@ int COLORMAP(int c, int *r);
 #define ENCRA(x,y)	((x) << (6+y*6))	/* encode regs in int */
 #define	RETREG(x)	(0) /* ? Sanity */
 
-/* XXX - to die */
-#define FPREG	28	/* frame pointer */
-#define STKREG	29	/* stack pointer */
+#define FPREG	6	/* frame pointer */
+#define STKREG	7	/* stack pointer */
+
+#define	MAXZP	030	/* number of locations used as stack */
+#define	ZPOFF	050	/* offset of zero page regs */
+
+#define	MYSTOREMOD
+#define	MYLONGTEMP(p,w) {					\
+	if (w->r_class == 0) {					\
+		w->r_color = freetemp(szty(p->n_type));		\
+		w->r_class = FPREG;				\
+	}							\
+	if (w->r_color < MAXZP*2) { /* color in bytes */	\
+		p->n_op = NAME;					\
+		p->n_lval = w->r_color/2 + ZPOFF;		\
+		p->n_name = "";					\
+		break;						\
+	}							\
+}
+
+/*
+ * special shapes for sp/fp.
+ */
+#define	SLDFPSP		(MAXSPECIAL+1)	/* load fp or sp */

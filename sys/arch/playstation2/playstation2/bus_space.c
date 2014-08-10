@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.9 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.9.2.1 2014/08/10 06:54:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.9 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.9.2.1 2014/08/10 06:54:04 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ bus_space_create(bus_space_tag_t t, const char *name,
 		pbs->pbs_base_addr = addr; /* no extent */
 	} else {
 		pbs->pbs_extent = extent_create(name, addr, addr + size - 1,
-		    M_DEVBUF, 0, 0, EX_NOWAIT);
+		    0, 0, EX_NOWAIT);
 		if (pbs->pbs_extent == 0) {
 			panic("%s:: unable to create bus_space for "
 			    "0x%08lx-%#lx", __func__, addr, size);

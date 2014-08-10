@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_clock.c,v 1.4 2012/10/27 17:17:39 chs Exp $ */
+/*	$NetBSD: imx51_clock.c,v 1.4.10.1 2014/08/10 06:53:51 tls Exp $ */
 /*
  * Copyright (c) 2009  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -25,7 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_clock.c,v 1.4 2012/10/27 17:17:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_clock.c,v 1.4.10.1 2014/08/10 06:53:51 tls Exp $");
+
+#include "opt_imx.h"
+#include "opt_imx51clk.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_clock.c,v 1.4 2012/10/27 17:17:39 chs Exp $");
 #include <arm/imx/imxclockvar.h>
 
 #include "imxccm.h"	/* if CCM driver is configured into the kernel */
-#include "opt_imx51clk.h"
 
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.10 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: sd.c,v 1.10.2.1 2014/08/10 06:54:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -266,6 +266,9 @@ sdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
 #endif
 	stat = scsi_immed_command(sc->sc_ctlr, sc->sc_tgt, sc->sc_lun,
 	    cdb, buf, size);
+	if (stat != 0)
+		return EIO;
+
 	if (rsize)
 		*rsize = size;
 

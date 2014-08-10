@@ -1,4 +1,4 @@
-/* $NetBSD: compident.S,v 1.2 2014/02/26 14:54:50 martin Exp $ */
+/* $NetBSD: compident.S,v 1.2.2.1 2014/08/10 06:51:42 tls Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -63,3 +63,4 @@
 	.long	ELF_NOTE_TYPE_MCMODEL_TAG
 	.ascii	"NetBSD\0\0"
 	.ascii	CONTENT
+	.p2align 2

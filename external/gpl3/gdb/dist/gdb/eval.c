@@ -1,6 +1,6 @@
 /* Evaluate expressions for GDB.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "value.h"
@@ -91,7 +91,7 @@ parse_and_eval_address (const char *exp)
 /* Like parse_and_eval_address, but treats the value of the expression
    as an integer, not an address, returns a LONGEST, not a CORE_ADDR.  */
 LONGEST
-parse_and_eval_long (char *exp)
+parse_and_eval_long (const char *exp)
 {
   struct expression *expr = parse_expression (exp);
   LONGEST retval;
@@ -171,10 +171,12 @@ evaluate_subexpression_type (struct expression *exp, int subexp)
    in *VAL_CHAIN.  RESULTP and VAL_CHAIN may be NULL if the caller does
    not need them.
 
-   If a memory error occurs while evaluating the expression, *RESULTP will
-   be set to NULL.  *RESULTP may be a lazy value, if the result could
-   not be read from memory.  It is used to determine whether a value
-   is user-specified (we should watch the whole value) or intermediate
+   If PRESERVE_ERRORS is true, then exceptions are passed through.
+   Otherwise, if PRESERVE_ERRORS is false, then if a memory error
+   occurs while evaluating the expression, *RESULTP will be set to
+   NULL.  *RESULTP may be a lazy value, if the result could not be
+   read from memory.  It is used to determine whether a value is
+   user-specified (we should watch the whole value) or intermediate
    (we should watch only the bit used to locate the final value).
 
    If the final value, or any intermediate value, could not be read
@@ -189,7 +191,8 @@ evaluate_subexpression_type (struct expression *exp, int subexp)
 
 void
 fetch_subexp_value (struct expression *exp, int *pc, struct value **valp,
-		    struct value **resultp, struct value **val_chain)
+		    struct value **resultp, struct value **val_chain,
+		    int preserve_errors)
 {
   struct value *mark, *new_mark, *result;
   volatile struct gdb_exception ex;
@@ -210,13 +213,14 @@ fetch_subexp_value (struct expression *exp, int *pc, struct value **valp,
     }
   if (ex.reason < 0)
     {
-      /* Ignore memory errors, we want watchpoints pointing at
+      /* Ignore memory errors if we want watchpoints pointing at
 	 inaccessible memory to still be created; otherwise, throw the
 	 error to some higher catcher.  */
       switch (ex.error)
 	{
 	case MEMORY_ERROR:
-	  break;
+	  if (!preserve_errors)
+	    break;
 	default:
 	  throw_exception (ex);
 	  break;
@@ -792,7 +796,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	if (noside == EVAL_AVOID_SIDE_EFFECTS)
 	  return value_zero (SYMBOL_TYPE (sym), not_lval);
 
-	if (SYMBOL_CLASS (sym) != LOC_COMPUTED
+	if (SYMBOL_COMPUTED_OPS (sym) == NULL
 	    || SYMBOL_COMPUTED_OPS (sym)->read_variable_at_entry == NULL)
 	  error (_("Symbol \"%s\" does not have any specific entry value"),
 		 SYMBOL_PRINT_NAME (sym));
@@ -1847,18 +1851,11 @@ evaluate_subexp_standard (struct type *expect_type,
       arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
       if (noside == EVAL_SKIP)
 	goto nosideret;
+      arg3 = value_struct_elt (&arg1, NULL, &exp->elts[pc + 2].string,
+			       NULL, "structure");
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	return value_zero (lookup_struct_elt_type (value_type (arg1),
-						   &exp->elts[pc + 2].string,
-						   0),
-			   lval_memory);
-      else
-	{
-	  struct value *temp = arg1;
-
-	  return value_struct_elt (&temp, NULL, &exp->elts[pc + 2].string,
-				   NULL, "structure");
-	}
+	arg3 = value_zero (value_type (arg3), not_lval);
+      return arg3;
 
     case STRUCTOP_PTR:
       tem = longest_to_int (exp->elts[pc + 1].longconst);
@@ -1908,18 +1905,11 @@ evaluate_subexp_standard (struct type *expect_type,
           }
       }
 
+      arg3 = value_struct_elt (&arg1, NULL, &exp->elts[pc + 2].string,
+			       NULL, "structure pointer");
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
-	return value_zero (lookup_struct_elt_type (value_type (arg1),
-						   &exp->elts[pc + 2].string,
-						   0),
-			   lval_memory);
-      else
-	{
-	  struct value *temp = arg1;
-
-	  return value_struct_elt (&temp, NULL, &exp->elts[pc + 2].string,
-				   NULL, "structure pointer");
-	}
+	arg3 = value_zero (value_type (arg3), not_lval);
+      return arg3;
 
     case STRUCTOP_MEMBER:
     case STRUCTOP_MPTR:
@@ -2815,6 +2805,23 @@ evaluate_subexp_standard (struct type *expect_type,
 	}
       else
         error (_("Attempt to use a type as an expression"));
+
+    case OP_TYPEID:
+      {
+	struct value *result;
+	enum exp_opcode sub_op = exp->elts[*pos].opcode;
+
+	if (sub_op == OP_TYPE || sub_op == OP_DECLTYPE || sub_op == OP_TYPEOF)
+	  result = evaluate_subexp (NULL_TYPE, exp, pos,
+				    EVAL_AVOID_SIDE_EFFECTS);
+	else
+	  result = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+
+	if (noside != EVAL_NORMAL)
+	  return allocate_value (cplus_typeid_type (exp->gdbarch));
+
+	return cplus_typeid (result);
+      }
 
     default:
       /* Removing this case and compiling with gcc -Wall reveals that

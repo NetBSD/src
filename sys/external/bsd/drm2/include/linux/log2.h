@@ -1,4 +1,4 @@
-/*	$NetBSD: log2.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: log2.h,v 1.2.2.1 2014/08/10 06:55:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,12 +32,45 @@
 #ifndef _LINUX_LOG2_H_
 #define _LINUX_LOG2_H_
 
+#include <sys/types.h>
 #include <sys/bitops.h>
+
+#include <machine/limits.h>
 
 static inline bool
 is_power_of_2(unsigned long x)
 {
 	return ((x != 0) && (((x - 1) & x) == 0));
+}
+
+static inline unsigned long
+roundup_pow_of_two(unsigned long n)
+{
+	unsigned i;
+
+	if (n == 0)
+		return 1;
+
+	n -= 1;
+	for (i = 1; i < CHAR_BIT * sizeof n; i <<= 1)
+		n |= (n >> i);
+
+	return (n + 1);
+}
+
+static inline unsigned long
+rounddown_pow_of_two(unsigned long n)
+{
+
+	/* XXX fls64 is not fls_ulong, but it'll do for now.  */
+	return (1UL << (fls64(n) - 1));
+}
+
+static inline unsigned
+order_base_2(unsigned long n)
+{
+
+	return ilog2(roundup_pow_of_two(n));
 }
 
 #endif  /* _LINUX_LOG2_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.34 2011/10/19 01:50:27 dyoung Exp $	 */
+/*	$NetBSD: at_control.c,v 1.34.26.1 2014/08/10 06:56:21 tls Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.34 2011/10/19 01:50:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.34.26.1 2014/08/10 06:56:21 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static void aa_clean(void);
 			 (a)->sat_addr.s_node == (b)->sat_addr.s_node )
 
 int
-at_control(u_long cmd, void * data, struct ifnet *ifp, struct lwp *l)
+at_control(u_long cmd, void *data, struct ifnet *ifp)
 {
 	struct ifreq   *ifr = (struct ifreq *) data;
 	const struct sockaddr_at *csat;
@@ -125,7 +125,7 @@ at_control(u_long cmd, void * data, struct ifnet *ifp, struct lwp *l)
 		 * If we are not superuser, then we don't get to do these
 		 * ops.
 		 */
-		if (l && kauth_authorize_network(l->l_cred,
+		if (kauth_authorize_network(curlwp->l_cred,
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL) != 0)

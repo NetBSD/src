@@ -419,6 +419,7 @@ enum elf_target_id
   MICROBLAZE_ELF_DATA,
   MIPS_ELF_DATA,
   MN10300_ELF_DATA,
+  NDS32_ELF_DATA,
   NIOS2_ELF_DATA,
   PPC32_ELF_DATA,
   PPC64_ELF_DATA,
@@ -641,7 +642,8 @@ enum elf_reloc_type_class {
   reloc_class_normal,
   reloc_class_relative,
   reloc_class_plt,
-  reloc_class_copy
+  reloc_class_copy,
+  reloc_class_ifunc
 };
 
 struct elf_reloc_cookie
@@ -880,12 +882,12 @@ struct elf_backend_data
   bfd_boolean (*check_directives)
     (bfd *abfd, struct bfd_link_info *info);
 
-  /* The AS_NEEDED_CLEANUP function is called once per --as-needed
-     input file that was not needed by the add_symbols phase of the
-     ELF backend linker.  The function must undo any target specific
-     changes in the symbol hash table.  */
-  bfd_boolean (*as_needed_cleanup)
-    (bfd *abfd, struct bfd_link_info *info);
+  /* The NOTICE_AS_NEEDED function is called as the linker is about to
+     handle an as-needed lib (ACT = notice_as_needed), and after the
+     linker has decided to keep the lib (ACT = notice_needed) or when
+     the lib is not needed (ACT = notice_not_needed).  */
+  bfd_boolean (*notice_as_needed)
+    (bfd *abfd, struct bfd_link_info *info, enum notice_asneeded_action act);
 
   /* The ADJUST_DYNAMIC_SYMBOL function is called by the ELF backend
      linker for every symbol which is defined by a dynamic object and
@@ -1128,7 +1130,7 @@ struct elf_backend_data
 
   /* This function returns class of a reloc type.  */
   enum elf_reloc_type_class (*elf_backend_reloc_type_class)
-    (const Elf_Internal_Rela *);
+  (const struct bfd_link_info *, const asection *, const Elf_Internal_Rela *);
 
   /* This function, if defined, removes information about discarded functions
      from other sections which mention them.  */
@@ -1207,19 +1209,10 @@ struct elf_backend_data
   asection *(*common_section) (asection *);
 
   /* Return TRUE if we can merge 2 definitions.  */
-  bfd_boolean (*merge_symbol) (struct bfd_link_info *,
-			       struct elf_link_hash_entry **,
-			       struct elf_link_hash_entry *,
-			       Elf_Internal_Sym *, asection **,
-			       bfd_vma *, unsigned int *,
-			       bfd_boolean *, bfd_boolean *,
-			       bfd_boolean *, bfd_boolean *,
-			       bfd_boolean *, bfd_boolean *,
-			       bfd_boolean *, bfd_boolean *,
-			       bfd *, asection **,
-			       bfd_boolean *, bfd_boolean *,
-			       bfd_boolean *, bfd_boolean *,
-			       bfd *, asection **);
+  bfd_boolean (*merge_symbol) (struct elf_link_hash_entry *,
+			       const Elf_Internal_Sym *, asection **,
+			       bfd_boolean, bfd_boolean,
+			       bfd *, const asection *);
 
   /* Return TRUE if symbol should be hashed in the `.gnu.hash' section.  */
   bfd_boolean (*elf_hash_symbol) (struct elf_link_hash_entry *);
@@ -1786,7 +1779,8 @@ extern bfd_boolean _bfd_elf_can_make_relative
   (bfd *input_bfd, struct bfd_link_info *info, asection *eh_frame_section);
 
 extern enum elf_reloc_type_class _bfd_elf_reloc_type_class
-  (const Elf_Internal_Rela *);
+  (const struct bfd_link_info *, const asection *,
+   const Elf_Internal_Rela *);
 extern bfd_vma _bfd_elf_rela_local_sym
   (bfd *, Elf_Internal_Sym *, asection **, Elf_Internal_Rela *);
 extern bfd_vma _bfd_elf_rel_local_sym
@@ -1919,8 +1913,6 @@ extern int _bfd_elf_sizeof_headers
   (bfd *, struct bfd_link_info *);
 extern bfd_boolean _bfd_elf_new_section_hook
   (bfd *, asection *);
-extern bfd_boolean _bfd_elf_init_reloc_shdr
-  (bfd *, struct bfd_elf_section_reloc_data *, asection *, bfd_boolean);
 extern const struct bfd_elf_special_section *_bfd_elf_get_special_section
   (const char *, const struct bfd_elf_special_section *, unsigned int);
 extern const struct bfd_elf_special_section *_bfd_elf_get_sec_type_attr
@@ -1993,12 +1985,6 @@ extern bfd_boolean _bfd_elf_eh_frame_present
 extern bfd_boolean _bfd_elf_maybe_strip_eh_frame_hdr
   (struct bfd_link_info *);
 
-extern bfd_boolean _bfd_elf_merge_symbol
-  (bfd *, struct bfd_link_info *, const char *, Elf_Internal_Sym *,
-   asection **, bfd_vma *, bfd_boolean *, unsigned int *,
-   struct elf_link_hash_entry **, bfd_boolean *,
-   bfd_boolean *, bfd_boolean *, bfd_boolean *);
-
 extern bfd_boolean _bfd_elf_hash_symbol (struct elf_link_hash_entry *);
 
 extern long _bfd_elf_link_lookup_local_dynindx
@@ -2055,7 +2041,7 @@ extern bfd_reloc_status_type bfd_elf_perform_complex_relocation
 extern bfd_boolean _bfd_elf_setup_sections
   (bfd *);
 
-extern void _bfd_elf_set_osabi (bfd * , struct bfd_link_info *);
+extern void _bfd_elf_post_process_headers (bfd * , struct bfd_link_info *);
 
 extern const bfd_target *bfd_elf32_object_p
   (bfd *);
@@ -2154,6 +2140,8 @@ extern bfd_boolean _bfd_elf_default_relocs_compatible
 
 extern bfd_boolean _bfd_elf_relocs_compatible
   (const bfd_target *, const bfd_target *);
+extern bfd_boolean _bfd_elf_notice_as_needed
+  (bfd *, struct bfd_link_info *, enum notice_asneeded_action);
 
 extern struct elf_link_hash_entry *_bfd_elf_archive_symbol_lookup
   (bfd *, struct bfd_link_info *, const char *);
@@ -2393,12 +2381,9 @@ struct elf_dyn_relocs
 
 extern bfd_boolean _bfd_elf_create_ifunc_sections
   (bfd *, struct bfd_link_info *);
-extern asection * _bfd_elf_create_ifunc_dyn_reloc
-  (bfd *, struct bfd_link_info *, asection *sec, asection *sreloc,
-   struct elf_dyn_relocs **);
 extern bfd_boolean _bfd_elf_allocate_ifunc_dyn_relocs
   (struct bfd_link_info *, struct elf_link_hash_entry *,
-   struct elf_dyn_relocs **, unsigned int, unsigned int);
+   struct elf_dyn_relocs **, unsigned int, unsigned int, unsigned int);
 
 extern void elf_append_rela (bfd *, asection *, Elf_Internal_Rela *);
 extern void elf_append_rel (bfd *, asection *, Elf_Internal_Rela *);
@@ -2430,7 +2415,7 @@ extern asection _bfd_elf_large_com_section;
 #define RELOC_FOR_GLOBAL_SYMBOL(info, input_bfd, input_section, rel,	\
 				r_symndx, symtab_hdr, sym_hashes,	\
 				h, sec, relocation,			\
-				unresolved_reloc, warned)		\
+				unresolved_reloc, warned, ignored)	\
   do									\
     {									\
       /* It seems this can happen with erroneous or unsupported		\
@@ -2445,6 +2430,7 @@ extern asection _bfd_elf_large_com_section;
 	h = (struct elf_link_hash_entry *) h->root.u.i.link;		\
 									\
       warned = FALSE;							\
+      ignored = FALSE;							\
       unresolved_reloc = FALSE;						\
       relocation = 0;							\
       if (h->root.type == bfd_link_hash_defined				\
@@ -2467,7 +2453,7 @@ extern asection _bfd_elf_large_com_section;
 	;								\
       else if (info->unresolved_syms_in_objects == RM_IGNORE		\
 	       && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)		\
-	;								\
+	ignored = TRUE;							\
       else if (!info->relocatable)					\
 	{								\
 	  bfd_boolean err;						\
@@ -2483,6 +2469,7 @@ extern asection _bfd_elf_large_com_section;
 	}								\
       (void) unresolved_reloc;						\
       (void) warned;							\
+      (void) ignored;							\
     }									\
   while (0)
 
@@ -2512,16 +2499,16 @@ extern asection _bfd_elf_large_com_section;
 	rel_hdr = _bfd_elf_single_rel_hdr (input_section->output_section); \
 									\
 	/* Avoid empty output section.  */				\
-	if (rel_hdr->sh_size > count * rel_hdr->sh_entsize)		\
+	if (rel_hdr->sh_size > rel_hdr->sh_entsize)			\
 	  {								\
-	    rel_hdr->sh_size -= count * rel_hdr->sh_entsize;		\
+	    rel_hdr->sh_size -= rel_hdr->sh_entsize;			\
 	    rel_hdr = _bfd_elf_single_rel_hdr (input_section);		\
-	    rel_hdr->sh_size -= count * rel_hdr->sh_entsize;		\
+	    rel_hdr->sh_size -= rel_hdr->sh_entsize;			\
 									\
 	    memmove (rel, rel + count,					\
 		     (relend - rel - count) * sizeof (*rel));		\
 									\
-	    input_section->reloc_count -= count;			\
+	    input_section->reloc_count--;				\
 	    relend -= count;						\
 	    rel--;							\
 	    continue;							\

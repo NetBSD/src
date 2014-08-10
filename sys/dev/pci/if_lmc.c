@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.54 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: if_lmc.c,v 1.54.2.1 2014/08/10 06:54:54 tls Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.54 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.54.2.1 2014/08/10 06:54:54 tls Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -3319,53 +3319,34 @@ static void
 ifnet_input(struct ifnet *ifp, struct mbuf *mbuf)
   {
   softc_t *sc = IFP2SC(ifp);
-  struct ifqueue *intrq;
-  int isr = 0;
+  pktqueue_t *pktq = NULL;
 
-  intrq = NULL; /* surpress compiler warning */
 # if INET
   if (mbuf->m_data[0]>>4 == 4)
-    {
-    isr = NETISR_IP;
-    intrq = &ipintrq;
-    }
+    pktq = ip_pktq;
 # endif /* INET */
 
 # if INET6
   if (mbuf->m_data[0]>>4 == 6)
-    {
-    isr = NETISR_IPV6;
-    intrq = &ip6intrq;
-    }
+    pktq = ip6_pktq;
 # endif /* INET6 */
 
-  if (isr)
-    {
-    if (!IF_QFULL(intrq))
-      {
-      /* ifnet_input() ENQUEUES in a hard interrupt. */
-      /* ip_input() DEQUEUES in a soft interrupt. */
-      /* Some BSD QUEUE routines are not interrupt-safe. */
-      DISABLE_INTR; /* noop in FreeBSD */
-      IF_ENQUEUE(intrq, mbuf);
-      ENABLE_INTR;  /* noop in FreeBSD */
-      schednetisr(isr); /* wake up the network code */
-      }
-    else /* intrq is full */
-      {
-      m_freem(mbuf);
-      sc->status.cntrs.idrops++;
-      if (sc->config.debug)
-        printf("%s: ifnet_input: rx pkt dropped: intrq full\n", NAME_UNIT);
-      }
-    }
-  else /* isr is zero */
+  if (!pktq)
     {
     m_freem(mbuf);
     sc->status.cntrs.idrops++;
     if (sc->config.debug)
       printf("%s: ifnet_input: rx pkt dropped: not IPv4 or IPv6\n", NAME_UNIT);
+    return;
     }
+
+  DISABLE_INTR;
+  if (__predict_false(!pktq_enqueue(pktq, mbuf, 0)))
+    {
+    sc->status.cntrs.idrops++;
+    m_freem(mbuf);
+    }
+  ENABLE_INTR;
   }
 
 /* sppp and p2p replace this with their own proc.

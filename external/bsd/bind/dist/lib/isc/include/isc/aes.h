@@ -1,4 +1,4 @@
-/*	$NetBSD: aes.h,v 1.1.1.1 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: aes.h,v 1.1.1.1.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -27,12 +27,12 @@
 #include <isc/platform.h>
 #include <isc/types.h>
 
-#ifdef ISC_PLATFORM_OPENSSLAES
-
 #define ISC_AES128_KEYLENGTH 16U
 #define ISC_AES192_KEYLENGTH 24U
 #define ISC_AES256_KEYLENGTH 32U
 #define ISC_AES_BLOCK_LENGTH 16U
+
+#ifdef ISC_PLATFORM_WANTAES
 
 ISC_LANG_BEGINDECLS
 
@@ -50,6 +50,6 @@ isc_aes256_crypt(const unsigned char *key, const unsigned char *in,
 
 ISC_LANG_ENDDECLS
 
-#endif /* ISC_PLATFORM_OPENSSLAES */
+#endif /* ISC_PLATFORM_WANTAES */
 
 #endif /* ISC_AES_H */

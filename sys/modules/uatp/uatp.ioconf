@@ -1,4 +1,4 @@
-# $NetBSD: uatp.ioconf,v 1.1 2012/08/04 04:37:26 riastradh Exp $
+# $NetBSD: uatp.ioconf,v 1.1.14.1 2014/08/10 06:56:11 tls Exp $
 
 ioconf uatp
 
@@ -8,4 +8,3 @@ include "dev/usb/files.usb"
 pseudo-root	uhidev*
 
 uatp*		at uhidev? reportid ?
-wsmouse*	at uatp? mux 0

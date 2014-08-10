@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.1 2014/03/01 10:00:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2014/08/10 07:10:55 tls Exp $
 
-.include <bsd.own.mk>
 .include <bsd.init.mk>
 
 .include "${.CURDIR}/../../arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 .cc: # disable .cc->NULL transform
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
+GNUHOSTDIST=	${DIST}
 
 INCS=		${G_pb_headers1} ${G_pb_headers2} ${G_pb_headers3} ${G_pb_headers4}
 INCS+=		${G_pb_headers5} ${G_pb_headers6} ${G_pb_headers7}

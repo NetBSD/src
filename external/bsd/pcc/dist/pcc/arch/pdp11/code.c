@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.5 2011/06/04 07:41:11 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.3 2011/09/01 12:46:44 plunky Exp $	*/
+/*	Id: code.c,v 1.6 2012/04/22 21:07:40 plunky Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.3.20.1 2014/08/10 07:10:06 tls Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -72,7 +72,7 @@ defloc(struct symtab *sp)
  * deals with struct return here
  */
 void
-efcode()
+efcode(void)
 {
 	NODE *p, *q;
 
@@ -127,12 +127,12 @@ bfcode(struct symtab **sp, int cnt)
 /* called just before final exit */
 /* flag is 1 if errors, 0 if none */
 void
-ejobcode(int flag )
+ejobcode(int flag)
 {
 }
 
 void
-bjobcode()
+bjobcode(void)
 {
 }
 

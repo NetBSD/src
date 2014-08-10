@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring_vstream.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: vstring_vstream.c,v 1.1.1.1.26.1 2014/08/10 07:12:50 tls Exp $	*/
 
 /*++
 /* NAME
@@ -168,7 +168,7 @@ int     vstring_get_null_bound(VSTRING *vp, VSTREAM *fp, ssize_t bound)
     int     c;
 
     if (bound <= 0)
-	msg_panic("vstring_get_nonl_bound: invalid bound %ld", (long) bound);
+	msg_panic("vstring_get_null_bound: invalid bound %ld", (long) bound);
 
     VSTRING_RESET(vp);
     while (bound-- > 0 && (c = VSTREAM_GETC(fp)) != VSTREAM_EOF && c != 0)

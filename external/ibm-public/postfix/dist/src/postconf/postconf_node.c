@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_node.c,v 1.1.1.2 2013/09/25 19:06:33 tron Exp $	*/
+/*	$NetBSD: postconf_node.c,v 1.1.1.2.2.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -8,77 +8,77 @@
 /* SYNOPSIS
 /*	#include <postconf.h>
 /*
-/*	PC_PARAM_TABLE *PC_PARAM_TABLE_CREATE(size)
+/*	PCF_PARAM_TABLE *PCF_PARAM_TABLE_CREATE(size)
 /*	ssize_t	size;
 /*
-/*	PC_PARAM_INFO **PC_PARAM_TABLE_LIST(table)
-/*	PC_PARAM_TABLE *table;
+/*	PCF_PARAM_INFO **PCF_PARAM_TABLE_LIST(table)
+/*	PCF_PARAM_TABLE *table;
 /*
-/*	const char *PC_PARAM_INFO_NAME(info)
-/*	PC_PARAM_INFO *info;
+/*	const char *PCF_PARAM_INFO_NAME(info)
+/*	PCF_PARAM_INFO *info;
 /*
-/*	PC_PARAM_NODE *PC_PARAM_INFO_NODE(info)
-/*	PC_PARAM_INFO *info;
+/*	PCF_PARAM_NODE *PCF_PARAM_INFO_NODE(info)
+/*	PCF_PARAM_INFO *info;
 /*
-/*	PC_PARAM_NODE *PC_PARAM_TABLE_FIND(table, name)
-/*	PC_PARAM_TABLE *table;
+/*	PCF_PARAM_NODE *PCF_PARAM_TABLE_FIND(table, name)
+/*	PCF_PARAM_TABLE *table;
 /*	const char *name;
 /*
-/*	PC_PARAM_INFO *PC_PARAM_TABLE_LOCATE(table, name)
-/*	PC_PARAM_TABLE *table;
+/*	PCF_PARAM_INFO *PCF_PARAM_TABLE_LOCATE(table, name)
+/*	PCF_PARAM_TABLE *table;
 /*	const char *name;
 /*
-/*	PC_PARAM_INFO *PC_PARAM_TABLE_ENTER(table, name, flags, 
+/*	PCF_PARAM_INFO *PCF_PARAM_TABLE_ENTER(table, name, flags,
 /*						param_data, convert_fn)
-/*	PC_PARAM_TABLE *table;
+/*	PCF_PARAM_TABLE *table;
 /*	const char *name;
 /*	int	flags;
 /*	char	*param_data;
 /*	const char *(*convert_fn)(char *);
 /*
-/*	PC_PARAM_NODE *make_param_node(flags, param_data, convert_fn)
+/*	PCF_PARAM_NODE *pcf_make_param_node(flags, param_data, convert_fn)
 /*	int	flags;
 /*	char	*param_data;
 /*	const char *(*convert_fn) (char *);
 /*
-/*	const char *convert_param_node(mode, name, node)
+/*	const char *pcf_convert_param_node(mode, name, node)
 /*	int	mode;
 /*	const char *name;
-/*	PC_PARAM_NODE *node;
+/*	PCF_PARAM_NODE *node;
 /*
-/*	VSTRING *param_string_buf;
+/*	VSTRING *pcf_param_string_buf;
 /*
-/*	PC_RAW_PARAMETER(node)
-/*	const PC_PARAM_NODE *node;
+/*	PCF_RAW_PARAMETER(node)
+/*	const PCF_PARAM_NODE *node;
 /* DESCRIPTION
-/*	This module maintains data structures (PC_PARAM_NODE) with
+/*	This module maintains data structures (PCF_PARAM_NODE) with
 /*	information about known-legitimate parameters.  These data
 /*	structures are stored in a hash table.
 /*
-/*	The PC_PARAM_MUMBLE() macros are wrappers around the htable(3)
-/*	module. Their sole purpose is to encapsulate all the pointer
-/*	casting from and to (PC_PARAM_NODE *). Apart from that, the
-/*	macros have no features worth discussing.
+/*	The PCF_PARAM_MUMBLE() macros are wrappers around the
+/*	htable(3) module. Their sole purpose is to encapsulate all
+/*	the pointer casting from and to (PCF_PARAM_NODE *). Apart
+/*	from that, the macros have no features worth discussing.
 /*
-/*	make_param_node() creates a node for the global parameter
+/*	pcf_make_param_node() creates a node for the global parameter
 /*	table. This node provides a parameter default value, and a
 /*	function that converts the default value to string.
 /*
-/*	convert_param_node() produces a string representation for
-/*	a global parameter default value.
+/*	pcf_convert_param_node() produces a string representation
+/*	for a global parameter default value.
 /*
-/*	PC_RAW_PARAMETER() returns non-zero if the specified parameter
-/*	node represents a "raw parameter". The value of such
-/*	parameters must not be scanned for macro names.  Some "raw
-/*	parameter" values contain "$" without macros, such as the
-/*	smtpd_expansion_filter "safe character" set; and some contain
-/*	$name from a private name space, such as forward_path.  Some
-/*	"raw parameter" values in postscreen(8) are safe to expand
-/*	by one level.  Support for that may be added later.
+/*	PCF_RAW_PARAMETER() returns non-zero if the specified
+/*	parameter node represents a "raw parameter". The value of
+/*	such parameters must not be scanned for macro names.  Some
+/*	"raw parameter" values contain "$" without macros, such as
+/*	the smtpd_expansion_filter "safe character" set; and some
+/*	contain $name from a private name space, such as forward_path.
+/*	Some "raw parameter" values in postscreen(8) are safe to
+/*	expand by one level.  Support for that may be added later.
 /*
-/*	param_string_buf is a buffer that is initialized on the fly
-/*	and that parameter-to-string conversion functions may use for
-/*	temporary result storage.
+/*	pcf_param_string_buf is a buffer that is initialized on the
+/*	fly and that parameter-to-string conversion functions may
+/*	use for temporary result storage.
 /*
 /*	Arguments:
 /* .IP size
@@ -86,24 +86,24 @@
 /* .IP table
 /*	A hash table for storage of "valid parameter" information.
 /* .IP info
-/*	A data structure with a name component and a PC_PARAM_NODE
-/*	component. Use PC_PARAM_INFO_NAME() and PC_PARAM_INFO_NODE()
+/*	A data structure with a name component and a PCF_PARAM_NODE
+/*	component. Use PCF_PARAM_INFO_NAME() and PCF_PARAM_INFO_NODE()
 /*	to access these components.
 /* .IP name
 /*	The name of a "valid parameter".
 /* .IP flags
-/*	PC_PARAM_FLAG_RAW for a "raw parameter", PC_PARAM_FLAG_NONE
-/*	otherwise. See the PC_RAW_PARAMETER() discussion above for
+/*	PCF_PARAM_FLAG_RAW for a "raw parameter", PCF_PARAM_FLAG_NONE
+/*	otherwise. See the PCF_RAW_PARAMETER() discussion above for
 /*	discussion of "raw parameter" values.
 /* .IP param_data
-/*	Information about the parameter value.  Specify PC_PARAM_NO_DATA
+/*	Information about the parameter value.  Specify PCF_PARAM_NO_DATA
 /*	if this is not applicable.
 /* .IP convert_fn
 /*	The function that will be invoked to produce a string
 /*	representation of the information in param_data. The function
 /*	receives the param_data value as argument.
 /* .IP mode
-/*	For now, the SHOW_DEFS flag is required.
+/*	For now, the PCF_SHOW_DEFS flag is required.
 /* .IP name
 /*	The name of the parameter whose value is requested.  This
 /*	is used for diagnostics.
@@ -139,41 +139,41 @@
 
 #include <postconf.h>
 
-VSTRING *param_string_buf;
+VSTRING *pcf_param_string_buf;
 
-/* make_param_node - make node for global parameter table */
+/* pcf_make_param_node - make node for global parameter table */
 
-PC_PARAM_NODE *make_param_node(int flags, char *param_data,
-			               const char *(*convert_fn) (char *))
+PCF_PARAM_NODE *pcf_make_param_node(int flags, char *param_data,
+				         const char *(*convert_fn) (char *))
 {
-    PC_PARAM_NODE *node;
+    PCF_PARAM_NODE *node;
 
-    node = (PC_PARAM_NODE *) mymalloc(sizeof(*node));
+    node = (PCF_PARAM_NODE *) mymalloc(sizeof(*node));
     node->flags = flags;
     node->param_data = param_data;
     node->convert_fn = convert_fn;
     return (node);
 }
 
-/* convert_param_node - get default parameter value */
+/* pcf_convert_param_node - get default parameter value */
 
-const char *convert_param_node(int mode, const char *name, PC_PARAM_NODE *node)
+const char *pcf_convert_param_node(int mode, const char *name, PCF_PARAM_NODE *node)
 {
-    const char *myname = "convert_param_node";
+    const char *myname = "pcf_convert_param_node";
     const char *value;
 
     /*
      * One-off initialization.
      */
-    if (param_string_buf == 0)
-	param_string_buf = vstring_alloc(100);
+    if (pcf_param_string_buf == 0)
+	pcf_param_string_buf = vstring_alloc(100);
 
     /*
      * Sanity check. A null value indicates that a parameter does not have
      * the requested value. At this time, the only requested value can be the
      * default value, and a null pointer value makes no sense here.
      */
-    if ((mode & SHOW_DEFS) == 0)
+    if ((mode & PCF_SHOW_DEFS) == 0)
 	msg_panic("%s: request for non-default value of parameter %s",
 		  myname, name);
     if ((value = node->convert_fn(node->param_data)) == 0)

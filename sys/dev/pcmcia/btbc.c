@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.15 2010/02/24 22:38:08 dyoung Exp $	*/
+/*	$NetBSD: btbc.c,v 1.15.34.1 2014/08/10 06:54:57 tls Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.15 2010/02/24 22:38:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.15.34.1 2014/08/10 06:54:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -187,7 +187,7 @@ btbc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pcioh = cfe->iospace[0].handle;
 
 	/* Attach Bluetooth unit */
-	sc->sc_unit = hci_attach(&btbc_hci, self, 0);
+	sc->sc_unit = hci_attach_pcb(&btbc_hci, self, 0);
 	if (sc->sc_unit == NULL)
 		aprint_error_dev(self, "HCI attach failed\n");
 
@@ -214,7 +214,7 @@ btbc_detach(device_t self, int flags)
 	callout_destroy(&sc->sc_ledch);
 
 	if (sc->sc_unit) {
-		hci_detach(sc->sc_unit);
+		hci_detach_pcb(sc->sc_unit);
 		sc->sc_unit = NULL;
 	}
 
@@ -229,7 +229,7 @@ btbc_suspend(device_t self, const pmf_qual_t *qual)
 	struct btbc_softc *sc = device_private(self);
 
 	if (sc->sc_unit) {
-		hci_detach(sc->sc_unit);
+		hci_detach_pcb(sc->sc_unit);
 		sc->sc_unit = NULL;
 	}
 
@@ -244,7 +244,7 @@ btbc_resume(device_t self, const pmf_qual_t *qual)
 
 	KASSERT(sc->sc_unit == NULL);
 
-	sc->sc_unit = hci_attach(&btbc_hci, sc->sc_dev, 0);
+	sc->sc_unit = hci_attach_pcb(&btbc_hci, sc->sc_dev, 0);
 	if (sc->sc_unit == NULL)
 		return false;
 

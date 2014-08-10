@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.112 2014/03/31 01:59:36 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.112.2.1 2014/08/10 06:53:30 tls Exp $
 
 .include <bsd.init.mk>
 
@@ -322,7 +322,8 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure Makefile
 		s,@GL_LIB@,GL,; \
 		s,@GL_PC_REQ_PRIV@,x11 xext,; \
 		s,@GL_PC_LIB_PRIV@,-lm -lpthread,; \
-		s,@GL_PC_CFLAGS@,," \
+		s,@GL_PC_CFLAGS@,,; \
+		s,@GLX_TLS@,no," \
 		-e "s,@GLU_LIB@,GLU,; \
 		s,@GLU_PC_REQ@,gl,; \
 		s,@GLU_PC_REQ_PRIV@,,; \

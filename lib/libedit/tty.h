@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.14 2012/05/15 15:59:01 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.14.8.1 2014/08/10 06:51:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -442,6 +442,7 @@
 #define	QU_IO	2	/* used only for quoted chars	*/
 #define	NN_IO	3	/* The number of entries	*/
 
+/* Don't re-order */
 #define	MD_INP	0
 #define	MD_OUT	1
 #define	MD_CTL	2

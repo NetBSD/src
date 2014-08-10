@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.34 2014/01/09 11:30:01 apb Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.34.2.1 2014/08/10 06:57:39 tls Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -90,6 +90,10 @@
 /* Define to 1 if you have the declaration of `bswap64', and to 0 if you
    don't. */
 #undef HAVE_DECL_BSWAP64
+
+/* Define to 1 if you have the declaration of `errc', and to 0 if you don't.
+   */
+#undef HAVE_DECL_ERRC
 
 /* Define to 1 if you have the declaration of `fstatvfs', and to 0 if you
    don't. */
@@ -222,6 +226,18 @@
 /* Define to 1 if you have the declaration of `user_from_uid', and to 0 if you
    don't. */
 #undef HAVE_DECL_USER_FROM_UID
+
+/* Define to 1 if you have the declaration of `verrc', and to 0 if you don't.
+   */
+#undef HAVE_DECL_VERRC
+
+/* Define to 1 if you have the declaration of `vwarnc', and to 0 if you don't.
+   */
+#undef HAVE_DECL_VWARNC
+
+/* Define to 1 if you have the declaration of `warnc', and to 0 if you don't.
+   */
+#undef HAVE_DECL_WARNC
 
 /* Define if you have the `devname' function. */
 #undef HAVE_DEVNAME

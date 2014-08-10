@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.21 2014/02/07 15:29:23 hannken Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.21.2.1 2014/08/10 06:56:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1616,6 +1616,8 @@ const struct vnodeopv_entry_desc chfs_vnodeop_entries[] =
 		{ &vop_setattr_desc, chfs_setattr },
 		{ &vop_read_desc, chfs_read },
 		{ &vop_write_desc, chfs_write },
+		{ &vop_fallocate_desc, genfs_eopnotsupp },
+		{ &vop_fdiscard_desc, genfs_eopnotsupp },
 		{ &vop_ioctl_desc, genfs_enoioctl },
 		{ &vop_fcntl_desc, genfs_fcntl },
 		{ &vop_poll_desc, genfs_poll },
@@ -1672,6 +1674,8 @@ const struct vnodeopv_entry_desc chfs_specop_entries[] =
 		{ &vop_setattr_desc, chfs_setattr },
 		{ &vop_read_desc, chfs_read },
 		{ &vop_write_desc, chfs_write },
+		{ &vop_fallocate_desc, spec_fallocate },
+		{ &vop_fdiscard_desc, spec_fdiscard },
 		{ &vop_ioctl_desc, spec_ioctl },
 		{ &vop_fcntl_desc, genfs_fcntl },
 		{ &vop_poll_desc, spec_poll },
@@ -1726,6 +1730,8 @@ const struct vnodeopv_entry_desc chfs_fifoop_entries[] =
 		{ &vop_setattr_desc, chfs_setattr },
 		{ &vop_read_desc, ufsfifo_read },
 		{ &vop_write_desc, ufsfifo_write },
+		{ &vop_fallocate_desc, vn_fifo_bypass },
+		{ &vop_fdiscard_desc, vn_fifo_bypass },
 		{ &vop_ioctl_desc, vn_fifo_bypass },
 		{ &vop_fcntl_desc, genfs_fcntl },
 		{ &vop_poll_desc, vn_fifo_bypass },

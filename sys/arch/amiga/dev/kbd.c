@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.56 2014/03/16 05:20:22 dholland Exp $ */
+/*	$NetBSD: kbd.c,v 1.56.2.1 2014/08/10 06:53:49 tls Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.56 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.56.2.1 2014/08/10 06:53:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +181,7 @@ const struct cdevsw kbd_cdevsw = {
 	.d_poll = kbdpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = kbdkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

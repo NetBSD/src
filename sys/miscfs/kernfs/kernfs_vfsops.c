@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.93 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.93.2.1 2014/08/10 06:56:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.93 2014/03/23 15:21:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.93.2.1 2014/08/10 06:56:05 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -68,6 +68,7 @@ MODULE(MODULE_CLASS_VFS, kernfs, NULL);
 MALLOC_JUSTDEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
 
 dev_t rrootdev = NODEV;
+kmutex_t kfs_lock;
 
 VFS_PROTOS(kernfs);
 
@@ -80,20 +81,20 @@ kernfs_init(void)
 {
 
 	malloc_type_attach(M_KERNFSMNT);
-	kernfs_hashinit();
+	mutex_init(&kfs_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 void
 kernfs_reinit(void)
 {
-	kernfs_hashreinit();
+
 }
 
 void
 kernfs_done(void)
 {
 
-	kernfs_hashdone();
+	mutex_destroy(&kfs_lock);
 	malloc_type_detach(M_KERNFSMNT);
 }
 
@@ -190,9 +191,20 @@ kernfs_unmount(struct mount *mp, int mntflags)
 int
 kernfs_root(struct mount *mp, struct vnode **vpp)
 {
+	const struct kern_target *root_target = &kern_targets[0];
+	int error;
 
 	/* setup "." */
-	return (kernfs_allocvp(mp, vpp, KFSkern, &kern_targets[0], 0));
+	error = vcache_get(mp, &root_target, sizeof(root_target), vpp);
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -216,6 +228,70 @@ kernfs_vget(struct mount *mp, ino_t ino,
 	return (EOPNOTSUPP);
 }
 
+int
+kernfs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	const struct kern_target *kt;
+	struct kernfs_node *kfs, *kfsp;
+	long *cookie;
+
+	KASSERT(key_len == sizeof(kt));
+	memcpy(&kt, key, key_len);
+
+	kfs = kmem_zalloc(sizeof(struct kernfs_node), KM_SLEEP);
+	cookie = &(VFSTOKERNFS(mp)->fileno_cookie);
+	mutex_enter(&kfs_lock);
+again:
+	TAILQ_FOREACH(kfsp, &VFSTOKERNFS(mp)->nodelist, kfs_list) {
+		if (kfsp->kfs_cookie == *cookie) {
+			(*cookie) ++;
+			goto again;
+		}
+		if (TAILQ_NEXT(kfsp, kfs_list)) {
+			if (kfsp->kfs_cookie < *cookie &&
+			    *cookie < TAILQ_NEXT(kfsp, kfs_list)->kfs_cookie)
+				break;
+			if (kfsp->kfs_cookie + 1 <
+			    TAILQ_NEXT(kfsp, kfs_list)->kfs_cookie) {
+				*cookie = kfsp->kfs_cookie + 1;
+				break;
+			}
+		}
+	}
+
+	kfs->kfs_cookie = *cookie;
+
+	if (kfsp)
+		TAILQ_INSERT_AFTER(&VFSTOKERNFS(mp)->nodelist, kfsp, kfs,
+		    kfs_list);
+	else
+		TAILQ_INSERT_TAIL(&VFSTOKERNFS(mp)->nodelist, kfs, kfs_list);
+
+	kfs->kfs_type = kt->kt_tag;
+	kfs->kfs_vnode = vp;
+	kfs->kfs_fileno = KERNFS_FILENO(kt, kt->kt_tag, kfs->kfs_cookie);
+	kfs->kfs_kt = kt;
+	kfs->kfs_mode = kt->kt_mode;
+	vp->v_tag = VT_KERNFS;
+	vp->v_op = kernfs_vnodeop_p;
+	vp->v_data = kfs;
+	vp->v_type = kt->kt_vtype;
+	mutex_exit(&kfs_lock);
+
+	if (kt->kt_tag == KFSkern)
+		vp->v_vflag = VV_ROOT;
+
+	if (kt->kt_tag == KFSdevice) {
+		spec_node_init(vp, *(dev_t *)kt->kt_data);
+	}
+
+	uvm_vnp_setsize(vp, 0);
+
+	*new_key = &kfs->kfs_kt;
+	return 0;
+}
+
 extern const struct vnodeopv_desc kernfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
@@ -234,6 +310,7 @@ struct vfsops kernfs_vfsops = {
 	.vfs_statvfs = genfs_statvfs,
 	.vfs_sync = kernfs_sync,
 	.vfs_vget = kernfs_vget,
+	.vfs_loadvnode = kernfs_loadvnode,
 	.vfs_fhtovp = (void *)eopnotsupp,
 	.vfs_vptofh = (void *)eopnotsupp,
 	.vfs_init = kernfs_init,

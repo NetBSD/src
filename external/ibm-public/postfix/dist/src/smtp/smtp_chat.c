@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_chat.c,v 1.1.1.3 2013/01/02 18:59:07 tron Exp $	*/
+/*	$NetBSD: smtp_chat.c,v 1.1.1.3.6.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -361,14 +361,13 @@ SMTP_RESP *smtp_chat_resp(SMTP_SESSION *session)
 	if (session->features & SMTP_FEATURE_PIPELINING) {
 	    msg_warn("%s: non-%s response from %s: %.100s",
 		     session->state->request->queue_id,
-		     (session->state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) ?
-		     "LMTP" : "ESMTP", session->namaddrport,
-		     STR(session->buffer));
+		     smtp_mode ? "ESMTP" : "LMTP",
+		     session->namaddrport, STR(session->buffer));
 	    if (var_helpful_warnings)
 		msg_warn("to prevent loss of mail, turn off command pipelining "
-			 "for %s with the %s parameter", session->addr,
-		    (session->state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) ?
-			 VAR_LMTP_EHLO_DIS_MAPS : VAR_SMTP_EHLO_DIS_MAPS);
+			 "for %s with the %s parameter",
+			 STR(session->iterator->addr),
+			 SMTP_X(EHLO_DIS_MAPS));
 	}
     }
 
@@ -471,9 +470,7 @@ void    smtp_chat_notify(SMTP_SESSION *session)
 		      mail_addr_mail_daemon());
     post_mail_fprintf(notice, "To: %s (Postmaster)", var_error_rcpt);
     post_mail_fprintf(notice, "Subject: %s %s client: errors from %s",
-		      var_mail_name,
-		      (session->state->misc_flags &
-		       SMTP_MISC_FLAG_USE_LMTP) ? "LMTP" : "SMTP",
+		      var_mail_name, smtp_mode ? "SMTP" : "LMTP",
 		      session->namaddrport);
     post_mail_fputs(notice, "");
     post_mail_fprintf(notice, "Unexpected response from %s.",

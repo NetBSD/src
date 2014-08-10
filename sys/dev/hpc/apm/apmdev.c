@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.29 2014/03/16 05:20:27 dholland Exp $ */
+/*	$NetBSD: apmdev.c,v 1.29.2.1 2014/08/10 06:54:51 tls Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.29 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.29.2.1 2014/08/10 06:54:51 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apm.h"
@@ -132,6 +132,7 @@ const struct cdevsw apmdev_cdevsw = {
 	.d_poll = apmdevpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = apmdevkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

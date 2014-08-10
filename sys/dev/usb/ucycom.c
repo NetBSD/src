@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.38 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.38.2.1 2014/08/10 06:54:59 tls Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.38 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.38.2.1 2014/08/10 06:54:59 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,7 @@ const struct cdevsw ucycom_cdevsw = {
 	.d_poll = ucycompoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

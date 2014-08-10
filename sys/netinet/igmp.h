@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.h,v 1.11 2007/12/25 18:33:46 perry Exp $	*/
+/*	$NetBSD: igmp.h,v 1.11.70.1 2014/08/10 06:56:25 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,13 +84,13 @@
  * IGMP packet format.
  */
 struct igmp {
-	u_int8_t	igmp_type;	/* version & type of IGMP message  */
-	u_int8_t	igmp_code;	/* code for routing sub-messages   */
-	u_int16_t	igmp_cksum;	/* IP-style checksum               */
+	uint8_t		igmp_type;	/* version & type of IGMP message  */
+	uint8_t		igmp_code;	/* code for routing sub-messages   */
+	uint16_t	igmp_cksum;	/* IP-style checksum               */
 	struct in_addr	igmp_group;	/* group address being reported    */
 } __packed;		/*  (zero for queries)             */
 
-#define	IGMP_MINLEN		     8
+#define	IGMP_MINLEN			8
 
 #define	IGMP_HOST_MEMBERSHIP_QUERY	0x11  /* membership query      */
 #define	IGMP_v1_HOST_MEMBERSHIP_REPORT	0x12  /* v1 membership report  */

@@ -1,15 +1,47 @@
-# OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/sha2/Makefile,v 1.1.2.1 2009/01/26 21:07:06 quanah Exp
+# $OpenLDAP$
 
-OPENLDAP := ../../../..
+LDAP_SRC = ../../../..
+LDAP_BUILD = ../../../..
+LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd
+LDAP_LIB = $(LDAP_BUILD)/libraries/libldap_r/libldap_r.la \
+	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
-#CCFLAGS = -Wall -g -DSLAPD_SHA2_DEBUG
-CCFLAGS = -Wall -g
+LIBTOOL = $(LDAP_BUILD)/libtool
+CC = gcc
+OPT = -g -O2 -Wall
+DEFS = 
+#DEFS = -DSLAPD_SHA2_DEBUG
+INCS = $(LDAP_INC)
+LIBS = $(LDAP_LIB)
 
-slapd-sha2.so: slapd-sha2.o sha2.o
-	$(CC) -I$(OPENLDAP)/include -shared -Wall -g $^ -o $@
+PROGRAMS = pw-sha2.la
+LTVER = 0:0:0
 
-%.o: %.c
-	$(CC) -I$(OPENLDAP)/include $(CCFLAGS) -c $<
+prefix=/usr/local
+exec_prefix=$(prefix)
+ldap_subdir=/openldap
+
+libdir=$(exec_prefix)/lib
+libexecdir=$(exec_prefix)/libexec
+moduledir = $(libexecdir)$(ldap_subdir)
+
+.SUFFIXES: .c .o .lo
+
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
+
+all:		$(PROGRAMS)
+
+pw-sha2.la:	slapd-sha2.lo sha2.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
 clean:
-	@rm -f slapd-sha2.so *.o
+	rm -rf *.o *.lo *.la .libs
+
+install:	$(PROGRAMS)
+	mkdir -p $(DESTDIR)$(moduledir)
+	for p in $(PROGRAMS) ; do \
+		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)$(moduledir) ; \
+	done
+

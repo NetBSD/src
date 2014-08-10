@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.80 2013/10/25 20:23:33 martin Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.80.2.1 2014/08/10 06:57:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.80 2013/10/25 20:23:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.80.2.1 2014/08/10 06:57:00 tls Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -210,6 +210,12 @@ ubc_init(void)
 				UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != 0) {
 		panic("ubc_init: failed to map ubc_object");
 	}
+}
+
+void
+ubchist_init(void)
+{
+
 	UVMHIST_INIT(ubchist, 300);
 }
 

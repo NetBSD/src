@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL_INSTALL,v 1.2 2005/12/11 12:17:06 christos Exp $
+#	$NetBSD: TWINTAIL_INSTALL,v 1.2.138.1 2014/08/10 06:53:55 tls Exp $
 #
 #	TWINTAIL_INSTALL -- TWINTAIL kernel with installation-sized
 #	ramdisk
@@ -8,3 +8,5 @@ include "arch/evbarm/conf/TWINTAIL"
 include "arch/evbarm/conf/INSTALL"
 
 options BOOTHOWTO=RB_SINGLE
+no makeoptions	DEBUG
+no config netbsd-ne0

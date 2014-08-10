@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.156 2014/04/01 19:12:37 christos Exp $
+#  $NetBSD: Makefile,v 1.156.2.1 2014/08/10 06:52:02 tls Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -53,6 +53,7 @@ LINTFLAGS += -g
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
+COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .elif (${MACHINE_CPU} == "arm")
 .PATH: ${.CURDIR}/arch/arm
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
@@ -177,7 +178,7 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	s_ilogb.c s_ilogbf.c s_ilogbl.c \
 	s_isinff.c s_isnanf.c s_lib_version.c s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_logbl.c \
-	s_matherr.c s_modff.c s_nextafter.c s_nextafterl.c \
+	s_matherr.c s_modff.c s_modfl.c s_nextafter.c s_nextafterl.c \
 	s_nextafterf.c s_remquo.c s_remquof.c s_rint.c s_rintf.c \
 	s_round.c s_roundf.c s_roundl.c s_scalbn.c \
 	s_scalbnf.c s_scalbnl.c s_signgam.c s_significand.c s_significandf.c s_sin.c \
@@ -310,6 +311,8 @@ MLINKS+=j0.3 j0f.3 j0.3 j1.3 j0.3 j1f.3 j0.3 jn.3 j0.3 jnf.3 \
 MLINKS+=lgamma.3 lgammaf.3 lgamma.3 lgamma_r.3 lgamma.3 lgammaf_r.3 \
 	lgamma.3 gamma.3 lgamma.3 gammaf.3 lgamma.3 gamma_r.3 \
 	lgamma.3 gammaf_r.3 lgamma.3 tgamma.3 lgamma.3 tgammaf.3
+MLINKS+=modf.3 modff.3 \
+	modf.3 modfl.3
 MLINKS+=nextafter.3 nextafterf.3 \
 	nextafter.3 nextafterl.3 \
 	nextafter.3 nexttoward.3

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_MD,v 1.12 2012/03/23 18:37:42 he Exp $
+#	$NetBSD: GENERIC_MD,v 1.12.12.1 2014/08/10 06:54:01 tls Exp $
 #
 # GENERIC_MD config file
 #
@@ -8,5 +8,5 @@ include "arch/macppc/conf/GENERIC"
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
-options 	MEMORY_DISK_ROOT_SIZE=4424	# 2212 KiB
+options 	MEMORY_DISK_ROOT_SIZE=4496	# 2248 KiB
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode

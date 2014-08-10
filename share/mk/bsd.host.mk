@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.host.mk,v 1.1 2014/01/16 01:19:46 christos Exp $
+#	$NetBSD: bsd.host.mk,v 1.1.2.1 2014/08/10 06:53:30 tls Exp $
 
 .if !defined(_BSD_HOST_MK_)
 _BSD_HOST_MK_=1
@@ -46,8 +46,13 @@ HOST_OSTYPE:=	${_HOST_OSNAME}-${_HOST_OSREL:C/\([^\)]*\)//g:[*]:C/ /_/g}-${_HOST
 .MAKEOVERRIDES+= HOST_OSTYPE
 .endif # !defined(HOST_OSTYPE)
 
+.if ${USETOOLS} == "yes"
 HOST_MKDEP?=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
 HOST_MKDEPCXX?=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
+.else
+HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
+HOST_MKDEPCXX?=	CC=${HOST_CXX:Q} mkdep
+.endif
 
 .if ${NEED_OWN_INSTALL_TARGET} != "no"
 HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}

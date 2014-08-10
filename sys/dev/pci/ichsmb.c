@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.35 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.35.2.1 2014/08/10 06:54:54 tls Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.35 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.35.2.1 2014/08/10 06:54:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -111,10 +111,13 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_7SERIES_SMB:
 		case PCI_PRODUCT_INTEL_8SERIES_SMB:
 		case PCI_PRODUCT_INTEL_CORE4G_M_SMB:
+		case PCI_PRODUCT_INTEL_BAYTRAIL_PCU_SMB:
 		case PCI_PRODUCT_INTEL_C600_SMBUS:
 		case PCI_PRODUCT_INTEL_C600_SMB_0:
 		case PCI_PRODUCT_INTEL_C600_SMB_1:
 		case PCI_PRODUCT_INTEL_C600_SMB_2:
+		case PCI_PRODUCT_INTEL_EP80579_SMB:
+		case PCI_PRODUCT_INTEL_DH89XX_SMB:
 		case PCI_PRODUCT_INTEL_C2000_PCU_SMBUS:
 			return 1;
 		}
@@ -144,14 +147,14 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 
 	if ((conf & LPCIB_SMB_HOSTC_HSTEN) == 0) {
 		aprint_error_dev(self, "SMBus disabled\n");
-		return;
+		goto out;
 	}
 
 	/* Map I/O space */
 	if (pci_mapreg_map(pa, LPCIB_SMB_BASE, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize)) {
 		aprint_error_dev(self, "can't map I/O space\n");
-		return;
+		goto out;
 	}
 
 	sc->sc_poll = 1;
@@ -186,7 +189,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);
 
-	if (!pmf_device_register(self, NULL, NULL))
+out:	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

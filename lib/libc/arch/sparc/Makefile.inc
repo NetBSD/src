@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.14 2011/04/12 03:35:47 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.14.20.1 2014/08/10 06:51:49 tls Exp $
 
 SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
 
+.if ${MACHINE} != "sparc64"
 # `source' files built from m4 source
 # the name `div.o' is taken for the ANSI C `div' function, hence sdiv here
 SRCS+=	rem.S sdiv.S udiv.S urem.S
@@ -34,3 +35,4 @@ urem.S: ${LIBCDIR}/arch/sparc/gen/divrem.m4
 	@(echo "define(NAME,\`.urem')define(OP,\`rem')define(S,\`false')"; \
 	 cat ${.ALLSRC}) | ${TOOL_M4} > ${.TARGET}
 	@chmod 444 ${.TARGET}
+.endif

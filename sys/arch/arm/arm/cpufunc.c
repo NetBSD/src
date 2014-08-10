@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.144 2014/03/30 23:20:14 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.144.2.1 2014/08/10 06:53:50 tls Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.144 2014/03/30 23:20:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.144.2.1 2014/08/10 06:53:50 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.144 2014/03/30 23:20:14 matt Exp $");
 
 #include <uvm/uvm.h>
 
+#include <arm/cpufunc_proto.h>
 #include <arm/cpuconf.h>
-#include <arm/cpufunc.h>
 #include <arm/locore.h>
 
 #ifdef CPU_XSCALE_80200
@@ -1212,8 +1212,7 @@ struct cpu_functions ixp12x0_cpufuncs = {
 };
 #endif	/* CPU_IXP12X0 */
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
+#if defined(CPU_XSCALE)
 struct cpu_functions xscale_cpufuncs = {
 	/* CPU functions */
 
@@ -1272,11 +1271,10 @@ struct cpu_functions xscale_cpufuncs = {
 
 	.cf_setup		= xscale_setup
 };
-#endif
-/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */
+#endif /* CPU_XSCALE */
 
-#if defined(CPU_CORTEX)
-struct cpu_functions cortex_cpufuncs = {
+#if defined(CPU_ARMV7)
+struct cpu_functions armv7_cpufuncs = {
 	/* CPU functions */
 
 	.cf_id			= cpufunc_id,
@@ -1337,7 +1335,7 @@ struct cpu_functions cortex_cpufuncs = {
 	.cf_setup		= armv7_setup
 
 };
-#endif /* CPU_CORTEX */
+#endif /* CPU_ARMV7 */
 
 #ifdef CPU_PJ4B
 struct cpu_functions pj4bv7_cpufuncs = {
@@ -1470,11 +1468,11 @@ struct cpu_functions cpufuncs;
 u_int cputype;
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
-    defined(CPU_ARM9E) || defined(CPU_ARM10) || defined(CPU_ARM11) || \
-    defined(CPU_FA526) || \
+    defined(CPU_ARM9E) || defined(CPU_ARM10) || defined(CPU_FA526) || \
+    defined(CPU_SHEEVA) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-    defined(CPU_CORTEX) || defined(CPU_PJ4B) || defined(CPU_SHEEVA)
+    defined(CPU_ARMV6) || defined(CPU_ARMV7)
 static void get_cachetype_cp15(void);
 
 /* Additional cache information local to this file.  Log2 of some of the
@@ -1489,7 +1487,7 @@ get_cachesize_cp15(int cssr)
 {
 	u_int csid;
 
-#if ((CPU_CORTEX) > 0) || defined(CPU_PJ4B)
+#if defined(CPU_ARMV7)
 	__asm volatile(".arch\tarmv7a");
 	__asm volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (cssr));
 	__asm volatile("isb");	/* sync to the new cssr */
@@ -1736,7 +1734,7 @@ get_cachetype_table(void)
 			    cachetab[i].ct_pdcache_line_size;
 			arm_pcache.dcache_ways = cachetab[i].ct_pdcache_ways;
 			if (arm_pcache.dcache_ways) {
-				arm_pcache.dcache_way_size = 
+				arm_pcache.dcache_way_size =
 				    arm_pcache.dcache_line_size
 				    / arm_pcache.dcache_ways;
 			}
@@ -1745,7 +1743,7 @@ get_cachetype_table(void)
 			    cachetab[i].ct_picache_line_size;
 			arm_pcache.icache_ways = cachetab[i].ct_picache_ways;
 			if (arm_pcache.icache_ways) {
-				arm_pcache.icache_way_size = 
+				arm_pcache.icache_way_size =
 				    arm_pcache.icache_line_size
 				    / arm_pcache.icache_ways;
 			}
@@ -2128,7 +2126,7 @@ set_cpufuncs(void)
 #endif /* CPU_XSCALE_IXP425 */
 #if defined(CPU_CORTEX)
 	if (CPU_ID_CORTEX_P(cputype)) {
-		cpufuncs = cortex_cpufuncs;
+		cpufuncs = armv7_cpufuncs;
 		cpu_do_powersave = 1;			/* Enable powersave */
 #if defined(CPU_ARMV6) || defined(CPU_PRE_ARMV6)
 		cpu_armv7_p = true;
@@ -2546,10 +2544,11 @@ late_abort_fixup(void *arg)
 #if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) || \
 	defined(CPU_ARM8) || defined (CPU_ARM9) || defined (CPU_ARM9E) || \
 	defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
+	defined(CPU_FA526) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
 	defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-	defined(CPU_ARM10) || defined(CPU_ARM11) || \
-	defined(CPU_FA526) || defined(CPU_CORTEX) || defined(CPU_SHEEVA)
+	defined(CPU_ARM10) || defined(CPU_SHEEVA) || \
+	defined(CPU_ARMV6) || defined(CPU_ARMV7)
 
 #define IGN	0
 #define OR	1
@@ -3092,7 +3091,7 @@ pj4bv7_setup(char *args)
 }
 #endif /* CPU_PJ4B */
 
-#if defined(CPU_CORTEX)
+#if defined(CPU_ARMV7)
 struct cpu_option armv7_options[] = {
     { "cpu.cache",      BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
     { "cpu.nocache",    OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
@@ -3133,10 +3132,10 @@ armv7_setup(char *args)
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(cpuctrlmask, cpuctrl);
 }
-#endif /* CPU_CORTEX */
+#endif /* CPU_ARMV7 */
 
 
-#if defined(CPU_ARM1136) || defined(CPU_ARM1176) 
+#if defined(CPU_ARM1136) || defined(CPU_ARM1176)
 void
 arm11x6_setup(char *args)
 {
@@ -3154,10 +3153,11 @@ arm11x6_setup(char *args)
 		CPU_CONTROL_32BP_ENABLE |
 		CPU_CONTROL_32BD_ENABLE |
 		CPU_CONTROL_LABT_ENABLE |
-		CPU_CONTROL_SYST_ENABLE |
 		CPU_CONTROL_UNAL_ENABLE |
 #ifdef ARM_MMU_EXTENDED
 		CPU_CONTROL_XP_ENABLE   |
+#else
+		CPU_CONTROL_SYST_ENABLE |
 #endif
 		CPU_CONTROL_IC_ENABLE;
 
@@ -3204,9 +3204,24 @@ arm11x6_setup(char *args)
 	}
 
 	/*
-	 * Enable an errata workaround
+	 * This enables the workaround for the following ARM1176 r0pX
+	 * errata.
+	 *
+	 * 394601: In low interrupt latency configuration, interrupted clean
+	 * and invalidate operation may not clean dirty data.
+	 *
+	 * 716151: Clean Data Cache line by MVA can corrupt subsequent
+	 * stores to the same cache line.
+	 *
+	 * 714068: Prefetch Instruction Cache Line or Invalidate Instruction
+	 * Cache Line by MVA can cause deadlock.
 	 */
 	if ((cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM1176JZS) { /* ARM1176JZSr0 */
+		/* 394601 and 716151 */
+		cpuctrl |= CPU_CONTROL_FI_ENABLE;
+		auxctrl |= ARM1176_AUXCTL_FIO;
+
+		/* 714068 */
 		auxctrl |= ARM1176_AUXCTL_PHD;
 	}
 
@@ -3464,8 +3479,7 @@ ixp12x0_setup(char *args)
 }
 #endif /* CPU_IXP12X0 */
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
+#if defined(CPU_XSCALE)
 struct cpu_option xscale_options[] = {
 #ifdef COMPAT_12
 	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
@@ -3546,7 +3560,7 @@ xscale_setup(char *args)
 	__asm volatile("mcr p15, 0, %0, c1, c0, 1"
 		: : "r" (auxctl));
 }
-#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */
+#endif	/* CPU_XSCALE */
 
 #if defined(CPU_SHEEVA)
 struct cpu_option sheeva_options[] = {
@@ -3564,8 +3578,6 @@ struct cpu_option sheeva_options[] = {
 void
 sheeva_setup(char *args)
 {
-	uint32_t sheeva_ext;
-
 	int cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 	    | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_BPRD_ENABLE;
@@ -3585,18 +3597,36 @@ sheeva_setup(char *args)
 	cpuctrl = parse_cpu_options(args, sheeva_options, cpuctrl);
 
 	/* Enable DCache Streaming Switch and Write Allocate */
-	__asm volatile("mrc p15, 1, %0, c15, c1, 0"
-	    : "=r" (sheeva_ext));
+	uint32_t sheeva_ext = armreg_sheeva_xctrl_read();
 
 	sheeva_ext |= FC_DCACHE_STREAM_EN | FC_WR_ALLOC_EN;
+#ifdef SHEEVA_L2_CACHE
+	sheeva_ext |= FC_L2CACHE_EN;
+	sheeva_ext &= ~FC_L2_PREF_DIS;
+#endif
 
-	__asm volatile("mcr p15, 1, %0, c15, c1, 0"
-	    :: "r" (sheeva_ext));
+	armreg_sheeva_xctrl_write(sheeva_ext);
 
-	/*
-	 * Sheeva has L2 Cache.  Enable/Disable it here.
-	 * Really not support yet...
-	 */
+#ifdef SHEEVA_L2_CACHE
+#ifndef SHEEVA_L2_CACHE_WT
+	arm_scache.cache_type = CPU_CT_CTYPE_WB2;
+#elif CPU_CT_CTYPE_WT != 0
+	arm_scache.cache_type = CPU_CT_CTYPE_WT;
+#endif
+	arm_scache.cache_unified = 1;
+	arm_scache.dcache_type = arm_scache.icache_type = CACHE_TYPE_PIPT;
+	arm_scache.dcache_size = arm_scache.icache_size = 256*1024;
+	arm_scache.dcache_ways = arm_scache.icache_ways = 4;
+	arm_scache.dcache_way_size = arm_scache.icache_way_size =
+	    arm_scache.dcache_size / arm_scache.dcache_ways;
+	arm_scache.dcache_line_size = arm_scache.icache_line_size = 32;
+	arm_scache.dcache_sets = arm_scache.icache_sets =
+	    arm_scache.dcache_way_size / arm_scache.dcache_line_size;
+
+	cpufuncs.cf_sdcache_wb_range = sheeva_sdcache_wb_range;
+	cpufuncs.cf_sdcache_inv_range = sheeva_sdcache_inv_range;
+	cpufuncs.cf_sdcache_wbinv_range = sheeva_sdcache_wbinv_range;
+#endif /* SHEEVA_L2_CACHE */
 
 #ifdef __ARMEB__
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
@@ -3619,5 +3649,8 @@ sheeva_setup(char *args)
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
+#ifdef SHEEVA_L2_CACHE
+	sheeva_sdcache_wbinv_all();
+#endif
 }
 #endif	/* CPU_SHEEVA */

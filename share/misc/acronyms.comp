@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.141 2013/09/28 18:01:49 dholland Exp $
+$NetBSD: acronyms.comp,v 1.141.2.1 2014/08/10 06:53:28 tls Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1353,6 +1353,7 @@ XIP	execute in place
 XML	Extensible Markup Language
 XOR	exclusive or
 XP	extreme programming
+XSI	X/Open System Interface
 XSL	extensible stylesheet language
 XSS	cross site scripting
 XT	extended technology

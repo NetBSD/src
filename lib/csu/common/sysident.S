@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.S,v 1.2 2013/09/10 16:45:33 matt Exp $ */
+/* $NetBSD: sysident.S,v 1.2.2.1 2014/08/10 06:51:42 tls Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -85,4 +85,5 @@
 	.long	ELF_NOTE_TYPE_MARCH_TAG
 	.ascii	"NetBSD\0\0"
 	.asciz	ELF_NOTE_MARCH_DESC
+	.p2align 2
 #endif

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.166 2011/08/11 22:52:47 apb Exp $
+# $NetBSD: rc,v 1.166.20.1 2014/08/10 07:03:06 tls Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder, and log output
@@ -84,6 +84,7 @@ rc_real_work()
 	# with redirected output.
 	#
 	_rc_postprocessor_fd=9 ; export _rc_postprocessor_fd
+	_rc_pid=$$ ; export _rc_pid
 	eval "exec ${_rc_postprocessor_fd}>&1"
 
 	# Print a metadata line when we exit
@@ -117,6 +118,24 @@ rc_real_work()
 	#
 	RC_PID=$(/bin/sh -c 'ps -p $$ -o ppid=') || RC_PID=$$
 	kill -0 $RC_PID >/dev/null 2>&1 || RC_PID=$$
+
+	#
+	# As long as process $RC_PID is still running, send a "nop"
+	# metadata message to the postprocessor every few seconds.
+	# This should help flush partial lines that may appear when
+	# rc.d scripts that are NOT marked with "KEYWORD: interactive"
+	# nevertheless attempt to print prompts and wait for input.
+	#
+	(
+	    # First detach from tty, to avoid intercepting SIGINFO.
+	    eval "exec ${_rc_original_stdout_fd}<&-"
+	    eval "exec ${_rc_original_stderr_fd}<&-"
+	    exec </dev/null >/dev/null 2>&1
+	    while kill -0 $RC_PID ; do
+		print_rc_metadata "nop"
+		sleep 3
+	    done
+	) &
 
 	#
 	# Get a list of all rc.d scripts, and use rcorder to choose
@@ -277,16 +296,20 @@ rc_postprocess_metadata()
 
 	case "$keyword" in
 	start)
-		# $args contains a date/time
+		# Marks the start of the entire /etc/rc script.
+		# $args contains a date/time.
 		rc_log_message "[$0 starting at $args]"
 		if ! $rc_silent; then
 			printf "%s\n" "$args"
 		fi
 		;;
 	cmd-name)
+		# Marks the start of a child script (usually one of
+		# the /etc/rc.d/* scripts).
 		rc_log_message "[running $1]"
 		;;
 	cmd-status)
+		# Marks the end of a child script.
 		# $1 is a command name, $2 is the command's exit status.
 		# If the command failed, report it, and add it to a list.
 		if [ "$2" != 0 ]; then
@@ -307,13 +330,21 @@ rc_postprocess_metadata()
 		;;
 	nop)
 		# Do nothing.
+		# This has the side effect of flushing partial lines,
+		# and the echo() and printf() functions in rc.subr take
+		# advantage of this.
 		;;
 	note)
+		# Unlike most metadata messages, which should be used
+		# only by /etc/rc and rc.subr, the "note" message may be
+		# used directly by /etc.rc.d/* and similar scripts.
+		# It adds a note to the log file, without displaying
+		# it to stdout.
 		rc_log_message "[NOTE: $args]"
 		;;
 	end)
-		#
-		# If any scripts (or other commands) failed, report them.
+		# Marks the end of processing, after the last child script.
+		# If any child scripts (or other commands) failed, report them.
 		#
 		if [ -n "$rc_failures" ]; then
 			rc_log_message "[failures]"
@@ -330,11 +361,15 @@ rc_postprocess_metadata()
 		printf "%s\n" "$args"
 		;;
 	exit)
+		# Marks an exit from the rc_real_work() function.
+		# This may be a normal or abnormal exit.
+		#
 		rc_log_message "[$0 exiting with status $1]"
 		exit $1
 		;;
 	interrupted)
-		# $args is a human-readable message
+		# Marks an interrupt trapped by the rc_real_work() function.
+		# $args is a human-readable message.
 		rc_log_message "$args"
 		printf "%s\n" "$args"
 		;;

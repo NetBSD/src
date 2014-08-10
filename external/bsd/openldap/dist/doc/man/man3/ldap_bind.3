@@ -1,6 +1,6 @@
 .TH LDAP_BIND 3 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" OpenLDAP: pkg/ldap/doc/man/man3/ldap_bind.3,v 1.20.2.8 2010/04/13 20:22:38 kurt Exp
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP$
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_bind, ldap_bind_s, ldap_simple_bind, ldap_simple_bind_s, ldap_sasl_bind, ldap_sasl_bind_s, ldap_sasl_interactive_bind_s, ldap_parse_sasl_bind_result, ldap_unbind, ldap_unbind_s, ldap_unbind_ext, ldap_unbind_ext_s, ldap_set_rebind_proc \- LDAP bind routines
@@ -49,6 +49,15 @@ OpenLDAP LDAP (libldap, \-lldap)
 .BI "void *" defaults ");"
 .RE
 .LP
+.BI "int ldap_sasl_interactive_bind(LDAP *" ld ", const char *" dn ","
+.RS
+.BI "const char *" mechs ","
+.BI "LDAPControl *" sctrls "[], LDAPControl *" cctrls "[],"
+.BI "unsigned " flags ", LDAP_SASL_INTERACT_PROC *" interact ","
+.BI "void *" defaults ", LDAPMessage *" result ","
+.BI "const char **" rmechp ", int *" msgidp ");"
+.RE
+.LP
 .BI "int (LDAP_SASL_INTERACT_PROC)(LDAP *" ld ", unsigned " flags ", void *" defaults ", void *" sasl_interact ");"
 .LP
 .BI "int ldap_unbind(LDAP *" ld ");"
@@ -84,7 +93,7 @@ either simple or SASL authentication.
 .LP
 .B SASL
 (Simple Authentication and Security Layer)
-that can negotiate one of many different kinds of authentication.
+can negotiate one of many different kinds of authentication.
 Both synchronous and asynchronous versions of each variant of the bind
 call are provided.  All routines
 take \fIld\fP as their first parameter, as returned from
@@ -210,6 +219,31 @@ SASL_CB_LIST_END
 indicates the end of the array of prompts
 .LP
 See the Cyrus SASL documentation for more details.
+.LP
+Applications which need to manage connections asynchronously may use
+.BR ldap_sasl_interactive_bind ()
+instead of the synchronous version.
+A valid mechs parameter must be supplied, otherwise the library will
+be forced to query the server for a list of supported mechanisms,
+and this query will be performed synchronously.
+The other parameters are the same as
+for the synchronous function, with three additional parameters.
+The actual SASL mechanism that was used, and the message ID for use
+with
+.BR ldap_result ()
+will be returned in rmechp and msgidp, respectively.
+The value in rmechp must not be modified by the caller and must be
+passed back on each subsequent call. The message obtained from
+.BR ldap_result ()
+must be passed in the result parameter.
+This parameter must be NULL when initiating a new Bind. The caller
+must free the result message after each call using
+.BR ldap_msgfree ().
+The
+.BR ldap_sasl_interactive_bind ()
+function returns an LDAP result code. If the code is
+LDAP_SASL_BIND_IN_PROGRESS then the Bind is not complete yet, and
+this function must be called again with the next result from the server.
 .SH REBINDING
 .LP
 The

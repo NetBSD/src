@@ -1,4 +1,4 @@
-/*	$NetBSD: luasystm.c,v 1.2 2014/03/24 20:21:02 christos Exp $ */
+/*	$NetBSD: luasystm.c,v 1.2.2.1 2014/08/10 06:56:10 tls Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -159,9 +159,8 @@ systm_panic(lua_State *L)
 /* mutexes */
 
 static int
-luaopen_systm(void *ls)
+luaopen_systm(lua_State *L)
 {
-	lua_State *L = (lua_State *)ls;
 	const luaL_Reg systm_lib[ ] = {
 		{ "print",			print },
 		{ "print_nolog",		print_nolog },
@@ -183,7 +182,7 @@ luaopen_systm(void *ls)
 		{NULL, NULL}
 	};
 
-	luaL_register(L, "systm", systm_lib);
+	luaL_newlib(L, systm_lib);
 
 	/* some string values */
 	lua_pushstring(L, copyright);
@@ -217,10 +216,10 @@ luasystm_modcmd(modcmd_t cmd, void *opaque)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = lua_mod_register("systm", luaopen_systm);
+		error = klua_mod_register("systm", luaopen_systm);
 		break;
 	case MODULE_CMD_FINI:
-		error = lua_mod_unregister("systm");
+		error = klua_mod_unregister("systm");
 		break;
 	default:
 		error = ENOTTY;

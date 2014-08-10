@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.61 2014/04/03 17:11:35 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.61.2.1 2014/08/10 06:52:20 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -50,7 +50,7 @@
 #define USE_SIGNALFD
 #endif
 
-__RCSID("$NetBSD: rumpclient.c,v 1.61 2014/04/03 17:11:35 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.61.2.1 2014/08/10 06:52:20 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -292,7 +292,7 @@ cliwaitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask,
 				pfd[1].events = POLLIN;
 
 				rv = host_poll(pfd, 2, -1);
-				if (pfd[1].revents & POLLIN) {
+				if (rv >= 1 && pfd[1].revents & POLLIN) {
 					dosig = 1;
 					goto cleanup;
 				}

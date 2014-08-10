@@ -1,4 +1,4 @@
-/*	$NetBSD: isv.c,v 1.6 2014/03/23 02:50:51 christos Exp $ */
+/*	$NetBSD: isv.c,v 1.6.2.1 2014/08/10 06:54:52 tls Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.6 2014/03/23 02:50:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.6.2.1 2014/08/10 06:54:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,7 @@ const struct cdevsw isv_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = isv_mmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

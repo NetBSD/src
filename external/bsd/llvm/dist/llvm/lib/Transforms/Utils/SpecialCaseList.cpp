@@ -15,7 +15,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/SpecialCaseList.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -42,7 +41,7 @@ struct SpecialCaseList::Entry {
   StringSet<> Strings;
   Regex *RegEx;
 
-  Entry() : RegEx(0) {}
+  Entry() : RegEx(nullptr) {}
 
   bool match(StringRef Query) const {
     return Strings.count(Query) || (RegEx && RegEx->match(Query));
@@ -55,20 +54,20 @@ SpecialCaseList *SpecialCaseList::create(
     const StringRef Path, std::string &Error) {
   if (Path.empty())
     return new SpecialCaseList();
-  OwningPtr<MemoryBuffer> File;
+  std::unique_ptr<MemoryBuffer> File;
   if (error_code EC = MemoryBuffer::getFile(Path, File)) {
     Error = (Twine("Can't open file '") + Path + "': " + EC.message()).str();
-    return 0;
+    return nullptr;
   }
   return create(File.get(), Error);
 }
 
 SpecialCaseList *SpecialCaseList::create(
     const MemoryBuffer *MB, std::string &Error) {
-  OwningPtr<SpecialCaseList> SCL(new SpecialCaseList());
+  std::unique_ptr<SpecialCaseList> SCL(new SpecialCaseList());
   if (!SCL->parse(MB, Error))
-    return 0;
-  return SCL.take();
+    return nullptr;
+  return SCL.release();
 }
 
 SpecialCaseList *SpecialCaseList::createOrDie(const StringRef Path) {

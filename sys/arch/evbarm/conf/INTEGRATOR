@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.75 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: INTEGRATOR,v 1.75.4.1 2014/08/10 06:53:54 tls Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -74,6 +74,7 @@ options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.

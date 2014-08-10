@@ -1,10 +1,10 @@
-/*	$NetBSD: add.c,v 1.1.1.3 2010/12/12 15:23:01 adam Exp $	*/
+/*	$NetBSD: add.c,v 1.1.1.3.24.1 2014/08/10 07:09:49 tls Exp $	*/
 
 /* add.c - ldap backend add function */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/add.c,v 1.61.2.7 2010/04/13 20:23:27 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -114,6 +114,10 @@ retry:
 			goto retry;
 		}
 	}
+
+	ldap_pvt_thread_mutex_lock( &li->li_counter_mutex );
+	ldap_pvt_mp_add( li->li_ops_completed[ SLAP_OP_ADD ], 1 );
+	ldap_pvt_thread_mutex_unlock( &li->li_counter_mutex );
 
 cleanup:
 	(void)ldap_back_controls_free( op, rs, &ctrls );

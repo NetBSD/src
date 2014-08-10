@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reuse.c,v 1.1.1.3 2013/09/25 19:06:35 tron Exp $	*/
+/*	$NetBSD: smtp_reuse.c,v 1.1.1.3.2.1 2014/08/10 07:12:49 tls Exp $	*/
 
 /*++
 /* NAME
@@ -9,54 +9,54 @@
 /*	#include <smtp.h>
 /*	#include <smtp_reuse.h>
 /*
-/*	void	smtp_save_session(state)
+/*	void	smtp_save_session(state, name_key_flags, endp_key_flags)
 /*	SMTP_STATE *state;
+/*	int	name_key_flags;
+/*	int	endp_key_flags;
 /*
-/*	SMTP_SESSION *smtp_reuse_domain(state, lookup_mx, domain, port)
+/*	SMTP_SESSION *smtp_reuse_nexthop(state, name_key_flags)
 /*	SMTP_STATE *state;
-/*	int	lookup_mx;
-/*	char	*domain;
-/*	unsigned port;
+/*	int	name_key_flags;
 /*
-/*	SMTP_SESSION *smtp_reuse_addr(state, addr, port)
+/*	SMTP_SESSION *smtp_reuse_addr(state, endp_key_flags)
 /*	SMTP_STATE *state;
-/*	const char *addr;
-/*	unsigned port;
+/*	int	endp_key_flags;
 /* DESCRIPTION
 /*	This module implements the SMTP client specific interface to
 /*	the generic session cache infrastructure.
 /*
-/*	Each cached connection identifier includes the name of the
-/*	mail delivery service. Thus, cached connections are not
-/*	shared between different services.
+/*	A cached connection is closed when the TLS policy requires
+/*	that TLS is enabled.
 /*
 /*	smtp_save_session() stores the current session under the
 /*	next-hop logical destination (if available) and under the
 /*	remote server address.  The SMTP_SESSION object is destroyed.
 /*
-/*	smtp_reuse_domain() looks up a cached session by its logical
+/*	smtp_reuse_nexthop() looks up a cached session by its logical
 /*	destination, and verifies that the session is still alive.
-/*	The restored session information includes the "best MX" bit.
+/*	The restored session information includes the "best MX" bit
+/*	and overrides the iterator dest, host and addr fields.
 /*	The result is null in case of failure.
 /*
 /*	smtp_reuse_addr() looks up a cached session by its server
 /*	address, and verifies that the session is still alive.
-/*	This operation is disabled when the legacy tls_per_site
-/*	or smtp_sasl_password_maps features are enabled.
+/*	The restored session information does not include the "best
+/*	MX" bit, and does not override the iterator dest, host and
+/*	addr fields.
 /*	The result is null in case of failure.
 /*
 /*	Arguments:
 /* .IP state
 /*	SMTP client state, including the current session, the original
 /*	next-hop domain, etc.
-/* .IP lookup_mx
-/*	Whether or not the domain is subject to MX lookup.
-/* .IP domain
-/*	Domain name or bare numerical address.
-/* .IP addr
-/*	The remote server address as printable text.
-/* .IP port
-/*	The remote server port, network byte order.
+/* .IP name_key_flags
+/*	Explicit declaration of context that should be used to look
+/*	up a cached connection by its logical destination.
+/*	See smtp_key(3) for details.
+/* .IP endp_key_flags
+/*	Explicit declaration of context that should be used to look
+/*	up a cached connection by its server address.
+/*	See smtp_key(3) for details.
 /* LICENSE
 /* .ad
 /* .fi
@@ -97,18 +97,15 @@
 #include <smtp_reuse.h>
 
  /*
-  * We encode the MX lookup/A lookup method into the name under which SMTP
-  * session information is cached. The following macros serve to make the
-  * remainder of the code less obscure.
+  * Key field delimiter, and place holder field value for
+  * unavailable/inapplicable information.
   */
-#define NO_MX_LOOKUP	0
-
-#define SMTP_SCACHE_LABEL(mx_lookup_flag) \
-	((mx_lookup_flag) ? "%s:%s:%u" : "%s:[%s]:%u")
+#define SMTP_REUSE_KEY_DELIM_NA	"\n*"
 
 /* smtp_save_session - save session under next-hop name and server address */
 
-void    smtp_save_session(SMTP_STATE *state)
+void    smtp_save_session(SMTP_STATE *state, int name_key_flags,
+			          int endp_key_flags)
 {
     SMTP_SESSION *session = state->session;
     int     fd;
@@ -116,26 +113,17 @@ void    smtp_save_session(SMTP_STATE *state)
     /*
      * Encode the next-hop logical destination, if available. Reuse storage
      * that is also used for cache lookup queries.
-     * 
-     * Note: if the label needs to be made more specific (with e.g., SASL login
-     * information), just append the text with vstring_sprintf_append().
      */
     if (HAVE_NEXTHOP_STATE(state))
-	vstring_sprintf(state->dest_label,
-			SMTP_SCACHE_LABEL(state->nexthop_lookup_mx),
-			state->service, state->nexthop_domain,
-			ntohs(state->nexthop_port));
+	smtp_key_prefix(state->dest_label, SMTP_REUSE_KEY_DELIM_NA,
+			state->iterator, name_key_flags);
 
     /*
      * Encode the physical endpoint name. Reuse storage that is also used for
      * cache lookup queries.
-     * 
-     * Note: if the label needs to be made more specific (with e.g., SASL login
-     * information), just append the text with vstring_sprintf_append().
      */
-    vstring_sprintf(state->endp_label,
-		    SMTP_SCACHE_LABEL(NO_MX_LOOKUP),
-		    state->service, session->addr, ntohs(session->port));
+    smtp_key_prefix(state->endp_label, SMTP_REUSE_KEY_DELIM_NA,
+		    state->iterator, endp_key_flags);
 
     /*
      * Passivate the SMTP_SESSION object, destroying the object in the
@@ -169,12 +157,24 @@ static SMTP_SESSION *smtp_reuse_common(SMTP_STATE *state, int fd,
 				               const char *label)
 {
     const char *myname = "smtp_reuse_common";
+    SMTP_ITERATOR *iter = state->iterator;
     SMTP_SESSION *session;
+
+    /*
+     * Can't happen. Both smtp_reuse_nexthop() and smtp_reuse_addr() decline
+     * the request when the TLS policy is not TLS_LEV_NONE.
+     */
+#ifdef USE_TLS
+    if (state->tls->level > TLS_LEV_NONE)
+	msg_panic("%s: unexpected plain-text cached session to %s",
+		  myname, label);
+#endif
 
     /*
      * Re-activate the SMTP_SESSION object.
      */
-    session = smtp_session_activate(fd, state->dest_prop, state->endp_prop);
+    session = smtp_session_activate(fd, state->iterator, state->dest_prop,
+				    state->endp_prop);
     if (session == 0) {
 	msg_warn("%s: bad cached session attribute for %s", myname, label);
 	(void) close(fd);
@@ -182,32 +182,8 @@ static SMTP_SESSION *smtp_reuse_common(SMTP_STATE *state, int fd,
     }
     state->session = session;
     session->state = state;
-
-    /*
-     * XXX Temporary fix.
-     * 
-     * Cached connections are always plaintext. They must never be reused when
-     * TLS encryption is required.
-     * 
-     * As long as we support the legacy smtp_tls_per_site feature, we must
-     * search the connection cache before making TLS policy decisions. This
-     * is because the policy can depend on the server name. For example, a
-     * site could have a global policy that requires encryption, with
-     * per-server exceptions that allow plaintext.
-     * 
-     * With the newer smtp_tls_policy_maps feature, the policy depends on the
-     * next-hop destination only. We can avoid unnecessary connection cache
-     * lookups, because we can compute the TLS policy much earlier.
-     */
 #ifdef USE_TLS
-    if (session->tls_level >= TLS_LEV_ENCRYPT) {
-	if (msg_verbose)
-	    msg_info("%s: skipping plain-text cached session to %s",
-		     myname, label);
-	smtp_quit(state);			/* Close politely */
-	smtp_session_free(session);		/* And avoid leaks */
-	return (state->session = 0);
-    }
+    session->tls = state->tls;			/* TEMPORARY */
 #endif
 
     /*
@@ -227,27 +203,32 @@ static SMTP_SESSION *smtp_reuse_common(SMTP_STATE *state, int fd,
     /*
      * Update the list of used cached addresses.
      */
-    htable_enter(state->cache_used, session->addr, (char *) 0);
+    htable_enter(state->cache_used, STR(iter->addr), (char *) 0);
 
     return (session);
 }
 
-/* smtp_reuse_domain - reuse session cached under domain name */
+/* smtp_reuse_nexthop - reuse session cached under nexthop name */
 
-SMTP_SESSION *smtp_reuse_domain(SMTP_STATE *state, int lookup_mx,
-				        const char *domain, unsigned port)
+SMTP_SESSION *smtp_reuse_nexthop(SMTP_STATE *state, int name_key_flags)
 {
     SMTP_SESSION *session;
     int     fd;
 
     /*
-     * Look up the session by its logical name.
-     * 
-     * Note: if the label needs to be made more specific (with e.g., SASL login
-     * information), just append the text with vstring_sprintf_append().
+     * Don't look up an existing plaintext connection when a new connection
+     * would (try to) use TLS.
      */
-    vstring_sprintf(state->dest_label, SMTP_SCACHE_LABEL(lookup_mx),
-		    state->service, domain, ntohs(port));
+#ifdef USE_TLS
+    if (state->tls->level > TLS_LEV_NONE)
+	return (0);
+#endif
+
+    /*
+     * Look up the session by its logical name.
+     */
+    smtp_key_prefix(state->dest_label, SMTP_REUSE_KEY_DELIM_NA,
+		    state->iterator, name_key_flags);
     if ((fd = scache_find_dest(smtp_scache, STR(state->dest_label),
 			       state->dest_prop, state->endp_prop)) < 0)
 	return (0);
@@ -262,32 +243,26 @@ SMTP_SESSION *smtp_reuse_domain(SMTP_STATE *state, int lookup_mx,
 
 /* smtp_reuse_addr - reuse session cached under numerical address */
 
-SMTP_SESSION *smtp_reuse_addr(SMTP_STATE *state, const char *addr,
-			              unsigned port)
+SMTP_SESSION *smtp_reuse_addr(SMTP_STATE *state, int endp_key_flags)
 {
     SMTP_SESSION *session;
     int     fd;
 
     /*
-     * XXX Disable connection cache lookup by server IP address when the
-     * tls_per_site policy or smtp_sasl_password_maps features are enabled.
-     * This connection may have been created under a different hostname that
-     * resolves to the same IP address. We don't want to use the wrong SASL
-     * credentials or the wrong TLS policy.
+     * Don't look up an existing plaintext connection when a new connection
+     * would (try to) use TLS.
      */
-    if ((var_smtp_tls_per_site && *var_smtp_tls_per_site)
-	|| (var_smtp_tls_policy && *var_smtp_tls_policy))
+#ifdef USE_TLS
+    if (state->tls->level > TLS_LEV_NONE)
 	return (0);
+#endif
 
     /*
      * Look up the session by its IP address. This means that we have no
      * destination-to-address binding properties.
-     * 
-     * Note: if the label needs to be made more specific (with e.g., SASL login
-     * information), just append the text with vstring_sprintf_append().
      */
-    vstring_sprintf(state->endp_label, SMTP_SCACHE_LABEL(NO_MX_LOOKUP),
-		    state->service, addr, ntohs(port));
+    smtp_key_prefix(state->endp_label, SMTP_REUSE_KEY_DELIM_NA,
+		    state->iterator, endp_key_flags);
     if ((fd = scache_find_endp(smtp_scache, STR(state->endp_label),
 			       state->endp_prop)) < 0)
 	return (0);
@@ -300,13 +275,5 @@ SMTP_SESSION *smtp_reuse_addr(SMTP_STATE *state, const char *addr,
      */
     session = smtp_reuse_common(state, fd, STR(state->endp_label));
 
-    /*
-     * XXX What if hostnames don't match (addr->name versus session->name),
-     * or if the SASL login name for this host does not match the SASL login
-     * name that was used when opening this session? If something depends
-     * critically on such information being identical, then that information
-     * should be included in the logical and physical labels under which a
-     * session is cached.
-     */
     return (session);
 }

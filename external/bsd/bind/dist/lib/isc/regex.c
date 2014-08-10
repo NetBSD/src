@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.c,v 1.1.1.1 2013/07/27 15:23:18 christos Exp $	*/
+/*	$NetBSD: regex.c,v 1.1.1.1.2.1 2014/08/10 07:06:43 tls Exp $	*/
 
 /*
  * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -23,7 +23,7 @@
 #include <isc/string.h>
 
 #if VALREGEX_REPORT_REASON
-#define FAIL(x) do { reason = (x); goto error; } while(0)
+#define FAIL(x) do { reason = (x); goto error; } while(/*CONSTCOND*/0)
 #else
 #define FAIL(x) goto error
 #endif

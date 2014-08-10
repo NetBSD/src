@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.13 2014/02/25 19:37:30 skrll Exp $
+#	$NetBSD: std.rpi,v 1.13.2.1 2014/08/10 06:53:55 tls Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -13,6 +13,7 @@ options 	ARM11_COMPAT_MMU
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	TPIDRPRW_IS_CURCPU
 options 	ARM_HAS_VBAR
 options 	KERNEL_BASE_EXT=0xc0000000

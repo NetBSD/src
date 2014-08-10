@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.45 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: irframe.c,v 1.45.2.1 2014/08/10 06:54:52 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.45 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.45.2.1 2014/08/10 06:54:52 tls Exp $");
 
 #include "irframe.h"
 
@@ -77,6 +77,7 @@ const struct cdevsw irframe_cdevsw = {
 	.d_poll = irframepoll,
 	.d_mmap = nommap,
 	.d_kqfilter = irframekqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.55 2013/06/30 21:38:57 rmind Exp $
+# $NetBSD: INSTALL,v 1.55.4.1 2014/08/10 06:53:57 tls Exp $
 #
 # INSTALL machine description file
 #
@@ -136,7 +136,7 @@ mainbus0	at root		# root "bus"
 
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
-#sgc0		at mainbus0	# SGC bus
+sgc0		at mainbus0	# SGC bus
 
 # Real-time clock (not optional)
 rtc*		at intio?
@@ -156,6 +156,9 @@ frodo*		at intio?
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
 #wskbd*		at dnkbd? mux 1
 com*		at frodo? offset ?	# tty flavor
+
+# mc146818-like real time clock found on 425e
+mcclock0	at frodo? offset 0x80
 
 # Davinci framebuffer
 dvbox*		at intio?
@@ -187,6 +190,9 @@ wsdisplay*	at tvrx?
 
 gendiofb*	at dio? scode ?
 wsdisplay*	at gendiofb?
+
+sti*		at sgc?	slot ?		# SGC EVRX framebuffers
+wsdisplay*	at sti?
 
 com*		at dio0 scode 9		# DCA serial interfaces
 com*		at dio? scode ?
@@ -245,3 +251,4 @@ pseudo-device	loop			# loopback network interface
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	wsmux			# mouse & keyboard multiplexor

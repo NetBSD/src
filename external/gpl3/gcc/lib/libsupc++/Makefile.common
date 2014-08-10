@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.common,v 1.6 2014/03/01 10:00:48 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.6.2.1 2014/08/10 07:10:56 tls Exp $
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
 GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
@@ -23,3 +23,7 @@ CPPFLAGS+=	-I${.CURDIR}/../libstdc++-v3/arch/${LIBSTDCXX_MACHINE_ARCH} -I.
 CPPFLAGS+=	-DHAVE_STDLIB_H -DHAVE_STRING_H
 
 CPPFLAGS.cp-demangle.c=-DIN_GLIBCPP_V3
+
+.for f in eh_ptr eh_throw guard atexit_thread nested_exception
+COPTS.${f}.cc+=	-std=gnu++0x
+.endfor
