@@ -45,6 +45,12 @@ aarch64*-*-linux*)
 	build_gdbserver=yes
 	;;
 
+aarch64*-*-netbsd*)
+	# Target: AArch64 NetBSD
+	#gdb_target_obs="aarch64-tdep.o aarch64-netbsd-tdep.o"
+	gdb_target_obs="aarch64-tdep.o"
+	;;
+
 alpha*-*-osf*)
 	# Target: Little-endian Alpha running OSF/1
 	gdb_target_obs="alpha-tdep.o alpha-osf1-tdep.o alpha-mdebug-tdep.o"

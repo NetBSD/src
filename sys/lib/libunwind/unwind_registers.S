@@ -269,6 +269,75 @@ ENTRY(_ZNK7_Unwind15Registers_ppc326jumptoEv)
 	bctr
 #endif
 
+#ifdef __aarch64__
+	.hidden _ZN7_Unwind17Registers_aarch64C1Ev
+ENTRY(_ZN7_Unwind17Registers_aarch64C1Ev)
+	stp	x0, x1, [x0]
+	add	x0, x0, #16
+	stp	x2, x3, [x0], #16
+	stp	x4, x5, [x0], #16
+	stp	x6, x7, [x0], #16
+	stp	x8, x9, [x0], #16
+	stp	x10, x11, [x0], #16
+	stp	x12, x13, [x0], #16
+	stp	x14, x15, [x0], #16
+	stp	x16, x17, [x0], #16
+	stp	x18, x19, [x0], #16
+	stp	x20, x22, [x0], #16
+	stp	x22, x24, [x0], #16
+	stp	x24, x26, [x0], #16
+	stp	x26, x27, [x0], #16
+	stp	x28, x29, [x0], #16
+	mov	x1, sp
+	stp	x30, x1,  [x0], #16
+
+	add	x0, x0, #8
+	str	xzr, [x0], #8
+
+	stp	q0, q1, [x0], #64
+	stp	q2, q3, [x0], #64
+	stp	q4, q5, [x0], #64
+	stp	q6, q7, [x0], #64
+	stp	q8, q9, [x0], #64
+	stp	q10, q11, [x0], #64
+	stp	q12, q13, [x0], #64
+	stp	q14, q15, [x0], #64
+	stp	q16, q17, [x0], #64
+	stp	q18, q19, [x0], #64
+	stp	q20, q21, [x0], #64
+	stp	q22, q23, [x0], #64
+	stp	q24, q25, [x0], #64
+	stp	q26, q27, [x0], #64
+	stp	q28, q29, [x0], #64
+	stp	q30, q31, [x0], #64
+
+	ret
+END(_ZN7_Unwind17Registers_aarch64C1Ev)
+
+	.hidden _ZNK7_Unwind17Registers_aarch646jumptoEv
+ENTRY(_ZNK7_Unwind17Registers_aarch646jumptoEv)
+	ldp	x2, x3, [x0, #16]
+	ldp	x4, x6, [x0, #32]
+	ldp	x6, x7, [x0, #48]
+	ldp	x8, x9, [x0, #64]
+	ldp	x10, x11, [x0, #80]
+	ldp	x12, x13, [x0, #96]
+	ldp	x14, x16, [x0, #112]
+	ldp	x16, x17, [x0, #128]
+	ldp	x18, x19, [x0, #144]
+	ldp	x20, x21, [x0, #160]
+	ldp	x22, x23, [x0, #176]
+	ldp	x24, x26, [x0, #192]
+	ldp	x26, x27, [x0, #208]
+	ldp	x28, x29, [x0, #224]
+	ldp	x30, x1, [x0, #240]
+	mov	sp, x1
+
+	ldp	x0, x1, [x0, #0]
+	ret
+END(_ZNK7_Unwind17Registers_aarch646jumptoEv)
+#endif /* __aarch64__ */
+
 #if defined(__arm__)
 	.fpu vfpv3
 	.hidden _ZN7_Unwind15Registers_arm32C1Ev

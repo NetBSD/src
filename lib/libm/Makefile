@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.160 2014/06/16 12:54:43 joerg Exp $
+#  $NetBSD: Makefile,v 1.161 2014/08/10 05:57:31 matt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -50,7 +50,15 @@ USE_SHLIBDIR=	yes
 # compiler_rt uses typeof() and __extension__
 LINTFLAGS += -g
 
-.if (${MACHINE_ARCH} == "alpha")
+.if (${MACHINE_CPU} == "aarch64")
+.PATH: ${.CURDIR}/arch/aarch64
+ARCH_SRCS = e_sqrt.S e_sqrtf.S s_fabsf.S
+ARCH_SRCS+= s_fma.S s_fmaf.S s_fmax.S s_fmaxf.S s_fmin.S s_fminf.S
+COPTS.e_sqrtl.c += -DHAVE_FENV_H
+COMMON_SRCS+= fenv.c
+COMMON_SRCS+= e_sqrtl.c
+COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
+.elif (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
