@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.12 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.13 2014/08/10 19:09:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.12 2013/11/08 00:38:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.13 2014/08/10 19:09:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.12 2013/11/08 00:38:26 rmind Exp $");
 void
 nbuf_init(nbuf_t *nbuf, struct mbuf *m, const ifnet_t *ifp)
 {
-	u_int ifid = npf_ifmap_id(ifp);
+	u_int ifid = npf_ifmap_getid(ifp);
 
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
 

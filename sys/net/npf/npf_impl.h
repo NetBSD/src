@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.56 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.57 2014/08/10 19:09:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ typedef void (*npf_workfunc_t)(void);
 #define	NPF_MAX_IFMAP		64
 
 /*
- * SESSION STATE STRUCTURES
+ * CONNECTION STATE STRUCTURES
  */
 
 #define	NPF_FLOW_FORW		0
@@ -180,7 +180,8 @@ u_int		npf_ifmap_register(const char *);
 void		npf_ifmap_flush(void);
 void		npf_ifmap_attach(ifnet_t *);
 void		npf_ifmap_detach(ifnet_t *);
-u_int		npf_ifmap_id(const ifnet_t *);
+u_int		npf_ifmap_getid(const ifnet_t *);
+const char *	npf_ifmap_getname(const u_int);
 
 /* Packet filter hooks. */
 int		npf_pfil_register(bool);
@@ -258,6 +259,7 @@ void		npf_ruleset_reload(npf_ruleset_t *, npf_ruleset_t *);
 npf_rule_t *	npf_ruleset_sharepm(npf_ruleset_t *, npf_natpolicy_t *);
 npf_natpolicy_t *npf_ruleset_findnat(npf_ruleset_t *, uint64_t);
 void		npf_ruleset_freealg(npf_ruleset_t *, npf_alg_t *);
+int		npf_ruleset_export(const npf_ruleset_t *, prop_array_t);
 
 int		npf_ruleset_add(npf_ruleset_t *, const char *, npf_rule_t *);
 int		npf_ruleset_remove(npf_ruleset_t *, const char *, uint64_t);
@@ -309,6 +311,7 @@ int		npf_state_tcp_timeout(const npf_state_t *);
 void		npf_nat_sysinit(void);
 void		npf_nat_sysfini(void);
 npf_natpolicy_t *npf_nat_newpolicy(prop_dictionary_t, npf_ruleset_t *);
+int		npf_nat_policyexport(const npf_natpolicy_t *, prop_dictionary_t);
 void		npf_nat_freepolicy(npf_natpolicy_t *);
 bool		npf_nat_cmppolicy(npf_natpolicy_t *, npf_natpolicy_t *);
 bool		npf_nat_sharepm(npf_natpolicy_t *, npf_natpolicy_t *);
