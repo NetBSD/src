@@ -68,10 +68,9 @@ getTargetNodeName(unsigned Opcode) const
   }
 }
 
-XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
-  : TargetLowering(XTM, new XCoreTargetObjectFile()),
-    TM(XTM),
-    Subtarget(*XTM.getSubtargetImpl()) {
+XCoreTargetLowering::XCoreTargetLowering(const TargetMachine &TM)
+    : TargetLowering(TM, new XCoreTargetObjectFile()), TM(TM),
+      Subtarget(TM.getSubtarget<XCoreSubtarget>()) {
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, &XCore::GRRegsRegClass);
@@ -92,14 +91,11 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
 
   // XCore does not have the NodeTypes below.
   setOperationAction(ISD::BR_CC,     MVT::i32,   Expand);
-  setOperationAction(ISD::SELECT_CC, MVT::i32,   Custom);
+  setOperationAction(ISD::SELECT_CC, MVT::i32,   Expand);
   setOperationAction(ISD::ADDC, MVT::i32, Expand);
   setOperationAction(ISD::ADDE, MVT::i32, Expand);
   setOperationAction(ISD::SUBC, MVT::i32, Expand);
   setOperationAction(ISD::SUBE, MVT::i32, Expand);
-
-  // Stop the combiner recombining select and set_cc
-  setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
 
   // 64bit
   setOperationAction(ISD::ADD, MVT::i64, Custom);
@@ -217,7 +213,6 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::BR_JT:              return LowerBR_JT(Op, DAG);
   case ISD::LOAD:               return LowerLOAD(Op, DAG);
   case ISD::STORE:              return LowerSTORE(Op, DAG);
-  case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
   case ISD::VAARG:              return LowerVAARG(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG);
   case ISD::SMUL_LOHI:          return LowerSMUL_LOHI(Op, DAG);
@@ -258,33 +253,21 @@ void XCoreTargetLowering::ReplaceNodeResults(SDNode *N,
 //  Misc Lower Operation implementation
 //===----------------------------------------------------------------------===//
 
-SDValue XCoreTargetLowering::
-LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
-{
-  SDLoc dl(Op);
-  SDValue Cond = DAG.getNode(ISD::SETCC, dl, MVT::i32, Op.getOperand(2),
-                             Op.getOperand(3), Op.getOperand(4));
-  return DAG.getNode(ISD::SELECT, dl, MVT::i32, Cond, Op.getOperand(0),
-                     Op.getOperand(1));
-}
-
 SDValue XCoreTargetLowering::getGlobalAddressWrapper(SDValue GA,
                                                      const GlobalValue *GV,
                                                      SelectionDAG &DAG) const {
   // FIXME there is no actual debug info here
   SDLoc dl(GA);
-  const GlobalValue *UnderlyingGV = GV;
-  // If GV is an alias then use the aliasee to determine the wrapper type
-  if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-    UnderlyingGV = GA->getAliasee();
-  if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(UnderlyingGV)) {
-    if ((GVar->isConstant() && GV->hasLocalLinkage()) ||
-        (GVar->hasSection() &&
-         StringRef(GVar->getSection()).startswith(".cp.")))
-      return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, GA);
-    return DAG.getNode(XCoreISD::DPRelativeWrapper, dl, MVT::i32, GA);
-  }
-  return DAG.getNode(XCoreISD::PCRelativeWrapper, dl, MVT::i32, GA);
+
+  if (GV->getType()->getElementType()->isFunctionTy())
+    return DAG.getNode(XCoreISD::PCRelativeWrapper, dl, MVT::i32, GA);
+
+  const auto *GVar = dyn_cast<GlobalVariable>(GV);
+  if ((GV->hasSection() && StringRef(GV->getSection()).startswith(".cp.")) ||
+      (GVar && GVar->isConstant() && GV->hasLocalLinkage()))
+    return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, GA);
+
+  return DAG.getNode(XCoreISD::DPRelativeWrapper, dl, MVT::i32, GA);
 }
 
 static bool IsSmallObject(const GlobalValue *GV, const XCoreTargetLowering &XTL) {
@@ -443,7 +426,9 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   assert(LD->getExtensionType() == ISD::NON_EXTLOAD &&
          "Unexpected extension type");
   assert(LD->getMemoryVT() == MVT::i32 && "Unexpected load EVT");
-  if (allowsUnalignedMemoryAccesses(LD->getMemoryVT()))
+  if (allowsMisalignedMemoryAccesses(LD->getMemoryVT(),
+                                     LD->getAddressSpace(),
+                                     LD->getAlignment()))
     return SDValue();
 
   unsigned ABIAlignment = getDataLayout()->
@@ -478,14 +463,15 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   if (LD->getAlignment() == 2) {
     SDValue Low = DAG.getExtLoad(ISD::ZEXTLOAD, DL, MVT::i32, Chain,
                                  BasePtr, LD->getPointerInfo(), MVT::i16,
-                                 LD->isVolatile(), LD->isNonTemporal(), 2);
+                                 LD->isVolatile(), LD->isNonTemporal(),
+                                 LD->isInvariant(), 2);
     SDValue HighAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, BasePtr,
                                    DAG.getConstant(2, MVT::i32));
     SDValue High = DAG.getExtLoad(ISD::EXTLOAD, DL, MVT::i32, Chain,
                                   HighAddr,
                                   LD->getPointerInfo().getWithOffset(2),
                                   MVT::i16, LD->isVolatile(),
-                                  LD->isNonTemporal(), 2);
+                                  LD->isNonTemporal(), LD->isInvariant(), 2);
     SDValue HighShifted = DAG.getNode(ISD::SHL, DL, MVT::i32, High,
                                       DAG.getConstant(16, MVT::i32));
     SDValue Result = DAG.getNode(ISD::OR, DL, MVT::i32, Low, HighShifted);
@@ -508,7 +494,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   CLI.setDebugLoc(DL).setChain(Chain)
     .setCallee(CallingConv::C, IntPtrTy,
                DAG.getExternalSymbol("__misaligned_load", getPointerTy()),
-               &Args, 0);
+               std::move(Args), 0);
 
   std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
   SDValue Ops[] = { CallResult.first, CallResult.second };
@@ -521,7 +507,9 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG) const
   StoreSDNode *ST = cast<StoreSDNode>(Op);
   assert(!ST->isTruncatingStore() && "Unexpected store type");
   assert(ST->getMemoryVT() == MVT::i32 && "Unexpected store EVT");
-  if (allowsUnalignedMemoryAccesses(ST->getMemoryVT())) {
+  if (allowsMisalignedMemoryAccesses(ST->getMemoryVT(),
+                                     ST->getAddressSpace(),
+                                     ST->getAlignment())) {
     return SDValue();
   }
   unsigned ABIAlignment = getDataLayout()->
@@ -568,7 +556,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG) const
   CLI.setDebugLoc(dl).setChain(Chain)
     .setCallee(CallingConv::C, Type::getVoidTy(*DAG.getContext()),
                DAG.getExternalSymbol("__misaligned_store", getPointerTy()),
-               &Args, 0);
+               std::move(Args), 0);
 
   std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
   return CallResult.second;
@@ -817,7 +805,8 @@ SDValue XCoreTargetLowering::LowerFRAMEADDR(SDValue Op,
     return SDValue();
 
   MachineFunction &MF = DAG.getMachineFunction();
-  const TargetRegisterInfo *RegInfo = getTargetMachine().getRegisterInfo();
+  const TargetRegisterInfo *RegInfo =
+      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
   return DAG.getCopyFromReg(DAG.getEntryNode(), SDLoc(Op),
                             RegInfo->getFrameRegister(MF), MVT::i32);
 }
@@ -863,7 +852,8 @@ LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
   SDLoc dl(Op);
 
   // Absolute SP = (FP + FrameToArgs) + Offset
-  const TargetRegisterInfo *RegInfo = getTargetMachine().getRegisterInfo();
+  const TargetRegisterInfo *RegInfo =
+      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
   SDValue Stack = DAG.getCopyFromReg(DAG.getEntryNode(), dl,
                             RegInfo->getFrameRegister(MF), MVT::i32);
   SDValue FrameToArgs = DAG.getNode(XCoreISD::FRAME_TO_ARGS_OFFSET, dl,
@@ -986,7 +976,7 @@ LowerATOMIC_LOAD(SDValue Op, SelectionDAG &DAG) const {
                        N->getBasePtr(), N->getPointerInfo(),
                        N->isVolatile(), N->isNonTemporal(),
                        N->isInvariant(), N->getAlignment(),
-                       N->getTBAAInfo(), N->getRanges());
+                       N->getAAInfo(), N->getRanges());
   }
   if (N->getMemoryVT() == MVT::i16) {
     if (N->getAlignment() < 2)
@@ -994,13 +984,13 @@ LowerATOMIC_LOAD(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getExtLoad(ISD::EXTLOAD, SDLoc(Op), MVT::i32, N->getChain(),
                           N->getBasePtr(), N->getPointerInfo(), MVT::i16,
                           N->isVolatile(), N->isNonTemporal(),
-                          N->getAlignment(), N->getTBAAInfo());
+                          N->isInvariant(), N->getAlignment(), N->getAAInfo());
   }
   if (N->getMemoryVT() == MVT::i8)
     return DAG.getExtLoad(ISD::EXTLOAD, SDLoc(Op), MVT::i32, N->getChain(),
                           N->getBasePtr(), N->getPointerInfo(), MVT::i8,
                           N->isVolatile(), N->isNonTemporal(),
-                          N->getAlignment(), N->getTBAAInfo());
+                          N->isInvariant(), N->getAlignment(), N->getAAInfo());
   return SDValue();
 }
 
@@ -1016,7 +1006,7 @@ LowerATOMIC_STORE(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getStore(N->getChain(), SDLoc(Op), N->getVal(),
                         N->getBasePtr(), N->getPointerInfo(),
                         N->isVolatile(), N->isNonTemporal(),
-                        N->getAlignment(), N->getTBAAInfo());
+                        N->getAlignment(), N->getAAInfo());
   }
   if (N->getMemoryVT() == MVT::i16) {
     if (N->getAlignment() < 2)
@@ -1024,13 +1014,13 @@ LowerATOMIC_STORE(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getTruncStore(N->getChain(), SDLoc(Op), N->getVal(),
                              N->getBasePtr(), N->getPointerInfo(), MVT::i16,
                              N->isVolatile(), N->isNonTemporal(),
-                             N->getAlignment(), N->getTBAAInfo());
+                             N->getAlignment(), N->getAAInfo());
   }
   if (N->getMemoryVT() == MVT::i8)
     return DAG.getTruncStore(N->getChain(), SDLoc(Op), N->getVal(),
                              N->getBasePtr(), N->getPointerInfo(), MVT::i8,
                              N->isVolatile(), N->isNonTemporal(),
-                             N->getAlignment(), N->getTBAAInfo());
+                             N->getAlignment(), N->getAAInfo());
   return SDValue();
 }
 
@@ -1135,8 +1125,8 @@ XCoreTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs,
+                 *DAG.getContext());
 
   // The ABI dictates there should be one stack slot available to the callee
   // on function entry (for saving lr).
@@ -1146,8 +1136,8 @@ XCoreTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
 
   SmallVector<CCValAssign, 16> RVLocs;
   // Analyze return values to determine the number of bytes of stack required.
-  CCState RetCCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                    getTargetMachine(), RVLocs, *DAG.getContext());
+  CCState RetCCInfo(CallConv, isVarArg, DAG.getMachineFunction(), RVLocs,
+                    *DAG.getContext());
   RetCCInfo.AllocateStack(CCInfo.getNextStackOffset(), 4);
   RetCCInfo.AnalyzeCallResult(Ins, RetCC_XCore);
 
@@ -1301,8 +1291,8 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs,
+                 *DAG.getContext());
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_XCore);
 
@@ -1460,7 +1450,7 @@ CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,
                const SmallVectorImpl<ISD::OutputArg> &Outs,
                LLVMContext &Context) const {
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallConv, isVarArg, MF, getTargetMachine(), RVLocs, Context);
+  CCState CCInfo(CallConv, isVarArg, MF, RVLocs, Context);
   if (!CCInfo.CheckReturn(Outs, RetCC_XCore))
     return false;
   if (CCInfo.getNextStackOffset() != 0 && isVarArg)
@@ -1484,8 +1474,8 @@ XCoreTargetLowering::LowerReturn(SDValue Chain,
   SmallVector<CCValAssign, 16> RVLocs;
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), RVLocs,
+                 *DAG.getContext());
 
   // Analyze return values.
   if (!isVarArg)
@@ -1558,7 +1548,8 @@ XCoreTargetLowering::LowerReturn(SDValue Chain,
 MachineBasicBlock *
 XCoreTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                  MachineBasicBlock *BB) const {
-  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
+  const TargetInstrInfo &TII =
+      *getTargetMachine().getSubtargetImpl()->getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
   assert((MI->getOpcode() == XCore::SELECT_CC) &&
          "Unexpected instr type to insert");
@@ -1820,7 +1811,9 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
     // Replace unaligned store of unaligned load with memmove.
     StoreSDNode *ST  = cast<StoreSDNode>(N);
     if (!DCI.isBeforeLegalize() ||
-        allowsUnalignedMemoryAccesses(ST->getMemoryVT()) ||
+        allowsMisalignedMemoryAccesses(ST->getMemoryVT(),
+                                       ST->getAddressSpace(),
+                                       ST->getAlignment()) ||
         ST->isVolatile() || ST->isIndexed()) {
       break;
     }
@@ -1929,7 +1922,7 @@ XCoreTargetLowering::isLegalAddressingMode(const AddrMode &AM,
   if (Ty->getTypeID() == Type::VoidTyID)
     return AM.Scale == 0 && isImmUs(AM.BaseOffs) && isImmUs4(AM.BaseOffs);
 
-  const DataLayout *TD = TM.getDataLayout();
+  const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
   unsigned Size = TD->getTypeAllocSize(Ty);
   if (AM.BaseGV) {
     return Size >= 4 && !AM.HasBaseReg && AM.Scale == 0 &&

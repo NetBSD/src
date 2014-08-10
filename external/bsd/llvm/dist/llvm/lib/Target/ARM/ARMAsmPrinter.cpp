@@ -76,13 +76,15 @@ void ARMAsmPrinter::EmitFunctionEntryLabel() {
 }
 
 void ARMAsmPrinter::EmitXXStructor(const Constant *CV) {
-  uint64_t Size = TM.getDataLayout()->getTypeAllocSize(CV->getType());
+  uint64_t Size =
+      TM.getSubtargetImpl()->getDataLayout()->getTypeAllocSize(CV->getType());
   assert(Size && "C++ constructor pointer had zero size!");
 
   const GlobalValue *GV = dyn_cast<GlobalValue>(CV->stripPointerCasts());
   assert(GV && "C++ constructor pointer was not a GlobalValue!");
 
-  const MCExpr *E = MCSymbolRefExpr::Create(getSymbol(GV),
+  const MCExpr *E = MCSymbolRefExpr::Create(GetARMGVSymbol(GV,
+                                                           ARMII::MO_NO_FLAG),
                                             (Subtarget->isTargetELF()
                                              ? MCSymbolRefExpr::VK_ARM_TARGET1
                                              : MCSymbolRefExpr::VK_None),
@@ -135,7 +137,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     assert(!MO.getSubReg() && "Subregs should be eliminated!");
     if(ARM::GPRPairRegClass.contains(Reg)) {
       const MachineFunction &MF = *MI->getParent()->getParent();
-      const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
+      const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
       Reg = TRI->getSubReg(Reg, ARM::gsub_0);
     }
     O << ARMInstPrinter::getRegisterName(Reg);
@@ -164,7 +166,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     else if ((Modifier && strcmp(Modifier, "hi16") == 0) ||
              (TF & ARMII::MO_HI16))
       O << ":upper16:";
-    O << *getSymbol(GV);
+    O << *GetARMGVSymbol(GV, TF);
 
     printOffset(MO.getOffset(), O);
     if (TF == ARMII::MO_PLT)
@@ -181,7 +183,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 
 MCSymbol *ARMAsmPrinter::
 GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
-  const DataLayout *DL = TM.getDataLayout();
+  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
   SmallString<60> Name;
   raw_svector_ostream(Name) << DL->getPrivateGlobalPrefix() << "JTI"
     << getFunctionNumber() << '_' << uid << '_' << uid2;
@@ -190,7 +192,7 @@ GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
 
 
 MCSymbol *ARMAsmPrinter::GetARMSJLJEHLabel() const {
-  const DataLayout *DL = TM.getDataLayout();
+  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
   SmallString<60> Name;
   raw_svector_ostream(Name) << DL->getPrivateGlobalPrefix() << "SJLJEH"
     << getFunctionNumber();
@@ -228,7 +230,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
     case 'y': // Print a VFP single precision register as indexed double.
       if (MI->getOperand(OpNum).isReg()) {
         unsigned Reg = MI->getOperand(OpNum).getReg();
-        const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
+        const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
         // Find the 'd' register that has this 's' register as a sub-register,
         // and determine the lane number.
         for (MCSuperRegIterator SR(Reg, TRI); SR.isValid(); ++SR) {
@@ -260,7 +262,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       // inline asm statement.
       O << "{";
       if (ARM::GPRPairRegClass.contains(RegBegin)) {
-        const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
+        const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
         unsigned Reg0 = TRI->getSubReg(RegBegin, ARM::gsub_0);
         O << ARMInstPrinter::getRegisterName(Reg0) << ", ";
         RegBegin = TRI->getSubReg(RegBegin, ARM::gsub_1);
@@ -316,7 +318,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         const MachineOperand &MO = MI->getOperand(OpNum);
         if (!MO.isReg())
           return true;
-        const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
+        const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
         unsigned Reg = TRI->getSubReg(MO.getReg(), ExtraCode[0] == 'Q' ?
             ARM::gsub_0 : ARM::gsub_1);
         O << ARMInstPrinter::getRegisterName(Reg);
@@ -342,7 +344,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       unsigned Reg = MI->getOperand(OpNum).getReg();
       if (!ARM::QPRRegClass.contains(Reg))
         return true;
-      const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
+      const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
       unsigned SubReg = TRI->getSubReg(Reg, ExtraCode[0] == 'e' ?
                                        ARM::dsub_0 : ARM::dsub_1);
       O << ARMInstPrinter::getRegisterName(SubReg);
@@ -357,7 +359,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       if (!MO.isReg())
         return true;
       const MachineFunction &MF = *MI->getParent()->getParent();
-      const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
+      const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
       unsigned Reg = MO.getReg();
       if(!ARM::GPRPairRegClass.contains(Reg))
         return false;
@@ -477,6 +479,9 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // Emit ARM Build Attributes
   if (Subtarget->isTargetELF())
     emitAttributes();
+
+  if (!M.getModuleInlineAsm().empty() && Subtarget->isThumb())
+    OutStreamer.EmitAssemblerFlag(MCAF_Code16);
 }
 
 static void
@@ -557,7 +562,7 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
     MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
     if (!Stubs.empty()) {
       OutStreamer.SwitchSection(TLOFELF.getDataRelSection());
-      const DataLayout *TD = TM.getDataLayout();
+      const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
 
       for (auto &stub: Stubs) {
         OutStreamer.EmitLabel(stub.first);
@@ -730,6 +735,43 @@ void ARMAsmPrinter::emitAttributes() {
   if (Subtarget->hasDivideInARMMode() && !Subtarget->hasV8Ops())
       ATS.emitAttribute(ARMBuildAttrs::DIV_use, ARMBuildAttrs::AllowDIVExt);
 
+  if (MMI) {
+    if (const Module *SourceModule = MMI->getModule()) {
+      // ABI_PCS_wchar_t to indicate wchar_t width
+      // FIXME: There is no way to emit value 0 (wchar_t prohibited).
+      if (auto WCharWidthValue = cast_or_null<ConstantInt>(
+              SourceModule->getModuleFlag("wchar_size"))) {
+        int WCharWidth = WCharWidthValue->getZExtValue();
+        assert((WCharWidth == 2 || WCharWidth == 4) &&
+               "wchar_t width must be 2 or 4 bytes");
+        ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_wchar_t, WCharWidth);
+      }
+
+      // ABI_enum_size to indicate enum width
+      // FIXME: There is no way to emit value 0 (enums prohibited) or value 3
+      //        (all enums contain a value needing 32 bits to encode).
+      if (auto EnumWidthValue = cast_or_null<ConstantInt>(
+              SourceModule->getModuleFlag("min_enum_size"))) {
+        int EnumWidth = EnumWidthValue->getZExtValue();
+        assert((EnumWidth == 1 || EnumWidth == 4) &&
+               "Minimum enum width must be 1 or 4 bytes");
+        int EnumBuildAttr = EnumWidth == 1 ? 1 : 2;
+        ATS.emitAttribute(ARMBuildAttrs::ABI_enum_size, EnumBuildAttr);
+      }
+    }
+  }
+
+  // TODO: We currently only support either reserving the register, or treating
+  // it as another callee-saved register, but not as SB or a TLS pointer; It
+  // would instead be nicer to push this from the frontend as metadata, as we do
+  // for the wchar and enum size tags
+  if (Subtarget->isR9Reserved())
+      ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_R9_use,
+                        ARMBuildAttrs::R9Reserved);
+  else
+      ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_R9_use,
+                        ARMBuildAttrs::R9IsGPR);
+
   if (Subtarget->hasTrustZone() && Subtarget->hasVirtualization())
       ATS.emitAttribute(ARMBuildAttrs::Virtualization_use,
                         ARMBuildAttrs::AllowTZVirtualization);
@@ -768,29 +810,48 @@ getModifierVariantKind(ARMCP::ARMCPModifier Modifier) {
 
 MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV,
                                         unsigned char TargetFlags) {
-  bool isIndirect = Subtarget->isTargetMachO() &&
-    (TargetFlags & ARMII::MO_NONLAZY) &&
-    Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
-  if (!isIndirect)
-    return getSymbol(GV);
+  if (Subtarget->isTargetMachO()) {
+    bool IsIndirect = (TargetFlags & ARMII::MO_NONLAZY) &&
+      Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
 
-  // FIXME: Remove this when Darwin transition to @GOT like syntax.
-  MCSymbol *MCSym = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-  MachineModuleInfoMachO &MMIMachO =
-    MMI->getObjFileInfo<MachineModuleInfoMachO>();
-  MachineModuleInfoImpl::StubValueTy &StubSym =
-    GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(MCSym) :
-    MMIMachO.getGVStubEntry(MCSym);
-  if (!StubSym.getPointer())
-    StubSym = MachineModuleInfoImpl::
-      StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
-  return MCSym;
+    if (!IsIndirect)
+      return getSymbol(GV);
+
+    // FIXME: Remove this when Darwin transition to @GOT like syntax.
+    MCSymbol *MCSym = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
+    MachineModuleInfoMachO &MMIMachO =
+      MMI->getObjFileInfo<MachineModuleInfoMachO>();
+    MachineModuleInfoImpl::StubValueTy &StubSym =
+      GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(MCSym)
+                                : MMIMachO.getGVStubEntry(MCSym);
+    if (!StubSym.getPointer())
+      StubSym = MachineModuleInfoImpl::StubValueTy(getSymbol(GV),
+                                                   !GV->hasInternalLinkage());
+    return MCSym;
+  } else if (Subtarget->isTargetCOFF()) {
+    assert(Subtarget->isTargetWindows() &&
+           "Windows is the only supported COFF target");
+
+    bool IsIndirect = (TargetFlags & ARMII::MO_DLLIMPORT);
+    if (!IsIndirect)
+      return getSymbol(GV);
+
+    SmallString<128> Name;
+    Name = "__imp_";
+    getNameWithPrefix(Name, GV);
+
+    return OutContext.GetOrCreateSymbol(Name);
+  } else if (Subtarget->isTargetELF()) {
+    return getSymbol(GV);
+  }
+  llvm_unreachable("unexpected target");
 }
 
 void ARMAsmPrinter::
 EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
-  const DataLayout *DL = TM.getDataLayout();
-  int Size = TM.getDataLayout()->getTypeAllocSize(MCPV->getType());
+  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
+  int Size =
+      TM.getSubtargetImpl()->getDataLayout()->getTypeAllocSize(MCPV->getType());
 
   ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
 
@@ -928,7 +989,7 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
     const MCExpr *MBBSymbolExpr = MCSymbolRefExpr::Create(MBB->getSymbol(),
-                                                      OutContext);
+                                                          OutContext);
     // If this isn't a TBB or TBH, the entries are direct branch instructions.
     if (OffsetWidth == 4) {
       EmitToStreamer(OutStreamer, MCInstBuilder(ARM::t2B)
@@ -968,7 +1029,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
   MCTargetStreamer &TS = *OutStreamer.getTargetStreamer();
   ARMTargetStreamer &ATS = static_cast<ARMTargetStreamer &>(TS);
   const MachineFunction &MF = *MI->getParent()->getParent();
-  const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
+  const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
   const ARMFunctionInfo &AFI = *MF.getInfo<ARMFunctionInfo>();
 
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
@@ -1106,7 +1167,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
 #include "ARMGenMCPseudoLowering.inc"
 
 void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  const DataLayout *DL = TM.getDataLayout();
+  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
 
   // If we just ended a constant pool, mark it as such.
   if (InConstantPool && MI->getOpcode() != ARM::CONSTPOOL_ENTRY) {
@@ -1225,8 +1286,10 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       // Add 's' bit operand (always reg0 for this)
       .addReg(0));
 
-    const GlobalValue *GV = MI->getOperand(0).getGlobal();
-    MCSymbol *GVSym = getSymbol(GV);
+    const MachineOperand &Op = MI->getOperand(0);
+    const GlobalValue *GV = Op.getGlobal();
+    const unsigned TF = Op.getTargetFlags();
+    MCSymbol *GVSym = GetARMGVSymbol(GV, TF);
     const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
     EmitToStreamer(OutStreamer, MCInstBuilder(ARM::Bcc)
       .addExpr(GVSymExpr)
