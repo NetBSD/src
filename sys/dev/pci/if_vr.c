@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.113 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.114 2014/08/10 16:44:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.113 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.114 2014/08/10 16:44:36 tls Exp $");
 
 
 
@@ -1742,7 +1742,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, sc->vr_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	if (pmf_device_register1(self, NULL, vr_resume, vr_shutdown))
 		pmf_class_network_register(self, ifp);

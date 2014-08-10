@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.45 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: if_msk.c,v 1.46 2014/08/10 16:44:36 tls Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.45 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.46 2014/08/10 16:44:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1117,7 +1117,7 @@ msk_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sk_dev),
-		RND_TYPE_NET, 0);
+		RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	DPRINTFN(2, ("msk_attach: end\n"));
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.2 2014/08/10 16:44:34 tls Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -320,7 +320,7 @@ harmony_attach(device_t parent, device_t self, void *aux)
 	audio_attach_mi(&harmony_sa_hw_if, sc, sc->sc_dv);
 
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
-	    RND_TYPE_UNKNOWN, 0);
+	    RND_TYPE_UNKNOWN, RND_FLAG_DEFAULT);
 
 	callout_init(&sc->sc_acc_tmo, 0);
 	callout_setfunc(&sc->sc_acc_tmo, harmony_acc_tmo, sc);

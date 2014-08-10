@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.44 2014/07/25 08:10:32 dholland Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.45 2014/08/10 16:44:33 tls Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.44 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.45 2014/08/10 16:44:33 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -248,7 +248,8 @@ ixpcom_attach_subr(struct ixpcom_softc *sc)
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_COLLECT_TIME|
+					RND_FLAG_ESTIMATE_TIME);
 #endif
 
 	/* if there are no enable/disable functions, assume the device

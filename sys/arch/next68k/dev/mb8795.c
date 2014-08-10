@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.52 2014/03/24 20:01:03 christos Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.53 2014/08/10 16:44:34 tls Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.52 2014/03/24 20:01:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.53 2014/08/10 16:44:34 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -138,7 +138,7 @@ mb8795_config(struct mb8795_softc *sc, int *media, int nmedia, int defmedia)
     panic("mb8795_config: can't establish shutdownhook");
 
   rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-                    RND_TYPE_NET, 0);
+                    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	DPRINTF(("%s: leaving mb8795_config()\n",device_xname(sc->sc_dev)));
 }

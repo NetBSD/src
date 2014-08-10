@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.143 2014/05/18 18:43:46 christos Exp $	*/
+/*	$NetBSD: if_de.c,v 1.144 2014/08/10 16:44:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.143 2014/05/18 18:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.144 2014/08/10 16:44:36 tls Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5143,7 +5143,7 @@ tulip_attach(
 
 #if defined(__NetBSD__)
     rnd_attach_source(&sc->tulip_rndsource, device_xname(sc->tulip_dev),
-		      RND_TYPE_NET, 0);
+		      RND_TYPE_NET, RND_FLAG_DEFAULT);
 #endif
 }
 

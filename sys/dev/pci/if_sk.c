@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.77 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.78 2014/08/10 16:44:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.77 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.78 2014/08/10 16:44:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1462,7 +1462,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, sc_if->sk_enaddr);
 
         rnd_attach_source(&sc->rnd_source, device_xname(sc->sk_dev),
-            RND_TYPE_NET, 0);
+            RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	if (pmf_device_register(self, NULL, sk_resume))
 		pmf_class_network_register(self, ifp);

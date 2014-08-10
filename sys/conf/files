@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1095 2014/07/30 13:32:09 ozaki-r Exp $
+#	$NetBSD: files,v 1.1096 2014/08/10 16:44:35 tls Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -116,6 +116,9 @@ defflag	opt_gre.h		GRE_DEBUG
 defflag opt_wapbl.h		WAPBL WAPBL_DEBUG
 defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 
+# printf entropy source
+defflag opt_rnd_printf.h	RND_PRINTF
+
 # compatibility options
 #
 defflag opt_compat_netbsd.h	COMPAT_NETBSD
@@ -165,6 +168,9 @@ include "opencrypto/files.opencrypto"
 
 # NIST SP800.90 CTR DRBG
 include "crypto/nist_ctr_drbg/files.nist_ctr_drbg"
+
+# ChaCha-based fast PRNG
+include "crypto/cprng_fast/files.cprng_fast"
 
 #
 # Kernel history/tracing. Old UVMHIST depends upon this.
