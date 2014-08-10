@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.153.2.3 2014/07/17 14:03:33 tls Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.153.2.4 2014/08/10 08:10:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.153.2.3 2014/07/17 14:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.153.2.4 2014/08/10 08:10:31 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
 #include "opt_dump.h"
+#include "opt_rnd_printf.h"
 
 #include <sys/param.h>
 #include <sys/stdint.h>
@@ -75,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.153.2.3 2014/07/17 14:03:33 tls Exp $
 #endif
 
 static kmutex_t kprintf_mtx;
-static bool kprintf_inited = false, kprintf_inited_callout = false;
+static bool kprintf_inited = false;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -113,11 +114,14 @@ long	panicstart, panicend;	/* position in the msgbuf of the start and
 				   end of the formatted panicstr. */
 int	doing_shutdown;	/* set to indicate shutdown in progress */
 
+#ifdef RND_PRINTF
+static bool kprintf_inited_callout = false;
 static SHA512_CTX kprnd_sha;
 static uint8_t kprnd_accum[SHA512_DIGEST_LENGTH];
 static int kprnd_added;
 
 static struct callout kprnd_callout;
+#endif
 
 #ifndef	DUMP_ON_PANIC
 #define	DUMP_ON_PANIC	1
@@ -142,6 +146,7 @@ const char HEXDIGITS[] = "0123456789ABCDEF";
  * functions
  */
 
+#ifdef RND_PRINTF
 static void kprintf_rnd_get(size_t bytes, void *priv)
 {
 	if (kprnd_added)  {
@@ -167,6 +172,8 @@ static void kprintf_rnd_callout(void *arg)
 	callout_schedule(&kprnd_callout, hz);
 }
 
+#endif
+
 /*
  * Locking is inited fairly early in MI bootstrap.  Before that
  * prints are done unlocked.  But that doesn't really matter,
@@ -177,11 +184,14 @@ kprintf_init(void)
 {
 
 	KASSERT(!kprintf_inited && cold); /* not foolproof, but ... */
+#ifdef RND_PRINTF
 	SHA512_Init(&kprnd_sha);
+#endif
 	mutex_init(&kprintf_mtx, MUTEX_DEFAULT, IPL_HIGH);
 	kprintf_inited = true;
 }
 
+#ifdef RND_PRINTF
 void
 kprintf_init_callout(void)
 {
@@ -191,6 +201,7 @@ kprintf_init_callout(void)
 	callout_schedule(&kprnd_callout, hz);
 	kprintf_inited_callout = true;
 }
+#endif
 
 void
 kprintf_lock(void)
@@ -450,9 +461,10 @@ addlog(const char *fmt, ...)
 static void
 putchar(int c, int flags, struct tty *tp)
 {
+#ifdef RND_PRINTF
 	uint8_t rbuf[SHA512_BLOCK_LENGTH];
 	static int cursor;
-
+#endif
 	if (panicstr)
 		constty = NULL;
 	if ((flags & TOCONS) && tp == NULL && constty) {
@@ -475,6 +487,7 @@ putchar(int c, int flags, struct tty *tp)
 	}
 #endif
 
+#ifdef RND_PRINTF
 	if (__predict_true(kprintf_inited)) {
 		rbuf[cursor] = c;
 		if (cursor == sizeof(rbuf) - 1) {
@@ -485,6 +498,7 @@ putchar(int c, int flags, struct tty *tp)
 			cursor++;
 		}
 	}
+#endif
 }
 
 /*
@@ -1536,7 +1550,8 @@ done:
 	(*v_flush)();
 
 	(void)nanotime(&ts);
+#ifdef RND_PRINTF
 	SHA512_Update(&kprnd_sha, (char *)&ts, sizeof(ts));
-
+#endif
 	return ret;
 }

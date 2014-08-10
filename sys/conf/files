@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1090.2.3 2014/08/10 06:54:36 tls Exp $
+#	$NetBSD: files,v 1.1090.2.4 2014/08/10 08:10:31 tls Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -115,6 +115,9 @@ defflag	opt_gre.h		GRE_DEBUG
 # Write Ahead Physical Block Logging
 defflag opt_wapbl.h		WAPBL WAPBL_DEBUG
 defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
+
+# printf entropy source
+defflag opt_rnd_printf.h	RND_PRINTF
 
 # compatibility options
 #
