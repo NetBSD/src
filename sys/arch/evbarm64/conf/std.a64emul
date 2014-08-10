@@ -1,0 +1,14 @@
+# $NetBSD: std.a64emul,v 1.1 2014/08/10 05:47:38 matt Exp $
+
+machine evbarm64 aarch64 arm
+maxpartitions	16
+
+include "arch/evbarm64/conf/std.evbarm64"
+
+# Pull in A64EMUL config definitions
+include "arch/evbarm64/conf/files.a64emul"
+
+options 	PIC_MAXPICS=1
+options 	PIC_MAXSOURCES=64
+options 	PIC_MAXMAXSOURCES=64
+options		__HAVE_PIC_SET_PRIORITY
