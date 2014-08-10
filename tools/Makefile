@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.176 2014/07/15 13:19:44 christos Exp $
+#	$NetBSD: Makefile,v 1.177 2014/08/10 05:57:31 matt Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -25,7 +25,7 @@
 TOOLS_BUILDRUMP?=no
 
 .if ${TOOLCHAIN_MISSING} == "no"
-. if defined(HAVE_GCC)
+. if defined(HAVE_GCC) && ${HAVE_GCC} > 0
 TOOLCHAIN_BITS= gmake .WAIT
 TOOLCHAIN_BITS+= gmp .WAIT
 TOOLCHAIN_BITS+= mpfr .WAIT
@@ -37,7 +37,7 @@ TOOLCHAIN_BITS+= mpc .WAIT
 TOOLCHAIN_BITS+= binutils .WAIT
 .endif
 
-.if defined(HAVE_GCC)
+.if defined(HAVE_GCC) && ${HAVE_GCC} > 0
 . if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS+= gcc
 .  if ${MKCROSSGDB:Uno} != "no" || make(obj)
