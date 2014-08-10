@@ -190,7 +190,7 @@ TEST(TripleTest, Normalization) {
          ++Vendor) {
       C[1] = Triple::getVendorTypeName(Triple::VendorType(Vendor));
       for (int OS = 1+Triple::UnknownOS; OS <= Triple::Minix; ++OS) {
-        if (OS == Triple::Cygwin || OS == Triple::MinGW32 || OS == Triple::Win32)
+        if (OS == Triple::Win32)
           continue;
 
         C[2] = Triple::getOSTypeName(Triple::OSType(OS));
@@ -563,5 +563,17 @@ TEST(TripleTest, NormalizeWindows) {
   EXPECT_EQ("i686-pc-windows-msvc", Triple::normalize("i686-pc-windows-msvc"));
 
   EXPECT_EQ("i686-pc-windows-elf", Triple::normalize("i686-pc-windows-elf-elf"));
+}
+
+TEST(TripleTest, getARMCPUForArch) {
+  {
+    llvm::Triple Triple("armv7s-apple-ios7");
+    EXPECT_STREQ("swift", Triple.getARMCPUForArch());
+  }
+  {
+    llvm::Triple Triple("armv7-apple-ios7");
+    EXPECT_STREQ("cortex-a8", Triple.getARMCPUForArch());
+    EXPECT_STREQ("swift", Triple.getARMCPUForArch("armv7s"));
+  }
 }
 }

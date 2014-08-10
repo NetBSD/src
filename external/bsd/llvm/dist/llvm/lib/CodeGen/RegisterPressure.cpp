@@ -41,7 +41,7 @@ static void decreaseSetPressure(std::vector<unsigned> &CurrSetPressure,
   }
 }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+LLVM_DUMP_METHOD
 void llvm::dumpRegSetPressure(ArrayRef<unsigned> SetPressure,
                               const TargetRegisterInfo *TRI) {
   bool Empty = true;
@@ -55,6 +55,7 @@ void llvm::dumpRegSetPressure(ArrayRef<unsigned> SetPressure,
     dbgs() << "\n";
 }
 
+LLVM_DUMP_METHOD
 void RegisterPressure::dump(const TargetRegisterInfo *TRI) const {
   dbgs() << "Max Pressure: ";
   dumpRegSetPressure(MaxSetPressure, TRI);
@@ -68,6 +69,7 @@ void RegisterPressure::dump(const TargetRegisterInfo *TRI) const {
   dbgs() << '\n';
 }
 
+LLVM_DUMP_METHOD
 void RegPressureTracker::dump() const {
   if (!isTopClosed() || !isBottomClosed()) {
     dbgs() << "Curr Pressure: ";
@@ -75,7 +77,6 @@ void RegPressureTracker::dump() const {
   }
   P.dump(TRI);
 }
-#endif
 
 /// Increase the current pressure as impacted by these registers and bump
 /// the high water mark if needed.
@@ -184,7 +185,7 @@ void RegPressureTracker::init(const MachineFunction *mf,
   reset();
 
   MF = mf;
-  TRI = MF->getTarget().getRegisterInfo();
+  TRI = MF->getSubtarget().getRegisterInfo();
   RCI = rci;
   MRI = &MF->getRegInfo();
   MBB = mbb;

@@ -20,20 +20,20 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/MC/MCAnalysis/MCAtom.h"
+#include "llvm/MC/MCAnalysis/MCFunction.h"
+#include "llvm/MC/MCAnalysis/MCModule.h"
+#include "llvm/MC/MCAnalysis/MCModuleYAML.h"
+#include "llvm/MC/MCAnalysis/MCObjectSymbolizer.h"
 #include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCAtom.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
-#include "llvm/MC/MCFunction.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
-#include "llvm/MC/MCModule.h"
-#include "llvm/MC/MCModuleYAML.h"
 #include "llvm/MC/MCObjectDisassembler.h"
 #include "llvm/MC/MCObjectFileInfo.h"
-#include "llvm/MC/MCObjectSymbolizer.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -57,10 +57,10 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+#include <system_error>
 
 using namespace llvm;
 using namespace object;
@@ -94,6 +94,12 @@ llvm::TripleName("triple", cl::desc("Target triple to disassemble for, "
                                     "see -version for available targets"));
 
 cl::opt<std::string>
+llvm::MCPU("mcpu",
+     cl::desc("Target a specific cpu type (-mcpu=help for details)"),
+     cl::value_desc("cpu-name"),
+     cl::init(""));
+
+cl::opt<std::string>
 llvm::ArchName("arch", cl::desc("Target arch to disassemble for, "
                                 "see -version for available targets"));
 
@@ -107,8 +113,8 @@ static cl::alias
 SectionHeadersShorter("h", cl::desc("Alias for --section-headers"),
                       cl::aliasopt(SectionHeaders));
 
-static cl::list<std::string>
-MAttrs("mattr",
+cl::list<std::string>
+llvm::MAttrs("mattr",
   cl::CommaSeparated,
   cl::desc("Target specific attributes"),
   cl::value_desc("a1,+a2,-a3,..."));
@@ -148,7 +154,7 @@ YAMLCFG("yaml-cfg",
 
 static StringRef ToolName;
 
-bool llvm::error(error_code EC) {
+bool llvm::error(std::error_code EC) {
   if (!EC)
     return false;
 
@@ -303,7 +309,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   }
 
   std::unique_ptr<const MCSubtargetInfo> STI(
-      TheTarget->createMCSubtargetInfo(TripleName, "", FeaturesStr));
+      TheTarget->createMCSubtargetInfo(TripleName, MCPU, FeaturesStr));
   if (!STI) {
     errs() << "error: no subtarget info for target " << TripleName << "\n";
     return;
@@ -395,7 +401,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
   // Create a mapping, RelocSecs = SectionRelocMap[S], where sections
   // in RelocSecs contain the relocations for section S.
-  error_code EC;
+  std::error_code EC;
   std::map<SectionRef, SmallVector<SectionRef, 1>> SectionRelocMap;
   for (const SectionRef &Section : Obj->sections()) {
     section_iterator Sec2 = Section.getRelocatedSection();
@@ -620,15 +626,13 @@ static void PrintSectionHeaders(const ObjectFile *Obj) {
 }
 
 static void PrintSectionContents(const ObjectFile *Obj) {
-  error_code EC;
+  std::error_code EC;
   for (const SectionRef &Section : Obj->sections()) {
     StringRef Name;
     StringRef Contents;
     uint64_t BaseAddr;
     bool BSS;
     if (error(Section.getName(Name)))
-      continue;
-    if (error(Section.getContents(Contents)))
       continue;
     if (error(Section.getAddress(BaseAddr)))
       continue;
@@ -637,11 +641,17 @@ static void PrintSectionContents(const ObjectFile *Obj) {
 
     outs() << "Contents of section " << Name << ":\n";
     if (BSS) {
+      uint64_t Size;
+      if (error(Section.getSize(Size)))
+        continue;
       outs() << format("<skipping contents of bss section at [%04" PRIx64
-                       ", %04" PRIx64 ")>\n", BaseAddr,
-                       BaseAddr + Contents.size());
+                       ", %04" PRIx64 ")>\n",
+                       BaseAddr, BaseAddr + Size);
       continue;
     }
+
+    if (error(Section.getContents(Contents)))
+      continue;
 
     // Dump out the content as hex and printable ascii characters.
     for (std::size_t addr = 0, end = Contents.size(); addr < end; addr += 16) {
@@ -809,10 +819,12 @@ static void PrintUnwindInfo(const ObjectFile *o) {
 
   if (const COFFObjectFile *coff = dyn_cast<COFFObjectFile>(o)) {
     printCOFFUnwindInfo(coff);
-  } else {
+  } else if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
+    printMachOUnwindInfo(MachO);
+  else {
     // TODO: Extract DWARF dump tool to objdump.
     errs() << "This operation is only currently supported "
-              "for COFF object files.\n";
+              "for COFF and MachO object files.\n";
     return;
   }
 }
@@ -850,15 +862,15 @@ static void DumpObject(const ObjectFile *o) {
 static void DumpArchive(const Archive *a) {
   for (Archive::child_iterator i = a->child_begin(), e = a->child_end(); i != e;
        ++i) {
-    std::unique_ptr<Binary> child;
-    if (error_code EC = i->getAsBinary(child)) {
+    ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->getAsBinary();
+    if (std::error_code EC = ChildOrErr.getError()) {
       // Ignore non-object files.
       if (EC != object_error::invalid_file_type)
         errs() << ToolName << ": '" << a->getFileName() << "': " << EC.message()
                << ".\n";
       continue;
     }
-    if (ObjectFile *o = dyn_cast<ObjectFile>(child.get()))
+    if (ObjectFile *o = dyn_cast<ObjectFile>(&*ChildOrErr.get()))
       DumpObject(o);
     else
       errs() << ToolName << ": '" << a->getFileName() << "': "
@@ -880,16 +892,16 @@ static void DumpInput(StringRef file) {
   }
 
   // Attempt to open the binary.
-  ErrorOr<Binary *> BinaryOrErr = createBinary(file);
-  if (error_code EC = BinaryOrErr.getError()) {
+  ErrorOr<std::unique_ptr<Binary>> BinaryOrErr = createBinary(file);
+  if (std::error_code EC = BinaryOrErr.getError()) {
     errs() << ToolName << ": '" << file << "': " << EC.message() << ".\n";
     return;
   }
-  std::unique_ptr<Binary> binary(BinaryOrErr.get());
+  Binary &Binary = *BinaryOrErr.get();
 
-  if (Archive *a = dyn_cast<Archive>(binary.get()))
+  if (Archive *a = dyn_cast<Archive>(&Binary))
     DumpArchive(a);
-  else if (ObjectFile *o = dyn_cast<ObjectFile>(binary.get()))
+  else if (ObjectFile *o = dyn_cast<ObjectFile>(&Binary))
     DumpObject(o);
   else
     errs() << ToolName << ": '" << file << "': " << "Unrecognized file type.\n";
