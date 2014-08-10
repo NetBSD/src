@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2014/07/05 20:45:49 joerg Exp $
+#	$NetBSD: Makefile,v 1.29 2014/08/10 17:34:22 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -12,6 +12,7 @@ SRCS+=	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
 	ARMBuildAttrs.cpp \
+	ARMWinEH.cpp \
 	Allocator.cpp \
 	BlockFrequency.cpp \
 	BranchProbability.cpp \
@@ -53,6 +54,7 @@ SRCS+=	APFloat.cpp \
 	SmallPtrSet.cpp \
 	SmallVector.cpp \
 	SourceMgr.cpp \
+	SpecialCaseList.cpp \
 	Statistic.cpp \
 	StreamableMemoryObject.cpp \
 	StringExtras.cpp \
@@ -79,20 +81,19 @@ SRCS+=	APFloat.cpp \
 	regstrlcpy.c
 
 SRCS+=	Atomic.cpp \
-	Disassembler.cpp \
 	DynamicLibrary.cpp \
 	Errno.cpp \
 	Host.cpp \
-	IncludeFile.cpp \
 	Memory.cpp \
 	Mutex.cpp \
 	Path.cpp \
 	Process.cpp \
 	Program.cpp \
 	RWMutex.cpp \
+	RandomNumberGenerator.cpp \
+	ScaledNumber.cpp \
 	SearchForAddressOfSpecialSymbol.cpp \
 	Signals.cpp \
-	system_error.cpp \
 	ThreadLocal.cpp \
 	Threading.cpp \
 	TimeValue.cpp \
@@ -109,7 +110,6 @@ SRCS+=	Host.inc \
 	RWMutex.inc \
 	Signals.inc \
 	Watchdog.inc \
-	system_error.inc \
 	ThreadLocal.inc \
 	TimeValue.inc
 

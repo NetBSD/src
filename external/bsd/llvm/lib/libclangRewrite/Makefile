@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2012/09/23 17:22:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2014/08/10 17:35:06 joerg Exp $
 
-LIB=	clangRewriteCore
+LIB=	clangRewrite
 
 .include <bsd.init.mk>
 
-.PATH: ${CLANG_SRCDIR}/lib/Rewrite/Core
+.PATH: ${CLANG_SRCDIR}/lib/Rewrite
 
 SRCS+=	DeltaTree.cpp \
 	HTMLRewrite.cpp \

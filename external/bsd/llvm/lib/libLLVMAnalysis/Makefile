@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2014/05/30 18:28:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.19 2014/08/10 17:34:21 joerg Exp $
 
 LIB=	LLVMAnalysis
 
@@ -32,6 +32,7 @@ SRCS+=	AliasAnalysis.cpp \
 	InstructionSimplify.cpp \
 	Interval.cpp \
 	IntervalPartition.cpp \
+	JumpInstrTableInfo.cpp \
 	LazyCallGraph.cpp \
 	LazyValueInfo.cpp \
 	LibCallAliasAnalysis.cpp \
@@ -55,6 +56,7 @@ SRCS+=	AliasAnalysis.cpp \
 	ScalarEvolutionAliasAnalysis.cpp \
 	ScalarEvolutionExpander.cpp \
 	ScalarEvolutionNormalization.cpp \
+	ScopedNoAliasAA.cpp \
 	SparsePropagation.cpp \
 	TargetTransformInfo.cpp \
 	Trace.cpp \

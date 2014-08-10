@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2014/05/30 18:28:13 joerg Exp $
+#	$NetBSD: Makefile,v 1.32 2014/08/10 17:34:19 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -30,8 +30,8 @@ CLANG_LIBS+= \
 	clangSema \
 	clangEdit \
 	clangAnalysis \
-	clangRewriteFrontend \
-	clangRewriteCore \
+	clangFrontendRewrite \
+	clangRewrite \
 	clangAST \
 	clangLex \
 	clangBasic
@@ -45,8 +45,8 @@ LLVM_LIBS+= \
 	BitWriter \
 	AArch64CodeGen \
 	AArch64TargetInfo \
-	AArch64MCTargetDesc \
 	AArch64AsmParser \
+	AArch64MCTargetDesc \
 	AArch64AsmPrinter \
 	AArch64Utils \
 	ARMCodeGen \

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.40 2014/05/30 18:28:13 joerg Exp $
+# $NetBSD: Makefile,v 1.41 2014/08/10 17:34:21 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -87,6 +87,7 @@ SUBDIR+= \
 SUBDIR+= \
 	libLLVMExecutionEngine \
 	libLLVMJIT \
+	libLLVMMCAnalysis \
 	libLLVMMCJIT \
 	libLLVMRuntimeDyld
 .endif
@@ -115,11 +116,11 @@ SUBDIR+= \
 	libclangDriver \
 	libclangEdit \
 	libclangFrontend \
+	libclangFrontendRewrite \
 	libclangFrontendTool \
 	libclangLex \
 	libclangParse \
-	libclangRewriteFrontend \
-	libclangRewriteCore \
+	libclangRewrite \
 	libclangSema \
 	libclangSerialization \
 	libclangStaticAnalyzerCheckers \
@@ -190,10 +191,12 @@ SUBDIR+= \
 	liblldbPluginABIMacOSX_arm \
 	liblldbPluginABIMacOSX_arm64 \
 	liblldbPluginABIMacOSX_i386 \
+	liblldbPluginABISysV_hexagon \
 	liblldbPluginABISysV_x86_64 \
 	liblldbPluginAppleObjCRuntime \
 	liblldbPluginCXXItaniumABI \
 	liblldbPluginDisassemblerLLVM \
+	liblldbPluginDynamicLoaderHexagonDYLD \
 	liblldbPluginDynamicLoaderMacOSXDYLD \
 	liblldbPluginDynamicLoaderPosixDYLD \
 	liblldbPluginDynamicLoaderStatic \
@@ -208,6 +211,7 @@ SUBDIR+= \
 	liblldbPluginObjectFilePECOFF \
 	liblldbPluginPlatformNetBSD \
 	liblldbPluginPlatformGDB \
+	liblldbPluginPlatformKalimba \
 	liblldbPluginPlatformLinux \
 	liblldbPluginPlatformMacOSX \
 	liblldbPluginPlatformPOSIX \

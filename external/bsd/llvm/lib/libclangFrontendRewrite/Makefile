@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2012/09/23 17:22:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.1 2014/08/10 17:34:22 joerg Exp $
 
-LIB=	clangRewriteFrontend
+LIB=	clangFrontendRewrite
 
 .include <bsd.init.mk>
 
-.PATH: ${CLANG_SRCDIR}/lib/Rewrite/Frontend
+.PATH: ${CLANG_SRCDIR}/lib/Frontend/Rewrite
 
 SRCS+=	FixItRewriter.cpp \
 	FrontendActions.cpp \
@@ -14,6 +14,7 @@ SRCS+=	FixItRewriter.cpp \
 	RewriteModernObjC.cpp \
 	RewriteObjC.cpp \
 	RewriteTest.cpp
+
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

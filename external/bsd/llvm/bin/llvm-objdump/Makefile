@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/02/14 20:23:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2014/08/10 17:34:20 joerg Exp $
 
 PROG_CXX=	llvm-objdump
 NOMAN=		yes
@@ -14,41 +14,44 @@ SRCS=	llvm-objdump.cpp \
 
 LLVM_LIBS+= \
 	AArch64Disassembler \
-	AArch64TargetInfo \
-	AArch64MCTargetDesc \
 	AArch64AsmParser \
+	AArch64MCTargetDesc \
 	AArch64AsmPrinter \
+	AArch64TargetInfo \
 	AArch64Utils \
 	ARMDisassembler \
-	ARMTargetInfo \
-	ARMMCTargetDesc \
 	ARMAsmParser \
+	ARMMCTargetDesc \
 	ARMAsmPrinter \
+	ARMTargetInfo \
 	MipsDisassembler \
-	MipsTargetInfo \
 	MipsAsmParser \
 	MipsMCTargetDesc \
 	MipsAsmPrinter \
+	MipsTargetInfo \
 	PowerPCDisassembler \
 	PowerPCAsmParser \
-	PowerPCTargetInfo \
 	PowerPCMCTargetDesc \
 	PowerPCAsmPrinter \
+	PowerPCTargetInfo \
 	SparcDisassembler \
 	SparcAsmParser \
-	SparcTargetInfo \
 	SparcMCTargetDesc \
 	SparcAsmPrinter \
+	SparcTargetInfo \
 	X86Disassembler \
-	X86MCTargetDesc \
-	X86TargetInfo \
 	X86AsmParser \
+	X86MCTargetDesc \
 	X86AsmPrinter \
+	X86TargetInfo \
 	X86Utils \
+	MCDisassembler \
 	DebugInfo \
-	MCParser \
-	MC \
 	Object \
+	BitReader \
+	MCParser \
+	MCAnalysis \
+	MC \
 	IR \
 	Support
 

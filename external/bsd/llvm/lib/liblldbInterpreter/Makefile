@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/08/10 17:35:07 joerg Exp $
 
 LIB=	lldbInterpreter
 
@@ -12,6 +12,7 @@ SRCS+=	Args.cpp \
 	CommandObject.cpp \
 	CommandObjectRegexCommand.cpp \
 	CommandObjectScript.cpp \
+	CommandOptionValidators.cpp \
 	CommandReturnObject.cpp \
 	OptionGroupArchitecture.cpp \
 	OptionGroupBoolean.cpp \

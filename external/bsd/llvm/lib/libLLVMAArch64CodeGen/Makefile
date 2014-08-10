@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/05/30 18:28:13 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2014/08/10 17:34:21 joerg Exp $
 
 LIB=	LLVMAArch64CodeGen
 
@@ -8,7 +8,8 @@ LIB=	LLVMAArch64CodeGen
 
 CPPFLAGS+=	-I${LLVM_SRCDIR}/lib/Target/AArch64
 
-SRCS+=	AArch64AddressTypePromotion.cpp \
+SRCS+=	AArch64A57FPLoadBalancing.cpp \
+	AArch64AddressTypePromotion.cpp \
 	AArch64AdvSIMDScalarPass.cpp \
 	AArch64AsmPrinter.cpp \
 	AArch64BranchRelaxation.cpp \

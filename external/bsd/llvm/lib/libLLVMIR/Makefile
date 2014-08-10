@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/05/30 18:28:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2014/08/10 17:34:21 joerg Exp $
 
 LIB=	LLVMIR
 
@@ -10,6 +10,7 @@ SRCS+=	AsmWriter.cpp \
 	Attributes.cpp \
 	AutoUpgrade.cpp \
 	BasicBlock.cpp \
+	Comdat.cpp \
 	ConstantFold.cpp \
 	ConstantRange.cpp \
 	Constants.cpp \
@@ -45,6 +46,7 @@ SRCS+=	AsmWriter.cpp \
 	Type.cpp \
 	TypeFinder.cpp \
 	Use.cpp \
+	UseListOrder.cpp \
 	User.cpp \
 	Value.cpp \
 	ValueSymbolTable.cpp \

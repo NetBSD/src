@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2014/01/15 22:21:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2014/08/10 17:34:20 joerg Exp $
 
 PROG_CXX=	llvm-mc
 NOMAN=		yes
@@ -50,6 +50,7 @@ LLVM_LIBS+= \
 	X86Disassembler \
 	X86AsmPrinter \
 	X86Utils \
+	MCDisassembler \
 	Object \
 	SelectionDAG \
 	CodeGen \
@@ -62,6 +63,9 @@ LLVM_LIBS+= \
 	MC \
 	IR \
 	Support
+
+LDADD+=	-lz
+DPADD+=	${LIBZ}
 
 .include "${.PARSEDIR}/../../link.mk"
 
