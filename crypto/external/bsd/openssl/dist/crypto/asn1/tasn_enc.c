@@ -463,6 +463,7 @@ static int asn1_set_seq_out(STACK_OF(ASN1_VALUE) *sk, unsigned char **out,
 				}
 			}
 		}
+		}
 	/* If not sorting just output each item */
 	if (!do_sort)
 		{

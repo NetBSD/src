@@ -1200,7 +1200,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT
 	tmp = BN_CTX_get(ctx);
 	tmp_Z = BN_CTX_get(ctx);
 	if (tmp == NULL || tmp_Z == NULL) goto err;
-
+	
 	prod_Z = OPENSSL_malloc(num * sizeof prod_Z[0]);
 	if (prod_Z == NULL) goto err;
 	for (i = 0; i < num; i++)
@@ -1208,25 +1208,25 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT
 		prod_Z[i] = BN_new();
 		if (prod_Z[i] == NULL) goto err;
 		}
-
+		
 	/* Set each prod_Z[i] to the product of points[0]->Z .. points[i]->Z,
 	 * skipping any zero-valued inputs (pretend that they're 1). */
 
 	if (!BN_is_zero(&points[0]->Z))
-		{
+				{
 		if (!BN_copy(prod_Z[0], &points[0]->Z)) goto err;
-		}
-	else
-		{
+				}
+			else
+				{
 		if (group->meth->field_set_to_one != 0)
-			{
+					{
 			if (!group->meth->field_set_to_one(group, prod_Z[0], ctx)) goto err;
-			}
-		else
-			{
+					}
+				else
+					{
 			if (!BN_one(prod_Z[0])) goto err;
-			}
-		}
+					}
+				}
 
 	for (i = 1; i < num; i++)
 		{
@@ -1244,10 +1244,9 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT
 	 * non-zero points[i]->Z by its inverse. */
 
 	if (!BN_mod_inverse(tmp, prod_Z[num - 1], &group->field, ctx))
-		{
-		ECerr(EC_F_EC_GFP_SIMPLE_POINTS_MAKE_AFFINE, ERR_R_BN_LIB);
-		goto err;
-		}
+			{
+			if (!group->meth->field_mul(group, prod_Z[i], prod_Z[i - 1], &points[i]->Z, ctx)) goto err;
+			}
 	if (group->meth->field_encode != 0)
 		{
 		/* In the Montgomery case, we just turned  R*H  (representing H)
@@ -1271,7 +1270,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT
 			/* Replace points[i]->Z by its inverse. */
 			if (!BN_copy(&points[i]->Z, tmp_Z)) goto err;
 			}
-		}
+			}
 
 	if (!BN_is_zero(&points[0]->Z))
 		{
@@ -1294,7 +1293,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT
 
 			if (!group->meth->field_mul(group, tmp, tmp, &p->Z, ctx)) goto err;
 			if (!group->meth->field_mul(group, &p->Y, &p->Y, tmp, ctx)) goto err;
-
+		
 			if (group->meth->field_set_to_one != 0)
 				{
 				if (!group->meth->field_set_to_one(group, &p->Z, ctx)) goto err;

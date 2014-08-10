@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.16 2014/07/25 08:32:21 dholland Exp $
+# $NetBSD: ad.powerpc,v 1.17 2014/08/10 08:07:50 spz Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -89,7 +89,7 @@
 ./usr/lib/powerpc/libcrypt.so.1			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libcrypt.so.1.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libcrypto.so.8		base-compat-shlib	compat,arch64,pic,crypto
-./usr/lib/powerpc/libcrypto.so.8.2		base-compat-shlib	compat,arch64,pic,crypto
+./usr/lib/powerpc/libcrypto.so.8.3		base-compat-shlib	compat,arch64,pic,crypto
 ./usr/lib/powerpc/libcrypto_rc5.so.7		base-compat-shlib	compat,arch64,pic,crypto,crypto_rc5
 ./usr/lib/powerpc/libcrypto_rc5.so.7.0		base-compat-shlib	compat,arch64,pic,crypto,crypto_rc5
 ./usr/lib/powerpc/libcurses.so.7		base-compat-shlib	compat,arch64,pic
@@ -275,7 +275,7 @@
 ./usr/lib/powerpc/libssh.so.22			base-compat-shlib	compat,arch64,pic,crypto
 ./usr/lib/powerpc/libssh.so.22.0		base-compat-shlib	compat,arch64,pic,crypto
 ./usr/lib/powerpc/libssl.so.10			base-compat-shlib	compat,arch64,pic,crypto
-./usr/lib/powerpc/libssl.so.10.3		base-compat-shlib	compat,arch64,pic,crypto
+./usr/lib/powerpc/libssl.so.10.4		base-compat-shlib	compat,arch64,pic,crypto
 ./usr/lib/powerpc/libstdc++.so.7		base-compat-shlib	compat,arch64,pic,gcccmds,libstdcxx
 ./usr/lib/powerpc/libstdc++.so.7.0		base-compat-shlib	compat,arch64,pic,gcc=4,libstdcxx
 ./usr/lib/powerpc/libstdc++.so.7.1		base-compat-shlib	compat,arch64,pic,gcc=45,libstdcxx

@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.53 2014/08/06 12:15:01 martin Exp $
+# $NetBSD: ad.arm,v 1.54 2014/08/10 08:07:50 spz Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -100,7 +100,7 @@
 ./usr/lib/oabi/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libcrypto.so.8			base-compat-shlib	compat,pic,crypto
-./usr/lib/oabi/libcrypto.so.8.2			base-compat-shlib	compat,pic,crypto
+./usr/lib/oabi/libcrypto.so.8.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libcrypto_idea.so.7		base-obsolete		obsolete
 ./usr/lib/oabi/libcrypto_idea.so.7.0		base-obsolete		obsolete
 ./usr/lib/oabi/libcrypto_mdc2.so.7		base-obsolete		obsolete
@@ -303,7 +303,7 @@
 ./usr/lib/oabi/libssh.so.22			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libssh.so.22.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libssl.so.10			base-compat-shlib	compat,pic,crypto
-./usr/lib/oabi/libssl.so.10.3			base-compat-shlib	compat,pic,crypto
+./usr/lib/oabi/libssl.so.10.4			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx
 ./usr/lib/oabi/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx
 ./usr/lib/oabi/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx,libstdcxx
