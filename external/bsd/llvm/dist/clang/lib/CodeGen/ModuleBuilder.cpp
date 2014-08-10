@@ -33,20 +33,52 @@ namespace {
     std::unique_ptr<const llvm::DataLayout> TD;
     ASTContext *Ctx;
     const CodeGenOptions CodeGenOpts;  // Intentionally copied in.
+
+    unsigned HandlingTopLevelDecls;
+    struct HandlingTopLevelDeclRAII {
+      CodeGeneratorImpl &Self;
+      HandlingTopLevelDeclRAII(CodeGeneratorImpl &Self) : Self(Self) {
+        ++Self.HandlingTopLevelDecls;
+      }
+      ~HandlingTopLevelDeclRAII() {
+        if (--Self.HandlingTopLevelDecls == 0)
+          Self.EmitDeferredDecls();
+      }
+    };
+
+    CoverageSourceInfo *CoverageInfo;
+
   protected:
     std::unique_ptr<llvm::Module> M;
     std::unique_ptr<CodeGen::CodeGenModule> Builder;
 
   public:
     CodeGeneratorImpl(DiagnosticsEngine &diags, const std::string& ModuleName,
-                      const CodeGenOptions &CGO, llvm::LLVMContext& C)
-      : Diags(diags), CodeGenOpts(CGO),
+                      const CodeGenOptions &CGO, llvm::LLVMContext& C,
+                      CoverageSourceInfo *CoverageInfo = nullptr)
+      : Diags(diags), CodeGenOpts(CGO), HandlingTopLevelDecls(0),
+        CoverageInfo(CoverageInfo),
         M(new llvm::Module(ModuleName, C)) {}
 
     virtual ~CodeGeneratorImpl() {}
 
     llvm::Module* GetModule() override {
       return M.get();
+    }
+
+    const Decl *GetDeclForMangledName(StringRef MangledName) override {
+      GlobalDecl Result;
+      if (!Builder->lookupRepresentativeDecl(MangledName, Result))
+        return nullptr;
+      const Decl *D = Result.getCanonicalDecl().getDecl();
+      if (auto FD = dyn_cast<FunctionDecl>(D)) {
+        if (FD->hasBody(FD))
+          return FD;
+      } else if (auto TD = dyn_cast<TagDecl>(D)) {
+        if (auto Def = TD->getDefinition())
+          return Def;
+      }
+      return D;
     }
 
     llvm::Module *ReleaseModule() override { return M.release(); }
@@ -58,7 +90,7 @@ namespace {
       M->setDataLayout(Ctx->getTargetInfo().getTargetDescription());
       TD.reset(new llvm::DataLayout(Ctx->getTargetInfo().getTargetDescription()));
       Builder.reset(new CodeGen::CodeGenModule(Context, CodeGenOpts, *M, *TD,
-                                               Diags));
+                                               Diags, CoverageInfo));
 
       for (size_t i = 0, e = CodeGenOpts.DependentLibraries.size(); i < e; ++i)
         HandleDependentLibrary(CodeGenOpts.DependentLibraries[i]);
@@ -75,10 +107,22 @@ namespace {
       if (Diags.hasErrorOccurred())
         return true;
 
+      HandlingTopLevelDeclRAII HandlingDecl(*this);
+
       // Make sure to emit all elements of a Decl.
       for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
         Builder->EmitTopLevelDecl(*I);
+
       return true;
+    }
+
+    void EmitDeferredDecls() {
+      // Emit any deferred inline method definitions. Note that more deferred
+      // methods may be added during this loop, since ASTConsumer callbacks
+      // can be invoked if AST inspection results in declarations being added.
+      for (unsigned I = 0; I < DeferredInlineMethodDefinitions.size(); ++I)
+        Builder->EmitTopLevelDecl(DeferredInlineMethodDefinitions[I]);
+      DeferredInlineMethodDefinitions.clear();
     }
 
     void HandleInlineMethodDefinition(CXXMethodDecl *D) override {
@@ -87,12 +131,19 @@ namespace {
 
       assert(D->doesThisDeclarationHaveABody());
 
-      // We may have member functions that need to be emitted at this point.
-      if (!D->isDependentContext() &&
-          (D->hasAttr<UsedAttr>() || D->hasAttr<ConstructorAttr>() ||
-           D->hasAttr<DLLExportAttr>())) {
-        Builder->EmitTopLevelDecl(D);
-      }
+      // We may want to emit this definition. However, that decision might be
+      // based on computing the linkage, and we have to defer that in case we
+      // are inside of something that will change the method's final linkage,
+      // e.g.
+      //   typedef struct {
+      //     void bar();
+      //     void foo() { bar(); }
+      //   } A;
+      DeferredInlineMethodDefinitions.push_back(D);
+
+      // Always provide some coverage mapping
+      // even for the methods that aren't emitted.
+      Builder->AddDeferredUnusedCoverageMapping(D);
     }
 
     /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
@@ -104,6 +155,19 @@ namespace {
         return;
 
       Builder->UpdateCompletedType(D);
+
+      // For MSVC compatibility, treat declarations of static data members with
+      // inline initializers as definitions.
+      if (Ctx->getLangOpts().MSVCCompat) {
+        for (Decl *Member : D->decls()) {
+          if (VarDecl *VD = dyn_cast<VarDecl>(Member)) {
+            if (Ctx->isMSStaticDataMemberInlineDefinition(VD) &&
+                Ctx->DeclMustBeEmitted(VD)) {
+              Builder->EmitGlobal(VD);
+            }
+          }
+        }
+      }
     }
 
     void HandleTagDeclRequiredDefinition(const TagDecl *D) override {
@@ -153,6 +217,9 @@ namespace {
     void HandleDependentLibrary(llvm::StringRef Lib) override {
       Builder->AddDependentLib(Lib);
     }
+
+  private:
+    std::vector<CXXMethodDecl *> DeferredInlineMethodDefinitions;
   };
 }
 
@@ -162,6 +229,7 @@ CodeGenerator *clang::CreateLLVMCodeGen(DiagnosticsEngine &Diags,
                                         const std::string& ModuleName,
                                         const CodeGenOptions &CGO,
                                         const TargetOptions &/*TO*/,
-                                        llvm::LLVMContext& C) {
-  return new CodeGeneratorImpl(Diags, ModuleName, CGO, C);
+                                        llvm::LLVMContext& C,
+                                        CoverageSourceInfo *CoverageInfo) {
+  return new CodeGeneratorImpl(Diags, ModuleName, CGO, C, CoverageInfo);
 }
