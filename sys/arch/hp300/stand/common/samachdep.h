@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.17 2014/04/19 06:04:58 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.18 2014/08/10 07:40:49 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -74,7 +74,6 @@ int cnputc(int);
 
 /* devopen.c */
 extern	u_int opendev;
-int atoi(char *);
 
 /* exec.c */
 void exec_hp300(char *, u_long, int);

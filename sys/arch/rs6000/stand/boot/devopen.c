@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2007/12/17 19:09:48 garbled Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 2014/08/10 07:40:49 isaki Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -33,19 +33,8 @@
 
 #define	ispart(c)	((c) >= 'a' && (c) <= 'h')
 
-int atoi(char *);
 int devlookup(char *);
 int devparse(const char *, int *, int *, int *, int *, int *, char **);
-
-int
-atoi(char *cp)
-{
-	int val = 0;
-
-	while (isdigit(*cp))
-		val = val * 10 + (*cp++ - '0');
-	return (val);
-}
 
 int
 devlookup(char *d)

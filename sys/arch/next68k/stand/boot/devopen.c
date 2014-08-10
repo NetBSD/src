@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5 2005/12/11 12:18:29 christos Exp $	*/
+/*	$NetBSD: devopen.c,v 1.6 2014/08/10 07:40:49 isaki Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -32,19 +32,8 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
-int atoi(const char *);
 int devlookup(const char *, int);
 int devparse(const char *, int *, char *, char *, char *, char **);
-
-int
-atoi(const char *cp)
-{
-    int val = 0;
-
-    while(isdigit((unsigned char)*cp))
-	val = val * 10 + (*cp++ - '0');
-    return val;
-}
 
 int
 devlookup(const char *d, int len)

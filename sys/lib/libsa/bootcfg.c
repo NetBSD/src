@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.c,v 1.1 2014/06/28 09:16:18 rtr Exp $	*/
+/*	$NetBSD: bootcfg.c,v 1.2 2014/08/10 07:40:49 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,10 +33,6 @@
 #include <lib/libsa/bootcfg.h>
 #include <lib/libkern/libkern.h>
 
-static int atoi(const char *);
-
-#define isnum(c) ((c) >= '0' && (c) <= '9')
-
 #define MENUFORMAT_AUTO   0
 #define MENUFORMAT_NUMBER 1
 #define MENUFORMAT_LETTER 2
@@ -45,22 +41,6 @@ static int atoi(const char *);
 #define DEFAULT_TIMEOUT 10
 
 struct bootcfg_def bootcfg_info;
-
-int
-atoi(const char *in)
-{
-	char *c;
-	int ret;
-
-	ret = 0;
-	c = (char *)in;
-	if (*c == '-')
-		c++;
-	for (; isnum(*c); c++)
-		ret = (ret * 10) + (*c - '0');
-
-	return (*in == '-') ? -ret : ret;
-}
 
 void
 bootcfg_do_noop(const char *cmd, char *arg)
@@ -231,7 +211,7 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 			if (cbanner < BOOTCFG_MAXBANNER)
 				bootcfg_info.banner[cbanner++] = value;
 		} else if (!strncmp(key, "timeout", 7)) {
-			if (!isnum(*value))
+			if (!isdigit(*value))
 				bootcfg_info.timeout = -1;
 			else
 				bootcfg_info.timeout = atoi(value);

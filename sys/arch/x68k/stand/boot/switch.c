@@ -1,4 +1,4 @@
-/*	$NetBSD: switch.c,v 1.1 2014/08/05 13:49:04 isaki Exp $	*/
+/*	$NetBSD: switch.c,v 1.2 2014/08/10 07:40:50 isaki Exp $	*/
 
 /*
  * Copyright (c) 2014 Tetsuya Isaki. All rights reserved.
@@ -60,22 +60,6 @@ static inline void
 sram_write_disable(void)
 {
 	SYSPORT_SRAM_WP = 0;
-}
-
-static int
-atoi(const char *in)
-{
-	char *c;
-	int ret;
-
-	ret = 0;
-	c = (char *)in;
-	if (*c == '-')
-		c++;
-	for (; isdigit(*c); c++)
-		ret = (ret * 10) + (*c - '0');
-
-	return (*in == '-') ? -ret : ret;
 }
 
 static int
