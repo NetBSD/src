@@ -245,9 +245,9 @@ def err_invalid_pth_file : Error<
 // Preprocessor Diagnostics
 //===----------------------------------------------------------------------===//
 
-let CategoryName = "User Defined Issues" in {
+let CategoryName = "User-Defined Issue" in {
 def pp_hash_warning : Warning<"%0">,
-  InGroup<PoundWarning>, DefaultWarnShowInSystemHeader;
+  InGroup<PoundWarning>, ShowInSystemHeader;
 def err_pp_hash_error : Error<"%0">;
 }
 
@@ -500,7 +500,9 @@ def ext_pp_bad_paste_ms : ExtWarn<
   "pasting formed '%0', an invalid preprocessing token">, DefaultError,
   InGroup<DiagGroup<"invalid-token-paste">>;
 def err_pp_operator_used_as_macro_name : Error<
-  "C++ operator '%0' (aka %1) cannot be used as a macro name">;
+  "C++ operator %0 (aka %1) used as a macro name">;
+def ext_pp_operator_used_as_macro_name : Extension<
+  "C++ operator %0 (aka %1) used as a macro name">, InGroup<Microsoft>;
 def err_pp_illegal_floating_literal : Error<
   "floating point literal in preprocessor expression">;
 def err_pp_line_requires_integer : Error<
@@ -539,6 +541,10 @@ def err_pp_include_in_arc_cf_code_audited : Error<
   "cannot #include files inside '#pragma clang arc_cf_code_audited'">;
 def err_pp_eof_in_arc_cf_code_audited : Error<
   "'#pragma clang arc_cf_code_audited' was not ended within this file">;
+
+def warn_pp_date_time : Warning<
+  "expansion of date or time macro is not reproducible">,
+  ShowInSystemHeader, DefaultIgnore, InGroup<DiagGroup<"date-time">>;
 
 // Module map parsing
 def err_mmap_unknown_token : Error<"skipping stray token">;

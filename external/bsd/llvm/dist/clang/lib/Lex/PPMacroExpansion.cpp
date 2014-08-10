@@ -1006,8 +1006,8 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
 
   // If the use of an extension results in an error diagnostic, extensions are
   // effectively unavailable, so just return false here.
-  if (PP.getDiagnostics().getExtensionHandlingBehavior() ==
-      DiagnosticsEngine::Ext_Error)
+  if (PP.getDiagnostics().getExtensionHandlingBehavior() >=
+      diag::Severity::Error)
     return false;
 
   const LangOptions &LangOpts = PP.getLangOpts();
@@ -1294,6 +1294,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     }
     Tok.setKind(tok::string_literal);
   } else if (II == Ident__DATE__) {
+    Diag(Tok.getLocation(), diag::warn_pp_date_time);
     if (!DATELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, *this);
     Tok.setKind(tok::string_literal);
@@ -1303,6 +1304,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
                                                  Tok.getLength()));
     return;
   } else if (II == Ident__TIME__) {
+    Diag(Tok.getLocation(), diag::warn_pp_date_time);
     if (!TIMELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, *this);
     Tok.setKind(tok::string_literal);
@@ -1327,6 +1329,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     OS << Depth;
     Tok.setKind(tok::numeric_constant);
   } else if (II == Ident__TIMESTAMP__) {
+    Diag(Tok.getLocation(), diag::warn_pp_date_time);
     // MSVC, ICC, GCC, VisualAge C++ extension.  The generated string should be
     // of the form "Ddd Mmm dd hh::mm::ss yyyy", which is returned by asctime.
 
@@ -1347,7 +1350,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Result = "??? ??? ?? ??:??:?? ????\n";
     }
     // Surround the string with " and strip the trailing newline.
-    OS << '"' << StringRef(Result, strlen(Result)-1) << '"';
+    OS << '"' << StringRef(Result).drop_back() << '"';
     Tok.setKind(tok::string_literal);
   } else if (II == Ident__COUNTER__) {
     // __COUNTER__ expands to a simple numeric value.
@@ -1443,6 +1446,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
         break;
       }
 
+      // FIXME: Should we accept "-R..." flags here, or should that be handled
+      // by a separate __has_remark?
       if (WarningName.size() < 3 || WarningName[0] != '-' ||
           WarningName[1] != 'W') {
         Diag(StrStartLoc, diag::warn_has_warning_invalid_option);
@@ -1455,7 +1460,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       // worth special casing.
       SmallVector<diag::kind, 10> Diags;
       Value = !getDiagnostics().getDiagnosticIDs()->
-        getDiagnosticsInGroup(WarningName.substr(2), Diags);
+        getDiagnosticsInGroup(diag::Flavor::WarningOrError,
+                              WarningName.substr(2), Diags);
     } while (false);
 
     OS << (int)Value;

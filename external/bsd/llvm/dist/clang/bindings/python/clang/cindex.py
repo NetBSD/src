@@ -1086,6 +1086,7 @@ CursorKind.CUDACONSTANT_ATTR = CursorKind(412)
 CursorKind.CUDADEVICE_ATTR = CursorKind(413)
 CursorKind.CUDAGLOBAL_ATTR = CursorKind(414)
 CursorKind.CUDAHOST_ATTR = CursorKind(415)
+CursorKind.CUDASHARED_ATTR = CursorKind(416)
 
 ###
 # Preprocessing
@@ -1166,10 +1167,6 @@ class Cursor(Structure):
     @property
     def spelling(self):
         """Return the spelling of the entity pointed at by the cursor."""
-        if not self.kind.is_declaration():
-            # FIXME: clang_getCursorSpelling should be fixed to not assert on
-            # this, for consistency with clang_getCursorUSR.
-            return None
         if not hasattr(self, '_spelling'):
             self._spelling = conf.lib.clang_getCursorSpelling(self)
 
@@ -1180,14 +1177,22 @@ class Cursor(Structure):
         """
         Return the display name for the entity referenced by this cursor.
 
-        The display name contains extra information that helps identify the cursor,
-        such as the parameters of a function or template or the arguments of a
-        class template specialization.
+        The display name contains extra information that helps identify the
+        cursor, such as the parameters of a function or template or the
+        arguments of a class template specialization.
         """
         if not hasattr(self, '_displayname'):
             self._displayname = conf.lib.clang_getCursorDisplayName(self)
 
         return self._displayname
+
+    @property
+    def mangled_name(self):
+        """Return the mangled name for the entity referenced by this cursor."""
+        if not hasattr(self, '_mangled_name'):
+            self._mangled_name = conf.lib.clang_Cursor_getMangling(self)
+
+        return self._mangled_name
 
     @property
     def location(self):
@@ -2973,6 +2978,11 @@ functionList = [
    Type.from_result),
 
   ("clang_getCursorUSR",
+   [Cursor],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_Cursor_getMangling",
    [Cursor],
    _CXString,
    _CXString.from_result),
