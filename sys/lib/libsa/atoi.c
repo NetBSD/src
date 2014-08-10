@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.h,v 1.3 2014/08/10 07:40:50 isaki Exp $	*/
+/*	$NetBSD: atoi.c,v 1.1 2014/08/10 07:40:49 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -26,12 +26,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _BOOTMENU_H
-#define _BOOTMENU_H
+#include <sys/types.h>
+#include <sys/reboot.h>
 
-#define COMMAND_SEPARATOR ';'
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
-void parsebootconf(const char *);
-void doboottypemenu(void);
+int
+atoi(const char *in)
+{
+	char *c;
+	int ret;
 
-#endif /* !_BOOTMENU_H */
+	ret = 0;
+	c = (char *)in;
+	if (*c == '-')
+		c++;
+	for (; isdigit(*c); c++)
+		ret = (ret * 10) + (*c - '0');
+
+	return (*in == '-') ? -ret : ret;
+}

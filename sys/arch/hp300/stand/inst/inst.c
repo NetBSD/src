@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.19 2014/06/21 02:01:21 tsutsui Exp $	*/
+/*	$NetBSD: inst.c,v 1.20 2014/08/10 07:40:49 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -760,18 +760,11 @@ resetsys(void)
 	__asm("stop #0x2700");
 }
 
-/*
- * XXX Should have a generic atoi for libkern/libsa.
- */
 int
 a2int(char *cp)
 {
-	int i = 0;
-
 	if (*cp == '\0')
-		return (-1);
+		return -1;
 
-	while (*cp != '\0')
-		i = i * 10 + *cp++ - '0';
-	return (i);
+	return atoi(cp);
 }
