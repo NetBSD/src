@@ -1,4 +1,4 @@
-/*	$NetBSD: import_name.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: import_name.c,v 1.1.1.1.22.1 2014/08/10 06:47:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -109,9 +109,9 @@ _gsskrb5_canon_name(OM_uint32 *minor_status, krb5_context context,
 	    return GSS_S_BAD_NAME;
 	else if (p->name.name_string.len > 1)
 	    hostname = p->name.name_string.val[1];
-	
+
 	service = p->name.name_string.val[0];
-	
+
 	ret = krb5_sname_to_principal(context,
 				      hostname,
 				      service,

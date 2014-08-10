@@ -1,4 +1,4 @@
-#	$NetBSD: aes.inc,v 1.2 2011/07/05 10:42:54 spz Exp $
+#	$NetBSD: aes.inc,v 1.2.20.1 2014/08/10 06:47:38 tls Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -16,6 +16,6 @@ AES_SRCS += aes_misc.c aes_cfb.c aes_ofb.c \
 SRCS += ${AES_SRCS}
 
 .for cryptosrc in ${AES_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/aes ${AESCPPFLAGS}
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/aes ${AESCPPFLAGS}
 .endfor
 

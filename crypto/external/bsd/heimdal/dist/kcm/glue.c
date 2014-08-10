@@ -1,4 +1,4 @@
-/*	$NetBSD: glue.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: glue.c,v 1.1.1.1.22.1 2014/08/10 06:47:27 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -34,7 +34,7 @@
 
 #include "kcm_locl.h"
 
-__RCSID("$NetBSD: glue.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $");
+__RCSID("NetBSD");
 
 /*
  * Server-side loopback glue for credentials cache operations; this

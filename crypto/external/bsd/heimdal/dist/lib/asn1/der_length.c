@@ -1,4 +1,4 @@
-/*	$NetBSD: der_length.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $	*/
+/*	$NetBSD: der_length.c,v 1.1.1.1.22.1 2014/08/10 06:47:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #include "der_locl.h"
 
-__RCSID("$NetBSD: der_length.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $");
+__RCSID("NetBSD");
 
 size_t
 _heim_len_unsigned (unsigned val)
@@ -88,7 +88,7 @@ static size_t
 len_oid (const heim_oid *oid)
 {
     size_t ret = 1;
-    int n;
+    size_t n;
 
     for (n = 2; n < oid->length; ++n) {
 	unsigned u = oid->components[n];

@@ -1,7 +1,7 @@
-/*	$NetBSD: ldebug.h,v 1.1.1.2 2012/03/15 00:08:14 alnsn Exp $	*/
+/*	$NetBSD: ldebug.h,v 1.1.1.2.8.1 2014/08/10 06:50:54 tls Exp $	*/
 
 /*
-** $Id: ldebug.h,v 1.1.1.2 2012/03/15 00:08:14 alnsn Exp $
+** $Id: ldebug.h,v 1.1.1.2.8.1 2014/08/10 06:50:54 tls Exp $
 ** Auxiliary functions from Debug Interface module
 ** See Copyright Notice in lua.h
 */
@@ -15,21 +15,27 @@
 
 #define pcRel(pc, p)	(cast(int, (pc) - (p)->code) - 1)
 
-#define getline(f,pc)	(((f)->lineinfo) ? (f)->lineinfo[pc] : 0)
+#define getfuncline(f,pc)	(((f)->lineinfo) ? (f)->lineinfo[pc] : -1)
 
 #define resethookcount(L)	(L->hookcount = L->basehookcount)
 
+/* Active Lua function (given call info) */
+#define ci_func(ci)		(clLvalue((ci)->func))
 
-LUAI_FUNC void luaG_typeerror (lua_State *L, const TValue *o,
-                                             const char *opname);
-LUAI_FUNC void luaG_concaterror (lua_State *L, StkId p1, StkId p2);
-LUAI_FUNC void luaG_aritherror (lua_State *L, const TValue *p1,
-                                              const TValue *p2);
-LUAI_FUNC int luaG_ordererror (lua_State *L, const TValue *p1,
-                                             const TValue *p2);
-LUAI_FUNC void luaG_runerror (lua_State *L, const char *fmt, ...);
-LUAI_FUNC void luaG_errormsg (lua_State *L);
-LUAI_FUNC int luaG_checkcode (const Proto *pt);
-LUAI_FUNC int luaG_checkopenop (Instruction i);
+
+LUAI_FUNC l_noret luaG_typeerror (lua_State *L, const TValue *o,
+                                                const char *opname);
+LUAI_FUNC l_noret luaG_concaterror (lua_State *L, const TValue *p1,
+                                                  const TValue *p2);
+LUAI_FUNC l_noret luaG_aritherror (lua_State *L, const TValue *p1,
+                                                 const TValue *p2);
+LUAI_FUNC l_noret luaG_tointerror (lua_State *L, const TValue *p1,
+                                                 const TValue *p2);
+LUAI_FUNC l_noret luaG_ordererror (lua_State *L, const TValue *p1,
+                                                 const TValue *p2);
+LUAI_FUNC l_noret luaG_runerror (lua_State *L, const char *fmt, ...);
+LUAI_FUNC l_noret luaG_errormsg (lua_State *L);
+LUAI_FUNC void luaG_traceexec (lua_State *L);
+
 
 #endif

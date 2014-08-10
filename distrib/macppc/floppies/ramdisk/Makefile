@@ -1,14 +1,18 @@
-#	$NetBSD: Makefile,v 1.40 2012/03/23 18:37:42 he Exp $
+#	$NetBSD: Makefile,v 1.40.10.1 2014/08/10 06:48:17 tls Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	2212k
+# This must be kept in sync with config option MEMORY_DISK_ROOT_SIZE
+# in both
+#   src/sys/arch/macppc/conf/INSTALL
+#   src/sys/arch/macppc/conf/GENERIC_MD
+IMAGESIZE=	2248k
 MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
-DBG=		-Os -mmultiple -mstring
+DBG=		-Os
 
 CRUNCHBIN=	ramdiskbin
 CRUNCHGEN_FLAGS= -d "${DBG}"

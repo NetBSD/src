@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2008/03/18 04:20:37 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.20.42.1 2014/08/10 06:49:08 tls Exp $
 #
 #	etc.mac68k/Makefile.inc -- mac68k-specific etc Makefile targets
 #

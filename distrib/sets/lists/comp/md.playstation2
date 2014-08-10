@@ -1,4 +1,4 @@
-# $NetBSD: md.playstation2,v 1.12 2014/04/01 19:13:31 martin Exp $
+# $NetBSD: md.playstation2,v 1.12.2.1 2014/08/10 06:48:34 tls Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/playstation2			comp-c-include
 ./usr/include/playstation2/_G_config.h		comp-obsolete		obsolete
@@ -30,8 +30,8 @@
 ./usr/include/playstation2/locore.h		comp-c-include
 ./usr/include/playstation2/math.h		comp-c-include
 ./usr/include/playstation2/mcontext.h		comp-c-include
-./usr/include/playstation2/mutex.h			comp-c-include
 ./usr/include/playstation2/mips_opcode.h	comp-c-include
+./usr/include/playstation2/mutex.h			comp-c-include
 ./usr/include/playstation2/param.h		comp-c-include
 ./usr/include/playstation2/pcb.h		comp-c-include
 ./usr/include/playstation2/pmap.h		comp-c-include

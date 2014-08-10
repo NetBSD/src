@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.121 2014/03/20 09:05:28 mrg Exp $
+# $NetBSD: mi,v 1.121.2.1 2014/08/10 06:48:35 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1519,14 +1519,13 @@
 ./usr/X11R7/include/drm					base-x11-root	obsolete
 ./usr/X11R7/include/fontconfig				base-x11-root	xorg
 ./usr/X11R7/include/freetype2				base-x11-root	xorg
+./usr/X11R7/include/freetype2/cache			base-x11-root	xorg
+./usr/X11R7/include/freetype2/config			base-x11-root	xorg
 ./usr/X11R7/include/freetype2/freetype			base-obsolete	obsolete
 ./usr/X11R7/include/freetype2/freetype/cache		base-obsolete	obsolete
 ./usr/X11R7/include/freetype2/freetype/config		base-obsolete	obsolete
 ./usr/X11R7/include/freetype2/freetype/internal		base-obsolete	obsolete
 ./usr/X11R7/include/freetype2/freetype/internal/services base-obsolete	obsolete
-./usr/X11R7/include/freetype2				base-x11-root	xorg
-./usr/X11R7/include/freetype2/cache			base-x11-root	xorg
-./usr/X11R7/include/freetype2/config			base-x11-root	xorg
 ./usr/X11R7/include/freetype2/internal			base-x11-root	xorg
 ./usr/X11R7/include/freetype2/internal/services		base-x11-root	xorg
 ./usr/X11R7/include/libdrm				base-x11-root	xorg
@@ -2146,6 +2145,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/epo			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/es			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/et			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/eu			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/eurosign		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/extras			base-x11-root	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/extras/apl		-unknown-	obsolete

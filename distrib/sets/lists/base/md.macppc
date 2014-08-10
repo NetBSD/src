@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.32 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.macppc,v 1.32.2.1 2014/08/10 06:48:34 tls Exp $
 ./usr/mdec/bootxx				base-sysutil-bin
 ./usr/mdec/installboot				base-obsolete		obsolete
 ./usr/mdec/mbr					base-obsolete		obsolete

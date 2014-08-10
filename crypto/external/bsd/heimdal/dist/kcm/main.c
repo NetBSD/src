@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.22.1 2014/08/10 06:47:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kcm_locl.h"
 
-__RCSID("$NetBSD: main.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $");
+__RCSID("NetBSD");
 
 sig_atomic_t exit_flag = 0;
 

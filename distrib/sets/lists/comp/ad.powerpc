@@ -1,12 +1,13 @@
-# $NetBSD: ad.powerpc,v 1.66 2014/03/07 05:50:42 matt Exp $
+# $NetBSD: ad.powerpc,v 1.66.2.1 2014/08/10 06:48:34 tls Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
-./usr/include/clang-3.0/altivec.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/altivec.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/altivec.h		comp-obsolete		obsolete
 ./usr/include/clang-3.4/altivec.h		comp-obsolete		obsolete
 ./usr/include/clang-3.5/altivec.h		comp-c-include		llvm
+./usr/include/g++/bits/powerpc			comp-c-include		compat,arch64
+./usr/include/g++/bits/powerpc/c++config.h	comp-c-include		compat,arch64,gcc=48
+./usr/include/g++/bits/powerpc64		comp-c-include		compat,arch64
+./usr/include/g++/bits/powerpc64/c++config.h	comp-c-include		compat,arch64,gcc=48
 ./usr/include/gcc-4.1/altivec.h			comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/altivec.h			comp-obsolete		gcc=45,obsolete
 ./usr/include/gcc-4.1/altivec.h			comp-obsolete		gcc=48,obsolete
@@ -20,6 +21,8 @@
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/vec_types.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.8/altivec.h			comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/htmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/htmxlintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/paired.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/ppc-asm.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/ppu_intrinsics.h		comp-c-include		gcccmds,gcc=48
@@ -28,10 +31,6 @@
 ./usr/include/gcc-4.8/spu2vmx.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/vec_types.h		comp-c-include		gcccmds,gcc=48
-./usr/include/g++/bits/powerpc			comp-c-include		compat,arch64
-./usr/include/g++/bits/powerpc/c++config.h	comp-c-include		compat,arch64,gcc=48
-./usr/include/g++/bits/powerpc64		comp-c-include		compat,arch64
-./usr/include/g++/bits/powerpc64/c++config.h	comp-c-include		compat,arch64,gcc=48
 ./usr/include/powerpc				comp-c-include
 ./usr/include/powerpc/ansi.h			comp-c-include
 ./usr/include/powerpc/aout_machdep.h		comp-c-include
@@ -101,7 +100,8 @@
 ./usr/include/powerpc/rwlock.h			comp-c-include
 ./usr/include/powerpc/setjmp.h			comp-c-include
 ./usr/include/powerpc/signal.h			comp-c-include
-./usr/include/powerpc/sljitarch.h		comp-c-include
+./usr/include/powerpc/sljitarch.h		comp-obsolete		obsolete
+./usr/include/powerpc/sljit_machdep.h		comp-c-include
 ./usr/include/powerpc/spr.h			comp-c-include
 ./usr/include/powerpc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/powerpc/trap.h			comp-c-include
@@ -299,12 +299,12 @@
 ./usr/lib/powerpc/libgnumalloc_p.a		comp-c-proflib		compat,arch64,profile
 ./usr/lib/powerpc/libgnumalloc_pic.a		comp-c-piclib		compat,arch64,pic,picinstall
 ./usr/lib/powerpc/libgomp.a			comp-c-lib		compat,arch64,gcc=45
-./usr/lib/powerpc/libgomp.so			base-sys-shlib		compat,arch64,pic,gcc=45
-./usr/lib/powerpc/libgomp_p.a			comp-c-proflib		compat,arch64,profile,gcc=45
-./usr/lib/powerpc/libgomp_pic.a			comp-c-piclib		compat,arch64,pic,gcc=45,picinstall
 ./usr/lib/powerpc/libgomp.a			comp-c-lib		compat,arch64,gcc=48
+./usr/lib/powerpc/libgomp.so			base-sys-shlib		compat,arch64,pic,gcc=45
 ./usr/lib/powerpc/libgomp.so			base-sys-shlib		compat,arch64,pic,gcc=48
+./usr/lib/powerpc/libgomp_p.a			comp-c-proflib		compat,arch64,profile,gcc=45
 ./usr/lib/powerpc/libgomp_p.a			comp-c-proflib		compat,arch64,profile,gcc=48
+./usr/lib/powerpc/libgomp_pic.a			comp-c-piclib		compat,arch64,pic,gcc=45,picinstall
 ./usr/lib/powerpc/libgomp_pic.a			comp-c-piclib		compat,arch64,pic,gcc=48,picinstall
 ./usr/lib/powerpc/libgssapi.a			comp-c-lib		compat,arch64,kerberos
 ./usr/lib/powerpc/libgssapi.so			base-sys-shlib		compat,arch64,pic,kerberos
@@ -334,6 +334,10 @@
 ./usr/lib/powerpc/libipsec.so			base-sys-shlib		compat,arch64,pic
 ./usr/lib/powerpc/libipsec_p.a			comp-c-proflib		compat,arch64,profile
 ./usr/lib/powerpc/libipsec_pic.a		comp-c-piclib		compat,arch64,pic,picinstall
+./usr/lib/powerpc/libirs.a			comp-c-lib		compat,arch64
+./usr/lib/powerpc/libirs.so			base-sys-shlib		compat,arch64,pic
+./usr/lib/powerpc/libirs_p.a			comp-c-proflib		compat,arch64,profile
+./usr/lib/powerpc/libirs_pic.a			comp-c-piclib		compat,arch64,pic,picinstall
 ./usr/lib/powerpc/libisc.a			comp-c-lib		compat,arch64
 ./usr/lib/powerpc/libisc.so			base-sys-shlib		compat,arch64,pic
 ./usr/lib/powerpc/libisc_p.a			comp-c-proflib		compat,arch64,profile

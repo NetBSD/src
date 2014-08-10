@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_16.S,v 1.2 2014/03/04 16:15:28 matt Exp $	*/
+/*	$NetBSD: atomic_and_16.S,v 1.2.2.1 2014/08/10 06:47:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ END(_atomic_and_16)
 ATOMIC_OP_ALIAS(atomic_and_16,_atomic_and_16)
 ATOMIC_OP_ALIAS(atomic_and_ushort,_atomic_and_16)
 CRT_ALIAS(__sync_fetch_and_and_2,_atomic_and_16)
+CRT_ALIAS(__atomic_fetch_and_2,_atomic_and_16)
 STRONG_ALIAS(_atomic_and_ushort,_atomic_and_16)
 
 ENTRY_NP(_atomic_and_16_nv)

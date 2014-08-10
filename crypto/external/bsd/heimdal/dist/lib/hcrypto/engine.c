@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.2 2014/03/27 16:10:45 apb Exp $	*/
+/*	$NetBSD: engine.c,v 1.2.2.1 2014/08/10 06:47:29 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -341,7 +341,7 @@ ENGINE_by_dso(const char *path, const char *id)
 	    dlclose(handle);
 	    free(engine);
 	    return NULL;
-	}	
+	}
     }
 
     {
@@ -359,7 +359,7 @@ ENGINE_by_dso(const char *path, const char *id)
 	    dlclose(handle);
 	    free(engine);
 	    return NULL;
-	}	
+	}
     }
 
     ENGINE_up_ref(engine);

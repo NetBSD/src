@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.40 2011/07/28 20:30:07 dyoung Exp $
+# $NetBSD: md.alpha,v 1.40.20.1 2014/08/10 06:48:34 tls Exp $
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/libalpha.so				base-sys-shlib
 ./usr/lib/libalpha.so.0				base-sys-shlib

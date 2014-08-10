@@ -1,4 +1,4 @@
-# $NetBSD: md.sbmips,v 1.4 2008/11/29 17:57:34 tsutsui Exp $
+# $NetBSD: md.sbmips,v 1.4.26.1 2014/08/10 06:48:34 tls Exp $
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/bootxx_cd9660			base-sysutil-bin
 ./usr/mdec/bootxx_ffs				base-sysutil-bin

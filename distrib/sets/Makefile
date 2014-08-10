@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2014/01/27 21:37:17 apb Exp $
+#	$NetBSD: Makefile,v 1.94.2.1 2014/08/10 06:48:34 tls Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -16,7 +16,7 @@ all:
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 COMPRESS_PROGRAM=${TOOL_GZIP}
-GZIP_FLAGS= -n
+GZIP_FLAGS= ${GZIP_N_FLAG}
 
 SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} \
@@ -210,7 +210,7 @@ maketars: .PRECIOUS .PHONY check_DESTDIR check_RELEASEDIR \
 maketarsetup: .EXEC
 .if defined(DESTDIR) && ${DESTDIR} != ""
 	${_MKMSG} "execute  checkflist"
-	${MAKE} checkflist
+	cd ${.CURDIR}; ${MAKE} checkflist
 .endif
 	mkdir -p ${TARDIR}
 	for i in MD5 SHA512; do \
@@ -306,12 +306,13 @@ makedeps: .PHONY
 
 # Sort the lists files
 sortlists: .PHONY
-	find ${.CURDIR}/lists \! \( -name CVS -prune \) -type f -print \
+	find ${.CURDIR}/lists \! \( -name CVS -prune \) \! -name .#\* \
+	    -type f -print \
 	| while read f ; do \
 	    ${_MKSHMSG} "sorting $${f#${.CURDIR}/}" ; \
 	    { grep '^#' "$$f" ; \
 	      grep -v '^#' "$$f" | sort ; \
-	    } >"$$f".tmp; \
+	    } | cat -s >"$$f".tmp; \
 	    if cmp "$$f" "$$f".tmp >/dev/null; then \
 	      : "$$f is unchanged" ; \
 	      rm "$$f".tmp ; \

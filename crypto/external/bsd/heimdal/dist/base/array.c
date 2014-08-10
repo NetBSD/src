@@ -1,4 +1,4 @@
-/*	$NetBSD: array.c,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $	*/
+/*	$NetBSD: array.c,v 1.1.1.1.22.1 2014/08/10 06:47:26 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -220,7 +220,7 @@ heim_array_delete_value(heim_array_t array, size_t idx)
  */
 
 void
-heim_array_filter(heim_array_t array, bool (^block)(heim_object_t))
+heim_array_filter(heim_array_t array, int (^block)(heim_object_t))
 {
     size_t n = 0;
 

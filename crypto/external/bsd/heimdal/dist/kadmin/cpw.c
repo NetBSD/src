@@ -1,4 +1,4 @@
-/*	$NetBSD: cpw.c,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $	*/
+/*	$NetBSD: cpw.c,v 1.1.1.1.22.1 2014/08/10 06:47:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -160,7 +160,7 @@ cpw_entry(struct passwd_options *opt, int argc, char **argv)
 		"--random-key, --random-password, --password, --key\n");
 	return 1;
     }
-	
+
     if (opt->key_string) {
 	const char *error;
 

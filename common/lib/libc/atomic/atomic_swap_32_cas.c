@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_32_cas.c,v 1.6 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_swap_32_cas.c,v 1.6.2.1 2014/08/10 06:47:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@ atomic_swap_32(volatile uint32_t *addr, uint32_t new)
 
 	return (old);
 }
+
+crt_alias(__atomic_exchange_4,_atomic_swap_32)
 
 #undef atomic_swap_32
 atomic_op_alias(atomic_swap_32,_atomic_swap_32)

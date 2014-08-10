@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.697 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: shl.mi,v 1.697.2.1 2014/08/10 06:48:34 tls Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -15,7 +15,7 @@
 #
 ./lib/libc.so					base-sys-shlib		dynamicroot
 ./lib/libc.so.12				base-sys-shlib		dynamicroot
-./lib/libc.so.12.190				base-sys-shlib		dynamicroot
+./lib/libc.so.12.193				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
@@ -49,9 +49,9 @@
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
 ./lib/libm.so.0.10				base-sys-shlib		dynamicroot
-./lib/libnpf.so					base-sys-shlib		dynamicroot
-./lib/libnpf.so.0				base-sys-shlib		dynamicroot
-./lib/libnpf.so.0.0				base-sys-shlib		dynamicroot
+./lib/libnpf.so					base-npf-shlib		npf,dynamicroot
+./lib/libnpf.so.0				base-npf-shlib		npf,dynamicroot
+./lib/libnpf.so.0.0				base-npf-shlib		npf,dynamicroot
 ./lib/libpcap.so				base-sys-shlib		dynamicroot
 ./lib/libpcap.so.5				base-sys-shlib		dynamicroot
 ./lib/libpcap.so.5.0				base-sys-shlib		dynamicroot
@@ -197,7 +197,7 @@
 ./usr/lib/libc++.so.1.0				base-sys-shlib		libcxx
 ./usr/lib/libc.so				base-sys-shlib
 ./usr/lib/libc.so.12				base-sys-shlib
-./usr/lib/libc.so.12.190			base-sys-shlib
+./usr/lib/libc.so.12.193			base-sys-shlib
 ./usr/lib/libcdk.so				base-obsolete		obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		kerberos
 ./usr/lib/libcom_err.so.7			base-krb5-shlib		kerberos
@@ -280,10 +280,10 @@
 ./usr/lib/libgnumalloc.so.1			base-sys-shlib
 ./usr/lib/libgnumalloc.so.1.0			base-sys-shlib
 ./usr/lib/libgomp.so				base-sys-shlib		gcc=45
-./usr/lib/libgomp.so.1				base-sys-shlib		gcc=45
-./usr/lib/libgomp.so.1.0			base-sys-shlib		gcc=45
 ./usr/lib/libgomp.so				base-sys-shlib		gcc=48
+./usr/lib/libgomp.so.1				base-sys-shlib		gcc=45
 ./usr/lib/libgomp.so.1				base-sys-shlib		gcc=48
+./usr/lib/libgomp.so.1.0			base-sys-shlib		gcc=45
 ./usr/lib/libgomp.so.1.1			base-sys-shlib		gcc=48
 ./usr/lib/libgssapi.so				base-krb5-shlib		kerberos
 ./usr/lib/libgssapi.so.10			base-krb5-shlib		kerberos
@@ -306,6 +306,9 @@
 ./usr/lib/libipsec.so				base-net-shlib
 ./usr/lib/libipsec.so.3				base-net-shlib
 ./usr/lib/libipsec.so.3.0			base-net-shlib
+./usr/lib/libirs.so				base-bind-shlib
+./usr/lib/libirs.so.8				base-bind-shlib
+./usr/lib/libirs.so.8.0				base-bind-shlib
 ./usr/lib/libisc.so				base-bind-shlib
 ./usr/lib/libisc.so.8				base-bind-shlib
 ./usr/lib/libisc.so.8.0				base-bind-shlib
@@ -314,7 +317,8 @@
 ./usr/lib/libisccc.so.8.0			base-bind-shlib
 ./usr/lib/libisccfg.so				base-bind-shlib
 ./usr/lib/libisccfg.so.8			base-bind-shlib
-./usr/lib/libisccfg.so.8.0			base-bind-shlib
+./usr/lib/libisccfg.so.8.1			base-bind-shlib
+./usr/lib/libisccfg.so.8.0			base-bind-shlib		obsolete
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi
@@ -345,16 +349,16 @@
 ./usr/lib/libkvm.so.6.0				base-sys-shlib
 ./usr/lib/liblber.so				base-ldap-shlib		ldap
 ./usr/lib/liblber.so.3				base-ldap-shlib		ldap
-./usr/lib/liblber.so.3.2			base-ldap-shlib		ldap
+./usr/lib/liblber.so.3.3			base-ldap-shlib		ldap
 ./usr/lib/libldap.so				base-ldap-shlib		ldap
 ./usr/lib/libldap.so.4				base-ldap-shlib		ldap
-./usr/lib/libldap.so.4.2			base-ldap-shlib		ldap
+./usr/lib/libldap.so.4.3			base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so				base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.4			base-ldap-shlib		ldap
-./usr/lib/libldap_r.so.4.2			base-ldap-shlib		ldap
+./usr/lib/libldap_r.so.4.3			base-ldap-shlib		ldap
 ./usr/lib/liblua.so				base-sys-shlib
-./usr/lib/liblua.so.1				base-sys-shlib
-./usr/lib/liblua.so.1.0				base-sys-shlib
+./usr/lib/liblua.so.5				base-sys-shlib
+./usr/lib/liblua.so.5.3				base-sys-shlib
 ./usr/lib/liblutok.so				base-sys-shlib		kyua
 ./usr/lib/liblutok.so.1				base-obsolete		obsolete
 ./usr/lib/liblutok.so.1.0			base-obsolete		obsolete
@@ -396,16 +400,16 @@
 ./usr/lib/libobjc.so				base-sys-shlib		gcc
 ./usr/lib/libobjc.so.3				base-sys-shlib		gcc=4
 ./usr/lib/libobjc.so.3				base-sys-shlib		gcc=45
-./usr/lib/libobjc.so.4				base-sys-shlib		gcc=48
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=4
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=45
+./usr/lib/libobjc.so.4				base-sys-shlib		gcc=48
 ./usr/lib/libobjc.so.4.0			base-sys-shlib		gcc=48
 ./usr/lib/libopenpgpsdk.so			base-obsolete		obsolete
 ./usr/lib/libopenpgpsdk.so.0			base-obsolete		obsolete
 ./usr/lib/libopenpgpsdk.so.0.9			base-obsolete		obsolete
 ./usr/lib/libossaudio.so			base-sys-shlib
 ./usr/lib/libossaudio.so.1			base-sys-shlib
-./usr/lib/libossaudio.so.1.0			base-sys-shlib
+./usr/lib/libossaudio.so.1.1			base-sys-shlib
 ./usr/lib/libp2k.so				base-puffs-shlib	rump
 ./usr/lib/libp2k.so.2				base-puffs-shlib	rump
 ./usr/lib/libp2k.so.2.0				base-puffs-shlib	rump
@@ -417,7 +421,7 @@
 ./usr/lib/libpcap.so.5.0			base-net-shlib
 ./usr/lib/libpci.so				base-sys-shlib
 ./usr/lib/libpci.so.2				base-sys-shlib
-./usr/lib/libpci.so.2.0				base-sys-shlib
+./usr/lib/libpci.so.2.1				base-sys-shlib
 ./usr/lib/libperfuse.so				base-perfuse-shlib
 ./usr/lib/libperfuse.so.0			base-perfuse-shlib
 ./usr/lib/libperfuse.so.0.0			base-perfuse-shlib
@@ -520,9 +524,9 @@
 ./usr/lib/librumpdev_scsipi.so			base-rump-shlib	rump
 ./usr/lib/librumpdev_scsipi.so.0		base-rump-shlib	rump
 ./usr/lib/librumpdev_scsipi.so.0.0		base-rump-shlib	rump
-./usr/lib/librumpdev_scsitest.so		base-rump-shlib	rump
-./usr/lib/librumpdev_scsitest.so.0		base-rump-shlib	rump
-./usr/lib/librumpdev_scsitest.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_scsitest.so		base-obsolete obsolete
+./usr/lib/librumpdev_scsitest.so.0		base-obsolete obsolete
+./usr/lib/librumpdev_scsitest.so.0.0		base-obsolete obsolete
 ./usr/lib/librumpdev_sysmon.so			base-rump-shlib	rump
 ./usr/lib/librumpdev_sysmon.so.0		base-rump-shlib	rump
 ./usr/lib/librumpdev_sysmon.so.0.0		base-rump-shlib	rump
@@ -544,6 +548,9 @@
 ./usr/lib/librumpdev_usb.so			base-rump-shlib	rump
 ./usr/lib/librumpdev_usb.so.0			base-rump-shlib	rump
 ./usr/lib/librumpdev_usb.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpdev_vnd.so			base-rump-shlib	rump
+./usr/lib/librumpdev_vnd.so.0			base-rump-shlib	rump
+./usr/lib/librumpdev_vnd.so.0.0			base-rump-shlib	rump
 ./usr/lib/librumpdev_wscons.so			base-rump-shlib	rump
 ./usr/lib/librumpdev_wscons.so.0 		base-rump-shlib	rump
 ./usr/lib/librumpdev_wscons.so.0.0		base-rump-shlib	rump
@@ -706,6 +713,9 @@
 ./usr/lib/librumpvfs.so				base-rump-shlib	rump
 ./usr/lib/librumpvfs.so.0			base-rump-shlib	rump
 ./usr/lib/librumpvfs.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpvfs_aio.so			base-rump-shlib	rump
+./usr/lib/librumpvfs_aio.so.0		base-rump-shlib	rump
+./usr/lib/librumpvfs_aio.so.0.0		base-rump-shlib	rump
 ./usr/lib/librumpvfs_fifofs.so			base-rump-shlib	rump
 ./usr/lib/librumpvfs_fifofs.so.0		base-rump-shlib	rump
 ./usr/lib/librumpvfs_fifofs.so.0.0		base-rump-shlib	rump
@@ -791,9 +801,12 @@
 ./usr/lib/libzpool.so.0				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libzpool.so.0.0			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libzpool_pic.a			base-zfs-shlib		zfs,dynamicroot,picinstall
-./usr/lib/lua/5.1/gpio.so                    	base-sys-shlib
-./usr/lib/lua/5.1/sqlite.so                    	base-sys-shlib
-./usr/lib/lua/5.1/syslog.so                    	base-sys-shlib
+./usr/lib/lua/5.1/gpio.so                    	base-obsolete		obsolete
+./usr/lib/lua/5.1/sqlite.so                    	base-obsolete		obsolete
+./usr/lib/lua/5.1/syslog.so                    	base-obsolete		obsolete
+./usr/lib/lua/5.3/gpio.so                    	base-sys-shlib
+./usr/lib/lua/5.3/sqlite.so                    	base-sys-shlib
+./usr/lib/lua/5.3/syslog.so                    	base-sys-shlib
 ./usr/lib/npf/ext_log.so			base-obsolete		obsolete
 ./usr/lib/npf/ext_log.so.0			base-obsolete		obsolete
 ./usr/lib/npf/ext_log.so.0.0			base-obsolete		obsolete

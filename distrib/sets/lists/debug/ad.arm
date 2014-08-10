@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.32 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: ad.arm,v 1.32.2.1 2014/08/10 06:48:35 tls Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -65,7 +65,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libc++.so.1.0.debug		comp-sys-debug	debug,compat,pic,libcxx
-./usr/libdata/debug/usr/lib/oabi/libc.so.12.190.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libc.so.12.193.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libc_vfp.so.0.0.debug		comp-sys-debug	debug,compat,pic
 ./usr/libdata/debug/usr/lib/oabi/libcom_err.so.6.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libcom_err.so.7.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
@@ -111,7 +111,9 @@
 ./usr/libdata/debug/usr/lib/oabi/libisccc.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libisccc.so.8.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
-./usr/libdata/debug/usr/lib/oabi/libisccfg.so.8.0.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libisccfg.so.8.0.debug	comp-bind-debug	debug,compat,obsolete
+./usr/libdata/debug/usr/lib/oabi/libisccfg.so.8.1.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libirs.so.8.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisns.so.0.0.debug	comp-isns-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
@@ -124,10 +126,10 @@
 ./usr/libdata/debug/usr/lib/oabi/libkrb5.so.24.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libkrb5.so.26.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libkvm.so.6.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/liblber.so.3.2.debug	comp-ldap-debug	ldap,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
-./usr/libdata/debug/usr/lib/oabi/liblua.so.1.0.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/liblber.so.3.3.debug	comp-ldap-debug	ldap,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libldap.so.4.3.debug	comp-ldap-debug	ldap,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libldap_r.so.4.3.debug	comp-ldap-debug	ldap,debug,compat
+./usr/libdata/debug/usr/lib/oabi/liblua.so.5.3.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblutok.so.1.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/oabi/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblwres.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
@@ -149,11 +151,11 @@
 ./usr/libdata/debug/usr/lib/oabi/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libobjc.so.4.0.debug	comp-sys-debug	gcc=48,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libopcodes.so.6.0.debug	comp-c-debug	binutils,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libossaudio.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/oabi/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libpcap.so.5.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libpci.so.2.0.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libpci.so.2.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/oabi/libpmc.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libposix.so.0.1.debug	comp-sys-debug	debug,compat

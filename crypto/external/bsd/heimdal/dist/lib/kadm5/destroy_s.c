@@ -1,4 +1,4 @@
-/*	$NetBSD: destroy_s.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: destroy_s.c,v 1.1.1.1.22.1 2014/08/10 06:47:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: destroy_s.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 /*
  * dealloc a `kadm5_config_params'

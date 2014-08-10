@@ -1924,7 +1924,6 @@ should_have_dwarf(Elf *elf)
 			char *name;
 
 			name = elf_strptr(elf, shdr.sh_link, sym.st_name);
-fprintf(stderr, "name = %s\n", name);
 
 			/* Studio emits these local symbols regardless */
 			if ((strcmp(name, "Bbss.bss") != 0) &&
@@ -1995,14 +1994,28 @@ dw_read(tdata_t *td, Elf *elf, char *filename __unused)
 	    &addrsz, &offsz, NULL, &nxthdr, &dw.dw_err)) != DW_DLV_OK)
 		terminate("rc = %d %s\n", rc, dwarf_errmsg(dw.dw_err));
 
-	if ((cu = die_sibling(&dw, NULL)) == NULL ||
-	    (((child = die_child(&dw, cu)) == NULL) &&
-	    should_have_dwarf(elf))) {
-		terminate("file does not contain dwarf type data "
-		    "(try compiling with -g)\n");
-	} else if (child == NULL) {
-		return (0);
+	if ((cu = die_sibling(&dw, NULL)) == NULL)
+		goto out;
+
+	if ((child = die_child(&dw, cu)) == NULL) {
+		Dwarf_Unsigned lang;
+		if (die_unsigned(&dw, cu, DW_AT_language, &lang, 0)) {
+			debug(1, "DWARF language: %u\n", lang);
+			/*
+			 * Assembly languages are typically that.
+			 * They have some dwarf info, but not what
+			 * we expect. They have local symbols for
+			 * example, but they are missing the child info.
+			 */
+			if (lang >= DW_LANG_lo_user)
+				return 0;
+		}
+	    	if (should_have_dwarf(elf))
+			goto out;
 	}
+
+	if (child == NULL)
+		return (0);
 
 	dw.dw_maxoff = nxthdr - 1;
 
@@ -2044,4 +2057,7 @@ dw_read(tdata_t *td, Elf *elf, char *filename __unused)
 	/* leak the dwarf_t */
 
 	return (0);
+out:
+	terminate("file does not contain dwarf type data "
+	    "(try compiling with -g)\n");
 }

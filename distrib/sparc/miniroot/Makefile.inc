@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.20 2013/08/12 16:31:28 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.20.2.1 2014/08/10 06:48:41 tls Exp $
 
-IMAGESIZE=	8192k
+IMAGESIZE=	9216k
 DBG=		-Os -fno-unwind-tables
 MAKEFS_FLAGS=   -o density=4k
 IMAGEENDIAN=	be

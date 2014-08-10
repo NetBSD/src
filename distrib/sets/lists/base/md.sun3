@@ -1,4 +1,4 @@
-# $NetBSD: md.sun3,v 1.46 2009/02/14 11:33:56 abs Exp $
+# $NetBSD: md.sun3,v 1.46.24.1 2014/08/10 06:48:34 tls Exp $
 ./usr/mdec/bootxx				base-sysutil-bin
 ./usr/mdec/bootyy				base-sysutil-bin
 ./usr/mdec/installboot				base-obsolete		obsolete

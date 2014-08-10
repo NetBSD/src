@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.262 2014/03/14 01:05:57 pooka Exp $
+# $NetBSD: shl.mi,v 1.262.2.1 2014/08/10 06:48:35 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -64,6 +64,7 @@
 ./usr/lib/libhx509_pic.a			comp-c-piclib		kerberos,picinstall
 ./usr/lib/libintl_pic.a				comp-c-piclib	picinstall
 ./usr/lib/libipsec_pic.a			comp-c-piclib	picinstall
+./usr/lib/libirs_pic.a				comp-bind-piclib	picinstall
 ./usr/lib/libisc_pic.a				comp-bind-piclib	picinstall
 ./usr/lib/libisccc_pic.a			comp-bind-piclib	picinstall
 ./usr/lib/libisccfg_pic.a			comp-bind-piclib	picinstall
@@ -164,7 +165,7 @@
 ./usr/lib/librumpdev_raidframe_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_rnd_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_scsipi_pic.a		comp-c-piclib		rump,picinstall
-./usr/lib/librumpdev_scsitest_pic.a		comp-c-piclib		rump,picinstall
+./usr/lib/librumpdev_scsitest_pic.a		comp-obsolete obsolete
 ./usr/lib/librumpdev_sysmon_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_ubt_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_ucom_pic.a			comp-c-piclib		rump,picinstall
@@ -172,6 +173,7 @@
 ./usr/lib/librumpdev_ulpt_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_umass_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_usb_pic.a			comp-c-piclib		rump,picinstall
+./usr/lib/librumpdev_vnd_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_wscons_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpfs_cd9660_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpfs_efs_pic.a			comp-c-piclib		rump,picinstall
@@ -225,6 +227,7 @@
 ./usr/lib/librumpnet_sockin_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpnet_virtif_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpuser_pic.a			comp-c-piclib		rump,picinstall
+./usr/lib/librumpvfs_aio_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpvfs_fifofs_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpvfs_layerfs_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpvfs_pic.a			comp-c-piclib		rump,picinstall

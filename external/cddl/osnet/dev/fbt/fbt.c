@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.15 2014/03/19 11:14:12 ozaki-r Exp $	*/
+/*	$NetBSD: fbt.c,v 1.15.2.1 2014/08/10 06:50:28 tls Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -153,7 +153,7 @@ static void	fbt_resume(void *, dtrace_id_t, void *);
 
 static const struct cdevsw fbt_cdevsw = {
 	fbt_open, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, nodiscard,
 	D_OTHER
 };
 

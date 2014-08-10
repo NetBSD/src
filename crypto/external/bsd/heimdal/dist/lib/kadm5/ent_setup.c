@@ -1,4 +1,4 @@
-/*	$NetBSD: ent_setup.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: ent_setup.c,v 1.1.1.1.22.1 2014/08/10 06:47:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: ent_setup.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 #define set_value(X, V) do { if((X) == NULL) (X) = malloc(sizeof(*(X))); *(X) = V; } while(0)
 #define set_null(X)     do { if((X) != NULL) free((X)); (X) = NULL; } while (0)
@@ -105,7 +105,7 @@ perform_tl_data(krb5_context context,
 				   NULL);
 	if (ret)
 	    return KADM5_BAD_TL_TYPE;
-	
+
 	ret = hdb_replace_extension(context, &ent->entry, &ext);
 	free_HDB_extension(&ext);
     } else {

@@ -1,4 +1,5 @@
-.Dd June 19, 2010
+.\" $NetBSD: pigz.1,v 1.3.2.1 2014/08/10 06:51:07 tls Exp $
+.Dd June 15, 2014
 .Dt PIGZ 1
 .Os
 .Sh NAME
@@ -7,8 +8,11 @@
 .Nd compress or expand files
 .Sh SYNOPSIS
 .Nm
-.Op Fl 0..9cdfhiKkLlNnqRrTtz
+.Op Fl 0..9cdFfhiKkLlNnqORrTtz
+.Op Fl 11
 .Op Fl b Ar blocksize
+.Op Fl I Ar iterations
+.Op Fl M Ar maxsplits
 .Op Fl p Ar threads
 .Op Fl S Ar suffix
 .Op Ar
@@ -27,7 +31,8 @@ The compressed data is written in order to the output, and a combined check
 value is calculated from the individual check values.
 .Pp
 The compressed data format generated is in the gzip, zlib, or single-entry
-zip format using the deflate compression method.  The compression produces
+zip format using the deflate compression method.
+The compression produces
 partial raw deflate streams which are concatenated by a single write thread
 and wrapped with the appropriate header and trailer, where the trailer
 contains the combined check value.
@@ -47,7 +52,7 @@ The default input block size is 128K, but can be changed with the
 .Fl b
 option.
 The number of compress threads is set by default to the number
-of online processors, which can be changed using the 
+of online processors, which can be changed using the
 .Fl p
 option.
 Specifying
@@ -96,7 +101,12 @@ and
 or
 .Fl Fl best
 indicates the slowest compression method (best compression).
-Level 0 is no compression.
+.Fl 0
+is no compression.
+.Fl 11
+gives a few percent better compression at a severe cost in execution time.
+The default is
+.Fl 6 .
 .It Fl b, Fl Fl blocksize Ar mmm
 Set compression block size to
 .Ar mmm
@@ -105,10 +115,14 @@ K (default 128KiB).
 Write all processed output to stdout (won't delete).
 .It Fl d, Fl Fl decompress, Fl Fl uncompress
 Decompress the compressed input.
+.It Fl F, Fl Fl first
+If compressing at level 11, do iterations first, before block split (default is last).
 .It Fl f, Fl Fl force
 Force overwrite, compress .gz, links, and to terminal.
 .It Fl h, Fl Fl help
 Display a help screen and quit.
+.It Fl I, Fl Fl iterations Ar n
+If compressing at level 11, number of iterations for optimization (default 15).
 .It Fl i, Fl Fl independent
 Compress blocks independently for damage recovery.
 .It Fl K, Fl Fl zip
@@ -121,14 +135,21 @@ Display the
 license and quit.
 .It Fl l, Fl Fl list
 List the contents of the compressed input.
+.It Fl M, Fl Fl maxsplits Ar n
+If compressing at level 11, maximum number of split blocks (default 15).
 .It Fl N, Fl Fl name
 Store/restore file name and mod time in/from header.
 .It Fl n, Fl Fl no-name
 Do not store or restore file name in/from header.
+.It Fl O, Fl Fl oneblock
+If compressing at level 11, do not split into smaller blocks (default is
+block splitting).
 .It Fl p, Fl Fl processes Ar n
 Allow up to n processes (default is the number of online processors)
 .It Fl q, Fl Fl quiet, Fl Fl silent
 Print no messages, even on error.
+.It Fl R, Fl Fl rsyncable
+Input-determined block locations for rsync.
 .It Fl r, Fl Fl recursive
 Process the contents of all subdirectories.
 .It Fl S, Fl Fl suffix Ar .sss

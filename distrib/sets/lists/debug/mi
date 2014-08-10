@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.54 2014/04/01 21:40:46 christos Exp $
+# $NetBSD: mi,v 1.54.2.1 2014/08/10 06:48:35 tls Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -75,6 +75,7 @@
 ./usr/lib/libheimntlm_g.a			comp-c-debuglib		debuglib,kerberos
 ./usr/lib/libhx509_g.a				comp-c-debuglib		debuglib,kerberos
 ./usr/lib/libiberty_g.a				comp-c-debuglib		debuglib,binutils
+./usr/lib/libirs_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libintl_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libipsec_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libisc_g.a				comp-c-debuglib		debuglib
@@ -152,7 +153,7 @@
 ./usr/lib/librumpdev_raidframe_g.a		comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_rnd_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_scsipi_g.a			comp-c-debuglib		debuglib,rump
-./usr/lib/librumpdev_scsitest_g.a		comp-c-debuglib		debuglib,rump
+./usr/lib/librumpdev_scsitest_g.a		comp-obsolete obsolete
 ./usr/lib/librumpdev_sysmon_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_ubt_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_ucom_g.a			comp-c-debuglib		debuglib,rump
@@ -160,6 +161,7 @@
 ./usr/lib/librumpdev_ulpt_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_umass_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_usb_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpdev_vnd_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_wscons_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpfs_cd9660_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpfs_efs_g.a			comp-c-debuglib		debuglib,rump
@@ -213,6 +215,7 @@
 ./usr/lib/librumpnet_sockin_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_virtif_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpuser_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpvfs_aio_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpvfs_fifofs_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpvfs_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpvfs_layerfs_g.a		comp-c-debuglib		debuglib,rump
@@ -468,14 +471,15 @@
 ./usr/libdata/debug/usr/bin/crunchide.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/csplit.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/ctags.debug		comp-c-debug		debug
-./usr/libdata/debug/usr/bin/ctfconvert.debug	comp-util-debug		dtrace,debug
-./usr/libdata/debug/usr/bin/ctfdump.debug	comp-util-debug		dtrace,debug
-./usr/libdata/debug/usr/bin/ctfmerge.debug	comp-util-debug		dtrace,debug
+./usr/libdata/debug/usr/bin/ctfconvert.debug	comp-util-debug		ctf,debug
+./usr/libdata/debug/usr/bin/ctfdump.debug	comp-util-debug		ctf,debug
+./usr/libdata/debug/usr/bin/ctfmerge.debug	comp-util-debug		ctf,debug
 ./usr/libdata/debug/usr/bin/cut.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/cvs.debug		comp-cvs-debug		cvs,debug
 ./usr/libdata/debug/usr/bin/db.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/dc.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/deroff.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/delv.debug		comp-bind-bin		debug
 ./usr/libdata/debug/usr/bin/diff.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/diff3.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/dig.debug		comp-netutil-debug	debug
@@ -483,6 +487,7 @@
 ./usr/libdata/debug/usr/bin/dns-sd.debug	comp-mdns-debug		mdns,debug
 ./usr/libdata/debug/usr/bin/du.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/eject.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/ekermit.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/elfedit.debug	comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/env.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/eqn.debug		comp-groff-debug	groff,debug
@@ -511,12 +516,12 @@
 ./usr/libdata/debug/usr/bin/gdb.debug		comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gencat.debug	comp-locale-debug	debug
+./usr/libdata/debug/usr/bin/getaddrinfo.debug	comp-util-debug	debug
 ./usr/libdata/debug/usr/bin/getconf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getent.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getextattr.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getopt.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/gettext.debug	comp-c-debug		debug
-./usr/libdata/debug/usr/bin/gkermit.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/gprof.debug		comp-debug-debug	binutils,debug
 ./usr/libdata/debug/usr/bin/grep.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/grn.debug		comp-groff-debug	groff,debug
@@ -655,6 +660,7 @@
 ./usr/libdata/debug/usr/bin/objdump.debug	comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/openpgp.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/openssl.debug	comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/bin/p++.debug		comp-cxx-debug		pcc,debug
 ./usr/libdata/debug/usr/bin/passwd.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/paste.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/patch.debug		comp-util-debug		debug
@@ -754,6 +760,7 @@
 ./usr/libdata/debug/usr/bin/tftp.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/tic.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/time.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/timeout.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tip.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tmux.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tn3270.debug	comp-obsolete		obsolete
@@ -885,6 +892,7 @@
 ./usr/libdata/debug/usr/libexec/ching/printching.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/libexec/comsat.debug	comp-mail-debug		debug
 ./usr/libdata/debug/usr/libexec/cpp.debug	comp-obsolete		pcc,obsolete
+./usr/libdata/debug/usr/libexec/cxxcom.debug	comp-cxx-debug		pcc,debug
 ./usr/libdata/debug/usr/libexec/digest-service.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-fortran-debug	gcc=3,gcccmds,debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		gcc=4,obsolete
@@ -998,6 +1006,7 @@
 ./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/diskpart.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dnssec-dsfromkey.debug	comp-bind-debug		debug
+./usr/libdata/debug/usr/sbin/dnssec-importkey.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-keyfromlabel.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-keygen.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-revoke.debug	comp-bind-debug		debug
@@ -1141,6 +1150,7 @@
 ./usr/libdata/debug/usr/sbin/postmulti.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postqueue.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postsuper.debug	comp-postfix-debug	postfix,debug
+./usr/libdata/debug/usr/sbin/posttls-finger.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/powerd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pppd.debug		comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/pppdump.debug	comp-ppp-debug		debug
@@ -1215,6 +1225,7 @@
 ./usr/libdata/debug/usr/sbin/sup.debug		comp-sup-debug		debug
 ./usr/libdata/debug/usr/sbin/supfilesrv.debug	comp-sup-debug		debug
 ./usr/libdata/debug/usr/sbin/supscan.debug	comp-sup-debug		debug
+./usr/libdata/debug/usr/sbin/sysinst.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/syslogd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdchk.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdmatch.debug	comp-netutil-debug	debug
@@ -1643,6 +1654,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_subr_prf.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_sysctl.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_sysv.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-obsolete		obsolete
@@ -1773,6 +1785,8 @@
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_put.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_set.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_bpfjit.debug		tests-lib-debug		debug,atf,sljit
+./usr/libdata/debug/usr/tests/lib/libbpfjit/t_extmem.debug		tests-lib-debug		debug,atf,sljit
+./usr/libdata/debug/usr/tests/lib/libbpfjit/t_cop.debug			tests-lib-debug		debug,atf,sljit
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_faccessat.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchmodat.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchownat.debug		tests-lib-debug		debug,atf
@@ -1790,6 +1804,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_unlinkat.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_utimensat.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/db/h_db.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/execve/t_execve.debug	tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_fileactions.debug	tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_spawn.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_spawnattr.debug	tests-kernel-tests	debug,atf
@@ -1881,6 +1896,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_readlink.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_snprintf.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_sprintf.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_stpcpy.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_stpncpy.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strcat.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strcpy.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strncat.debug		tests-lib-debug		debug,atf,ssp
@@ -1916,6 +1933,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtol.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtox.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_system.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string/t_bm.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_memchr.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_memcpy.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_memmem.debug		tests-lib-debug		debug,atf
@@ -1960,6 +1978,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_lwp_create.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_lwp_ctl.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mincore.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_minherit.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkdir.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkfifo.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mknod.debug		tests-lib-debug		debug,atf
@@ -2038,6 +2057,7 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_infinity.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_ldexp.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_libm.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libm/t_modf.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_log.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_pow.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_precision.debug		tests-lib-debug		debug,atf
@@ -2115,7 +2135,12 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlvsym.debug		tests-libexec-debug	debug,atf,pic
 ./usr/libdata/debug/usr/tests/net/bpf/t_bpf.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpf/t_div-by-zero.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/bpf/t_mbuf.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpfilter/t_bpfilter.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/bpfjit/t_bpfjit.debug		tests-net-debug		debug,atf,sljit,rump
+./usr/libdata/debug/usr/tests/net/bpfjit/t_cop.debug		tests-net-debug		debug,atf,sljit,rump
+./usr/libdata/debug/usr/tests/net/bpfjit/t_extmem.debug		tests-net-debug		debug,atf,sljit,rump
+./usr/libdata/debug/usr/tests/net/bpfjit/t_mbuf.debug		tests-net-debug		debug,atf,sljit,rump
 ./usr/libdata/debug/usr/tests/net/carp/t_basic.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/fdpass/fdpass32.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/fdpass/fdpass64.debug		tests-net-debug		debug,atf

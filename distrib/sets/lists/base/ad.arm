@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.41 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: ad.arm,v 1.41.2.1 2014/08/10 06:48:34 tls Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -92,7 +92,7 @@
 ./usr/lib/oabi/libc++.so.1			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/oabi/libc++.so.1.0			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/oabi/libc.so.12			base-compat-shlib	compat,pic
-./usr/lib/oabi/libc.so.12.190			base-compat-shlib	compat,pic
+./usr/lib/oabi/libc.so.12.193			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libc_vfp.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libc_vfp.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
@@ -146,8 +146,8 @@
 ./usr/lib/oabi/libgnumalloc.so.1		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/oabi/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/oabi/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48
+./usr/lib/oabi/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/oabi/libgomp.so.1.1			base-compat-shlib	compat,pic,gcc=48
 ./usr/lib/oabi/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libgssapi.so.10.0		base-compat-shlib	compat,pic,kerberos
@@ -163,12 +163,15 @@
 ./usr/lib/oabi/libintl.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libipsec.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libirs.so.8			base-compat-shlib	compat,pic
+./usr/lib/oabi/libirs.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisc.so.8			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisc.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisccc.so.8			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisccc.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisccfg.so.8			base-compat-shlib	compat,pic
-./usr/lib/oabi/libisccfg.so.8.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libisccfg.so.8.0			base-compat-shlib	obsolete
+./usr/lib/oabi/libisccfg.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/oabi/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/oabi/libisns.so.0			base-compat-shlib	compat,pic
@@ -186,13 +189,13 @@
 ./usr/lib/oabi/libkvm.so.6			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libkvm.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblber.so.3			base-compat-shlib	compat,pic,ldap
-./usr/lib/oabi/liblber.so.3.2			base-compat-shlib	compat,pic,ldap
+./usr/lib/oabi/liblber.so.3.3			base-compat-shlib	compat,pic,ldap
 ./usr/lib/oabi/libldap.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/oabi/libldap.so.4.2			base-compat-shlib	compat,pic,ldap
+./usr/lib/oabi/libldap.so.4.3			base-compat-shlib	compat,pic,ldap
 ./usr/lib/oabi/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/oabi/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
-./usr/lib/oabi/liblua.so.1			base-compat-shlib	compat,pic
-./usr/lib/oabi/liblua.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libldap_r.so.4.3			base-compat-shlib	compat,pic,ldap
+./usr/lib/oabi/liblua.so.5			base-compat-shlib	compat,pic
+./usr/lib/oabi/liblua.so.5.3			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblutok.so.1			base-obsolete		obsolete
 ./usr/lib/oabi/liblutok.so.1.0			base-obsolete		obsolete
 ./usr/lib/oabi/liblutok.so.2			base-compat-shlib	compat,pic,kyua
@@ -223,14 +226,14 @@
 ./usr/lib/oabi/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/oabi/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=4
 ./usr/lib/oabi/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=45
-./usr/lib/oabi/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/oabi/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=4
 ./usr/lib/oabi/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=45
+./usr/lib/oabi/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/oabi/libobjc.so.4.0			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/oabi/libopcodes.so.6			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libopcodes.so.6.0		base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libossaudio.so.1			base-compat-shlib	compat,pic
-./usr/lib/oabi/libossaudio.so.1.0		base-compat-shlib	compat,pic
+./usr/lib/oabi/libossaudio.so.1.1		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libp2k.so.2			base-compat-shlib	compat,pic,rump
 ./usr/lib/oabi/libp2k.so.2.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/oabi/libpam.so.4			base-compat-shlib	compat,pic,pam
@@ -238,9 +241,7 @@
 ./usr/lib/oabi/libpcap.so.5			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libpcap.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libpci.so.2			base-compat-shlib	compat,pic
-./usr/lib/oabi/libpci.so.2			base-compat-shlib	compat,pic
-./usr/lib/oabi/libpci.so.2.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libpci.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libpci.so.2.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libperfuse.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libperfuse.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libpmc.so.1			base-compat-shlib	compat,pic
@@ -330,10 +331,14 @@
 ./usr/lib/oabi/libz.so.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libz.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/lua				base-compat-shlib	compat
-./usr/lib/oabi/lua/5.1				base-compat-shlib	compat
-./usr/lib/oabi/lua/5.1/gpio.so			base-compat-shlib	compat,pic
-./usr/lib/oabi/lua/5.1/sqlite.so		base-compat-shlib	compat,pic
-./usr/lib/oabi/lua/5.1/syslog.so		base-compat-shlib	compat,pic
+./usr/lib/oabi/lua/5.1				base-obsolete		obsolete
+./usr/lib/oabi/lua/5.1/gpio.so			base-obsolete		obsolete
+./usr/lib/oabi/lua/5.1/sqlite.so		base-obsolete		obsolete
+./usr/lib/oabi/lua/5.1/syslog.so		base-obsolete		obsolete
+./usr/lib/oabi/lua/5.3				base-compat-shlib	compat
+./usr/lib/oabi/lua/5.3/gpio.so			base-compat-shlib	compat,pic
+./usr/lib/oabi/lua/5.3/sqlite.so		base-compat-shlib	compat,pic
+./usr/lib/oabi/lua/5.3/syslog.so		base-compat-shlib	compat,pic
 ./usr/lib/oabi/npf				base-obsolete		obsolete
 ./usr/lib/oabi/npf/ext_log.so			base-obsolete		obsolete
 ./usr/lib/oabi/npf/ext_log.so.0			base-obsolete		obsolete

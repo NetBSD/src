@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.8 2014/01/27 21:37:17 apb Exp $
+#	$NetBSD: Makefile.bootimage,v 1.8.2.1 2014/08/10 06:47:57 tls Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -390,7 +390,7 @@ ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 CLEANFILES+=	${IMGBASE}.img.gz ${IMGBASE}.img.gz.tmp
 
 ${IMGBASE}.img.gz:	${IMGBASE}.img
-	${TOOL_GZIP} -9nc ${IMGBASE}.img > ${.TARGET}.tmp
+	${TOOL_GZIP_N} -9c ${IMGBASE}.img > ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 
 clean:

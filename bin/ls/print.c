@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.54 2014/02/22 13:11:42 mlelstv Exp $	*/
+/*	$NetBSD: print.c,v 1.54.2.1 2014/08/10 06:41:18 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.54 2014/02/22 13:11:42 mlelstv Exp $");
+__RCSID("$NetBSD: print.c,v 1.54.2.1 2014/08/10 06:41:18 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: print.c,v 1.54 2014/02/22 13:11:42 mlelstv Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <fts.h>
 #include <grp.h>
 #include <pwd.h>
@@ -136,8 +137,7 @@ printlong(DISPLAY *dp)
 			continue;
 		sp = p->fts_statp;
 		if (f_inode)
-			(void)printf("%*lu ", dp->s_inode,
-			    (unsigned long)sp->st_ino);
+			(void)printf("%*"PRIu64" ", dp->s_inode, sp->st_ino);
 		if (f_size) {
 			if (f_humanize) {
 				if ((humanize_number(szbuf, sizeof(szbuf),
@@ -365,7 +365,7 @@ printaname(FTSENT *p, int inodefield, int sizefield)
 	sp = p->fts_statp;
 	chcnt = 0;
 	if (f_inode)
-		chcnt += printf("%*lu ", inodefield, (unsigned long)sp->st_ino);
+		chcnt += printf("%*"PRIu64" ", inodefield, sp->st_ino);
 	if (f_size) {
 		if (f_humanize) {
 			if ((humanize_number(szbuf, sizeof(szbuf), sp->st_size,

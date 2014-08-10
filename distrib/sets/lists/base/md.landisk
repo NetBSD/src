@@ -1,4 +1,4 @@
-# $NetBSD: md.landisk,v 1.5 2009/04/22 17:20:15 tsutsui Exp $
+# $NetBSD: md.landisk,v 1.5.24.1 2014/08/10 06:48:34 tls Exp $
 ./usr/mdec/boot			base-sysutil-bin
 ./usr/mdec/bootxx_ffsv1		base-sysutil-bin
 ./usr/mdec/bootxx_ffsv2		base-sysutil-bin

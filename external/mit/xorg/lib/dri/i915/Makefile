@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2011/08/11 23:15:36 joerg Exp $
+# $NetBSD: Makefile,v 1.11.18.1 2014/08/10 06:50:56 tls Exp $
 
 MODULE=	i915
 
@@ -19,6 +19,7 @@ SRCS=	\
 	intel_batchbuffer.c \
 	intel_clear.c \
 	intel_extensions.c \
+	intel_extensions_es.c \
 	intel_mipmap_tree.c \
 	intel_tex_layout.c \
 	intel_tex_image.c \
@@ -56,8 +57,6 @@ CPPFLAGS+=	 -DI915 -DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP
 
 LIBDPLIBS+=	drm_intel	${.CURDIR}/../../libdrm_intel
 
-COPTS.intel_context.c+=	-Wno-error	# XXX
-COPTS.intel_tex.c+=	-Wno-error	# XXX
 CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-format \
 			-Wno-constant-logical-operand
 

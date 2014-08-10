@@ -1,4 +1,4 @@
-/*	$NetBSD: test_expr.c,v 1.1.1.1 2011/04/13 18:15:12 elric Exp $	*/
+/*	$NetBSD: test_expr.c,v 1.1.1.1.22.1 2014/08/10 06:47:30 tls Exp $	*/
 
 
 #include "hx_locl.h"
@@ -82,7 +82,7 @@ main(int argc, char **argv)
 
 	_hx509_expr_free(expr);
     }
-	
+
     hx509_env_free(&env);
 
     return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldap.c,v 1.1.1.1 2011/04/13 18:15:58 elric Exp $	*/
+/*	$NetBSD: ldap.c,v 1.1.1.1.22.1 2014/08/10 06:47:31 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -63,7 +63,7 @@ _wind_ldap_case_exact_attribute(const uint32_t *tmp,
 	return WIND_ERR_OVERRUN;
     while(i < olen && tmp[i] == 0x20) /* skip initial spaces */
 	i++;
-	
+
     while (i < olen) {
 	if (tmp[i] == 0x20) {
 	    if (put_char(out, &o, 0x20, *out_len) ||
@@ -74,7 +74,7 @@ _wind_ldap_case_exact_attribute(const uint32_t *tmp,
 	} else {
 	    if (put_char(out, &o, tmp[i++], *out_len))
 		return WIND_ERR_OVERRUN;
-	}	
+	}
     }
     assert(o > 0);
 

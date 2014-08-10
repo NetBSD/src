@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc.powerpc,v 1.1 2014/03/05 08:23:16 martin Exp $
+# $NetBSD: md.evbppc.powerpc,v 1.1.2.1 2014/08/10 06:48:35 tls Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -14,12 +14,12 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/blowfish/blowfish.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/bpf				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/bpf/bpf.kmod			base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/ccd				base-kernel-modules	kmod
-./stand/powerpc-4xx/@OSRELEASE@/modules/ccd/ccd.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/camellia			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/camellia/camellia.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/cast128				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/cast128/cast128.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/ccd				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/ccd/ccd.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/cd9660				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/cd9660/cd9660.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/cgd				base-kernel-modules	kmod
@@ -90,6 +90,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hdaudio/hdaudio.kmod		base-obsolete	obsolete
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/hythygtemp			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/hythygtemp/hythygtemp.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/if_axe				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/if_axe/if_axe.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/if_axen				base-kernel-modules	kmod,compatmodules
@@ -228,10 +230,10 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/vcoda/vcoda.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/vnd 				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/vnd/vnd.kmod		        base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/zlib				base-kernel-modules	kmod
-./stand/powerpc-4xx/@OSRELEASE@/modules/zlib/zlib.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/zfs				base-kernel-modules     kmod,zfs
 ./stand/powerpc-4xx/@OSRELEASE@/modules/zfs/zfs.kmod			base-kernel-modules     kmod,zfs
+./stand/powerpc-4xx/@OSRELEASE@/modules/zlib				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/zlib/zlib.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@					base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -245,12 +247,12 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/aio/aio.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/blowfish			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/blowfish/blowfish.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/bpf				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/bpf/bpf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/camellia			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/camellia/camellia.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/cast128			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/cast128/cast128.kmod		base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/bpf				base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/bpf/bpf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/ccd				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/ccd/ccd.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/cd9660				base-kernel-modules	kmod,compatmodules
@@ -323,6 +325,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/hdaudio/hdaudio.kmod		base-obsolete	obsolete
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/hythygtemp			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/hythygtemp/hythygtemp.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/if_axe			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/if_axe/if_axe.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/if_axen			base-kernel-modules	kmod,compatmodules
@@ -461,7 +465,7 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/vcoda/vcoda.kmod	        base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/vnd 				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/vnd/vnd.kmod		        base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/zlib				base-kernel-modules	kmod
-./stand/powerpc-booke/@OSRELEASE@/modules/zlib/zlib.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/zfs				base-kernel-modules     kmod,zfs
 ./stand/powerpc-booke/@OSRELEASE@/modules/zfs/zfs.kmod			base-kernel-modules     kmod,zfs
+./stand/powerpc-booke/@OSRELEASE@/modules/zlib				base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/zlib/zlib.kmod		base-kernel-modules	kmod

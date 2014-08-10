@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_32_cas.c,v 1.8 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_add_32_cas.c,v 1.8.2.1 2014/08/10 06:47:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -74,3 +74,5 @@ __strong_alias(_atomic_add_long,_atomic_add_32)
 atomic_op_alias(atomic_add_ptr,_atomic_add_32)
 __strong_alias(_atomic_add_ptr,_atomic_add_32)
 #endif /* _LP64 */
+
+__strong_alias(__atomic_fetch_add_4,__sync_fetch_and_add_4)

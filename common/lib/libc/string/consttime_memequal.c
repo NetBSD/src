@@ -1,4 +1,9 @@
-/* $NetBSD: consttime_memequal.c,v 1.4 2013/08/28 19:31:14 riastradh Exp $ */
+/* $NetBSD: consttime_memequal.c,v 1.4.2.1 2014/08/10 06:47:06 tls Exp $ */
+
+/*
+ * Written by Matthias Drochner <drochner@NetBSD.org>.
+ * Public domain.
+ */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include "namespace.h"

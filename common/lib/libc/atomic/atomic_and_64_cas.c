@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_64_cas.c,v 1.9 2014/01/28 21:47:48 joerg Exp $	*/
+/*	$NetBSD: atomic_and_64_cas.c,v 1.9.2.1 2014/08/10 06:47:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@ atomic_and_64(volatile uint64_t *addr, uint64_t val)
 {
 	(void) fetch_and_and_8(addr, val);
 }
+
+__strong_alias(__atomic_fetch_and_8,__sync_fetch_and_and_8)
 
 #undef atomic_and_64
 atomic_op_alias(atomic_and_64,_atomic_and_64)

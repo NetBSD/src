@@ -1,4 +1,4 @@
-# $NetBSD: md.mvme68k,v 1.22 2009/02/14 11:33:56 abs Exp $
+# $NetBSD: md.mvme68k,v 1.22.24.1 2014/08/10 06:48:34 tls Exp $
 ./usr/mdec/bootsd				base-sysutil-bin
 ./usr/mdec/bootst				base-sysutil-bin
 ./usr/mdec/bootxx				base-sysutil-bin

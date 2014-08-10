@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2014/03/17 01:41:46 mrg Exp $
+#	$NetBSD: Makefile,v 1.28.2.1 2014/08/10 06:50:57 tls Exp $
 
 NOLINT=	1	# defined
 
@@ -44,6 +44,8 @@ SRCS+=					\
 	pixman-ppc.c			\
 
 # XXX
+
+# missing: HAVE_GCC_VECTOR_EXTENSIONS
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 . if ${MACHINE_ARCH} == "i386"

@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.146 2013/07/09 09:34:58 roy Exp $
+#	$NetBSD: special,v 1.146.4.1 2014/08/10 06:49:17 tls Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -38,7 +38,7 @@
 ./etc/bootptab			type=file mode=0644 optional
 ./etc/ccd.conf			type=file mode=0644 optional
 ./etc/cgd			type=dir  mode=0700 optional
-./etc/cgd/cgd.conf		type=file mode=0600 optional
+./etc/cgd/cgd.conf		type=file mode=0600 optional tags=nodiff
 ./etc/changelist		type=file mode=0644
 ./etc/crontab			type=file mode=0644 optional
 ./etc/csh.cshrc			type=file mode=0644
@@ -81,7 +81,7 @@
 ./etc/hosts			type=file mode=0644
 ./etc/hosts.allow		type=file mode=0644 optional
 ./etc/hosts.deny		type=file mode=0644 optional
-./etc/hosts.equiv		type=file mode=0600 optional
+./etc/hosts.equiv		type=file mode=0600 optional tags=nodiff
 ./etc/hosts.lpd			type=file mode=0644 optional
 ./etc/ifaliases			type=file mode=0644 optional
 ./etc/inetd.conf		type=file mode=0644
@@ -90,7 +90,7 @@
 ./etc/ipnat.conf		type=file mode=0644 optional
 ./etc/ipsec.conf		type=file mode=0600 optional tags=nodiff
 ./etc/iscsi			type=dir  mode=0755
-./etc/iscsi/auths		type=file mode=0600
+./etc/iscsi/auths		type=file mode=0600 tags=nodiff
 ./etc/iscsi/targets		type=file mode=0644
 ./etc/ld.so.conf		type=file mode=0644 optional
 ./etc/localtime			type=link mode=0755
@@ -304,16 +304,16 @@
 ./etc/security.local		type=file mode=0644 optional
 ./etc/services			type=file mode=0644
 ./etc/shells			type=file mode=0644
-./etc/shosts.equiv		type=file mode=0600 optional
+./etc/shosts.equiv		type=file mode=0600 optional tags=nodiff
 ./etc/skel			type=dir  mode=0755 optional
-./etc/spwd.db			type=file mode=0600 tags=exclude
+./etc/spwd.db			type=file mode=0600 tags=exclude tags=nodiff
 ./etc/ssh			type=dir  mode=0755 optional
 ./etc/ssh/ssh_config		type=file mode=0644 optional
 ./etc/ssh/ssh_host_dsa_key	type=file mode=0600 optional tags=nodiff
 ./etc/ssh/ssh_host_dsa_key.pub	type=file mode=0644 optional
 ./etc/ssh/ssh_host_ecdsa_key	type=file mode=0600 optional tags=nodiff
 ./etc/ssh/ssh_host_ecdsa_key.pub	type=file mode=0644 optional
-./etc/ssh/ssh_host_key		type=file mode=0600 optional tags=nodiff
+./etc/ssh/ssh_host_key		type=file mode=0600 optional tags=nodiff tags=nodiff
 ./etc/ssh/ssh_host_key.pub	type=file mode=0644 optional
 ./etc/ssh/ssh_host_rsa_key	type=file mode=0600 optional tags=nodiff
 ./etc/ssh/ssh_host_rsa_key.pub	type=file mode=0644 optional
@@ -339,14 +339,14 @@
 
 ./root				type=dir  mode=0755
 ./root/.cshrc			type=file mode=0644
-./root/.klogin			type=file mode=0600 optional
+./root/.klogin			type=file mode=0600 optional tags=nodiff
 ./root/.login			type=file mode=0644
 ./root/.profile			type=file mode=0644
-./root/.rhosts			type=file mode=0600 optional
-./root/.shosts			type=file mode=0600 optional
+./root/.rhosts			type=file mode=0600 optional tags=nodiff
+./root/.shosts			type=file mode=0600 optional tags=nodiff
 ./root/.ssh			type=dir  mode=0700 optional
-./root/.ssh/authorized_keys	type=file mode=0600 optional
-./root/.ssh/authorized_keys2	type=file mode=0600 optional
+./root/.ssh/authorized_keys	type=file mode=0600 optional tags=nodiff
+./root/.ssh/authorized_keys2	type=file mode=0600 optional tags=nodiff
 ./root/.ssh/config		type=file mode=0644 optional
 ./root/.ssh/id_dsa		type=file mode=0600 optional tags=nodiff
 ./root/.ssh/id_dsa.pub		type=file mode=0644 optional
@@ -404,7 +404,7 @@
 ./var/chroot/tftp-proxy		type=dir  mode=0755
 ./var/cron			type=dir  mode=0755
 ./var/cron/tabs			type=dir  mode=0700
-./var/cron/tabs/root		type=file mode=0600
+./var/cron/tabs/root		type=file mode=0600 tags=nodiff
 ./var/db			type=dir  mode=0755
 ./var/log			type=dir  mode=0755
 ./var/log/authlog		type=file mode=0600 optional tags=exclude
@@ -425,7 +425,7 @@
 ./var/spool/ftp/etc		type=dir  mode=0755 optional
 ./var/spool/ftp/etc/group		type=file mode=0644 optional
 ./var/spool/ftp/etc/localtime		type=file mode=0644 optional
-./var/spool/ftp/etc/master.passwd	type=file mode=0600 optional
+./var/spool/ftp/etc/master.passwd	type=file mode=0600 optional tags=nodiff
 ./var/spool/ftp/etc/passwd		type=file mode=0644 optional
 ./var/spool/ftp/hidden		type=dir  mode=0111 ignore optional
 ./var/spool/ftp/pub		type=dir  mode=0775 ignore optional

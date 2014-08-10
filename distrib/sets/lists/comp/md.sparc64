@@ -1,7 +1,7 @@
-# $NetBSD: md.sparc64,v 1.182 2014/02/28 09:31:17 martin Exp $
-./usr/include/g++/bits/sparc			comp-c-include		gcc,compat
+# $NetBSD: md.sparc64,v 1.182.2.1 2014/08/10 06:48:34 tls Exp $
+./usr/include/g++/bits/sparc			comp-c-include		compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc=48,compat
-./usr/include/g++/bits/sparc64			comp-c-include		gcc,compat
+./usr/include/g++/bits/sparc64			comp-c-include		compat
 ./usr/include/g++/bits/sparc64/c++config.h	comp-c-include		gcc=48,compat
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
@@ -63,7 +63,8 @@
 ./usr/include/sparc/rwlock.h			comp-c-include
 ./usr/include/sparc/setjmp.h			comp-c-include
 ./usr/include/sparc/signal.h			comp-c-include
-./usr/include/sparc/sljitarch.h			comp-c-include
+./usr/include/sparc/sljitarch.h			comp-obsolete		obsolete
+./usr/include/sparc/sljit_machdep.h		comp-c-include
 ./usr/include/sparc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/sparc/tctrl.h			comp-c-include
 ./usr/include/sparc/trap.h			comp-c-include
@@ -134,7 +135,8 @@
 ./usr/include/sparc64/rwlock.h			comp-c-include
 ./usr/include/sparc64/setjmp.h			comp-c-include
 ./usr/include/sparc64/signal.h			comp-c-include
-./usr/include/sparc64/sljitarch.h		comp-c-include
+./usr/include/sparc64/sljitarch.h		comp-obsolete		obsolete
+./usr/include/sparc64/sljit_machdep.h		comp-c-include
 ./usr/include/sparc64/stdarg.h			comp-obsolete		obsolete
 ./usr/include/sparc64/svr4_machdep.h		comp-c-include
 ./usr/include/sparc64/trap.h			comp-c-include
@@ -144,9 +146,6 @@
 ./usr/include/sparc64/vuid_event.h		comp-c-include
 ./usr/include/sparc64/wchar_limits.h		comp-c-include
 ./usr/include/sparc64/z8530var.h		comp-c-include
-./usr/lib/sparc_mcmedany.o			comp-c-lib
-./usr/lib/sparc_mcmedlow.o			comp-c-lib
-./usr/lib/sparc_mcmedmid.o			comp-c-lib
 ./usr/lib/sparc/crt0.o				comp-c-lib		compat
 ./usr/lib/sparc/crtbegin.o			comp-c-lib		compat
 ./usr/lib/sparc/crtbeginS.o			comp-c-lib		compat,pic
@@ -407,12 +406,12 @@
 ./usr/lib/sparc/libgnumalloc_p.a		comp-c-proflib		compat,profile
 ./usr/lib/sparc/libgnumalloc_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/sparc/libgomp.a			comp-c-lib		compat,gcc=45
-./usr/lib/sparc/libgomp.so			base-sys-shlib		compat,pic,gcc=45
-./usr/lib/sparc/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
-./usr/lib/sparc/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,picinstall
 ./usr/lib/sparc/libgomp.a			comp-c-lib		compat,gcc=48
+./usr/lib/sparc/libgomp.so			base-sys-shlib		compat,pic,gcc=45
 ./usr/lib/sparc/libgomp.so			base-sys-shlib		compat,pic,gcc=48
+./usr/lib/sparc/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
 ./usr/lib/sparc/libgomp_p.a			comp-c-proflib		compat,profile,gcc=48
+./usr/lib/sparc/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,picinstall
 ./usr/lib/sparc/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=48,picinstall
 ./usr/lib/sparc/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/sparc/libgssapi.so			base-sys-shlib		compat,pic,kerberos
@@ -445,6 +444,10 @@
 ./usr/lib/sparc/libipsec.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libipsec_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libipsec_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/sparc/libirs.a			comp-c-lib		compat
+./usr/lib/sparc/libirs.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libirs_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libirs_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/sparc/libisc.a			comp-c-lib		compat
 ./usr/lib/sparc/libisc.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libisc_p.a			comp-c-proflib		compat,profile
@@ -574,10 +577,10 @@
 ./usr/lib/sparc/libp2k.so			base-sys-shlib		compat,pic,rump
 ./usr/lib/sparc/libp2k_p.a			comp-c-proflib		compat,profile,rump
 ./usr/lib/sparc/libp2k_pic.a			comp-c-piclib		compat,pic,rump,picinstall
-./usr/lib/sparc/libpam.a			comp-c-lib		compat
-./usr/lib/sparc/libpam.so			base-sys-shlib		compat,pic
-./usr/lib/sparc/libpam_p.a			comp-obsolete		obsolete
-./usr/lib/sparc/libpam_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/sparc/libpam.a			comp-c-lib		compat,pam
+./usr/lib/sparc/libpam.so			base-sys-shlib		compat,pic,pam
+./usr/lib/sparc/libpam_p.a			comp-obsolete		obsolete,pam
+./usr/lib/sparc/libpam_pic.a			comp-c-piclib		compat,pic,pam,picinstall
 ./usr/lib/sparc/libpcap.a			comp-c-lib		compat
 ./usr/lib/sparc/libpcap.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libpcap_p.a			comp-c-proflib		compat,profile
@@ -760,6 +763,9 @@
 ./usr/lib/sparc/libz.so				base-sys-shlib		compat,pic
 ./usr/lib/sparc/libz_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libz_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/sparc_mcmedany.o			comp-c-lib
+./usr/lib/sparc_mcmedlow.o			comp-c-lib
+./usr/lib/sparc_mcmedmid.o			comp-c-lib
 ./usr/libdata/ldscripts/elf32_sparc.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf32_sparc.xbn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf32_sparc.xc		comp-util-bin		binutils

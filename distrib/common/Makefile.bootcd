@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.24 2014/02/15 09:43:02 dsl Exp $
+#	$NetBSD: Makefile.bootcd,v 1.24.2.1 2014/08/10 06:47:57 tls Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -25,6 +25,7 @@
 #	BOOTXX_CD9660	Defaults to $DESTDIR/usr/mdec/bootxx_cd9660
 #	CDBOOTOPTIONS	Options for installboot, eg -o console=com0,speed=9600
 #	CDMAKEFSOPTIONS	Options for makefs, eg bootimage=i386;bootxx,no-emul-boot
+#	CDMAKEFSEXTRAOPTS additional options for makefs, e.g. -F specfile
 #	CDROMS_RELEASEDIR Where to install ${CDBASE}.iso
 #	CDINSTKERNEL	instkernel directory (relative to ${.CURDIR})
 #	CDKERNELS	couples of the form:
@@ -206,7 +207,7 @@ copy-releasedir:
 	fi
 
 image:
-	${TOOL_MAKEFS} -t cd9660 -o ${_CDMAKEFSOPTIONS:Q} ${CDIMAGE} cdrom
+	${TOOL_MAKEFS} -t cd9660 ${CDMAKEFSEXTRAOPTS} -o ${_CDMAKEFSOPTIONS:Q} ${CDIMAGE} cdrom
 
 .if ${CDRELEASE} == false
 release: prepare .WAIT prepare_md_post .WAIT copy-releasedir .WAIT image_md_pre .WAIT image .WAIT image_md_post
