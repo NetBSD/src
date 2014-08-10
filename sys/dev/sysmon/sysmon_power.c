@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.46 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.47 2014/08/10 16:44:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.46 2012/02/02 19:43:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.47 2014/08/10 16:44:36 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -201,7 +201,7 @@ sysmon_power_init(void)
 	selinit(&sysmon_power_event_queue_selinfo);
 
 	rnd_attach_source(&sysmon_rndsource, "system-power",
-			  RND_TYPE_POWER, 0);
+			  RND_TYPE_POWER, RND_FLAG_DEFAULT);
 
 }
 

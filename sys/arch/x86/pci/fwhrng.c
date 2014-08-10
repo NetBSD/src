@@ -1,4 +1,4 @@
-/*	$NetBSD: fwhrng.c,v 1.6 2013/10/17 21:12:24 christos Exp $	*/
+/*	$NetBSD: fwhrng.c,v 1.7 2014/08/10 16:44:34 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.6 2013/10/17 21:12:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.7 2014/08/10 16:44:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ fwhrng_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_rnd_ch, 0);
 	/* FWH is polled for entropy, so no estimate is available. */
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
+	    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE);
 	sc->sc_rnd_i = sizeof(sc->sc_rnd_ax);
 	fwhrng_callout(sc);
 

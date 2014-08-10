@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.322 2014/07/25 08:10:38 dholland Exp $	*/
+/*	$NetBSD: cd.c,v 1.323 2014/08/10 16:44:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.322 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.323 2014/08/10 16:44:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ cdattach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 
 	rnd_attach_source(&cd->rnd_source, device_xname(cd->sc_dev),
-			  RND_TYPE_DISK, 0);
+			  RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.49 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: plcom.c,v 1.50 2014/08/10 16:44:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.49 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.50 2014/08/10 16:44:34 tls Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -562,7 +562,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_TTY, 0);
+	    RND_TYPE_TTY, RND_FLAG_DEFAULT);
 #endif
 
 	/*
