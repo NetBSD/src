@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.37 2013/06/13 00:55:01 tls Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.38 2014/08/10 16:44:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.37 2013/06/13 00:55:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.38 2014/08/10 16:44:35 tls Exp $");
 
 #include "opt_amdpm.h"
 
@@ -194,18 +194,7 @@ amdpm_attach(device_t parent, device_t self, void *aux)
 					amdpm_rnd_get, sc);
 			rnd_attach_source(&sc->sc_rnd_source,
 			    device_xname(self), RND_TYPE_RNG,
-			    /*
-			     * XXX Careful!  The use of RND_FLAG_NO_ESTIMATE
-			     * XXX here is unobvious: we later feed raw bits
-			     * XXX into the "entropy pool" with rnd_add_data,
-			     * XXX explicitly supplying an entropy estimate.
-			     * XXX In this context, NO_ESTIMATE serves only
-			     * XXX to prevent rnd_add_data from trying to
-			     * XXX use the *time at which we added the data*
-			     * XXX as entropy, which is not a good idea since
-			     * XXX we add data periodically from a callout.
-			     */
-			    RND_FLAG_NO_ESTIMATE|RND_FLAG_HASCB);
+			    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
 #ifdef AMDPM_RND_COUNTERS
 			evcnt_attach_dynamic(&sc->sc_rnd_hits, EVCNT_TYPE_MISC,
 			    NULL, device_xname(self), "rnd hits");

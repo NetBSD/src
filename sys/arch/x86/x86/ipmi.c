@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.56 2013/10/17 20:58:55 christos Exp $ */
+/*	$NetBSD: ipmi.c,v 1.57 2014/08/10 16:44:34 tls Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.56 2013/10/17 20:58:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.57 2014/08/10 16:44:34 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1511,10 +1511,6 @@ ipmi_convert_sensor(uint8_t *reading, struct ipmi_sensor *psensor)
 		val = 0;
 		break;
 	}
-	if (val != psensor->i_prevval) {
-		rnd_add_uint32(&psensor->i_rnd, val);
-		psensor->i_prevval = val;
-	}
 	return val;
 }
 
@@ -1811,7 +1807,7 @@ add_child_sensors(struct ipmi_softc *sc, uint8_t *psdr, int count,
 	char			*e;
 	struct ipmi_sensor	*psensor;
 	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
-
+	
 	typ = ipmi_sensor_type(sensor_type, ext_type, entity);
 	if (typ == -1) {
 		dbg_printf(5, "Unknown sensor type:%.2x et:%.2x sn:%.2x "
@@ -1868,22 +1864,6 @@ add_child_sensors(struct ipmi_softc *sc, uint8_t *psdr, int count,
 			         ipmi_is_dupname(psensor->i_envdesc));
 		}
 
-		/*
-		 * Add entropy source.
-		 */
-		switch (psensor->i_envtype) {
-		    case ENVSYS_STEMP:
-		    case ENVSYS_SFANRPM:
-			rnd_attach_source(&psensor->i_rnd,
-					  psensor->i_envdesc,
-					  RND_TYPE_ENV, 0);
-		        break;
-		    default:	/* XXX intrusion sensors? */
-			rnd_attach_source(&psensor->i_rnd,
-					  psensor->i_envdesc,
-					  RND_TYPE_POWER, 0);
-		}
-		    
 		dbg_printf(5, "add sensor:%.4x %.2x:%d ent:%.2x:%.2x %s\n",
 		    s1->sdrhdr.record_id, s1->sensor_type,
 		    typ, s1->entity_id, s1->entity_instance,
@@ -2078,6 +2058,7 @@ ipmi_thread(void *cookie)
 		ipmi_s->i_envnum = -1;
 		sc->sc_sensor[i].units = ipmi_s->i_envtype;
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+		sc->sc_sensor[i].flags |= ENVSYS_FHAS_ENTROPY;
 		/*
 		 * Monitor threshold limits in the sensors.
 		 */

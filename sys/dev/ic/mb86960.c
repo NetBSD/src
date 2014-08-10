@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.79 2013/05/17 10:48:54 mbalmer Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.80 2014/08/10 16:44:35 tls Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.79 2013/05/17 10:48:54 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.80 2014/08/10 16:44:35 tls Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -250,7 +250,7 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	/* Print additional info when attached. */
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",

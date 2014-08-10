@@ -1,4 +1,4 @@
-/*      $NetBSD: wmcom.c,v 1.3 2014/07/25 08:10:32 dholland Exp $      */
+/*      $NetBSD: wmcom.c,v 1.4 2014/08/10 16:44:33 tls Exp $      */
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.3 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.4 2014/08/10 16:44:33 tls Exp $");
 
 #include "rnd.h"
 
@@ -225,7 +225,7 @@ wmcom_attach(device_t parent, device_t self, void *aux)
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_TTY, 0);
+	    RND_TYPE_TTY, RND_FLAG_DEFAULT);
 #endif
 
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);

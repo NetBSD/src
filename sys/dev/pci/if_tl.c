@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.100 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.101 2014/08/10 16:44:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.100 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.101 2014/08/10 16:44:36 tls Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -470,7 +470,7 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 }
 
 static void

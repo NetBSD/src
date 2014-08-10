@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.55 2014/06/03 13:53:28 msaitoh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.56 2014/08/10 16:44:35 tls Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.55 2014/06/03 13:53:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.56 2014/08/10 16:44:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,20 +595,9 @@ hifn_init_pubrng(struct hifn_softc *sc)
 
 #ifdef __NetBSD__
 		rndsource_setcb(&sc->sc_rnd_source, hifn_rng_get, sc);
-		/*
-		 * XXX Careful!  The use of RND_FLAG_NO_ESTIMATE
-		 * XXX here is unobvious: we later feed raw bits
-		 * XXX into the "entropy pool" with rnd_add_data,
-		 * XXX explicitly supplying an entropy estimate.
-		 * XXX In this context, NO_ESTIMATE serves only
-		 * XXX to prevent rnd_add_data from trying to
-		 * XXX use the *time at which we added the data*
-		 * XXX as entropy, which is not a good idea since
-		 * XXX we add data periodically from a callout.
-		 */
 		rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
 				  RND_TYPE_RNG,
-				  RND_FLAG_NO_ESTIMATE|RND_FLAG_HASCB);
+				  RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
 #endif
 
 		if (hz >= 100)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.12 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.13 2014/08/10 16:44:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.12 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.13 2014/08/10 16:44:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1462,8 +1462,6 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.12 2014/07/25 08:10:32 dholland Exp $ */
-
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
  *
@@ -1657,7 +1655,7 @@ aceattach(struct ace_softc *ace)
 	disk_attach(&ace->sc_dk);
 
 	rnd_attach_source(&ace->rnd_source, device_xname(ace->sc_dev),
-			  RND_TYPE_DISK, 0);
+			  RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
 }
 

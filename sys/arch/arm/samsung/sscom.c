@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.5 2014/04/20 22:45:27 matt Exp $ */
+/*	$NetBSD: sscom.c,v 1.6 2014/08/10 16:44:33 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.5 2014/04/20 22:45:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.6 2014/08/10 16:44:33 tls Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -514,7 +514,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_DEFAULT);
 #endif
 
 	/* if there are no enable/disable functions, assume the device

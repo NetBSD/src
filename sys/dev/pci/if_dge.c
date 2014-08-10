@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.37 2014/03/29 19:28:24 christos Exp $ */
+/*	$NetBSD: if_dge.c,v 1.38 2014/08/10 16:44:36 tls Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.37 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.38 2014/08/10 16:44:36 tls Exp $");
 
 
 
@@ -895,7 +895,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 #ifdef DGE_EVENT_COUNTERS
 	/* Fix segment event naming */

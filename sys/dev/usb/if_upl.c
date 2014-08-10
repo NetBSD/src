@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.46 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.47 2014/08/10 16:44:36 tls Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.46 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47 2014/08/10 16:44:36 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -311,7 +311,7 @@ upl_attach(device_t parent, device_t self, void *aux)
 
 	bpf_attach(ifp, DLT_RAW, 0);
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	sc->sc_attached = 1;
 	splx(s);

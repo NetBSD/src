@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.38 2014/03/15 13:33:48 kiyohara Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.39 2014/08/10 16:44:35 tls Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.38 2014/03/15 13:33:48 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.39 2014/08/10 16:44:35 tls Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -894,7 +894,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	    NULL, device_xname(sc->sc_dev), "wdogsoft");
 #endif
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	return;
 

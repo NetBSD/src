@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.184 2014/04/21 16:33:48 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.185 2014/08/10 16:44:37 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.184 2014/04/21 16:33:48 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.185 2014/08/10 16:44:37 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1100,7 +1100,9 @@ attachrnd:
 	 * Attach RNG source for this CPU's VM events
 	 */
         rnd_attach_source(&uvm.cpus[cpu_index(ci)]->rs,
-			  ci->ci_data.cpu_name, RND_TYPE_VM, 0);
+			  ci->ci_data.cpu_name, RND_TYPE_VM,
+			  RND_FLAG_COLLECT_TIME|RND_FLAG_COLLECT_VALUE|
+			  RND_FLAG_ESTIMATE_VALUE);
 
 }
 

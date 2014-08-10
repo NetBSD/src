@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.28 2013/10/17 21:24:24 christos Exp $ */
+/* $NetBSD: mtd803.c,v 1.29 2014/08/10 16:44:35 tls Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.28 2013/10/17 21:24:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.29 2014/08/10 16:44:35 tls Exp $");
 
 
 #include <sys/param.h>
@@ -177,7 +177,7 @@ mtd_config(struct mtd_softc *sc)
 
 	/* Initialise random source */
 	rnd_attach_source(&sc->rnd_src, device_xname(sc->dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	/* Add shutdown hook to reset card when we reboot */
 	sc->sd_hook = shutdownhook_establish(mtd_shutdown, sc);

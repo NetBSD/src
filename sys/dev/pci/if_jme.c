@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.25 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.26 2014/08/10 16:44:36 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.25 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.26 2014/08/10 16:44:36 tls Exp $");
 
 
 #include <sys/param.h>
@@ -510,7 +510,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	sc->jme_intrxto = PCCRX_COAL_TO_DEFAULT;
 	sc->jme_intrxct = PCCRX_COAL_PKT_DEFAULT;

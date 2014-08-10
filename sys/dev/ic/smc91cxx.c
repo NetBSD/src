@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.87 2014/07/10 15:26:30 christos Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.88 2014/08/10 16:44:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.87 2014/07/10 15:26:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.88 2014/08/10 16:44:35 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -377,7 +377,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 	}
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&sc->sc_mii_callout, 0);
 

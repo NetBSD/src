@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.33 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.34 2014/08/10 16:44:35 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.33 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.34 2014/08/10 16:44:35 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -489,7 +489,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 	sc->sc_cfgflags |= CFGFLG_ATTACHED;
 
 	if (pmf_device_register1(sc->sc_dev, NULL, NULL, cs_shutdown))

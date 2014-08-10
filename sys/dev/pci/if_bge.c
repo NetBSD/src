@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.276 2014/08/05 04:29:01 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.277 2014/08/10 16:44:36 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.276 2014/08/05 04:29:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277 2014/08/10 16:44:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3998,7 +3998,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, eaddr);
 	ether_set_ifflags_cb(&sc->ethercom, bge_ifflags_cb);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->bge_dev),
-		RND_TYPE_NET, 0);
+		RND_TYPE_NET, RND_FLAG_DEFAULT);
 #ifdef BGE_EVENT_COUNTERS
 	/*
 	 * Attach event counters.

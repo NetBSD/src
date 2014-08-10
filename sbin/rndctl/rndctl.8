@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.20 2011/11/23 12:15:30 wiz Exp $
+.\"	$NetBSD: rndctl.8,v 1.21 2014/08/10 16:44:32 tls Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -39,6 +39,7 @@
 .Nm
 .Fl ls
 .Op Fl d Ar devname | Fl t Ar devtype
+.Op Fl v
 .Nm
 .Fl L Ar save-file
 .Nm
@@ -119,6 +120,8 @@ Terminal, mouse, or other user input devices.
 .It Ic rng
 Random number generators.
 .El
+.It Fl v
+Verbose output: show entropy estimation statistics for each source.
 .El
 .Sh FILES
 .Bl -tag -width /dev/urandomx -compact

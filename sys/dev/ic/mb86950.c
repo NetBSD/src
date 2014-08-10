@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.20 2012/10/27 17:18:21 chs Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.21 2014/08/10 16:44:35 tls Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.20 2012/10/27 17:18:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.21 2014/08/10 16:44:35 tls Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -294,7 +294,7 @@ mb86950_config(struct mb86950_softc *sc, int *media,
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 /* XXX No! This doesn't work - DLCR6 of the mb86950 is different
 

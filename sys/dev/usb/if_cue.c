@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.67 2013/01/22 14:03:19 jmcneill Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.68 2014/08/10 16:44:36 tls Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.67 2013/01/22 14:03:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68 2014/08/10 16:44:36 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -551,7 +551,7 @@ cue_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->cue_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&(sc->cue_stat_ch), 0);
 

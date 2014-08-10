@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.4 2014/06/05 03:48:08 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.5 2014/08/10 16:44:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -254,7 +254,7 @@ awin_eth_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr); 
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 }
 
 int

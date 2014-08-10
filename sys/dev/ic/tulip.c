@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.183 2013/09/15 14:58:32 martin Exp $	*/
+/*	$NetBSD: tulip.c,v 1.184 2014/08/10 16:44:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.183 2013/09/15 14:58:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.184 2014/08/10 16:44:35 tls Exp $");
 
 
 #include <sys/param.h>
@@ -524,7 +524,7 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	ether_set_ifflags_cb(&sc->sc_ethercom, tlp_ifflags_cb);
 
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);

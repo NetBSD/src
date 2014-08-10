@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperentropy.c,v 1.2 2014/01/17 14:57:04 pooka Exp $	*/
+/*	$NetBSD: hyperentropy.c,v 1.3 2014/08/10 16:44:36 tls Exp $	*/
 
 /*
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.2 2014/01/17 14:57:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.3 2014/08/10 16:44:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -59,11 +59,11 @@ rump_hyperentropy_init(void)
 	if (rump_threads) {
 		rndsource_setcb(&rndsrc, feedrandom, &rndsrc);
 		rnd_attach_source(&rndsrc, "rump_hyperent", RND_TYPE_VM,
-		    RND_FLAG_NO_ESTIMATE|RND_FLAG_HASCB);
+		    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
 	} else {
 		/* without threads, just fill the pool */
 		rnd_attach_source(&rndsrc, "rump_hyperent", RND_TYPE_VM,
-		    RND_FLAG_NO_ESTIMATE);
+		    RND_FLAG_COLLECT_VALUE);
 		feedrandom(RND_POOLBITS/NBBY, NULL);
 	}
 }

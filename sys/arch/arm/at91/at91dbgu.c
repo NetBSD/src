@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.11 2014/07/25 08:10:31 dholland Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.11 2014/07/25 08:10:31 dholland Exp $ */
+/*	$Id: at91dbgu.c,v 1.12 2014/08/10 16:44:33 tls Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.12 2014/08/10 16:44:33 tls Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.11 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.12 2014/08/10 16:44:33 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -289,7 +289,7 @@ at91dbgu_attach(device_t parent, device_t self, void *aux)
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_DEFAULT);
 #endif
 
 	/* if there are no enable/disable functions, assume the device

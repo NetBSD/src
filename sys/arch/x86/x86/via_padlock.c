@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.21 2012/02/02 19:43:01 tls Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.22 2014/08/10 16:44:34 tls Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.21 2012/02/02 19:43:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.22 2014/08/10 16:44:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,9 +124,8 @@ via_c3_rnd_init(struct via_padlock_softc *sc)
 	} else {
 	    sc->sc_rnd_hz = 10;
 	}
-	/* See hifn7751.c re use of RND_FLAG_NO_ESTIMATE */
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
+			  RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE);
 	callout_init(&sc->sc_rnd_co, 0);
 	/* Call once to prime the pool early and set callout. */
 	via_c3_rnd(sc);

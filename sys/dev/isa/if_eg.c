@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.86 2013/10/18 08:09:37 apb Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.87 2014/08/10 16:44:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.86 2013/10/18 08:09:37 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.87 2014/08/10 16:44:35 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -465,7 +465,7 @@ egattach(device_t parent, device_t self, void *aux)
 	    IST_EDGE, IPL_NET, egintr, sc);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 }
 
 void

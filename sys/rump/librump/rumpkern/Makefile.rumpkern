@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.147 2014/06/05 23:42:25 rmind Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.148 2014/08/10 16:44:36 tls Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -15,6 +15,7 @@ LIB=		rump
 	${RUMPTOP}/../dev					\
 	${RUMPTOP}/../crypto/nist_ctr_drbg			\
 	${RUMPTOP}/../crypto/rijndael				\
+	${RUMPTOP}/../crypto/cprng_fast				\
 	${RUMPTOP}/../secmodel					\
 	${RUMPTOP}/../secmodel/suser				\
 	${RUMPTOP}/../compat/common
@@ -153,7 +154,8 @@ SRCS+=	clock_subr.c
 SRCS+=	nist_ctr_drbg.c
 SRCS+=	rijndael-alg-fst.c
 SRCS+=	rijndael-api-fst.c
-SRCS+=	rijndael.c	
+SRCS+=	rijndael.c
+SRCS+=	cprng_fast.c
 
 # compat
 SRCS+=	kern_select_50.c

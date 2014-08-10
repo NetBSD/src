@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.40 2014/02/25 18:30:09 pooka Exp $ */
+/*	$NetBSD: dbcool.c,v 1.41 2014/08/10 16:44:35 tls Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.40 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.41 2014/08/10 16:44:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1606,6 +1606,7 @@ dbcool_setup_sensors(struct dbcool_softc *sc)
 			sc->sc_sensor[i].units = ENVSYS_STEMP;
 			sc->sc_sensor[i].state = ENVSYS_SINVALID;
 			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
+			sc->sc_sensor[i].flags |= ENVSYS_FHAS_ENTROPY;
 			error = dbcool_attach_sensor(sc, i);
 			break;
 		case DBC_VOLT:
@@ -1622,12 +1623,14 @@ dbcool_setup_sensors(struct dbcool_softc *sc)
 			sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
 			sc->sc_sensor[i].state = ENVSYS_SINVALID;
 			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
+			sc->sc_sensor[i].flags |= ENVSYS_FHAS_ENTROPY;
 			error = dbcool_attach_sensor(sc, i);
 			break;
 		case DBC_FAN:
 			sc->sc_sensor[i].units = ENVSYS_SFANRPM;
 			sc->sc_sensor[i].state = ENVSYS_SINVALID;
 			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
+			sc->sc_sensor[i].flags |= ENVSYS_FHAS_ENTROPY;
 			error = dbcool_attach_sensor(sc, i);
 			break;
 		case DBC_VID:

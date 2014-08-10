@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.62 2012/06/30 23:36:20 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.63 2014/08/10 16:44:35 tls Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.62 2012/06/30 23:36:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.63 2014/08/10 16:44:35 tls Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -401,7 +401,7 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	if (!pmf_device_register(self, xennet_xenbus_suspend,
 	    xennet_xenbus_resume))

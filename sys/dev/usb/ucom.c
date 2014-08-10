@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.106 2014/07/25 16:13:21 gdt Exp $	*/
+/*	$NetBSD: ucom.c,v 1.107 2014/08/10 16:44:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.106 2014/07/25 16:13:21 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.107 2014/08/10 16:44:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	tty_attach(tp);
 
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_DEFAULT);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");

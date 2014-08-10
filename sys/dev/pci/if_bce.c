@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.38 2014/03/29 19:28:24 christos Exp $	 */
+/* $NetBSD: if_bce.c,v 1.39 2014/08/10 16:44:36 tls Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.38 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.39 2014/08/10 16:44:36 tls Exp $");
 
 #include "vlan.h"
 
@@ -461,7 +461,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 	    ether_sprintf(sc->enaddr));
 	ether_ifattach(ifp, sc->enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 	callout_init(&sc->bce_timeout, 0);
 
 	if (pmf_device_register(self, NULL, bce_resume))

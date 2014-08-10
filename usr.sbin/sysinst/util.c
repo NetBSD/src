@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2014/08/10 16:44:37 tls Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1092,6 +1092,10 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 		}
 		run_program(RUN_DISPLAY | RUN_CHROOT,
 			"/usr/sbin/postinstall -s /.sysinst -d / fix");
+
+		/* Don't discard the system's old entropy if any */
+		run_program(RUN_CHROOT | RUN_SILENT,
+			    "/etc/rc.d/random_seed start");
 	}
 
 	/* Configure the system */
@@ -1099,7 +1103,24 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 		run_makedev();
 
 	if (!update) {
-		/* Save keybard type */
+		struct stat sb1, sb2;
+
+		stat(target_expand("/"), &sb1);
+		stat(target_expand("/var"), &sb2);
+
+		if (sb1.st_dev != sb2.st_dev) {
+			add_rc_conf("random_file=/etc/entropy-file\n");
+			if (target_file_exists_p("/boot.cfg")) {
+				run_program(RUN_CHROOT|RUN_FATAL,
+					    "sh -c 'sed -e s./var/db/./etc/. "
+					    "< /boot.cfg "
+					    "> /tmp/boot.cfg.tmp'");
+				mv_within_target_or_die("/tmp/boot.cfg.tmp",
+							"/boot.cfg");
+			}
+		}
+
+		/* Save keyboard type */
 		save_kb_encoding();
 
 		/* Other configuration. */
@@ -1109,6 +1130,9 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	/* Mounted dist dir? */
 	umount_mnt2();
 
+	/* Save entropy -- on some systems it's ~all we'll ever get */
+	run_program(RUN_DISPLAY | RUN_CHROOT | RUN_FATAL | RUN_PROGRESS,
+		    "/etc/rc.d/random_seed stop");
 	/* Install/Upgrade complete ... reboot or exit to script */
 	msg_display(success_msg);
 	process_menu(MENU_ok, NULL);

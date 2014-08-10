@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.27 2014/07/25 08:10:32 dholland Exp $ */
+/*	$NetBSD: epcom.c,v 1.28 2014/08/10 16:44:33 tls Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.27 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.28 2014/08/10 16:44:33 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -249,7 +249,7 @@ epcom_attach_subr(struct epcom_softc *sc)
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_DEFAULT);
 #endif
 
 	/* if there are no enable/disable functions, assume the device

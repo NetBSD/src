@@ -1,5 +1,5 @@
-#	$NetBSD: files.arc4,v 1.1 2002/10/11 01:52:07 thorpej Exp $
+#	$NetBSD: files.arc4,v 1.2 2014/08/10 16:44:35 tls Exp $
 
 define	arc4
 
-file	crypto/arc4/arc4.c		arc4
+file	crypto/arc4/arc4.c

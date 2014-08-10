@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.9 2013/08/29 21:54:11 riastradh Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.10 2014/08/10 16:44:33 tls Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.9 2013/08/29 21:54:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.10 2014/08/10 16:44:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ bcmrng_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_rnd_lock, MUTEX_DEFAULT, IPL_SERIAL);
 	rndsource_setcb(&sc->sc_rndsource, &bcmrng_get_cb, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(self), RND_TYPE_RNG,
-	    RND_FLAG_NO_ESTIMATE|RND_FLAG_HASCB);
+	    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
 
 	/* get some initial entropy ASAP */
 	bcmrng_get_cb(RND_POOLBITS / NBBY, sc);

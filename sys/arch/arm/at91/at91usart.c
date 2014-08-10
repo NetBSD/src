@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.10 2014/07/25 08:10:31 dholland Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.10 2014/07/25 08:10:31 dholland Exp $ */
+/*	$Id: at91usart.c,v 1.11 2014/08/10 16:44:33 tls Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.11 2014/08/10 16:44:33 tls Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.10 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.11 2014/08/10 16:44:33 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -315,7 +315,7 @@ at91usart_attach_subr(struct at91usart_softc *sc, struct at91bus_attach_args *sa
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_DEFAULT);
 #endif
 
 	/* if there are no enable/disable functions, assume the device

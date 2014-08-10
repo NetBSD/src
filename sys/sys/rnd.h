@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.40 2013/08/29 01:04:49 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.41 2014/08/10 16:44:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 
 #ifdef _KERNEL
 #include <sys/queue.h>
+#include <sys/systm.h>
 #endif
 
 #ifdef _KERNEL
@@ -85,13 +86,27 @@ typedef struct {
 	uint32_t	flags;		/* flags */
 } rndsource_t;
 
+typedef struct {
+	rndsource_t	rt;
+	uint32_t	dt_samples;	/* time-delta samples input */
+	uint32_t	dt_total;	/* time-delta entropy estimate */
+	uint32_t	dv_samples;	/* value-delta samples input */
+	uint32_t	dv_total;	/* value-delta entropy estimate */
+} rndsource_est_t;
+
 /*
  * Flags to control the source.  Low byte is type, upper bits are flags.
  */
-#define	RND_FLAG_NO_ESTIMATE	0x00000100	/* don't estimate entropy */
-#define	RND_FLAG_NO_COLLECT	0x00000200	/* don't collect entropy */
+#define RND_FLAG_NO_ESTIMATE	0x00000100
+#define RND_FLAG_NO_COLLECT	0x00000200
 #define RND_FLAG_FAST		0x00000400	/* process samples in bulk */
 #define RND_FLAG_HASCB		0x00000800	/* has get callback */
+#define RND_FLAG_COLLECT_TIME	0x00001000	/* use timestamp as input */
+#define RND_FLAG_COLLECT_VALUE	0x00002000	/* use value as input */
+#define RND_FLAG_ESTIMATE_TIME	0x00004000	/* estimate entropy on time */
+#define RND_FLAG_ESTIMATE_VALUE	0x00008000	/* estimate entropy on value */
+#define RND_FLAG_DEFAULT	(RND_FLAG_COLLECT_VALUE|RND_FLAG_COLLECT_TIME|\
+				 RND_FLAG_ESTIMATE_TIME)
 
 #define	RND_TYPE_UNKNOWN	0	/* unknown source */
 #define	RND_TYPE_DISK		1	/* source is physical disk */
@@ -115,20 +130,27 @@ typedef struct {
 #endif
 #define RND_POOLBITS	(RND_POOLWORDS * 32)
 
+typedef struct rnd_delta_estimator {
+	uint64_t	x;
+	uint64_t	dx;
+	uint64_t	d2x;
+	uint64_t	insamples;
+	uint64_t	outbits;
+} rnd_delta_t;
+
 typedef struct krndsource {
 	LIST_ENTRY(krndsource) list;	/* the linked list */
         char            name[16];       /* device name */
-        uint32_t        last_time;      /* last time recorded */
-        uint32_t        last_delta;     /* last delta value */
-        uint32_t        last_delta2;    /* last delta2 value */
+	rnd_delta_t	time_delta;	/* time delta estimator */
+	rnd_delta_t	value_delta;	/* value delta estimator */
         uint32_t        total;          /* entropy from this source */
         uint32_t        type;           /* type */
         uint32_t        flags;          /* flags */
         void            *state;         /* state information */
         size_t          test_cnt;       /* how much test data accumulated? */
-        rngtest_t	*test;          /* test data for RNG type sources */
 	void		(*get)(size_t, void *);	/* pool wants N bytes (badly) */
 	void		*getarg;	/* argument to get-function */
+	rngtest_t	*test;		/* test data for RNG type sources */
 } krndsource_t;
 
 static inline void
@@ -151,6 +173,7 @@ typedef struct {
 void		rndpool_init(rndpool_t *);
 void		rndpool_init_global(void);
 uint32_t	rndpool_get_entropy_count(rndpool_t *);
+void		rndpool_set_entropy_count(rndpool_t *, uint32_t);
 void		rndpool_get_stats(rndpool_t *, void *, int);
 void		rndpool_increment_entropy_count(rndpool_t *, uint32_t);
 uint32_t	*rndpool_get_pool(rndpool_t *);
@@ -161,6 +184,7 @@ uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t, uint32_t);
 void		rnd_init(void);
 void		rnd_init_softint(void);
 void		_rnd_add_uint32(krndsource_t *, uint32_t);
+void		_rnd_add_uint64(krndsource_t *, uint64_t);
 void		rnd_add_data(krndsource_t *, const void *const, uint32_t,
 		    uint32_t);
 void		rnd_attach_source(krndsource_t *, const char *,
@@ -174,8 +198,22 @@ void		rnd_seed(void *, size_t);
 static inline void
 rnd_add_uint32(krndsource_t *kr, uint32_t val)
 {
-	if (__predict_true(kr) && RND_ENABLED(kr)) {
-		_rnd_add_uint32(kr, val);
+	if (__predict_true(kr)) {
+		if (RND_ENABLED(kr)) {
+			_rnd_add_uint32(kr, val);
+		}
+	} else {
+		rnd_add_data(NULL, &val, sizeof(val), 0);
+	}
+}
+
+static inline void
+rnd_add_uint64(krndsource_t *kr, uint64_t val)
+{
+	if (__predict_true(kr)) {
+		if (RND_ENABLED(kr)) {
+			_rnd_add_uint64(kr, val);
+		}
 	} else {
 		rnd_add_data(NULL, &val, sizeof(val), 0);
 	}
@@ -185,6 +223,11 @@ extern int	rnd_empty;
 extern int	rnd_full;
 extern int	rnd_filled;
 extern int	rnd_initial_entropy;
+
+extern int	rnd_ready;
+extern int	rnd_printing;		/* XXX recursion through printf */
+
+extern int	rnd_blockonce;
 
 #endif /* _KERNEL */
 
@@ -200,12 +243,28 @@ typedef struct {
 } rndstat_t;
 
 /*
+ * return "count" random entries with estimates, starting at "start"
+ */
+typedef struct {
+	uint32_t	start;
+	uint32_t	count;
+	rndsource_est_t	source[RND_MAXSTATCOUNT];
+} rndstat_est_t;
+
+
+/*
  * return information on a specific source by name
  */
 typedef struct {
 	char		name[16];
 	rndsource_t	source;
 } rndstat_name_t;
+
+typedef struct {
+	char		name[16];
+	rndsource_est_t	source;
+} rndstat_est_name_t;
+
 
 /*
  * set/clear device flags.  If type is set to 0xff, the name is used
@@ -235,5 +294,7 @@ typedef struct {
 #define	RNDCTL		_IOW('R',  104, rndctl_t)  /* set/clear source flags */
 #define	RNDADDDATA	_IOW('R',  105, rnddata_t) /* add data to the pool */
 #define	RNDGETPOOLSTAT	_IOR('R',  106, rndpoolstat_t) /* get statistics */
+#define	RNDGETESTNUM	_IOWR('R', 107, rndstat_est_t) /* get srcest */
+#define	RNDGETESTNAME	_IOWR('R', 108, rndstat_est_name_t) /* " by name */
 
 #endif /* !_SYS_RND_H_ */

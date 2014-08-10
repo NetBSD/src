@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.16 2012/07/22 14:32:57 matt Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.17 2014/08/10 16:44:35 tls Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.16 2012/07/22 14:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.17 2014/08/10 16:44:35 tls Exp $");
 
 /*
  * The LAN9118 Family
@@ -279,7 +279,7 @@ lan9118_attach(struct lan9118_softc *sc)
 	callout_init(&sc->sc_tick, 0);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 	return 0;
 }
 

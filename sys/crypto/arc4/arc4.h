@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4.h,v 1.4 2005/12/11 12:20:48 christos Exp $	*/
+/*	$NetBSD: arc4.h,v 1.5 2014/08/10 16:44:35 tls Exp $	*/
 
 /*
  * ARC4 implementation
@@ -32,9 +32,18 @@
 #ifndef _CRYPTO_ARC4_H_
 #define	_CRYPTO_ARC4_H_
 
+typedef struct arc4_ctx {
+        unsigned int    x;
+        unsigned int    y;
+        unsigned int    state[256];
+        /* was unsigned char, changed to int for performance -- onoe */
+} arc4_ctx_t;
+
 int arc4_ctxlen(void);
 void arc4_setkey(void *, const u_char *, unsigned int);
 void arc4_encrypt(void *, u_char *, const u_char *, int);
 void arc4_decrypt(void *, u_char *, const u_char *, int);
+
+void arc4_stream(void *, u_char *, int);
 
 #endif /* _CRYPTO_ARC4_H_ */

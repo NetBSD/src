@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.457 2014/07/07 20:14:43 riastradh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.458 2014/08/10 16:44:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.457 2014/07/07 20:14:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.458 2014/08/10 16:44:36 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.457 2014/07/07 20:14:43 riastradh Ex
 #include "opt_compat_netbsd.h"
 #include "opt_wapbl.h"
 #include "opt_ptrace.h"
+#include "opt_rnd_printf.h"
 
 #include "drvctl.h"
 #include "ksyms.h"
@@ -499,6 +500,8 @@ main(void)
 	/* Initialize the kernel strong PRNG. */
 	kern_cprng = cprng_strong_create("kernel", IPL_VM,
 					 CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
+
+	cprng_fast_init();
 					 
 	/* Initialize interfaces. */
 	ifinit1();
@@ -526,6 +529,11 @@ main(void)
 
 	/* Enable deferred processing of RNG samples */
 	rnd_init_softint();
+
+#ifdef RND_PRINTF
+	/* Enable periodic injection of console output into entropy pool */
+	kprintf_init_callout();
+#endif
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */

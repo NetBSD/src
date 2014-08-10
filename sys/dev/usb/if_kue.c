@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.80 2013/10/16 07:34:20 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81 2014/08/10 16:44:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.80 2013/10/16 07:34:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81 2014/08/10 16:44:36 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -507,7 +507,7 @@ kue_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->kue_desc.kue_macaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->kue_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	sc->kue_attached = true;
 	splx(s);
