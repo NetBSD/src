@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.19 2012/07/21 05:49:42 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.20 2014/08/10 03:22:33 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -213,6 +213,20 @@ perfuse_node_path(struct perfuse_state *ps, puffs_cookie_t opc)
 	sprintf(buf, "%s", PERFUSE_NODE_DATA(opc)->pnd_name);
 
 	return buf;
+}
+
+int
+perfuse_ns_match(const int attrnamespace, const char *attrname)
+{
+	const char *system_ns[] = { "system.", "trusted.", "security", NULL };
+	int i;
+
+        for (i = 0; system_ns[i]; i++) {
+                if (strncmp(attrname, system_ns[i], strlen(system_ns[i])) == 0)
+			return (attrnamespace == EXTATTR_NAMESPACE_SYSTEM);
+        }
+
+	return (attrnamespace == EXTATTR_NAMESPACE_USER);
 }
 
 const char *
