@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.241 2014/08/10 05:57:31 matt Exp $
+#	$NetBSD: bsd.sys.mk,v 1.242 2014/08/10 17:44:26 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -125,7 +125,7 @@ COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .endif
 
 .if ${MKSOFTFLOAT:Uno} != "no"
-COPTS+=		-msoft-float
+COPTS+=		${${ACTIVE_CC} == "gcc":? -msoft-float :}
 FOPTS+=		-msoft-float
 .elif ${MACHINE_ARCH} == "coldfire"
 COPTS+=		-mhard-float

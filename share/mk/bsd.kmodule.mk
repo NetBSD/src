@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.43 2014/03/10 12:13:14 nakayama Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.44 2014/08/10 17:44:26 joerg Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -31,7 +31,7 @@ CFLAGS+=	-fno-common -fno-unwind-tables
 .elif ${MACHINE_CPU} == "hppa"
 CFLAGS+=	-mlong-calls
 .elif ${MACHINE_CPU} == "powerpc"
-CFLAGS+=	-mlongcall
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mlongcall :}
 .elif ${MACHINE_CPU} == "vax"
 CFLAGS+=	-fno-pic
 .endif
