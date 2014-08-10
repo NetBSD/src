@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2014/08/08 16:56:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2014/08/10 17:44:26 joerg Exp $
 
 S!=	cd ${.CURDIR}/../../../..; pwd
 
@@ -12,7 +12,8 @@ LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
 
-CFLAGS=		-Os -Wall -msoft-float -ffreestanding
+CFLAGS=		-Os -Wall -ffreestanding
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msoft-float :}
 CPPFLAGS+=	-D_STANDALONE -DPPC_OEA -I${.OBJDIR} -I${S}
 STRIPFLAG=
 LINKFLAGS=	-x -N -Ttext 4000 -e _start
