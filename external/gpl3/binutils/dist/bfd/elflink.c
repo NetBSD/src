@@ -1442,7 +1442,10 @@ _bfd_elf_merge_symbol (bfd *abfd,
       if (!(oldbfd != NULL
 	    && (oldbfd->flags & BFD_PLUGIN) != 0
 	    && (abfd->flags & BFD_PLUGIN) == 0))
-	*skip = TRUE;
+	{
+	  newdef = FALSE;
+	  *skip = TRUE;
+	}
 
       /* Merge st_other.  If the symbol already has a dynamic index,
 	 but visibility says it should not be visible, turn it into a
