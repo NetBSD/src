@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.6 2014/08/11 03:50:29 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.7 2014/08/11 13:01:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.6 2014/08/11 03:50:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.7 2014/08/11 13:01:58 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -269,11 +269,14 @@ cprng_fast_intr(void *cookie __unused)
 {
 	struct cprng_fast *cprng;
 	uint8_t seed[CPRNG_FAST_SEED_BYTES];
+	int s;
 
 	cprng_strong(kern_cprng, seed, sizeof(seed), FASYNC);
 
 	cprng = percpu_getref(cprng_fast_percpu);
+	s = splvm();
 	cprng_fast_seed(cprng, seed);
+	splx(s);
 	percpu_putref(cprng_fast_percpu);
 
 	explicit_memset(seed, 0, sizeof(seed));
