@@ -1,0 +1,13 @@
+# $NetBSD: CHANGES-7.0,v 1.1.2.1 2014/08/11 09:21:47 riz Exp $
+
+A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
+until the 7.0 release:
+
+doc/CHANGES-7.0					patched by hand
+doc/LAST_MINUTE					patched by hand
+doc/README.files				patched by hand
+gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
+sys/sys/param.h					patched by hand
+
+	Welcome to 7.0_BETA!
+

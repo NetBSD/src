@@ -1,7 +1,7 @@
-/*	$NetBSD: lbitlib.c,v 1.1.1.1 2014/07/20 23:17:33 lneto Exp $	*/
+/*	$NetBSD: lbitlib.c,v 1.1 2014/07/19 18:38:34 lneto Exp $	*/
 
 /*
-** Id: lbitlib.c,v 1.26 2014/05/15 19:28:34 roberto Exp 
+** $Id: lbitlib.c,v 1.1 2014/07/19 18:38:34 lneto Exp $
 ** Standard library for bitwise operations
 ** See Copyright Notice in lua.h
 */
