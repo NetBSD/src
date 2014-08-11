@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.45 2014/08/11 03:43:25 jnemeth Exp $
+# $NetBSD: md.i386,v 1.46 2014/08/11 05:19:16 jnemeth Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -288,8 +288,6 @@
 ./stand/i386-xen/@OSRELEASE@/modules/emdtv/emdtv.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/est				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/est/est.kmod			base-kernel-modules	kmod,compatmodules
-./stand/i386-xen/@OSRELEASE@/modules/example				base-kernel-modules	kmod,compatmodules
-./stand/i386-xen/@OSRELEASE@/modules/example/example.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/exec_aout				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/exec_aout/exec_aout.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/exec_elf32				base-kernel-modules	kmod,compatmodules
@@ -669,8 +667,6 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/emdtv/emdtv.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/est				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/est/est.kmod			base-kernel-modules	kmod,compatmodules
-./stand/i386pae-xen/@OSRELEASE@/modules/example				base-kernel-modules	kmod,compatmodules
-./stand/i386pae-xen/@OSRELEASE@/modules/example/example.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/exec_aout			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/exec_aout/exec_aout.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/exec_elf32			base-kernel-modules	kmod,compatmodules

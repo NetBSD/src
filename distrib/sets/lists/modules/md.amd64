@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.40 2014/08/11 03:43:25 jnemeth Exp $
+# $NetBSD: md.amd64,v 1.41 2014/08/11 05:19:16 jnemeth Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -258,8 +258,6 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/emdtv/emdtv.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/est				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/est/est.kmod			base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/example				base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/example/example.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/exec_elf32			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/exec_elf32/exec_elf32.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/exec_elf64			base-kernel-modules	kmod,compatmodules
