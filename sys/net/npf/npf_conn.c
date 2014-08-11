@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.10 2014/08/10 19:09:43 rmind Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.11 2014/08/11 23:48:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.10 2014/08/10 19:09:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.11 2014/08/11 23:48:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -917,8 +917,11 @@ npf_conn_import(npf_conndb_t *cd, prop_dictionary_t cdict,
 	}
 	memcpy(&con->c_state, d, sizeof(npf_state_t));
 
-	/* Reconstruct NAT association, if any, or return NULL. */
-	con->c_nat = npf_nat_import(cdict, natlist, con);
+	/* Reconstruct NAT association, if any. */
+	if ((obj = prop_dictionary_get(cdict, "nat")) != NULL &&
+	    (con->c_nat = npf_nat_import(obj, natlist, con)) == NULL) {
+		goto err;
+	}
 
 	/*
 	 * Fetch and copy the keys for each direction.

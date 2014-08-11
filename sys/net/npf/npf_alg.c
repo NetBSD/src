@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.14 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.15 2014/08/11 23:48:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.14 2014/07/20 00:37:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.15 2014/08/11 23:48:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -243,4 +243,25 @@ npf_alg_conn(npf_cache_t *npc, int di)
 	}
 	pserialize_read_exit(s);
 	return con;
+}
+
+prop_array_t
+npf_alg_export(void)
+{
+	prop_array_t alglist = prop_array_create();
+
+	KASSERT(npf_config_locked_p());
+
+	for (u_int i = 0; i < alg_count; i++) {
+		const npf_alg_t *alg = &alg_list[i];
+
+		if (alg->na_name == NULL) {
+			continue;
+		}
+		prop_dictionary_t algdict = prop_dictionary_create();
+		prop_dictionary_set_cstring(algdict, "name", alg->na_name);
+		prop_array_add(alglist, algdict);
+		prop_object_release(algdict);
+	}
+	return alglist;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.58 2014/08/11 01:54:12 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.59 2014/08/11 23:48:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -338,6 +338,7 @@ npf_alg_t *	npf_alg_construct(const char *);
 bool		npf_alg_match(npf_cache_t *, npf_nat_t *, int);
 void		npf_alg_exec(npf_cache_t *, npf_nat_t *, bool);
 npf_conn_t *	npf_alg_conn(npf_cache_t *, int);
+prop_array_t	npf_alg_export(void);
 
 /* Debugging routines. */
 const char *	npf_addr_dump(const npf_addr_t *, int);

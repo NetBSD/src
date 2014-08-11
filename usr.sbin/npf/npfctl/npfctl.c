@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.42 2014/07/23 05:00:38 htodd Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.43 2014/08/11 23:48:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.42 2014/07/23 05:00:38 htodd Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.43 2014/08/11 23:48:01 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -506,7 +506,12 @@ npfctl_load(int fd)
 	if (ncf == NULL) {
 		return errno;
 	}
-	error = npf_config_submit(ncf, fd);
+	errno = error = npf_config_submit(ncf, fd);
+	if (error) {
+		nl_error_t ne;
+		_npf_config_error(ncf, &ne);
+		npfctl_print_error(&ne);
+	}
 	npf_config_destroy(ncf);
 	return error;
 }
