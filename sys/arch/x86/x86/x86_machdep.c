@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.66 2014/07/24 13:42:28 riastradh Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.67 2014/08/11 03:43:25 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.66 2014/07/24 13:42:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67 2014/08/11 03:43:25 jnemeth Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -81,6 +81,13 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.66 2014/07/24 13:42:28 riastradh E
 void (*x86_cpu_idle)(void);
 static bool x86_cpu_idle_ipi;
 static char x86_cpu_idle_text[16];
+
+#ifdef XEN
+char module_machine_amd64_xen[] = "amd64-xen";
+char module_machine_i386_xen[] = "i386-xen";
+char module_machine_i386pae_xen[] = "i386pae-xen";
+#endif
+
 
 /* --------------------------------------------------------------------- */
 
@@ -151,6 +158,19 @@ module_init_md(void)
 {
 	struct btinfo_modulelist *biml;
 	struct bi_modulelist_entry *bi, *bimax;
+
+	/* setup module path for XEN kernels */
+#ifdef XEN
+#if defined(amd64)
+	module_machine = module_machine_amd64_xen;
+#elif defined(i386)
+#ifdef PAE
+	module_machine = module_machine_i386pae_xen;
+#else
+	module_machine = module_machine_i386_xen;
+#endif
+#endif
+#endif
 
 	biml = lookup_bootinfo(BTINFO_MODULELIST);
 	if (biml == NULL) {
