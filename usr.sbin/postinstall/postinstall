@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.175 2014/08/04 21:56:30 apb Exp $
+# $NetBSD: postinstall,v 1.176 2014/08/11 12:49:01 roy Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -939,6 +939,11 @@ do_fontconfig()
 		FONTCONFIG_DIR="${SRC_DIR}/etc/fonts/conf.avail" 
 	else
 		FONTCONFIG_DIR="${XSRC_DIR}/external/mit/fontconfig/dist/conf.d"
+	fi
+
+	if [ ! -d "${FONTCONFIG_DIR}" ]; then
+		msg "${FONTCONFIG_DIR} is not a directory; skipping check"
+		return 0
 	fi
 
 	populate_dir "$op" false "${FONTCONFIG_DIR}" "${DEST_DIR}/etc/fonts/conf.avail" 444 \
