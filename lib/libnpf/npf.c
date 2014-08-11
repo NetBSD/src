@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.32 2014/08/10 19:09:43 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.33 2014/08/11 23:48:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.32 2014/08/10 19:09:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.33 2014/08/11 23:48:01 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -237,11 +237,11 @@ npf_config_import(const char *path)
 	nl_config_t *ncf;
 
 	npf_dict = prop_dictionary_internalize_from_file(path);
-	if (npf_dict) {
+	if (!npf_dict) {
 		return NULL;
 	}
 	ncf = _npf_config_consdict(npf_dict);
-	if (ncf == NULL) {
+	if (!ncf) {
 		prop_object_release(npf_dict);
 		return NULL;
 	}
