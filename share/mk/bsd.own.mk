@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.829 2014/08/11 03:43:25 jnemeth Exp $
+#	$NetBSD: bsd.own.mk,v 1.830 2014/08/11 22:28:50 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -709,6 +709,9 @@ MKGCC:= no
 MKGCC:= no
 .endif
 
+# No GDB support for aarch64
+MKGDB.aarch64=	no
+
 #
 # The m68000 port is incomplete.
 #
@@ -725,10 +728,8 @@ NOPROFILE=	# defined
 #
 # The ia64 port is incomplete.
 #
-.if ${MACHINE_ARCH} == "ia64"
-MKLINT=		no
-MKGDB=		no
-.endif
+MKLINT.ia64=	no
+MKGDB.ia64=	no
 
 #
 # On the MIPS, all libs are compiled with ABIcalls (and are thus PIC),
@@ -743,9 +744,7 @@ MKPICLIB:=	no
 # On VAX using ELF, all objects are PIC, not just shared libraries,
 # so don't build the _pic version.
 #
-.if ${MACHINE_ARCH} == "vax"
-MKPICLIB=	no
-.endif
+MKPICLIB.vax=	no
 
 #
 # Location of the file that contains the major and minor numbers of the
@@ -881,9 +880,9 @@ MK${var}:=	yes
 #
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" \
     || ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" \
-    || ${MACHINE_ARCH} == "powerpc64"
+    || ${MACHINE_ARCH} == "powerpc64" || ${MACHINE_CPU} == "aarch64"
 MKCOMPAT?=	yes
-.elif !empty(MACHINE_ARCH:Mearm*) || ${MACHINE_CPU} == "aarch64"
+.elif !empty(MACHINE_ARCH:Mearm*)
 MKCOMPAT?=	no
 .else
 # Don't let this build where it really isn't supported.
@@ -891,7 +890,7 @@ MKCOMPAT:=	no
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE} == "evbppc" && ${MACHINE_ARCH} == "powerpc"
+    (${MACHINE} == "evbppc" && ${MACHINE_ARCH} == "powerpc")
 MKCOMPATMODULES?=	yes
 .else
 MKCOMPATMODULES:=	no
@@ -963,7 +962,7 @@ _MKVARS.yes= \
 	MKX11FONTS \
 	MKYP
 .for var in ${_MKVARS.yes}
-${var}?=	yes
+${var}?=	${${var}.${MACHINE_ARCH}:Uyes}
 .endfor
 
 #
@@ -995,7 +994,7 @@ _MKVARS.no= \
 	MKSOFTFLOAT MKSTRIPIDENT MKTPM \
 	MKUNPRIVED MKUPDATE MKX11 MKX11MOTIF MKZFS
 .for var in ${_MKVARS.no}
-${var}?=no
+${var}?=	${${var}.${MACHINE_ARCH}:Uno}
 .endfor
 
 #
