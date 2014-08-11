@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: vmparam.h,v 1.2 2014/08/11 22:08:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -133,6 +133,15 @@
 #define VM_FREELIST_FIRST4GB	1
 
 #elif defined(__arm__)
+
+// These exist for building the RUMP libraries with MKCOMPAT
+
+#define KERNEL_BASE		0x80000000
+#define PGSHIFT			12
+#define	NBPG			(1 << PGSHIFT)
+#define VM_PHYSSEG_MAX		1
+#define VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
 
 #include <arm/vmparam.h>
 
