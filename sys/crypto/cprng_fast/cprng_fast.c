@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.5 2014/08/11 03:47:49 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.6 2014/08/11 03:50:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.5 2014/08/11 03:47:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.6 2014/08/11 03:50:29 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -206,7 +206,7 @@ __CTASSERT(sizeof ((struct cprng_fast *)0)->key == CPRNG_FAST_SEED_BYTES);
 static void	cprng_fast_schedule_reseed(struct cprng_fast *);
 static void	cprng_fast_intr(void *);
 
-static inline void	cprng_fast_seed(struct cprng_fast *, const void *);
+static void	cprng_fast_seed(struct cprng_fast *, const void *);
 static void	cprng_fast_buf(struct cprng_fast *, void *, unsigned);
 
 static void	cprng_fast_buf_short(void *, size_t);
@@ -291,7 +291,7 @@ cprng_fast_intr(void *cookie __unused)
  */
 #define	CPRNG_FAST_BUFIDX	(crypto_core_OUTPUTWORDS - 1)
 
-static inline void
+static void
 cprng_fast_seed(struct cprng_fast *cprng, const void *seed)
 {
 
