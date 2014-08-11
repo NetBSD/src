@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.3 2014/08/10 22:35:32 justin Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.4 2014/08/11 03:46:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,16 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.3 2014/08/10 22:35:32 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.4 2014/08/11 03:46:54 riastradh Exp $");
 
 #include <sys/types.h>
-#include <sys/bitops.h>
 #include <sys/param.h>
+#include <sys/bitops.h>
+#include <sys/cprng.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/percpu.h>
-#include <sys/cprng.h>
-
 
 /* ChaCha core */
 
