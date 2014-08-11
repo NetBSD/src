@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.36 2014/08/10 19:09:43 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.37 2014/08/11 01:54:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.36 2014/08/10 19:09:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.37 2014/08/11 01:54:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -115,7 +115,11 @@ struct npf_rule {
 	prop_data_t		r_info;
 };
 
-static int	npf_rule_export(const npf_rule_t *, prop_dictionary_t);
+#define	SKIPTO_ADJ_FLAG		(1U << 31)
+#define	SKIPTO_MASK		(SKIPTO_ADJ_FLAG - 1)
+
+static int	npf_rule_export(const npf_ruleset_t *,
+    const npf_rule_t *, prop_dictionary_t);
 
 /*
  * Private attributes - must be in the NPF_RULE_PRIVMASK range.
@@ -193,7 +197,7 @@ npf_ruleset_insert(npf_ruleset_t *rlset, npf_rule_t *rl)
 	rlset->rs_nitems++;
 
 	if (rl->r_skip_to < ++n) {
-		rl->r_skip_to = n;
+		rl->r_skip_to = SKIPTO_ADJ_FLAG | n;
 	}
 }
 
@@ -342,12 +346,13 @@ npf_ruleset_list(npf_ruleset_t *rlset, const char *rname)
 		rldict = prop_dictionary_create();
 		KASSERT(rl->r_parent == rg);
 
-		if (npf_rule_export(rl, rldict) ||
-		    !prop_array_add(rules, rldict)) {
+		if (npf_rule_export(rlset, rl, rldict)) {
 			prop_object_release(rldict);
 			prop_object_release(rules);
 			return NULL;
 		}
+		prop_array_add(rules, rldict);
+		prop_object_release(rldict);
 	}
 
 	if (!prop_dictionary_set(rgdict, "rules", rules)) {
@@ -377,17 +382,19 @@ npf_ruleset_flush(npf_ruleset_t *rlset, const char *rname)
 int
 npf_ruleset_export(const npf_ruleset_t *rlset, prop_array_t rules)
 {
-	const npf_rule_t *rl;
+	const u_int nitems = rlset->rs_nitems;
 	int error = 0;
+	u_int n = 0;
 
 	KASSERT(npf_config_locked_p());
 
-	LIST_FOREACH(rl, &rlset->rs_all, r_aentry) {
+	while (n < nitems) {
+		const npf_rule_t *rl = rlset->rs_rules[n];
 		const npf_natpolicy_t *natp = rl->r_natp;
 		prop_dictionary_t rldict;
 
 		rldict = prop_dictionary_create();
-		if ((error = npf_rule_export(rl, rldict)) != 0) {
+		if ((error = npf_rule_export(rlset, rl, rldict)) != 0) {
 			prop_object_release(rldict);
 			break;
 		}
@@ -395,10 +402,9 @@ npf_ruleset_export(const npf_ruleset_t *rlset, prop_array_t rules)
 			prop_object_release(rldict);
 			break;
 		}
-		if (!prop_array_add(rules, rldict)) {
-			prop_object_release(rldict);
-			return ENOMEM;
-		}
+		prop_array_add(rules, rldict);
+		prop_object_release(rldict);
+		n++;
 	}
 	return error;
 }
@@ -625,14 +631,18 @@ npf_rule_alloc(prop_dictionary_t rldict)
 }
 
 static int
-npf_rule_export(const npf_rule_t *rl, prop_dictionary_t rldict)
+npf_rule_export(const npf_ruleset_t *rlset, const npf_rule_t *rl,
+    prop_dictionary_t rldict)
 {
+	u_int skip_to = 0;
 	prop_data_t d;
 
 	prop_dictionary_set_uint32(rldict, "attr", rl->r_attr);
 	prop_dictionary_set_int32(rldict, "prio", rl->r_priority);
-	prop_dictionary_set_uint32(rldict, "skip-to", rl->r_skip_to);
-
+	if ((rl->r_skip_to & SKIPTO_ADJ_FLAG) == 0) {
+		skip_to = rl->r_skip_to & SKIPTO_MASK;
+	}
+	prop_dictionary_set_uint32(rldict, "skip-to", skip_to);
 	prop_dictionary_set_int32(rldict, "code-type", rl->r_type);
 	if (rl->r_code) {
 		d = prop_data_create_data(rl->r_code, rl->r_clen);
@@ -652,7 +662,9 @@ npf_rule_export(const npf_rule_t *rl, prop_dictionary_t rldict)
 		d = prop_data_create_data(rl->r_key, NPF_RULE_MAXKEYLEN);
 		prop_dictionary_set_and_rel(rldict, "key", d);
 	}
-	prop_dictionary_set(rldict, "info", rl->r_info);
+	if (rl->r_info) {
+		prop_dictionary_set(rldict, "info", rl->r_info);
+	}
 	return 0;
 }
 
@@ -836,7 +848,7 @@ npf_ruleset_inspect(npf_cache_t *npc, const npf_ruleset_t *rlset,
 
 	while (n < nitems) {
 		npf_rule_t *rl = rlset->rs_rules[n];
-		const u_int skip_to = rl->r_skip_to;
+		const u_int skip_to = rl->r_skip_to & SKIPTO_MASK;
 		const uint32_t attr = rl->r_attr;
 
 		KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
