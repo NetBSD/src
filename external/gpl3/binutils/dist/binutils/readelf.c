@@ -8847,6 +8847,20 @@ get_symbol_visibility (unsigned int visibility)
 }
 
 static const char *
+get_alpha_symbol_other (unsigned int other)
+{   
+  switch (other)
+    {
+    case STO_ALPHA_NOPV:
+      return "NOPV";
+    case STO_ALPHA_STD_GPLOAD:
+      return "STD GPLOAD";
+    default:
+      return NULL;
+    } 
+}
+
+static const char *
 get_mips_symbol_other (unsigned int other)
 {
   switch (other)
@@ -8940,6 +8954,9 @@ get_symbol_other (unsigned int other)
 
   switch (elf_header.e_machine)
     {
+    case EM_ALPHA:
+      result = get_alpha_symbol_other (other);
+      break;
     case EM_MIPS:
       result = get_mips_symbol_other (other);
       break;
