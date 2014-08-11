@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.37 2014/08/10 19:09:43 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.38 2014/08/11 01:54:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.37 2014/08/10 19:09:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.38 2014/08/11 01:54:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -181,7 +181,6 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 			NPF_ERR_DEBUG(errdict);
 			break;
 		}
-		prop_dictionary_remove(tbldict, "entries");
 	}
 	prop_object_iterator_release(it);
 	/*
@@ -555,7 +554,6 @@ npfctl_load(u_long cmd, void *data)
 	if (error) {
 		goto fail;
 	}
-	prop_dictionary_remove(npf_dict, "nat");
 
 	/* Tables. */
 	tables = prop_dictionary_get(npf_dict, "tables");
@@ -597,7 +595,6 @@ npfctl_load(u_long cmd, void *data)
 		if (error) {
 			goto fail;
 		}
-		prop_dictionary_remove(npf_dict, "conn-list");
 	}
 
 	flush = false;
@@ -606,7 +603,7 @@ npfctl_load(u_long cmd, void *data)
 	/*
 	 * Finally - perform the load.
 	 */
-	npf_config_load(npf_dict, rlset, tblset, nset, rpset, conndb, flush);
+	npf_config_load(rlset, tblset, nset, rpset, conndb, flush);
 
 	/* Done.  Since data is consumed now, we shall not destroy it. */
 	tblset = NULL;
@@ -630,9 +627,7 @@ fail:
 	if (tblset) {
 		npf_tableset_destroy(tblset);
 	}
-	if (error) {
-		prop_object_release(npf_dict);
-	}
+	prop_object_release(npf_dict);
 
 	/* Error report. */
 #ifndef _NPF_TESTING
@@ -653,12 +648,15 @@ int
 npfctl_save(u_long cmd, void *data)
 {
 	struct plistref *pref = data;
-	prop_array_t conlist, natlist;
-	prop_dictionary_t npf_dict;
+	prop_array_t rulelist, natlist, tables, rprocs, conlist;
+	prop_dictionary_t npf_dict = NULL;
 	int error;
 
-	conlist = prop_array_create();
+	rulelist = prop_array_create();
 	natlist = prop_array_create();
+	tables = prop_array_create();
+	rprocs = prop_array_create();
+	conlist = prop_array_create();
 
 	/*
 	 * Serialise the connections and NAT policies.
@@ -668,21 +666,42 @@ npfctl_save(u_long cmd, void *data)
 	if (error) {
 		goto out;
 	}
+	error = npf_ruleset_export(npf_config_ruleset(), rulelist);
+	if (error) {
+		goto out;
+	}
 	error = npf_ruleset_export(npf_config_natset(), natlist);
 	if (error) {
 		goto out;
 	}
-	npf_dict = npf_config_dict();
+	error = npf_tableset_export(npf_config_tableset(), tables);
+	if (error) {
+		goto out;
+	}
+	error = npf_rprocset_export(npf_config_rprocs(), rprocs);
+	if (error) {
+		goto out;
+	}
+	npf_dict = prop_dictionary_create();
+	prop_dictionary_set_uint32(npf_dict, "version", NPF_VERSION);
+	prop_dictionary_set_and_rel(npf_dict, "rules", rulelist);
 	prop_dictionary_set_and_rel(npf_dict, "nat", natlist);
+	prop_dictionary_set_and_rel(npf_dict, "tables", tables);
+	prop_dictionary_set_and_rel(npf_dict, "rprocs", rprocs);
 	prop_dictionary_set_and_rel(npf_dict, "conn-list", conlist);
 	prop_dictionary_set_bool(npf_dict, "active", npf_pfil_registered_p());
 	error = prop_dictionary_copyout_ioctl(pref, cmd, npf_dict);
 out:
 	npf_config_exit();
 
-	if (error) {
-		prop_object_release(conlist);
+	if (!npf_dict) {
+		prop_object_release(rulelist);
 		prop_object_release(natlist);
+		prop_object_release(tables);
+		prop_object_release(rprocs);
+		prop_object_release(conlist);
+	} else {
+		prop_object_release(npf_dict);
 	}
 	return error;
 }

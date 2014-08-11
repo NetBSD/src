@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.11 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.12 2014/08/11 01:54:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -259,6 +259,22 @@ void
 npf_rprocset_insert(npf_rprocset_t *rpset, npf_rproc_t *rp)
 {
 	LIST_INSERT_HEAD(&rpset->rps_list, rp, rp_entry);
+}
+
+int
+npf_rprocset_export(const npf_rprocset_t *rpset, prop_array_t rprocs)
+{
+	prop_dictionary_t rpdict;
+	const npf_rproc_t *rp;
+
+	LIST_FOREACH(rp, &rpset->rps_list, rp_entry) {
+		rpdict = prop_dictionary_create();
+		prop_dictionary_set_cstring(rpdict, "name", rp->rp_name);
+		prop_dictionary_set_uint32(rpdict, "flags", rp->rp_flags);
+		prop_array_add(rprocs, rpdict);
+		prop_object_release(rpdict);
+	}
+	return 0;
 }
 
 /*
