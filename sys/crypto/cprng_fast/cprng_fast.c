@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.7 2014/08/11 13:01:58 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.8 2014/08/11 13:06:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.7 2014/08/11 13:01:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.8 2014/08/11 13:06:31 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -203,6 +203,7 @@ struct cprng_fast {
 
 __CTASSERT(sizeof ((struct cprng_fast *)0)->key == CPRNG_FAST_SEED_BYTES);
 
+static void	cprng_fast_init_cpu(void *, void *, struct cpu_info *);
 static void	cprng_fast_schedule_reseed(struct cprng_fast *);
 static void	cprng_fast_intr(void *);
 
@@ -218,25 +219,23 @@ static void	*cprng_fast_softint	__read_mostly;
 void
 cprng_fast_init(void)
 {
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
 
 	crypto_core_selftest();
 	cprng_fast_percpu = percpu_alloc(sizeof(struct cprng_fast));
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		struct cprng_fast *cprng;
-		uint8_t seed[CPRNG_FAST_SEED_BYTES];
-
-		percpu_traverse_enter();
-		cprng = percpu_getptr_remote(cprng_fast_percpu, ci);
-		cprng_strong(kern_cprng, seed, sizeof(seed), FASYNC);
-		/* Can't do anything about it if not full entropy.  */
-		cprng_fast_seed(cprng, seed);
-		explicit_memset(seed, 0, sizeof(seed));
-		percpu_traverse_exit();
-	}
+	percpu_foreach(cprng_fast_percpu, &cprng_fast_init_cpu, NULL);
 	cprng_fast_softint = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
 	    &cprng_fast_intr, NULL);
+}
+
+static void
+cprng_fast_init_cpu(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct cprng_fast *const cprng = p;
+	uint8_t seed[CPRNG_FAST_SEED_BYTES];
+
+	cprng_strong(kern_cprng, seed, sizeof seed, FASYNC);
+	cprng_fast_seed(cprng, seed);
+	(void)explicit_memset(seed, 0, sizeof seed);
 }
 
 static inline int
