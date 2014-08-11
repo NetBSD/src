@@ -1,8 +1,8 @@
-#	$NetBSD: README.files,v 1.5 2012/09/06 22:20:38 riz Exp $
+#	$NetBSD: README.files,v 1.5.12.1 2014/08/11 09:21:47 riz Exp $
 
 What's in this directory:
 
-CHANGES		Changes between the XXX.XXX-1 and XXX.XXX releases.
+CHANGES		Changes between the 6.0 and 7.0 releases.
 
 CHANGES.prev	Changes in previous NetBSD releases.
 
