@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2 2014/08/10 23:26:48 matt Exp $
+# $NetBSD: ad.aarch64,v 1.3 2014/08/11 13:40:34 joerg Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-npf-shlib		compat
 ./lib/eabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -35,8 +35,8 @@
 ./libexec/ld.elf_so-eabi			base-compat-shlib	compat,pic
 #./libexec/ld.elf_so-eabihf			base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
-./usr/lib/eabi					base-compat-lib		arch64
-./usr/lib/eabi/i18n				base-compat-lib		arch64
+./usr/lib/eabi					base-compat-lib		compat
+./usr/lib/eabi/i18n				base-compat-lib		compat
 ./usr/lib/eabi/i18n/libBIG5.so.5		base-i18n-shlib		compat,pic
 ./usr/lib/eabi/i18n/libBIG5.so.5.0		base-i18n-shlib		compat,pic
 ./usr/lib/eabi/i18n/libDECHanyu.so.5		base-i18n-shlib		compat,pic
@@ -326,7 +326,7 @@
 ./usr/lib/eabi/lua/5.3/gpio.so			base-compat-shlib	compat,pic
 ./usr/lib/eabi/lua/5.3/sqlite.so			base-compat-shlib	compat,pic
 ./usr/lib/eabi/lua/5.3/syslog.so			base-compat-shlib	compat,pic
-./usr/lib/eabi/security				base-compat-shlib	arch64
+./usr/lib/eabi/security				base-compat-shlib	compat
 ./usr/lib/eabi/security/pam_afslog.so.4		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/eabi/security/pam_chroot.so.4		base-compat-shlib	compat,pic,pam
 ./usr/lib/eabi/security/pam_deny.so.4		base-compat-shlib	compat,pic,pam
@@ -349,8 +349,8 @@
 ./usr/lib/eabi/security/pam_skey.so.4		base-compat-shlib	compat,pic,skey,pam
 ./usr/lib/eabi/security/pam_ssh.so.4		base-compat-shlib	compat,pic,crypto,pam
 ./usr/lib/eabi/security/pam_unix.so.4		base-compat-shlib	compat,pic,pam
-./usr/lib/eabihf					base-compat-lib		arch64
-./usr/lib/eabihf/i18n				base-compat-lib		arch64
+./usr/lib/eabihf				base-compat-lib		compat
+./usr/lib/eabihf/i18n				base-compat-lib		compat
 #./usr/lib/eabihf/i18n/libBIG5.so.5		base-i18n-shlib		compat,pic
 #./usr/lib/eabihf/i18n/libBIG5.so.5.0		base-i18n-shlib		compat,pic
 #./usr/lib/eabihf/i18n/libDECHanyu.so.5		base-i18n-shlib		compat,pic
@@ -640,7 +640,7 @@
 #./usr/lib/eabihf/lua/5.3/gpio.so			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/lua/5.3/sqlite.so			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/lua/5.3/syslog.so			base-compat-shlib	compat,pic
-./usr/lib/eabihf/security				base-compat-shlib	arch64
+./usr/lib/eabihf/security				base-compat-shlib	compat
 #./usr/lib/eabihf/security/pam_afslog.so.4		base-compat-shlib	compat,pic,kerberos,pam
 #./usr/lib/eabihf/security/pam_chroot.so.4		base-compat-shlib	compat,pic,pam
 #./usr/lib/eabihf/security/pam_deny.so.4		base-compat-shlib	compat,pic,pam
@@ -663,8 +663,8 @@
 #./usr/lib/eabihf/security/pam_skey.so.4		base-compat-shlib	compat,pic,skey,pam
 #./usr/lib/eabihf/security/pam_ssh.so.4		base-compat-shlib	compat,pic,crypto,pam
 #./usr/lib/eabihf/security/pam_unix.so.4		base-compat-shlib	compat,pic,pam
-./usr/lib/oabi					base-compat-lib		arch64
-./usr/lib/oabi/i18n				base-compat-lib		arch64
+./usr/lib/oabi					base-compat-lib		compat
+./usr/lib/oabi/i18n				base-compat-lib		compat
 ./usr/lib/oabi/i18n/libBIG5.so.5		base-i18n-shlib		compat,pic
 ./usr/lib/oabi/i18n/libBIG5.so.5.0		base-i18n-shlib		compat,pic
 ./usr/lib/oabi/i18n/libDECHanyu.so.5		base-i18n-shlib		compat,pic
@@ -952,7 +952,7 @@
 ./usr/lib/oabi/lua/5.3/gpio.so			base-compat-shlib	compat,pic
 ./usr/lib/oabi/lua/5.3/sqlite.so		base-compat-shlib	compat,pic
 ./usr/lib/oabi/lua/5.3/syslog.so		base-compat-shlib	compat,pic
-./usr/lib/oabi/security				base-compat-shlib	arch64
+./usr/lib/oabi/security				base-compat-shlib	compat
 ./usr/lib/oabi/security/pam_afslog.so.4		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/oabi/security/pam_chroot.so.4		base-compat-shlib	compat,pic,pam
 ./usr/lib/oabi/security/pam_deny.so.4		base-compat-shlib	compat,pic,pam
