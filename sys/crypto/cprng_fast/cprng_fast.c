@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.4 2014/08/11 03:46:54 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.5 2014/08/11 03:47:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.4 2014/08/11 03:46:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.5 2014/08/11 03:47:49 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.4 2014/08/11 03:46:54 riastradh Exp
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/percpu.h>
+#include <sys/rnd.h>
 
 /* ChaCha core */
 
@@ -213,8 +214,6 @@ static void	cprng_fast_buf_long(void *, size_t);
 
 static percpu_t	*cprng_fast_percpu	__read_mostly;
 static void	*cprng_fast_softint	__read_mostly;
-
-extern int	rnd_initial_entropy;
 
 void
 cprng_fast_init(void)
