@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: byte_swap.h,v 1.2 2014/08/11 04:03:59 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ static __inline uint64_t
 __byte_swap_u64_variable(uint64_t v)
 {
 	if (!__builtin_constant_p(v)) {
-		__asm("rev\t%0, %1" : "=r" (v) : "0" (v));
+		__asm("rev\t%x0, %x1" : "=r" (v) : "0" (v));
 		return v;
 	}
 
@@ -71,7 +71,7 @@ static __inline uint32_t
 __byte_swap_u32_variable(uint32_t v)
 {
 	if (!__builtin_constant_p(v)) {
-		__asm("rev\t%0, %1" : "=r" (v) : "0" (v));
+		__asm("rev\t%w0, %w1" : "=r" (v) : "0" (v));
 		return v;
 	}
 
@@ -88,7 +88,7 @@ __byte_swap_u16_variable(uint16_t v)
 
 	if (!__builtin_constant_p(v)) {
 		uint32_t v32 = v;
-		__asm("rev16\t%0, %1" : "=r" (v32) : "0" (v32));
+		__asm("rev16\t%w0, %w1" : "=r" (v32) : "0" (v32));
 		return v32;
 	}
 
