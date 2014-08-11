@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2014/08/04 01:25:23 rjs Exp $
+#	$NetBSD: Makefile,v 1.18 2014/08/11 08:25:58 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,11 +16,13 @@ SRCS.DRI=	radeon_dri.c
 CPPFLAGS+=	${X11FLAGS.DRI}
 .endif
 
+.if ${X11DRI} != "no"
 # XXX
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+. if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS.KMS=	radeon_dri2.c radeon_kms.c drmmode_display.c radeon_vbo.c
 CPPFLAGS+=	-DXF86DRM_MODE
 LIBDPLIBS+=	drm_radeon ${.CURDIR}/../../../lib/libdrm_radeon
+. endif
 .endif
 
 SRCS.EXA=	radeon_exa.c r600_exa.c r6xx_accel.c \
