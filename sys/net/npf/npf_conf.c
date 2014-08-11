@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conf.c,v 1.7 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf_conf.c,v 1.8 2014/08/11 01:54:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.7 2014/07/23 01:25:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.8 2014/08/11 01:54:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -66,7 +66,6 @@ typedef struct {
 	npf_tableset_t *	n_tables;
 	npf_ruleset_t *		n_nat_rules;
 	npf_rprocset_t *	n_rprocs;
-	prop_dictionary_t	n_dict;
 	bool			n_default_pass;
 } npf_config_t;
 
@@ -77,7 +76,6 @@ static pserialize_t		npf_config_psz		__cacheline_aligned;
 void
 npf_config_init(void)
 {
-	prop_dictionary_t dict;
 	npf_ruleset_t *rlset, *nset;
 	npf_rprocset_t *rpset;
 	npf_tableset_t *tset;
@@ -86,19 +84,17 @@ npf_config_init(void)
 	npf_config_psz = pserialize_create();
 
 	/* Load the empty configuration. */
-	dict = prop_dictionary_create();
 	tset = npf_tableset_create(0);
 	rpset = npf_rprocset_create();
 	rlset = npf_ruleset_create(0);
 	nset = npf_ruleset_create(0);
-	npf_config_load(dict, rlset, tset, nset, rpset, NULL, true);
+	npf_config_load(rlset, tset, nset, rpset, NULL, true);
 	KASSERT(npf_config != NULL);
 }
 
 static void
 npf_config_destroy(npf_config_t *nc)
 {
-	prop_object_release(nc->n_dict);
 	npf_ruleset_destroy(nc->n_rules);
 	npf_ruleset_destroy(nc->n_nat_rules);
 	npf_rprocset_destroy(nc->n_rprocs);
@@ -127,8 +123,8 @@ npf_config_fini(void)
  * Performs the necessary synchronisation and destroys the old config.
  */
 void
-npf_config_load(prop_dictionary_t dict, npf_ruleset_t *rset,
-    npf_tableset_t *tset, npf_ruleset_t *nset, npf_rprocset_t *rpset,
+npf_config_load(npf_ruleset_t *rset, npf_tableset_t *tset,
+    npf_ruleset_t *nset, npf_rprocset_t *rpset,
     npf_conndb_t *conns, bool flush)
 {
 	npf_config_t *nc, *onc;
@@ -138,7 +134,6 @@ npf_config_load(prop_dictionary_t dict, npf_ruleset_t *rset,
 	nc->n_tables = tset;
 	nc->n_nat_rules = nset;
 	nc->n_rprocs = rpset;
-	nc->n_dict = dict;
 	nc->n_default_pass = flush;
 
 	/*
@@ -185,9 +180,6 @@ npf_config_load(prop_dictionary_t dict, npf_ruleset_t *rset,
 	 * If not flushing - enable the connection tracking.
 	 */
 	npf_conn_load(conns, !flush);
-
-	/* Sync the config proplib data. */
-	npf_tableset_syncdict(tset, dict);
 	mutex_exit(&npf_config_lock);
 
 	/* Finally, it is safe to destroy the old config. */
@@ -261,10 +253,10 @@ npf_config_tableset(void)
 	return npf_config->n_tables;
 }
 
-prop_dictionary_t
-npf_config_dict(void)
+npf_rprocset_t *
+npf_config_rprocs(void)
 {
-	return npf_config->n_dict;
+	return npf_config->n_rprocs;
 }
 
 bool

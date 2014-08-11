@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.21 2014/02/06 02:51:28 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.22 2014/08/11 01:54:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.21 2014/02/06 02:51:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.22 2014/08/11 01:54:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -256,10 +256,9 @@ npf_tableset_reload(npf_tableset_t *nts, npf_tableset_t *ots)
 	}
 }
 
-void
-npf_tableset_syncdict(const npf_tableset_t *ts, prop_dictionary_t ndict)
+int
+npf_tableset_export(const npf_tableset_t *ts, prop_array_t tables)
 {
-	prop_array_t tables = prop_array_create();
 	const npf_table_t *t;
 
 	KASSERT(npf_config_locked_p());
@@ -276,9 +275,7 @@ npf_tableset_syncdict(const npf_tableset_t *ts, prop_dictionary_t ndict)
 		prop_array_add(tables, tdict);
 		prop_object_release(tdict);
 	}
-	prop_dictionary_remove(ndict, "tables");
-	prop_dictionary_set(ndict, "tables", tables);
-	prop_object_release(tables);
+	return 0;
 }
 
 /*
