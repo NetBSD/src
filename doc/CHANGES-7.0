@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.1 2014/08/11 09:21:47 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.2 2014/08/11 15:40:08 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -10,4 +10,21 @@ gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
 sys/sys/param.h					patched by hand
 
 	Welcome to 7.0_BETA!
+
+sys/dev/usb/xhci.c				1.24
+
+	PR/49091: xhci: wrong wMaxPacketSize value
+
+	While this is correct according to the specification only fixed sizes
+	are allowed, i.e. 512 for SS, etc. Maybe these should be used?
+	[skrll, ticket #3]
+
+
+sys/kern/kern_rndpool.c				1.7
+sys/kern/kern_rndq.c				1.27
+
+	buf is not guaranteed to be aligned; don't *(uint32_t *) it.
+	done is not guaranteed to be aligned; don't *(uint32_t *) it.
+	Fixes PR kern/49098.
+	[riastradh, ticket #4]
 
