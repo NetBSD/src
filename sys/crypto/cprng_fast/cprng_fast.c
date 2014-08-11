@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.8 2014/08/11 13:06:31 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.9 2014/08/11 13:12:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.8 2014/08/11 13:06:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.9 2014/08/11 13:12:53 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -235,15 +235,23 @@ cprng_fast_init_cpu(void *p, void *arg __unused, struct cpu_info *ci __unused)
 
 	cprng_strong(kern_cprng, seed, sizeof seed, FASYNC);
 	cprng_fast_seed(cprng, seed);
+	cprng->have_initial = rnd_initial_entropy;
 	(void)explicit_memset(seed, 0, sizeof seed);
 }
-
+
 static inline int
 cprng_fast_get(struct cprng_fast **cprngp)
 {
+	struct cprng_fast *cprng;
+	int s;
 
-	*cprngp = percpu_getref(cprng_fast_percpu);
-	return splvm();
+	*cprngp = cprng = percpu_getref(cprng_fast_percpu);
+	s = splvm();
+
+	if (__predict_false(!cprng->have_initial))
+		cprng_fast_schedule_reseed(cprng);
+
+	return s;
 }
 
 static inline void
@@ -255,7 +263,7 @@ cprng_fast_put(struct cprng_fast *cprng, int s)
 	splx(s);
 	percpu_putref(cprng_fast_percpu);
 }
-
+
 static inline void
 cprng_fast_schedule_reseed(struct cprng_fast *cprng __unused)
 {
@@ -275,6 +283,7 @@ cprng_fast_intr(void *cookie __unused)
 	cprng = percpu_getref(cprng_fast_percpu);
 	s = splvm();
 	cprng_fast_seed(cprng, seed);
+	cprng->have_initial = rnd_initial_entropy;
 	splx(s);
 	percpu_putref(cprng_fast_percpu);
 
@@ -300,12 +309,6 @@ cprng_fast_seed(struct cprng_fast *cprng, const void *seed)
 	(void)memset(cprng->buffer, 0, sizeof cprng->buffer);
 	(void)memcpy(cprng->key, seed, sizeof cprng->key);
 	(void)memset(cprng->nonce, 0, sizeof cprng->nonce);
-
-	if (__predict_true(rnd_initial_entropy)) {
-		cprng->have_initial = true;
-	} else {
-		cprng->have_initial = false;
-	}
 }
 
 static inline uint32_t
@@ -322,12 +325,6 @@ cprng_fast_word(struct cprng_fast *cprng)
 		if (__predict_false(++cprng->nonce[0] == 0)) {
 			cprng->nonce[1]++;
 			cprng_fast_schedule_reseed(cprng);
-		} else {
-			if (__predict_false(false == cprng->have_initial)) {
-				if (rnd_initial_entropy) {
-					cprng_fast_schedule_reseed(cprng);
-				}
-			}
 		}
 		v = cprng->buffer[CPRNG_FAST_BUFIDX];
 		cprng->buffer[CPRNG_FAST_BUFIDX] = CPRNG_FAST_BUFIDX;
