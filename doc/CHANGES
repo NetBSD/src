@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1966 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1967 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -508,3 +508,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		from riastradh@ using per-cpu instances of chacha8.
 		[tls 20140810]
 	OpenSSL: update to 1.0.1i [spz 20140810]
+	kernel: add MODULAR infrastructure for Xen kernels [jnemeth 20140810]
