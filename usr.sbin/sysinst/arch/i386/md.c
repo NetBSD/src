@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:40 martin Exp $ */
+/*	$NetBSD: md.c,v 1.3 2014/08/11 00:31:22 riz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -301,14 +301,24 @@ md_post_newfs(void)
 {
 	int ret;
 	size_t len;
-	int td, sd;
 	char bootxx[8192 + 4];
+	char boot_options[1024];
 	char *bootxx_filename;
 	/*
-	 * XXX - should either find some way to pull this automatically
-	 * from sys/arch/i386/stand/lib/boot_params.S, or just bite the
-	 * bullet and include /sbin/installboot on the ramdisk
+	 * XXX - this code retains a lot of cruft from when we went
+	 * to great pains to exclude installboot from the ramdisk
+	 * for size reasons and should be rewritten.
 	 */
+	static const char *consoles[]={
+        	"pc", /* CONSDEV_PC */
+		"com0", /* CONSDEV_COM0 */
+		"com1", /* CONSDEV_COM1 */
+		"com2", /* CONSDEV_COM2 */
+		"com3", /* CONSDEV_COM3 */
+		"com0kbd", /* CONSDEV_COM0KBD */
+		"com1kbd", /* CONSDEV_COM1KBD */
+		"com2kbd", /* CONSDEV_COM2KBD */
+		"com3kbd" /* CONSDEV_COM3KBD */ };
 	static struct x86_boot_params boottype =
 		{sizeof boottype, 0, 5, 0, 9600, { '\0' }, "", 0};
 	static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
@@ -339,39 +349,28 @@ md_post_newfs(void)
 	if (ret)
 		return ret;
 
-	/* Copy bootstrap in by hand - /sbin/installboot explodes ramdisks */
-	ret = 1;
-
-	snprintf(bootxx, sizeof bootxx, "/dev/r%s%c", pm->diskdev, 'a' + pm->rootpart);
-	td = open(bootxx, O_RDWR, 0);
-	bootxx_filename = bootxx_name();
-	if (bootxx_filename != NULL) {
-		sd = open(bootxx_filename, O_RDONLY);
-		free(bootxx_filename);
-	} else
-		sd = -1;
-	if (td == -1 || sd == -1)
-		goto bad_bootxx;
-	len = read(sd, bootxx, sizeof bootxx);
-	if (len < 2048 || len > 8192)
-		goto bad_bootxx;
-
-	if (*(uint32_t *)(bootxx + 512 * 2 + 4) != X86_BOOT_MAGIC_1)
-		goto bad_bootxx;
-
-	boottype.bp_length = bp.bp_length;
-	memcpy(&bp, &boottype, min(boottype.bp_length, sizeof boottype));
-
-	if (pwrite(td, bootxx, 512, 0) != 512)
-		goto bad_bootxx;
-	len -= 512 * 2;
-	if (pwrite(td, bootxx + 512 * 2, len, 2 * (off_t)512) - len != 0)
-		goto bad_bootxx;
-	ret = 0;
-
-    bad_bootxx:
-	close(td);
-	close(sd);
+        bootxx_filename = bootxx_name();                                                 
+        if (bootxx_filename != NULL) {                                                   
+		snprintf(boot_options, sizeof boot_options,
+		    "console=%s,speed=%u", consoles[boottype.bp_consdev],
+		    boottype.bp_conspeed);
+		if (pm->isspecial) {
+                	ret = run_program(RUN_DISPLAY | RUN_NO_CLEAR,                 
+                	    "/usr/sbin/installboot -o %s /dev/r%s %s",
+			    boot_options, pm->diskdev, bootxx_filename); 
+		} else {
+                	ret = run_program(RUN_DISPLAY | RUN_NO_CLEAR,                 
+                	    "/usr/sbin/installboot -o %s /dev/r%s%c %s",
+			    boot_options, pm->diskdev, 'a' + pm->rootpart,
+			    bootxx_filename); 
+		}
+                free(bootxx_filename);                                                   
+        } else                                                                  
+                ret = -1;                                                     
+                                                                                
+        if (ret != 0)                                                         
+                process_menu(MENU_ok,                                           
+                    deconst("Warning: disk is probably not bootable"));         
 
 	return ret;
 }
