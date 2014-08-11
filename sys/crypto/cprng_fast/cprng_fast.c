@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.9 2014/08/11 13:12:53 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.10 2014/08/11 13:22:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.9 2014/08/11 13:12:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.10 2014/08/11 13:22:16 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -338,11 +338,17 @@ cprng_fast_buf(struct cprng_fast *cprng, void *buf, unsigned n)
 {
 	uint8_t *p = buf;
 	uint32_t v;
-	unsigned r;
+	unsigned w, r;
 
-	while (n) {
-		r = MIN(n, 4);
-		n -= r;
+	w = n / sizeof(uint32_t);
+	while (w--) {
+		v = cprng_fast_word(cprng);
+		(void)memcpy(p, &v, 4);
+		p += 4;
+	}
+
+	r = n % sizeof(uint32_t);
+	if (r) {
 		v = cprng_fast_word(cprng);
 		while (r--) {
 			*p++ = (v & 0xff);
