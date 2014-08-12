@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.64 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.65 2014/08/12 06:49:10 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.64 2013/06/23 07:28:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.65 2014/08/12 06:49:10 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.64 2013/06/23 07:28:37 dholla
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
-
-
-#define doclusterread 0 /* XXX underway */
-#define doclusterwrite 0
 
 /*
  * Vnode op for reading.
