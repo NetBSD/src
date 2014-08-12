@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.25 2014/08/12 13:48:29 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.26 2014/08/12 13:50:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.25 2014/08/12 13:48:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.26 2014/08/12 13:50:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1445,7 +1445,10 @@ xhci_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	dev->def_ep_desc.bEndpointAddress = USB_CONTROL_ENDPOINT;
 	dev->def_ep_desc.bmAttributes = UE_CONTROL;
 	/* XXX */
-	USETW(dev->def_ep_desc.wMaxPacketSize, 64);
+	if (speed == USB_SPEED_LOW)
+		USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
+	else
+		USETW(dev->def_ep_desc.wMaxPacketSize, 64);
 	dev->def_ep_desc.bInterval = 0;
 
 	/* doesn't matter, just don't let it uninitialized */
