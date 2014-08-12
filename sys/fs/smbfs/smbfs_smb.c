@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.44 2012/11/30 23:24:21 nakayama Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.45 2014/08/12 06:57:20 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.44 2012/11/30 23:24:21 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.45 2014/08/12 06:57:20 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -778,7 +778,7 @@ smbfs_smb_move(struct smbnode *src, struct smbnode *tdnp,
 	struct mbchain *mbp;
 	int error;
 
-	error = smb_rq_alloc(rqp, SSTOCP(ssp), SMB_COM_MOVE, scred, &rqp);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_MOVE, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
