@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.7 2014/08/12 08:06:07 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.8 2014/08/12 08:06:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.7 2014/08/12 08:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.8 2014/08/12 08:06:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1854,7 +1854,7 @@ motg_device_ctrl_abort(usbd_xfer_handle xfer)
 void
 motg_device_ctrl_close(usbd_pipe_handle pipe)
 {
-	struct motg_softc *sc = pipe->device->bus->hci_private;
+	struct motg_softc *sc __diagused = pipe->device->bus->hci_private;
 	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
 	struct motg_pipe *otgpipeiter;
 
@@ -1879,7 +1879,7 @@ motg_device_ctrl_close(usbd_pipe_handle pipe)
 void
 motg_device_ctrl_done(usbd_xfer_handle xfer)
 {
-	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->pipe;
+	struct motg_pipe *otgpipe __diagused = (struct motg_pipe *)xfer->pipe;
 	DPRINTFN(MD_CTRL, ("motg_device_ctrl_done:\n"));
 	KASSERT(otgpipe->hw_ep->xfer != xfer);
 }
@@ -1931,7 +1931,7 @@ motg_device_data_start1(struct motg_softc *sc, struct motg_hw_ep *ep)
 	usbd_xfer_handle xfer = NULL;
 	struct motg_pipe *otgpipe;
 	usbd_status err = 0;
-	uint32_t val;
+	uint32_t val __diagused;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	if (sc->sc_dying)
@@ -2330,7 +2330,7 @@ motg_device_data_abort(usbd_xfer_handle xfer)
 void
 motg_device_data_close(usbd_pipe_handle pipe)
 {
-	struct motg_softc *sc = pipe->device->bus->hci_private;
+	struct motg_softc *sc __diagused = pipe->device->bus->hci_private;
 	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
 	struct motg_pipe *otgpipeiter;
 
@@ -2356,7 +2356,7 @@ motg_device_data_close(usbd_pipe_handle pipe)
 void
 motg_device_data_done(usbd_xfer_handle xfer)
 {
-	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->pipe;
+	struct motg_pipe *otgpipe __diagused = (struct motg_pipe *)xfer->pipe;
 	DPRINTFN(MD_CTRL, ("motg_device_data_done:\n"));
 	KASSERT(otgpipe->hw_ep->xfer != xfer);
 }
@@ -2409,9 +2409,7 @@ motg_device_xfer_abort(usbd_xfer_handle xfer)
 {
 	int wake;
 	uint8_t csr;
-#ifdef DIAGNOSTIC
 	struct motg_softc *sc = xfer->pipe->device->bus->hci_private;
-#endif
 	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->pipe;
 	KASSERT(mutex_owned(&sc->sc_lock));
 
