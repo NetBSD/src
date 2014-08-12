@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.5 2014/08/12 14:39:49 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.6 2014/08/12 15:16:06 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -64,3 +64,9 @@ usr.sbin/postinstall/postinstall		1.179
 	not just print the unexpanded value.  This is done by
 	using make -V '${VAR}' instead of make -V 'VAR'.
 	[apb, ticket #8]
+
+
+usr.sbin/postinstall/postinstall		1.176
+
+	FONTCONFIG_DIR not existing does not need to be fixed.
+	[apb, ticket #9]
