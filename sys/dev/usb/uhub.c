@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.124 2013/09/15 15:33:47 martin Exp $	*/
+/*	$NetBSD: uhub.c,v 1.125 2014/08/12 13:36:40 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.124 2013/09/15 15:33:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.125 2014/08/12 13:36:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,9 @@ uhub_explore(usbd_device_handle dev)
 		}
 
 		/* Figure out device speed */
-		if (status & UPS_HIGH_SPEED)
+		if (status & UPS_SUPER_SPEED)
+			speed = USB_SPEED_SUPER;
+		else if (status & UPS_HIGH_SPEED)
 			speed = USB_SPEED_HIGH;
 		else if (status & UPS_LOW_SPEED)
 			speed = USB_SPEED_LOW;
