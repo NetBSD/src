@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.198 2014/07/25 17:21:32 nakayama Exp $ */
+/*	$NetBSD: autoconf.c,v 1.198.2.1 2014/08/12 18:56:51 riz Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.198 2014/07/25 17:21:32 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.198.2.1 2014/08/12 18:56:51 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -775,7 +775,7 @@ static void
 dev_path_drive_match(device_t dev, int ctrlnode, int target,
     uint64_t wwn, int lun)
 {
-	int child = 0;
+	int child = 0, ide_node = 0;
 	char buf[OFPATHLEN];
 
 	DPRINTF(ACDB_BOOTDEV, ("dev_path_drive_match: %s, controller %x, "
@@ -791,6 +791,27 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 		if (child == ofbootpackage)
 			break;
 
+	if (child != ofbootpackage) {
+		/*
+		 * Try Mac firmware style (also used by QEMU/OpenBIOS):
+		 * below the controller there is an intermediate node
+		 * for each IDE channel, and individual targets always
+		 * are "@0"
+		 */
+		for (ide_node = prom_firstchild(ctrlnode); ide_node != 0;
+		    ide_node = prom_nextsibling(ide_node)) {
+			const char * name = prom_getpropstring(ide_node,
+			    "device_type");
+			if (strcmp(name, "ide") != 0) continue;
+			for (child = prom_firstchild(ide_node); child != 0;
+			    child = prom_nextsibling(child))
+				if (child == ofbootpackage)
+					break;
+			if (child == ofbootpackage)
+				break;
+		}
+	}
+
 	if (child == ofbootpackage) {
 		const char * name = prom_getpropstring(child, "name");
 
@@ -805,6 +826,8 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 		if (wwn)
 			snprintf(buf, sizeof(buf), "%s@w%016" PRIx64 ",%d",
 			    name, wwn, lun);
+		else if (ide_node)
+			snprintf(buf, sizeof(buf), "%s@0", name);
 		else
 			snprintf(buf, sizeof(buf), "%s@%d,%d",
 			    name, target, lun);
