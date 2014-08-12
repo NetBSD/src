@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.40 2014/07/25 12:16:22 martin Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.41 2014/08/12 12:13:09 gson Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -87,6 +87,9 @@ lookup_complex(const atf_tc_t *tc, const char *mountpath)
 
 	USES_DIRS;
 
+	if (FSTYPE_UDF(tc))
+		atf_tc_expect_fail("PR kern/49033");
+
 	sprintf(pb, "%s/dir", mountpath);
 	if (rump_sys_mkdir(pb, 0777) == -1)
 		atf_tc_fail_errno("mkdir");
@@ -129,6 +132,9 @@ lookup_complex(const atf_tc_t *tc, const char *mountpath)
 
 		atf_tc_fail("stat results differ, see ouput for more details");
 	}
+	if (FSTYPE_UDF(tc))
+		atf_tc_fail("random failure of PR kern/49033 "
+			    "did not happen this time");
 }
 
 static void
