@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.30 2013/09/14 14:07:56 jakllsch Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.31 2014/08/12 13:40:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ usbdev(int f, int a, int rec)
 		case USB_SPEED_LOW:  printf("low speed, "); break;
 		case USB_SPEED_FULL: printf("full speed, "); break;
 		case USB_SPEED_HIGH: printf("high speed, "); break;
+		case USB_SPEED_SUPER: printf("super speed, "); break;
 		default: break;
 		}
 		if (di.udi_power)
