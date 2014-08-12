@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.37 2014/08/06 11:41:18 apb Exp $
+#	$NetBSD: Makefile.image,v 1.38 2014/08/12 11:48:22 martin Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -13,6 +13,7 @@
 #
 # Optional variables:
 #	IMAGE		name of target image
+#	IMAGEPREBUILD	additional operations to run pre image creation
 #	IMAGEPOSTBUILD	operation to run on ${IMAGE} ${.TARGET} after its built
 #			(if this returns non zero, ${.TARGET} is removed)
 #	CRUNCHBIN	name of crunchgen(1)ed binary
@@ -85,6 +86,9 @@ CLEANFILES+=	${WORKSPEC} ${WORKSPEC}.tmp
 .if defined(IMAGE)						# {
 IMGMAKEFSOPTIONS?= -o bsize=4096,fsize=512
 ${IMAGE}: ${WORKBUILT}
+.if defined(IMAGEPREBUILD)
+	${IMAGEPREBUILD}
+.endif
 	[ "${.OODATE}" = ${WORKBUILT} -a -f ${IMAGE} -a ! ${IMAGE} -ot ${WORKBUILT} ]  || { \
 	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}; \
 	rm -f ${.TARGET} ${.TARGET}.tmp; \
