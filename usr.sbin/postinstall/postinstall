@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.176 2014/08/11 12:49:01 roy Exp $
+# $NetBSD: postinstall,v 1.177 2014/08/12 08:28:04 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -880,22 +880,22 @@ do_dhcpcd()
 #
 #	dhcpcdrundir
 #
-additem dhcpcdrundir "accientaly created /@RUNDIR@ does not exist"
+additem dhcpcdrundir "accidentaly created /@RUNDIR@ does not exist"
 do_dhcpcdrundir()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_dhcpcdrundir fix|check"
 	op="$1"
 	failed=0
 
-	if [ -d /@RUNDIR@ ]; then
+	if [ -d "${DEST_DIR}/@RUNDIR@" ]; then
 		if [ "${op}" = "check" ]; then
 			msg "Remove eroneously created /@RUNDIR@"
 			failed=1
-		elif ! eval "rm -r /@RUNDIR@"; then
-			msg "Failed to remove /@RUNDIR@"
+		elif ! rm -r "${DEST_DIR}/@RUNDIR@"; then
+			msg "Failed to remove ${DEST_DIR}/@RUNDIR@"
 			failed=1
 		else
-			msg "Removed eroneously created /@RUNDIR@"
+			msg "Removed eroneously created ${DEST_DIR}/@RUNDIR@"
 		fi
 	fi
 	return ${failed}
