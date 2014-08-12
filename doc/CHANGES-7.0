@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.4 2014/08/12 10:24:13 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.5 2014/08/12 14:39:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -50,3 +50,17 @@ sys/dev/usb/motg.c				1.8
 	Make this compile when DIAGNOSTIC isn't defined.
 	[skrll, ticket #6]
 
+usr.sbin/postinstall/postinstall		1.177
+usr.sbin/postinstall/postinstall		1.178
+usr.sbin/postinstall/postinstall		1.179
+
+	Check for and delete ${DEST_DIR}/@RUNDIR@, not /@RUNDIR@.
+	Also remove an unnecessary eval in do_dhcpcdrundir and
+	fix a typo in the description.
+
+	Quoting fixes in several eval commands.
+
+	In get_makevar, ask make to recursively expand the variable,
+	not just print the unexpanded value.  This is done by
+	using make -V '${VAR}' instead of make -V 'VAR'.
+	[apb, ticket #8]
