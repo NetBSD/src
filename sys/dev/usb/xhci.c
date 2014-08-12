@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.24 2014/08/11 10:37:59 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.25 2014/08/12 13:48:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.24 2014/08/11 10:37:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.25 2014/08/12 13:48:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -853,9 +853,15 @@ int
 xhci_intr(void *v)
 {
 	struct xhci_softc * const sc = v;
+	int ret = 0;
 
-	if (sc == NULL || sc->sc_dying || !device_has_power(sc->sc_dev))
+	if (sc == NULL)
 		return 0;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+
+	if (sc->sc_dying || !device_has_power(sc->sc_dev))
+		goto done;
 
 	DPRINTF(("%s: %s\n", __func__, device_xname(sc->sc_dev)));
 
@@ -864,10 +870,13 @@ xhci_intr(void *v)
 #ifdef DIAGNOSTIC
 		DPRINTFN(16, ("xhci_intr: ignored interrupt while polling\n"));
 #endif
-		return 0;
+		goto done;
 	}
 
-	return xhci_intr1(sc);
+	ret = xhci_intr1(sc);
+done:
+	mutex_spin_exit(&sc->sc_intr_lock);
+	return ret;
 }
 
 int
@@ -1314,7 +1323,9 @@ xhci_poll(struct usbd_bus *bus)
 
 	DPRINTF(("%s: %s\n", __func__, device_xname(sc->sc_dev)));
 
+	mutex_spin_enter(&sc->sc_intr_lock);
 	xhci_intr1(sc);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return;
 }
