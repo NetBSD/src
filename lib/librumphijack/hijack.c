@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.109 2014/07/21 14:23:43 gson Exp $	*/
+/*      $NetBSD: hijack.c,v 1.110 2014/08/12 23:47:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.109 2014/07/21 14:23:43 gson Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.110 2014/08/12 23:47:09 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1380,7 +1380,7 @@ fcntl(int fd, int cmd, ...)
 		 * for the file descriptors not dup2'd.
 		 */
 
-		for (i = 0, maxdup2 = 0; i <= DUP2HIGH; i++) {
+		for (i = 0, maxdup2 = -1; i <= DUP2HIGH; i++) {
 			if (dup2vec[i] & DUP2BIT) {
 				int val;
 
