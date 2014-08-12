@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.149 2014/03/03 15:36:36 macallan Exp $	*/
+/*	$NetBSD: trap.c,v 1.150 2014/08/12 20:27:10 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149 2014/03/03 15:36:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.150 2014/08/12 20:27:10 joerg Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -736,7 +736,7 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 			struct pcb * const pcb = lwp_getpcb(l);
 			const int reg = EXC_ALI_RST(tf->tf_dsisr);
 			const int a_reg = EXC_ALI_RA(tf->tf_dsisr);
-			double * const fpreg = &pcb->pcb_fpu.fpreg[reg];
+			uint64_t * const fpreg = &pcb->pcb_fpu.fpreg[reg];
 			register_t* a_reg_addr = &tf->tf_fixreg[a_reg];
 
 			/*
@@ -782,7 +782,7 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 			struct pcb * const pcb = lwp_getpcb(l);
 			const int reg = EXC_ALI_RST(tf->tf_dsisr);
 			const int a_reg = EXC_ALI_RA(tf->tf_dsisr);
-			double * const fpreg = &pcb->pcb_fpu.fpreg[reg];
+			uint64_t * const fpreg = &pcb->pcb_fpu.fpreg[reg];
 			register_t* a_reg_addr = &tf->tf_fixreg[a_reg];
 
 			/*
