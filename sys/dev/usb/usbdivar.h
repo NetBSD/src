@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.107 2013/10/03 19:04:00 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.108 2014/08/12 13:36:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -164,7 +164,8 @@ struct usbd_bus {
 #define USBREV_1_0	2
 #define USBREV_1_1	3
 #define USBREV_2_0	4
-#define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0" }
+#define USBREV_3_0	5
+#define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0", "3.0" }
 
 	void		       *soft; /* soft interrupt cookie */
 	bus_dma_tag_t		dmatag;	/* DMA tag */
