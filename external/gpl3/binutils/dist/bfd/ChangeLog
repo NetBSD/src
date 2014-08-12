@@ -1,3 +1,8 @@
+2013-12-14  Alan Modra  <amodra@gmail.com>
+
+	* elflink.c (_bfd_elf_merge_symbol): If merging a new weak
+	symbol that will be skipped, we don't have a new definition.
+
 2013-03-25  Tristan Gingold  <gingold@adacore.com>
 
 	* configure.in: Bump version to 2.23.2
