@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.3 2014/08/12 09:37:13 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.4 2014/08/12 10:24:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -40,3 +40,13 @@ external/gpl3/binutils/dist/bfd/elflink.c	1.8
 	* elflink.c (_bfd_elf_merge_symbol): If merging a new weak
 	symbol that will be skipped, we don't have a new definition.
 	[skrll, ticket #5]
+
+
+sys/dev/usb/motg.c				1.7
+sys/dev/usb/motg.c				1.8
+
+	Trailing whitespace.
+
+	Make this compile when DIAGNOSTIC isn't defined.
+	[skrll, ticket #6]
+
