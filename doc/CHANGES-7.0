@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.2 2014/08/11 15:40:08 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.3 2014/08/12 09:37:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -28,3 +28,15 @@ sys/kern/kern_rndq.c				1.27
 	Fixes PR kern/49098.
 	[riastradh, ticket #4]
 
+external/gpl3/binutils/dist/bfd/ChangeLog	1.6
+external/gpl3/binutils/dist/bfd/elflink.c	1.8
+
+	Apply change from upstream to fix PR/48709 - port-alpha/48709: static
+	threaded programs crash.
+
+	With this fix the new weak symbol's st_other is not merged in, i.e. NOPV
+	is not copied from the libc __libc_thr_init.
+
+	* elflink.c (_bfd_elf_merge_symbol): If merging a new weak
+	symbol that will be skipped, we don't have a new definition.
+	[skrll, ticket #5]
