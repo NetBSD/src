@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.6 2014/08/12 15:16:06 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.7 2014/08/12 19:02:55 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -70,3 +70,15 @@ usr.sbin/postinstall/postinstall		1.176
 
 	FONTCONFIG_DIR not existing does not need to be fixed.
 	[apb, ticket #9]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.199
+
+	Match firmware paths for the boot device in Mac style, as used by
+	QEMU/OpenBIOS.
+	[martin, ticket #2]
+
+sys/arch/sparc/sparc/autoconf.c			1.258
+
+	Add device name mapping for "qfe" (quad hme) cards. PR#49103.
+	[martin, ticket #7]
+
