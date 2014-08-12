@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.175 2014/08/04 21:56:30 apb Exp $
+# $NetBSD: postinstall,v 1.175.2.1 2014/08/12 14:38:29 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -186,7 +186,7 @@ additem()
 {
 	[ $# -eq 2 ] || err 3 "USAGE: additem item description"
 	defaultitems="${defaultitems}${defaultitems:+ }$1"
-	eval desc_$1=\"$2\"
+	eval desc_$1=\"\$2\"
 }
 
 # adddisableditem item description
@@ -197,7 +197,7 @@ adddisableditem()
 {
 	[ $# -eq 2 ] || err 3 "USAGE: adddisableditem item description"
 	otheritems="${otheritems}${otheritems:+ }$1"
-	eval desc_$1=\"$2\"
+	eval desc_$1=\"\$2\"
 }
 
 # checkdir op dir mode
@@ -430,7 +430,7 @@ rcvar_is_enabled()
 	_rcie_var="$1"
 	(
 		[ -f "${DEST_DIR}/etc/rc.conf" ] && . "${DEST_DIR}/etc/rc.conf"
-		eval _rcie_val="\${${_rcie_var}}"
+		eval _rcie_val=\"\${${_rcie_var}}\"
 		case $_rcie_val in
 		#	"yes", "true", "on", or "1"
 		[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
@@ -524,7 +524,7 @@ obsolete_paths()
 		if [ "${op}" = "check" ]; then
 			msg "Remove obsolete ${ftype} ${ofile}"
 			failed=1
-		elif ! eval "${cmd} \${ofile}"; then
+		elif ! eval "${cmd} \"\${ofile}\""; then
 			msg "Can't remove obsolete ${ftype} ${ofile}"
 			failed=1
 		else
@@ -716,9 +716,9 @@ get_makevar()
 
 	for _var in "$@"; do
 		_value="$(echo '.include <bsd.own.mk>' | \
-		    ${MAKE} -f - -V "${_var}")"
+		    ${MAKE} -f - -V "\${${_var}}")"
 
-		eval ${_var}=\"${_value}\"
+		eval ${_var}=\"\${_value}\"
 	done
 }
 
@@ -880,22 +880,22 @@ do_dhcpcd()
 #
 #	dhcpcdrundir
 #
-additem dhcpcdrundir "accientaly created /@RUNDIR@ does not exist"
+additem dhcpcdrundir "accidentaly created /@RUNDIR@ does not exist"
 do_dhcpcdrundir()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_dhcpcdrundir fix|check"
 	op="$1"
 	failed=0
 
-	if [ -d /@RUNDIR@ ]; then
+	if [ -d "${DEST_DIR}/@RUNDIR@" ]; then
 		if [ "${op}" = "check" ]; then
 			msg "Remove eroneously created /@RUNDIR@"
 			failed=1
-		elif ! eval "rm -r /@RUNDIR@"; then
-			msg "Failed to remove /@RUNDIR@"
+		elif ! rm -r "${DEST_DIR}/@RUNDIR@"; then
+			msg "Failed to remove ${DEST_DIR}/@RUNDIR@"
 			failed=1
 		else
-			msg "Removed eroneously created /@RUNDIR@"
+			msg "Removed eroneously created ${DEST_DIR}/@RUNDIR@"
 		fi
 	fi
 	return ${failed}
