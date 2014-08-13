@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.830 2014/08/11 22:28:50 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.831 2014/08/13 18:25:11 justin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -50,7 +50,7 @@ TOOLCHAIN_MISSING?=	yes
 
 TOOLCHAIN_MISSING?=	no
 
-.if ${MACHINE_CPU} == "aarch64" && ${MKLLVM:Uyes} != "no"
+.if ${MACHINE_CPU} == "aarch64" && !defined(EXTERNAL_TOOLCHAIN) && ${MKLLVM:Uyes} != "no"
 MKLLVM?=	yes
 HAVE_LLVM?=	yes
 MKGCC?=		no
