@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.59 2014/01/29 18:45:21 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.60 2014/08/13 21:41:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.59 2014/01/29 18:45:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.60 2014/08/13 21:41:32 matt Exp $");
 
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -109,7 +109,7 @@ swi_handler(trapframe_t *tf)
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 #else
-	KASSERT((tf->tf_spsr & IF32_bits) == 0);
+	KASSERT(VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
 	restore_interrupts(tf->tf_spsr & IF32_bits);
 #endif
 
