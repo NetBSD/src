@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.16 2014/03/28 21:39:09 matt Exp $	*/
+/*	$NetBSD: locore.h,v 1.17 2014/08/13 21:41:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -112,9 +112,13 @@
  */
 
 #ifdef __PROG32
+#ifdef __NO_FIQ
 #define VALID_R15_PSR(r15,psr)						\
-	(((psr) & PSR_MODE) == PSR_USR32_MODE &&			\
-		((psr) & (I32_bit | F32_bit)) == 0)
+	(((psr) & PSR_MODE) == PSR_USR32_MODE && ((psr) & I32_bit) == 0)
+#else
+#define VALID_R15_PSR(r15,psr)						\
+	(((psr) & PSR_MODE) == PSR_USR32_MODE && ((psr) & IF32_bits) == 0)
+#endif
 #else
 #define VALID_R15_PSR(r15,psr)						\
 	(((r15) & R15_MODE) == R15_MODE_USR &&				\
