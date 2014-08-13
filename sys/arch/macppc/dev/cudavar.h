@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cudavar.h,v 1.2 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cudavar.h,v 1.3 2014/08/13 09:41:50 macallan Exp $");
 
 #ifndef CUDAVAR_H
 #define CUDAVAR_H
@@ -43,10 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: cudavar.h,v 1.2 2008/04/29 06:53:02 martin Exp $");
 /* Cuda commands */
 #define CMD_AUTOPOLL	1
 #define CMD_READ_RTC	3
+#define CMD_READ_PRAM	7	/* addr is 16bit, upper byte first */
 #define CMD_WRITE_RTC	9
 #define CMD_POWEROFF	10
+#define CMD_WRITE_PRAM	12
 #define CMD_RESET	17
-#define CMD_IIC	34
+#define CMD_IIC		34
 
 struct cuda_attach_args {
 	void *cookie;
