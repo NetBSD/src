@@ -1,4 +1,4 @@
-/*	$NetBSD: int_const.h,v 1.4 2010/05/29 17:33:57 tnozaki Exp $	*/
+/*	$NetBSD: int_const.h,v 1.5 2014/08/13 22:51:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
 #ifndef _MIPS_INT_CONST_H_
 #define _MIPS_INT_CONST_H_
 
+#ifdef __INTMAX_C_SUFFIX__
+#include <sys/common_int_const.h>
+#else
 /*
  * 7.18.4 Macros for integer constants
  */
@@ -65,5 +68,7 @@
 #define	INTMAX_C(c)	c ## LL
 #define	UINTMAX_C(c)	c ## ULL
 #endif
+
+#endif /* !__INTMAX_C_SUFFIX__ */
 
 #endif /* !_MIPS_INT_CONST_H_ */
