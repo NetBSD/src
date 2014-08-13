@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.29 2014/03/27 17:31:56 christos Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.30 2014/08/13 14:10:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.29 2014/03/27 17:31:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.30 2014/08/13 14:10:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,85 +100,16 @@ static LIST_HEAD(ptyfs_hashhead, ptyfsnode) *ptyfs_used_tbl, *ptyfs_free_tbl;
 static u_long ptyfs_used_mask, ptyfs_free_mask; /* size of hash table - 1 */
 static kmutex_t ptyfs_used_slock, ptyfs_free_slock;
 
-static void ptyfs_getinfo(struct ptyfsnode *, struct lwp *);
-
 static void ptyfs_hashins(struct ptyfsnode *);
 static void ptyfs_hashrem(struct ptyfsnode *);
 
-static struct ptyfsnode *ptyfs_free_get(ptyfstype, int, struct lwp *);
+static struct vnode *ptyfs_used_get(ptyfstype, int, struct mount *, int);
+static struct ptyfsnode *ptyfs_free_get(ptyfstype, int);
 
 static void ptyfs_rehash(kmutex_t *, struct ptyfs_hashhead **,
     u_long *);
 
 #define PTYHASH(type, pty, mask) (PTYFS_FILENO(type, pty) % (mask + 1))
-
-
-static void
-ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
-{
-	extern struct ptm_pty *ptyfs_save_ptm;
-
-	if (ptyfs->ptyfs_type == PTYFSroot) {
-		ptyfs->ptyfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|
-		    S_IROTH|S_IXOTH;
-		goto out;
-	} else
-		ptyfs->ptyfs_mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|
-		    S_IROTH|S_IWOTH;
-
-	if (ptyfs_save_ptm != NULL) {
-		int error;
-		struct pathbuf *pb;
-		struct nameidata nd;
-		char ttyname[64];
-		kauth_cred_t cred;
-		struct vattr va;
-
-		/*
-		 * We support traditional ptys, so we copy the info
-		 * from the inode
-		 */
-		if ((error = (*ptyfs_save_ptm->makename)(
-			NULL, l, ttyname, sizeof(ttyname),
-			ptyfs->ptyfs_pty, ptyfs->ptyfs_type == PTYFSpts ? 't'
-			: 'p')) != 0)
-				goto out;
-		pb = pathbuf_create(ttyname);
-		if (pb == NULL) {
-			error = ENOMEM;
- 			goto out;
-		}
-		NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, pb);
-		if ((error = namei(&nd)) != 0) {
-			pathbuf_destroy(pb);
-			goto out;
-		}
-		cred = kauth_cred_alloc();
-		error = VOP_GETATTR(nd.ni_vp, &va, cred);
-		kauth_cred_free(cred);
-		VOP_UNLOCK(nd.ni_vp);
-		vrele(nd.ni_vp);
-		pathbuf_destroy(pb);
-		if (error)
-			goto out;
-		ptyfs->ptyfs_uid = va.va_uid;
-		ptyfs->ptyfs_gid = va.va_gid;
-		ptyfs->ptyfs_mode = va.va_mode;
-		ptyfs->ptyfs_flags = va.va_flags;
-		ptyfs->ptyfs_birthtime = va.va_birthtime;
-		ptyfs->ptyfs_ctime = va.va_ctime;
-		ptyfs->ptyfs_mtime = va.va_mtime;
-		ptyfs->ptyfs_atime = va.va_atime;
-		return;
-	}
-out:
-	ptyfs->ptyfs_uid = ptyfs->ptyfs_gid = 0;
-	ptyfs->ptyfs_status |= PTYFS_CHANGE;
-	PTYFS_ITIMES(ptyfs, NULL, NULL, NULL);
-	ptyfs->ptyfs_birthtime = ptyfs->ptyfs_mtime =
-	    ptyfs->ptyfs_atime = ptyfs->ptyfs_ctime;
-	ptyfs->ptyfs_flags = 0;
-}
 
 
 /*
@@ -208,8 +139,7 @@ out:
  * the vnode free list.
  */
 int
-ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
-    struct lwp *l)
+ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty)
 {
 	struct ptyfsnode *ptyfs;
 	struct vnode *vp;
@@ -232,7 +162,7 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
 		goto retry;
 	}
 
-	vp->v_data = ptyfs = ptyfs_free_get(type, pty, l);
+	vp->v_data = ptyfs = ptyfs_free_get(type, pty);
 	ptyfs->ptyfs_vnode = vp;
 
 	switch (type) {
@@ -336,7 +266,7 @@ ptyfs_hashdone(void)
  * Removes the node from the free table.
  */
 struct ptyfsnode *
-ptyfs_free_get(ptyfstype type, int pty, struct lwp *l)
+ptyfs_free_get(ptyfstype type, int pty)
 {
 	struct ptyfs_hashhead *ppp;
 	struct ptyfsnode *pp;
@@ -356,7 +286,19 @@ ptyfs_free_get(ptyfstype type, int pty, struct lwp *l)
 	pp->ptyfs_pty = pty;
 	pp->ptyfs_type = type;
 	pp->ptyfs_fileno = PTYFS_FILENO(pty, type);
-	ptyfs_getinfo(pp, l);
+	if (pp->ptyfs_type == PTYFSroot)
+		pp->ptyfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|
+		    S_IROTH|S_IXOTH;
+	else
+		pp->ptyfs_mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|
+		    S_IROTH|S_IWOTH;
+
+	pp->ptyfs_uid = pp->ptyfs_gid = 0;
+	pp->ptyfs_status = PTYFS_CHANGE;
+	PTYFS_ITIMES(pp, NULL, NULL, NULL);
+	pp->ptyfs_birthtime = pp->ptyfs_mtime =
+	    pp->ptyfs_atime = pp->ptyfs_ctime;
+	pp->ptyfs_flags = 0;
 	return pp;
 }
 
@@ -426,4 +368,80 @@ ptyfs_hashrem(struct ptyfsnode *pp)
 	    ptyfs_free_mask)];
 	LIST_INSERT_HEAD(ppp, pp, ptyfs_hash);
 	mutex_exit(&ptyfs_free_slock);
+}
+
+/*
+ * Mark this controlling pty as active.
+ */
+void
+ptyfs_set_active(struct mount *mp, int pty)
+{
+	struct ptyfsmount *pmnt = VFSTOPTY(mp);
+
+	KASSERT(pty >= 0);
+	/* Reallocate map if needed. */
+	if (pty >= pmnt->pmnt_bitmap_size * NBBY) {
+		int osize, nsize;
+		uint8_t *obitmap, *nbitmap;
+
+		nsize = roundup(howmany(pty + 1, NBBY), 64);
+		nbitmap = kmem_alloc(nsize, KM_SLEEP);
+		mutex_enter(&pmnt->pmnt_lock);
+		if (pty < pmnt->pmnt_bitmap_size * NBBY) {
+			mutex_exit(&pmnt->pmnt_lock);
+			kmem_free(nbitmap, nsize);
+		} else {
+			osize = pmnt->pmnt_bitmap_size;
+			obitmap = pmnt->pmnt_bitmap;
+			pmnt->pmnt_bitmap_size = nsize;
+			pmnt->pmnt_bitmap = nbitmap;
+			if (osize > 0)
+				memcpy(pmnt->pmnt_bitmap, obitmap, osize);
+			memset(pmnt->pmnt_bitmap + osize, 0, nsize - osize);
+			mutex_exit(&pmnt->pmnt_lock);
+			if (osize > 0)
+				kmem_free(obitmap, osize);
+		}
+	}
+
+	mutex_enter(&pmnt->pmnt_lock);
+	setbit(pmnt->pmnt_bitmap, pty);
+	mutex_exit(&pmnt->pmnt_lock);
+}
+
+/*
+ * Mark this controlling pty as inactive.
+ */
+void
+ptyfs_clr_active(struct mount *mp, int pty)
+{
+	struct ptyfsmount *pmnt = VFSTOPTY(mp);
+
+	KASSERT(pty >= 0);
+	mutex_enter(&pmnt->pmnt_lock);
+	if (pty >= 0 && pty < pmnt->pmnt_bitmap_size * NBBY)
+		clrbit(pmnt->pmnt_bitmap, pty);
+	mutex_exit(&pmnt->pmnt_lock);
+}
+
+/*
+ * Lookup the next active controlling pty greater or equal "pty".
+ * Return -1 if not found.
+ */
+int
+ptyfs_next_active(struct mount *mp, int pty)
+{
+	struct ptyfsmount *pmnt = VFSTOPTY(mp);
+
+	KASSERT(pty >= 0);
+	mutex_enter(&pmnt->pmnt_lock);
+	while (pty < pmnt->pmnt_bitmap_size * NBBY) {
+		if (isset(pmnt->pmnt_bitmap, pty)) {
+			mutex_exit(&pmnt->pmnt_lock);
+			return pty;
+		}
+		pty++;
+	}
+	mutex_exit(&pmnt->pmnt_lock);
+	return -1;
 }

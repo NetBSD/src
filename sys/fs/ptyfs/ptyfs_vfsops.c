@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.50 2014/04/16 18:55:18 maxv Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.51 2014/08/13 14:10:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.50 2014/04/16 18:55:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.51 2014/08/13 14:10:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ ptyfs__makename(struct mount *mp, struct lwp *l, char *tbuf, size_t bufsiz,
 {
 	size_t len;
 	const char *np;
+	int pty = minor(dev);
 
 	switch (ms) {
 	case 'p':
@@ -170,7 +171,7 @@ ptyfs__makename(struct mount *mp, struct lwp *l, char *tbuf, size_t bufsiz,
 		 */
 		if (l->l_proc->p_cwdi->cwdi_rdir == NULL
 		    && ptyfs_save_ptm != NULL 
-		    && ptyfs_used_get(PTYFSptc, minor(dev), mp, 0) == NULL)
+		    && ptyfs_next_active(mp, pty) != pty)
 			return (*ptyfs_save_ptm->makename)(mp, l,
 			    tbuf, bufsiz, dev, ms);
 
@@ -193,6 +194,7 @@ static int
 ptyfs__allocvp(struct mount *mp, struct lwp *l, struct vnode **vpp,
     dev_t dev, char ms)
 {
+	int error;
 	ptyfstype type;
 
 	switch (ms) {
@@ -206,7 +208,10 @@ ptyfs__allocvp(struct mount *mp, struct lwp *l, struct vnode **vpp,
 		return EINVAL;
 	}
 
-	return ptyfs_allocvp(mp, vpp, type, minor(dev), l);
+	error = ptyfs_allocvp(mp, vpp, type, minor(dev));
+	if (error == 0 && type == PTYFSptc)
+		ptyfs_set_active(mp, minor(dev));
+	return error;
 }
 
 
@@ -299,12 +304,15 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	pmnt = malloc(sizeof(struct ptyfsmount), M_PTYFSMNT, M_WAITOK);
 
 	mp->mnt_data = pmnt;
+	mutex_init(&pmnt->pmnt_lock, MUTEX_DEFAULT, IPL_NONE);
 	pmnt->pmnt_gid = args->gid;
 	pmnt->pmnt_mode = args->mode;
 	if (args->version >= PTYFS_ARGSVERSION)
 		pmnt->pmnt_flags = args->flags;
 	else
 		pmnt->pmnt_flags = 0;
+	pmnt->pmnt_bitmap_size = 0;
+	pmnt->pmnt_bitmap = NULL;
 	mp->mnt_flag |= MNT_LOCAL;
 	vfs_getnewfsid(mp);
 
@@ -360,6 +368,9 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 	/*
 	 * Finally, throw away the ptyfsmount structure
 	 */
+	if (pmnt->pmnt_bitmap_size > 0)
+		kmem_free(pmnt->pmnt_bitmap, pmnt->pmnt_bitmap_size);
+	mutex_destroy(&pmnt->pmnt_lock);
 	free(mp->mnt_data, M_PTYFSMNT);
 	mp->mnt_data = NULL;
 
@@ -370,7 +381,7 @@ int
 ptyfs_root(struct mount *mp, struct vnode **vpp)
 {
 	/* setup "." */
-	return ptyfs_allocvp(mp, vpp, PTYFSroot, 0, NULL);
+	return ptyfs_allocvp(mp, vpp, PTYFSroot, 0);
 }
 
 /*ARGSUSED*/
