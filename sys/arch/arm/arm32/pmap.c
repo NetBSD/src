@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.295 2014/07/25 15:09:43 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.296 2014/08/13 05:56:03 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295 2014/07/25 15:09:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.296 2014/08/13 05:56:03 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -5518,19 +5518,27 @@ pmap_copy_page_xscale(paddr_t src, paddr_t dst)
 	 * the cache for the appropriate page. Invalidate the TLB
 	 * as required.
 	 */
-	*csrc_pte = L2_S_PROTO | src |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) |
-	    L2_C | L2_XS_T_TEX(TEX_XSCALE_X);	/* mini-data */
+	const pt_entry_t nsrc_pte = L2_S_PROTO | src
+	    | L2_S_PROT(PTE_KERNEL, VM_PROT_READ)
+	    | L2_C | L2_XS_T_TEX(TEX_XSCALE_X);	/* mini-data */
+	l2pte_set(csrc_pte, nsrc_pte, 0);
 	PTE_SYNC(csrc_pte);
-	*cdst_pte = L2_S_PROTO | dst |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) |
-	    L2_C | L2_XS_T_TEX(TEX_XSCALE_X);	/* mini-data */
+
+	const pt_entry_t ndst_pte = L2_S_PROTO | dst
+	    | L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE)
+	    | L2_C | L2_XS_T_TEX(TEX_XSCALE_X);	/* mini-data */
+	l2pte_set(cdst_pte, ndst_pte, 0);
 	PTE_SYNC(cdst_pte);
+
 	cpu_tlb_flushD_SE(csrcp);
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 	bcopy_page(csrcp, cdstp);
 	xscale_cache_clean_minidata();
+	l2pte_reset(csrc_pte);
+	l2pte_reset(cdst_pte);
+	PTE_SYNC(csrc_pte);
+	PTE_SYNC(cdst_pte);
 }
 #endif /* ARM_MMU_XSCALE == 1 */
 
