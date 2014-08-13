@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.7 2014/08/12 19:02:55 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.8 2014/08/13 21:50:56 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -81,4 +81,15 @@ sys/arch/sparc/sparc/autoconf.c			1.258
 
 	Add device name mapping for "qfe" (quad hme) cards. PR#49103.
 	[martin, ticket #7]
+
+sys/dev/usb/xhci.c				1.25
+
+	Serialise xhci_intr1 calls with sc_intr_lock.  From Takahiro HAYASHI.
+	[skrll, ticket #11]
+
+sys/dev/usb/files.usb				1.133
+sys/dev/usb/usb.h				1.108
+
+	Add XHCI_DEBUG.
+	[skrll, ticket #12]
 
