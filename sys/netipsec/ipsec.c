@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.63 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.64 2014/08/13 19:43:47 plunky Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.63 2014/05/30 01:39:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.64 2014/08/13 19:43:47 plunky Exp $");
 
 /*
  * IPsec controller part.
@@ -1748,7 +1748,7 @@ ipsec_get_reqlevel(const struct ipsecrequest *isr)
     (((lev) != IPSEC_LEVEL_USE && (lev) != IPSEC_LEVEL_REQUIRE		\
     && (lev) != IPSEC_LEVEL_UNIQUE) ?					\
 	(ipsec_debug ? log(LOG_INFO, "fixed system default level " #lev \
-	":%d->%d\n", (lev), IPSEC_LEVEL_REQUIRE) : 0),			\
+	":%d->%d\n", (lev), IPSEC_LEVEL_REQUIRE) : (void)0),		\
 	(lev) = IPSEC_LEVEL_REQUIRE, (lev)				\
     : (lev))
 
