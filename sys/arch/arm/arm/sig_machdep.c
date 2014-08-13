@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.47 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.48 2014/08/13 21:10:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.47 2013/08/18 06:28:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.48 2014/08/13 21:10:31 matt Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/cpu.h>
@@ -183,6 +183,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	gr[_REG_LR]   = tf->tf_usr_lr;
 	gr[_REG_PC]   = tf->tf_pc;
 	gr[_REG_CPSR] = tf->tf_spsr;
+
+	KASSERTMSG(VALID_R15_PSR(gr[_REG_PC], gr[_REG_CPSR]), "%#x %#x",
+	    gr[_REG_PC], gr[_REG_CPSR]);
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
 	    (void *) gr[_REG_PC])) != -1)
