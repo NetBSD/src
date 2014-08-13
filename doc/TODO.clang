@@ -1,4 +1,4 @@
-$NetBSD: TODO.clang,v 1.13 2014/08/10 19:12:08 joerg Exp $
+$NetBSD: TODO.clang,v 1.14 2014/08/13 14:43:48 joerg Exp $
 
 Hacks for the clang integration
 -------------------------------
@@ -14,3 +14,9 @@ g++ otherwise on trivial input.
 
 src/external/mit/xorg/lib/pixman uses -fno-integrated-as on ARM for the
 macro (ab)use.
+
+Clang does support union arguments for va_arg on 32bit PowerPC, hack
+around to get the files to compiles are in:
+    lib/libc/compat/sys/compat___semctl13.c
+    lib/libc/compat/sys/compat_semctl.c
+    lib/libc/sys/semctl.c
