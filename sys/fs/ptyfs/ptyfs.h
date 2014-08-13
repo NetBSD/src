@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.12 2014/04/04 18:10:29 christos Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.13 2014/08/13 14:10:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -106,11 +106,14 @@ struct ptyfsnode {
 };
 
 struct ptyfsmount {
+	kmutex_t pmnt_lock;
 	TAILQ_ENTRY(ptyfsmount) pmnt_le;
 	struct mount *pmnt_mp;
 	gid_t pmnt_gid;
 	mode_t pmnt_mode;
 	int pmnt_flags;
+	int pmnt_bitmap_size;
+	uint8_t *pmnt_bitmap;
 };
 
 #define VFSTOPTY(mp)	((struct ptyfsmount *)(mp)->mnt_data)
@@ -150,9 +153,10 @@ struct ptyfs_args {
 #define PTYFSTOV(ptyfs)	((ptyfs)->ptyfs_vnode)
 
 int ptyfs_freevp(struct vnode *);
-struct vnode *ptyfs_used_get(ptyfstype, int, struct mount *, int);
-int ptyfs_allocvp(struct mount *, struct vnode **, ptyfstype, int,
-    struct lwp *);
+void ptyfs_set_active(struct mount *, int);
+void ptyfs_clr_active(struct mount *, int);
+int ptyfs_next_active(struct mount *, int);
+int ptyfs_allocvp(struct mount *, struct vnode **, ptyfstype, int);
 void ptyfs_hashinit(void);
 void ptyfs_hashreinit(void);
 void ptyfs_hashdone(void);
