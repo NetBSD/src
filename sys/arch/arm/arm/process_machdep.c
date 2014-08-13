@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.29 2014/01/04 00:10:02 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.30 2014/08/13 21:41:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29 2014/01/04 00:10:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.30 2014/08/13 21:41:32 matt Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -158,14 +158,11 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	regs->r_pc = tf->tf_pc;
 	regs->r_cpsr = tf->tf_spsr;
 
+	KASSERT(VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
+
 #ifdef THUMB_CODE
 	if (tf->tf_spsr & PSR_T_bit)
 		regs->r_pc |= 1;
-#endif
-#ifdef DIAGNOSTIC
-	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
-	     && (tf->tf_spsr & IF32_bits))
-		panic("process_read_regs: IRQs/FIQs blocked in user process");
 #endif
 
 	return(0);
@@ -204,11 +201,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	if ((regs->r_pc & 1) || (regs->r_cpsr & PSR_T_bit))
 		tf->tf_spsr |= PSR_T_bit;
 #endif
-#ifdef DIAGNOSTIC
-	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
-	     && (tf->tf_spsr & IF32_bits))
-		panic("process_read_regs: IRQs/FIQs blocked in user process");
-#endif
+	KASSERT(VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
 #else /* __PROG26 */
 	if ((regs->r_pc & (R15_MODE | R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
 		return EPERM;
