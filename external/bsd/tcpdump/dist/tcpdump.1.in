@@ -207,6 +207,7 @@ special privileges.
 .B \-A
 Print each packet (minus its link level header) in ASCII.  Handy for
 capturing web pages.
+.TP
 .B \-a
 Attempt to convert network and broadcast addresses to names.
 .TP
