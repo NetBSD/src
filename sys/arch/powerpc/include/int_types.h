@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.10 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: int_types.h,v 1.11 2014/08/13 22:56:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,6 +37,9 @@
 #ifndef	_POWERPC_INT_TYPES_H_
 #define	_POWERPC_INT_TYPES_H_
 
+#ifdef __UINTPTR_TYPE__
+#include <sys/common_int_types.h>
+#else
 #include <sys/cdefs.h>
 
 /*
@@ -75,5 +78,7 @@ typedef unsigned long int     __uintptr_t;
 typedef	int		       __intptr_t;
 typedef	unsigned int	      __uintptr_t;
 #endif
+
+#endif /* !__UINTPTR_TYPE__ */
 
 #endif	/* !_POWERPC_INT_TYPES_H_ */
