@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.296 2014/08/13 05:56:03 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.297 2014/08/13 15:06:28 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.296 2014/08/13 05:56:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.297 2014/08/13 15:06:28 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3770,7 +3770,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			pool_put(&pmap_pv_pool, pv);
 #endif
 	}
+#if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
 	KASSERT(md == NULL || !pmap_page_locked_p(md));
+#endif
 	if (pmap_initialized) {
 		UVMHIST_LOG(maphist, "  <-- done (ptep %p: %#x -> %#x)",
 		    ptep, opte, npte, 0);
