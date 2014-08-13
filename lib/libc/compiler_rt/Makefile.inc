@@ -1,8 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.24 2014/08/10 23:39:08 matt Exp $
+# $NetBSD: Makefile.inc,v 1.25 2014/08/13 14:41:45 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
-.if ${LIBC_MACHINE_ARCH} == "powerpc"
+.if ${LIBC_MACHINE_ARCH} == "powerpc" || ${LIBC_MACHINE_ARCH} == "powerpc64"
 COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
 COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
 .else
@@ -200,7 +200,7 @@ GENERIC_SRCS+= \
 	InstrProfilingFile.c \
 	InstrProfilingPlatformOther.c
 
-.if ${LIBC_MACHINE_ARCH} == "powerpc"
+.if ${LIBC_MACHINE_ARCH} == "powerpc" || ${LIBC_MACHINE_ARCH} == "powerpc64"
 GENERIC_SRCS+= \
 	fixtfdi.c \
 	fixunstfdi.c \
