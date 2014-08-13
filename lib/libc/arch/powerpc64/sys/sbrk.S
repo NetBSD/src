@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.3 2006/07/07 06:50:06 ross Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.4 2014/08/13 15:19:22 joerg Exp $	*/
 
 #include "SYS.h"
 
@@ -23,7 +23,7 @@ _C_LABEL(__curbrk):
 	.endm
 
 ENTRY(_sbrk)
-	ldAddr	%r6,__curbrk
+	LdAddr	%r6,__curbrk
 	add	%r3,%r3,%r6
 	mr	%r7,%r3				# r7 = new break
 	li	%r0,SYS_break
