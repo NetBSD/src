@@ -1,4 +1,4 @@
-/* $NetBSD: compat_semctl.c,v 1.4 2014/08/10 17:55:08 joerg Exp $ */
+/* $NetBSD: compat_semctl.c,v 1.5 2014/08/13 14:43:48 joerg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_semctl.c,v 1.4 2014/08/10 17:55:08 joerg Exp $");
+__RCSID("$NetBSD: compat_semctl.c,v 1.5 2014/08/13 14:43:48 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -46,6 +46,9 @@ __RCSID("$NetBSD: compat_semctl.c,v 1.4 2014/08/10 17:55:08 joerg Exp $");
 #include <sys/null.h>
 #include <compat/sys/sem.h>
 #include <stdarg.h>
+#if defined(__clang__) && defined(__powerpc__) && !defined(__powerpc64__)
+#define __lint__
+#endif
 #ifdef __lint__
 #include <string.h>
 #endif
