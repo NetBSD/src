@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.5 2009/12/14 00:46:04 matt Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.6 2014/08/13 19:48:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
 #ifndef _MIPS_INT_FMTIO_H_
 #define _MIPS_INT_FMTIO_H_
 
+#ifdef __INTPTR_FMTd__
+#include <sys/common_int_fmtio.h>
+#else
 /*
  * 7.8.1 Macros for format specifiers
  */
@@ -398,5 +401,7 @@
 #else
 #define	SCNxPTR		"x"	/* uintptr_t		*/
 #endif
+
+#endif /* !__INTPTR_FMTd__ */
 
 #endif /* !_MIPS_INT_FMTIO_H_ */
