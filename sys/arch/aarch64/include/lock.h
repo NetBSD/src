@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: lock.h,v 1.2 2014/08/13 19:32:35 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ __cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
 static __inline void __unused
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
-	__atomic_clear(alp, __ATOMIC_ACQUIRE);
+	__atomic_clear(alp, __ATOMIC_RELAXED);
 }
 
 static __inline void __unused
