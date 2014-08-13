@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.19 2014/03/14 21:59:41 mrg Exp $ */
+/*	$NetBSD: cuda.c,v 1.20 2014/08/13 10:56:35 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.19 2014/03/14 21:59:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.20 2014/08/13 10:56:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,8 +559,8 @@ switch_start:
 		if (sc->sc_received > 255) {
 			/* bitch only once */
 			if (sc->sc_received == 256) {
-				printf("%s: input overflow\n",
-				    device_xname(sc->sc_dev));
+				aprint_error_dev(sc->sc_dev,
+				    "input overflow\n");
 				ending = 1;
 			}
 		} else
@@ -596,7 +596,8 @@ switch_start:
 					me->handler(me->cookie,
 					    sc->sc_received - 1, &sc->sc_in[1]);
 				} else {
-					printf("no handler for type %02x\n", type);
+					aprint_error_dev(sc->sc_dev,
+					  "no handler for type %02x\n", type);
 					panic("barf");
 				}
 			}
@@ -678,6 +679,7 @@ switch_start:
 		} else {
 			/* send next byte */
 			cuda_write_reg(sc, vSR, sc->sc_out[sc->sc_sent]);
+			DPRINTF("%02x", sc->sc_out[sc->sc_sent]);
 			cuda_toggle_ack(sc);	/* signal byte ready to
 							 * shift */
 		}
@@ -755,15 +757,27 @@ cuda_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 	uint8_t cmd[] = { CUDA_PSEUDO, CMD_READ_RTC};
 
 	sc->sc_tod = 0;
-	cuda_send(sc, 0, 2, cmd);
+	while (sc->sc_tod == 0) {
+		cuda_send(sc, 0, 2, cmd);
 
-	while ((sc->sc_tod == 0) && (cnt < 10)) {
-		tsleep(&sc->sc_todev, 0, "todr", 10);
-		cnt++;
+		while ((sc->sc_tod == 0) && (cnt < 10)) {
+			tsleep(&sc->sc_todev, 0, "todr", 10);
+			cnt++;
+		}
+
+		if (sc->sc_tod == 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to read a sane RTC value\n");
+			return EIO;
+		}
+		if ((sc->sc_tod > 0xf0000000UL) ||
+		    (sc->sc_tod < DIFF19041970)) {
+			/* huh? try again */
+			sc->sc_tod = 0;
+			aprint_verbose_dev(sc->sc_dev,
+			    "got garbage reading RTC, trying again\n");
+		}
 	}
-
-	if (sc->sc_tod == 0)
-		return EIO;
 
 	tvp->tv_sec = sc->sc_tod - DIFF19041970;
 	DPRINTF("tod: %" PRIo64 "\n", tvp->tv_sec);
@@ -787,6 +801,7 @@ cuda_todr_set(todr_chip_handle_t tch, struct timeval *tvp)
 		}
 		return 0;
 	}
+	aprint_error_dev(sc->sc_dev, "%s failed\n", __func__);
 	return -1;
 		
 }
@@ -950,6 +965,7 @@ cuda_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
 
 	if (sc->sc_error) {
 		sc->sc_error = 0;
+		aprint_error_dev(sc->sc_dev, "error doing I2C\n");
 		return -1;
 	}
 
@@ -974,7 +990,8 @@ cuda_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
 		}
 
 		if (sc->sc_error) {
-			printf("error trying to read\n");
+			aprint_error_dev(sc->sc_dev, 
+			    "error trying to read from I2C\n");
 			sc->sc_error = 0;
 			return -1;
 		}
