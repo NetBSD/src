@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.45 2014/06/26 02:14:32 christos Exp $	*/
+/*	$NetBSD: process.c,v 1.46 2014/08/13 11:35:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: process.c,v 1.45 2014/06/26 02:14:32 christos Exp $");
+__RCSID("$NetBSD: process.c,v 1.46 2014/08/13 11:35:34 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/process.c 192732 2009-05-25 06:45:33Z brian $");
 #endif
@@ -295,24 +295,32 @@ applies(struct s_command *cp)
 		r = 1;
 	else if (cp->a2)
 		if (cp->startline > 0) {
-			if (MATCH(cp->a2)) {
-				cp->startline = 0;
-				lastaddr = 1;
-				r = 1;
-			} else if (linenum - cp->startline <= cp->a2->u.l)
-				r = 1;
-			else if ((cp->a2->type == AT_LINE &&
-				   linenum > cp->a2->u.l) ||
-				   (cp->a2->type == AT_RELLINE &&
-				   linenum - cp->startline > cp->a2->u.l)) {
-				/*
-				 * We missed the 2nd address due to a branch,
-				 * so just close the range and return false.
-				 */
-				cp->startline = 0;
-				r = 0;
-			} else
-				r = 1;
+			switch (cp->a2->type) {
+			case AT_RELLINE:
+				if (linenum - cp->startline <= cp->a2->u.l)
+					r = 1;
+				else {
+					cp->startline = 0;
+					r = 0;
+				}
+				break;
+			default:
+				if (MATCH(cp->a2)) {
+					cp->startline = 0;
+					lastaddr = 1;
+					r = 1;
+				} else if (cp->a2->type == AT_LINE &&
+				    linenum > cp->a2->u.l) {
+					/*
+					 * We missed the 2nd address due to a
+					 * branch, so just close the range and
+					 * return false.
+					 */
+					cp->startline = 0;
+					r = 0;
+				} else
+					r = 1;
+			}
 		} else if (cp->a1 && MATCH(cp->a1)) {
 			/*
 			 * If the second address is a number less than or
