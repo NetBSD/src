@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.12 2009/09/04 23:29:02 apb Exp $
+.\"	$NetBSD: boot.8,v 1.13 2014/08/14 15:50:42 apb Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd September 4, 2009
+.Dd August 14, 2014
 .Dt BOOT 8
 .Os
 .Sh NAME
@@ -266,7 +266,10 @@ partition by
 .Sh SEE ALSO
 Architecture-specific
 .Xr boot 8
-manual pages,
+manual pages (such as
+.Xr emips/boot 8 ,
+.Xr sparc64/boot 8 ,
+.Xr x86/boot 8 ) ,
 .Xr ddb 4 ,
 .Xr userconf 4 ,
 .\" .Xr boot.cfg 5 ,
