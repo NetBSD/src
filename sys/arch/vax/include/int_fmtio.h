@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.7 2014/08/14 11:28:13 martin Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.8 2014/08/14 14:21:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -143,8 +143,8 @@
 #define	SCNdLEAST16	"hd"	/* int_least16_t	*/
 #define	SCNdLEAST32	"d"	/* int_least32_t	*/
 #define	SCNdLEAST64	"lld"	/* int_least64_t	*/
-#define	SCNdFAST8	"hhd"	/* int_fast8_t		*/
-#define	SCNdFAST16	"hd"	/* int_fast16_t		*/
+#define	SCNdFAST8	"d"	/* int_fast8_t		*/
+#define	SCNdFAST16	"d"	/* int_fast16_t		*/
 #define	SCNdFAST32	"d"	/* int_fast32_t		*/
 #define	SCNdFAST64	"lld"	/* int_fast64_t		*/
 #define	SCNdMAX		"lld"	/* intmax_t		*/
@@ -158,8 +158,8 @@
 #define	SCNiLEAST16	"hi"	/* int_least16_t	*/
 #define	SCNiLEAST32	"i"	/* int_least32_t	*/
 #define	SCNiLEAST64	"lli"	/* int_least64_t	*/
-#define	SCNiFAST8	"hhi"	/* int_fast8_t		*/
-#define	SCNiFAST16	"hi"	/* int_fast16_t		*/
+#define	SCNiFAST8	"i"	/* int_fast8_t		*/
+#define	SCNiFAST16	"i"	/* int_fast16_t		*/
 #define	SCNiFAST32	"i"	/* int_fast32_t		*/
 #define	SCNiFAST64	"lli"	/* int_fast64_t		*/
 #define	SCNiMAX		"lli"	/* intmax_t		*/
@@ -175,8 +175,8 @@
 #define	SCNoLEAST16	"ho"	/* uint_least16_t	*/
 #define	SCNoLEAST32	"o"	/* uint_least32_t	*/
 #define	SCNoLEAST64	"llo"	/* uint_least64_t	*/
-#define	SCNoFAST8	"hho"	/* uint_fast8_t		*/
-#define	SCNoFAST16	"ho"	/* uint_fast16_t	*/
+#define	SCNoFAST8	"o"	/* uint_fast8_t		*/
+#define	SCNoFAST16	"o"	/* uint_fast16_t	*/
 #define	SCNoFAST32	"o"	/* uint_fast32_t	*/
 #define	SCNoFAST64	"llo"	/* uint_fast64_t	*/
 #define	SCNoMAX		"llo"	/* uintmax_t		*/
@@ -190,8 +190,8 @@
 #define	SCNuLEAST16	"hu"	/* uint_least16_t	*/
 #define	SCNuLEAST32	"u"	/* uint_least32_t	*/
 #define	SCNuLEAST64	"llu"	/* uint_least64_t	*/
-#define	SCNuFAST8	"hhu"	/* uint_fast8_t		*/
-#define	SCNuFAST16	"hu"	/* uint_fast16_t	*/
+#define	SCNuFAST8	"u"	/* uint_fast8_t		*/
+#define	SCNuFAST16	"u"	/* uint_fast16_t	*/
 #define	SCNuFAST32	"u"	/* uint_fast32_t	*/
 #define	SCNuFAST64	"llu"	/* uint_fast64_t	*/
 #define	SCNuMAX		"llu"	/* uintmax_t		*/
@@ -205,8 +205,8 @@
 #define	SCNxLEAST16	"hx"	/* uint_least16_t	*/
 #define	SCNxLEAST32	"x"	/* uint_least32_t	*/
 #define	SCNxLEAST64	"llx"	/* uint_least64_t	*/
-#define	SCNxFAST8	"hhx"	/* uint_fast8_t		*/
-#define	SCNxFAST16	"hx"	/* uint_fast16_t	*/
+#define	SCNxFAST8	"x"	/* uint_fast8_t		*/
+#define	SCNxFAST16	"x"	/* uint_fast16_t	*/
 #define	SCNxFAST32	"x"	/* uint_fast32_t	*/
 #define	SCNxFAST64	"llx"	/* uint_fast64_t	*/
 #define	SCNxMAX		"llx"	/* uintmax_t		*/
