@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.242 2014/08/10 17:44:26 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.243 2014/08/14 15:14:45 matt Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -261,7 +261,7 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 # Objcopy
 .if ${MACHINE_ARCH} == aarch64eb
 # AARCH64 big endian needs to preserve $x/$d symbols for the linker.
-OBJCOPYLIBFALGS_EXTRA=-K '\$x' -K '\$d'
+OBJCOPYLIBFLAGS_EXTRA=-K '\$x' -K '\$d'
 .elif !empty(MACHINE_ARCH:M*arm*eb)
 # ARM big endian needs to preserve $a/$d/$t symbols for the linker.
 OBJCOPYLIBFLAGS_EXTRA=-K '\$a' -K '\$d' -K '\$t'
