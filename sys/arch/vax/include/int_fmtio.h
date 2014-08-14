@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.5 2014/08/13 19:48:17 matt Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.6 2014/08/14 09:17:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #define	PRIiFAST32	"i"	/* int_fast32_t		*/
 #define	PRIiFAST64	"lli"	/* int_fast64_t		*/
 #define	PRIiMAX		"lli"	/* intmax_t		*/
-#define	PRIiPTR		"li"	/* intptr_t		*/
+#define	PRIiPTR		"i"	/* intptr_t		*/
 
 /* fprintf macros for unsigned integers */
 
@@ -101,7 +101,7 @@
 #define	PRIuFAST32	"u"	/* uint_fast32_t	*/
 #define	PRIuFAST64	"llu"	/* uint_fast64_t	*/
 #define	PRIuMAX		"llu"	/* uintmax_t		*/
-#define	PRIuPTR		"lu"	/* uintptr_t		*/
+#define	PRIuPTR		"u"	/* uintptr_t		*/
 
 #define	PRIx8		"x"	/* uint8_t		*/
 #define	PRIx16		"x"	/* uint16_t		*/
