@@ -32,7 +32,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.6 2014/05/21 12:18:24 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.7 2014/08/14 15:42:31 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -197,7 +197,110 @@ static struct exynos_gpio_pin_group exynos4_pin_groups[] = {
 
 
 #ifdef EXYNOS5
+
+/*
+ * Exynos 5250 contains 253 multi-functional input/output port pins and 160
+ * memory port pins. There are 39 general port groups and 2 memory port
+ * groups. They are:
+ *
+ * GPA0, GPA1: 14 in/out ports-2xUART with flow control, UART without flow
+ * control, and/or 2xI2C , and/or2xHS-I2C
+ *
+ * GPA2: 8 in/out ports-2xSPI, and/or I2C
+ *
+ * GPB0, GPB1: 10 in/out ports-2xI2S, and/or 2xPCM, and/or AC97, SPDIF, I2C,
+ * and/or SPI
+ *
+ * GPB2, GPB3: 8 in/out ports-PWM, I2C, and/or I2C ,and/or HS-I2C
+ *
+ * GPC0, GPC1: 11 in/out ports-1xMMC (8-bit MMC) I/F
+ *
+ * GPC2: 7 in/out ports-1xMMC (4-bit MMC) I/F
+ *
+ * GPC3, GPC4: 14 in/out ports-2xMMC (4-bit MMC) and/or 1xMMC (8-bit MMC) I/F
+ *
+ * GPD0: 4 pin/out ports-1xUART with flow control I/F
+ *
+ * GPD1: 8 pin/out ports-HSI I/F
+ *
+ * GPE0, GPE1, GPF0, GPF1, GPG0, GPG1, GPG2, GPH0, GPH1: 48 in/out ports-CAM
+ * I/F, and/or Trace I/F
+ *
+ * GPV0, GPV1, GPV2, GPV3, GPV4: 34 in/out ports-C2C I/F
+ *
+ * GPX0, 1, 2, 3: 32 in/out port-external wake-up interrupts (up-to 32-bit),
+ * and/or AUD I/F, and/or MFC I/F (GPX groups are in alive region)
+ *
+ * GPY0, GPY1, GPY2: 16 in/out ports-control signals of EBI (SROM)
+ *
+ * GPY3, GPY4, GPY5, GPY6: 32 in/out memory ports-EBI
+ *
+ * GPZ: 7 in/out ports-low power I2S and/or PCM
+ *
+ * MP1_0-MP1_10: 80 DRAM1 ports NOTE: GPIO registers do not control these
+ * ports.
+ *
+ * MP2_0-MP2_10: 80 DRAM2 ports NOTE: GPIO registers do not control these
+ * ports.
+ * 
+ * ETC0, ETC5, ETC6, ETC7, ETC8: 22 in/out ETC ports-JTAG, C2C_CLK (Rx),
+ * RESET, CLOCK, USBOTG and USB3, C2C_CLK (Tx)
+ */
+
 static struct exynos_gpio_pin_group exynos5_pin_groups[] = {
+	GPIO_GRP(5, LEFT,  0x0000, GPA0, 8),
+	GPIO_GRP(5, LEFT,  0x0020, GPA1, 6),
+	GPIO_GRP(5, LEFT,  0x0040, GPA2, 8),
+	GPIO_GRP(5, LEFT,  0x0060, GPB0, 5),
+	GPIO_GRP(5, LEFT,  0x0080, GPB1, 5),
+	GPIO_GRP(5, LEFT,  0x00A0, GPB2, 4),
+	GPIO_GRP(5, LEFT,  0x00C0, GPB3, 4),
+	GPIO_GRP(5, LEFT,  0x00E0, GPC0, 7),
+	GPIO_GRP(5, LEFT,  0x0100, GPC1, 4),
+	GPIO_GRP(5, LEFT,  0x0120, GPC2, 7),
+	GPIO_GRP(5, LEFT,  0x0140, GPC3, 7),
+	GPIO_GRP(5, LEFT,  0x0160, GPD0, 4),
+	GPIO_GRP(5, LEFT,  0x0180, GPD1, 8),
+	GPIO_GRP(5, LEFT,  0x01A0, GPY0, 6),
+	GPIO_GRP(5, LEFT,  0x01C0, GPY1, 4),
+	GPIO_GRP(5, LEFT,  0x01E0, GPY2, 6),
+	GPIO_GRP(5, LEFT,  0x0200, GPY3, 8),
+	GPIO_GRP(5, LEFT,  0x0220, GPY4, 8),
+	GPIO_GRP(5, LEFT,  0x0240, GPY5, 8),
+	GPIO_GRP(5, LEFT,  0x0260, GPY6, 8),
+	GPIO_GRP(5, LEFT,  0x0280, ETC0, 6),
+	GPIO_GRP(5, LEFT,  0x02A0, ETC6, 7),
+	GPIO_GRP(5, LEFT,  0x02C0, ETC7, 5),
+	GPIO_GRP(5, LEFT,  0x02E0, GPC4, 7),
+	/* EXTINT skipped */
+	GPIO_GRP(5, LEFT,  0x0C00, GPX0, 8),
+	GPIO_GRP(5, LEFT,  0x0C20, GPX1, 8),
+	GPIO_GRP(5, LEFT,  0x0C40, GPX2, 8),
+	GPIO_GRP(5, LEFT,  0x0C60, GPX3, 8),
+	/* EXTINT skipped */
+
+	GPIO_GRP(5, RIGHT, 0x0000, GPE0, 8),
+	GPIO_GRP(5, RIGHT, 0x0020, GPE1, 2),
+	GPIO_GRP(5, RIGHT, 0x0040, GPF0, 4),
+	GPIO_GRP(5, RIGHT, 0x0060, GPF1, 4),
+	GPIO_GRP(5, RIGHT, 0x0080, GPG0, 8),
+	GPIO_GRP(5, RIGHT, 0x00A0, GPG1, 8),
+	GPIO_GRP(5, RIGHT, 0x00C0, GPG2, 2),
+	GPIO_GRP(5, RIGHT, 0x00E0, GPH0, 4),
+	GPIO_GRP(5, RIGHT, 0x0100, GPH1, 8),
+	/* EXTINT skipped */
+
+	GPIO_GRP(5, C2C,   0x0000, GPV0, 8),
+	GPIO_GRP(5, C2C,   0x0020, GPV1, 8),
+	GPIO_GRP(5, C2C,   0x0040, ETC5, 2),
+	GPIO_GRP(5, C2C,   0x0060, GPV2, 8),
+	GPIO_GRP(5, C2C,   0x0080, GPV3, 8),
+	GPIO_GRP(5, C2C,   0x00A0, ETC8, 2),
+	GPIO_GRP(5, C2C,   0x00C0, GPV4, 2),
+	/* EXTINT skipped */
+
+	GPIO_GRP(5, I2S,   0x0000, GPZ,  7),
+	/* EXTINT skipped */
 };
 #endif
 
