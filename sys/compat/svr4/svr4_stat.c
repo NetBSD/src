@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.69 2009/01/11 02:45:50 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.70 2014/08/14 17:29:30 maxv Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.69 2009/01/11 02:45:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.70 2014/08/14 17:29:30 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,7 +477,6 @@ svr4_sys_systeminfo(struct lwp *l, const struct svr4_sys_systeminfo_args *uap, r
 	case SVR4_SI_PLATFORM:
 #if defined(__i386__)
 		str = "i86pc";
-#elif defined(__sparc__)
 #elif defined(__sparc__)
 		{
 			extern char machine_model[];
