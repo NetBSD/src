@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.4 2014/07/19 06:12:24 hikaru Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.4.4.1 2014/08/14 06:52:38 martin Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.4 2014/07/19 06:12:24 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.4.4.1 2014/08/14 06:52:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -158,6 +158,7 @@ void vmxnet3_evintr(struct vmxnet3_softc *);
 void vmxnet3_txintr(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
 void vmxnet3_rxintr(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
 void vmxnet3_iff(struct vmxnet3_softc *);
+int vmxnet3_ifflags_cb(struct ethercom *);
 void vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *, struct mbuf *);
 int vmxnet3_getbuf(struct vmxnet3_softc *, struct vmxnet3_rxring *);
 void vmxnet3_stop(struct ifnet *, int disable);
@@ -308,6 +309,7 @@ vmxnet3_attach(device_t parent, device_t self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, vmxnet3_ifflags_cb);
 	vmxnet3_link_state(sc);
 }
 
@@ -857,6 +859,15 @@ setit:
 	WRITE_CMD(sc, VMXNET3_CMD_SET_FILTER);
 	ds->rxmode = mode;
 	WRITE_CMD(sc, VMXNET3_CMD_SET_RXMODE);
+}
+
+int
+vmxnet3_ifflags_cb(struct ethercom *ec)
+{
+
+	vmxnet3_iff((struct vmxnet3_softc *)ec->ec_if.if_softc);
+
+	return 0;
 }
 
 
