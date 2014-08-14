@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.106.4.1 2014/08/13 21:50:39 riz Exp $	*/
+/*	$NetBSD: usb.h,v 1.106.4.2 2014/08/14 06:56:55 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ MALLOC_DECLARE(M_USBHC);
 #define AUE_DEBUG 1
 #define AUVITEK_I2C_DEBUG 1
 #define AXE_DEBUG 1
+#define AXEN_DEBUG 1
 #define CUE_DEBUG 1
 #define DWC2_DEBUG 1
 #define EHCI_DEBUG 1
