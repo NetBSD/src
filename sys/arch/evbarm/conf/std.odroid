@@ -1,4 +1,4 @@
-#	$NetBSD: std.odroid,v 1.2 2014/06/06 15:00:20 reinoud Exp $
+#	$NetBSD: std.odroid,v 1.3 2014/08/14 12:48:52 reinoud Exp $
 #
 # standard NetBSD/evbarm for ODROID options
 
@@ -23,6 +23,7 @@ options 	FPU_VFP
 
 # All shipped Samsung SoC's that are not Samsung products have this
 options 	ARM_TRUSTZONE_FIRMWARE
+options		__NO_FIQ
 
 makeoptions	KERNEL_BASE_PHYS="0x80000000"
 makeoptions	KERNEL_BASE_VIRT="0x80000000"
