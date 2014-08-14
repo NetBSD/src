@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.13 2014/08/14 09:02:18 martin Exp $	*/
+/*	$NetBSD: mutex.h,v 1.14 2014/08/14 11:28:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ struct kmutex {
  */
 #define	MUTEX_GIVE(mtx)		/* nothing */
 
-#define	MUTEX_CAS(p, o, n)	(atomic_cas_uint((p), (o), (n)) == (o))
+#define	MUTEX_CAS(p, o, n)	(atomic_cas_ulong((p), (o), (n)) == (o))
 
 #endif	/* __MUTEX_PRIVATE */
 
