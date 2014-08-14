@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.8 2014/08/13 21:50:56 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.9 2014/08/14 06:58:39 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -92,4 +92,19 @@ sys/dev/usb/usb.h				1.108
 
 	Add XHCI_DEBUG.
 	[skrll, ticket #12]
+
+sys/arch/sparc64/sparc64/locore.s		1.370
+
+	Add missing delay slot in DEBUG kernel.
+	[nakayama, ticket #14]
+
+sys/arch/x86/pci/if_vmx.c			1.5
+
+	Set ifflags callback so that the device can enter promiscuous mode.
+	[hikaru, ticket #15]
+
+sys/dev/usb/usb.h				1.107
+
+	Define AXEN_DEBUG.  From Takahiro HAYASHI.
+	[skrll, ticket #10]
 
