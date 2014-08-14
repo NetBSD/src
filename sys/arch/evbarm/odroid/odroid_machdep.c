@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.25 2014/08/14 15:44:42 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.26 2014/08/14 15:57:51 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.25 2014/08/14 15:44:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.26 2014/08/14 15:57:51 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -573,7 +573,7 @@ odroid_exynos4_gpio_ncs(device_t self, prop_dictionary_t dict) {
 	/* expansion connector bits at pin 0,1,5 : */
 	prop_dictionary_set_uint32(dict, "nc-GPX1", 0xff - 0b00100011);
 	prop_dictionary_set_uint32(dict, "nc-GPX2", 0xff - 0b00000000);
-	/* hub communication at pin 0,4,5 : */
+	/* usb hub communication at pin 0,4,5 : */
 	prop_dictionary_set_uint32(dict, "nc-GPX3", 0xff - 0b00110001);
 	prop_dictionary_set_uint32(dict, "nc-GPZ",  0xff - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-GPV0", 0xff - 0b00000000);
@@ -621,8 +621,10 @@ odroid_exynos5_gpio_ncs(device_t self, prop_dictionary_t dict) {
 	prop_dictionary_set_uint32(dict, "nc-ETC6", 0x7f - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-ETC7", 0x1f - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-GPC4", 0x3f - 0b00000000);
-	prop_dictionary_set_uint32(dict, "nc-GPX0", 0xff - 0b00000000);
-	prop_dictionary_set_uint32(dict, "nc-GPX1", 0xff - 0b00000000);
+	/* usb hub communication at bit 6,7 : */
+	prop_dictionary_set_uint32(dict, "nc-GPX0", 0xff - 0b11000000);
+	/* usb hub communication at bit 4 : */
+	prop_dictionary_set_uint32(dict, "nc-GPX1", 0xff - 0b00010000);
 	/* blue led at bit 3 : microSD activity */
 	prop_dictionary_set_uint32(dict, "nc-GPX2", 0xff - 0b00001000);
 	prop_dictionary_set_uint32(dict, "nc-GPX3", 0xff - 0b00000000);
