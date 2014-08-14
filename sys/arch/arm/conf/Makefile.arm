@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.42 2014/03/02 13:21:59 joerg Exp $
+#	$NetBSD: Makefile.arm,v 1.43 2014/08/14 18:39:39 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -83,9 +83,8 @@ LINKFLAGS_NORMAL=	-X
 # with ddb. Do it differently if 'makeoptions DEBUG="-g"' was specified.
 .if !defined(DEBUG) || empty(DEBUG:M-g*)
 SYSTEM_LD_TAIL?=	${SYSTEM_LD_TAIL_DBSYM} ; \
-			${OBJCOPY} --strip-symbol='$$a'	 \
-				    --strip-symbol='$$t'	 \
-				    --strip-symbol='$$d' $@	;\
+			${OBJCOPY} --wildcard --strip-symbol='[$$][atd]' \
+				    --strip-symbol='[$$][atd]\.*' $@;   \
 			${SIZE} $@; chmod 755 $@
 .else
 STRIPFLAGS=-g --strip-symbol='$$a' --strip-symbol='$$t' --strip-symbol='$$d'
