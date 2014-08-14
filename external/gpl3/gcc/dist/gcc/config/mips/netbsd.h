@@ -231,6 +231,12 @@ along with GCC; see the file COPYING3.  If not see
 #define PTRDIFF_TYPE ((POINTER_SIZE == 64 || TARGET_NEWABI) \
 		      ? "long int" : "int")
 
+#undef INTPTR_TYPE
+#define INTPTR_TYPE PTRDIFF_TYPE
+
+#undef UINTPTR_TYPE
+#define UINTPTR_TYPE SIZE_TYPE
+
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
 
