@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.43 2014/08/14 18:39:39 joerg Exp $
+#	$NetBSD: Makefile.arm,v 1.44 2014/08/14 20:59:54 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -87,7 +87,8 @@ SYSTEM_LD_TAIL?=	${SYSTEM_LD_TAIL_DBSYM} ; \
 				    --strip-symbol='[$$][atd]\.*' $@;   \
 			${SIZE} $@; chmod 755 $@
 .else
-STRIPFLAGS=-g --strip-symbol='$$a' --strip-symbol='$$t' --strip-symbol='$$d'
+STRIPFLAGS=-g --wildcard --strip-symbol='[$$][atd]' \
+	   --strip-symbol='[$$][atd]\.*'
 .endif
 
 ##
