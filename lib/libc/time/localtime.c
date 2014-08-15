@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.82 2014/05/13 16:33:56 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.83 2014/08/15 11:04:07 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.82 2014/05/13 16:33:56 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.83 2014/08/15 11:04:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -144,16 +144,16 @@ struct __state {
 };
 
 struct rule {
-	int		r_type;		/* type of rule--see below */
+	int		r_type;		/* type of rule; see below */
 	int		r_day;		/* day number of rule */
 	int		r_week;		/* week number of rule */
 	int		r_mon;		/* month number of rule */
 	int_fast32_t	r_time;		/* transition time of rule */
 };
 
-#define JULIAN_DAY		0	/* Jn - Julian day */
-#define DAY_OF_YEAR		1	/* n - day of year */
-#define MONTH_NTH_DAY_OF_WEEK	2	/* Mm.n.d - month, week, day of week */
+#define JULIAN_DAY		0	/* Jn = Julian day */
+#define DAY_OF_YEAR		1	/* n = day of year */
+#define MONTH_NTH_DAY_OF_WEEK	2	/* Mm.n.d = month, week, day of week */
 
 typedef struct tm *(*subfun_t)(const timezone_t sp, const time_t *timep,
 			       const int_fast32_t offset, struct tm *tmp);
@@ -386,17 +386,7 @@ tzload(timezone_t sp, const char *name, const int doextend)
 					2 * sizeof *sp +
 					4 * TZ_MAX_TIMES];
 	} u_t;
-	u_t *			up;
-
-	up = malloc(sizeof *up);
-	if (up == NULL)
-		return -1;
-
-	sp->goback = sp->goahead = FALSE;
-	if (name == NULL && (name = TZDEFAULT) == NULL)
-		goto oops;
-	{
-		int	doaccess;
+	union local_storage {
 		/*
 		** Section 4.9.1 of the C standard says that
 		** "FILENAME_MAX expands to an integral constant expression
@@ -406,35 +396,51 @@ tzload(timezone_t sp, const char *name, const int doextend)
 		*/
 		char		fullname[FILENAME_MAX + 1];
 
-		if (name[0] == ':')
-			++name;
-		doaccess = name[0] == '/';
-		if (!doaccess) {
-			if ((p = TZDIR) == NULL)
-				goto oops;
-			if ((strlen(p) + strlen(name) + 1) >= sizeof fullname)
-				goto oops;
-			(void) strcpy(fullname, p);	/* XXX strcpy is safe */
-			(void) strcat(fullname, "/");	/* XXX strcat is safe */
-			(void) strcat(fullname, name);	/* XXX strcat is safe */
-			/*
-			** Set doaccess if '.' (as in "../") shows up in name.
-			*/
-			if (strchr(name, '.') != NULL)
-				doaccess = TRUE;
-			name = fullname;
-		}
-		if (doaccess && access(name, R_OK) != 0)
-			goto oops;
-		/*
-		 * XXX potential security problem here if user of a set-id
-		 * program has set TZ (which is passed in as name) here,
-		 * and uses a race condition trick to defeat the access(2)
-		 * above.
-		 */
-		if ((fid = open(name, OPEN_MODE)) == -1)
+		/* The main part of the storage for this function.  */
+		struct {
+			u_t u;
+			struct __state st;
+		} u;
+	};
+	char *fullname;
+	u_t *up;
+	int doaccess;
+	union local_storage *lsp;
+	lsp = malloc(sizeof *lsp);
+	if (!lsp)
+		return -1;
+	fullname = lsp->fullname;
+	up = &lsp->u.u;
+
+	sp->goback = sp->goahead = FALSE;
+
+	if (! name) {
+		name = TZDEFAULT;
+		if (! name)
 			goto oops;
 	}
+
+	if (name[0] == ':')
+		++name;
+	doaccess = name[0] == '/';
+	if (!doaccess) {
+		p = TZDIR;
+		if (! p || sizeof lsp->fullname - 1 <= strlen(p) + strlen(name))
+			goto oops;
+		strcpy(fullname, p);
+		strcat(fullname, "/");
+		strcat(fullname, name);
+		/* Set doaccess if '.' (as in "../") shows up in name.  */
+		if (strchr(name, '.'))
+			doaccess = TRUE;
+		name = fullname;
+	}
+	if (doaccess && access(name, R_OK) != 0)
+		goto oops;
+
+	fid = open(name, OPEN_MODE);
+	if (fid < 0)
+		goto oops;
 	nread = read(fid, up->buf, sizeof up->buf);
 	if (close(fid) < 0 || nread <= 0)
 		goto oops;
@@ -567,36 +573,36 @@ tzload(timezone_t sp, const char *name, const int doextend)
 	if (doextend && nread > 2 &&
 		up->buf[0] == '\n' && up->buf[nread - 1] == '\n' &&
 		sp->typecnt + 2 <= TZ_MAX_TYPES) {
-			struct __state ts;
+			struct __state *ts = &lsp->u.st;
 			int	result;
 
 			up->buf[nread - 1] = '\0';
-			result = tzparse(&ts, &up->buf[1], FALSE);
-			if (result == 0 && ts.typecnt == 2 &&
-				sp->charcnt + ts.charcnt <= TZ_MAX_CHARS) {
+			result = tzparse(ts, &up->buf[1], FALSE);
+			if (result == 0 && ts->typecnt == 2 &&
+				sp->charcnt + ts->charcnt <= TZ_MAX_CHARS) {
 					for (i = 0; i < 2; ++i)
-						ts.ttis[i].tt_abbrind +=
+						ts->ttis[i].tt_abbrind +=
 							sp->charcnt;
-					for (i = 0; i < ts.charcnt; ++i)
+					for (i = 0; i < ts->charcnt; ++i)
 						sp->chars[sp->charcnt++] =
-							ts.chars[i];
+							ts->chars[i];
 					i = 0;
-					while (i < ts.timecnt &&
-						ts.ats[i] <=
+					while (i < ts->timecnt &&
+						ts->ats[i] <=
 						sp->ats[sp->timecnt - 1])
 							++i;
-					while (i < ts.timecnt &&
+					while (i < ts->timecnt &&
 					    sp->timecnt < TZ_MAX_TIMES) {
 						sp->ats[sp->timecnt] =
-							ts.ats[i];
+							ts->ats[i];
 						sp->types[sp->timecnt] =
 							sp->typecnt +
-							ts.types[i];
+							ts->types[i];
 						++sp->timecnt;
 						++i;
 					}
-					sp->ttis[sp->typecnt++] = ts.ttis[0];
-					sp->ttis[sp->typecnt++] = ts.ttis[1];
+					sp->ttis[sp->typecnt++] = ts->ttis[0];
+					sp->ttis[sp->typecnt++] = ts->ttis[1];
 			}
 	}
 	if (sp->timecnt > 1) {
@@ -771,10 +777,10 @@ getsecs(const char *strp, int_fast32_t *const secsp)
 	int	num;
 
 	/*
-	** `HOURSPERDAY * DAYSPERWEEK - 1' allows quasi-Posix rules like
+	** 'HOURSPERDAY * DAYSPERWEEK - 1' allows quasi-Posix rules like
 	** "M10.4.6/26", which does not conform to Posix,
 	** but which specifies the equivalent of
-	** ``02:00 on the first Sunday on or after 23 Oct''.
+	** "02:00 on the first Sunday on or after 23 Oct".
 	*/
 	strp = getnum(strp, &num, 0, HOURSPERDAY * DAYSPERWEEK - 1);
 	if (strp == NULL)
@@ -788,7 +794,7 @@ getsecs(const char *strp, int_fast32_t *const secsp)
 		*secsp += num * SECSPERMIN;
 		if (*strp == ':') {
 			++strp;
-			/* `SECSPERMIN' allows for leap seconds. */
+			/* 'SECSPERMIN' allows for leap seconds.  */
 			strp = getnum(strp, &num, 0, SECSPERMIN);
 			if (strp == NULL)
 				return NULL;
@@ -956,6 +962,13 @@ transtime(const int year, const struct rule *const rulep,
 		for (i = 0; i < rulep->r_mon - 1; ++i)
 			value += mon_lengths[leapyear][i] * SECSPERDAY;
 		break;
+	default:
+		_DIAGASSERT(
+		    rulep->r_type == JULIAN_DAY ||
+		    rulep->r_type == DAY_OF_YEAR ||
+		    rulep->r_type == MONTH_NTH_DAY_OF_WEEK);
+		value = 0;
+		break;
 	}
 
 	/*
@@ -984,7 +997,6 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 	char *			cp;
 	int			load_result;
 
-	INITIALIZE(dstname);
 	stdname = name;
 	if (lastditch) {
 		stdlen = strlen(name);	/* length of standard zone name */
@@ -1341,8 +1353,8 @@ tzset(void)
 
 /*
 ** The easy way to behave "as if no library function calls" localtime
-** is to not call it--so we drop its guts into "localsub", which can be
-** freely called. (And no, the PANS doesn't require the above behavior--
+** is to not call it, so we drop its guts into "localsub", which can be
+** freely called. (And no, the PANS doesn't require the above behavior,
 ** but it *is* desirable.)
 **
 ** The unused offset argument is for the benefit of mktime variants.
@@ -1473,8 +1485,9 @@ gmtsub(const timezone_t sp, const time_t *const timep,
 		gmt_is_set = TRUE;
 		saveerrno = errno;
 		gmtptr = malloc(sizeof *gmtptr);
+		gmt_is_set = gmtptr != NULL;
 		errno = saveerrno;
-		if (gmtptr != NULL)
+		if (gmt_is_set)
 			gmtload(gmtptr);
 	}
 	mutex_unlock(&gmt_mutex);
@@ -2062,8 +2075,8 @@ time1(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 	int			sameind, otherind;
 	int			i;
 	int			nseen;
-	int				seen[TZ_MAX_TYPES];
-	int				types[TZ_MAX_TYPES];
+	char				seen[TZ_MAX_TYPES];
+	unsigned char			types[TZ_MAX_TYPES];
 	int				okay;
 
 	if (tmp == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.14 2014/05/13 16:33:56 christos Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.15 2014/08/15 11:04:07 christos Exp $	*/
 
 #ifndef TZFILE_H
 #define TZFILE_H
@@ -41,7 +41,7 @@
 struct tzhead {
 	char	tzh_magic[4];		/* TZ_MAGIC */
 	char	tzh_version[1];		/* '\0' or '2' or '3' as of 2013 */
-	char	tzh_reserved[15];	/* reserved--must be zero */
+	char	tzh_reserved[15];	/* reserved; must be zero */
 	char	tzh_ttisgmtcnt[4];	/* coded number of trans. time flags */
 	char	tzh_ttisstdcnt[4];	/* coded number of trans. time flags */
 	char	tzh_leapcnt[4];		/* coded number of leap seconds */
