@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.14 2014/08/13 15:56:52 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2014/08/15 09:40:07 matt Exp $
 
 SRCS+=		ppc_reloc.c
 LDFLAGS+=	-Wl,-e,_rtld_start
 
-# XXX Should not be in CPPFLAGS!
-CPPFLAGS+=	-fpic
+CPPFLAGS+=	-fPIC
 
 .if ${LDELFSO_MACHINE_ARCH} == "powerpc64"
 SRCS+=		rtld_start64.S
