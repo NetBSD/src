@@ -1,8 +1,8 @@
-.\"	$NetBSD: tzfile.5,v 1.20 2013/09/20 19:06:54 christos Exp $
+.\"	$NetBSD: tzfile.5,v 1.21 2014/08/15 11:04:07 christos Exp $
 .\"
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
-.Dd September 20, 2013
+.Dd August 15, 2014
 .Dt TZFILE 5
 .Os
 .Sh NAME
@@ -150,7 +150,7 @@ For version-3-format time zone files, the POSIX-TZ-style string may
 use two minor extensions to the POSIX TZ format, as described in
 .Xr tzset 3 .
 First, the hours part of its transition times may be signed and range from
-\(mi167 through 167 instead of the POSIX-required unsigned values
+\-167 through 167 instead of the POSIX-required unsigned values
 from 0 through 24.
 Second, DST is in effect all year if it starts
 January 1 at 00:00 and ends December 31 at 24:00 plus the difference

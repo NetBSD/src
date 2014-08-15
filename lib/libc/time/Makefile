@@ -1,4 +1,3 @@
-# <pre>
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -6,7 +5,7 @@
 PACKAGE=	tzcode
 
 # Version numbers of the code and data distributions.
-VERSION=	2014e
+VERSION=	2014f
 
 # Email address for bug reports.
 BUGEMAIL=	tz@iana.org
@@ -96,14 +95,14 @@ REDO=		posix_right
 YEARISTYPE=	./yearistype
 
 # Non-default libraries needed to link.
-# Add -lintl if you want to use `gettext' on Solaris.
+# Add -lintl if you want to use 'gettext' on Solaris.
 LDLIBS=
 
 # Add the following to the end of the "CFLAGS=" line as needed.
 #  -DBIG_BANG=-9999999LL if the Big Bang occurred at time -9999999 (see zic.c)
-#  -DHAVE_ADJTIME=0 if `adjtime' does not exist (SVR0?)
+#  -DHAVE_ADJTIME=0 if 'adjtime' does not exist (SVR0?)
 #  -DHAVE_DOS_FILE_NAMES if file names have drive specifiers etc. (MS-DOS)
-#  -DHAVE_GETTEXT=1 if `gettext' works (GNU, Linux, Solaris); also see LDLIBS
+#  -DHAVE_GETTEXT=1 if 'gettext' works (GNU, Linux, Solaris); also see LDLIBS
 #  -DHAVE_INCOMPATIBLE_CTIME_R=1 if your system's time.h declares
 #	ctime_r and asctime_r incompatibly with the POSIX standard (Solaris 8).
 #  -DHAVE_INTTYPES_H=1 if you have a pre-C99 compiler with "inttypes.h"
@@ -124,7 +123,7 @@ LDLIBS=
 #	year 2000 grief
 #  -Dtime_tz=\"T\" to use T as the time_t type, rather than the system time_t
 #  -DTZ_DOMAIN=\"foo\" to use "foo" for gettext domain name; default is "tz"
-#  -TTZ_DOMAINDIR=\"/path\" to use "/path" for gettext directory;
+#  -DTZ_DOMAINDIR=\"/path\" to use "/path" for gettext directory;
 #	the default is system-supplied, typically "/usr/lib/locale"
 #  -DTZDEFRULESTRING=\",date/time,date/time\" to default to the specified
 #  -DNO_ERROR_IN_DST_GAP=1
@@ -136,14 +135,16 @@ LDLIBS=
 GCC_DEBUG_FLAGS = -Dlint -g3 -O3 -fno-common -fstrict-aliasing \
 	-Wall -Wextra \
 	-Wbad-function-cast -Wcast-align -Wcast-qual \
-	-Wformat=2 -Winit-self \
+	-Wdeclaration-after-statement \
+	-Wformat=2 -Winit-self -Wjump-misses-init \
 	-Wmissing-declarations -Wmissing-noreturn -Wmissing-prototypes \
 	-Wnested-externs -Wno-address -Wno-cast-qual \
 	-Wno-format-nonliteral -Wno-sign-compare -Wno-sign-conversion \
 	-Wno-type-limits \
 	-Wno-unused-parameter -Woverlength-strings -Wpointer-arith \
 	-Wshadow -Wstrict-prototypes -Wsuggest-attribute=const \
-	-Wsuggest-attribute=noreturn -Wsuggest-attribute=pure -Wtrampolines \
+	-Wsuggest-attribute=format -Wsuggest-attribute=noreturn \
+	-Wsuggest-attribute=pure -Wtrampolines \
 	-Wwrite-strings
 #
 # If you want to use System V compatibility code, add
@@ -237,7 +238,7 @@ ZIC=		$(zic) $(ZFLAGS)
 
 ZFLAGS=
 
-# The name of a Posix-compliant `awk' on your system.
+# The name of a Posix-compliant 'awk' on your system.
 AWK=		awk
 
 # The full path name of a Posix-compliant shell, preferably one that supports
@@ -267,16 +268,34 @@ VALIDATE_ENV = \
   SP_CHARSET_FIXED=YES \
   SP_ENCODING=UTF-8
 
-# INVALID_CHAR is a regular expression that matches invalid characters in
-# distributed files.  For now, stick to a safe subset of ASCII.
+# SAFE_CHAR is a regular expression that matches a safe character.
+# Some parts of this distribution are limited to safe characters;
+# others can use any UTF-8 character.
+# For now, the safe characters are a safe subset of ASCII.
 # The caller must set the shell variable 'sharp' to the character '#',
 # since Makefile macros cannot contain '#'.
 # TAB_CHAR is a single tab character, in single quotes.
 TAB_CHAR=	'	'
-INVALID_CHAR1=	$(TAB_CHAR)' !\"'$$sharp'$$%&'\''()*+,./0123456789:;<=>?@'
-INVALID_CHAR2=	'ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\^_`'
-INVALID_CHAR3=	'abcdefghijklmnopqrstuvwxyz{|}~'
-INVALID_CHAR=	'[^]'$(INVALID_CHAR1)$(INVALID_CHAR2)$(INVALID_CHAR3)'-]'
+SAFE_CHARSET1=	$(TAB_CHAR)' !\"'$$sharp'$$%&'\''()*+,./0123456789:;<=>?@'
+SAFE_CHARSET2=	'ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\^_`'
+SAFE_CHARSET3=	'abcdefghijklmnopqrstuvwxyz{|}~'
+SAFE_CHARSET=	]$(SAFE_CHARSET1)$(SAFE_CHARSET2)$(SAFE_CHARSET3)-
+SAFE_CHAR=	'['$(SAFE_CHARSET)']'
+# NONSYM_CHAR is a regular expression that matches any character
+# except for a small number of symbols, where we prefer to stick with
+# ASCII renderings for the convenience of maintainers whose text editors
+# mishandle UTF-8 by default (e.g., XEmacs 21.4.22).
+NONSYM_CHAR=	'[^–—°′″≈≠≤≥±−×÷∞←→↔·•§¶«»‘’‚‛“”„‟‹›「」『』〝〞〟]'
+
+# SAFE_LINE matches a line of safe characters.
+# SAFE_SHARP_LINE is similar, except any character can follow '#';
+# this is so that comments can contain non-ASCII characters.
+# NONSYM_LINE matches a line of non-symbols.
+# VALID_LINE matches a line of any validly-encoded characters.
+SAFE_LINE=	'^'$(SAFE_CHAR)'*$$'
+SAFE_SHARP_LINE='^'$(SAFE_CHAR)'*('$$sharp$(NONSYM_CHAR)'*)?$$'
+NONSYM_LINE=	'^'$(NONSYM_CHAR)'*$$'
+VALID_LINE=	'^.*$$'
 
 # Flags to give 'tar' when making a distribution.
 # Try to use flags appropriate for GNU tar.
@@ -299,7 +318,7 @@ AR=		ar
 # ':' on typical hosts; 'ranlib' on the ancient hosts that still need ranlib.
 RANLIB=		:
 
-TZCOBJS=	zic.o localtime.o asctime.o scheck.o ialloc.o
+TZCOBJS=	zic.o scheck.o ialloc.o
 TZDOBJS=	zdump.o localtime.o ialloc.o asctime.o
 DATEOBJS=	date.o localtime.o strftime.o asctime.o
 LIBSRCS=	localtime.c asctime.c difftime.c
@@ -315,21 +334,20 @@ MANTXTS=	newctime.3.txt newstrftime.3.txt newtzset.3.txt \
 			tzfile.5.txt tzselect.8.txt zic.8.txt zdump.8.txt \
 			date.1.txt
 COMMON=		Makefile README
-DOCS=		NEWS Theory $(MANS) date.1 $(MANTXTS)
+WEB_PAGES=	tz-art.htm tz-link.htm
+DOCS=		NEWS Theory $(MANS) date.1 $(MANTXTS) $(WEB_PAGES)
 PRIMARY_YDATA=	africa antarctica asia australasia \
 		europe northamerica southamerica
 YDATA=		$(PRIMARY_YDATA) pacificnew etcetera backward
 NDATA=		systemv factory
 TDATA=		$(YDATA) $(NDATA)
-TABDATA=	iso3166.tab zone.tab leapseconds
+ZONETABLES=	zone1970.tab zone.tab
+TABDATA=	iso3166.tab leapseconds $(ZONETABLES)
 LEAP_DEPS=	leapseconds.awk leap-seconds.list
 DATA=		$(YDATA) $(NDATA) $(TABDATA) \
 			$(LEAP_DEPS) yearistype.sh
-WEB_PAGES=	tz-art.htm tz-link.htm
 AWK_SCRIPTS=	checktab.awk leapseconds.awk
-MISC=		usno1988 usno1989 usno1989a usno1995 usno1997 usno1998 \
-			$(WEB_PAGES) $(AWK_SCRIPTS) workman.sh \
-			zoneinfo2tdf.pl
+MISC=		$(AWK_SCRIPTS) workman.sh zoneinfo2tdf.pl
 ENCHILADA=	$(COMMON) $(DOCS) $(SOURCES) $(DATA) $(MISC)
 
 # And for the benefit of csh users on systems that assume the user
@@ -348,7 +366,7 @@ install:	all $(DATA) $(REDO) $(MANS)
 			$(DESTDIR)$(MANDIR)/man8
 		$(ZIC) -y $(YEARISTYPE) \
 			-d $(DESTDIR)$(TZDIR) -l $(LOCALTIME) -p $(POSIXRULES)
-		cp -f iso3166.tab zone.tab $(DESTDIR)$(TZDIR)/.
+		cp -f iso3166.tab $(ZONETABLES) $(DESTDIR)$(TZDIR)/.
 		cp tzselect zic zdump $(DESTDIR)$(ETCDIR)/.
 		cp libtz.a $(DESTDIR)$(LIBDIR)/.
 		$(RANLIB) $(DESTDIR)$(LIBDIR)/libtz.a
@@ -435,10 +453,22 @@ tzselect:	tzselect.ksh
 check:		check_character_set check_tables check_web
 
 check_character_set: $(ENCHILADA)
-		sharp='#'; ! grep -n $(INVALID_CHAR) $(ENCHILADA)
+		LC_ALL=en_US.utf8 && export LC_ALL && \
+		sharp='#' && \
+		! grep -Env $(SAFE_LINE) $(MANS) date.1 $(MANTXTS) \
+			$(MISC) $(SOURCES) $(WEB_PAGES) && \
+		! grep -Env $(SAFE_SHARP_LINE) $(YDATA) $(NDATA) iso3166.tab \
+			zone.tab leapseconds $(LEAP_DEPS) yearistype.sh && \
+		test $$(grep -Ecv $(SAFE_SHARP_LINE) Makefile) -eq 1 && \
+		! grep -Env $(NONSYM_LINE) README NEWS Theory $(MANS) date.1 \
+			zone1970.tab && \
+		! grep -Env $(VALID_LINE) $(ENCHILADA)
 
-check_tables:	checktab.awk $(PRIMARY_YDATA)
-		$(AWK) -f checktab.awk $(PRIMARY_YDATA)
+check_tables:	checktab.awk $(PRIMARY_YDATA) $(ZONETABLES)
+		for tab in $(ZONETABLES); do \
+		  $(AWK) -f checktab.awk -v zone_table=$$tab $(PRIMARY_YDATA) \
+		    || exit; \
+		done
 
 check_web:	$(WEB_PAGES)
 		$(VALIDATE_ENV) $(VALIDATE) $(VALIDATE_FLAGS) $(WEB_PAGES)
@@ -517,7 +547,7 @@ check_public:	$(ENCHILADA)
 # Check that the code works under various alternative
 # implementations of time_t.
 check_time_t_alternatives:
-		zones=`$(AWK) '/^[^#]/ { print $$3 }' <zone.tab` && \
+		zones=`$(AWK) '/^[^#]/ { print $$3 }' <zone1970.tab` && \
 		for type in $(TIME_T_ALTERNATIVES); do \
 		  mkdir -p tzpublic/$$type && \
 		  make clean_misc && \
@@ -586,3 +616,10 @@ zdump.o:	version.h
 zic.o:		private.h tzfile.h version.h
 
 .KEEP_STATE:
+
+.PHONY: ALL INSTALL all
+.PHONY: check check_character_set check_public check_tables
+.PHONY: check_time_t_alternatives check_web clean clean_misc
+.PHONY: install maintainer-clean names posix_only posix_right
+.PHONY: public right_only right_posix signatures tarballs typecheck
+.PHONY: zonenames zones

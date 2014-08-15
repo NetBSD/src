@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.33 2014/05/13 16:33:56 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.34 2014/08/15 11:04:07 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.33 2014/05/13 16:33:56 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.34 2014/08/15 11:04:07 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -27,10 +27,6 @@ __RCSID("$NetBSD: zdump.c,v 1.33 2014/05/13 16:33:56 christos Exp $");
 #include "time.h"	/* for struct tm */
 #include "stdlib.h"	/* for exit, malloc, atoi */
 #include <err.h>
-#include "ctype.h"	/* for isalpha et al. */
-#ifndef isascii
-#define isascii(x) 1
-#endif /* !defined isascii */
 
 /*
 ** Substitutes for pre-C99 compilers.
@@ -170,16 +166,6 @@ enum { SECSPER400YEARS_FITS = SECSPERLYEAR <= INTMAX_MAX / 400 };
 #include "libintl.h"
 #endif /* HAVE_GETTEXT */
 
-#ifndef GNUC_or_lint
-#ifdef lint
-#define GNUC_or_lint
-#else /* !defined lint */
-#ifdef __GNUC__
-#define GNUC_or_lint
-#endif /* defined __GNUC__ */
-#endif /* !defined lint */
-#endif /* !defined GNUC_or_lint */
-
 #ifndef ATTRIBUTE_PURE
 #if 2 < __GNUC__ || (__GNUC__ == 2 && 96 <= __GNUC_MINOR__)
 # define ATTRIBUTE_PURE __attribute__ ((ATTRIBUTE_PURE__))
@@ -198,7 +184,7 @@ enum { SECSPER400YEARS_FITS = SECSPERLYEAR <= INTMAX_MAX / 400 };
 
 /*
 ** For the benefit of GNU folk...
-** `_(MSGID)' uses the current locale's message library string for MSGID.
+** '_(MSGID)' uses the current locale's message library string for MSGID.
 ** The default is to use gettext if available, and use MSGID otherwise.
 */
 
@@ -210,9 +196,9 @@ enum { SECSPER400YEARS_FITS = SECSPERLYEAR <= INTMAX_MAX / 400 };
 #endif /* !HAVE_GETTEXT */
 #endif /* !defined _ */
 
-#ifndef TZ_DOMAIN
-#define TZ_DOMAIN "tz"
-#endif /* !defined TZ_DOMAIN */
+#if !defined TZ_DOMAIN && defined HAVE_GETTEXT
+# define TZ_DOMAIN "tz"
+#endif
 
 extern char **	environ;
 extern int	getopt(int argc, char * const argv[],
@@ -241,6 +227,25 @@ static time_t	hunt(char * name, time_t lot, time_t	hit);
 static void	show(char * zone, time_t t, int v);
 static const char *	tformat(void);
 static time_t	yeartot(long y) ATTRIBUTE_PURE;
+
+/* Is A an alphabetic character in the C locale?  */
+static int
+is_alpha(char a)
+{
+	switch (a) {
+	  default:
+		return 0;
+	  case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
+	  case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N':
+	  case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U':
+	  case 'V': case 'W': case 'X': case 'Y': case 'Z':
+	  case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
+	  case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
+	  case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
+	  case 'v': case 'w': case 'x': case 'y': case 'z':
+	  	return 1;
+	}
+}
 
 #ifndef TYPECHECK
 #define my_localtime	localtime
@@ -288,7 +293,7 @@ abbrok(const char *const abbrp, const char *const zone)
 		return;
 	cp = abbrp;
 	wp = NULL;
-	while (isascii((unsigned char) *cp) && isalpha((unsigned char) *cp))
+	while (is_alpha(*cp))
 		++cp;
 	if (cp - abbrp == 0)
 		wp = _("lacks alphabetic at start");
@@ -298,10 +303,9 @@ abbrok(const char *const abbrp, const char *const zone)
 		wp = _("has more than 6 alphabetics");
 	if (wp == NULL && (*cp == '+' || *cp == '-')) {
 		++cp;
-		if (isascii((unsigned char) *cp) &&
-			isdigit((unsigned char) *cp))
-				if (*cp++ == '1' && *cp >= '0' && *cp <= '4')
-					++cp;
+		if ('0' <= *cp && *cp <= '9')
+			if (*cp++ == '1' && '0' <= *cp && *cp <= '4')
+				cp++;
 		if (*cp != '\0')
 			wp = _("differs from POSIX standard");
 	}
