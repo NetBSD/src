@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.7 2014/08/06 13:52:06 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.7.2.1 2014/08/15 11:11:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -200,7 +200,7 @@ pci_read_config_word(struct pci_dev *pdev, int reg, uint16_t *valuep)
 {
 	KASSERT(!ISSET(reg, 1));
 	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
-	    (reg &~ 3)) >> (8 * (reg & 3));
+	    (reg &~ 2)) >> (8 * (reg & 2));
 	return 0;
 }
 
@@ -208,7 +208,7 @@ static inline int
 pci_read_config_byte(struct pci_dev *pdev, int reg, uint8_t *valuep)
 {
 	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
-	    (reg &~ 1)) >> (8 * (reg & 1));
+	    (reg &~ 3)) >> (8 * (reg & 3));
 	return 0;
 }
 
