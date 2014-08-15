@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.154 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.154.2.1 2014/08/15 13:00:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.154 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.154.2.1 2014/08/15 13:00:48 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -1200,7 +1200,6 @@ kprintf(const char *fmt0, int oflags, void *vp, char *sbuf, va_list ap)
 	const char *xdigs;	/* digits for [xX] conversion */
 	char bf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
 	char *tailp;		/* tail pointer for snprintf */
-	struct timespec ts;
 
 	if (oflags == TOBUFONLY && (vp != NULL))
 		tailp = *(char **)vp;
@@ -1549,9 +1548,12 @@ done:
 		*(char **)vp = sbuf;
 	(*v_flush)();
 
-	(void)nanotime(&ts);
 #ifdef RND_PRINTF
-	SHA512_Update(&kprnd_sha, (char *)&ts, sizeof(ts));
+	if (!cold) {
+		struct timespec ts;
+		(void)nanotime(&ts);
+		SHA512_Update(&kprnd_sha, (char *)&ts, sizeof(ts));
+	}
 #endif
 	return ret;
 }
