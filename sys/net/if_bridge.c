@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.90 2014/07/23 05:32:23 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.91 2014/08/15 15:32:24 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.90 2014/07/23 05:32:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91 2014/08/15 15:32:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -798,6 +798,10 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		return (EBUSY);
 
 	if (ifs->if_input != ether_input)
+		return EINVAL;
+
+	/* FIXME: doesn't work with non-IFF_SIMPLEX interfaces */
+	if ((ifs->if_flags & IFF_SIMPLEX) == 0)
 		return EINVAL;
 
 	bif = malloc(sizeof(*bif), M_DEVBUF, M_NOWAIT);
