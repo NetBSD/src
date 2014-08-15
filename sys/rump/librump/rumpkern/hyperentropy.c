@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperentropy.c,v 1.3 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: hyperentropy.c,v 1.4 2014/08/15 15:04:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.3 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.4 2014/08/15 15:04:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -37,10 +37,12 @@ __KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.3 2014/08/10 16:44:36 tls Exp $")
 #include "rump_private.h"
 
 static krndsource_t rndsrc;
+static volatile unsigned hyperentropy_wanted;
+static void *feedrandom_softint;
 
 #define MAXGET (RND_POOLBITS/NBBY)
 static void
-feedrandom(size_t bytes, void *arg)
+feedrandom(size_t bytes)
 {
 	uint8_t *rnddata;
 	size_t dsize;
@@ -52,18 +54,42 @@ feedrandom(size_t bytes, void *arg)
 	kmem_intr_free(rnddata, MAXGET);
 }
 
+static void
+feedrandom_intr(void *cookie __unused)
+{
+
+	feedrandom(atomic_swap_uint(&hyperentropy_wanted, 0));
+}
+
+static void
+feedrandom_cb(size_t bytes, void *cookie __unused)
+{
+	unsigned old, new;
+
+	do {
+		old = hyperentropy_wanted;
+		new = ((MAXGET - old) < bytes? MAXGET : (old + bytes));
+	} while (atomic_cas_uint(&hyperentropy_wanted, old, new) != old);
+
+	softint_schedule(feedrandom_softint);
+}
+
 void
 rump_hyperentropy_init(void)
 {
 
 	if (rump_threads) {
-		rndsource_setcb(&rndsrc, feedrandom, &rndsrc);
+		feedrandom_softint =
+		    softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
+			feedrandom_intr, NULL);
+		KASSERT(feedrandom_softint != NULL);
+		rndsource_setcb(&rndsrc, feedrandom_cb, &rndsrc);
 		rnd_attach_source(&rndsrc, "rump_hyperent", RND_TYPE_VM,
 		    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
 	} else {
 		/* without threads, just fill the pool */
 		rnd_attach_source(&rndsrc, "rump_hyperent", RND_TYPE_VM,
 		    RND_FLAG_COLLECT_VALUE);
-		feedrandom(RND_POOLBITS/NBBY, NULL);
+		feedrandom(MAXGET);
 	}
 }
