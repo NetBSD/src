@@ -46,6 +46,13 @@ along with GCC; see the file COPYING3.  If not see
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "long int"
 
+/* we keep these "long" on both 32bit and 64bit targets */
+#undef INTPTR_TYPE
+#define INTPTR_TYPE PTRDIFF_TYPE
+
+#undef UINTPTR_TYPE
+#define UINTPTR_TYPE SIZE_TYPE
+
 /* This is the char to use for continuation (in case we need to turn
    continuation back on).  */
 #undef DBX_CONTIN_CHAR
