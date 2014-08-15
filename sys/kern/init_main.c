@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.458 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: init_main.c,v 1.458.2.1 2014/08/15 12:58:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.458 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.458.2.1 2014/08/15 12:58:45 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -501,8 +501,6 @@ main(void)
 	kern_cprng = cprng_strong_create("kernel", IPL_VM,
 					 CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
 
-	cprng_fast_init();
-					 
 	/* Initialize interfaces. */
 	ifinit1();
 
@@ -513,6 +511,9 @@ main(void)
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
+
+	/* Once all CPUs are detected, initialize the per-CPU cprng_fast.  */
+	cprng_fast_init();
 
 	ssp_init();
 
