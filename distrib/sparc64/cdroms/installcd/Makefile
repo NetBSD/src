@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2014/07/26 19:34:08 dholland Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2014/08/15 10:23:22 martin Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 
@@ -38,6 +38,9 @@ CDRUNTIME+=	./usr/bin/tip
 CDRUNTIME+=	./usr/bin/tput
 CDRUNTIME+=	./usr/bin/vi
 CDRUNTIME+=	./usr/bin/vmstat
+.if ${MKBSDTAR} != "no"
+CDRUNTIME+=	./usr/lib/libarchive.so*
+.endif
 CDRUNTIME+=	./usr/lib/libbz2.so*
 CDRUNTIME+=	./usr/lib/libc.so*
 CDRUNTIME+=	./usr/lib/libcurses.so*

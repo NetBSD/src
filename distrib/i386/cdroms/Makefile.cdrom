@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.30 2014/07/26 19:34:08 dholland Exp $
+# $NetBSD: Makefile.cdrom,v 1.30.2.1 2014/08/15 10:23:22 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -37,6 +37,9 @@ CDRUNTIME+=	./usr/bin/tip
 CDRUNTIME+=	./usr/bin/tput
 CDRUNTIME+=	./usr/bin/vi
 CDRUNTIME+=	./usr/bin/vmstat
+.if ${MKBSDTAR} != "no"
+CDRUNTIME+=	./usr/lib/libarchive.so*
+.endif
 CDRUNTIME+=	./usr/lib/libbz2.so*
 CDRUNTIME+=	./usr/lib/libc.so*
 CDRUNTIME+=	./usr/lib/libcurses.so*
