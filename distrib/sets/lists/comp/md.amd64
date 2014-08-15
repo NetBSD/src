@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.155.2.7.2.1 2014/04/08 11:44:29 msaitoh Exp $
+# $NetBSD: md.amd64,v 1.155.2.7.2.2 2014/08/15 08:25:12 msaitoh Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1063,7 +1063,7 @@
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libcrypt.so.1.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libcrypto.so.8.2.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libcrypto.so.8.3.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libcurses.so.7.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdes.so.8.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdevmapper.so.1.0.debug	comp-compat-shlib	compat,pic,lvm,debug
@@ -1159,7 +1159,7 @@
 ./usr/libdata/debug/usr/lib/i386/libsqlite3.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libssh.so.18.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libssl.so.10.3.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libssl.so.10.4.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.1.0.debug	comp-compat-shlib	compat,pic,debug

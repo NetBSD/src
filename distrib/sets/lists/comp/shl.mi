@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.209.2.12.2.2 2014/04/16 05:20:32 msaitoh Exp $
+# $NetBSD: shl.mi,v 1.209.2.12.2.3 2014/08/15 08:25:12 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -259,7 +259,7 @@
 ./usr/libdata/debug/usr/lib/libc.so.12.181.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcom_err.so.7.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libcrypto.so.8.2.debug	comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libcrypto.so.8.3.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug
 ./usr/libdata/debug/usr/lib/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug
 ./usr/libdata/debug/usr/lib/libcurses.so.7.0.debug	comp-sys-debug	debug
@@ -417,7 +417,7 @@
 ./usr/libdata/debug/usr/lib/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libssh.so.18.0.debug	comp-secsh-debug	crypto,debug
-./usr/libdata/debug/usr/lib/libssl.so.10.3.debug		comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libssl.so.10.4.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug
