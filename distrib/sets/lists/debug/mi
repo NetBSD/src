@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.81 2014/08/09 11:33:53 apb Exp $
+# $NetBSD: mi,v 1.81.2.1 2014/08/15 12:26:56 martin Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -251,6 +251,7 @@
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chmod.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/cp.debug		comp-util-debug		debug
+./usr/libdata/debug/bin/cpio.debug		comp-util-debug		debug,bsdtar
 ./usr/libdata/debug/bin/csh.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/date.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/dd.debug		comp-util-debug		debug
@@ -280,6 +281,7 @@
 ./usr/libdata/debug/bin/stty.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/sync.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/systrace.debug		comp-obsolete		obsolete
+./usr/libdata/debug/bin/tar.debug		comp-util-debug		debug,bsdtar
 ./usr/libdata/debug/bin/test.debug		comp-util-debug		debug
 ./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/amrctl.debug		comp-sysutil-debug	debug
