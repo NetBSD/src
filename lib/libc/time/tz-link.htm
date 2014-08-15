@@ -5,10 +5,10 @@
 <head>
 <title>Sources for Time Zone and Daylight Saving Time Data</title>
 <link rel="schema.DC" href="http://purl.org/DC/elements/1.1/">
-<meta http-equiv="Content-type" content='text/html; charset="US-ASCII"'>
+<meta http-equiv="Content-type" content='text/html; charset="UTF-8"'>
 <meta name="DC.Creator" content="Eggert, Paul">
 <meta name="DC.Contributor" content="Olson, Arthur David">
-<meta name="DC.Date" content="2014-06-04">
+<meta name="DC.Date" content="2014-08-05">
 <meta name="DC.Description"
  content="Sources of information about time zones and daylight saving time">
 <meta name="DC.Identifier"
@@ -247,7 +247,8 @@ General Public License (<abbr
 title="General Public License">GPL</abbr>)</a>.</li>
 <li><a href="http://sourceforge.net/projects/tzical">tziCal &ndash; tz
 database conversion utility</a> is like Vzic, except for the <a
-href="http://msdn.microsoft.com/netframework">.NET framework</a>.</li>
+href="http://msdn.microsoft.com/netframework">.NET framework</a>
+and with a <abbr>BSD</abbr>-style license.</li>
 <li><a
 href="http://search.cpan.org/dist/DateTime-TimeZone/">DateTime::TimeZone</a>
 contains a script <code>parse_olson</code> that compiles
@@ -268,7 +269,7 @@ and from <abbr title="Common Locale Data Repository">CLDR</abbr> data
 into an <abbr>ICU</abbr>-specific format.
 <abbr>ICU</abbr> is freely available under a
 <abbr>BSD</abbr>-style license.</li>
-<li><a href="http://www.joda.org/joda-time/">Joda Time &ndash; Java date
+<li><a href="http://www.joda.org/joda-time/">Joda-Time &ndash; Java date
 and time <abbr title="Application Program Interface">API</abbr></a>
 contains a class
 <code>org.joda.time.tz.ZoneInfoCompiler</code> that compiles
@@ -280,11 +281,21 @@ are similar to Joda Time, but for the .NET framework instead of
 Java. They are freely available under the
 <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License</a>
 and a <abbr>BSD</abbr>-style license, respectively.</li>
-<li><a href="https://github.com/mde/timezone-js">TimezoneJS.Date</a>
-is a <a href="http://en.wikipedia.org/wiki/JavaScript">JavaScript</a>
-library that parses <code><abbr>tz</abbr></code> source files and interprets time
-stamps using an API that is upward compatible with standard JavaScript
+<li><a href="http://en.wikipedia.org/wiki/JavaScript">JavaScript</a>-based
+compilers and libraries include:
+<ul>
+<li><a href="http://momentjs.com/timezone/">Moment Timezone</a> is a
+plugin for the <a href="http://momentjs.com/">Moment.js</a> date
+manipulation library. It is freely available under
+the <abbr title="Massachusetts Institute of Technology">MIT</abbr>
+license.</li>
+<li><a href="https://github.com/mde/timezone-js">TimezoneJS.Date</a>'s
+<abbr>API</abbr> is upward compatible with standard JavaScript
 Dates. It is freely available under the Apache License.</li>
+<li><a href="https://github.com/sproutsocial/walltime-js">Walltime-js</a>
+translates UTC to local time. It is freely available under the <abbr>MIT</abbr>
+license.</li>
+</ul>
 <li><a href="http://pytz.sourceforge.net">pytz &ndash; World Timezone
 Definitions for Python</a> compiles <code><abbr>tz</abbr></code> source into
 <a href="http://python.org/">Python</a>.
@@ -293,8 +304,7 @@ It is freely available under a <abbr>BSD</abbr>-style license.</li>
 Ruby Timezone Library</a>
 compiles <code><abbr>tz</abbr></code> source into
 <a href="http://www.ruby-lang.org/en/">Ruby</a>.
-It is freely available under the <abbr
-title="Massachusetts Institute of Technology">MIT</abbr> license.</li>
+It is freely available under the <abbr>MIT</abbr> license.</li>
 <li>The <a href="http://www.squeaksource.com/Chronos/">Chronos Date/Time
 Library</a> is
 a <a href="http://en.wikipedia.org/wiki/Smalltalk">Smalltalk</a> class
@@ -302,7 +312,7 @@ library that compiles <code><abbr>tz</abbr></code> source into a time
 zone repository whose format
 is either proprietary or an <abbr>XML</abbr>-encoded
 representation.</li>
-<li>Starting with version 8.5, <a href="http://tcl.tk/">Tcl</a>
+<li><a href="http://tcl.tk/">Tcl</a>
 contains a developer-oriented parser that compiles <code><abbr>tz</abbr></code>
 source into text files, along with a runtime that can read those
 files. Tcl is freely available under a <abbr>BSD</abbr>-style
@@ -327,6 +337,9 @@ It is freely available under the <abbr>LGPL</abbr>.</li>
 <li><a href="http://bmsi.com/java/#TZ">ZoneInfo.java</a>
 is a <code><abbr>tz</abbr></code> binary file reader written in Java.
 It is freely available under the <abbr>LGPL</abbr>.</li>
+<li><a href="https://github.com/bigeasy/timezone">Timezone</a> is a
+JavaScript library that supports date arithmetic that is time zone
+aware. It is freely available under the <abbr>MIT</abbr> license.</li>
 <li>Tcl, mentioned above, also contains a
 <code><abbr>tz</abbr></code> binary file reader.</li>
 <li><a href="http://search.cpan.org/perldoc?DateTime::TimeZone::Tzfile">
@@ -344,7 +357,8 @@ are not supported.</li>
 <li>The <a
 href="http://hackage.haskell.org/package/timezone-olson">timezone-olson</a>
 package contains <a href="http://haskell.org">Haskell</a> code that
-parses and uses <code><abbr>tz</abbr></code> binary data.</li>
+parses and uses <code><abbr>tz</abbr></code> binary data. It is freely
+available under a BSD-style license.</li>
 </ul>
 <h2>Other <code><abbr>tz</abbr></code>-based time zone software</h2>
 <ul>
@@ -358,6 +372,10 @@ href="http://mozilla.com/thunderbird">Thunderbird</a>.
 It displays multiple clocks in the application window, and has a mapping
 interface to <a href="http://earth.google.com/">Google Earth</a>.
 It is freely available under the <abbr>GPL</abbr>.</li>
+<li><a href="http://golang.org/">Go programming language</a>
+implementations contain a copy of a 32-bit subset of a recent
+<code><abbr>tz</abbr></code> database in a
+Go-specific format.</li>
 <li><a
 href="http://users.skynet.be/Peter.Verthez/projects/intclock/">International
 clock (intclock)</a> is a multi-timezone clock for
@@ -365,8 +383,8 @@ clock (intclock)</a> is a multi-timezone clock for
 under the <abbr>GPL</abbr>.</li>
 <li><a
 href="http://www.oracle.com/us/technologies/java/overview/index.html">Oracle
-Java</a> releases since 1.4
-contain a copy of a subset of a recent <code><abbr>tz</abbr></code> database in a
+Java</a> contains a copy of a subset of a recent
+<code><abbr>tz</abbr></code> database in a
 Java-specific format.</li>
 <li><a href="http://kimmo.suominen.com/sw/timezone/">Time Zone</a> is
 a <a href="http://wordpress.org/">WordPress</a> plugin. It is freely
@@ -377,7 +395,7 @@ download, compile and use the <code>tzdata<var>D</var>.tar.gz</code>
 files as they are released. The Basic version is free.</li>
 <li><a
 href="http://veladg.com/velaterra.html">VelaTerra</a> is
-a Mac <abbr>OS X</abbr> program. Its developers
+an <abbr>OS X</abbr> program. Its developers
 <a href="http://veladg.com/tzoffer.html">offer free
 licenses</a> to <code><abbr>tz</abbr></code> contributors.</li>
 </ul>
@@ -397,9 +415,7 @@ href="http://astrocom.com/">Astro Computing Services</a>.</li>
 is another time zone database.</li>
 <li><a href="http://tycho.usno.navy.mil/tzones.html">World Time Zones</a>
 contains data from the Time Service Department of the
-<abbr>US</abbr> Naval Observatory, used as the source
-for the <code><abbr>usno</abbr>*</code> files in
-the <code><abbr>tz</abbr></code> distribution.</li>
+<abbr>US</abbr> Naval Observatory.</li>
 <li>The <a href="http://www.iata.org/publications/Pages/ssim.aspx">Standard
 Schedules Information Manual</a> of the
 <a href="http://iata.org/">International Air Transport
@@ -422,7 +438,7 @@ title="Central Intelligence Agency">CIA</abbr>)</a> publishes a <a
 href="https://www.cia.gov/library/publications/the-world-factbook/graphics/ref_maps/physical/pdf/standard_time_zones_of_the_world.pdf">time
 zone map</a>; the
 <a
-href="http://www.lib.utexas.edu/maps/world.html">Perry-Casta&ntilde;eda
+href="http://www.lib.utexas.edu/maps/world.html">Perry&ndash;Casta&ntilde;eda
 Library Map Collection</a>
 of the University of Texas at Austin has copies of
 recent editions.
@@ -446,6 +462,9 @@ where the two differ greatly.</li>
 maps</a> contains <a
 href="http://en.wikipedia.org/wiki/Shapefile">shapefiles</a> of
 sets of <code><abbr>tz</abbr></code> regions.</li>
+<li>The <a href="https://github.com/bradfitz/latlong">latlong package</a>
+maps geographical coordinates to a <code><abbr>tz</abbr></code> region.
+It is written in Go and is freely available under the Apache License.</li>
 <li><a href="http://derickrethans.nl/what-time-is-it.html">What Time
 is It Here?</a> applies <a href="http://www.mongodb.org/">MongoDB</a>
 geospatial query operators to shapefiles' data.</li>
@@ -612,7 +631,8 @@ Scales</a> goes into more detail, particularly for historical variants.</li>
 title="International Astronomical Union">IAU</abbr></a>'s <a
 href="http://www.iausofa.org/"><abbr
 title="Standards Of Fundamental Astronomy">SOFA</abbr></a>
-initiative publishes C and Fortran
+collection contains C and <a
+href="http://en.wikipedia.org/wiki/Fortran">Fortran</a>
 code for converting among time scales like
 <abbr title="International Atomic Time">TAI</abbr>,
 <abbr>TDB</abbr>, <abbr>TDT</abbr> and
@@ -679,7 +699,7 @@ Schema: Datatypes &ndash; dateTime</a> specifies a format inspired by
 <a href="http://tools.ietf.org/html/rfc5322">Internet
 Message Format</a> (Internet <abbr>RFC</abbr> 5322) &sect;3.3
 specifies the time notation used in email and <a
-href="http://tools.ietf.org/html/rfc2616"><abbr>HTTP</abbr></a>
+href="http://www.w3.org/Protocols/"><abbr>HTTP</abbr></a>
 headers.</li>
 <li>
 <a href="http://tools.ietf.org/html/rfc3339">Date and Time
@@ -697,12 +717,12 @@ Best of Dates, the Worst of Dates</a> covers many problems encountered
 by software developers when handling dates and time stamps.</li>
 <li>Alphabetic time zone abbreviations should not be used as unique
 identifiers for <abbr>UTC</abbr> offsets as they are ambiguous in
-practice. For example, "<abbr>EST</abbr>" denotes 5 hours behind
-<abbr>UTC</abbr> in English-speaking North America, but it denotes 10
-or 11 hours ahead of <abbr>UTC</abbr> in Australia; and
-French-speaking North Americans prefer
-"<abbr title="Heure Normale de l'Est">HNE</abbr>" to
-"<abbr>EST</abbr>". For <abbr>POSIX</abbr> the <code><abbr>tz</abbr></code>
+practice. For example, in English-speaking North America
+"<abbr>CST</abbr>" denotes 6 hours behind <abbr>UTC</abbr>,
+but in China it denotes 8 hours ahead of <abbr>UTC</abbr>,
+and French-speaking North Americans prefer
+"<abbr title="Heure Normale du Centre">HNC</abbr>" to
+"<abbr>CST</abbr>". For <abbr>POSIX</abbr> the <code><abbr>tz</abbr></code>
 database contains English abbreviations for all time stamps but in
 many cases these are merely inventions of the database
 maintainers.</li>

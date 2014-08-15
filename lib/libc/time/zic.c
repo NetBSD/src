@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.46 2014/05/28 19:13:27 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.47 2014/08/15 11:04:07 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.46 2014/05/28 19:13:27 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.47 2014/08/15 11:04:07 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -34,25 +34,12 @@ typedef int_fast64_t	zic_t;
 #endif /* !defined ZIC_MAX_ABBR_LEN_WO_WARN */
 
 #if HAVE_SYS_STAT_H
-#include "sys/stat.h"
+#include <sys/stat.h>
 #endif
 #ifdef S_IRUSR
 #define MKDIR_UMASK (S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 #else
 #define MKDIR_UMASK 0755
-#endif
-
-/*
-** On some ancient hosts, predicates like `isspace(C)' are defined
-** only if isascii(C) || C == EOF. Modern hosts obey the C Standard,
-** which says they are defined only if C == ((unsigned char) C) || C == EOF.
-** Neither the C Standard nor Posix require that `isascii' exist.
-** For portability, we check both ancient and modern requirements.
-** If isascii is not defined, the isascii check succeeds trivially.
-*/
-#include "ctype.h"
-#ifndef isascii
-#define isascii(x) 1
 #endif
 
 #define end(cp)	(strchr((cp), '\0'))
@@ -133,7 +120,7 @@ static void	adjleap(void);
 static void	associate(void);
 static void	dolink(const char * fromfield, const char * tofield);
 static char **	getfields(char * buf);
-static zic_t	gethms(const char * string, const char * errstrng,
+static zic_t	gethms(const char * string, const char * errstring,
 			int signable);
 static void	infile(const char * filename);
 static void	inleap(char ** fields, int nfields);
@@ -143,7 +130,8 @@ static int	inzcont(char ** fields, int nfields);
 static int	inzone(char ** fields, int nfields);
 static int	inzsub(char ** fields, int nfields, int iscont);
 static int	itsdir(const char * name);
-static int	lowerit(int c);
+static int	is_alpha(char a);
+static char	lowerit(char);
 static int	mkdirs(char * filename);
 static void	newabbr(const char * abbr);
 static zic_t	oadd(zic_t t1, zic_t t2);
@@ -636,11 +624,71 @@ _("%s: More than one -L option specified\n"),
 }
 
 static void
+componentcheck(char const *name, char const *component,
+	       char const *component_end)
+{
+	enum { component_len_max = 14 };
+	size_t component_len = component_end - component;
+	if (0 < component_len && component_len <= 2
+	    && component[0] == '.' && component_end[-1] == '.') {
+		fprintf(stderr, _("%s: file name '%s' contains"
+				  " '%.*s' component"),
+			progname, name, (int) component_len, component);
+		exit(EXIT_FAILURE);
+	}
+	if (!noise)
+		return;
+	if (0 < component_len && component[0] == '-')
+		warning(_("file name '%s' component contains leading '-'"),
+			name);
+	if (component_len_max < component_len)
+		warning(_("file name '%s' contains overlength component"
+			  " '%.*s...'"),
+			name, component_len_max, component);
+}
+
+static void
+namecheck(const char *name)
+{
+	char const *cp;
+
+	/* Benign characters in a portable file name.  */
+	static char const benign[] =
+	  "-/_"
+	  "abcdefghijklmnopqrstuvwxyz"
+	  "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+	/* Non-control chars in the POSIX portable character set,
+	   excluding the benign characters.  */
+	static char const printable_and_not_benign[] =
+	  " !\"#$%&'()*+,.0123456789:;<=>?@[\\]^`{|}~";
+
+	char const *component = name;
+	for (cp = name; *cp; cp++) {
+		unsigned char c = *cp;
+		if (noise && !strchr(benign, c)) {
+			warning((strchr(printable_and_not_benign, c)
+				 ? _("file name '%s' contains byte '%c'")
+				 : _("file name '%s' contains byte '\\%o'")),
+				name, c);
+			return;
+		}
+		if (c == '/') {
+			componentcheck(name, component, cp);
+			component = cp + 1;
+		}
+	}
+	componentcheck(name, component, cp);
+}
+
+static void
 dolink(const char *const fromfield, const char *const tofield)
 {
 	char *	fromname;
 	char *	toname;
+	int fromisdir;
 
+	namecheck(tofield);
 	if (fromfield[0] == '/')
 		fromname = ecpyalloc(fromfield);
 	else {
@@ -659,10 +707,16 @@ dolink(const char *const fromfield, const char *const tofield)
 	** We get to be careful here since
 	** there's a fair chance of root running us.
 	*/
-	if (!itsdir(toname))
+	fromisdir = itsdir(fromname);
+	if (fromisdir) {
+		int err = fromisdir < 0 ? errno : EPERM;
+		fprintf(stderr, _("%s: link from %s failed: %s"),
+			progname, fromname, strerror(err));
+		exit(EXIT_FAILURE);
+	}
+	if (itsdir(toname) <= 0)
 		(void) remove(toname);
-	if (link(fromname, toname) != 0
-	    && access(fromname, F_OK) == 0 && !itsdir(fromname)) {
+	if (link(fromname, toname) != 0) {
 		int	result;
 
 		if (mkdirs(toname) != 0)
@@ -767,17 +821,24 @@ static const zic_t max_time = -1 - ((zic_t) -1 << (TIME_T_BITS_IN_FILE - 1));
 
 static const zic_t big_bang_time = BIG_BANG;
 
+/* Return 1 if NAME is a directory, 0 if it's something else, -1 if trouble.  */
 static int
 itsdir(const char *const name)
 {
-	char *	myname;
-	int	accres;
-
-	myname = ecpyalloc(name);
-	myname = ecatalloc(myname, "/.");
-	accres = access(myname, F_OK);
-	free(myname);
-	return accres == 0;
+	struct stat st;
+	int res = stat(name, &st);
+	if (res != 0)
+		return res;
+#ifdef S_ISDIR
+	return S_ISDIR(st.st_mode) != 0;
+#else
+	{
+		char *nameslashdot = ecatalloc(ecpyalloc(name), "/.");
+		res = stat(nameslashdot, &st);
+		free(nameslashdot);
+		return res == 0;
+	}
+#endif
 }
 
 /*
@@ -1505,6 +1566,7 @@ writezone(const char *const name, const char *const string, char version)
 	void *typesptr = ats + timecnt;
 	unsigned char *types = typesptr;
 
+	namecheck(name);
 	/*
 	** Sort.
 	*/
@@ -1572,7 +1634,7 @@ writezone(const char *const name, const char *const string, char version)
 		++timei32;
 	}
 	/*
-	** Output an INT32_MIN "transition" if appropriate--see below.
+	** Output an INT32_MIN "transition" if appropriate; see below.
 	*/
 	if (timei32 > 0 && ats[timei32] > INT32_MIN) {
 		--timei32;
@@ -1590,7 +1652,7 @@ writezone(const char *const name, const char *const string, char version)
 	/*
 	** Remove old file, if any, to snap links.
 	*/
-	if (!itsdir(fullname) && remove(fullname) != 0 && errno != ENOENT) {
+	if (itsdir(fullname) <= 0 && remove(fullname) != 0 && errno != ENOENT) {
 		const char *e = strerror(errno);
 
 		(void) fprintf(stderr, _("%s: Can't remove %s: %s\n"),
@@ -1750,7 +1812,7 @@ writezone(const char *const name, const char *const string, char version)
 			if (pass == 1)
 				/*
 				** Output an INT32_MIN "transition"
-				** if appropriate--see above.
+				** if appropriate; see above.
 				*/
 				puttzcode(((ats[i] < INT32_MIN) ?
 					INT32_MIN : ats[i]), fp);
@@ -1833,10 +1895,8 @@ doabbr(char *const abbr, const int abbrlen, const char *const format,
 	}
 	if (!doquotes)
 		return;
-	for (cp = abbr; *cp != '\0'; ++cp)
-		if (strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", *cp) == NULL &&
-			strchr("abcdefghijklmnopqrstuvwxyz", *cp) == NULL)
-				break;
+	for (cp = abbr; is_alpha(*cp); cp++)
+		continue;
 	len = strlen(abbr);
 	if (len > 0 && *cp == '\0')
 		return;
@@ -2116,6 +2176,7 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 	envvar = emalloc(max_envvar_len + 1);
 	INITIALIZE(untiltime);
 	INITIALIZE(starttime);
+	starttime = 0; /* XXX: gcc */
 	/*
 	** Now. . .finally. . .generate some useful data!
 	*/
@@ -2390,7 +2451,7 @@ error(_("can't determine time zone abbreviation to use just after until time"));
 		if (lastat->at < rpytime(&xr, max_year - 1)) {
 			/*
 			** Create new type code for the redundant entry,
-			** to prevent it being optimised away.
+			** to prevent it being optimized away.
 			*/
 			if (typecnt >= TZ_MAX_TYPES) {
 				error(_("too many local time types"));
@@ -2441,15 +2502,15 @@ addtype(const zic_t gmtoff, const char *const abbr, const int isdst,
 	int	i, j;
 
 	if (isdst != TRUE && isdst != FALSE) {
-		error(_("internal error - addtype called with bad isdst"));
+		error(_("internal error: addtype called with bad isdst"));
 		exit(EXIT_FAILURE);
 	}
 	if (ttisstd != TRUE && ttisstd != FALSE) {
-		error(_("internal error - addtype called with bad ttisstd"));
+		error(_("internal error: addtype called with bad ttisstd"));
 		exit(EXIT_FAILURE);
 	}
 	if (ttisgmt != TRUE && ttisgmt != FALSE) {
-		error(_("internal error - addtype called with bad ttisgmt"));
+		error(_("internal error: addtype called with bad ttisgmt"));
 		exit(EXIT_FAILURE);
 	}
 	/*
@@ -2559,11 +2620,54 @@ yearistype(const int year, const char *const type)
 		exit(EXIT_FAILURE);
 }
 
+/* Is A a space character in the C locale?  */
 static int
-lowerit(int a)
+is_space(char a)
 {
-	a = (unsigned char) a;
-	return (isascii(a) && isupper(a)) ? tolower(a) : a;
+	switch (a) {
+	  default:
+		return 0;
+	  case ' ': case '\f': case '\n': case '\r': case '\t': case '\v':
+	  	return 1;
+	}
+}
+
+/* Is A an alphabetic character in the C locale?  */
+static int
+is_alpha(char a)
+{
+	switch (a) {
+	  default:
+		return 0;
+	  case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
+	  case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N':
+	  case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U':
+	  case 'V': case 'W': case 'X': case 'Y': case 'Z':
+	  case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
+	  case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
+	  case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
+	  case 'v': case 'w': case 'x': case 'y': case 'z':
+	  	return 1;
+	}
+}
+
+/* If A is an uppercase character in the C locale, return its lowercase
+   counterpart.  Otherwise, return A.  */
+static char
+lowerit(char a)
+{
+	switch (a) {
+	  default: return a;
+	  case 'A': return 'a'; case 'B': return 'b'; case 'C': return 'c';
+	  case 'D': return 'd'; case 'E': return 'e'; case 'F': return 'f';
+	  case 'G': return 'g'; case 'H': return 'h'; case 'I': return 'i';
+	  case 'J': return 'j'; case 'K': return 'k'; case 'L': return 'l';
+	  case 'M': return 'm'; case 'N': return 'n'; case 'O': return 'o';
+	  case 'P': return 'p'; case 'Q': return 'q'; case 'R': return 'r';
+	  case 'S': return 's'; case 'T': return 't'; case 'U': return 'u';
+	  case 'V': return 'v'; case 'W': return 'w'; case 'X': return 'x';
+	  case 'Y': return 'y'; case 'Z': return 'z';
+	}
 }
 
 /* case-insensitive equality */
@@ -2629,8 +2733,7 @@ getfields(char *cp)
 	array = emalloc(size_product(strlen(cp) + 1, sizeof *array));
 	nsubs = 0;
 	for ( ; ; ) {
-		while (isascii((unsigned char) *cp) &&
-			isspace((unsigned char) *cp))
+		while (is_space(*cp))
 				++cp;
 		if (*cp == '\0' || *cp == '#')
 			break;
@@ -2647,9 +2750,8 @@ getfields(char *cp)
 						));
 					exit(1);
 				}
-		} while (*cp != '\0' && *cp != '#' &&
-			(!isascii(*cp) || !isspace((unsigned char) *cp)));
-		if (isascii(*cp) && isspace((unsigned char) *cp))
+		} while (*cp && *cp != '#' && !is_space(*cp));
+		if (is_space(*cp))
 			++cp;
 		*dp = '\0';
 	}
@@ -2682,8 +2784,8 @@ tadd(const zic_t t1, const zic_t t2)
 }
 
 /*
-** Given a rule, and a year, compute the date - in seconds since January 1,
-** 1970, 00:00 LOCAL time - in that year that the rule refers to.
+** Given a rule, and a year, compute the date (in seconds since January 1,
+** 1970, 00:00 LOCAL time) in that year that the rule refers to.
 */
 
 static zic_t
@@ -2755,7 +2857,7 @@ rpytime(const struct rule *const rp, const zic_t wantedy)
 			}
 		if (i < 0 || i >= len_months[isleap(y)][m]) {
 			if (noise)
-				warning(_("rule goes past start/end of month--\
+				warning(_("rule goes past start/end of month; \
 will not work with pre-2004 versions of zic"));
 		}
 	}
@@ -2782,8 +2884,7 @@ newabbr(const char *const string)
 		*/
 		cp = string;
 		mp = NULL;
-		while (isascii((unsigned char) *cp) &&
-			isalpha((unsigned char) *cp))
+		while (is_alpha(*cp))
 				++cp;
 		if (cp - string == 0)
 mp = _("time zone abbreviation lacks alphabetic at start");
@@ -2793,8 +2894,7 @@ mp = _("time zone abbreviation has fewer than 3 alphabetics");
 mp = _("time zone abbreviation has too many alphabetics");
 		if (mp == NULL && (*cp == '+' || *cp == '-')) {
 			++cp;
-			if (isascii((unsigned char) *cp) &&
-				isdigit((unsigned char) *cp))
+			if (is_digit(*cp))
 					if (*cp++ == '1' &&
 						*cp >= '0' && *cp <= '4')
 							++cp;
@@ -2828,29 +2928,25 @@ mkdirs(char *argname)
 		/*
 		** DOS drive specifier?
 		*/
-		if (isalpha((unsigned char) name[0]) &&
-			name[1] == ':' && name[2] == '\0') {
+		if (is_alpha(name[0]) && name[1] == ':' && name[2] == '\0') {
 				*cp = '/';
 				continue;
 		}
 #endif
-		if (!itsdir(name)) {
-			/*
-			** It doesn't seem to exist, so we try to create it.
-			** Creation may fail because of the directory being
-			** created by some other multiprocessor, so we get
-			** to do extra checking.
-			*/
-			if (mkdir(name, MKDIR_UMASK) != 0) {
-				const char *e = strerror(errno);
-
-				if (errno != EEXIST || !itsdir(name)) {
-					(void) fprintf(stderr,
-_("%s: Can't create directory %s: %s\n"),
-						progname, name, e);
-					free(name);
-					return -1;
-				}
+		/*
+		** Try to create it.  It's OK if creation fails because
+		** the directory already exists, perhaps because some
+		** other process just created it.
+		*/
+		if (mkdir(name, MKDIR_UMASK) != 0) {
+			int err = errno;
+			if (itsdir(name) <= 0) {
+				(void) fprintf(stderr,
+					       _("%s: Can't create directory"
+						 " %s: %s\n"),
+					       progname, name, strerror(err));
+				free(name);
+				return -1;
 			}
 		}
 		*cp = '/';
@@ -2858,7 +2954,3 @@ _("%s: Can't create directory %s: %s\n"),
 	free(name);
 	return 0;
 }
-
-/*
-** UNIX was a registered trademark of The Open Group in 2003.
-*/
