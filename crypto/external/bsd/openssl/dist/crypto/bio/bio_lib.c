@@ -132,7 +132,7 @@ int BIO_free(BIO *a)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, a, &a->ex_data);
 
-	if ((a->method == NULL) || (a->method->destroy == NULL)) return(1);
+	if ((a->method != NULL) && (a->method->destroy != NULL))
 	a->method->destroy(a);
 	OPENSSL_free(a);
 	return(1);
