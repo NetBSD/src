@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.111 2014/07/06 18:09:04 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.112 2014/08/15 13:32:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.111 2014/07/06 18:09:04 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.112 2014/08/15 13:32:53 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -338,7 +338,7 @@ rl_initialize(void)
 	el_set(e, EL_SIGNAL, rl_catch_signals);
 
 	/* set default mode to "emacs"-style and read setting afterwards */
-	/* so this can be overriden */
+	/* so this can be overridden */
 	el_set(e, EL_EDITOR, "emacs");
 	if (rl_terminal_name != NULL)
 		el_set(e, EL_TERMINAL, rl_terminal_name);
