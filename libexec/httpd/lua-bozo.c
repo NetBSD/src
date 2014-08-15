@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.10 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.11 2014/08/15 19:35:28 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -276,6 +276,7 @@ lua_url_decode(lua_State *L, char *s)
 			*q++ = *p;
 		}
 	}
+	*q = '\0';
 	lua_pushstring(L, val);
 	lua_setfield(L, -2, s);
 	free(val);
