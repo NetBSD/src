@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.5 2014/08/13 19:48:17 matt Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.6 2014/08/15 07:45:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,15 +57,12 @@
 #else
 #define	PRIdLEAST64	"lld"	/* int_least64_t	*/
 #endif
-#ifdef __arch64__
-#define	PRIdFAST8	"ld"	/* int_fast8_t		*/
-#define	PRIdFAST16	"ld"	/* int_fast16_t		*/
-#define	PRIdFAST32	"ld"	/* int_fast32_t		*/
-#define	PRIdFAST64	"ld"	/* int_fast64_t		*/
-#else
 #define	PRIdFAST8	"d"	/* int_fast8_t		*/
 #define	PRIdFAST16	"d"	/* int_fast16_t		*/
 #define	PRIdFAST32	"d"	/* int_fast32_t		*/
+#ifdef __arch64__
+#define	PRIdFAST64	"ld"	/* int_fast64_t		*/
+#else
 #define	PRIdFAST64	"lld"	/* int_fast64_t		*/
 #endif
 #ifdef __arch64__
@@ -91,15 +88,12 @@
 #else
 #define	PRIiLEAST64	"lli"	/* int_least64_t	*/
 #endif
-#ifdef __arch64__
-#define	PRIiFAST8	"li"	/* int_fast8_t		*/
-#define	PRIiFAST16	"li"	/* int_fast16_t		*/
-#define	PRIiFAST32	"li"	/* int_fast32_t		*/
-#define	PRIiFAST64	"li"	/* int_fast64_t		*/
-#else
 #define	PRIiFAST8	"i"	/* int_fast8_t		*/
 #define	PRIiFAST16	"i"	/* int_fast16_t		*/
 #define	PRIiFAST32	"i"	/* int_fast32_t		*/
+#ifdef __arch64__
+#define	PRIiFAST64	"li"	/* int_fast64_t		*/
+#else
 #define	PRIiFAST64	"lli"	/* int_fast64_t		*/
 #endif
 #ifdef __arch64__
@@ -253,15 +247,12 @@
 #else
 #define	SCNdLEAST64	"lld"	/* int_least64_t	*/
 #endif
-#ifdef __arch64__
-#define	SCNdFAST8	"ld"	/* int_fast8_t		*/
-#define	SCNdFAST16	"ld"	/* int_fast16_t		*/
-#define	SCNdFAST32	"ld"	/* int_fast32_t		*/
-#define	SCNdFAST64	"ld"	/* int_fast64_t		*/
-#else
 #define	SCNdFAST8	"d"	/* int_fast8_t		*/
 #define	SCNdFAST16	"d"	/* int_fast16_t		*/
 #define	SCNdFAST32	"d"	/* int_fast32_t		*/
+#ifdef __arch64__
+#define	SCNdFAST64	"ld"	/* int_fast64_t		*/
+#else
 #define	SCNdFAST64	"lld"	/* int_fast64_t		*/
 #endif
 #ifdef __arch64__
@@ -287,15 +278,12 @@
 #else
 #define	SCNiLEAST64	"lli"	/* int_least64_t	*/
 #endif
-#ifdef __arch64__
-#define	SCNiFAST8	"li"	/* int_fast8_t		*/
-#define	SCNiFAST16	"li"	/* int_fast16_t		*/
-#define	SCNiFAST32	"li"	/* int_fast32_t		*/
-#define	SCNiFAST64	"li"	/* int_fast64_t		*/
-#else
 #define	SCNiFAST8	"i"	/* int_fast8_t		*/
 #define	SCNiFAST16	"i"	/* int_fast16_t		*/
 #define	SCNiFAST32	"i"	/* int_fast32_t		*/
+#ifdef __arch64__
+#define	SCNiFAST64	"li"	/* int_fast64_t		*/
+#else
 #define	SCNiFAST64	"lli"	/* int_fast64_t		*/
 #endif
 #ifdef __arch64__
@@ -323,15 +311,12 @@
 #else
 #define	SCNoLEAST64	"llo"	/* uint_least64_t	*/
 #endif
-#ifdef __arch64__
-#define	SCNoFAST8	"hho"	/* uint_fast8_t		*/
-#define	SCNoFAST16	"ho"	/* uint_fast16_t	*/
-#define	SCNoFAST32	"o"	/* uint_fast32_t	*/
-#define	SCNoFAST64	"lo"	/* uint_fast64_t	*/
-#else
 #define	SCNoFAST8	"o"	/* uint_fast8_t		*/
 #define	SCNoFAST16	"o"	/* uint_fast16_t	*/
 #define	SCNoFAST32	"o"	/* uint_fast32_t	*/
+#ifdef __arch64__
+#define	SCNoFAST64	"lo"	/* uint_fast64_t	*/
+#else
 #define	SCNoFAST64	"llo"	/* uint_fast64_t	*/
 #endif
 #ifdef __arch64__
@@ -357,15 +342,12 @@
 #else
 #define	SCNuLEAST64	"llu"	/* uint_least64_t	*/
 #endif
-#ifdef __arch64__
-#define	SCNuFAST8	"hhu"	/* uint_fast8_t		*/
-#define	SCNuFAST16	"hu"	/* uint_fast16_t	*/
-#define	SCNuFAST32	"u"	/* uint_fast32_t	*/
-#define	SCNuFAST64	"lu"	/* uint_fast64_t	*/
-#else
 #define	SCNuFAST8	"u"	/* uint_fast8_t		*/
 #define	SCNuFAST16	"u"	/* uint_fast16_t	*/
 #define	SCNuFAST32	"u"	/* uint_fast32_t	*/
+#ifdef __arch64__
+#define	SCNuFAST64	"lu"	/* uint_fast64_t	*/
+#else
 #define	SCNuFAST64	"llu"	/* uint_fast64_t	*/
 #endif
 #ifdef __arch64__
@@ -391,15 +373,12 @@
 #else
 #define	SCNxLEAST64	"llx"	/* uint_least64_t	*/
 #endif
-#ifdef __arch64__
-#define	SCNxFAST8	"hhx"	/* uint_fast8_t		*/
-#define	SCNxFAST16	"hx"	/* uint_fast16_t	*/
-#define	SCNxFAST32	"x"	/* uint_fast32_t	*/
-#define	SCNxFAST64	"lx"	/* uint_fast64_t	*/
-#else
 #define	SCNxFAST8	"x"	/* uint_fast8_t		*/
 #define	SCNxFAST16	"x"	/* uint_fast16_t	*/
 #define	SCNxFAST32	"x"	/* uint_fast32_t	*/
+#ifdef __arch64__
+#define	SCNxFAST64	"lx"	/* uint_fast64_t	*/
+#else
 #define	SCNxFAST64	"llx"	/* uint_fast64_t	*/
 #endif
 #ifdef __arch64__
