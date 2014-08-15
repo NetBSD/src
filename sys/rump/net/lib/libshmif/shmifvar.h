@@ -1,4 +1,4 @@
-/*	$NetBSD: shmifvar.h,v 1.7 2013/12/20 09:06:35 pooka Exp $	*/
+/*	$NetBSD: shmifvar.h,v 1.8 2014/08/15 15:03:03 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -56,6 +56,8 @@ struct shmif_pkthdr {
 
 	uint32_t sp_sec;
 	uint32_t sp_usec;
+
+	uint64_t sp_sender;
 };
 
 #define BUSMEM_SIZE (1024*1024)
