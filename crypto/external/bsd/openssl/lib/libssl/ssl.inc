@@ -1,4 +1,4 @@
-#	$NetBSD: ssl.inc,v 1.3.4.3 2014/04/08 11:31:21 msaitoh Exp $
+#	$NetBSD: ssl.inc,v 1.3.4.4 2014/08/15 08:10:41 msaitoh Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -22,6 +22,6 @@ SRCS+=	s23_clnt.c s23_lib.c s23_meth.c s23_pkt.c s23_srvr.c
 SRCS+=	s3_both.c s3_cbc.c s3_clnt.c s3_enc.c s3_lib.c s3_meth.c s3_pkt.c \
 	s3_srvr.c
 SRCS+=	ssl_algs.c ssl_asn1.c ssl_cert.c ssl_ciph.c ssl_err.c ssl_err2.c \
-	ssl_lib.c ssl_rsa.c ssl_sess.c ssl_stat.c ssl_txt.c
+	ssl_lib.c ssl_rsa.c ssl_sess.c ssl_stat.c ssl_utst.c ssl_txt.c
 SRCS+=	t1_clnt.c t1_enc.c t1_lib.c t1_meth.c t1_reneg.c t1_srvr.c
 SRCS+=	tls_srp.c
