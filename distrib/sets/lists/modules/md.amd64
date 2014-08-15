@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.41 2014/08/11 05:19:16 jnemeth Exp $
+# $NetBSD: md.amd64,v 1.41.2.1 2014/08/15 12:53:54 martin Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -234,6 +234,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/coretemp/coretemp.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/crypto				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/crypto/crypto.kmod		base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/cyclic				base-kernel-modules	kmod,dtrace,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/cyclic/cyclic.kmod		base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/cx24227				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/cx24227/cx24227.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/cxdtv				base-kernel-modules	kmod,compatmodules
@@ -246,6 +248,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/dk_subr/dk_subr.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dm				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dm/dm.kmod			base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/dtrace				base-kernel-modules	kmod,dtrace,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/drm				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/drm/drm.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtv				base-kernel-modules	kmod,compatmodules
@@ -266,6 +270,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/exec_script/exec_script.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/ext2fs				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/ext2fs/ext2fs.kmod		base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/fbt				base-kernel-modules	kmod,dtrace,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/fbt/fbt.kmod			base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/fdesc				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/fdesc/fdesc.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/ffs				base-kernel-modules	kmod,compatmodules
@@ -404,6 +410,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/ppp_deflate/ppp_deflate.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/procfs				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/procfs/procfs.kmod		base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/profile				base-kernel-modules	kmod,dtrace,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/profile/profile.kmod		base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/ptyfs				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/ptyfs/ptyfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/puffs				base-kernel-modules	kmod,compatmodules
@@ -414,6 +422,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/pwdog/pwdog.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/scsiverbose			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/scsiverbose/scsiverbose.kmod		base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/sdt				base-kernel-modules	kmod,dtrace,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/sdt/sdt.kmod			base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/sdtemp				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/sdtemp/sdtemp.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/secmodel_bsd44			base-kernel-modules	kmod,compatmodules
