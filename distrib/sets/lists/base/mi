@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984.2.10.2.2 2014/05/21 21:22:39 bouyer Exp $
+# $NetBSD: mi,v 1.984.2.10.2.3 2014/08/15 23:37:04 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4520,6 +4520,7 @@
 ./usr/share/zoneinfo/Asia/Bishkek		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Brunei		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Calcutta		base-sys-share		share
+./usr/share/zoneinfo/Asia/Chita			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Choibalsan		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Chongqing		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Chungking		base-sys-share		share
@@ -4581,6 +4582,7 @@
 ./usr/share/zoneinfo/Asia/Seoul			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Shanghai		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Singapore		base-sys-share		share
+./usr/share/zoneinfo/Asia/Srednekolymsk		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Taipei		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Tashkent		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Tbilisi		base-sys-share		share
@@ -4928,8 +4930,10 @@
 ./usr/share/zoneinfo/WET			base-sys-share		share
 ./usr/share/zoneinfo/Zulu			base-sys-share		share
 ./usr/share/zoneinfo/iso3166.tab		base-sys-share		share
+./usr/share/zoneinfo/leapseconds		base-sys-share		share
 ./usr/share/zoneinfo/posixrules			base-sys-share		share
 ./usr/share/zoneinfo/zone.tab			base-sys-share		share
+./usr/share/zoneinfo/zone1970.tab		base-sys-share		share
 ./var						base-sys-root
 ./var/account					base-sys-root
 ./var/at					base-cron-root
