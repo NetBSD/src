@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.52 2014/08/14 14:06:53 maxv Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.53 2014/08/15 13:40:39 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.52 2014/08/14 14:06:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.53 2014/08/15 13:40:39 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,9 +209,17 @@ ptyfs__allocvp(struct mount *mp, struct lwp *l, struct vnode **vpp,
 	}
 
 	error = ptyfs_allocvp(mp, vpp, type, minor(dev));
-	if (error == 0 && type == PTYFSptc)
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+	if (type == PTYFSptc)
 		ptyfs_set_active(mp, minor(dev));
-	return error;
+	return 0;
 }
 
 
@@ -240,7 +248,7 @@ ptyfs_init(void)
 void
 ptyfs_reinit(void)
 {
-	ptyfs_hashreinit();
+
 }
 
 void
@@ -382,8 +390,19 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 int
 ptyfs_root(struct mount *mp, struct vnode **vpp)
 {
+	int error;
+
 	/* setup "." */
-	return ptyfs_allocvp(mp, vpp, PTYFSroot, 0);
+	error = ptyfs_allocvp(mp, vpp, PTYFSroot, 0);
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -391,6 +410,46 @@ int
 ptyfs_sync(struct mount *mp, int waitfor,
     kauth_cred_t uc)
 {
+	return 0;
+}
+
+/*
+ * Initialize this vnode / ptynode pair.
+ * Caller assures no other thread will try to load this node.
+ */
+int
+ptyfs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	struct ptyfskey pkey;
+	struct ptyfsnode *ptyfs;
+
+	KASSERT(key_len == sizeof(pkey));
+	memcpy(&pkey, key, key_len);
+
+	ptyfs = ptyfs_get_node(pkey.ptk_type, pkey.ptk_pty);
+	KASSERT(memcmp(&ptyfs->ptyfs_key, &pkey, sizeof(pkey)) == 0);
+
+	switch (pkey.ptk_type) {
+	case PTYFSroot:	/* /pts = dr-xr-xr-x */
+		vp->v_type = VDIR;
+		vp->v_vflag = VV_ROOT;
+		break;
+
+	case PTYFSpts:	/* /pts/N = cxxxxxxxxx */
+	case PTYFSptc:	/* controlling side = cxxxxxxxxx */
+		vp->v_type = VCHR;
+		spec_node_init(vp, PTYFS_MAKEDEV(ptyfs));
+		break;
+	default:
+		panic("ptyfs_loadvnode");
+	}
+
+	vp->v_tag = VT_PTYFS;
+	vp->v_op = ptyfs_vnodeop_p;
+	vp->v_data = ptyfs;
+	uvm_vnp_setsize(vp, 0);
+	*new_key = &ptyfs->ptyfs_key;
 	return 0;
 }
 
@@ -424,6 +483,7 @@ struct vfsops ptyfs_vfsops = {
 	.vfs_statvfs = genfs_statvfs,
 	.vfs_sync = ptyfs_sync,
 	.vfs_vget = ptyfs_vget,
+	.vfs_loadvnode = ptyfs_loadvnode,
 	.vfs_fhtovp = (void *)eopnotsupp,
 	.vfs_vptofh = (void *)eopnotsupp,
 	.vfs_init = ptyfs_init,
