@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1968 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1969 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -25,3 +25,4 @@
 
 
 Changes from NetBSD 7.0 to NetBSD 8.0:
+	libc: Update to tzcode2014f. [christos 20140815]
