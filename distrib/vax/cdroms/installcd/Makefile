@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2014/07/26 19:34:08 dholland Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2014/08/15 10:23:21 martin Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
@@ -68,6 +68,9 @@ CDRUNTIME+=	./usr/bin/tip
 CDRUNTIME+=	./usr/bin/tput
 CDRUNTIME+=	./usr/bin/vi
 CDRUNTIME+=	./usr/bin/vmstat
+.if ${MKBSDTAR} != "no"
+CDRUNTIME+=	./usr/lib/libarchive.so*
+.endif
 CDRUNTIME+=	./usr/lib/libbz2.so*
 CDRUNTIME+=	./usr/lib/libc.so*
 CDRUNTIME+=	./usr/lib/libcurses.so*
