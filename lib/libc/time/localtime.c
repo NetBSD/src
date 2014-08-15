@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.83 2014/08/15 11:04:07 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.84 2014/08/15 13:20:29 martin Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.83 2014/08/15 11:04:07 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.84 2014/08/15 13:20:29 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -997,6 +997,7 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 	char *			cp;
 	int			load_result;
 
+	dstname = NULL; /* XXX gcc */
 	stdname = name;
 	if (lastditch) {
 		stdlen = strlen(name);	/* length of standard zone name */
