@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.80 2011/11/24 03:35:57 mrg Exp $	*/
+/*	$NetBSD: ess.c,v 1.81 2014/08/15 19:55:23 nakayama Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.80 2011/11/24 03:35:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.81 2014/08/15 19:55:23 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -920,7 +920,7 @@ essattach(struct ess_softc *sc, int enablejoy)
 		return;
 	}
 
-	aprint_normal(": ESS Technology ES%s [version 0x%04x]\n",
+	aprint_normal("ESS Technology ES%s [version 0x%04x]\n",
 	    essmodel[sc->sc_model], sc->sc_version);
 
 	callout_init(&sc->sc_poll1_ch, CALLOUT_MPSAFE);
