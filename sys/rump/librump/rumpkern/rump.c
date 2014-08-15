@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.308 2014/08/11 04:27:24 ozaki-r Exp $	*/
+/*	$NetBSD: rump.c,v 1.308.2.1 2014/08/15 12:58:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.308 2014/08/11 04:27:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.308.2.1 2014/08/15 12:58:45 martin Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -286,8 +286,6 @@ rump_init(void)
 	uvm_ra_init();
 	uao_init();
 
-	percpu_init();
-
 	mutex_obj_init();
 	callout_startup();
 
@@ -305,7 +303,6 @@ rump_init(void)
 	kern_cprng = cprng_strong_create("kernel", IPL_VM,
 	    CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
 
-	cprng_fast_init();
 	rump_hyperentropy_init();
 
 	procinit();
@@ -328,6 +325,7 @@ rump_init(void)
 	rump_schedule();
 	bootlwp = curlwp;
 
+	percpu_init();
 	inittimecounter();
 	ntp_init();
 
@@ -363,6 +361,9 @@ rump_init(void)
 
 		aprint_verbose("cpu%d at thinair0: rump virtual cpu\n", i);
 	}
+
+	/* Once all CPUs are detected, initialize the per-CPU cprng_fast.  */
+	cprng_fast_init();
 
 	/* CPUs are up.  allow kernel threads to run */
 	rump_thread_allow(NULL);
