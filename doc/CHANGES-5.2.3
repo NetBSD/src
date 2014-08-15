@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.3,v 1.1.2.14 2014/08/15 23:06:37 riz Exp $
+# $NetBSD: CHANGES-5.2.3,v 1.1.2.15 2014/08/15 23:07:24 riz Exp $
 
 A complete list of changes from the NetBSD 5.2.2 release to the NetBSD 5.2.3
 release:
@@ -196,6 +196,7 @@ sys/compat/linux32/common/linux32_socketcall.c	1.9
 	If SCARG(uap, what) = 0, copyin() will copy (size_t)-1 bytes, and it's
 	not a good idea; but not proven harmful. With the help of njoly@.
 	[maxv, ticket #1916]
+
 distrib/sets/lists/base/mi				patch
 doc/3RDPARTY						patch
 share/zoneinfo/Makefile					patch
