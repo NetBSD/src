@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperentropy.c,v 1.5 2014/08/15 17:45:00 justin Exp $	*/
+/*	$NetBSD: hyperentropy.c,v 1.6 2014/08/15 18:23:42 justin Exp $	*/
 
 /*
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -25,10 +25,10 @@
  * SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.5 2014/08/15 17:45:00 justin Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.6 2014/08/15 18:23:42 justin Exp $");
 
 #include <sys/atomic.h>
-#include <sys/cdefs.h>
 #include <sys/kmem.h>
 #include <sys/param.h>
 #include <sys/rnd.h>
