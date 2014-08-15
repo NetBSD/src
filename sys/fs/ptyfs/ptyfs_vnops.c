@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.48 2014/08/13 14:10:00 hannken Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.49 2014/08/15 13:40:39 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.48 2014/08/13 14:10:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.49 2014/08/15 13:40:39 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,10 +213,7 @@ const struct vnodeopv_desc ptyfs_vnodeop_opv_desc =
 	{ &ptyfs_vnodeop_p, ptyfs_vnodeop_entries };
 
 /*
- * _reclaim is called when getnewvnode()
- * wants to make use of an entry on the vnode
- * free list.  at this time the filesystem needs
- * to free any private data and remove the node
+ * free any private data and remove the node
  * from any private lists.
  */
 int
@@ -225,7 +222,12 @@ ptyfs_reclaim(void *v)
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	return ptyfs_freevp(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
+
+	vcache_remove(vp->v_mount, &ptyfs->ptyfs_key, sizeof(ptyfs->ptyfs_key));
+	vp->v_data = NULL;
+	return 0;
 }
 
 int
@@ -639,11 +641,10 @@ ptyfs_lookup(void *v)
 		if (error)
 			return error;
 		if (ptyfs_next_active(dvp->v_mount, pty) != pty) {
-			vput(*vpp);
+			vrele(*vpp);
 			*vpp = NULL;
 			return ENOENT;
 		}
-		VOP_UNLOCK(*vpp);
 		return 0;
 
 	default:
