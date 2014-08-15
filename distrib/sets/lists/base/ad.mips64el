@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.81.2.5.2.1 2014/04/08 11:58:56 msaitoh Exp $
+# $NetBSD: ad.mips64el,v 1.81.2.5.2.2 2014/08/15 08:36:55 msaitoh Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -72,7 +72,7 @@
 ./usr/lib/64/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libcrypto.so.8			base-compat-shlib	compat,pic,crypto
-./usr/lib/64/libcrypto.so.8.2			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libcrypto.so.8.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libcrypto_rc5.so.7			base-compat-shlib	compat,pic,crypto,crypto_rc5
 ./usr/lib/64/libcrypto_rc5.so.7.0		base-compat-shlib	compat,pic,crypto,crypto_rc5
 ./usr/lib/64/libcurses.so.7			base-compat-shlib	compat,pic
@@ -248,7 +248,7 @@
 ./usr/lib/64/libssh.so.18			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libssh.so.18.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libssl.so.10			base-compat-shlib	compat,pic,crypto
-./usr/lib/64/libssl.so.10.3			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libssl.so.10.4			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libstdc++.so.7			base-compat-shlib	compat,pic,cxx
 ./usr/lib/64/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx
 ./usr/lib/64/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx
@@ -372,7 +372,7 @@
 ./usr/lib/o32/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcrypto.so.8			base-compat-shlib	compat,pic,crypto
-./usr/lib/o32/libcrypto.so.8.2			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libcrypto.so.8.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdes.so.8			base-compat-shlib	compat,pic,crypto
@@ -546,7 +546,7 @@
 ./usr/lib/o32/libssh.so.18			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libssh.so.18.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libssl.so.10			base-compat-shlib	compat,pic,crypto
-./usr/lib/o32/libssl.so.10.3			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libssl.so.10.4			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libstdc++.so.7			base-compat-shlib	compat,pic,cxx
 ./usr/lib/o32/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx
 ./usr/lib/o32/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx

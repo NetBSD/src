@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.616.2.5.2.1 2014/04/08 11:58:56 msaitoh Exp $
+# $NetBSD: shl.mi,v 1.616.2.5.2.2 2014/08/15 08:36:55 msaitoh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -21,7 +21,7 @@
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
 ./lib/libcrypto.so				base-crypto-shlib	crypto,dynamicroot
 ./lib/libcrypto.so.8				base-crypto-shlib	crypto,dynamicroot
-./lib/libcrypto.so.8.2				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.8.3				base-crypto-shlib	crypto,dynamicroot
 ./lib/libdevmapper.so				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
@@ -183,7 +183,7 @@
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib
 ./usr/lib/libcrypto.so				base-crypto-shlib	crypto
 ./usr/lib/libcrypto.so.8			base-crypto-shlib	crypto
-./usr/lib/libcrypto.so.8.2			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.8.3			base-crypto-shlib	crypto
 ./usr/lib/libcrypto_rc5.so			base-crypto-shlib	crypto,crypto_rc5
 ./usr/lib/libcrypto_rc5.so.7			base-crypto-shlib	crypto,crypto_rc5
 ./usr/lib/libcrypto_rc5.so.7.0			base-crypto-shlib	crypto,crypto_rc5
@@ -660,7 +660,7 @@
 ./usr/lib/libssh.so.18.0			base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
 ./usr/lib/libssl.so.10				base-crypto-shlib	crypto
-./usr/lib/libssl.so.10.3				base-crypto-shlib	crypto
+./usr/lib/libssl.so.10.4				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so				base-sys-shlib		gcc,cxx
 ./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx

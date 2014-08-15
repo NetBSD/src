@@ -270,6 +270,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_aGOST94,0,0,SSL_aGOST94,0,0,0,0,0,0,0},
 	{0,SSL_TXT_aGOST01,0,0,SSL_aGOST01,0,0,0,0,0,0,0},
 	{0,SSL_TXT_aGOST,0,0,SSL_aGOST94|SSL_aGOST01,0,0,0,0,0,0,0},
+	{0,SSL_TXT_aSRP,0,    0,SSL_aSRP,  0,0,0,0,0,0,0},
 
 	/* aliases combining key exchange and server authentication */
 	{0,SSL_TXT_EDH,0,     SSL_kEDH,~SSL_aNULL,0,0,0,0,0,0,0},
@@ -925,7 +926,7 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 		int rule, int strength_bits,
 		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 	{
-	CIPHER_ORDER *head, *tail, *curr, *curr2, *last;
+	CIPHER_ORDER *head, *tail, *curr, *next, *last;
 	const SSL_CIPHER *cp;
 	int reverse = 0;
 
@@ -942,21 +943,25 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 
 	if (reverse)
 		{
-		curr = tail;
+		next = tail;
 		last = head;
 		}
 	else
 		{
-		curr = head;
+		next = head;
 		last = tail;
 		}
 
-	curr2 = curr;
+	curr = NULL;
 	for (;;)
 		{
-		if ((curr == NULL) || (curr == last)) break;
-		curr = curr2;
-		curr2 = reverse ? curr->prev : curr->next;
+		if (curr == last) break;
+
+		curr = next;
+
+		if (curr == NULL) break;
+
+		next = reverse ? curr->prev : curr->next;
 
 		cp = curr->cipher;
 
@@ -1598,6 +1603,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_kSRP:
 		kx="SRP";
 		break;
+	case SSL_kGOST:
+		kx="GOST";
+		break;
 	default:
 		kx="unknown";
 		}
@@ -1627,6 +1635,15 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_aPSK:
 		au="PSK";
+		break;
+	case SSL_aSRP:
+		au="SRP";
+		break;
+	case SSL_aGOST94:
+		au="GOST94";
+		break;
+	case SSL_aGOST01:
+		au="GOST01";
 		break;
 	default:
 		au="unknown";
@@ -1675,6 +1692,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_SEED:
 		enc="SEED(128)";
 		break;
+	case SSL_eGOST2814789CNT:
+		enc="GOST89(256)";
+		break;
 	default:
 		enc="unknown";
 		break;
@@ -1696,6 +1716,12 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_AEAD:
 		mac="AEAD";
+		break;
+	case SSL_GOST89MAC:
+		mac="GOST89";
+		break;
+	case SSL_GOST94:
+		mac="GOST94";
 		break;
 	default:
 		mac="unknown";
