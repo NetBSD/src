@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.5,v 1.1.2.20 2014/08/15 08:43:26 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.5,v 1.1.2.21 2014/08/15 23:39:46 riz Exp $
 
 A complete list of changes from the NetBSD 6.1.4 release to the NetBSD 6.1.5
 release:
@@ -1250,3 +1250,32 @@ distrib/sets/lists/comp/shl.mi				patch
 doc/3RDPARTY						patch
 
 	[spz, ticket #1111]
+
+distrib/sets/lists/base/mi				patch
+doc/3RDPARTY						patch
+share/zoneinfo/Makefile					patch
+share/zoneinfo/africa					patch
+share/zoneinfo/antarctica				patch
+share/zoneinfo/asia					patch
+share/zoneinfo/australasia				patch
+share/zoneinfo/backward					patch
+share/zoneinfo/etcetera					patch
+share/zoneinfo/europe					patch
+share/zoneinfo/factory					patch
+share/zoneinfo/iso3166.tab				patch
+share/zoneinfo/leap-seconds.list			patch
+share/zoneinfo/northamerica				patch
+share/zoneinfo/pacificnew				patch
+share/zoneinfo/southamerica				patch
+share/zoneinfo/systemv					patch
+share/zoneinfo/yearistype.sh				patch
+share/zoneinfo/zone.tab					patch
+share/zoneinfo/zone1970.tab				patch
+
+	Update timezone database from tzdata2014c to tzdata2014f.
+	This adds two new timezones (Asia/Chita and Asia/Srednekolymsk),
+	updates many other timezones, and adds two new
+	data files in the /usr/share/zoneinfo directory (leapseconds
+	and zone1970.dat).
+	[apb, ticket #1107]
+
