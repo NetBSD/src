@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.30 2013/12/26 18:34:28 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.31 2014/08/15 11:04:07 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -6,7 +6,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.30 2013/12/26 18:34:28 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.31 2014/08/15 11:04:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: strftime.c,v 1.30 2013/12/26 18:34:28 christos Exp $");
 **    may be used to endorse or promote products derived from this software
 **    without specific prior written permission.
 **
-** THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+** THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS "AS IS" AND
 ** ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ** IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 ** ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
@@ -69,12 +69,6 @@ __RCSID("$NetBSD: strftime.c,v 1.30 2013/12/26 18:34:28 christos Exp $");
 ** OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 ** SUCH DAMAGE.
 */
-
-#ifndef LIBC_SCCS
-#ifndef lint
-static const char	sccsid[] = "@(#)strftime.c	5.4 (Berkeley) 3/14/89";
-#endif /* !defined lint */
-#endif /* !defined LIBC_SCCS */
 
 #include "tzfile.h"
 #include "fcntl.h"
@@ -354,7 +348,7 @@ label:
 ** (01-53)."
 ** (ado, 1993-05-24)
 **
-** From "http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html" by Markus Kuhn:
+** From <http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html> by Markus Kuhn:
 ** "Week 01 of a year is per definition the first week which has the
 ** Thursday in this year, which is equivalent to the week which contains
 ** the fourth day of January. In other words, the first week of a new year
@@ -766,9 +760,9 @@ _loc(void)
 	if (oldsun) {
 		/*
 		** SunOS 4 used an obsolescent format; see localdtconv(3).
-		** c_fmt had the ``short format for dates and times together''
+		** c_fmt had the "short format for dates and times together"
 		** (SunOS 4 date, "%a %b %e %T %Z %Y" in the C locale);
-		** date_fmt had the ``long format for dates''
+		** date_fmt had the "long format for dates"
 		** (SunOS 4 strftime %C, "%A, %B %e, %Y" in the C locale).
 		** Discard the latter in favor of the former.
 		*/
