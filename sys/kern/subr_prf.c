@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.154.2.1 2014/08/15 13:00:48 martin Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.154.2.2 2014/08/15 23:57:51 riz Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.154.2.1 2014/08/15 13:00:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.154.2.2 2014/08/15 23:57:51 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -161,8 +161,8 @@ static void kprintf_rnd_get(size_t bytes, void *priv)
 			/* This is optional but seems useful. */
 			SHA512_Update(&kprnd_sha, kprnd_accum,
 				      sizeof(kprnd_accum));
+			mutex_exit(&kprintf_mtx);
 		}
-		mutex_exit(&kprintf_mtx);
 	}
 }
 
