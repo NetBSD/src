@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.10 2014/08/15 13:07:37 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.11 2014/08/15 23:59:39 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -175,4 +175,16 @@ xsrc/external/mit/libdrm/dist/radeon/radeon_bo_gem.c	1.4
 
 	convert an mmap() to drmMap().
 	[mrg, ticket #25]
+
+sys/kern/subr_prf.c				1.156
+
+	If mutex_tryenter() fails, don't call mutex_exit().
+	[apb, ticket #26]
+
+build.sh					1.295
+
+	Only the -m command line option, not MACHINE from the environment,
+	is supposed override MACHINE_ARCH from the environment with the
+	default MACHINE_ARCH for the requested machine.
+	[apb, ticket #27]
 
