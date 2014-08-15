@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.16.2.1 2014/04/08 11:44:29 msaitoh Exp $
+#	$NetBSD: mi,v 1.1738.2.16.2.2 2014/08/15 08:25:12 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5340,6 +5340,7 @@
 ./usr/share/man/cat3/SSL_CTX_set_session_cache_mode.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_session_id_context.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_ssl_version.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_CTX_set_tlsext_ticket_key_cb.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_timeout.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_tmp_dh_callback.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_tmp_rsa_callback.0	comp-c-catman		crypto,.cat
@@ -11698,6 +11699,7 @@
 ./usr/share/man/html3/SSL_CTX_set_session_cache_mode.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_session_id_context.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_ssl_version.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/SSL_CTX_set_tlsext_ticket_key_cb.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_timeout.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_tmp_dh_callback.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_tmp_rsa_callback.html	comp-c-htmlman		crypto,html
@@ -17858,6 +17860,7 @@
 ./usr/share/man/man3/SSL_CTX_set_session_cache_mode.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_session_id_context.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_ssl_version.3	comp-c-man		crypto,.man
+./usr/share/man/man3/SSL_CTX_set_tlsext_ticket_key_cb.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_timeout.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_tmp_dh_callback.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_tmp_rsa_callback.3	comp-c-man		crypto,.man

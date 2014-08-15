@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.69.2.7.2.1 2014/04/08 11:44:29 msaitoh Exp $
+# $NetBSD: ad.mips64eb,v 1.69.2.7.2.2 2014/08/15 08:25:12 msaitoh Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -1284,7 +1284,7 @@
 ./usr/libdata/debug/usr/lib/64/libcom_err.so.6.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/64/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libcrypto.so.8.2.debug	comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/64/libcrypto.so.8.3.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/64/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
@@ -1384,7 +1384,7 @@
 ./usr/libdata/debug/usr/lib/64/libsqlite3.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/64/libssh.so.18.0.debug	comp-secsh-debug	crypto,debug,compat
-./usr/libdata/debug/usr/lib/64/libssl.so.10.3.debug		comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/64/libssl.so.10.4.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat
@@ -1440,7 +1440,7 @@
 ./usr/libdata/debug/usr/lib/o32/libcom_err.so.6.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/o32/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libcrypto.so.8.2.debug	comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/o32/libcrypto.so.8.3.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
@@ -1540,7 +1540,7 @@
 ./usr/libdata/debug/usr/lib/o32/libsqlite3.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libssh.so.18.0.debug	comp-secsh-debug	crypto,debug,compat
-./usr/libdata/debug/usr/lib/o32/libssl.so.10.3.debug		comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/o32/libssl.so.10.4.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat
