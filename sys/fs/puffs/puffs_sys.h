@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.84 2013/10/17 21:03:27 christos Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.85 2014/08/16 16:19:41 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -197,6 +197,8 @@ struct puffs_mount {
 #define PNODE_FAF	0x004	/* issue all operations as FAF		*/
 #define PNODE_DOINACT 	0x008	/* if inactive-on-demand, call inactive */
 #define PNODE_SOPEXP	0x100	/* Node reclaim postponed in sop thread	*/
+#define PNODE_RDIRECT	0x200	/* bypass page cache on read		*/
+#define PNODE_WDIRECT	0x400	/* bypass page cache on write		*/
 
 #define PNODE_METACACHE_ATIME	0x10	/* cache atime metadata */
 #define PNODE_METACACHE_CTIME	0x20	/* cache atime metadata */
