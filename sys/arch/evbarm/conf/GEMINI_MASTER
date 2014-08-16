@@ -72,6 +72,7 @@ options		NFS_BOOT_RWSIZE=1024
 
 options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	COMPAT_40	# NetBSD 4.0 compatibility.
