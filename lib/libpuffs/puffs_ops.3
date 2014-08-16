@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.36 2012/08/16 11:28:38 wiz Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.37 2014/08/16 16:25:44 manu Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -81,6 +81,11 @@
 .Fo puffs_node_open
 .Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int mode"
 .Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_open2
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int modep"
+.Fa "const struct puffs_cred *pcr" "int *oflags"
 .Fc
 .Ft int
 .Fo puffs_node_close
@@ -481,6 +486,7 @@ file, directory and device special file, respectively.
 In case of mknod, the device identifier can be found in
 .Fa va-\*[Gt]va_rdev .
 .It Fn puffs_node_open "pu" "opc" "mode" "pcr"
+.It Fn puffs_node_open2 "pu" "opc" "mode" "pcr" "oflags"
 Open the node denoted by the cookie
 .Fa opc .
 The parameter
@@ -491,6 +497,12 @@ was called with, e.g.
 .Dv O_APPEND
 and
 .Dv O_NONBLOCK .
+.Fn puffs_node_open2
+allows the filesystem to pass back information for the file in
+.Fa oflags .
+The only implemented flag for now is
+.Dv PUFFS_OPEN_IO_DIRECT
+that cause file read/write to bypass the page cache.
 .It Fn puffs_node_close "pu" "opc" "flags" "pcr"
 Close a node.
 The parameter
