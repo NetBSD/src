@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM56340,v 1.4 2014/08/03 08:53:56 martin Exp $
+#	$NetBSD: BCM56340,v 1.5 2014/08/16 17:56:31 apb Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -90,6 +90,7 @@ options		NFS_BOOT_RWSIZE=1024
 
 options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.

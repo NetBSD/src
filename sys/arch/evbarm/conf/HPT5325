@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.20 2014/08/03 09:18:16 martin Exp $
+#	$NetBSD: HPT5325,v 1.21 2014/08/16 17:56:31 apb Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -108,6 +108,7 @@ options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

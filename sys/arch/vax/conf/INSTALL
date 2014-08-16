@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.68 2014/03/16 13:37:36 joerg Exp $
+#	$NetBSD: INSTALL,v 1.69 2014/08/16 17:56:34 apb Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -106,6 +106,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 #options 	COMPAT_ULTRIX
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
