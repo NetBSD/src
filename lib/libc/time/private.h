@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.34 2014/08/15 11:04:07 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.35 2014/08/16 16:22:21 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -354,7 +354,7 @@ const char *	scheck(const char * string, const char * format);
 ** INITIALIZE(x)
 */
 
-#ifdef lint
+#if defined(__GNUC__) || defined(__lint__)
 # define INITIALIZE(x)	((x) = 0)
 #else
 # define INITIALIZE(x)
