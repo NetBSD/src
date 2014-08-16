@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.66 2014/08/10 03:22:33 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.67 2014/08/16 16:28:43 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1338,6 +1338,13 @@ int
 perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	const struct puffs_cred *pcr)
 {
+	return perfuse_node_open2(pu, opc, mode, pcr, NULL);
+}
+
+int
+perfuse_node_open2(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
+	const struct puffs_cred *pcr, int *oflags)
+{
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
 	perfuse_msg_t *pm;
@@ -1438,6 +1445,12 @@ perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	 * so that we can reuse it later
 	 */
 	perfuse_new_fh(opc, foo->fh, mode);
+
+	/*
+	 * Set direct I/O if the filesystems forces it
+	 */
+	if ((foo->open_flags & FUSE_FOPEN_DIRECT_IO) && (oflags != NULL))
+		*oflags |= PUFFS_OPEN_IO_DIRECT;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
@@ -3030,11 +3043,6 @@ perfuse_node_read(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 	 */
 	if (vap->va_type == VDIR)
 		return EISDIR;
-
-	if ((u_quad_t)offset + *resid > vap->va_size)
-		DWARNX("%s %p read %lld@%zu beyond EOF %" PRIu64 "\n",
-		       __func__, (void *)opc, (long long)offset,
-		       *resid, vap->va_size);
 
 	do {
 		size_t max_read;
