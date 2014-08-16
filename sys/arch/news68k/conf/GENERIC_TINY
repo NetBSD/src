@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.80 2014/07/05 09:14:02 tsutsui Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.81 2014/08/16 17:56:33 apb Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.80 $"
+#ident 		"GENERIC_TINY-$Revision: 1.81 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -55,6 +55,7 @@ options 	COMPAT_30		# NetBSD 3.0 binary compatibility
 options 	COMPAT_40		# NetBSD 4.0 binary compatibility
 options 	COMPAT_50		# NetBSD 5.0 binary compatibility
 options 	COMPAT_60		# NetBSD 6.0 compatibility.
+options 	COMPAT_70		# NetBSD 7.0 compatibility.
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 
 #options 	COMPAT_SVR4		# binary compatibility with SVR4
