@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.14 2014/08/16 08:43:12 apb Exp $
+.\"	$NetBSD: boot.8,v 1.15 2014/08/16 11:39:47 apb Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@ Additional information may be found in
 architecture-specific
 .Xr boot 8
 manual pages.
-.Pp
+.Ss Boot Protocol
 In the native
 .Nx
 boot protocol, options are passed from the boot loader
@@ -55,6 +55,10 @@ to the kernel via flag bits in the
 .Va boothowto
 variable (see
 .Xr boothowto 9 ) .
+Some boot loaders may also support other boot protocols.
+.Ss Menu
+Some boot loaders may present a menu, which may be configured via
+.Xr boot.cfg 5 .
 .Ss Interactive mode
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
@@ -226,7 +230,7 @@ is of the form specified in
 .It Ic help
 Print an overview about commands and arguments.
 .\" .It Ic load Va module Op Va arguments
-.\" [i386 only]
+.\" [x86 only]
 .It Ic ls Op Pa path
 Print a directory listing of
 .Pa path ,
@@ -234,9 +238,11 @@ containing inode number, filename, and file type.
 .Pa path
 can contain a device specification.
 .\" .It Ic multiboot Va kernel Op Va arguments
-.\" [i386 only]
+.\" [x86 only]
 .It Ic quit
 Reboot the system.
+.\" .It Ic userconf Va command
+.\" [x86only]
 .El
 .Pp
 In an emergency, the bootstrap methods described in the
@@ -249,7 +255,7 @@ can be used.
 boot program code loaded by the primary bootstrap
 .\" .It Pa /boot.cfg
 .\" optional configuration file
-.\" (used only on i386 and amd64 architectures)
+.\" [x86 only]
 .It Pa /netbsd
 system code
 .It Pa /netbsd.gz
@@ -272,7 +278,7 @@ manual pages (such as
 .Xr x86/boot 8 ) ,
 .Xr ddb 4 ,
 .Xr userconf 4 ,
-.\" .Xr boot.cfg 5 ,
+.\" .Xr boot.cfg 5 [x86 only] ,
 .Xr halt 8 ,
 .Xr installboot 8 ,
 .Xr reboot 8 ,
