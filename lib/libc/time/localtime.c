@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.84 2014/08/15 13:20:29 martin Exp $	*/
+/*	$NetBSD: localtime.c,v 1.85 2014/08/16 16:22:21 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.84 2014/08/15 13:20:29 martin Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.85 2014/08/16 16:22:21 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -961,13 +961,6 @@ transtime(const int year, const struct rule *const rulep,
 		value = d * SECSPERDAY;
 		for (i = 0; i < rulep->r_mon - 1; ++i)
 			value += mon_lengths[leapyear][i] * SECSPERDAY;
-		break;
-	default:
-		_DIAGASSERT(
-		    rulep->r_type == JULIAN_DAY ||
-		    rulep->r_type == DAY_OF_YEAR ||
-		    rulep->r_type == MONTH_NTH_DAY_OF_WEEK);
-		value = 0;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.34 2014/08/15 11:04:07 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.35 2014/08/16 16:22:21 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.34 2014/08/15 11:04:07 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.35 2014/08/16 16:22:21 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -175,11 +175,11 @@ enum { SECSPER400YEARS_FITS = SECSPERLYEAR <= INTMAX_MAX / 400 };
 #endif
 
 #ifndef INITIALIZE
-#ifdef GNUC_or_lint
+#if defined(__GNUC__) || defined(__lint__)
 #define INITIALIZE(x)	((x) = 0)
-#else /* !defined GNUC_or_lint */
+#else /* !defined GNUC || lint */
 #define INITIALIZE(x)
-#endif /* !defined GNUC_or_lint */
+#endif /* !defined GNUC || lint */
 #endif /* !defined INITIALIZE */
 
 /*
