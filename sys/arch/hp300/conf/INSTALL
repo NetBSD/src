@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.58 2014/04/30 17:51:53 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.59 2014/08/16 17:57:37 apb Exp $
 #
 # INSTALL machine description file
 #
@@ -57,6 +57,7 @@ maxusers	32
 #options 	COMPAT_40	# compatibility with NetBSD 4.0
 #options 	COMPAT_50	# compatibility with NetBSD 5.0
 #options 	COMPAT_60	# NetBSD 6.0 compatibility.
+#options 	COMPAT_70	# NetBSD 7.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SYSVSHM		# System V-style shared memory
