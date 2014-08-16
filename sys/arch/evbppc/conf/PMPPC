@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.31 2014/08/10 17:56:23 joerg Exp $
+#	$NetBSD: PMPPC,v 1.32 2014/08/16 17:56:32 apb Exp $
 #
 #	PMPPC
 #
@@ -53,6 +53,7 @@ options 	SYMTAB_SPACE=590000	# size for embedded symbol table
 #options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 #options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

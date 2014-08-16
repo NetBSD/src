@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40 2014/03/24 14:15:38 szptvlfn Exp $
+# $NetBSD: GENERIC,v 1.41 2014/08/16 17:56:32 apb Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.40 $"
+#ident          "GENERIC-$Revision: 1.41 $"
 
 maxusers	16		# estimated number of users
 
@@ -85,6 +85,7 @@ options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1107 2014/07/25 15:01:14 dholland Exp $
+# $NetBSD: GENERIC,v 1.1108 2014/08/16 17:56:32 apb Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1107 $"
+#ident 		"GENERIC-$Revision: 1.1108 $"
 
 maxusers	64		# estimated number of users
 
@@ -138,6 +138,7 @@ options 	COMPAT_30	# NetBSD 3.0
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_50	# NetBSD 5.0
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.135 2014/07/05 09:21:14 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.136 2014/08/16 17:56:33 apb Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.135 $"
+#ident 		"GENERIC-$Revision: 1.136 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -85,6 +85,7 @@ options 	COMPAT_30	# NetBSD 3.0
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

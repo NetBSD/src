@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_DFC,v 1.23 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: VIRTEX_DFC,v 1.24 2014/08/16 17:56:32 apb Exp $
 #
 # VIRTEX_DFC
 #
@@ -73,6 +73,7 @@ options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems

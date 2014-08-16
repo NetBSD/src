@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.106 2014/07/05 09:28:48 tsutsui Exp $
+#	$NetBSD: GENERIC.in,v 1.107 2014/08/16 17:56:31 apb Exp $
 #
 # Generic atari
 #
@@ -168,6 +168,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 #if !defined(SMALL030_KERNEL)
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables

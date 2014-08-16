@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS600,v 1.16 2013/11/21 14:03:02 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS600,v 1.17 2014/08/16 17:56:32 apb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs600"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS600-$Revision: 1.16 $"
+#ident 		"OPENBLOCKS600-$Revision: 1.17 $"
 
 maxusers	32
 
@@ -64,6 +64,7 @@ options 	COMPAT_30		# NetBSD 3.0,
 options 	COMPAT_40		# NetBSD 4.0,
 options 	COMPAT_50		# NetBSD 5.0 compatibility.
 options 	COMPAT_60		# NetBSD 6.0 compatibility.
+options 	COMPAT_70		# NetBSD 7.0 compatibility.
 options 	COMPAT_43		# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 options		COMPAT_BSDPTY		# /dev/[pt]ty?? ptys.

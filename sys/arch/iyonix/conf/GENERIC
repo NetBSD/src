@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.83 2014/08/03 08:53:56 martin Exp $
+#	$NetBSD: GENERIC,v 1.84 2014/08/16 17:56:32 apb Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.83 $"
+#ident 		"GENERIC-$Revision: 1.84 $"
 
 maxusers	32		# estimated number of users
 
@@ -110,6 +110,7 @@ options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

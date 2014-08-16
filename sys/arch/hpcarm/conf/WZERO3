@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.35 2014/08/03 08:53:56 martin Exp $
+#	$NetBSD: WZERO3,v 1.36 2014/08/16 17:56:32 apb Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.35 $"
+#ident 		"GENERIC-$Revision: 1.36 $"
 
 # estimated number of users
 maxusers	32
@@ -82,6 +82,7 @@ options 	INET6		# IPV6
 
 options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.

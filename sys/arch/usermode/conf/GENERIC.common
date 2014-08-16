@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC.common,v 1.19 2012/10/17 14:48:18 apb Exp $
+# $NetBSD: GENERIC.common,v 1.20 2014/08/16 17:56:34 apb Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -31,6 +31,7 @@ options		CPU_DEBUG
 options 	COMPAT_BSDPTY
 options 	COMPAT_50
 options 	COMPAT_60
+options 	COMPAT_70
 options 	COMPAT_OSSAUDIO
 
 file-system	FFS

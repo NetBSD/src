@@ -1,4 +1,4 @@
-# $NetBSD: MMEYE_WLF,v 1.13 2013/06/30 21:38:57 rmind Exp $
+# $NetBSD: MMEYE_WLF,v 1.14 2014/08/16 17:56:33 apb Exp $
 #
 # MMEYE_WLF -- Brains Inc. MMEYE-WLF platforms kernel
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 maxusers	16		# estimated number of users
 
@@ -72,6 +72,7 @@ options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	BSDDISKLABEL_EI	# endian independent disklabel support

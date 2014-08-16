@@ -1,4 +1,4 @@
-#	$NetBSD: T_SH7706LAN,v 1.8 2014/03/24 14:15:38 szptvlfn Exp $
+#	$NetBSD: T_SH7706LAN,v 1.9 2014/08/16 17:56:32 apb Exp $
 #
 #	TAC T-SH7706LAN Rev.3 config file
 #
@@ -50,6 +50,7 @@ options 	COMPAT_30	# NetBSD 3.0
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_50	# NetBSD 5.0
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

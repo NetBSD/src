@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.21 2014/08/10 17:56:23 joerg Exp $
+#	$NetBSD: P2020DS,v 1.22 2014/08/16 17:56:32 apb Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,7 +8,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.21 $"
+ident 		"P2020DS-$Revision: 1.22 $"
 
 maxusers	32
 
@@ -64,6 +64,7 @@ options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

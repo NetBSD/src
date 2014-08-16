@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.61 2014/07/05 09:21:14 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.62 2014/08/16 17:56:31 apb Exp $
 #
 # GENERIC machine description file
 # 
@@ -57,6 +57,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 #options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores
 #options 	SYSVMSG		# System V-style message queues
