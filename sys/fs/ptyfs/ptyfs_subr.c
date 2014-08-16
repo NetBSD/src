@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.31 2014/08/15 13:40:39 hannken Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.32 2014/08/16 07:22:30 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.31 2014/08/15 13:40:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.32 2014/08/16 07:22:30 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ void
 ptyfs_hashinit(void)
 {
 
-	ptyfs_node_tbl = hashinit(16, HASH_LIST, true, &ptyfs_node_mask);
+	ptyfs_node_tbl = hashinit(16, HASH_SLIST, true, &ptyfs_node_mask);
 	mutex_init(&ptyfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -136,7 +136,7 @@ ptyfs_hashdone(void)
 {
 	
 	mutex_destroy(&ptyfs_hashlock);
-	hashdone(ptyfs_node_tbl, HASH_LIST, ptyfs_node_mask);
+	hashdone(ptyfs_node_tbl, HASH_SLIST, ptyfs_node_mask);
 }
 
 /*
