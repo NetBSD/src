@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.22 2014/08/04 20:59:19 martin Exp $
+# $NetBSD: INSTALL,v 1.23 2014/08/16 17:57:02 apb Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -43,6 +43,7 @@ no options		COMPAT_30
 no options		COMPAT_40
 no options		COMPAT_50
 no options		COMPAT_60
+no options		COMPAT_70
 no options		COMPAT_43
 
 no options 		COMPAT_OSSAUDIO
