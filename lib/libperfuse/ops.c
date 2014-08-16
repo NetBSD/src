@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.67 2014/08/16 16:28:43 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.68 2014/08/16 16:31:15 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1960,17 +1960,6 @@ out:
 	return error;
 }
 
-/* ARGSUSED0 */
-int
-perfuse_node_mmap(struct puffs_usermount *pu, puffs_cookie_t opc, int flags,
-	const struct puffs_cred *pcr)
-{
-	/* 
-	 * Not implemented anymore in libfuse
-	 */
-	return ENOSYS;
-}
-
 /* ARGSUSED2 */
 int
 perfuse_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
@@ -2083,14 +2072,6 @@ out:
 
 	node_rele(opc);
 	return error;
-}
-
-/* ARGSUSED0 */
-int
-perfuse_node_seek(struct puffs_usermount *pu, puffs_cookie_t opc,
-	off_t oldoff, off_t newoff, const struct puffs_cred *pcr)
-{
-	return 0;
 }
 
 int
