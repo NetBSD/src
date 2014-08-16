@@ -1,4 +1,4 @@
-/*	$NetBSD: essreg.h,v 1.16 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: essreg.h,v 1.17 2014/08/16 13:01:33 nakayama Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.16 $ (SHARK) $Date: 2005/12/11 12:22:02 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.17 $ (SHARK) $Date: 2014/08/16 13:01:33 $
 **
 **++
 **
@@ -176,14 +176,17 @@
 #define ESS_DRQ2_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3 || (chan) == 5)
 
 #define ESS_USE_AUDIO1(model) ((model) <= ESS_1879)
+#define ESS_IS_ES18X9(model) (((model) == ESS_1869) || ((model) == ESS_1879))
 
 /*
  * Macros to manipulate gain values
  */
+#define ESS_6BIT_GAIN(x)	((x) & 0xfc)
 #define ESS_4BIT_GAIN(x)	((x) & 0xf0)
 #define ESS_3BIT_GAIN(x)	(((x) & 0xe0) >> 1)
 #define ESS_STEREO_GAIN(l, r)	((l) | ((r) >> 4))
 #define ESS_MONO_GAIN(x)	((x) >> 4)
+#define ESS_SPATIAL_GAIN(x)	((x) >> 2)
 
 #ifdef ESS_AMODE_LOW
 /*
@@ -268,11 +271,23 @@
 #define ESS_MREG_VOLUME_AUXB	0x3A
 #define ESS_MREG_VOLUME_PCSPKR	0x3C
 #define ESS_MREG_VOLUME_LINE	0x3E
+#define ESS_MREG_SPATIAL_CTRL	0x50
+#define   ESS_SPATIAL_CTRL_MONO		0x02
+#define   ESS_SPATIAL_CTRL_RESET	0x04
+#define   ESS_SPATIAL_CTRL_ENABLE	0x08
+#define ESS_MREG_SPATIAL_LEVEL	0x52
 #define ESS_MREG_VOLUME_LEFT	0x60
 #define ESS_MREG_VOLUME_RIGHT	0x62
 #define   ESS_VOLUME_MUTE	0x40
 #define ESS_MREG_VOLUME_CTRL	0x64
 #define ESS_MREG_SAMPLE_RATE	0x70	/* sample rate for Audio2 channel */
+#define ESS_MREG_MODE		0x71	/* mode for Audio2 channel */
+#define   ESS_MODE_FM_MIX		0x01
+#define   ESS_MODE_ASYNC_MODE		0x02
+#define   ESS_MODE_SCF1_BYPASS		0x04
+#define   ESS_MODE_SCF2_BYPASS		0x08
+#define   ESS_MODE_4X_MODE		0x10
+#define   ESS_MODE_NEWREG		0x20
 #define ESS_MREG_FILTER_CLOCK	0x72	/* filter clock for Audio2 channel */
 #define ESS_MREG_XFER_COUNTLO	0x74	/* low-byte of DMA transfer size */
 #define ESS_MREG_XFER_COUNTHI	0x76	/* high-byte of DMA transfer size */
