@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.52 2013/04/27 18:19:43 christos Exp $
+#	$NetBSD: INSTALL,v 1.53 2014/08/16 17:56:32 apb Exp $
 #
 # INSTALL
 
@@ -53,6 +53,7 @@ options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

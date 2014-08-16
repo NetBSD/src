@@ -1,4 +1,4 @@
-# $NetBSD: A64EMUL,v 1.1 2014/08/10 05:47:38 matt Exp $
+# $NetBSD: A64EMUL,v 1.2 2014/08/16 17:56:31 apb Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/evbarm64/conf/std.a64emul"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"A64EMUL-$Revision: 1.1 $"
+ident		"A64EMUL-$Revision: 1.2 $"
 
 maxusers 32
 
@@ -128,6 +128,7 @@ options 	COMPAT_43
 #options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 # OSF/1 binary compatibility
 
