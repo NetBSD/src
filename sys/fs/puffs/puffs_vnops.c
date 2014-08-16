@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.182 2014/07/25 08:20:52 dholland Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.183 2014/08/16 16:19:41 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.182 2014/07/25 08:20:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.183 2014/08/16 16:19:41 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -893,6 +893,7 @@ puffs_vnop_open(void *v)
 	PUFFS_MSG_VARS(vn, open);
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	struct puffs_node *pn = VPTOPP(vp);
 	int mode = ap->a_mode;
 	int error;
 
@@ -913,6 +914,12 @@ puffs_vnop_open(void *v)
 	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_open, vp->v_data, NULL, error);
 	error = checkerr(pmp, error, __func__);
 
+	if (open_msg->pvnr_oflags & PUFFS_OPEN_IO_DIRECT) {
+		if (mode & FREAD)
+			pn->pn_stat |= PNODE_RDIRECT;
+		if (mode & FWRITE)
+			pn->pn_stat |= PNODE_WDIRECT;
+	}
  out:
 	DPRINTF(("puffs_open: returning %d\n", error));
 	PUFFS_MSG_RELEASE(open);
@@ -2181,6 +2188,7 @@ puffs_vnop_read(void *v)
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, read);
 	struct vnode *vp = ap->a_vp;
+	struct puffs_node *pn = VPTOPP(vp);
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct uio *uio = ap->a_uio;
 	size_t tomove, argsize;
@@ -2196,7 +2204,9 @@ puffs_vnop_read(void *v)
 	if (uio->uio_offset < 0)
 		return EINVAL;
 
-	if (vp->v_type == VREG && PUFFS_USE_PAGECACHE(pmp)) {
+	if (vp->v_type == VREG &&
+	    PUFFS_USE_PAGECACHE(pmp) &&
+	    !(pn->pn_stat & PNODE_RDIRECT)) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 		while (uio->uio_resid > 0) {
@@ -2301,7 +2311,9 @@ puffs_vnop_write(void *v)
 
 	mutex_enter(&pn->pn_sizemtx);
 
-	if (vp->v_type == VREG && PUFFS_USE_PAGECACHE(pmp)) {
+	if (vp->v_type == VREG && 
+	    PUFFS_USE_PAGECACHE(pmp) &&
+	    !(pn->pn_stat & PNODE_WDIRECT)) {
 		ubcflags = UBC_WRITE | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp);
 
 		/*
