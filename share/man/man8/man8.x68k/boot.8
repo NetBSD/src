@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.14 2009/09/05 11:37:53 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.15 2014/08/16 08:43:12 apb Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 8, 2003
+.Dd August 16, 2014
 .Dt BOOT 8 x68k
 .Os
 .Sh NAME
@@ -124,7 +124,7 @@ Pressing a key within the time limit will enter interactive mode.
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
 .Bl -tag -width helpx -offset indent
-.It Ic boot Oo Ar device : Ns Oc Oo Ar filename Oc Oo Fl adqsv Oc
+.It Ic boot Oo Ar device : Oc Ns Oo Ar filename Oc Oo Fl adqsv Oc
 The default
 .Ar device
 will be set to the disk that the boot loader was
