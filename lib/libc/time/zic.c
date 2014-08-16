@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.48 2014/08/16 10:38:43 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.49 2014/08/16 16:22:21 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.48 2014/08/16 10:38:43 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.49 2014/08/16 16:22:21 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -2176,7 +2176,6 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 	envvar = emalloc(max_envvar_len + 1);
 	INITIALIZE(untiltime);
 	INITIALIZE(starttime);
-	starttime = 0; /* XXX: gcc */
 	/*
 	** Now. . .finally. . .generate some useful data!
 	*/
@@ -2318,7 +2317,7 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 				zic_t	offset;
 
 				INITIALIZE(ktime);
-				ktime = 0; /* XXX: gcc */
+				ktime = 0;
 				if (useuntil) {
 					/*
 					** Turn untiltime into UT
@@ -2332,8 +2331,7 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 					if (!zp->z_untilrule.r_todisstd)
 						untiltime = tadd(untiltime,
 							-stdoff);
-				} else
-					untiltime = 0;	/* XXX: gcc */
+				}
 				/*
 				** Find the rule (of those to do, if any)
 				** that takes effect earliest in the year.
