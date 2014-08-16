@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.85 2014/07/05 09:32:48 tsutsui Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.86 2014/08/16 17:56:31 apb Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -59,6 +59,7 @@ options COMPAT_30 # NetBSD 3.0 compatibility.
 options COMPAT_40 # NetBSD 4.0 compatibility.
 options COMPAT_50 # NetBSD 5.0 compatibility.
 options COMPAT_60 # NetBSD 6.0 compatibility.
+options COMPAT_70 # NetBSD 7.0 compatibility.
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.

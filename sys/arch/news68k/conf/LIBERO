@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.61 2013/06/30 21:38:58 rmind Exp $
+# 	$NetBSD: LIBERO,v 1.62 2014/08/16 17:56:33 apb Exp $
 
 #	NEWS1750 config file;
 #
@@ -48,6 +48,7 @@ options 	COMPAT_30		# NetBSD 3.0 binary compatibility
 options 	COMPAT_40		# NetBSD 4.0 binary compatibility
 options 	COMPAT_50		# NetBSD 5.0 binary compatibility
 options 	COMPAT_60		# NetBSD 6.0 compatibility.
+options 	COMPAT_70		# NetBSD 7.0 compatibility.
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 
 #options 	COMPAT_SVR4		# binary compatibility with SVR4

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28 2013/06/30 21:38:58 rmind Exp $
+# $NetBSD: GENERIC,v 1.29 2014/08/16 17:56:33 apb Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.28 $"
+#ident		"GENERIC-$Revision: 1.29 $"
 
 maxusers	32
 
@@ -75,6 +75,7 @@ options 	DDB		# in-kernel debugger
 #options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
