@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.40 2012/10/17 14:48:41 apb Exp $
+#	$NetBSD: SMALLRAM,v 1.41 2014/08/16 17:57:02 apb Exp $
 #
 # This is an example of how to configure a small, efficient kernel for
 # a system with limited RAM. Even so it's capable of doing quite a
@@ -43,6 +43,7 @@ no options 	COMPAT_40
 no options 	COMPAT_43
 no options 	COMPAT_50
 no options 	COMPAT_60
+no options 	COMPAT_70
 
 no options 	COMPAT_AOUT_M68K
 no options 	EXEC_AOUT
