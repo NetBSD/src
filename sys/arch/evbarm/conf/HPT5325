@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.21 2014/08/16 17:56:31 apb Exp $
+#	$NetBSD: HPT5325,v 1.22 2014/08/17 21:17:43 joerg Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -162,7 +162,7 @@ options 	DDB		# in-kernel debugger
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 #makeoptions	COPTS="-O2"
-options 	SYMTAB_SPACE=800000
+makeoptions	COPY_SYMTAB=1
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
