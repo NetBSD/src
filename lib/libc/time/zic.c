@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.49 2014/08/16 16:22:21 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.50 2014/08/17 06:11:48 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.49 2014/08/16 16:22:21 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.50 2014/08/17 06:11:48 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -2317,7 +2317,6 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 				zic_t	offset;
 
 				INITIALIZE(ktime);
-				ktime = 0;
 				if (useuntil) {
 					/*
 					** Turn untiltime into UT
