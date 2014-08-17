@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.54 2014/08/16 19:27:27 sborrill Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.55 2014/08/17 07:05:44 apb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.54 2014/08/16 19:27:27 sborrill Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.55 2014/08/17 07:05:44 apb Exp $");
 #endif
 
 #include <sys/param.h>
@@ -445,8 +445,9 @@ print_ccd_info(int u, struct ccddiskinfo *ccd, char *str)
 	}
 
 	/* Dump out softc information. */
-	printf("ccd%d\t\t%d\t0x%x\t%zu\t", u, ccd->ccd_ileave,
-	    ccd->ccd_flags & CCDF_USERMASK, ccd->ccd_size * DEV_BSIZE);
+	printf("ccd%d\t\t%d\t0x%x\t%ju\t", u, ccd->ccd_ileave,
+	    ccd->ccd_flags & CCDF_USERMASK,
+	    (uintmax_t)ccd->ccd_size * DEV_BSIZE);
 
 	/* Read component pathname and display component info. */
 	for (size_t i = 0; i < ccd->ccd_ndisks; ++i) {
