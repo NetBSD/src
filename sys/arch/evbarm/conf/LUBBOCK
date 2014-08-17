@@ -125,7 +125,7 @@ options 	DIAGNOSTIC	# internal consistency checks
 #options 	KGDB
 #options  	DEBUG_KGDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-#options 	SYMTAB_SPACE=200000
+#makeoptions	COPY_SYMTAB=1
 
 config		netbsd		root on ? type ?
 config		netbsd-sm0	root on sm0 type nfs

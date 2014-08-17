@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.80 2014/07/20 10:06:10 alnsn Exp $
+#	$NetBSD: P5064,v 1.81 2014/08/17 21:17:43 joerg Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.80 $"
+#ident 		"P5064-$Revision: 1.81 $"
 
 maxusers 32
 
@@ -25,7 +25,7 @@ options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DDB			# kernel debugger
 makeoptions	DEBUG="-g"
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
-options 	SYMTAB_SPACE=485000
+makeoptions	COPY_SYMTAB=1
 
 # File systems
 file-system	FFS		# Fast file system

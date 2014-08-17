@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.23 2014/08/10 22:55:29 chs Exp $
+#	$NetBSD: IGEPV2,v 1.24 2014/08/17 21:17:43 joerg Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -133,7 +133,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=520000
+makeoptions	COPY_SYMTAB=1
 
 ## USB Debugging options
 options USB_DEBUG

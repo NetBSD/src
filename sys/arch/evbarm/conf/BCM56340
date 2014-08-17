@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM56340,v 1.5 2014/08/16 17:56:31 apb Exp $
+#	$NetBSD: BCM56340,v 1.6 2014/08/17 21:17:43 joerg Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -154,7 +154,7 @@ options 	DDB_COMMANDONENTER="show event"
 options 	DB_MAX_LINE=INT_MAX
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=590000
+makeoptions	COPY_SYMTAB=1
 
 ## USB Debugging options
 options USB_DEBUG

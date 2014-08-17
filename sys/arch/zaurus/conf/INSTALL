@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.23 2014/08/16 17:57:02 apb Exp $
+# $NetBSD: INSTALL,v 1.24 2014/08/17 21:17:44 joerg Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -65,7 +65,7 @@ options 		RASOPS_SMALL
 no options 		DIAGNOSTIC
 no options 		DDB
 no options 		DDB_HISTORY_SIZE
-no options 		SYMTAB_SPACE
+no makeoptions	COPY_SYMTAB
 
 no zrc0 at pxaip?
 

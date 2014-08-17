@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.17 2014/08/16 17:57:37 apb Exp $
+# $NetBSD: INSTALL,v 1.18 2014/08/17 21:17:44 joerg Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -36,7 +36,7 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 # Debugging options
 #options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	SYMTAB_SPACE=72000	# place DDB symbols in data segment
+#makeoptions	COPY_SYMTAB=1	# place DDB symbols in data segment
 #options 	DEBUG			# extra kernel debugging support
 #options 	DIAGNOSTIC		# extra kernel sanity checking
 #options 	SCSIVERBOSE		# Verbose SCSI errors

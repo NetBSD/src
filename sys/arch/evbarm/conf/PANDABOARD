@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.14 2014/08/16 17:56:31 apb Exp $
+#	$NetBSD: PANDABOARD,v 1.15 2014/08/17 21:17:43 joerg Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -138,7 +138,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=530000
+makeoptions	COPY_SYMTAB=1
 
 ## USB Debugging options
 options USB_DEBUG

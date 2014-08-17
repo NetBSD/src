@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.12 2014/08/03 08:53:56 martin Exp $
+#	$NetBSD: ARMADAXP,v 1.13 2014/08/17 21:17:43 joerg Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -139,7 +139,7 @@ options 	DDB_KEYCODE=0x1d	# Enter ddb on ^]
 #options 	KGDB
 options 	KGDB_DEVADDR=0xd0012000
 makeoptions 	DEBUG="-g"		# compile full symbol table
-options 	SYMTAB_SPACE=800000
+makeoptions	COPY_SYMTAB=1
 
 ## USB Debugging options
 #options 	USB_DEBUG

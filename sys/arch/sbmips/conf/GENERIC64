@@ -5,6 +5,6 @@ makeoptions	LP64="yes"
 options 	EXEC_ELF64
 options 	COMPAT_NETBSD32
 
-no options	SYMTAB_SPACE
-options		SYMTAB_SPACE=640000
+no makeoptions	COPY_SYMTAB
+makeoptions	COPY_SYMTAB=1
 

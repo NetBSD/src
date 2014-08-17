@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.15 2012/06/08 08:56:45 martin Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.16 2014/08/17 21:17:44 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -526,15 +526,10 @@ emitload(FILE *fp)
 		swname =
 		    cf->cf_root != NULL ? cf->cf_name : "generic";
 		fprintf(fp, "KERNELS+=%s\n", nm);
-		fprintf(fp, "%s: ${SYSTEM_DEP} swap${.TARGET}.o vers.o", nm);
-		fprintf(fp, "\n"
-			    "\t${SYSTEM_LD_HEAD}\n"
-			    "\t${SYSTEM_LD} swap${.TARGET}.o\n"
-			    "\t${SYSTEM_LD_TAIL}\n"
-			    "\n"
-			    "swap%s.o: swap%s.c\n"
-			    "\t${NORMAL_C}\n\n", swname, swname);
+		fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o vers.o build_kernel\n",
+			nm, nm);
 	}
+	fputs("\n", fp);
 }
 
 /*

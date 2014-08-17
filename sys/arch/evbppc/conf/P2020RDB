@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.23 2014/08/16 17:56:32 apb Exp $
+#	$NetBSD: P2020RDB,v 1.24 2014/08/17 21:17:43 joerg Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.23 $"
+ident 		"P2020RBD-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -42,7 +42,7 @@ options 	DIAGNOSTIC	# cheap kernel consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=410000	# size for embedded symbol table
+makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 

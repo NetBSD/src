@@ -1,8 +1,8 @@
-#	$NetBSD: CPMBR1400,v 1.18 2014/08/16 17:56:32 apb Exp $
+#	$NetBSD: CPMBR1400,v 1.19 2014/08/17 21:17:43 joerg Exp $
 
 include		"arch/evbmips/conf/std.rasoc"
 
-options 	SYMTAB_SPACE=450000		# size for embedded symbol table
+makeoptions	COPY_SYMTAB=1		# size for embedded symbol table
 
 #options 	RALINK_CONSOLE_EARLY
 options 	RT3883
