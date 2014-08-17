@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.62 2014/08/09 09:43:49 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.62.2.1 2014/08/17 03:26:51 riz Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.62 2014/08/09 09:43:49 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.62.2.1 2014/08/17 03:26:51 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -97,6 +97,8 @@ struct shmif_sc {
 
 	struct lwp *sc_rcvl;
 	bool sc_dying;
+
+	uint64_t sc_uuid;
 };
 
 static void shmif_rcv(void *);
@@ -167,12 +169,13 @@ allocif(int unit, struct shmif_sc **scp)
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	sc->sc_memfd = -1;
 	sc->sc_unit = unit;
+	sc->sc_uuid = cprng_fast64();
 
 	ifp = &sc->sc_ec.ec_if;
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "shmif%d", unit);
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = shmif_init;
 	ifp->if_ioctl = shmif_ioctl;
 	ifp->if_start = shmif_start;
@@ -540,6 +543,7 @@ shmif_start(struct ifnet *ifp)
 		sp.sp_len = pktsize;
 		sp.sp_sec = tv.tv_sec;
 		sp.sp_usec = tv.tv_usec;
+		sp.sp_sender = sc->sc_uuid;
 
 		bpf_mtap(ifp, m0);
 
@@ -743,7 +747,9 @@ shmif_rcv(void *arg)
 		 * Test if we want to pass the packet upwards
 		 */
 		eth = mtod(m, struct ether_header *);
-		if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
+		if (sp.sp_sender == sc->sc_uuid) {
+			passup = false;
+		} else if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) == 0) {
 			passup = true;
 		} else if (ETHER_IS_MULTICAST(eth->ether_dhost)) {
