@@ -1117,6 +1117,7 @@ vax_notice_update_cc (rtx exp, rtx insn ATTRIBUTE_UNUSED)
 	    case IOR:
 	    case XOR:
 	    case NOT:
+	    case CTZ:
 	    case MEM:
 	    case REG:
 	      cc_status.flags = CC_NO_OVERFLOW;
