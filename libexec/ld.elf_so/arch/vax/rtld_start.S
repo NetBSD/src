@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.22 2014/03/22 15:13:10 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.23 2014/08/17 16:14:19 matt Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -152,7 +152,7 @@ ALTENTRY(_rtld_bind_start)
 	extzv	%r2,$4,%r3,%r5	/* extract count */
 	movq	4(%fp),%r2	/* fetch callframe status & saved AP */
 	insv	%r1,$16,$12,%r2	/* update save mask */
-	addl3	%r3,r4,%r1	/* add counts and discard them */
+	addl3	%r3,%r4,%r1	/* add counts and discard them */
 	movq	12(%fp),%r4	/* fetch callframe saved FP & PC */
 	moval	20(%fp)[%r1],%sp/* pop callframe */
 	extzv	$16,$12,%r2,%r1	/* get save mask back */
