@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.55 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: yds.c,v 1.56 2014/08/17 08:54:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.55 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.56 2014/08/17 08:54:44 tsutsui Exp $");
 
 #include "mpu.h"
 
@@ -167,18 +167,18 @@ static int	yds_halt_input(void *);
 static int	yds_getdev(void *, struct audio_device *);
 static int	yds_mixer_set_port(void *, mixer_ctrl_t *);
 static int	yds_mixer_get_port(void *, mixer_ctrl_t *);
-static void   *yds_malloc(void *, int, size_t);
+static void *	yds_malloc(void *, int, size_t);
 static void	yds_free(void *, void *, size_t);
 static size_t	yds_round_buffersize(void *, int, size_t);
-static paddr_t yds_mappage(void *, void *, off_t, int);
+static paddr_t	yds_mappage(void *, void *, off_t, int);
 static int	yds_get_props(void *);
 static int	yds_query_devinfo(void *, mixer_devinfo_t *);
 static void	yds_get_locks(void *, kmutex_t **, kmutex_t **);
 
-static int     yds_attach_codec(void *, struct ac97_codec_if *);
+static int	yds_attach_codec(void *, struct ac97_codec_if *);
 static int	yds_read_codec(void *, uint8_t, uint16_t *);
 static int	yds_write_codec(void *, uint8_t, uint16_t);
-static int     yds_reset_codec(void *);
+static int	yds_reset_codec(void *);
 
 static u_int	yds_get_dstype(int);
 static int	yds_download_mcode(struct yds_softc *);
@@ -203,40 +203,40 @@ static void	yds_dump_play_slot(struct yds_softc *, int);
 #endif /* AUDIO_DEBUG */
 
 static const struct audio_hw_if yds_hw_if = {
-	yds_open,
-	yds_close,
-	NULL,
-	yds_query_encoding,
-	yds_set_params,
-	yds_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	yds_halt_output,
-	yds_halt_input,
-	NULL,
-	yds_getdev,
-	NULL,
-	yds_mixer_set_port,
-	yds_mixer_get_port,
-	yds_query_devinfo,
-	yds_malloc,
-	yds_free,
-	yds_round_buffersize,
-	yds_mappage,
-	yds_get_props,
-	yds_trigger_output,
-	yds_trigger_input,
-	NULL,
-	yds_get_locks,
+	.open		  = yds_open,
+	.close		  = yds_close,
+	.drain		  = NULL,
+	.query_encoding	  = yds_query_encoding,
+	.set_params	  = yds_set_params,
+	.round_blocksize  = yds_round_blocksize,
+	.commit_settings  = NULL,
+	.init_output	  = NULL,
+	.init_input	  = NULL,
+	.start_output	  = NULL,
+	.start_input	  = NULL,
+	.halt_output	  = yds_halt_output,
+	.halt_input	  = yds_halt_input,
+	.speaker_ctl	  = NULL,
+	.getdev		  = yds_getdev,
+	.setfd		  = NULL,
+	.set_port	  = yds_mixer_set_port,
+	.get_port	  = yds_mixer_get_port,
+	.query_devinfo	  = yds_query_devinfo,
+	.allocm		  = yds_malloc,
+	.freem		  = yds_free,
+	.round_buffersize = yds_round_buffersize,
+	.mappage	  = yds_mappage,
+	.get_props	  = yds_get_props,
+	.trigger_output	  = yds_trigger_output,
+	.trigger_input	  = yds_trigger_input,
+	.dev_ioctl	  = NULL,
+	.get_locks	  = yds_get_locks,
 };
 
 static const struct audio_device yds_device = {
-	"Yamaha DS-1",
-	"",
-	"yds"
+	.name    = "Yamaha DS-1",
+	.version = "",
+	.config  = "yds"
 };
 
 static const struct {
