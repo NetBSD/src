@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.25 2014/08/13 14:41:45 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.26 2014/08/17 16:14:59 matt Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -136,9 +136,15 @@ GENERIC_SRCS+= \
 
 # These have h/w instructions which are always used.
 .if ${LIBC_MACHINE_ARCH} != "alpha" && ${LIBC_MACHINE_CPU} != "powerpc" \
+    && ${LIBC_MACHINE_CPU} != "aarch64"
+GENERIC_SRCS+= \
+	clzsi2.c
+.endif
+
+# These have h/w instructions which are always used.
+.if ${LIBC_MACHINE_ARCH} != "alpha" && ${LIBC_MACHINE_CPU} != "powerpc" \
     && ${LIBC_MACHINE_CPU} != "aarch64" && ${LIBC_MACHINE_ARCH} != "vax"
 GENERIC_SRCS+= \
-	clzsi2.c \
 	ctzsi2.c \
 	divmodsi4.c \
 	divsi3.c \
