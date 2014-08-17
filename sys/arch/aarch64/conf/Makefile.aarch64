@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.2 2014/08/14 18:39:39 joerg Exp $
+#	$NetBSD: Makefile.aarch64,v 1.3 2014/08/17 21:17:43 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -68,8 +68,7 @@ LINKFLAGS_NORMAL+=	-T ${LDSCRIPT}
 # Strip AArch64 mapping symbols from the kernel image, as they interfere
 # with ddb. Do it differently if 'makeoptions DEBUG="-g"' was specified.
 .if !defined(DEBUG) || empty(DEBUG:M-g*)
-SYSTEM_LD_TAIL?=	${SYSTEM_LD_TAIL_DBSYM}; \
-			${OBJCOPY} -w --strip-symbol='[$$][dx]'	\
+SYSTEM_LD_TAIL?=	${OBJCOPY} -w --strip-symbol='[$$][dx]'	\
 				   --strip-symbol='[$$][dx]\.*' $@ ;\
 			${SIZE} $@; chmod 755 $@
 .else

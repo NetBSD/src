@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.55 2014/08/16 17:56:31 apb Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.56 2014/08/17 21:17:43 joerg Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -135,7 +135,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=800000
+makeoptions	COPY_SYMTAB=1
 
 ## USB Debugging options
 options USB_DEBUG
