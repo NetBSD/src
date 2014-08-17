@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.11 2014/08/15 23:59:39 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.12 2014/08/17 03:34:59 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -187,4 +187,34 @@ build.sh					1.295
 	is supposed override MACHINE_ARCH from the environment with the
 	default MACHINE_ARCH for the requested machine.
 	[apb, ticket #27]
+
+sys/rump/net/lib/libshmif/if_shmem.c		1.63
+sys/rump/net/lib/libshmif/shmifvar.h		1.8-1.9
+
+	Make shmif work with bridges.
+	[ozaki-r, ticket #28]
+
+sbin/mount_ptyfs/mount_ptyfs.8			1.14
+sys/fs/ptyfs/ptyfs.h				1.13-1.14
+sys/fs/ptyfs/ptyfs_subr.c			1.30-1.32
+sys/fs/ptyfs/ptyfs_vfsops.c			1.51-1.53
+sys/fs/ptyfs/ptyfs_vnops.c			1.48-1.49
+
+	Sync ptyfs with recent changes:
+	 + Change ptyfs to vcache.
+	  - Use (type, minor) as key.
+	  - Change ptyfs_allocvp to return a referenced vnode and lock where
+	    needed.
+	  - Remove unneeded vnode backpointer ptyfs_vnode.
+	  - Keep a single hashlist for pty nodes to make their attributes
+	    persistent.
+	 + Add a map of active controlling ptys per mount and no longer abuse
+  	   the vnode lifecycle.
+	 + No longer set "recycle" on VOP_INACTIVE().
+	 + Make ptyfs_used_get() private to ptyfs_subr.c
+	 + Stop copying device attributes from traditional ptys on first
+	   allocation.
+	 + Remove unneeded argument "lwp" from ptyfs_allocvp() and
+	   ptyfs_free_get().
+	[hannken, ticket #29]
 
