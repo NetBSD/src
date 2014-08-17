@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.41 2014/08/16 17:56:31 apb Exp $
+# $NetBSD: HDL_G,v 1.42 2014/08/17 21:17:43 joerg Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -137,7 +137,7 @@ options 	USERCONF	# userconf(4) support
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=750000
+makeoptions	COPY_SYMTAB=1
 
 #config		netbsd		root on ? type ?
 config		netbsd		root on wd0a type ?

@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.6 2014/08/16 17:56:31 apb Exp $
+# $Id: IMX23_OLINUXINO,v 1.7 2014/08/17 21:17:43 joerg Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -90,7 +90,7 @@ options		COMPAT_60	# NetBSD 6.0 compatibility
 options		COMPAT_70	# NetBSD 7.0 compatibility
 
 makeoptions     DEBUG="-g"      # compile full symbol table
-options         SYMTAB_SPACE=800000
+makeoptions	COPY_SYMTAB=1
 
 options		SYSVMSG		# System V-like message queues
 options		SYSVSEM		# System V-like semaphores

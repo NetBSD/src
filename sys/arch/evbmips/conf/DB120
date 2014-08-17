@@ -1,4 +1,4 @@
-#	$NetBSD: DB120,v 1.13 2014/07/20 10:06:11 alnsn Exp $
+#	$NetBSD: DB120,v 1.14 2014/08/17 21:17:43 joerg Exp $
 #
 # Qualcomm Atheros AR9344 DB120 evaluation board.
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DB120-$Revision: 1.13 $"
+#ident 		"DB120-$Revision: 1.14 $"
 
 maxusers	32
 
@@ -52,7 +52,7 @@ options 	DEBUG		# extra kernel debugging support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=350000	# size for embedded symbol table
+makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1097 2014/08/16 17:24:28 apb Exp $
+#	$NetBSD: files,v 1.1098 2014/08/17 21:17:44 joerg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1355,7 +1355,6 @@ defpseudodev fss:	disk
 defpseudo pty:		tty
 defpseudo rnd
 defpseudo ksyms
-defparam opt_ksyms.h	SYMTAB_SPACE
 defpseudo nullcons
 defpseudo lockstat
 defpseudo bio:		sysmon_envsys
