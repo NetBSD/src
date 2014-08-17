@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.76 2014/05/16 00:48:41 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.77 2014/08/17 21:17:43 joerg Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -520,7 +520,7 @@ ENTRY(start)
 
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
-#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(COPY_SYMTAB)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax

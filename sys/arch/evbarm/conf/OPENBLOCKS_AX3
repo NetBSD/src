@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.10 2014/08/16 17:56:31 apb Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.11 2014/08/17 21:17:43 joerg Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -157,7 +157,7 @@ options 	DDB_ONPANIC=1
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=800000
+makeoptions	COPY_SYMTAB=1
 
 config		netbsd		root on ? type ?
 
