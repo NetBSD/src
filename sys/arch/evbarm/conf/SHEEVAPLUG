@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.40 2014/08/16 17:56:31 apb Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.41 2014/08/17 21:17:43 joerg Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -165,7 +165,7 @@ options 	DDB		# in-kernel debugger
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 #makeoptions	COPTS="-O1"
-options 	SYMTAB_SPACE=840000
+makeoptions	COPY_SYMTAB=1
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?

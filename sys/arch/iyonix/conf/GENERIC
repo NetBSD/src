@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.84 2014/08/16 17:56:32 apb Exp $
+#	$NetBSD: GENERIC,v 1.85 2014/08/17 21:17:44 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.84 $"
+#ident 		"GENERIC-$Revision: 1.85 $"
 
 maxusers	32		# estimated number of users
 
@@ -86,7 +86,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=630000
+makeoptions	COPY_SYMTAB=1
 options 	PERFCTRS	# performance counters
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

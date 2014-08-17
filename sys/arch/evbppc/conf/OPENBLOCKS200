@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.41 2014/08/16 17:56:32 apb Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.42 2014/08/17 21:17:43 joerg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -39,7 +39,7 @@ options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=410000	# size for embedded symbol table
+makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 
