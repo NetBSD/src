@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.129 2014/06/13 15:45:02 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.130 2014/08/17 19:28:46 justin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.129 2014/06/13 15:45:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.130 2014/08/17 19:28:46 justin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1740,8 +1740,10 @@ rumpfs_mountfs(struct mount *mp)
 
 	rn = makeprivate(VDIR, RUMPFS_DEFAULTMODE, NODEV, DEV_BSIZE, false);
 	rn->rn_parent = rn;
-	if ((error = makevnode(mp, rn, &rfsmp->rfsmp_rvp)) != 0)
+	if ((error = makevnode(mp, rn, &rfsmp->rfsmp_rvp)) != 0) {
+		kmem_free(rfsmp, sizeof(*rfsmp));
 		return error;
+	}
 
 	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
 
