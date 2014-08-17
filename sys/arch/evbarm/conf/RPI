@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.47 2014/08/16 17:56:31 apb Exp $
+#	$NetBSD: RPI,v 1.48 2014/08/17 21:17:43 joerg Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -141,7 +141,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB,KGDB_PLCOMUNIT=0,KGDB_DEVRATE=115200,KGDB_CONMODE=0xB00
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=880000
+makeoptions	COPY_SYMTAB=1
 options 	PLCONSOLE
 #options 	PLCONSOLE,PLCOMCNUNIT=0,PLCONSPEED=115200,PLCONMODE=0xB00
 

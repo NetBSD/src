@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 2014/08/16 17:56:33 apb Exp $
+# $NetBSD: GENERIC,v 1.123 2014/08/17 21:17:44 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -165,7 +165,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=650000
+makeoptions	COPY_SYMTAB=1
 
 config		netbsd	root on ? type ?
 
