@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.10 2014/08/18 09:14:03 christos Exp $	*/
+/*	$NetBSD: flock.c,v 1.11 2014/08/18 09:16:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.10 2014/08/18 09:14:03 christos Exp $");
+__RCSID("$NetBSD: flock.c,v 1.11 2014/08/18 09:16:35 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -216,9 +216,9 @@ main(int argc, char *argv[])
 		usage("Missing lock file argument");
 	case 1:
 		if (cls)
-			usage("Close is valid only for descriptors");
+			usage("Close is not valid for descriptors");
 		errno = 0;
-		l = strtol(argv[0], &v, 0);	// XXX: error checking
+		l = strtol(argv[0], &v, 0);
 		if ((l == LONG_MIN || l == LONG_MAX) && errno == ERANGE)
 			err(EXIT_FAILURE, "Bad file descriptor `%s'", argv[0]);
 		if (l > INT_MAX || l < 0 || *v)
