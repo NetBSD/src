@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.41 2014/08/17 21:17:43 joerg Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.42 2014/08/18 06:31:24 christos Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -135,8 +135,9 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	MEMORY_DISK_ROOT_SIZE=22528	# Size in blocks
 #options 	MEMORY_RBFLAGS=RB_AUTOBOOT
 
-options 	DKWEDGE_AUTODISCOVER
-options 	DKWEDGE_METHOD_GPT
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # Miscellaneous kernel options
 
