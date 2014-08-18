@@ -155,6 +155,13 @@ int drm_gem_object_init(struct drm_device *dev,
 
 #ifdef __NetBSD__
 	obj->gemo_shm_uao = uao_create(size, 0);
+	/*
+	 * XXX This is gross.  We ought to do it the other way around:
+	 * set the uao to have the main uvm object's lock.  However,
+	 * uvm_obj_setlock is not safe on uvm_aobjs.
+	 */
+	mutex_obj_hold(obj->gemo_shm_uao->vmobjlock);
+	uvm_obj_setlock(&obj->gemo_uvmobj, obj->gemo_shm_uao->vmobjlock);
 #else
 	filp = shmem_file_setup("drm mm object", size, VM_NORESERVE);
 	if (IS_ERR(filp))

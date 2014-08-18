@@ -33,6 +33,7 @@
 #ifdef __NetBSD__
 #include <sys/types.h>
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_object.h>
 #endif
 
 #include <drm/ttm/ttm_module.h>
@@ -286,7 +287,21 @@ static int ttm_bo_add_ttm(struct ttm_buffer_object *bo, bool zero_alloc)
 		break;
 	}
 
+#ifdef __NetBSD__
+	if (ret)
+		return ret;
+
+	/*
+	 * XXX This is gross.  We ought to do it the other way around:
+	 * set the uao to have the main uvm object's lock.  However,
+	 * uvm_obj_setlock is not safe on uvm_aobjs.
+	 */
+	mutex_obj_hold(bo->ttm->swap_storage->vmobjlock);
+	uvm_obj_setlock(&bo->uvmobj, bo->ttm->swap_storage->vmobjlock);
+	return 0;
+#else
 	return ret;
+#endif
 }
 
 static int ttm_bo_handle_move_mem(struct ttm_buffer_object *bo,

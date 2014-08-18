@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.2 2014/08/09 00:18:58 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.2.4.1 2014/08/18 07:49:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.2 2014/08/09 00:18:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.2.4.1 2014/08/18 07:49:10 martin Exp $");
 
 #include <sys/types.h>
 
@@ -89,6 +89,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 	unsigned i;
 	vm_prot_t vm_prot;	/* VM_PROT_* */
 	pgprot_t pgprot;	/* VM_PROT_* | PMAP_* cacheability flags */
+	unsigned mmapflags;
 	int ret;
 
 	/* Copy-on-write mappings make no sense for the graphics aperture.  */
@@ -178,13 +179,19 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		/* XXX PGO_ALLPAGES?  */
 		if (pps[i] == PGO_DONTCARE)
 			continue;
-		if (bo->mem.bus.is_iomem)
-			paddr = bus_space_mmap(bdev->memt, u.base,
-			    ((startpage + i) << PAGE_SHIFT), vm_prot, 0);
-		else
+		if (bo->mem.bus.is_iomem) {
+			const paddr_t cookie = bus_space_mmap(bdev->memt,
+			    u.base, ((startpage + i) << PAGE_SHIFT), vm_prot,
+			    0);
+
+			paddr = pmap_phys_address(cookie);
+			mmapflags = pmap_mmap_flags(cookie);
+		} else {
 			paddr = page_to_phys(u.ttm->pages[startpage + i]);
+			mmapflags = 0;
+		}
 		ret = -pmap_enter(ufi->orig_map->pmap, vaddr + i*PAGE_SIZE,
-		    paddr, vm_prot, (PMAP_CANFAIL | pgprot));
+		    paddr, vm_prot, (PMAP_CANFAIL | pgprot | mmapflags));
 		if (ret)
 			goto out3;
 	}
