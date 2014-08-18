@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.19 2014/06/14 07:39:00 hannken Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.20 2014/08/18 17:16:42 agc Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -156,8 +156,11 @@ dm_target_stripe_init(dm_dev_t * dmv, void **target_config, char *params)
 		       argv[strpi], argv[strpi+1]);
 
 		tlc = kmem_alloc(sizeof(*tlc), KM_NOSLEEP);
-		if ((tlc->pdev = dm_pdev_insert(argv[strpi])) == NULL)
+		if ((tlc->pdev = dm_pdev_insert(argv[strpi])) == NULL) {
+			kmem_free(tsc, sizeof(*tsc));
+			kmem_free(tlc, sizeof(*tlc));
 			return ENOENT;
+		}
 		tlc->offset = atoi(argv[strpi+1]);
 
 		/* Insert striping device to linked list. */
@@ -183,8 +186,10 @@ dm_target_stripe_status(void *target_config)
 	if ((params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL)
 		return NULL;
 
-	if ((tmp = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL)
+	if ((tmp = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL) {
+		kmem_free(params, DM_MAX_PARAMS_SIZE);
 		return NULL;
+	}
 
 	snprintf(params, DM_MAX_PARAMS_SIZE, "%d %" PRIu64,
 	    tsc->stripe_num, tsc->stripe_chunksize);
