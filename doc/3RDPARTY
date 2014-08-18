@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1147 2014/08/18 07:03:33 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1148 2014/08/18 07:16:32 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -326,7 +326,7 @@ Home Page:	http://www.gnu.org/software/make/
 Mailing List:	bug-make@gnu.org
 Responsible:	
 License:	GPLv2+ (3.81), GPLv3+ (3.82 and later)
-Location:	external/gpl2/gmke
+Location:	external/gpl2/gmake
 Notes:
 
 Package:	diffutils
