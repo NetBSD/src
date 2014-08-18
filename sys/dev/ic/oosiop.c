@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.13 2010/11/13 13:52:02 uebayasi Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.14 2014/08/18 03:43:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.13 2010/11/13 13:52:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.14 2014/08/18 03:43:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,6 +247,7 @@ static int
 oosiop_alloc_cb(struct oosiop_softc *sc, int ncb)
 {
 	struct oosiop_cb *cb;
+	void *xfer_kva;
 	struct oosiop_xfer *xfer;
 	bus_size_t xfersize;
 	bus_dma_segment_t seg;
@@ -258,7 +259,8 @@ oosiop_alloc_cb(struct oosiop_softc *sc, int ncb)
 	cb = malloc(sizeof(struct oosiop_cb) * ncb, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (cb == NULL) {
 		printf(": failed to allocate cb memory\n");
-		return (ENOMEM);
+		err = ENOMEM;
+		goto fail0;
 	}
 
 	/*
@@ -269,57 +271,79 @@ oosiop_alloc_cb(struct oosiop_softc *sc, int ncb)
 	    &nseg, BUS_DMA_NOWAIT);
 	if (err) {
 		printf(": failed to allocate xfer block memory, err=%d\n", err);
-		return (err);
+		goto fail1;
 	}
-	err = bus_dmamem_map(sc->sc_dmat, &seg, nseg, xfersize,
-	    (void **)(void *)&xfer, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	KASSERT(nseg == 1);
+	err = bus_dmamem_map(sc->sc_dmat, &seg, nseg, xfersize, &xfer_kva,
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (err) {
 		printf(": failed to map xfer block memory, err=%d\n", err);
-		return (err);
+		goto fail2;
 	}
+	xfer = xfer_kva;
 
 	/* Initialize each command block */
 	for (i = 0; i < ncb; i++) {
 		err = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
-		    0, BUS_DMA_NOWAIT, &cb->cmddma);
+		    0, BUS_DMA_NOWAIT, &cb[i].cmddma);
 		if (err) {
 			printf(": failed to create cmddma map, err=%d\n", err);
-			return (err);
+			goto loop_fail0;
 		}
 		err = bus_dmamap_create(sc->sc_dmat, OOSIOP_MAX_XFER,
 		    OOSIOP_NSG, OOSIOP_DBC_MAX, 0, BUS_DMA_NOWAIT,
-		    &cb->datadma);
+		    &cb[i].datadma);
 		if (err) {
 			printf(": failed to create datadma map, err=%d\n", err);
-			return (err);
+			goto loop_fail1;
 		}
 
 		err = bus_dmamap_create(sc->sc_dmat,
 		    sizeof(struct oosiop_xfer), 1, sizeof(struct oosiop_xfer),
-		    0, BUS_DMA_NOWAIT, &cb->xferdma);
+		    0, BUS_DMA_NOWAIT, &cb[i].xferdma);
 		if (err) {
 			printf(": failed to create xfer block map, err=%d\n",
 			    err);
-			return (err);
+			goto loop_fail2;
 		}
-		err = bus_dmamap_load(sc->sc_dmat, cb->xferdma, xfer,
+		err = bus_dmamap_load(sc->sc_dmat, cb[i].xferdma, xfer,
 		    sizeof(struct oosiop_xfer), NULL, BUS_DMA_NOWAIT);
 		if (err) {
 			printf(": failed to load xfer block, err=%d\n", err);
-			return (err);
+			goto loop_fail3;
 		}
 
-		cb->xfer = xfer;
+		cb[i].xfer = &xfer[i];
+		continue;
 
-		s = splbio();
-		TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
-		splx(s);
-
-		cb++;
-		xfer++;
+loop_fail4: __unused
+		bus_dmamap_unload(sc->sc_dmat, cb[i].xferdma);
+loop_fail3:	bus_dmamap_destroy(sc->sc_dmat, cb[i].xferdma);
+loop_fail2:	bus_dmamap_destroy(sc->sc_dmat, cb[i].datadma);
+loop_fail1:	bus_dmamap_destroy(sc->sc_dmat, cb[i].cmddma);
+loop_fail0:	goto fail3;
 	}
 
-	return (0);
+	for (i = 0; i < ncb; i++) {
+		s = splbio();
+		TAILQ_INSERT_TAIL(&sc->sc_free_cb, &cb[i], chain);
+		splx(s);
+	}
+
+	/* Success!  */
+	return 0;
+
+fail3:	while (i--) {
+		bus_dmamap_unload(sc->sc_dmat, cb[i].xferdma);
+		bus_dmamap_destroy(sc->sc_dmat, cb[i].xferdma);
+		bus_dmamap_destroy(sc->sc_dmat, cb[i].datadma);
+		bus_dmamap_destroy(sc->sc_dmat, cb[i].cmddma);
+	}
+	bus_dmamem_unmap(sc->sc_dmat, xfer_kva, xfersize);
+fail2:	bus_dmamem_free(sc->sc_dmat, &seg, 1);
+fail1:	free(cb, M_DEVBUF);
+fail0:	KASSERT(err);
+	return err;
 }
 
 static inline void
