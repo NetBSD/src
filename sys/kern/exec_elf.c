@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.69 2014/07/08 17:16:25 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.69.2.1 2014/08/18 07:37:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.69 2014/07/08 17:16:25 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.69.2.1 2014/08/18 07:37:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -863,9 +863,6 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 	int error;
 	int isnetbsd = 0;
 	char *ndata, *ndesc;
-#ifdef COMPAT_OLDNOTE
-	int compat_oldnote = -1;
-#endif
 	
 #ifdef DIAGNOSTIC
 	const char *badnote;
@@ -907,6 +904,12 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		 *    header size + 4-byte aligned name + 4-byte aligned desc
 		 * Ensure this size is consistent with what is indicated
 		 * in sh_size. The first check avoids integer overflows.
+		 *
+		 * Binaries from before NetBSD 1.6 have two notes in the same
+		 * note section.  The second note was never used, so as long as
+		 * the section is at least as big as it should be, it's ok.
+		 * These binaries also have a second note section with a note of
+		 * type ELF_NOTE_TYPE_NETBSD_TAG, which can be ignored as well.
 		 */
 		if (np->n_namesz > shp->sh_size || np->n_descsz > shp->sh_size) {
 			BADNOTE("note size limit");
@@ -914,11 +917,8 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		}
 		nsize = sizeof(*np) + roundup(np->n_namesz, 4) +
 		    roundup(np->n_descsz, 4);
-		if (nsize != shp->sh_size) {
+		if (nsize > shp->sh_size) {
 			BADNOTE("note size");
-#ifdef COMPAT_OLDNOTE
-			if (nsize > shp->sh_size || compat_oldnote == 0)
-#endif
 			goto bad;
 		}
 		ndesc = ndata + roundup(np->n_namesz, 4);
@@ -933,9 +933,6 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 				memcpy(&epp->ep_osversion, ndesc,
 				    ELF_NOTE_NETBSD_DESCSZ);
 				isnetbsd = 1;
-#ifdef COMPAT_OLDNOTE
-				compat_oldnote = epp->ep_osversion == 199905;
-#endif
 				break;
 			}
 
@@ -947,10 +944,6 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    memcmp(ndata, ELF_NOTE_SUSE_NAME,
 			    ELF_NOTE_SUSE_NAMESZ) == 0)
 				break;
-#ifdef COMPAT_OLDNOTE
-			if (compat_oldnote == 1)
-				break;
-#endif
 			BADNOTE("NetBSD tag");
 			goto bad;
 
