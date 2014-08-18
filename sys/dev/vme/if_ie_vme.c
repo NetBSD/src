@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.30 2011/06/03 16:28:41 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.31 2014/08/18 04:26:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.30 2011/06/03 16:28:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.31 2014/08/18 04:26:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,7 +424,7 @@ ie_vme_match(device_t parent, cfdata_t cf, void *aux)
 		return (0);
 	}
 	if (va->r[0].size != VMECF_LEN_DEFAULT &&
-	    va->r[0].size != sizeof(sizeof(struct ievme))) {
+	    va->r[0].size != sizeof(struct ievme)) {
 		printf("ie_vme_match: bad csr size\n");
 		return (0);
 	}
