@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.15 2014/08/18 14:33:23 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.16 2014/08/18 14:35:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shmif_dumpbus.c,v 1.15 2014/08/18 14:33:23 pooka Exp $");
+__RCSID("$NetBSD: shmif_dumpbus.c,v 1.16 2014/08/18 14:35:29 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -217,8 +217,6 @@ main(int argc, char *argv[])
 
 	while (curbus <= buslast || bonus) {
 		struct pcap_pkthdr packhdr;
-		struct shmif_pkthdr sp;
-		struct shmif_pkthdr2 sp2;
 		uint32_t oldoff;
 		uint32_t curlen;
 		uint32_t sp_sec, sp_usec, sp_len;
@@ -230,12 +228,16 @@ main(int argc, char *argv[])
 		oldoff = curbus;
 
 		if (useversion == 3) {
+			struct shmif_pkthdr sp;
+
 			curbus = shmif_busread(bmem,
 			    &sp, oldoff, sizeof(sp), &wrap);
 			sp_len = sp.sp_len;
 			sp_sec = sp.sp_sec;
 			sp_usec = sp.sp_usec;
 		} else {
+			struct shmif_pkthdr2 sp2;
+
 			curbus = shmif_busread(bmem,
 			    &sp2, oldoff, sizeof(sp2), &wrap);
 			sp_len = sp2.sp_len;
