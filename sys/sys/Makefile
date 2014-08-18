@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.149 2014/07/25 21:43:13 joerg Exp $
+#	$NetBSD: Makefile,v 1.150 2014/08/18 22:33:25 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	callback.h callout.h cdbr.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clockctl.h \
 	common_int_const.h common_int_fmtio.h common_int_limits.h \
-	common_int_mwgwtypes.h common_int_types.h \
+	common_int_mwgwtypes.h common_int_types.h common_wchar_limits.h \
 	condvar.h conf.h core.h \
 	cpufreq.h cpuio.h ctype_bits.h ctype_inline.h \
 	device.h device_if.h \
