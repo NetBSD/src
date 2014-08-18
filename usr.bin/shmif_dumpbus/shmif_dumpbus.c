@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.16 2014/08/18 14:35:29 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.17 2014/08/18 14:40:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shmif_dumpbus.c,v 1.16 2014/08/18 14:35:29 pooka Exp $");
+__RCSID("$NetBSD: shmif_dumpbus.c,v 1.17 2014/08/18 14:40:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -232,23 +232,23 @@ main(int argc, char *argv[])
 
 			curbus = shmif_busread(bmem,
 			    &sp, oldoff, sizeof(sp), &wrap);
-			sp_len = sp.sp_len;
-			sp_sec = sp.sp_sec;
-			sp_usec = sp.sp_usec;
+			sp_len = FIXENDIAN32(sp.sp_len);
+			sp_sec = FIXENDIAN32(sp.sp_sec);
+			sp_usec = FIXENDIAN32(sp.sp_usec);
 		} else {
 			struct shmif_pkthdr2 sp2;
 
 			curbus = shmif_busread(bmem,
 			    &sp2, oldoff, sizeof(sp2), &wrap);
-			sp_len = sp2.sp_len;
-			sp_sec = sp2.sp_sec;
-			sp_usec = sp2.sp_usec;
+			sp_len = FIXENDIAN32(sp2.sp_len);
+			sp_sec = FIXENDIAN32(sp2.sp_sec);
+			sp_usec = FIXENDIAN32(sp2.sp_usec);
 		}
 		if (wrap)
 			bonus = 0;
 
 		assert(curbus < sb.st_size);
-		curlen = FIXENDIAN32(sp_len);
+		curlen = sp_len;
 
 		if (curlen == 0) {
 			continue;
@@ -256,7 +256,7 @@ main(int argc, char *argv[])
 
 		fprintf(dumploc, "packet %d, offset 0x%04x, length 0x%04x, "
 			    "ts %d/%06d\n", i++, curbus, curlen,
-			    FIXENDIAN32(sp_sec), FIXENDIAN32(sp_usec));
+			    sp_sec, sp_usec);
 
 		if (!pcapfile) {
 			curbus = shmif_busread(bmem,
@@ -268,8 +268,8 @@ main(int argc, char *argv[])
 
 		memset(&packhdr, 0, sizeof(packhdr));
 		packhdr.caplen = packhdr.len = curlen;
-		packhdr.ts.tv_sec = FIXENDIAN32(sp_sec);
-		packhdr.ts.tv_usec = FIXENDIAN32(sp_usec);
+		packhdr.ts.tv_sec = sp_sec;
+		packhdr.ts.tv_usec = sp_usec;
 		assert(curlen <= BUFSIZE);
 
 		curbus = shmif_busread(bmem, buf, curbus, curlen, &wrap);
