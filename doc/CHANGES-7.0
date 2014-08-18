@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.12 2014/08/17 03:34:59 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.13 2014/08/18 07:55:26 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -217,4 +217,46 @@ sys/fs/ptyfs/ptyfs_vnops.c			1.48-1.49
 	 + Remove unneeded argument "lwp" from ptyfs_allocvp() and
 	   ptyfs_free_get().
 	[hannken, ticket #29]
+
+sys/kern/exec_elf.c				1.70
+
+	eliminate COMPAT_OLDNOTE and just always recognize the old notes.
+	[chs, ticket #32]
+
+external/bsd/bind/Makefile.inc			1.22
+
+	ALLOW_FILTER_AAAA_ON_V4 has been renamed to ALLOW_FILTER_AAAA
+	(John D. Baker)
+	[christos, ticket #33]
+
+usr.bin/sed/process.c				1.46
+
+	PR/49109: Jeremie Le Hen: fix sed relative addressin (1,+N)
+	https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=192108
+	http://svnweb.freebsd.org/base?view=revision&revision=269302
+	[christos, ticket #34]
+
+sys/external/bsd/drm2/dist/drm/drm_gem.c	1.5
+sys/external/bsd/drm2/dist/drm/ttm/ttm_bo.c	1.5
+sys/external/bsd/drm2/dist/drm/ttm/ttm_bo.c	1.6
+sys/external/bsd/drm2/ttm/ttm_bo_vm.c		1.3
+
+	bus_space_mmap cookies are not paddrs, so don't pmap_enter them!
+	For gem and ttm objects backed by uvm_aobjs, share the vmobjlock.
+	Simplify previous.
+	[riastradh, ticket #36]
+
+external/gpl3/gcc/dist/gcc/config/vax/builtins.md 1.4
+external/gpl3/gcc/dist/gcc/config/vax/vax.c	1.10
+	Rework so that the ctzsi builtin is supported.
+
+lib/libc/compiler_rt/Makefile.inc		1.26
+	VAX does need __clzsi2
+
+libexec/ld.elf_so/arch/vax/rtld_start.S		1.23
+libexec/ld.elf_so/arch/vax/rtld_start.S		1.24
+	add a missing register prefix.
+	Add proper registers for register counts.
+
+	[matt, ticket #37]
 
