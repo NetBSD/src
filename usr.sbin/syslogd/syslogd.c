@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.119 2013/11/27 20:48:28 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.120 2014/08/18 05:21:16 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.119 2013/11/27 20:48:28 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.120 2014/08/18 05:21:16 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -1854,21 +1854,22 @@ logmsg(struct buf_msg *buffer)
 	}
 
 	for (f = Files; f; f = f->f_next) {
+		char *h;	/* host to use for comparing */
+
 		/* skip messages that are incorrect priority */
 		if (!MATCH_PRI(f, fac, prilev)
 		    || f->f_pmask[fac] == INTERNAL_NOPRI)
 			continue;
 
 		/* skip messages with the incorrect host name */
-		/* do we compare with host (IMHO correct) or recvhost */
-		/* (compatible)? */
-		if (f->f_host != NULL && buffer->host != NULL) {
-			char shost[MAXHOSTNAMELEN + 1], *h;
-			if (!BSDOutputFormat) {
-				h = buffer->host;
-			} else {
-				(void)strlcpy(shost, buffer->host,
-				    sizeof(shost));
+		/* compare with host (which is supposedly more correct), */
+		/* but fallback to recvhost if host is NULL */
+		h = (buffer->host != NULL) ? buffer->host : buffer->recvhost;
+		if (f->f_host != NULL && h != NULL) {
+			char shost[MAXHOSTNAMELEN + 1];
+
+			if (BSDOutputFormat) {
+				(void)strlcpy(shost, h, sizeof(shost));
 				trim_anydomain(shost);
 				h = shost;
 			}
@@ -3740,7 +3741,7 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
 		f->f_host = NULL;
 	else {
 		f->f_host = strdup(host);
-		trim_anydomain(f->f_host);
+		trim_anydomain(&f->f_host[1]);	/* skip +/- at beginning */
 	}
 
 	/* save program name, if any */
