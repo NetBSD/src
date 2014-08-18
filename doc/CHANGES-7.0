@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.13 2014/08/18 07:55:26 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.14 2014/08/18 12:42:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -260,3 +260,17 @@ libexec/ld.elf_so/arch/vax/rtld_start.S		1.24
 
 	[matt, ticket #37]
 
+sbin/ccdconfig/ccdconfig.c			1.54
+sbin/ccdconfig/ccdconfig.c			1.55
+sys/dev/ccd.c					1.152
+sys/dev/ccdvar.h				1.34
+
+	Switch size_t to uint64_t in appropriate places to ensure that 
+	ccd(4) works with component and total sizes of > 2TB.
+	Add COMPAT_60 code for platforms where this alters userland-accessible
+	structures.
+	Make kernel print device information when a ccd configured.
+	Fix some typos in comments.
+	Don't print ccd_size with %zu; it no longer has type size_t.
+	Instead, cast to uintmax_t and print with %ju.
+	[sborrill, ticket #38]
