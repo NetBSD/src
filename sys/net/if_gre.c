@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.159 2014/08/08 03:05:45 rtr Exp $ */
+/*	$NetBSD: if_gre.c,v 1.160 2014/08/18 04:28:55 riastradh Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.159 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.160 2014/08/18 04:28:55 riastradh Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -275,7 +275,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 
 	if ((any = sockaddr_any_by_family(AF_INET)) == NULL &&
 	    (any = sockaddr_any_by_family(AF_INET6)) == NULL)
-		return -1;
+		goto fail0;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_SOFTNET);
@@ -302,9 +302,8 @@ gre_clone_create(struct if_clone *ifc, int unit)
 
 	rc = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, gre_fp_recvloop, sc,
 	    NULL, "%s", sc->sc_if.if_xname);
-
-	if (rc != 0)
-		return -1;
+	if (rc)
+		goto fail1;
 
 	gre_evcnt_attach(sc);
 
@@ -314,6 +313,12 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	if_alloc_sadl(&sc->sc_if);
 	bpf_attach(&sc->sc_if, DLT_NULL, sizeof(uint32_t));
 	return 0;
+
+fail1:	cv_destroy(&sc->sc_fp_condvar);
+	cv_destroy(&sc->sc_condvar);
+	mutex_destroy(&sc->sc_mtx);
+	free(sc, M_DEVBUF);
+fail0:	return -1;
 }
 
 static int
