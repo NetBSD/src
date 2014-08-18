@@ -1,4 +1,4 @@
-#	$NetBSD: MV2120,v 1.23 2014/08/17 21:17:43 joerg Exp $
+#	$NetBSD: MV2120,v 1.24 2014/08/18 06:31:24 christos Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
@@ -345,7 +345,9 @@ options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 
 pseudo-device drvctl
 
-options DKWEDGE_AUTODISCOVER
-options DKWEDGE_METHOD_GPT
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+
 options BUFQ_READPRIO
 options BUFQ_PRIOCSCAN

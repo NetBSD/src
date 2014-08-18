@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.59 2014/08/17 21:17:44 joerg Exp $
+#	$NetBSD: GENERIC,v 1.60 2014/08/18 06:31:24 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -108,10 +108,10 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
-#options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
-# The following two options can break /etc/fstab, so handle with care
-#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
-#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 
 # Shared memory options
 
