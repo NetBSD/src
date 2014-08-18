@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.19 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.20 2014/08/18 13:46:07 apb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.19 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.20 2014/08/18 13:46:07 apb Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -232,18 +232,15 @@ addwedges(const mbr_args_t *a, const struct disklabel *lp)
 
 		if (p->p_fstype == FS_UNUSED)
 			continue;
-		if ((ptype = bsdlabel_fstype_to_str(p->p_fstype)) == NULL) {
-			/*
-			 * XXX Should probably just add these...
-			 * XXX maybe just have an empty ptype?
-			 */
-			aprint_verbose("%s: skipping partition %d, type %d\n",
-			    a->pdk->dk_name, i, p->p_fstype);
-			continue;
-		}
-		strcpy(dkw.dkw_ptype, ptype);
+		ptype = bsdlabel_fstype_to_str(p->p_fstype);
+		if (ptype == NULL)
+			snprintf(dkw.dkw_ptype, sizeof(dkw.dkw_ptype),
+			    "unknown#%u", p->p_fstype);
+		else
+			strlcpy(dkw.dkw_ptype, ptype, sizeof(dkw.dkw_ptype));
 
-		strcpy(dkw.dkw_parent, a->pdk->dk_name);
+		strlcpy(dkw.dkw_parent, a->pdk->dk_name,
+		    sizeof(dkw.dkw_parent));
 		dkw.dkw_offset = p->p_offset;
 		dkw.dkw_size = p->p_size;
 
