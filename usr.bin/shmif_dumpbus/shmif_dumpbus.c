@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.12 2014/08/18 14:21:18 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.13 2014/08/18 14:21:44 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shmif_dumpbus.c,v 1.12 2014/08/18 14:21:18 pooka Exp $");
+__RCSID("$NetBSD: shmif_dumpbus.c,v 1.13 2014/08/18 14:21:44 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 		doswap = true;
 	}
 	if (SWAPME(bmem->shm_version) != SHMIF_VERSION)
-		errx(1, "bus vesrsion %d, program %d",
+		errx(1, "bus version %d, program %d",
 		    SWAPME(bmem->shm_version), SHMIF_VERSION);
 
 	if (pcapfile && strcmp(pcapfile, "-") == 0)
