@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1146 2014/08/15 11:05:07 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1147 2014/08/18 07:03:33 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -316,6 +316,18 @@ Location:	external/bsd/dhcpcd/dist
 Notes:
 Please submit all changes to the author.
 The distribution doesn't include the Linux specific bits or build system.
+
+Package:	gmake
+Version:	3.81
+Current Vers:	4.0
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/make/
+Home Page:	http://www.gnu.org/software/make/
+Mailing List:	bug-make@gnu.org
+Responsible:	
+License:	GPLv2+ (3.81), GPLv3+ (3.82 and later)
+Location:	external/gpl2/gmke
+Notes:
 
 Package:	diffutils
 Version:	2.8.1
