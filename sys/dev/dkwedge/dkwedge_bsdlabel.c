@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.20 2014/08/18 13:46:07 apb Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.21 2014/08/18 14:18:59 apb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.20 2014/08/18 13:46:07 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.21 2014/08/18 14:18:59 apb Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -144,21 +144,15 @@ bsdlabel_fstype_to_str(uint8_t fstype)
 {
 	const char *str;
 
+	/*
+	 * For each type known to FSTYPE_DEFN (from <sys/disklabel.h>),
+	 * a suitable case branch will convert the type number to a string.
+	 */
 	switch (fstype) {
-	case FS_UNUSED:		str = DKW_PTYPE_UNUSED;		break;
-	case FS_SWAP:		str = DKW_PTYPE_SWAP;		break;
-	case FS_BSDFFS:		str = DKW_PTYPE_FFS;		break;
-	case FS_MSDOS:		str = DKW_PTYPE_FAT;		break;
-	case FS_BSDLFS:		str = DKW_PTYPE_LFS;		break;
-	case FS_ISO9660:	str = DKW_PTYPE_ISO9660;	break;
-	case FS_ADOS:		str = DKW_PTYPE_AMIGADOS;	break;
-	case FS_HFS:		str = DKW_PTYPE_APPLEHFS;	break;
-	case FS_FILECORE:	str = DKW_PTYPE_FILECORE;	break;
-	case FS_EX2FS:		str = DKW_PTYPE_EXT2FS;		break;
-	case FS_NTFS:		str = DKW_PTYPE_NTFS;		break;
-	case FS_RAID:		str = DKW_PTYPE_RAIDFRAME;	break;
-	case FS_CCD:		str = DKW_PTYPE_CCD;		break;
-	case FS_APPLEUFS:	str = DKW_PTYPE_APPLEUFS;	break;
+#define FSTYPE_TO_STR_CASE(tag, number, name, fsck, mount) \
+	case __CONCAT(FS_,tag):	str = name;			break;
+	FSTYPE_DEFN(FSTYPE_TO_STR_CASE)
+#undef FSTYPE_TO_STR_CASE
 	default:		str = NULL;			break;
 	}
 
