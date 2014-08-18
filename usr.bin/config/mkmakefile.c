@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.16 2014/08/17 21:17:44 joerg Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.17 2014/08/18 08:07:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -507,7 +507,6 @@ static void
 emitload(FILE *fp)
 {
 	struct config *cf;
-	const char *nm, *swname;
 
 	fputs(".MAIN: all\nall:", fp);
 	TAILQ_FOREACH(cf, &allcf, cf_next) {
@@ -522,12 +521,11 @@ emitload(FILE *fp)
 	}
 	fputs("\n\n", fp);
 	TAILQ_FOREACH(cf, &allcf, cf_next) {
-		nm = cf->cf_name;
-		swname =
-		    cf->cf_root != NULL ? cf->cf_name : "generic";
-		fprintf(fp, "KERNELS+=%s\n", nm);
+		fprintf(fp, "KERNELS+=%s\n", cf->cf_name);
 		fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o vers.o build_kernel\n",
-			nm, nm);
+			cf->cf_name, cf->cf_name);
+		fprintf(fp, "swap%s.o: swap%s.c\n"
+			"\t${NORMAL_C}\n\n", cf->cf_name, cf->cf_name);
 	}
 	fputs("\n", fp);
 }
