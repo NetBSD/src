@@ -939,12 +939,12 @@ EOF
     sparc:Linux:*:* | sparc64:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-gnu
 	exit ;;
-    vax:Linux:*:*)
-	echo ${UNAME_MACHINE}-dec-linux-gnu
-	exit ;;
     tile*:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-gnu
 	exit 0 ;;
+    vax:Linux:*:*)
+	echo ${UNAME_MACHINE}-dec-linux-gnu
+	exit ;;
     x86_64:Linux:*:*)
 	echo x86_64-unknown-linux-gnu
 	exit ;;
