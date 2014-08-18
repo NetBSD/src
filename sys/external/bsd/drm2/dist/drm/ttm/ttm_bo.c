@@ -33,6 +33,7 @@
 #ifdef __NetBSD__
 #include <sys/types.h>
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_object.h>
 #endif
 
 #include <drm/ttm/ttm_module.h>
@@ -269,6 +270,16 @@ static int ttm_bo_add_ttm(struct ttm_buffer_object *bo, bool zero_alloc)
 						      page_flags, glob->dummy_read_page);
 		if (unlikely(bo->ttm == NULL))
 			ret = -ENOMEM;
+#ifdef __NetBSD__
+		/*
+		 * XXX This is gross.  We ought to do it the other way
+		 * around: set the uao to have the main uvm object's
+		 * lock.  However, uvm_obj_setlock is not safe on
+		 * uvm_aobjs.
+		 */
+		mutex_obj_hold(bo->ttm->swap_storage->vmobjlock);
+		uvm_obj_setlock(&bo->uvmobj, bo->ttm->swap_storage->vmobjlock);
+#endif
 		break;
 	case ttm_bo_type_sg:
 		bo->ttm = bdev->driver->ttm_tt_create(bdev, bo->num_pages << PAGE_SHIFT,
@@ -279,6 +290,11 @@ static int ttm_bo_add_ttm(struct ttm_buffer_object *bo, bool zero_alloc)
 			break;
 		}
 		bo->ttm->sg = bo->sg;
+#ifdef __NetBSD__
+		/* XXX This is gross too -- see above.  */
+		mutex_obj_hold(bo->ttm->swap_storage->vmobjlock);
+		uvm_obj_setlock(&bo->uvmobj, bo->ttm->swap_storage->vmobjlock);
+#endif
 		break;
 	default:
 		pr_err("Illegal buffer object type\n");
