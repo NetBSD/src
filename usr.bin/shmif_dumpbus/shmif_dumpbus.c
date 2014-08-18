@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.11 2013/12/20 10:04:33 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.12 2014/08/18 14:21:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shmif_dumpbus.c,v 1.11 2013/12/20 10:04:33 pooka Exp $");
+__RCSID("$NetBSD: shmif_dumpbus.c,v 1.12 2014/08/18 14:21:18 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -69,15 +69,41 @@ usage(void)
 }
 
 #define BUFSIZE 64*1024
-#ifdef __NetBSD__
-#define SWAPME(a) (doswap ? bswap32(a) : (a))
-#define SWAPME64(a) (doswap ? bswap64(a) : (a))
-#else
-/* lazy, but let's assume everyone uses shmif_dumpbus only locally */
-#define SWAPME(a) (a)
-#define SWAPME64(a) (a)
-#define bswap32(a) (a)
-#endif
+
+/*
+ * byte swapdom
+ */
+static uint32_t
+swp32(uint32_t x)
+{
+	uint32_t v;
+
+	v = (((x) & 0xff000000) >> 24) |
+	    (((x) & 0x00ff0000) >>  8) |
+	    (((x) & 0x0000ff00) <<  8) |
+	    (((x) & 0x000000ff) << 24);
+	return v;
+}
+
+static uint64_t
+swp64(uint64_t x)
+{
+	uint64_t v;
+
+	v = (((x) & 0xff00000000000000ull) >> 56) |
+	    (((x) & 0x00ff000000000000ull) >> 40) |
+	    (((x) & 0x0000ff0000000000ull) >> 24) |
+	    (((x) & 0x000000ff00000000ull) >>  8) |
+	    (((x) & 0x00000000ff000000ull) <<  8) |
+	    (((x) & 0x0000000000ff0000ull) << 24) |
+	    (((x) & 0x000000000000ff00ull) << 40) |
+	    (((x) & 0x00000000000000ffull) << 56);
+	return v;
+}
+
+#define SWAPME(x) (doswap ? swp32(x) : (x))
+#define SWAPME64(x) (doswap ? swp64(x) : (x))
+
 int
 main(int argc, char *argv[])
 {
@@ -133,9 +159,9 @@ main(int argc, char *argv[])
 	bmem = busmem;
 
 	if (bmem->shm_magic != SHMIF_MAGIC) {
-		if (bmem->shm_magic != bswap32(SHMIF_MAGIC))
+		if (bmem->shm_magic != swp32(SHMIF_MAGIC))
 			errx(1, "%s not a shmif bus", argv[0]);
-		doswap = 1;
+		doswap = true;
 	}
 	if (SWAPME(bmem->shm_version) != SHMIF_VERSION)
 		errx(1, "bus vesrsion %d, program %d",
