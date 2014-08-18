@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.13 2014/08/18 14:21:44 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.14 2014/08/18 14:23:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shmif_dumpbus.c,v 1.13 2014/08/18 14:21:44 pooka Exp $");
+__RCSID("$NetBSD: shmif_dumpbus.c,v 1.14 2014/08/18 14:23:24 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -101,8 +101,8 @@ swp64(uint64_t x)
 	return v;
 }
 
-#define SWAPME(x) (doswap ? swp32(x) : (x))
-#define SWAPME64(x) (doswap ? swp64(x) : (x))
+#define FIXENDIAN32(x) (doswap ? swp32(x) : (x))
+#define FIXENDIAN64(x) (doswap ? swp64(x) : (x))
 
 int
 main(int argc, char *argv[])
@@ -163,18 +163,18 @@ main(int argc, char *argv[])
 			errx(1, "%s not a shmif bus", argv[0]);
 		doswap = true;
 	}
-	if (SWAPME(bmem->shm_version) != SHMIF_VERSION)
+	if (FIXENDIAN32(bmem->shm_version) != SHMIF_VERSION)
 		errx(1, "bus version %d, program %d",
-		    SWAPME(bmem->shm_version), SHMIF_VERSION);
+		    FIXENDIAN32(bmem->shm_version), SHMIF_VERSION);
 
 	if (pcapfile && strcmp(pcapfile, "-") == 0)
 		dumploc = stderr;
 
 	fprintf(dumploc, "bus version %d, lock: %d, generation: %" PRIu64
 	    ", firstoff: 0x%04x, lastoff: 0x%04x\n",
-	    SWAPME(bmem->shm_version), SWAPME(bmem->shm_lock),
-	    SWAPME64(bmem->shm_gen),
-	    SWAPME(bmem->shm_first), SWAPME(bmem->shm_last));
+	    FIXENDIAN32(bmem->shm_version), FIXENDIAN32(bmem->shm_lock),
+	    FIXENDIAN64(bmem->shm_gen),
+	    FIXENDIAN32(bmem->shm_first), FIXENDIAN32(bmem->shm_last));
 
 	if (hflag)
 		exit(0);
@@ -189,8 +189,8 @@ main(int argc, char *argv[])
 		pdump = NULL;
 	}
 
-	curbus = SWAPME(bmem->shm_first);
-	buslast = SWAPME(bmem->shm_last);
+	curbus = FIXENDIAN32(bmem->shm_first);
+	buslast = FIXENDIAN32(bmem->shm_last);
 	if (curbus == BUSMEM_DATASIZE)
 		curbus = 0;
 
@@ -215,15 +215,15 @@ main(int argc, char *argv[])
 			bonus = 0;
 
 		assert(curbus < sb.st_size);
-		curlen = SWAPME(sp.sp_len);
+		curlen = FIXENDIAN32(sp.sp_len);
 
 		if (curlen == 0) {
 			continue;
 		}
 
 		fprintf(dumploc, "packet %d, offset 0x%04x, length 0x%04x, "
-			    "ts %d/%06d\n", i++, curbus,
-			    curlen, SWAPME(sp.sp_sec), SWAPME(sp.sp_usec));
+			    "ts %d/%06d\n", i++, curbus, curlen,
+			    FIXENDIAN32(sp.sp_sec), FIXENDIAN32(sp.sp_usec));
 
 		if (!pcapfile) {
 			curbus = shmif_busread(bmem,
@@ -235,8 +235,8 @@ main(int argc, char *argv[])
 
 		memset(&packhdr, 0, sizeof(packhdr));
 		packhdr.caplen = packhdr.len = curlen;
-		packhdr.ts.tv_sec = SWAPME(sp.sp_sec);
-		packhdr.ts.tv_usec = SWAPME(sp.sp_usec);
+		packhdr.ts.tv_sec = FIXENDIAN32(sp.sp_sec);
+		packhdr.ts.tv_usec = FIXENDIAN32(sp.sp_usec);
 		assert(curlen <= BUFSIZE);
 
 		curbus = shmif_busread(bmem, buf, curbus, curlen, &wrap);
