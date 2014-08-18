@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.55 2014/08/16 17:56:31 apb Exp $
+# $NetBSD: XEN3_DOMU,v 1.56 2014/08/18 06:31:24 christos Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -75,9 +75,9 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
-# The following two options can break /etc/fstab, so handle with care
-#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
-#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS

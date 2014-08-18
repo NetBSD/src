@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82 2014/08/16 17:56:33 apb Exp $
+# $NetBSD: GENERIC,v 1.83 2014/08/18 06:31:24 christos Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.82 $"
+#ident 		"GENERIC-$Revision: 1.83 $"
 
 maxusers	32
 
@@ -84,11 +84,11 @@ options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
-#options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
-#options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
-# The following two options can break /etc/fstab, so handle with care
-#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
-#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
