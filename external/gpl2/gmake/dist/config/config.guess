@@ -942,6 +942,9 @@ EOF
     vax:Linux:*:*)
 	echo ${UNAME_MACHINE}-dec-linux-gnu
 	exit ;;
+    tile*:Linux:*:*)
+	echo ${UNAME_MACHINE}-unknown-linux-gnu
+	exit 0 ;;
     x86_64:Linux:*:*)
 	echo x86_64-unknown-linux-gnu
 	exit ;;
