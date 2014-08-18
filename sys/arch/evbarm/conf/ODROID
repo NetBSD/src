@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID,v 1.7 2014/08/17 21:17:43 joerg Exp $
+#	$NetBSD: ODROID,v 1.8 2014/08/18 06:31:24 christos Exp $
 #
 #	ODROID -- ODROID series Exynos Kernel
 #
@@ -129,8 +129,9 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	MINIROOTSIZE=1000	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
-options 	DKWEDGE_AUTODISCOVER
-options 	DKWEDGE_METHOD_GPT
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
