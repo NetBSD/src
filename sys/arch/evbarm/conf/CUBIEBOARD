@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.14 2014/08/17 21:17:43 joerg Exp $
+#	$NetBSD: CUBIEBOARD,v 1.15 2014/08/18 06:31:24 christos Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -116,8 +116,9 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	MINIROOTSIZE=1000	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
-options 	DKWEDGE_AUTODISCOVER
-options 	DKWEDGE_METHOD_GPT
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
