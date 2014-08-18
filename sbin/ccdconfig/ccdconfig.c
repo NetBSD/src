@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.53 2013/05/03 00:01:15 christos Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.53.6.1 2014/08/18 12:40:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.53 2013/05/03 00:01:15 christos Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.53.6.1 2014/08/18 12:40:36 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -271,7 +271,7 @@ do_single(int argc, char **argv, int action)
 			    ui == 0 ? '(' : ' ', cp2,
 			    ui == ccio.ccio_ndisks - 1 ? ')' : ',');
 		}
-		printf(", %ld blocks ", (long)ccio.ccio_size);
+		printf(", %ju blocks ", (uintmax_t)ccio.ccio_size);
 		if (ccio.ccio_ileave != 0)
 			printf("interleaved at %d blocks\n", ccio.ccio_ileave);
 		else
@@ -445,8 +445,9 @@ print_ccd_info(int u, struct ccddiskinfo *ccd, char *str)
 	}
 
 	/* Dump out softc information. */
-	printf("ccd%d\t\t%d\t0x%x\t%zu\t", u, ccd->ccd_ileave,
-	    ccd->ccd_flags & CCDF_USERMASK, ccd->ccd_size * DEV_BSIZE);
+	printf("ccd%d\t\t%d\t0x%x\t%ju\t", u, ccd->ccd_ileave,
+	    ccd->ccd_flags & CCDF_USERMASK,
+	    (uintmax_t)ccd->ccd_size * DEV_BSIZE);
 
 	/* Read component pathname and display component info. */
 	for (size_t i = 0; i < ccd->ccd_ndisks; ++i) {
