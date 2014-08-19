@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.4 2014/08/08 20:59:35 riz Exp $ */
+/*	$NetBSD: partman.c,v 1.5 2014/08/19 13:41:08 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -1736,7 +1736,7 @@ pm_wedges_fill(pm_devs_t *pm_cur)
 		if (wedges[i].pm == pm_cur && ! wedges[i].allocated)
 			wedges[i].pm = NULL;
 
-	for (i = 0; i < MAXPARTITIONS && i < MAX_WEDGES; i++)
+	for (i = 0; i < min(MAXPARTITIONS,MAX_WEDGES); i++)
 		if (pm_cur->bsdlabel[i].pi_fstype != FS_UNUSED) {
 			current = pm_wedge_getfree();
 			if (current < 0) {
@@ -2597,7 +2597,7 @@ pm_upddevlist(menudesc *m, void *arg)
 		if (pm_i->found > 0)
 			pm_i->found = 0;
 	/* Detect all present devices */
-	find_disks("partman");
+	(void)find_disks("partman");
 	pm_lvm_find();
 	pm_clean();
 
