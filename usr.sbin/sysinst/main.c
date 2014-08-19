@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2014/08/19 13:04:45 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2014/08/19 13:30:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -392,7 +392,8 @@ toplevel(void)
 	 */
 	char *home = getenv("HOME");
 	if (home != NULL)
-		chdir(home);
+		if (chdir(home) != 0)
+			(void)chdir("/");
 	unwind_mounts();
 
 	/* Display banner message in (english, francais, deutsch..) */
