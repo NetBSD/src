@@ -1,6 +1,8 @@
-# OpenLDAP: pkg/openldap-guide/release/copyright.sdf,v 1.22.2.10 2010/04/13 20:22:35 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
+
+# This file should match ../../../COPYRIGHT (except in formating)
 
 !if OPT_PP_HTML
 !define	copyright '[[c]] Copyright'
@@ -13,7 +15,7 @@ H1: OpenLDAP Software Copyright Notices
 H2: OpenLDAP Copyright Notice
 
 !block nofill
-[[copyright]] 1998-2008 The OpenLDAP Foundation.
+[[copyright]] 1998-2012 The OpenLDAP Foundation.
 {{All rights reserved.}}
 !endblock
 
@@ -43,7 +45,7 @@ Additional information about OpenLDAP software can be obtained at
 H2: Additional Copyright Notices
 
 !block nofill
-Portions [[copyright]] 1998-2008 Kurt D. Zeilenga.
+Portions [[copyright]] 1998-2012 Kurt D. Zeilenga.
 Portions [[copyright]] 1998-2006 Net Boolean Incorporated.
 Portions [[copyright]] 2001-2006 IBM Corporation.
 {{All rights reserved.}}
@@ -55,11 +57,11 @@ Public License}}.
 
 
 !block nofill
-Portions [[copyright]] 1999-2007 Howard Y.H. Chu.
-Portions [[copyright]] 1999-2007 Symas Corporation.
+Portions [[copyright]] 1999-2008 Howard Y.H. Chu.
+Portions [[copyright]] 1999-2008 Symas Corporation.
 Portions [[copyright]] 1998-2003 Hallvard B. Furuseth.
-Portions [[copyright]] 2007-2009 Gavin Henry.
-Portions [[copyright]] 2007-2009 Suretec Systems Limited.
+Portions [[copyright]] 2007-2011 Gavin Henry.
+Portions [[copyright]] 2007-2011 Suretec Systems Limited.
 {{All rights reserved.}}
 !endblock
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: dnskey_48.c,v 1.4 2012/06/05 00:42:08 christos Exp $	*/
+/*	$NetBSD: dnskey_48.c,v 1.4.2.1 2014/08/19 23:46:30 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -34,6 +34,7 @@
 
 static inline isc_result_t
 fromtext_dnskey(ARGS_FROMTEXT) {
+	isc_result_t result;
 	isc_token_t token;
 	dns_secalg_t alg;
 	dns_secproto_t proto;
@@ -69,17 +70,26 @@ fromtext_dnskey(ARGS_FROMTEXT) {
 	if ((flags & 0xc000) == 0xc000)
 		return (ISC_R_SUCCESS);
 
-	return (isc_base64_tobuffer(lexer, target, -1));
+	result = isc_base64_tobuffer(lexer, target, -1);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	/* Ensure there's at least enough data to compute a key ID for MD5 */
+	if (alg == DST_ALG_RSAMD5 && isc_buffer_usedlength(target) < 7)
+		return (ISC_R_UNEXPECTEDEND);
+
+	return (ISC_R_SUCCESS);
 }
 
 static inline isc_result_t
 totext_dnskey(ARGS_TOTEXT) {
 	isc_region_t sr;
-	char buf[sizeof("64000")];
+	char buf[sizeof("[key id = 64000]")];
 	unsigned int flags;
 	unsigned char algorithm;
 	char algbuf[DNS_NAME_FORMATSIZE];
 	const char *keyinfo;
+	isc_region_t tmpr;
 
 	REQUIRE(rdata->type == 48);
 	REQUIRE(rdata->length != 0);
@@ -131,11 +141,19 @@ totext_dnskey(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" (", target));
 	RETERR(str_totext(tctx->linebreak, target));
-	if (tctx->width == 0)   /* No splitting */
-		RETERR(isc_base64_totext(&sr, 0, "", target));
-	else
-		RETERR(isc_base64_totext(&sr, tctx->width - 2,
-					 tctx->linebreak, target));
+
+	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
+		if (tctx->width == 0)   /* No splitting */
+			RETERR(isc_base64_totext(&sr, 0, "", target));
+		else
+			RETERR(isc_base64_totext(&sr, tctx->width - 2,
+						 tctx->linebreak, target));
+	} else {
+		dns_rdata_toregion(rdata, &tmpr);
+		snprintf(buf, sizeof(buf), "[key id = %u]",
+			 dst_region_computeid(&tmpr, algorithm));
+		RETERR(str_totext(buf, target));
+	}
 
 	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0)
 		RETERR(str_totext(tctx->linebreak, target));
@@ -146,7 +164,6 @@ totext_dnskey(ARGS_TOTEXT) {
 		RETERR(str_totext(")", target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0) {
-		isc_region_t tmpr;
 
 		RETERR(str_totext(" ; ", target));
 		RETERR(str_totext(keyinfo, target));
@@ -187,6 +204,15 @@ fromwire_dnskey(ARGS_FROMWIRE) {
 		dns_name_init(&name, NULL);
 		RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 	}
+
+	/*
+	 * RSAMD5 computes key ID differently from other
+	 * algorithms: we need to ensure there's enough data
+	 * present for the computation
+	 */
+	if (algorithm == DST_ALG_RSAMD5 && sr.length < 3)
+		return (ISC_R_UNEXPECTEDEND);
+
 	isc_buffer_activeregion(source, &sr);
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));

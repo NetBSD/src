@@ -20,20 +20,7 @@
 
  	Version:	1.0
  	Tabs:		4 spaces
-
-    Change History (most recent first):
-
-Log: GenLinkedList.c,v $
-Revision 1.4  2006/08/14 23:24:56  cheshire
-Re-licensed mDNSResponder daemon source code under Apache License, Version 2.0
-
-Revision 1.3  2004/04/22 21:14:42  cheshire
-Fix comment spelling mistake
-
-Revision 1.2  2004/02/05 07:41:08  cheshire
-Add Log header
-
-*/
+ */
 
 #include "GenLinkedList.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fad-sita.c,v 1.1.1.1.12.1 2013/06/23 06:28:19 tls Exp $	*/
+/*	$NetBSD: fad-sita.c,v 1.1.1.1.12.2 2014/08/19 23:47:16 tls Exp $	*/
 
 /*
  *  fad-sita.c: Packet capture interface additions for SITA ACN devices
@@ -39,7 +39,7 @@
 
 extern pcap_if_t	*acn_if_list;								/* pcap's list of available interfaces */
 
-int pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf) {
+int pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf) {
 
 	//printf("pcap_findalldevs()\n");				// fulko
 

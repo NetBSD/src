@@ -1,5 +1,5 @@
 /* Definitions for DEC Alpha/AXP running FreeBSD using the ELF format
-   Copyright (C) 2000, 2002, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
    Contributed by David E. O'Brien <obrien@FreeBSD.org> and BSDi.
 
 This file is part of GCC.
@@ -30,14 +30,13 @@ along with GCC; see the file COPYING3.  If not see
 #define CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
 
 #define LINK_SPEC "%{G*} %{relax:-relax}				\
-  %{p:%nconsider using `-pg' instead of `-p' with gprof(1)}		\
-  %{Wl,*:%*}								\
+  %{p:%nconsider using '-pg' instead of '-p' with gprof(1)}		\
   %{assert*} %{R*} %{rpath*} %{defsym*}					\
   %{shared:-Bshareable %{h*} %{soname*}}				\
   %{!shared:								\
     %{!static:								\
       %{rdynamic:-export-dynamic}					\
-      %{!dynamic-linker:-dynamic-linker %(fbsd_dynamic_linker) }}	\
+      -dynamic-linker %(fbsd_dynamic_linker) }	\
     %{static:-Bstatic}}							\
   %{symbolic:-Bsymbolic}"
 
@@ -54,25 +53,13 @@ along with GCC; see the file COPYING3.  If not see
 #undef  WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE	32
 
-#undef  TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (FreeBSD/alpha ELF)");
-
 #define TARGET_ELF	1
-
-#undef  TARGET_DEFAULT
-#define TARGET_DEFAULT	(MASK_FPREGS | MASK_GAS)
 
 #undef HAS_INIT_SECTION
 
 /* Show that we need a GP when profiling.  */
 #undef  TARGET_PROFILING_NEEDS_GP
 #define TARGET_PROFILING_NEEDS_GP 1
-
-/* This is the char to use for continuation (in case we need to turn
-   continuation back on).  */
-
-#undef  DBX_CONTIN_CHAR
-#define DBX_CONTIN_CHAR	'?'
 
 /* Don't default to pcc-struct-return, we want to retain compatibility with
    older FreeBSD releases AND pcc-struct-return may not be reentrant.  */

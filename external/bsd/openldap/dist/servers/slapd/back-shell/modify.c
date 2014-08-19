@@ -1,10 +1,10 @@
-/*	$NetBSD: modify.c,v 1.1.1.3 2010/12/12 15:23:21 adam Exp $	*/
+/*	$NetBSD: modify.c,v 1.1.1.3.12.1 2014/08/19 23:52:02 tls Exp $	*/
 
 /* modify.c - shell backend modify function */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-shell/modify.c,v 1.33.2.5 2010/04/13 20:23:39 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 
 #include "slap.h"
 #include "shell.h"
+#include "ldif.h"
 
 int
 shell_back_modify(
@@ -89,8 +90,6 @@ shell_back_modify(
 	for ( ; ml != NULL; ml = ml->sml_next ) {
 		mod = &ml->sml_mod;
 
-		/* FIXME: should use LDIF routines to deal with binary data */
-
 		switch ( mod->sm_op ) {
 		case LDAP_MOD_ADD:
 			fprintf( wfp, "add: %s\n", mod->sm_desc->ad_cname.bv_val );
@@ -107,8 +106,14 @@ shell_back_modify(
 
 		if( mod->sm_values != NULL ) {
 			for ( i = 0; mod->sm_values[i].bv_val != NULL; i++ ) {
-				fprintf( wfp, "%s: %s\n", mod->sm_desc->ad_cname.bv_val,
-					mod->sm_values[i].bv_val /* binary! */ );
+				char *out = ldif_put( LDIF_PUT_VALUE,
+					mod->sm_desc->ad_cname.bv_val,
+					mod->sm_values[i].bv_val,
+					mod->sm_values[i].bv_len );
+				if ( out ) {
+					fprintf( wfp, "%s", out );
+					ber_memfree( out );
+				}
 			}
 		}
 

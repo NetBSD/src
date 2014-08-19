@@ -404,7 +404,7 @@ Once::run_once(void* arg)
 
   err = pthread_mutex_unlock(&once_pointer_control);
   if (err != 0)
-    gold_fatal(_("pthread_mutex_unlock falied: %s"), strerror(err));
+    gold_fatal(_("pthread_mutex_unlock failed: %s"), strerror(err));
 
 #endif // defined(ENABLE_THREADS)
 }

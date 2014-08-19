@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1.12.1 2013/06/23 06:28:17 tls Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.1.12.2 2014/08/19 23:47:16 tls Exp $	*/
 /*	$OpenBSD: err.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: log.c,v 1.1.1.1.12.1 2013/06/23 06:28:17 tls Exp $");
+__RCSID("$NetBSD: log.c,v 1.1.1.1.12.2 2014/08/19 23:47:16 tls Exp $");
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: log.c,v 1.1.1.1.12.1 2013/06/23 06:28:17 tls Exp $");
 #include "log-internal.h"
 
 static void _warn_helper(int severity, const char *errstr, const char *fmt,
-    va_list ap);
+    va_list ap) EV_CHECK_FMT(3, 0);
 static void event_log(int severity, const char *msg);
 static void event_exit(int errcode) EV_NORETURN;
 

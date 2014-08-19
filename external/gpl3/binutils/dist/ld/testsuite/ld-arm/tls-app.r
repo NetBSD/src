@@ -1,5 +1,5 @@
 
-.*:     file format elf32-.*arm
+.*:     file format elf32-.*arm.*
 
 DYNAMIC RELOCATION RECORDS
 OFFSET   TYPE              VALUE 

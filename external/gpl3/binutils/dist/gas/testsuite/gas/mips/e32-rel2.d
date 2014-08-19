@@ -7,7 +7,7 @@
 # FIXME: really this should check that the contents of .sdata, .lit4,
 # and .lit8 are correct too.
 
-.*:     file format elf.*mips
+.*:     file format .*
 
 RELOCATION RECORDS FOR \[\.text\]:
 OFFSET [ ]+ TYPE              VALUE 

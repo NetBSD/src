@@ -21,6 +21,6 @@ text_label:
 	bgeu	$4,$5,external_label
 	bgtu	$4,$5,external_label
 
-# Round to a 16 byte boundary, for ease in testing multiple targets.
-	nop
-	nop
+# Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
+	.align	2
+	.space	8

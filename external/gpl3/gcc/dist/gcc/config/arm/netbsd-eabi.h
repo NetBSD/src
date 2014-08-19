@@ -19,24 +19,23 @@
    <http://www.gnu.org/licenses/>.  */
 
 /* Run-time Target Specification.  */
-#undef TARGET_VERSION
-#define TARGET_VERSION fputs (" (NetBSD/earm ELF)", stderr);
-
 #undef MULTILIB_DEFAULTS
 #define MULTILIB_DEFAULTS { "mabi=aapcs-linux" }
 
-#undef MUST_USE_SJLJ_EXCEPTIONS
-#define MUST_USE_SJLJ_EXCEPTIONS (!TARGET_AAPCS_BASED)
-
-#define TARGET_LINKER_EABI_SUFFIX "%{!mabi=apcs-gnu:%{!mabi=atpcs:_nbsd_eabi}}"
-#define TARGET_LINKER_BIG_EMULATION "armelfb%(linker_eabi_suffix)"
-#define TARGET_LINKER_LITTLE_EMULATION "armelf%(linker_eabi_suffix)"
+#define TARGET_LINKER_EABI_SUFFIX \
+    (TARGET_DEFAULT_FLOAT_ABI == ARM_FLOAT_ABI_SOFT \
+     ? "%{!mabi=apcs-gnu:%{!mabi=atpcs:%{mfloat-abi=hard:_eabihf;:_eabi}}}" \
+     : "%{!mabi=apcs-gnu:%{!mabi=atpcs:%{mfloat-abi=soft:_eabi;:_eabihf}}}")
+#define TARGET_LINKER_BIG_EMULATION "armelfb_nbsd%(linker_eabi_suffix)"
+#define TARGET_LINKER_LITTLE_EMULATION "armelf_nbsd%(linker_eabi_suffix)"
 
 /* TARGET_BIG_ENDIAN_DEFAULT is set in
    config.gcc for big endian configurations.  */
 #undef  TARGET_LINKER_EMULATION
 #if TARGET_BIG_ENDIAN_DEFAULT
 #define TARGET_LINKER_EMULATION TARGET_LINKER_BIG_EMULATION
+#undef BE8_LINK_SPEC
+#define BE8_LINK_SPEC " %{!mlittle-endian:%{march=armv7-a|mcpu=cortex-a5|mcpu=cortex-a8|mcpu=cortex-a9:%{!r:--be8}}}" 
 #else
 #define TARGET_LINKER_EMULATION TARGET_LINKER_LITTLE_EMULATION
 #endif
@@ -46,14 +45,25 @@
 #undef ARM_DEFAULT_ABI
 #define ARM_DEFAULT_ABI ARM_ABI_AAPCS_LINUX
 
+#undef ARM_EABI_UNWIND_TABLES
+#define ARM_EABI_UNWIND_TABLES 0
+#undef ARM_UNWIND_INFO
+#define ARM_UNWIND_INFO 0
+#undef ARM_DWARF_UNWIND_TABLES
+#define ARM_DWARF_UNWIND_TABLES 1
+
 #undef TARGET_OS_CPP_BUILTINS
-#define TARGET_OS_CPP_BUILTINS()	\
-  do					\
-    {					\
-      if (TARGET_AAPCS_BASED)		\
-	TARGET_BPABI_CPP_BUILTINS();	\
-      NETBSD_OS_CPP_BUILTINS_ELF();	\
-    }					\
+#define TARGET_OS_CPP_BUILTINS()		\
+  do						\
+    {						\
+      if (TARGET_AAPCS_BASED)			\
+	TARGET_BPABI_CPP_BUILTINS();		\
+      NETBSD_OS_CPP_BUILTINS_ELF();		\
+      if (ARM_DWARF_UNWIND_TABLES)		\
+	builtin_define ("__ARM_DWARF_EH__");	\
+      if (ARM_EABI_UNWIND_TABLES)		\
+	builtin_define ("__UNWIND_TABLES__");	\
+    }						\
   while (0)
 
 #undef SUBTARGET_CPP_SPEC
@@ -78,8 +88,8 @@
 /* Default to full VFP if -mhard-float is specified.  */
 #undef SUBTARGET_ASM_FLOAT_SPEC
 #define SUBTARGET_ASM_FLOAT_SPEC	\
-  "%{mhard-float:{!mfpu=*:-mfpu=vfp}}   \
-   %{mfloat-abi=hard:{!mfpu=*:-mfpu=vfp}}"
+  "%{mhard-float:%{!mfpu=*:-mfpu=vfp}}   \
+   %{mfloat-abi=hard:%{!mfpu=*:-mfpu=vfp}}"
 
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS				\

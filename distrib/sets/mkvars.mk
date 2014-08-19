@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.6.8.3 2013/06/23 06:26:18 tls Exp $
+# $NetBSD: mkvars.mk,v 1.6.8.4 2014/08/19 23:45:42 tls Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -6,6 +6,7 @@ MKEXTRAVARS= \
 	MACHINE_CPU \
 	HAVE_GCC \
 	HAVE_GDB \
+	HAVE_LIBGCC_EH \
 	HAVE_SSP \
 	OBJECT_FMT \
 	TOOLCHAIN_MISSING \
@@ -34,7 +35,6 @@ MKEXTRAVARS= \
 #####
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>
 .include <bsd.endian.mk>
 
 .if (${MKMAN} == "no" || empty(MANINSTALL:Mmaninstall))
@@ -87,3 +87,5 @@ mksolaris: .PHONY
 .else
 	@echo MKSOLARIS="no"
 .endif
+
+.include <bsd.files.mk>

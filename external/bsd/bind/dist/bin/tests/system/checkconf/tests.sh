@@ -1,4 +1,4 @@
-# Copyright (C) 2005, 2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005, 2007, 2010-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -34,16 +34,42 @@ cmp good.conf.in good.conf.out || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-echo "I: checking that named-checkconf handles a known bad config"
+echo "I: checking that named-checkconf -x removes secrets"
 ret=0
-$CHECKCONF bad.conf > /dev/null 2>&1 && ret=1
-if [ $? != 1 ]; then echo "I:failed"; ret=1; fi
+# ensure there is a secret and that it is not the check string.
+grep 'secret "' good.conf.in > /dev/null || ret=1
+grep 'secret "????????????????"' good.conf.in > /dev/null 2>&1 && ret=1
+$CHECKCONF -p -x good.conf.in | grep -v '^good.conf.in:' > good.conf.out 2>&1 || ret=1
+grep 'secret "????????????????"' good.conf.out > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-echo "I: checking that named-checkconf handles a known bad tsig secret"
+for bad in bad*.conf
+do
+	ret=0
+	echo "I: checking that named-checkconf detects error in $bad"
+	$CHECKCONF $bad > /dev/null 2>&1
+	if [ $? != 1 ]; then echo "I:failed"; ret=1; fi
+	status=`expr $status + $ret`
+done
+
+echo "I: checking that named-checkconf -z catches missing hint file"
 ret=0
-$CHECKCONF badtsig.conf > /dev/null 2>&1
-if [ $? != 1 ]; then echo "I:failed"; ret=1; fi
+$CHECKCONF -z hint-nofile.conf > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking that named-checkconf catches range errors"
+ret=0
+$CHECKCONF range.conf > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking that named-checkconf warns of notify inconsistencies"
+ret=0
+warnings=`$CHECKCONF notify.conf 2>&1 | grep "'notify' is disabled" | wc -l`
+[ $warnings -eq 3 ] || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
 echo "I: checking named-checkconf dnssec warnings"
@@ -94,6 +120,75 @@ EOF
     [ $? -eq 1 ] || { echo "I: zone $field failed" ; ret=1; }
 done
 if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking options allowed in inline-signing slaves"
+ret=0
+n=`$CHECKCONF bad-dnssec.conf 2>&1 | grep "dnssec-dnskey-kskonly.*requires inline" | wc -l`
+[ $n -eq 1 ] || ret=1
+n=`$CHECKCONF bad-dnssec.conf 2>&1 | grep "dnssec-loadkeys-interval.*requires inline" | wc -l`
+[ $n -eq 1 ] || ret=1
+n=`$CHECKCONF bad-dnssec.conf 2>&1 | grep "update-check-ksk.*requires inline" | wc -l`
+[ $n -eq 1 ] || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: check file + inline-signing for slave zones"
+n=`$CHECKCONF inline-no.conf 2>&1 | grep "missing 'file' entry" | wc -l`
+[ $n -eq 0 ] || ret=1
+n=`$CHECKCONF inline-good.conf 2>&1 | grep "missing 'file' entry" | wc -l`
+[ $n -eq 0 ] || ret=1
+n=`$CHECKCONF inline-bad.conf 2>&1 | grep "missing 'file' entry" | wc -l`
+[ $n -eq 1 ] || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking named-checkconf DLZ warnings"
+ret=0
+$CHECKCONF dlz-bad.conf 2>&1 | grep "'dlz' and 'database'" > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking for missing key directory warning"
+ret=0
+rm -rf test.keydir
+n=`$CHECKCONF warn-keydir.conf 2>&1 | grep "'test.keydir' does not exist" | wc -l`
+[ $n -eq 1 ] || ret=1
+touch test.keydir
+n=`$CHECKCONF warn-keydir.conf 2>&1 | grep "'test.keydir' is not a directory" | wc -l`
+[ $n -eq 1 ] || ret=1
+rm -f test.keydir
+mkdir test.keydir
+n=`$CHECKCONF warn-keydir.conf 2>&1 | grep "key-directory" | wc -l`
+[ $n -eq 0 ] || ret=1
+rm -rf test.keydir
+if [ $ret != 0 ]; then echo "I:failed"; fi
+
+echo "I: checking that named-checkconf -z catches conflicting ttl with max-ttl"
+ret=0
+$CHECKCONF -z max-ttl.conf > check.out 2>&1
+grep 'TTL 900 exceeds configured max-zone-ttl 600' check.out > /dev/null 2>&1 || ret=1
+grep 'TTL 900 exceeds configured max-zone-ttl 600' check.out > /dev/null 2>&1 || ret=1
+grep 'TTL 900 exceeds configured max-zone-ttl 600' check.out > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
+status=`expr $status + $ret`
+
+echo "I: checking that named-checkconf -z catches invalid max-ttl"
+ret=0
+$CHECKCONF -z max-ttl-bad.conf > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
+status=`expr $status + $ret`
+
+echo "I: checking that named-checkconf -z skips zone check with alternate databases"
+ret=0
+$CHECKCONF -z altdb.conf > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
+status=`expr $status + $ret`
+
+echo "I: checking that named-checkconf -z skips zone check with DLZ"
+ret=0
+$CHECKCONF -z altdlz.conf > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
 
 echo "I:exit status: $status"

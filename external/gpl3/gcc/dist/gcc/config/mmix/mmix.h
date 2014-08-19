@@ -1,6 +1,5 @@
 /* Definitions of target machine for GNU compiler, for MMIX.
-   Copyright (C) 2000, 2001, 2002, 2004, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson (hp@bitrange.com)
 
 This file is part of GCC.
@@ -72,12 +71,6 @@ along with GCC; see the file COPYING3.  If not see
    untouched by the epilogue".  */
 #define MMIX_EH_RETURN_STACKADJ_REGNUM MMIX_STATIC_CHAIN_REGNUM
 
-#ifdef REG_OK_STRICT
-# define MMIX_REG_OK_STRICT 1
-#else
-# define MMIX_REG_OK_STRICT 0
-#endif
-
 #define MMIX_FUNCTION_ARG_SIZE(MODE, TYPE) \
  ((MODE) != BLKmode ? GET_MODE_SIZE (MODE) : int_size_in_bytes (TYPE))
 
@@ -140,33 +133,8 @@ struct GTY(()) machine_function
     }								\
   while (0)
 
-extern int target_flags;
-
 #define TARGET_DEFAULT \
  (MASK_BRANCH_PREDICT | MASK_BASE_ADDRESSES | MASK_USE_RETURN_INSN)
-
-/* Unfortunately, this must not reference anything in "mmix.c".  */
-#define TARGET_VERSION \
-  fprintf (stderr, " (MMIX)")
-
-#define OVERRIDE_OPTIONS mmix_override_options ()
-
-#define OPTIMIZATION_OPTIONS(LEVEL, SIZE)	\
-  do						\
-    {						\
-      if (LEVEL >= 1)				\
-	flag_regmove = TRUE;			\
-      						\
-      if (SIZE || LEVEL > 1)			\
-	{					\
-	  flag_omit_frame_pointer = TRUE;	\
-	}					\
-    }						\
-  while (0)
-
-/* This one will have to wait a little bit; right now we can't debug
-   neither with or without a frame-pointer.  */
-/* #define CAN_DEBUG_WITHOUT_FP */
 
 
 /* Node: Per-Function Data */
@@ -295,8 +263,6 @@ extern int target_flags;
    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, \
    1, 1, 1, 1, 1, 1, 1 \
  }
-
-#define CONDITIONAL_REGISTER_USAGE mmix_conditional_register_usage ()
 
 #define INCOMING_REGNO(OUT) mmix_opposite_regno (OUT, 0)
 
@@ -466,11 +432,6 @@ enum reg_class
 
 #define INDEX_REG_CLASS GENERAL_REGS
 
-#define REG_CLASS_FROM_LETTER(CHAR)		\
- ((CHAR) == 'x' ? SYSTEM_REGS			\
-  : (CHAR) == 'y' ? REMAINDER_REG		\
-  : (CHAR) == 'z' ? HIMULT_REG : NO_REGS)
-
 #define REGNO_OK_FOR_BASE_P(REGNO)				\
  ((REGNO) <= MMIX_LAST_GENERAL_REGISTER				\
   || (REGNO) == MMIX_ARG_POINTER_REGNUM				\
@@ -479,12 +440,6 @@ enum reg_class
 
 #define REGNO_OK_FOR_INDEX_P(REGNO) REGNO_OK_FOR_BASE_P (REGNO)
 
-#define PREFERRED_RELOAD_CLASS(X, CLASS) \
- mmix_preferred_reload_class (X, CLASS)
-
-#define PREFERRED_OUTPUT_RELOAD_CLASS(X, CLASS) \
- mmix_preferred_output_reload_class (X, CLASS)
-
 #define SECONDARY_INPUT_RELOAD_CLASS(CLASS, MODE, X) \
  mmix_secondary_reload_class (CLASS, MODE, X, 1)
 
@@ -492,16 +447,6 @@ enum reg_class
  mmix_secondary_reload_class (CLASS, MODE, X, 0)
 
 #define CLASS_MAX_NREGS(CLASS, MODE) HARD_REGNO_NREGS (CLASS, MODE)
-
-#define CONST_OK_FOR_LETTER_P(VALUE, C)	\
- mmix_const_ok_for_letter_p (VALUE, C)
-
-#define EXTRA_CONSTRAINT(VALUE, C)	\
- mmix_extra_constraint (VALUE, C, MMIX_REG_OK_STRICT)
-
-/* Do we need anything serious here?  Yes, any FLOT constant.  */
-#define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C)			\
- mmix_const_double_ok_for_letter_p (VALUE, C)
 
 
 /* Node: Frame Layout */
@@ -586,47 +531,16 @@ enum reg_class
 
 #define ACCUMULATE_OUTGOING_ARGS 1
 
-#define RETURN_POPS_ARGS(FUNDECL, FUNTYPE, STACKSIZE) 0
-
 
 /* Node: Register Arguments */
-#define FUNCTION_ARG(CUM, MODE, TYPE, NAMED)	\
- mmix_function_arg (&(CUM), MODE, TYPE, NAMED, 0)
-
-#define FUNCTION_INCOMING_ARG(CUM, MODE, TYPE, NAMED)	\
- mmix_function_arg (&(CUM), MODE, TYPE, NAMED, 1)
 
 typedef struct { int regs; int lib; } CUMULATIVE_ARGS;
 
 #define INIT_CUMULATIVE_ARGS(CUM, FNTYPE, LIBNAME, INDIRECT, N_NAMED_ARGS) \
  ((CUM).regs = 0, (CUM).lib = ((LIBNAME) != 0))
 
-#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED)		\
- ((CUM).regs							\
-  = ((targetm.calls.must_pass_in_stack (MODE, TYPE))		\
-     || (MMIX_FUNCTION_ARG_SIZE (MODE, TYPE) > 8		\
-	 && !TARGET_LIBFUNC && !(CUM).lib))			\
-  ? (MMIX_MAX_ARGS_IN_REGS) + 1					\
-  : (CUM).regs + (7 + (MMIX_FUNCTION_ARG_SIZE (MODE, TYPE))) / 8)
-
 #define FUNCTION_ARG_REGNO_P(REGNO)		\
  mmix_function_arg_regno_p (REGNO, 0)
-
-
-/* Node: Register Arguments */
-
-#define FUNCTION_VALUE(VALTYPE, FUNC)  \
- gen_rtx_REG (TYPE_MODE (VALTYPE), MMIX_RETURN_VALUE_REGNUM)
-
-/* This needs to take care of the register hole for complex return values.  */
-#define FUNCTION_OUTGOING_VALUE(VALTYPE, FUNC)  \
- mmix_function_outgoing_value (VALTYPE, FUNC)
-
-#define LIBCALL_VALUE(MODE) \
- gen_rtx_REG (MODE, MMIX_RETURN_VALUE_REGNUM)
-
-#define FUNCTION_VALUE_REGNO_P(REGNO) \
- mmix_function_value_regno_p (REGNO)
 
 
 /* Node: Caller Saves */
@@ -661,20 +575,6 @@ typedef struct { int regs; int lib; } CUMULATIVE_ARGS;
 
 #define MAX_REGS_PER_ADDRESS 2
 
-#ifndef REG_OK_STRICT
-# define REG_OK_FOR_BASE_P(X)			\
-  (REGNO (X) <= MMIX_LAST_GENERAL_REGISTER	\
-   || REGNO (X) == MMIX_ARG_POINTER_REGNUM	\
-   || REGNO (X) >= FIRST_PSEUDO_REGISTER)
-#else
-# define REG_OK_FOR_BASE_P(X) REGNO_OK_FOR_BASE_P (REGNO (X))
-#endif /* REG_OK_STRICT */
-
-#define REG_OK_FOR_INDEX_P(X) REG_OK_FOR_BASE_P (X)
-
-#define LEGITIMATE_CONSTANT_P(X) \
- mmix_legitimate_constant_p (X)
-
 
 /* Node: Condition Code */
 
@@ -694,23 +594,6 @@ typedef struct { int regs; int lib; } CUMULATIVE_ARGS;
 
 
 /* Node: Costs */
-
-/* The special registers can only move to and from general regs, and we
-   need to check that their constraints match, so say 3 for them.  */
-/* WARNING: gcc-2.7.2.2 i686-pc-linux-gnulibc1 (as shipped with RH 4.2)
-   miscompiles reload1.c:reload_cse_simplify_set; a call to
-   reload_cse_regno_equal_p is missing when checking if a substitution of
-   a register setting is valid if this is defined to just the expression
-   in mmix_register_move_cost.
-
-   Symptom: a (all?) register setting is optimized away for e.g.
-   "char *p1(char *p) { return p+1; }" and the value of register zero ($0)
-   is returned.
-
-   We can workaround by making this a function call - unknown if this
-   causes dire speed effects.  */
-#define REGISTER_MOVE_COST(MODE, FROM, TO) \
- mmix_register_move_cost (MODE, FROM, TO)
 
 #define SLOW_BYTE_ACCESS 0
 
@@ -743,9 +626,6 @@ typedef struct { int regs; int lib; } CUMULATIVE_ARGS;
 /* These aren't currently functional.  We just keep them as markers.  */
 #define ASM_APP_ON "%APP\n"
 #define ASM_APP_OFF "%NO_APP\n"
-
-#define ASM_OUTPUT_SOURCE_FILENAME(STREAM, NAME) \
- mmix_asm_output_source_filename (STREAM, NAME)
 
 #define OUTPUT_QUOTED_STRING(STREAM, STRING) \
  mmix_output_quoted_string (STREAM, STRING, strlen (STRING))
@@ -857,15 +737,6 @@ typedef struct { int regs; int lib; } CUMULATIVE_ARGS;
  {{"sp", 254}, {":sp", 254}, {"rD", 256}, {"rE", 257},	\
   {"rH", 258}, {"rJ", MMIX_rJ_REGNUM}, {"rO", MMIX_rO_REGNUM}}
 
-#define PRINT_OPERAND(STREAM, X, CODE) \
- mmix_print_operand (STREAM, X, CODE)
-
-#define PRINT_OPERAND_PUNCT_VALID_P(CODE) \
- mmix_print_operand_punct_valid_p (CODE)
-
-#define PRINT_OPERAND_ADDRESS(STREAM, X) \
- mmix_print_operand_address (STREAM, X)
-
 #define ASM_OUTPUT_REG_PUSH(STREAM, REGNO) \
  mmix_asm_output_reg_push (STREAM, REGNO)
 
@@ -941,8 +812,6 @@ typedef struct { int regs; int lib; } CUMULATIVE_ARGS;
 #define FUNCTION_MODE QImode
 
 #define NO_IMPLICIT_EXTERN_C
-
-#define HANDLE_SYSV_PRAGMA 1
 
 /* These are checked.  */
 #define DOLLARS_IN_IDENTIFIERS 0

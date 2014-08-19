@@ -1,9 +1,9 @@
-/*	$NetBSD: context.c,v 1.1.1.3 2010/12/12 15:22:12 adam Exp $	*/
+/*	$NetBSD: context.c,v 1.1.1.3.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/librewrite/context.c,v 1.15.2.5 2010/04/13 20:23:08 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -217,11 +217,11 @@ rewrite_context_apply(
 	assert( result != NULL );
 
 	op->lo_depth++;
-	assert( op->lo_depth > 0 );
 
 	Debug( LDAP_DEBUG_TRACE, "==> rewrite_context_apply"
 			" [depth=%d] string='%s'\n",
 			op->lo_depth, string, 0 );
+	assert( op->lo_depth > 0 );
 	
 	s = (char *)string;
 	

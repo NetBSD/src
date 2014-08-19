@@ -1,7 +1,7 @@
-/*	$NetBSD: backtrace_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: backtrace_test.c,v 1.3.2.2 2014/08/19 23:46:01 tls Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -74,8 +74,8 @@ func3() {
 			if (result == ISC_R_SUCCESS)
 				printf("  [%d] %s\n", i, fname);
 			else {
-				printf("  [%d] getsymbol failed: %s\n", i,
-				       isc_result_totext(result));
+				printf("  [%d] %p getsymbol failed: %s\n", i,
+				       tracebuf[i], isc_result_totext(result));
 			}
 		}
 	}
@@ -95,9 +95,5 @@ func1() {
 
 int
 main() {
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	return (func1());
 }

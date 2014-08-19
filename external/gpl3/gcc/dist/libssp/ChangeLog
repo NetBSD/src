@@ -1,22 +1,106 @@
-2012-07-02  Release Manager
+2014-05-22  Release Manager
 
-	* GCC 4.5.4 released.
+	* GCC 4.8.3 released.
 
-2011-04-28  Release Manager
+2014-04-04  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
 
-	* GCC 4.5.3 released.
+	Backport from mainline
+	2013-11-15  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
 
-2010-12-16  Release Manager
+	* configure: Regenerate.
 
-	* GCC 4.5.2 released.
+2013-10-16  Release Manager
 
-2010-07-31  Release Manager
+	* GCC 4.8.2 released.
 
-	* GCC 4.5.1 released.
+2013-05-31  Release Manager
 
-2010-04-14  Release Manager
+	* GCC 4.8.1 released.
 
-	* GCC 4.5.0 released.
+2013-03-22  Release Manager
+
+	* GCC 4.8.0 released.
+
+2013-02-06  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	Revert previous patch.
+
+2013-02-03  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	Update copyright years.
+
+2013-01-15  Paul Pluzhnikov  <ppluzhnikov@google.com>
+
+	PR 55982
+	* strncat-chk.c (__strncat_chk): Fix loop unroll.
+
+2012-09-14  David Edelsohn  <dje.gcc@gmail.com>
+
+	* configure: Regenerated.
+
+2012-05-29  Benjamin Kosnik  <bkoz@redhat.com>
+
+	PR libstdc++/51007
+	* configure.ac: Allow gnu, gnu* variants for --enable-symvers argument.
+	* configure: Regenerated.
+
+2012-05-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure: Regenerated.
+
+2011-11-21  Andreas Tobler  <andreast@fgznet.ch>
+
+	* configure: Regenerate.
+
+2011-03-21  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR bootstrap/48135
+	* configure.ac (ssp_use_symver): Handle --disable-symvers.
+	* configure: Regenerate.
+
+2011-02-13  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* Makefile.in: Regenerate.
+	* aclocal.m4: Likewise.
+	* configure: Likewise.
+
+2010-12-06  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	PR target/40125
+	PR lto/46695
+	* configure.ac: Invoke ACX_LT_HOST_FLAGS.
+	* Makefile.am (libssp_la_LDFLAGS): Use lt_host_flags.
+	* aclocal.m4: Regenerate.
+	* configure: Regenerate.
+	* Makefile.in: Regenerate.
+
+2010-07-02  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* configure.ac (ssp_use_symver): Only check for Sun-style symbol
+	versioning on Solaris 2.
+	* configure: Regenerate.
+
+2010-07-02  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* configure.ac: Check for Sun symbol versioning.
+	Check for memmove.
+	* configure: Regenerate.
+	* config.h.in: Regenerate.
+
+	* Makefile.am [LIBSSP_USE_SYMVER]: Protect version_arg,
+	version_dep with LIBSSP_USE_SYMVER_GNU.
+	[LIBSSP_USE_SYMVER_SUN]: Handle Sun symbol versioning.
+	* Makefile.in: Regenerate.
+
+	* ssp.map: Reformat.
+
+	* memmove-chk.c: Change guard to HAVE_MEMMOVE.
+
+2010-05-04  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	PR other/43620
+	* configure.ac (AM_INIT_AUTOMAKE): Add no-dist.
+	* Makefile.in: Regenerate.
 
 2010-04-02  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
 

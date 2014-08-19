@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.4 2012/06/05 00:39:13 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.4.2.1 2014/08/19 23:46:00 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -122,6 +122,9 @@ static isc_boolean_t non_root_caps = ISC_FALSE;
 #ifdef HAVE_SYS_CAPABILITY_H
 #include <sys/capability.h>
 #else
+#ifdef HAVE_LINUX_TYPES_H
+#include <linux/types.h>
+#endif
 /*%
  * We define _LINUX_FS_H to prevent it from being included.  We don't need
  * anything from it, and the files it includes cause warnings with 2.2
@@ -196,8 +199,8 @@ linux_setcaps(cap_t caps) {
 #ifdef HAVE_LIBCAP
 #define SET_CAP(flag) \
 	do { \
-		capval = (flag); \
 		cap_flag_value_t curval; \
+		capval = (flag); \
 		err = cap_get_flag(curcaps, capval, CAP_PERMITTED, &curval); \
 		if (err != -1 && curval) { \
 			err = cap_set_flag(caps, CAP_EFFECTIVE, 1, &capval, CAP_SET); \
@@ -606,7 +609,7 @@ ns_os_changeuser(void) {
 }
 
 void
-ns_os_adjustnofile() {
+ns_os_adjustnofile(void) {
 #ifdef HAVE_LINUXTHREADS
 	isc_result_t result;
 	isc_resourcevalue_t newvalue;

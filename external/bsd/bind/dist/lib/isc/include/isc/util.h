@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.7 2012/06/05 00:42:41 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.7.2.1 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -77,7 +77,7 @@
  * Use this in translation units that would otherwise be empty, to
  * suppress compiler warnings.
  */
-#define EMPTY_TRANSLATION_UNIT static void isc__empty(void) { isc__empty(); }
+#define EMPTY_TRANSLATION_UNIT static void __used isc__empty(void) { isc__empty(); }
 
 /*%
  * We use macros instead of calling the routines directly because
@@ -241,10 +241,11 @@
  * Prevent Linux spurious warnings
  */
 #if defined(__linux__) && defined(__GNUC__) && (__GNUC__ > 3)
-#define isc_util_fwrite(a, b, c, d)	\
+#define isc_util_fwrite(a, b, c, d)    \
 	__builtin_expect(fwrite((a), (b), (c), (d)), (c))
 #else
-#define isc_util_fwrite(a, b, c, d)	fwrite((a), (b), (c), (d))
+#define isc_util_fwrite(a, b, c, d)    fwrite((a), (b), (c), (d))
 #endif
+
 
 #endif /* ISC_UTIL_H */

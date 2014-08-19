@@ -1,6 +1,6 @@
 /* Generic symbol-table support for the BFD library.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009
+   2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2012
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -107,6 +107,7 @@ SUBSECTION
 	which has been created using <<bfd_make_empty_symbol>>.  Here is an
 	example showing the creation of a symbol table with only one element:
 
+|	#include "sysdep.h"
 |	#include "bfd.h"
 |	int main (void)
 |	{
@@ -1386,8 +1387,8 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 
       dirlen = strlen (directory_name);
       if (info->filename == NULL
-	  || strncmp (info->filename, directory_name, dirlen) != 0
-	  || strcmp (info->filename + dirlen, file_name) != 0)
+	  || filename_ncmp (info->filename, directory_name, dirlen) != 0
+	  || filename_cmp (info->filename + dirlen, file_name) != 0)
 	{
 	  size_t len;
 

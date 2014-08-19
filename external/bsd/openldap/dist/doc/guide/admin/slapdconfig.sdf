@@ -1,19 +1,18 @@
-# OpenLDAP: pkg/openldap-guide/admin/slapdconfig.sdf,v 1.87.2.21 2010/04/13 20:22:35 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: The slapd Configuration File
 
-Once the software has been built and installed, you are ready
-to configure {{slapd}}(8) for use at your site. The slapd
-runtime configuration is primarily accomplished through the
-{{slapd.conf}}(5) file, normally installed in the
-{{EX:/usr/local/etc/openldap}} directory.
+This chapter describes configuring {{slapd}}(8) via the {{slapd.conf}}(5)
+configuration file.  {{slapd.conf}}(5) has been deprecated and should
+only be used if your site requires one of the backends that hasn't yet
+been updated to work with the newer {{slapd-config}}(5) system.  Configuring
+{{slapd}}(8) via {{slapd-config}}(5) is described in the previous chapter.
 
-An alternate configuration file location can be specified via a command-line
-option to {{slapd}}(8). This chapter describes the general format
-of the {{slapd.conf}}(5) configuration file, followed by a detailed
-description of commonly used config file directives.
+The {{slapd.conf}}(5) file is normally installed in the
+{{EX:/usr/local/etc/openldap}} directory.  An alternate configuration
+file location can be specified via a command-line option to {{slapd}}(8).
 
 
 H2: Configuration File Format
@@ -129,7 +128,7 @@ Note: You should be careful when using this directive - there is
 no small limit on the number of nested include directives, and no
 loop detection is done.
 
-H4: loglevel <integer>
+H4: loglevel <level>
 
 This directive specifies the level at which debugging statements
 and operation statistics should be syslogged (currently logged to
@@ -263,7 +262,7 @@ This directive marks the beginning of a backend declaration.
 supported backend types listed in Table 6.2.
 
 !block table; align=Center; coltags="EX,N"; \
-	title="Table 5.2: Database Backends"
+	title="Table 6.2: Database Backends"
 Types	Description
 bdb	Berkeley DB transactional backend
 dnssrv	DNS SRV backend
@@ -616,7 +615,7 @@ E:  9.    rootdn "cn=Manager,dc=example,dc=com"
 E: 10.    rootpw secret
 E: 11.    # indexed attribute definitions
 E: 12.    index uid pres,eq
-E: 13.    index cn,sn,uid pres,eq,approx,sub
+E: 13.    index cn,sn pres,eq,approx,sub
 E: 14.    index objectClass eq
 E: 15.    # database access control definitions
 E: 16.    access to attrs=userPassword

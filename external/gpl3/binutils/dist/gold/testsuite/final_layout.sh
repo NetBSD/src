@@ -2,7 +2,7 @@
 
 # final_layout.sh -- test --final-layout
 
-# Copyright 2010 Free Software Foundation, Inc.
+# Copyright 2010, 2011 Free Software Foundation, Inc.
 # Written by Sriraman Tallam <tmsriram@google.com>.
 
 # This file is part of gold.
@@ -25,17 +25,34 @@
 # The goal of this program is to verify if --section-ordering-file works as
 # intended.  File final_layout.cc is in this test.
 
+set -e
+
 check()
 {
-    func_addr_1=`grep $2 $1 | awk '{print $1}' | tr 'abcdef' 'ABCDEF'`
-    func_addr_1=`echo 16i${func_addr_1}p | dc`
-    func_addr_2=`grep $3 $1 | awk '{print $1}' | tr 'abcdef' 'ABCDEF'`
-    func_addr_2=`echo 16i${func_addr_2}p | dc`
-    if [ $func_addr_1 -gt $func_addr_2 ]
-    then
-        echo "final layout of" $2 "and" $3 "is not right."
-	exit 1
-    fi
+    awk "
+BEGIN { saw1 = 0; saw2 = 0; err = 0; }
+/.*$2\$/ { saw1 = 1; }
+/.*$3\$/ {
+     saw2 = 1;
+     if (!saw1)
+       {
+	  printf \"layout of $2 and $3 is not right\\n\";
+	  err = 1;
+	  exit 1;
+       }
+    }
+END {
+      if (!saw1 && !err)
+        {
+	  printf \"did not see $2\\n\";
+	  exit 1;
+	}
+      if (!saw2 && !err)
+	{
+	  printf \"did not see $3\\n\";
+	  exit 1;
+	}
+    }" $1
 }
 
 check final_layout.stdout "_Z3barv" "_Z3bazv"

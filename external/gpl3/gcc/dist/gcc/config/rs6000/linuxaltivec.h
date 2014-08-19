@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for AltiVec enhanced PowerPC machines running GNU/Linux.
-   Copyright (C) 2001, 2003, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez (aldyh@redhat.com).
 
    This file is part of GCC.
@@ -19,12 +19,14 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
-#undef  TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (PowerPC AltiVec GNU/Linux)");
-
 /* Override rs6000.h and sysv4.h definition.  */
+#if (TARGET_DEFAULT & MASK_LITTLE_ENDIAN)
 #undef	TARGET_DEFAULT
-#define	TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS | MASK_ALTIVEC)
+#define	TARGET_DEFAULT (MASK_ALTIVEC | MASK_LITTLE_ENDIAN)
+#else
+#undef	TARGET_DEFAULT
+#define	TARGET_DEFAULT MASK_ALTIVEC
+#endif
 
 #undef  SUBSUBTARGET_OVERRIDE_OPTIONS
 #define SUBSUBTARGET_OVERRIDE_OPTIONS rs6000_altivec_abi = 1

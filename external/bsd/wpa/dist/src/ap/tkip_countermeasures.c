@@ -1,15 +1,9 @@
 /*
  * hostapd / TKIP countermeasures
- * Copyright (c) 2002-2011, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2012, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "utils/includes.h"
@@ -17,6 +11,7 @@
 #include "utils/common.h"
 #include "utils/eloop.h"
 #include "common/ieee802_11_defs.h"
+#include "radius/radius.h"
 #include "hostapd.h"
 #include "sta_info.h"
 #include "ap_mlme.h"
@@ -50,12 +45,17 @@ static void ieee80211_tkip_countermeasures_start(struct hostapd_data *hapd)
 	eloop_cancel_timeout(ieee80211_tkip_countermeasures_stop, hapd, NULL);
 	eloop_register_timeout(60, 0, ieee80211_tkip_countermeasures_stop,
 			       hapd, NULL);
-	for (sta = hapd->sta_list; sta != NULL; sta = sta->next) {
+	while ((sta = hapd->sta_list)) {
+		sta->acct_terminate_cause =
+			RADIUS_ACCT_TERMINATE_CAUSE_ADMIN_RESET;
+		if (sta->flags & WLAN_STA_AUTH) {
+			mlme_deauthenticate_indication(
+				hapd, sta,
+				WLAN_REASON_MICHAEL_MIC_FAILURE);
+		}
 		hostapd_drv_sta_deauth(hapd, sta->addr,
 				       WLAN_REASON_MICHAEL_MIC_FAILURE);
-		ap_sta_set_authorized(hapd, sta, 0);
-		sta->flags &= ~(WLAN_STA_AUTH | WLAN_STA_ASSOC);
-		hostapd_drv_sta_remove(hapd, sta->addr);
+		ap_free_sta(hapd, sta);
 	}
 }
 
@@ -66,9 +66,10 @@ void ieee80211_tkip_countermeasures_deinit(struct hostapd_data *hapd)
 }
 
 
-void michael_mic_failure(struct hostapd_data *hapd, const u8 *addr, int local)
+int michael_mic_failure(struct hostapd_data *hapd, const u8 *addr, int local)
 {
 	struct os_time now;
+	int ret = 0;
 
 	if (addr && local) {
 		struct sta_info *sta = ap_get_sta(hapd, addr);
@@ -84,7 +85,7 @@ void michael_mic_failure(struct hostapd_data *hapd, const u8 *addr, int local)
 				   "MLME-MICHAELMICFAILURE.indication "
 				   "for not associated STA (" MACSTR
 				   ") ignored", MAC2STR(addr));
-			return;
+			return ret;
 		}
 	}
 
@@ -93,8 +94,12 @@ void michael_mic_failure(struct hostapd_data *hapd, const u8 *addr, int local)
 		hapd->michael_mic_failures = 1;
 	} else {
 		hapd->michael_mic_failures++;
-		if (hapd->michael_mic_failures > 1)
+		if (hapd->michael_mic_failures > 1) {
 			ieee80211_tkip_countermeasures_start(hapd);
+			ret = 1;
+		}
 	}
 	hapd->michael_mic_failure = now.sec;
+
+	return ret;
 }

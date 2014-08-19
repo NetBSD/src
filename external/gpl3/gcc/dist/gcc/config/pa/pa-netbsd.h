@@ -1,11 +1,11 @@
 /* Definitions for PA_RISC with ELF format
-   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
 GCC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
+the Free Software Foundation; either version 3, or (at your option)
 any later version.
 
 GCC is distributed in the hope that it will be useful,
@@ -14,16 +14,16 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GCC; see the file COPYING.  If not, write to
-the Free Software Foundation, 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with GCC; see the file COPYING3.  If not see
+<http://www.gnu.org/licenses/>.  */
 
 
 #undef TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
     {						\
-      NETBSD_OS_CPP_BUILTINS_ELF();             \
+	NETBSD_OS_CPP_BUILTINS_ELF();	\
+	builtin_assert ("machine=bigendian");	\
     }						\
   while (0)
 
@@ -53,7 +53,7 @@ Boston, MA 02111-1307, USA.  */
    file which includes this one.  */
 
 #undef STRING_ASM_OP
-#define STRING_ASM_OP   "\t.stringz"
+#define STRING_ASM_OP   "\t.stringz\t"
 
 #define TEXT_SECTION_ASM_OP "\t.text"
 #define DATA_SECTION_ASM_OP "\t.data"
@@ -94,7 +94,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Use the default.  */
 #undef ASM_OUTPUT_INTERNAL_LABEL
-                    
+
 /* Use the default.  */
 #undef TARGET_ASM_GLOBALIZE_LABEL
 /* Globalizing directive for a label.  */
@@ -121,7 +121,7 @@ Boston, MA 02111-1307, USA.  */
   do								\
     {								\
       if (!FUNCTION_NAME_P (XSTR (FUN, 0)))			\
-	hppa_encode_label (FUN);				\
+	pa_encode_label (FUN);					\
       (*targetm.asm_out.globalize_label) (FILE, XSTR (FUN, 0));	\
     }								\
   while (0)
@@ -136,3 +136,13 @@ Boston, MA 02111-1307, USA.  */
 
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "long int"
+
+#if 0
+#undef TARGET_SYNC_LIBCALL
+#define TARGET_SYNC_LIBCALL 1
+#endif
+
+#if 0
+#undef TARGET_SYNC_LIBCALL
+#define TARGET_SYNC_LIBCALL 1
+#endif

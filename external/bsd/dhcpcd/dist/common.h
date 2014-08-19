@@ -1,8 +1,8 @@
-/* $NetBSD: common.h,v 1.1.1.7.2.1 2013/06/23 06:26:31 tls Exp $ */
+/* $NetBSD: common.h,v 1.1.1.7.2.2 2014/08/19 23:46:43 tls Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <sys/param.h>
 #include <sys/time.h>
 #include <stdio.h>
 
@@ -40,22 +41,31 @@
 #define HOSTNAME_MAX_LEN	250	/* 255 - 3 (FQDN) - 2 (DNS enc) */
 #endif
 
-#define UNCONST(a)		((void *)(unsigned long)(const void *)(a))
+#ifndef MIN
+#define MIN(a,b)		((/*CONSTCOND*/(a)<(b))?(a):(b))
+#define MAX(a,b)		((/*CONSTCOND*/(a)>(b))?(a):(b))
+#endif
 
-#define timeval_to_double(tv) ((tv)->tv_sec * 1.0 + (tv)->tv_usec * 1.0e-6)
+#define UNCONST(a)		((void *)(unsigned long)(const void *)(a))
+#define STRINGIFY(a)		#a
+#define TOSTRING(a)		STRINGIFY(a)
+
+#define USECINSEC		1000000
+#define timeval_to_double(tv)						\
+	((double)(tv)->tv_sec + (double)((tv)->tv_usec) * 1.0e-6)
 #define timernorm(tv) do {						\
-	while ((tv)->tv_usec >= 1000000) {				\
+	while ((tv)->tv_usec >=  USECINSEC) {				\
 		(tv)->tv_sec++;						\
-		(tv)->tv_usec -= 1000000;				\
+		(tv)->tv_usec -= USECINSEC;				\
 	}								\
 } while (0 /* CONSTCOND */);
 #define tv_to_ms(ms, tv) do {						\
 	ms = (tv)->tv_sec * 1000;					\
 	ms += (tv)->tv_usec / 1000;					\
 } while (0 /* CONSTCOND */);
-#define ms_to_tv(tv, ms) do {						\
-	(tv)->tv_sec = ms / 1000;					\
-	(tv)->tv_usec = (ms - ((tv)->tv_sec * 1000)) * 1000;		\
+#define ms_to_tv(tv, ms) do {						      \
+	(tv)->tv_sec = ms / 1000;					      \
+	(tv)->tv_usec = (suseconds_t)(ms - ((tv)->tv_sec * 1000)) * 1000;     \
 } while (0 /* CONSTCOND */);
 
 #ifndef TIMEVAL_TO_TIMESPEC
@@ -99,15 +109,14 @@
 # endif
 #endif
 
-int set_cloexec(int);
-int set_nonblock(int);
-char *get_line(FILE * __restrict);
-const char *get_hostname(void);
+void get_line_free(void);
+const char *get_hostname(char *, size_t, int);
 extern int clock_monotonic;
 int get_monotonic(struct timeval *);
 ssize_t setvar(char ***, const char *, const char *, const char *);
-ssize_t setvard(char ***, const char *, const char *, int);
+ssize_t setvard(char ***, const char *, const char *, size_t);
 time_t uptime(void);
-int writepid(int, pid_t);
 
+char *hwaddr_ntoa(const unsigned char *, size_t, char *, size_t);
+size_t hwaddr_aton(unsigned char *, const char *);
 #endif

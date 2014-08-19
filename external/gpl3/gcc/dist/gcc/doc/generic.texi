@@ -1,5 +1,4 @@
-@c Copyright (c) 2004, 2005, 2007, 2008, 2010 Free Software Foundation, Inc.
-@c Free Software Foundation, Inc.
+@c Copyright (C) 2004-2013 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -621,7 +620,7 @@ internal representation, except for declarations of functions
 @menu
 * Working with declarations::  Macros and functions that work on
 declarations.
-* Internal structure:: How declaration nodes are represented. 
+* Internal structure:: How declaration nodes are represented.
 @end menu
 
 @node Working with declarations
@@ -734,11 +733,11 @@ referenced in debug bind statements.
 
 @item FIELD_DECL
 These nodes represent non-static data members.  The @code{DECL_SIZE} and
-@code{DECL_ALIGN} behave as for @code{VAR_DECL} nodes.  
-The position of the field within the parent record is specified by a 
+@code{DECL_ALIGN} behave as for @code{VAR_DECL} nodes.
+The position of the field within the parent record is specified by a
 combination of three attributes.  @code{DECL_FIELD_OFFSET} is the position,
 counting in bytes, of the @code{DECL_OFFSET_ALIGN}-bit sized word containing
-the bit of the field closest to the beginning of the structure.  
+the bit of the field closest to the beginning of the structure.
 @code{DECL_FIELD_BIT_OFFSET} is the bit offset of the first bit of the field
 within this word; this may be nonzero even for fields that are not bit-fields,
 since @code{DECL_OFFSET_ALIGN} may be greater than the natural alignment
@@ -810,7 +809,7 @@ used to represent @code{CONST_DECL}.
 
 @item struct tree_parm_decl
 This structure inherits from @code{struct tree_decl_with_rtl}.  It is
-used to represent @code{PARM_DECL}.  
+used to represent @code{PARM_DECL}.
 
 @item struct tree_decl_with_vis
 This structure inherits from @code{struct tree_decl_with_rtl}.  It
@@ -819,11 +818,11 @@ a section name and assembler name.
 
 @item struct tree_var_decl
 This structure inherits from @code{struct tree_decl_with_vis}.  It is
-used to represent @code{VAR_DECL}.  
+used to represent @code{VAR_DECL}.
 
 @item struct tree_function_decl
 This structure inherits from @code{struct tree_decl_with_vis}.  It is
-used to represent @code{FUNCTION_DECL}.  
+used to represent @code{FUNCTION_DECL}.
 
 @end table
 @node Adding new DECL node types
@@ -1122,6 +1121,7 @@ target system bytes are not the same width as host system bytes.
 @subsection References to storage
 @tindex ADDR_EXPR
 @tindex INDIRECT_REF
+@tindex MEM_REF
 @tindex ARRAY_REF
 @tindex ARRAY_RANGE_REF
 @tindex TARGET_MEM_REF
@@ -1182,6 +1182,13 @@ These nodes are used to represent the object pointed to by a pointer.
 The operand is the pointer being dereferenced; it will always have
 pointer or reference type.
 
+@item MEM_REF
+These nodes are used to represent the object pointed to by a pointer
+offset by a constant.
+The first operand is the pointer being dereferenced; it will always have
+pointer or reference type.  The second operand is a pointer constant.
+Its type is specifying the type to be used for type-based alias analysis.
+
 @item COMPONENT_REF
 These nodes represent non-static data member accesses.  The first
 operand is the object (rather than a pointer to it); the second operand
@@ -1227,6 +1234,7 @@ the byte offset of the field, but should not be used directly; call
 @tindex PLUS_EXPR
 @tindex MINUS_EXPR
 @tindex MULT_EXPR
+@tindex MULT_HIGHPART_EXPR
 @tindex RDIV_EXPR
 @tindex TRUNC_DIV_EXPR
 @tindex FLOOR_DIV_EXPR
@@ -1379,7 +1387,8 @@ shift.  Right shift should be treated as arithmetic, i.e., the
 high-order bits should be zero-filled when the expression has unsigned
 type and filled with the sign bit when the expression has signed type.
 Note that the result is undefined if the second operand is larger
-than or equal to the first operand's type size.
+than or equal to the first operand's type size. Unlike most nodes, these
+can have a vector as first operand and a scalar as second operand.
 
 
 @item BIT_IOR_EXPR
@@ -1407,13 +1416,13 @@ generate these expressions anyhow, if it can tell that strictness does
 not matter.  The type of the operands and that of the result are
 always of @code{BOOLEAN_TYPE} or @code{INTEGER_TYPE}.
 
-@itemx POINTER_PLUS_EXPR
+@item POINTER_PLUS_EXPR
 This node represents pointer arithmetic.  The first operand is always
 a pointer/reference type.  The second operand is always an unsigned
 integer type compatible with sizetype.  This is the only binary
 arithmetic operand that can operate on pointer types.
 
-@itemx PLUS_EXPR
+@item PLUS_EXPR
 @itemx MINUS_EXPR
 @itemx MULT_EXPR
 These nodes represent various binary arithmetic operations.
@@ -1424,6 +1433,11 @@ one operand is of floating type and the other is of integral type.
 
 The behavior of these operations on signed arithmetic overflow is
 controlled by the @code{flag_wrapv} and @code{flag_trapv} variables.
+
+@item MULT_HIGHPART_EXPR
+This node represents the ``high-part'' of a widening multiplication.
+For an integral type with @var{b} bits of precision, the result is
+the most significant @var{b} bits of the full @math{2@var{b}} product.
 
 @item RDIV_EXPR
 This node represents a floating point division operation.
@@ -1468,11 +1482,12 @@ allows the backend to choose between the faster of @code{TRUNC_DIV_EXPR},
 @itemx NE_EXPR
 These nodes represent the less than, less than or equal to, greater
 than, greater than or equal to, equal, and not equal comparison
-operators.  The first and second operand with either be both of integral
-type or both of floating type.  The result type of these expressions
-will always be of integral or boolean type.  These operations return
-the result type's zero value for false, and the result type's one value
-for true.
+operators.  The first and second operands will either be both of integral
+type, both of floating type or both of vector type.  The result type of
+these expressions will always be of integral, boolean or signed integral
+vector type.  These operations return the result type's zero value for
+false, the result type's one value for true, and a vector whose elements
+are zero (false) or minus one (true) for vectors.
 
 For floating point comparisons, if we honor IEEE NaNs and either operand
 is NaN, then @code{NE_EXPR} always returns true and the remaining operators
@@ -1566,8 +1581,8 @@ function to call; it is always an expression whose type is a
 @code{POINTER_TYPE}.
 
 The number of arguments to the call is returned by @code{call_expr_nargs},
-while the arguments themselves can be accessed with the @code{CALL_EXPR_ARG} 
-macro.  The arguments are zero-indexed and numbered left-to-right.  
+while the arguments themselves can be accessed with the @code{CALL_EXPR_ARG}
+macro.  The arguments are zero-indexed and numbered left-to-right.
 You can iterate over the arguments using @code{FOR_EACH_CALL_EXPR_ARG}, as in:
 
 @smallexample
@@ -1687,16 +1702,12 @@ its sole argument yields the representation for @code{ap}.
 @tindex VEC_PACK_TRUNC_EXPR
 @tindex VEC_PACK_SAT_EXPR
 @tindex VEC_PACK_FIX_TRUNC_EXPR
-@tindex VEC_EXTRACT_EVEN_EXPR 
-@tindex VEC_EXTRACT_ODD_EXPR
-@tindex VEC_INTERLEAVE_HIGH_EXPR
-@tindex VEC_INTERLEAVE_LOW_EXPR
 
 @table @code
 @item VEC_LSHIFT_EXPR
 @itemx VEC_RSHIFT_EXPR
-These nodes represent whole vector left and right shifts, respectively.  
-The first operand is the vector to shift; it will always be of vector type.  
+These nodes represent whole vector left and right shifts, respectively.
+The first operand is the vector to shift; it will always be of vector type.
 The second operand is an expression for the number of bits by which to
 shift.  Note that the result is undefined if the second operand is larger
 than or equal to the first operand's type size.
@@ -1704,9 +1715,9 @@ than or equal to the first operand's type size.
 @item VEC_WIDEN_MULT_HI_EXPR
 @itemx VEC_WIDEN_MULT_LO_EXPR
 These nodes represent widening vector multiplication of the high and low
-parts of the two input vectors, respectively.  Their operands are vectors 
-that contain the same number of elements (@code{N}) of the same integral type.  
-The result is a vector that contains half as many elements, of an integral type 
+parts of the two input vectors, respectively.  Their operands are vectors
+that contain the same number of elements (@code{N}) of the same integral type.
+The result is a vector that contains half as many elements, of an integral type
 whose size is twice as wide.  In the case of @code{VEC_WIDEN_MULT_HI_EXPR} the
 high @code{N/2} elements of the two vector are multiplied to produce the
 vector of @code{N/2} products. In the case of @code{VEC_WIDEN_MULT_LO_EXPR} the
@@ -1716,7 +1727,7 @@ vector of @code{N/2} products.
 @item VEC_UNPACK_HI_EXPR
 @itemx VEC_UNPACK_LO_EXPR
 These nodes represent unpacking of the high and low parts of the input vector,
-respectively.  The single operand is a vector that contains @code{N} elements 
+respectively.  The single operand is a vector that contains @code{N} elements
 of the same integral or floating point type.  The result is a vector
 that contains half as many elements, of an integral or floating point type
 whose size is twice as wide.  In the case of @code{VEC_UNPACK_HI_EXPR} the
@@ -1760,23 +1771,17 @@ twice as many elements of an integral type whose size is half as wide.  The
 elements of the two vectors are merged (concatenated) to form the output
 vector.
 
-@item VEC_EXTRACT_EVEN_EXPR
-@itemx VEC_EXTRACT_ODD_EXPR
-These nodes represent extracting of the even/odd elements of the two input 
-vectors, respectively. Their operands and result are vectors that contain the 
-same number of elements of the same type.
-
-@item VEC_INTERLEAVE_HIGH_EXPR
-@itemx VEC_INTERLEAVE_LOW_EXPR
-These nodes represent merging and interleaving of the high/low elements of the
-two input vectors, respectively. The operands and the result are vectors that 
-contain the same number of elements (@code{N}) of the same type.
-In the case of @code{VEC_INTERLEAVE_HIGH_EXPR}, the high @code{N/2} elements of 
-the first input vector are interleaved with the high @code{N/2} elements of the
-second input vector. In the case of @code{VEC_INTERLEAVE_LOW_EXPR}, the low
-@code{N/2} elements of the first input vector are interleaved with the low 
-@code{N/2} elements of the second input vector.
-
+@item VEC_COND_EXPR
+These nodes represent @code{?:} expressions.  The three operands must be
+vectors of the same size and number of elements.  The second and third
+operands must have the same type as the entire expression.  The first
+operand is of signed integral vector type.  If an element of the first
+operand evaluates to a zero value, the corresponding element of the
+result is taken from the third operand. If it evaluates to a minus one
+value, it is taken from the second operand. It should never evaluate to
+any other value currently, but optimizations should not rely on that
+property. In contrast with a @code{COND_EXPR}, all operands are always
+evaluated.
 @end table
 
 
@@ -2202,7 +2207,9 @@ Clauses are represented by separate sub-codes defined in
 @code{OMP_CLAUSE_COPYPRIVATE}, @code{OMP_CLAUSE_IF},
 @code{OMP_CLAUSE_NUM_THREADS}, @code{OMP_CLAUSE_SCHEDULE},
 @code{OMP_CLAUSE_NOWAIT}, @code{OMP_CLAUSE_ORDERED},
-@code{OMP_CLAUSE_DEFAULT}, and @code{OMP_CLAUSE_REDUCTION}.  Each code
+@code{OMP_CLAUSE_DEFAULT}, @code{OMP_CLAUSE_REDUCTION},
+@code{OMP_CLAUSE_COLLAPSE}, @code{OMP_CLAUSE_UNTIED},
+@code{OMP_CLAUSE_FINAL}, and @code{OMP_CLAUSE_MERGEABLE}.  Each code
 represents the corresponding OpenMP clause.
 
 Clauses associated with the same directive are chained together
@@ -2412,14 +2419,6 @@ optimization options specified on the command line.
 
 @end ftable
 
-@subsubsection Statements
-
-There are tree nodes corresponding to all of the source-level
-statement constructs, used within the C and C++ frontends.  These are
-enumerated here, together with a list of the various macros that can
-be used to obtain information about them.  There are a few macros that
-can be used with all statements:
-
 @c ---------------------------------------------------------------------
 @c Language-dependent trees
 @c ---------------------------------------------------------------------
@@ -2502,7 +2501,7 @@ should submit your patches for inclusion in GCC@.
 @tindex UNKNOWN_TYPE
 @tindex TYPENAME_TYPE
 @tindex TYPEOF_TYPE
-@findex CP_TYPE_QUALS
+@findex cp_type_quals
 @findex TYPE_UNQUALIFIED
 @findex TYPE_QUAL_CONST
 @findex TYPE_QUAL_VOLATILE
@@ -2514,7 +2513,7 @@ should submit your patches for inclusion in GCC@.
 @findex TYPE_PRECISION
 @findex TYPE_ARG_TYPES
 @findex TYPE_METHOD_BASETYPE
-@findex TYPE_PTRMEM_P
+@findex TYPE_PTRDATAMEM_P
 @findex TYPE_OFFSET_BASETYPE
 @findex TREE_TYPE
 @findex TYPE_CONTEXT
@@ -2534,8 +2533,8 @@ the type @code{const int ()[7]}, denoting an array of seven @code{int}s.
 
 The following functions and macros deal with cv-qualification of types:
 @ftable @code
-@item CP_TYPE_QUALS
-This macro returns the set of type qualifiers applied to this type.
+@item cp_type_quals
+This function returns the set of type qualifiers applied to this type.
 This value is @code{TYPE_UNQUALIFIED} if no qualifiers have been
 applied.  The @code{TYPE_QUAL_CONST} bit is set if the type is
 @code{const}-qualified.  The @code{TYPE_QUAL_VOLATILE} bit is set if the
@@ -2591,7 +2590,7 @@ This predicate holds for a class-type.
 @item TYPE_BUILT_IN
 This predicate holds for a built-in type.
 
-@item TYPE_PTRMEM_P
+@item TYPE_PTRDATAMEM_P
 This predicate holds if the type is a pointer to data member.
 
 @item TYPE_PTR_P
@@ -2616,8 +2615,8 @@ language-dependent info about GENERIC types.
 
 @item POINTER_TYPE
 Used to represent pointer types, and pointer to data member types.  If
-@code{TREE_TYPE} 
-is a pointer to data member type, then @code{TYPE_PTRMEM_P} will hold.
+@code{TREE_TYPE}
+is a pointer to data member type, then @code{TYPE_PTRDATAMEM_P} will hold.
 For a pointer to data member type of the form @samp{T X::*},
 @code{TYPE_PTRMEM_CLASS_TYPE} will be the type @code{X}, while
 @code{TYPE_PTRMEM_POINTED_TO_TYPE} will be the type @code{T}.
@@ -2629,7 +2628,7 @@ type.  In that case, the @code{TYPE_PTRMEMFUNC_FN_TYPE} is a
 @code{POINTER_TYPE} pointing to a @code{METHOD_TYPE}.  The
 @code{METHOD_TYPE} is the type of a function pointed to by the
 pointer-to-member function.  If @code{TYPE_PTRMEMFUNC_P} does not hold,
-this type is a class type.  For more information, see @pxref{Classes}.
+this type is a class type.  For more information, @pxref{Classes}.
 
 @item UNKNOWN_TYPE
 This node is used to represent a type the knowledge of which is

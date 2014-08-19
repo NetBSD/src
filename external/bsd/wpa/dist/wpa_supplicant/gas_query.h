@@ -3,14 +3,8 @@
  * Copyright (c) 2009, Atheros Communications
  * Copyright (c) 2011, Qualcomm Atheros
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef GAS_QUERY_H
@@ -25,6 +19,9 @@ void gas_query_deinit(struct gas_query *gas);
 int gas_query_rx(struct gas_query *gas, const u8 *da, const u8 *sa,
 		 const u8 *bssid, const u8 *data, size_t len, int freq);
 
+/**
+ * enum gas_query_result - GAS query result
+ */
 enum gas_query_result {
 	GAS_QUERY_SUCCESS,
 	GAS_QUERY_FAILURE,

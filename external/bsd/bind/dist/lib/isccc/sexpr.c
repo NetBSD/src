@@ -1,7 +1,7 @@
-/*	$NetBSD: sexpr.c,v 1.3 2012/06/05 00:42:58 christos Exp $	*/
+/*	$NetBSD: sexpr.c,v 1.3.2.1 2014/08/19 23:46:34 tls Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -114,7 +114,7 @@ isccc_sexpr_frombinary(const isccc_region_t *region)
 	}
 	sexpr->value.as_region.rend = sexpr->value.as_region.rstart +
 		region_size;
-	memcpy(sexpr->value.as_region.rstart, region->rstart, region_size);
+	memmove(sexpr->value.as_region.rstart, region->rstart, region_size);
 	/*
 	 * NUL terminate.
 	 */
@@ -313,7 +313,7 @@ isccc_sexpr_tostring(isccc_sexpr_t *sexpr)
 	REQUIRE(sexpr != NULL &&
 		(sexpr->type == ISCCC_SEXPRTYPE_STRING ||
 		 sexpr->type == ISCCC_SEXPRTYPE_BINARY));
-	
+
 	if (sexpr->type == ISCCC_SEXPRTYPE_BINARY)
 		return ((char *)sexpr->value.as_region.rstart);
 	return (sexpr->value.as_string);

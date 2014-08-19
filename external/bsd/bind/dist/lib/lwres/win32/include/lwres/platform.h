@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.4 2012/06/05 00:43:10 christos Exp $	*/
+/*	$NetBSD: platform.h,v 1.4.2.1 2014/08/19 23:46:35 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -86,7 +86,7 @@
 do { \
 	int _on = 1; \
 	retval = ioctlsocket((SOCKET) sd, FIONBIO, &_on); \
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * Need to define close here since lwres closes sockets and not files

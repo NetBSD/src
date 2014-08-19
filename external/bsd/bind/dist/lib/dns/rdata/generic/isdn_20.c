@@ -1,7 +1,7 @@
-/*	$NetBSD: isdn_20.c,v 1.3 2012/06/05 00:42:09 christos Exp $	*/
+/*	$NetBSD: isdn_20.c,v 1.3.2.1 2014/08/19 23:46:30 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -129,6 +129,8 @@ fromstruct_isdn(ARGS_FROMSTRUCT) {
 
 	RETERR(uint8_tobuffer(isdn->isdn_len, target));
 	RETERR(mem_tobuffer(target, isdn->isdn, isdn->isdn_len));
+	if (isdn->subaddress == NULL)
+		return (ISC_R_SUCCESS);
 	RETERR(uint8_tobuffer(isdn->subaddress_len, target));
 	return (mem_tobuffer(target, isdn->subaddress, isdn->subaddress_len));
 }
@@ -155,11 +157,17 @@ tostruct_isdn(ARGS_TOSTRUCT) {
 		return (ISC_R_NOMEMORY);
 	isc_region_consume(&r, isdn->isdn_len);
 
-	isdn->subaddress_len = uint8_fromregion(&r);
-	isc_region_consume(&r, 1);
-	isdn->subaddress = mem_maybedup(mctx, r.base, isdn->subaddress_len);
-	if (isdn->subaddress == NULL)
-		goto cleanup;
+	if (r.length == 0) {
+		isdn->subaddress_len = 0;
+		isdn->subaddress = NULL;
+	} else {
+		isdn->subaddress_len = uint8_fromregion(&r);
+		isc_region_consume(&r, 1);
+		isdn->subaddress = mem_maybedup(mctx, r.base,
+						isdn->subaddress_len);
+		if (isdn->subaddress == NULL)
+			goto cleanup;
+	}
 
 	isdn->mctx = mctx;
 	return (ISC_R_SUCCESS);

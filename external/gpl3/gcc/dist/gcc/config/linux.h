@@ -1,6 +1,8 @@
-/* Definitions for Linux-based GNU systems with ELF format
-   Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2003, 2004, 2005, 2006,
-   2007, 2009 Free Software Foundation, Inc.
+/* Definitions for systems using the Linux kernel, with or without
+   MMU, using ELF at the compiler level but possibly FLT for final
+   linked executables and shared libraries in some no-MMU cases, and
+   possibly with a choice of libc implementations.
+   Copyright (C) 1995-2013 Free Software Foundation, Inc.
    Contributed by Eric Youngdale.
    Modified for stabs-in-ELF by H.J. Lu (hjl@lucon.org).
 
@@ -25,62 +27,21 @@ a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */
 
-/* Don't assume anything about the header files.  */
-#define NO_IMPLICIT_EXTERN_C
-
-#undef ASM_APP_ON
-#define ASM_APP_ON "#APP\n"
-
-#undef ASM_APP_OFF
-#define ASM_APP_OFF "#NO_APP\n"
-
-#undef MD_EXEC_PREFIX
-#undef MD_STARTFILE_PREFIX
-
-/* Provide a STARTFILE_SPEC appropriate for GNU/Linux.  Here we add
-   the GNU/Linux magical crtbegin.o file (see crtstuff.c) which
-   provides part of the support for getting C++ file-scope static
-   object constructed before entering `main'.  */
-   
-#undef	STARTFILE_SPEC
-#if defined HAVE_LD_PIE
-#define STARTFILE_SPEC \
-  "%{!shared: %{pg|p|profile:gcrt1.o%s;pie:Scrt1.o%s;:crt1.o%s}} \
-   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
+/* C libraries supported on Linux.  */
+#ifdef SINGLE_LIBC
+#define OPTION_GLIBC  (DEFAULT_LIBC == LIBC_GLIBC)
+#define OPTION_UCLIBC (DEFAULT_LIBC == LIBC_UCLIBC)
+#define OPTION_BIONIC (DEFAULT_LIBC == LIBC_BIONIC)
 #else
-#define STARTFILE_SPEC \
-  "%{!shared: %{pg|p|profile:gcrt1.o%s;:crt1.o%s}} \
-   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
+#define OPTION_GLIBC  (linux_libc == LIBC_GLIBC)
+#define OPTION_UCLIBC (linux_libc == LIBC_UCLIBC)
+#define OPTION_BIONIC (linux_libc == LIBC_BIONIC)
 #endif
 
-/* Provide a ENDFILE_SPEC appropriate for GNU/Linux.  Here we tack on
-   the GNU/Linux magical crtend.o file (see crtstuff.c) which
-   provides part of the support for getting C++ file-scope static
-   object constructed before entering `main', followed by a normal
-   GNU/Linux "finalizer" file, `crtn.o'.  */
-
-#undef	ENDFILE_SPEC
-#define ENDFILE_SPEC \
-  "%{shared|pie:crtendS.o%s;:crtend.o%s} crtn.o%s"
-
-/* This is for -profile to use -lc_p instead of -lc.  */
-#ifndef CC1_SPEC
-#define CC1_SPEC "%{profile:-p}"
-#endif
-
-/* The GNU C++ standard library requires that these macros be defined.  */
-#undef CPLUSPLUS_CPP_SPEC
-#define CPLUSPLUS_CPP_SPEC "-D_GNU_SOURCE %(cpp)"
-
-#undef	LIB_SPEC
-#define LIB_SPEC \
-  "%{pthread:-lpthread} \
-   %{shared:-lc} \
-   %{!shared:%{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}}"
-
-#define LINUX_TARGET_OS_CPP_BUILTINS()				\
+#define GNU_USER_TARGET_OS_CPP_BUILTINS()			\
     do {							\
-	builtin_define ("__gnu_linux__");			\
+	if (OPTION_GLIBC)					\
+	  builtin_define ("__gnu_linux__");			\
 	builtin_define_std ("linux");				\
 	builtin_define_std ("unix");				\
 	builtin_assert ("system=linux");			\
@@ -88,30 +49,25 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 	builtin_assert ("system=posix");			\
     } while (0)
 
-#if defined(HAVE_LD_EH_FRAME_HDR)
-#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
-#endif
-
-/* Define this so we can compile MS code for use with WINE.  */
-#define HANDLE_PRAGMA_PACK_PUSH_POP
-
-#undef LINK_GCC_C_SEQUENCE_SPEC
-#define LINK_GCC_C_SEQUENCE_SPEC \
-  "%{static:--start-group} %G %L %{static:--end-group}%{!static:%G}"
-
-/* Use --as-needed -lgcc_s for eh support.  */
-#ifdef HAVE_LD_AS_NEEDED
-#define USE_LD_AS_NEEDED 1
-#endif
-
 /* Determine which dynamic linker to use depending on whether GLIBC or
-   uClibc is the default C library and whether -muclibc or -mglibc has
-   been passed to change the default.  */
-#if UCLIBC_DEFAULT
-#define CHOOSE_DYNAMIC_LINKER(G, U) "%{mglibc:%{muclibc:%e-mglibc and -muclibc used together}" G ";:" U "}"
+   uClibc or Bionic is the default C library and whether
+   -muclibc or -mglibc or -mbionic has been passed to change the default.  */
+
+#define CHOOSE_DYNAMIC_LINKER1(LIBC1, LIBC2, LIBC3, LD1, LD2, LD3)	\
+  "%{" LIBC2 ":" LD2 ";:%{" LIBC3 ":" LD3 ";:" LD1 "}}"
+
+#if DEFAULT_LIBC == LIBC_GLIBC
+#define CHOOSE_DYNAMIC_LINKER(G, U, B) \
+  CHOOSE_DYNAMIC_LINKER1 ("mglibc", "muclibc", "mbionic", G, U, B)
+#elif DEFAULT_LIBC == LIBC_UCLIBC
+#define CHOOSE_DYNAMIC_LINKER(G, U, B) \
+  CHOOSE_DYNAMIC_LINKER1 ("muclibc", "mglibc", "mbionic", U, G, B)
+#elif DEFAULT_LIBC == LIBC_BIONIC
+#define CHOOSE_DYNAMIC_LINKER(G, U, B) \
+  CHOOSE_DYNAMIC_LINKER1 ("mbionic", "mglibc", "muclibc", B, G, U)
 #else
-#define CHOOSE_DYNAMIC_LINKER(G, U) "%{muclibc:%{mglibc:%e-mglibc and -muclibc used together}" U ";:" G "}"
-#endif
+#error "Unsupported DEFAULT_LIBC"
+#endif /* DEFAULT_LIBC */
 
 /* For most targets the following definitions suffice;
    GLIBC_DYNAMIC_LINKER must be defined for each target using them, or
@@ -120,18 +76,34 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define UCLIBC_DYNAMIC_LINKER "/lib/ld-uClibc.so.0"
 #define UCLIBC_DYNAMIC_LINKER32 "/lib/ld-uClibc.so.0"
 #define UCLIBC_DYNAMIC_LINKER64 "/lib/ld64-uClibc.so.0"
-#define LINUX_DYNAMIC_LINKER \
-  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER, UCLIBC_DYNAMIC_LINKER)
-#define LINUX_DYNAMIC_LINKER32 \
-  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER32, UCLIBC_DYNAMIC_LINKER32)
-#define LINUX_DYNAMIC_LINKER64 \
-  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER64, UCLIBC_DYNAMIC_LINKER64)
+#define UCLIBC_DYNAMIC_LINKERX32 "/lib/ldx32-uClibc.so.0"
+#define BIONIC_DYNAMIC_LINKER "/system/bin/linker"
+#define BIONIC_DYNAMIC_LINKER32 "/system/bin/linker"
+#define BIONIC_DYNAMIC_LINKER64 "/system/bin/linker64"
+#define BIONIC_DYNAMIC_LINKERX32 "/system/bin/linkerx32"
+
+#define GNU_USER_DYNAMIC_LINKER						\
+  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER, UCLIBC_DYNAMIC_LINKER,	\
+			 BIONIC_DYNAMIC_LINKER)
+#define GNU_USER_DYNAMIC_LINKER32					\
+  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER32, UCLIBC_DYNAMIC_LINKER32, \
+			 BIONIC_DYNAMIC_LINKER32)
+#define GNU_USER_DYNAMIC_LINKER64					\
+  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER64, UCLIBC_DYNAMIC_LINKER64, \
+			 BIONIC_DYNAMIC_LINKER64)
+#define GNU_USER_DYNAMIC_LINKERX32					\
+  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKERX32, UCLIBC_DYNAMIC_LINKERX32, \
+			 BIONIC_DYNAMIC_LINKERX32)
 
 /* Determine whether the entire c99 runtime
    is present in the runtime library.  */
+#undef TARGET_C99_FUNCTIONS
 #define TARGET_C99_FUNCTIONS (OPTION_GLIBC)
 
 /* Whether we have sincos that follows the GNU extension.  */
-#define TARGET_HAS_SINCOS (OPTION_GLIBC)
+#undef TARGET_HAS_SINCOS
+#define TARGET_HAS_SINCOS (OPTION_GLIBC || OPTION_BIONIC)
 
-#define TARGET_POSIX_IO
+/* Whether we have Bionic libc runtime */
+#undef TARGET_HAS_BIONIC
+#define TARGET_HAS_BIONIC (OPTION_BIONIC)

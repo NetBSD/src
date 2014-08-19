@@ -30,7 +30,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-cdp.c,v 1.25 2004-10-07 14:53:11 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-cdp.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-cdp.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: print-cdp.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 
 #define CDP_HEADER_LEN  4
 
-static struct tok cdp_tlv_values[] = {
+static const struct tok cdp_tlv_values[] = {
     { 0x01,             "Device-ID"},
     { 0x02,             "Address"},
     { 0x03,             "Port-ID"},
@@ -75,7 +75,7 @@ static struct tok cdp_tlv_values[] = {
     { 0, NULL}
 };
 
-static struct tok cdp_capability_values[] = {
+static const struct tok cdp_capability_values[] = {
     { 0x01,             "Router" },
     { 0x02,             "Transparent Bridge" },
     { 0x04,             "Source Route Bridge" },

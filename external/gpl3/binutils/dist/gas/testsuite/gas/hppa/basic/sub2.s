@@ -107,3 +107,9 @@
 	sub,tsv,tc,*>> %r4,%r5,%r6
 	sub,tsv,tc,*nsv %r4,%r5,%r6
 	sub,tsv,tc,*ev %r4,%r5,%r6
+
+        ;; PR gas/11395: Check for the correct assembly
+        ;; of unconditional 32-bit and 64-bit sub instructions.
+        sub %r1,%r1,%r1
+        sub,db %r1,%r1,%r1
+

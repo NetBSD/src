@@ -110,8 +110,8 @@ SECTIONS
   {
     *(.text)
     *(.gnu.linkonce.t*)
-    *(.init)
-    *(.fini)
+    *(SORT_NONE(.init))
+    *(SORT_NONE(.fini))
     ${RELOCATING+ _etext = . ; }
   } ${RELOCATING+ > ${TEXT_MEMORY}}
 
@@ -216,6 +216,13 @@ SECTIONS
   .debug_loc      0 : { *(.debug_loc) }
   .debug_macinfo  0 : { *(.debug_macinfo) }
 
+  /* DWARF 3 */
+  .debug_pubtypes 0 : { *(.debug_pubtypes) }
+  .debug_ranges   0 : { *(.debug_ranges) }
+
+  /* DWARF Extension.  */
+  .debug_macro    0 : { *(.debug_macro) } 
+  
   PROVIDE (__stack = ${STACK_START_ADDR});
 }
 EOF

@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 libatf_c___la_SOURCES += atf-c++/detail/application.cpp \
                          atf-c++/detail/application.hpp \
+                         atf-c++/detail/auto_array.hpp \
                          atf-c++/detail/env.cpp \
                          atf-c++/detail/env.hpp \
                          atf-c++/detail/exceptions.cpp \
@@ -47,7 +48,8 @@ libatf_c___la_SOURCES += atf-c++/detail/application.cpp \
                          atf-c++/detail/ui.cpp \
                          atf-c++/detail/ui.hpp
 
-tests_atf_c___detail_DATA = atf-c++/detail/Atffile
+tests_atf_c___detail_DATA = atf-c++/detail/Atffile \
+                            atf-c++/detail/Kyuafile
 tests_atf_c___detaildir = $(pkgtestsdir)/atf-c++/detail
 EXTRA_DIST += $(tests_atf_c___detail_DATA)
 
@@ -57,42 +59,46 @@ atf_c___detail_libtest_helpers_la_SOURCES = atf-c++/detail/test_helpers.cpp \
 
 tests_atf_c___detail_PROGRAMS = atf-c++/detail/application_test
 atf_c___detail_application_test_SOURCES = atf-c++/detail/application_test.cpp
-atf_c___detail_application_test_LDADD = atf-c++/detail/libtest_helpers.la libatf-c++.la
+atf_c___detail_application_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
+
+tests_atf_c___detail_PROGRAMS += atf-c++/detail/auto_array_test
+atf_c___detail_auto_array_test_SOURCES = atf-c++/detail/auto_array_test.cpp
+atf_c___detail_auto_array_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
 
 tests_atf_c___detail_PROGRAMS += atf-c++/detail/env_test
 atf_c___detail_env_test_SOURCES = atf-c++/detail/env_test.cpp
-atf_c___detail_env_test_LDADD = atf-c++/detail/libtest_helpers.la libatf-c++.la
+atf_c___detail_env_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
 
 tests_atf_c___detail_PROGRAMS += atf-c++/detail/exceptions_test
 atf_c___detail_exceptions_test_SOURCES = atf-c++/detail/exceptions_test.cpp
-atf_c___detail_exceptions_test_LDADD = atf-c++/detail/libtest_helpers.la libatf-c++.la
+atf_c___detail_exceptions_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
 
 tests_atf_c___detail_PROGRAMS += atf-c++/detail/expand_test
 atf_c___detail_expand_test_SOURCES = atf-c++/detail/expand_test.cpp
-atf_c___detail_expand_test_LDADD = atf-c++/detail/libtest_helpers.la libatf-c++.la
+atf_c___detail_expand_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
 
 tests_atf_c___detail_PROGRAMS += atf-c++/detail/fs_test
 atf_c___detail_fs_test_SOURCES = atf-c++/detail/fs_test.cpp
-atf_c___detail_fs_test_LDADD = atf-c++/detail/libtest_helpers.la libatf-c++.la
+atf_c___detail_fs_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
 
 tests_atf_c___detail_PROGRAMS += atf-c++/detail/parser_test
 atf_c___detail_parser_test_SOURCES = atf-c++/detail/parser_test.cpp
-atf_c___detail_parser_test_LDADD = atf-c++/detail/libtest_helpers.la libatf-c++.la
+atf_c___detail_parser_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
 
 tests_atf_c___detail_PROGRAMS += atf-c++/detail/process_test
 atf_c___detail_process_test_SOURCES = atf-c++/detail/process_test.cpp
-atf_c___detail_process_test_LDADD = atf-c++/detail/libtest_helpers.la libatf-c++.la
+atf_c___detail_process_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
 
 tests_atf_c___detail_PROGRAMS += atf-c++/detail/sanity_test
 atf_c___detail_sanity_test_SOURCES = atf-c++/detail/sanity_test.cpp
-atf_c___detail_sanity_test_LDADD = atf-c++/detail/libtest_helpers.la libatf-c++.la
+atf_c___detail_sanity_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
 
 tests_atf_c___detail_PROGRAMS += atf-c++/detail/text_test
 atf_c___detail_text_test_SOURCES = atf-c++/detail/text_test.cpp
-atf_c___detail_text_test_LDADD = atf-c++/detail/libtest_helpers.la libatf-c++.la
+atf_c___detail_text_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
 
 tests_atf_c___detail_PROGRAMS += atf-c++/detail/ui_test
 atf_c___detail_ui_test_SOURCES = atf-c++/detail/ui_test.cpp
-atf_c___detail_ui_test_LDADD = atf-c++/detail/libtest_helpers.la libatf-c++.la
+atf_c___detail_ui_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
 
 # vim: syntax=make:noexpandtab:shiftwidth=8:softtabstop=8

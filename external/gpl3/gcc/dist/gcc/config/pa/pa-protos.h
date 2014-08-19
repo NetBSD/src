@@ -1,6 +1,5 @@
 /* Prototypes for pa.c functions used in the md file & elsewhere.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2007 Free Software Foundation,
-   Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,139 +19,87 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifdef RTX_CODE
 /* Prototype function used in various macros.  */
-extern int symbolic_operand (rtx, enum machine_mode);
-extern int tls_symbolic_operand (rtx);
 extern rtx pa_eh_return_handler_rtx (void);
 
 /* Used in insn-*.c.  */
-extern int following_call (rtx);
-extern int function_label_operand (rtx, enum machine_mode);
-extern int lhs_lshift_cint_operand (rtx, enum machine_mode);
+extern int pa_following_call (rtx);
 
 /* Define functions in pa.c and used in insn-output.c.  */
 
-extern const char *output_and (rtx *);
-extern const char *output_ior (rtx *);
-extern const char *output_move_double (rtx *);
-extern const char *output_fp_move_double (rtx *);
-extern const char *output_block_move (rtx *, int);
-extern const char *output_block_clear (rtx *, int);
-extern const char *output_cbranch (rtx *, int, rtx);
-extern const char *output_lbranch (rtx, rtx, int);
-extern const char *output_bb (rtx *, int, rtx, int);
-extern const char *output_bvb (rtx *, int, rtx, int);
-extern const char *output_dbra (rtx *, rtx, int);
-extern const char *output_movb (rtx *, rtx, int, int);
-extern const char *output_parallel_movb (rtx *, rtx);
-extern const char *output_parallel_addb (rtx *, rtx);
-extern const char *output_call (rtx, rtx, int);
-extern const char *output_indirect_call (rtx, rtx);
-extern const char *output_millicode_call (rtx, rtx);
-extern const char *output_mul_insn (int, rtx);
-extern const char *output_div_insn (rtx *, int, rtx);
-extern const char *output_mod_insn (int, rtx);
-extern const char *singlemove_string (rtx *);
-extern void output_arg_descriptor (rtx);
-extern void output_global_address (FILE *, rtx, int);
-extern void print_operand (FILE *, rtx, int);
-extern rtx legitimize_pic_address (rtx, enum machine_mode, rtx);
-extern void hppa_encode_label (rtx);
-extern int arith11_operand (rtx, enum machine_mode);
-extern int adddi3_operand (rtx, enum machine_mode);
-extern int indexed_memory_operand (rtx, enum machine_mode);
-extern int symbolic_expression_p (rtx);
-extern int symbolic_memory_operand (rtx, enum machine_mode);
+extern const char *pa_output_and (rtx *);
+extern const char *pa_output_64bit_and (rtx *);
+extern const char *pa_output_ior (rtx *);
+extern const char *pa_output_64bit_ior (rtx *);
+extern const char *pa_output_move_double (rtx *);
+extern const char *pa_output_fp_move_double (rtx *);
+extern const char *pa_output_block_move (rtx *, int);
+extern const char *pa_output_block_clear (rtx *, int);
+extern const char *pa_output_cbranch (rtx *, int, rtx);
+extern const char *pa_output_lbranch (rtx, rtx, int);
+extern const char *pa_output_bb (rtx *, int, rtx, int);
+extern const char *pa_output_bvb (rtx *, int, rtx, int);
+extern const char *pa_output_dbra (rtx *, rtx, int);
+extern const char *pa_output_movb (rtx *, rtx, int, int);
+extern const char *pa_output_parallel_movb (rtx *, rtx);
+extern const char *pa_output_parallel_addb (rtx *, rtx);
+extern const char *pa_output_call (rtx, rtx, int);
+extern const char *pa_output_indirect_call (rtx, rtx);
+extern const char *pa_output_millicode_call (rtx, rtx);
+extern const char *pa_output_mul_insn (int, rtx);
+extern const char *pa_output_div_insn (rtx *, int, rtx);
+extern const char *pa_output_mod_insn (int, rtx);
+extern const char *pa_singlemove_string (rtx *);
+extern void pa_output_arg_descriptor (rtx);
+extern void pa_output_global_address (FILE *, rtx, int);
+extern void pa_print_operand (FILE *, rtx, int);
+extern void pa_encode_label (rtx);
+extern int pa_symbolic_expression_p (rtx);
 extern bool pa_tls_referenced_p (rtx);
 extern int pa_adjust_insn_length (rtx, int);
-extern int int11_operand (rtx, enum machine_mode);
-extern int reg_or_cint_move_operand (rtx, enum machine_mode);
-extern int arith5_operand (rtx, enum machine_mode);
-extern int uint5_operand (rtx, enum machine_mode);
-extern int pic_label_operand (rtx, enum machine_mode);
-extern int plus_xor_ior_operator (rtx, enum machine_mode);
-extern int borx_reg_operand (rtx, enum machine_mode);
-extern int shadd_operand (rtx, enum machine_mode);
-extern int arith_operand (rtx, enum machine_mode);
-extern int read_only_operand (rtx, enum machine_mode);
-extern int move_dest_operand (rtx, enum machine_mode);
-extern int move_src_operand (rtx, enum machine_mode);
-extern int prefetch_cc_operand (rtx, enum machine_mode);
-extern int prefetch_nocc_operand (rtx, enum machine_mode);
-extern int and_operand (rtx, enum machine_mode);
-extern int arith32_operand (rtx, enum machine_mode);
-extern int uint32_operand (rtx, enum machine_mode);
-extern int reg_before_reload_operand (rtx, enum machine_mode);
-extern int reg_or_0_operand (rtx, enum machine_mode);
-extern int reg_or_0_or_nonsymb_mem_operand (rtx, enum machine_mode);
-extern int pre_cint_operand (rtx, enum machine_mode);
-extern int post_cint_operand (rtx, enum machine_mode);
-extern int div_operand (rtx, enum machine_mode);
-extern int int5_operand (rtx, enum machine_mode);
-extern int movb_comparison_operator (rtx, enum machine_mode);
-extern int ireg_or_int5_operand (rtx, enum machine_mode);
-extern int fmpyaddoperands (rtx *);
-extern int fmpysuboperands (rtx *);
-extern int call_operand_address (rtx, enum machine_mode);
-extern void emit_bcond_fp (rtx[]);
-extern int emit_move_sequence (rtx *, enum machine_mode, rtx);
-extern int emit_hpdiv_const (rtx *, int);
-extern int is_function_label_plus_const (rtx);
-extern int jump_in_call_delay (rtx);
-extern int hppa_fpstore_bypass_p (rtx, rtx);
-extern int attr_length_millicode_call (rtx);
-extern int attr_length_call (rtx, int);
-extern int attr_length_indirect_call (rtx);
-extern int attr_length_save_restore_dltp (rtx);
+extern int pa_fmpyaddoperands (rtx *);
+extern int pa_fmpysuboperands (rtx *);
+extern void pa_emit_bcond_fp (rtx[]);
+extern int pa_emit_move_sequence (rtx *, enum machine_mode, rtx);
+extern int pa_emit_hpdiv_const (rtx *, int);
+extern int pa_is_function_label_plus_const (rtx);
+extern int pa_jump_in_call_delay (rtx);
+extern int pa_fpstore_bypass_p (rtx, rtx);
+extern int pa_attr_length_millicode_call (rtx);
+extern int pa_attr_length_call (rtx, int);
+extern int pa_attr_length_indirect_call (rtx);
+extern rtx pa_legitimize_reload_address (rtx, enum machine_mode,
+					 int, int, int);
 
 /* Declare functions defined in pa.c and used in templates.  */
 
-extern struct rtx_def *return_addr_rtx (int, rtx);
+extern rtx pa_return_addr_rtx (int, rtx);
 
-extern int fp_reg_operand (rtx, enum machine_mode);
-extern int arith_double_operand (rtx, enum machine_mode);
-extern int ireg_operand (rtx, enum machine_mode);
-extern int lhs_lshift_operand (rtx, enum machine_mode);
-extern int pc_or_label_operand (rtx, enum machine_mode);
 #ifdef ARGS_SIZE_RTX
 /* expr.h defines ARGS_SIZE_RTX and `enum direction' */
 #ifdef TREE_CODE
-extern enum direction function_arg_padding (enum machine_mode, const_tree);
+extern enum direction pa_function_arg_padding (enum machine_mode, const_tree);
 #endif
 #endif /* ARGS_SIZE_RTX */
-extern int non_hard_reg_operand (rtx, enum machine_mode);
-extern int eq_neq_comparison_operator (rtx, enum machine_mode);
-extern int insn_refs_are_delayed (rtx);
-extern rtx get_deferred_plabel (rtx);
+extern int pa_insn_refs_are_delayed (rtx);
+extern rtx pa_get_deferred_plabel (rtx);
 #endif /* RTX_CODE */
 
-extern int integer_store_memory_operand (rtx, enum machine_mode);
-extern int ldil_cint_p (HOST_WIDE_INT);
-extern int zdepi_cint_p (unsigned HOST_WIDE_INT);
+extern int pa_and_mask_p (unsigned HOST_WIDE_INT);
+extern int pa_cint_ok_for_move (HOST_WIDE_INT);
+extern int pa_ior_mask_p (unsigned HOST_WIDE_INT);
+extern int pa_ldil_cint_p (HOST_WIDE_INT);
+extern int pa_shadd_constant_p (int);
+extern int pa_zdepi_cint_p (unsigned HOST_WIDE_INT);
 
-extern void override_options (void);
-extern void output_ascii (FILE *, const char *, int);
-extern HOST_WIDE_INT compute_frame_size (HOST_WIDE_INT, int *);
-extern int and_mask_p (unsigned HOST_WIDE_INT);
-extern int cint_ok_for_move (HOST_WIDE_INT);
-extern void hppa_expand_prologue (void);
-extern void hppa_expand_epilogue (void);
-extern int ior_mask_p (unsigned HOST_WIDE_INT);
-extern void compute_zdepdi_operands (unsigned HOST_WIDE_INT,
-				     unsigned *);
-#ifdef RTX_CODE
-extern const char * output_64bit_and (rtx *);
-extern const char * output_64bit_ior (rtx *);
-extern int cmpib_comparison_operator (rtx, enum machine_mode);
-#endif
-
+extern void pa_output_ascii (FILE *, const char *, int);
+extern HOST_WIDE_INT pa_compute_frame_size (HOST_WIDE_INT, int *);
+extern void pa_expand_prologue (void);
+extern void pa_expand_epilogue (void);
+extern bool pa_can_use_return_insn (void);
 
 /* Miscellaneous functions in pa.c.  */
 #ifdef TREE_CODE
-extern int reloc_needed (tree);
-#ifdef RTX_CODE
-extern rtx function_arg (CUMULATIVE_ARGS *, enum machine_mode,
-			 tree, int);
-#endif
+extern int pa_reloc_needed (tree);
 extern bool pa_return_in_memory (const_tree, const_tree);
 #endif /* TREE_CODE */
 
@@ -169,6 +116,6 @@ extern void pa_hpux_asm_output_external (FILE *, tree, const char *);
 extern bool pa_cannot_change_mode_class (enum machine_mode, enum machine_mode,
 					 enum reg_class);
 extern bool pa_modes_tieable_p (enum machine_mode, enum machine_mode);
+extern HOST_WIDE_INT pa_initial_elimination_offset (int, int);
 
-extern const int magic_milli[];
-extern int shadd_constant_p (int);
+extern const int pa_magic_milli[];

@@ -189,7 +189,7 @@ writeout_test (int test, const char * test_data)
 {
   char filename[256];
   FILE *fd;
-  size_t len;
+  size_t len, sys_fwrite;
   char * parse;
 
   /* Unique filename per test */
@@ -204,11 +204,14 @@ writeout_test (int test, const char * test_data)
   if (parse == NULL)
     fatal_error (__LINE__, "Failed to malloc parse.", errno);
       
-  memcpy (parse, test_data, sizeof (char) * len);
+  memcpy (parse, test_data, sizeof (char) * (len + 1));
   /* Run all possible replaces */
   run_replaces (parse);
 
-  fwrite (parse, len, sizeof (char), fd);
+  sys_fwrite = fwrite (parse, sizeof (char), len, fd);
+  if (sys_fwrite != len)
+    fatal_error (__LINE__, "Failed to write to test file.", errno);
+
   free (parse);
   fclose (fd);
 }

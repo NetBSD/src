@@ -2,7 +2,7 @@
 # as: -march=armv4t
 # objdump: -dr --prefix-addresses --show-raw-insn
 # EABI targets have their own variant.
-# not-target: *-*-*eabi *-*-symbianelf
+# not-target: *-*-*eabi *-*-symbianelf *-*-nacl*
 
 .*: +file format .*arm.*
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: symtab.h,v 1.1.1.1 2009/12/13 16:54:27 kardel Exp $	*/
+/*	$NetBSD: symtab.h,v 1.1.1.1.12.1 2014/08/19 23:51:39 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: symtab.h,v 1.24.332.2 2009/01/18 23:47:41 tbox Exp */
+/* Id */
 
 #ifndef ISC_SYMTAB_H
 #define ISC_SYMTAB_H 1
@@ -58,6 +58,14 @@
  * A user-specified action will be called (if provided) when a symbol is
  * undefined.  It can be used to free memory associated with keys and/or
  * values.
+ *
+ * A symbol table is implemented as a hash table of lists; the size of the
+ * hash table is set by the 'size' parameter to isc_symtbl_create().  When
+ * the number of entries in the symbol table reaches three quarters of this
+ * value, the hash table is reallocated with size doubled, in order to
+ * optimize lookup performance.  This has a negative effect on insertion
+ * performance, which can be mitigated by sizing the table appropriately
+ * when creating it.
  *
  * \li MP:
  *	The callers of this module must ensure any required synchronization.

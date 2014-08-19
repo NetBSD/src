@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
                [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2009-2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,10 +17,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-settime.docbook,v 1.15 2011/11/03 20:21:37 each Exp  -->
 <refentry id="man.dnssec-settime">
   <refentryinfo>
-    <date>July 15, 2009</date>
+    <date>February 06, 2014</date>
   </refentryinfo>
 
   <refmeta>
@@ -39,6 +38,7 @@
       <year>2009</year>
       <year>2010</year>
       <year>2011</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -153,8 +153,15 @@
         <term>-E <replaceable class="parameter">engine</replaceable></term>
         <listitem>
           <para>
-            Use the given OpenSSL engine. When compiled with PKCS#11 support
-            it defaults to pkcs11; the empty name resets it to no engine.
+            Specifies the cryptographic hardware to use, when applicable.
+          </para>
+          <para>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
           </para>
         </listitem>
       </varlistentry>
@@ -171,7 +178,7 @@
       then the offset is computed in years (defined as 365 24-hour days,
       ignoring leap years), months (defined as 30 24-hour days), weeks,
       days, hours, or minutes, respectively.  Without a suffix, the offset
-      is computed in seconds.  To unset a date, use 'none'.
+      is computed in seconds.  To unset a date, use 'none' or 'never'.
     </para>
 
     <variablelist>

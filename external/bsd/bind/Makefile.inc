@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2012/05/09 21:59:10 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.13.2.1 2014/08/19 23:45:56 tls Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -27,7 +27,7 @@ NAMED_USE_PTHREADS?=no
 
 IDIST=		${NETBSDSRCDIR}/external/bsd/bind/dist
 BIND_SRCDIR=	${NETBSDSRCDIR}/external/bsd/bind
-BIND_HTMLDIR=	/usr/share/doc/html/bind9
+BIND_HTMLDIR=	/usr/share/doc/reference/ref8/bind9
 
 .include "${IDIST}/version"
 
@@ -50,6 +50,7 @@ CPPFLAGS+=-I${BIND_SRCDIR}/include \
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DWANT_IPV6
+CPPFLAGS+=	-DALLOW_FILTER_AAAA_ON_V4
 .endif
 
 .if defined(HAVE_GCC)
@@ -63,9 +64,9 @@ DBG=-g3 -gstabs
 .if !defined(LIB) || empty(LIB)
 # NOTE: the order of these libraries is important...
 .if defined(NAMED_DEBUG)
-LDADD+=		-lbind9_g -ldns_g -llwres_g -lisccfg_g -lisccc_g -lisc_g
+LDADD+=		-lbind9_g -llwres_g -lisccfg_g -ldns_g -lisccc_g -lisc_g
 .else
-LDADD+=		-lbind9 -ldns -llwres -lisccfg -lisccc -lisc
+LDADD+=		-lbind9 -llwres -lisccfg -ldns -lisccc -lisc
 DPADD+=		${LIBBIND9} ${LIBDNS} ${LIBLWRES}
 DPADD+=		${LIBISCCFG} ${LIBISCCC} ${LIBISC}
 .endif
@@ -89,10 +90,25 @@ LIBDPLIBS+=      pthread  ${NETBSDSRCDIR}/lib/libpthread
 .endif
 
 .if ${NAMED_USE_OPENSSL} == "yes"
-CPPFLAGS+=-DOPENSSL
+CPPFLAGS+=-DOPENSSL -DUSE_ISC_SPNEGO
+.if ${MKKERBEROS} != "no"
+CPPFLAGS+=-DGSSAPI
+.endif
+.if ${MKKERBEROS} != "no"
 .if !defined (LIB) || empty(LIB)
-LDADD+= -lcrypto
-DPADD+= ${LIBCRYPTO}
+LDADD+= -lgssapi -lheimntlm -lkrb5 -lhx509 -lheimbase \
+	-lcom_err  -lroken -lasn1 -lwind
+DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBHEIMBASE} \
+	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND}
+.else
+.for L in gssapi krb5 hx509 heimntlm heimbase com_err roken asn1 wind
+LIBDPLIBS+=	$L ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/lib$L
+.endfor
+.endif
+.endif
+.if !defined (LIB) || empty(LIB)
+LDADD+= -lcrypto -lcrypt
+DPADD+= ${LIBCRYPTO} ${LIBCRYPT}
 .else
 .if exists(${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto)
 LIBDPLIBS+=	crypto ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto

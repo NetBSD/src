@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -228,8 +228,8 @@ namespace __gnu_parallel
       _It2 __begin2_iterator;
 
       /** @brief Constructor.
-       *  @param b1 Begin iterator of first sequence.
-       *  @param b2 Begin iterator of second sequence. */
+       *  @param __b1 Begin iterator of first sequence.
+       *  @param __b2 Begin iterator of second sequence. */
       explicit
       __inner_product_selector(_It __b1, _It2 __b2)
       : __begin1_iterator(__b1), __begin2_iterator(__b2) { }
@@ -291,7 +291,7 @@ namespace __gnu_parallel
      *  @param __i iterator referencing object. */
     template<typename _It>
       void
-      operator()(_It) { }
+      operator()(_It __i) { }
   };
 
   /** @brief Reduction function doing nothing. */

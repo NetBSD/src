@@ -1,5 +1,4 @@
-/*	$NetBSD: load_bal_unittest.c,v 1.1.1.1.4.2 2013/06/23 06:26:30 tls Exp $	*/
-
+/*	$NetBSD: load_bal_unittest.c,v 1.1.1.1.4.3 2014/08/19 23:46:42 tls Exp $	*/
 /*
  * Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
  *

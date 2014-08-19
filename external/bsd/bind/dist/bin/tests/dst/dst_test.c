@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.3.2.2 2014/08/19 23:46:02 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,6 +32,7 @@
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 
 #include <dns/fixedname.h>
+#include <dns/log.h>
 #include <dns/name.h>
 #include <dns/result.h>
 
@@ -56,11 +57,12 @@ use(dst_key_t *key, isc_mem_t *mctx) {
 	 */
 	isc_buffer_add(&sigbuf, 1);
 
-	isc_buffer_init(&databuf, data, strlen(data));
+	isc_buffer_constinit(&databuf, data, strlen(data));
 	isc_buffer_add(&databuf, strlen(data));
 	isc_buffer_usedregion(&databuf, &datareg);
 
-	ret = dst_context_create(key, mctx, &ctx);
+	ret = dst_context_create3(key, mctx,
+				  DNS_LOGCATEGORY_GENERAL, ISC_TRUE, &ctx);
 	if (ret != ISC_R_SUCCESS) {
 		printf("contextcreate(%d) returned: %s\n", dst_key_alg(key),
 		       isc_result_totext(ret));
@@ -80,7 +82,8 @@ use(dst_key_t *key, isc_mem_t *mctx) {
 
 	isc_buffer_forward(&sigbuf, 1);
 	isc_buffer_remainingregion(&sigbuf, &sigreg);
-	ret = dst_context_create(key, mctx, &ctx);
+	ret = dst_context_create3(key, mctx,
+				  DNS_LOGCATEGORY_GENERAL, ISC_FALSE, &ctx);
 	if (ret != ISC_R_SUCCESS) {
 		printf("contextcreate(%d) returned: %s\n", dst_key_alg(key),
 		       isc_result_totext(ret));
@@ -240,10 +243,6 @@ main(void) {
 	dns_name_t *name;
 	isc_result_t result;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	result = isc_mem_create(0, 0, &mctx);
 	if (result != ISC_R_SUCCESS)
 		return (1);
@@ -268,7 +267,7 @@ main(void) {
 
 	dns_fixedname_init(&fname);
 	name = dns_fixedname_name(&fname);
-	isc_buffer_init(&b, "test.", 5);
+	isc_buffer_constinit(&b, "test.", 5);
 	isc_buffer_add(&b, 5);
 	result = dns_name_fromtext(name, &b, NULL, 0, NULL);
 	if (result != ISC_R_SUCCESS)
@@ -280,7 +279,7 @@ main(void) {
 	io(name, 49667, DST_ALG_DSA, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC, mctx);
 	io(name, 2, DST_ALG_RSAMD5, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC, mctx);
 
-	isc_buffer_init(&b, "dh.", 3);
+	isc_buffer_constinit(&b, "dh.", 3);
 	isc_buffer_add(&b, 3);
 	result = dns_name_fromtext(name, &b, NULL, 0, NULL);
 	if (result != ISC_R_SUCCESS)

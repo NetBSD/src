@@ -90,3 +90,19 @@
 .*:113: Error: Preg expected in address. Input text was \).
 .*:114: Error: Preg expected in address. Input text was \).
 .*:115: Error: Dreg expected for destination operand. Input text was \).
+.*:117: Error: Illegal dest register combination. Input text was \).
+.*:118: Error: Illegal source register combination. Input text was \).
+.*:120: Error: Destination Dregs \(full\) must differ by one.
+.*:121: Error: Destination Dregs \(half\) must match.
+.*:122: Error: Destination Dreg sizes \(full or half\) must match.
+.*:124: Error: Resource conflict in dest reg.
+.*:125: Error: Differing source registers.
+.*:126: Error: Resource conflict in dest reg.
+.*:127: Error: Differing source registers.
+.*:129: Error: Register mismatch.
+.*:131: Error: Illegal dest register combination. Input text was A0.H.
+.*:133: Error: Illegal dest register combination.
+.*:134: Error: Illegal dest register combination.
+.*:135: Error: Illegal dest register combination.
+.*:136: Error: Illegal dest register combination.
+.*:137: Error: Illegal dest register combination.

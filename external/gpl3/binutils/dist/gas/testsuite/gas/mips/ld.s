@@ -61,6 +61,7 @@ data_label:
 
 	.text
 	.align	12
+text_label:
 	ld	r4,0
 	ld	r4,1
 	ld	r4,0x8000

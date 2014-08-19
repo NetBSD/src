@@ -1,7 +1,7 @@
-/*	$NetBSD: dns64.h,v 1.3 2012/06/05 00:41:47 christos Exp $	*/
+/*	$NetBSD: dns64.h,v 1.3.2.1 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -86,7 +86,7 @@ dns_dns64_create(isc_mem_t *mctx, isc_netaddr_t *prefix,
  *                      zero.
  *	'client'	to be NULL or a valid acl.
  *	'mapped'	to be NULL or a valid acl.
- *	'exculded'	to be NULL or a valid acl.
+ *	'excluded'	to be NULL or a valid acl.
  *
  * Returns:
  *	ISC_R_SUCCESS

@@ -1,4 +1,4 @@
-/*	$NetBSD: sel-lex.l,v 1.1.1.2 2011/04/14 14:08:57 elric Exp $	*/
+/*	$NetBSD: sel-lex.l,v 1.1.1.2.10.1 2014/08/19 23:45:19 tls Exp $	*/
 
 %{
 /*
@@ -52,6 +52,7 @@ unsigned lineno = 1;
 
 static char * handle_string(void);
 static int lex_input(char *, int);
+static int lex_classic_input(void);
 
 struct hx_expr_input _hx509_expr_input;
 

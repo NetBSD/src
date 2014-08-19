@@ -1,9 +1,9 @@
-/*	$NetBSD: memory.c,v 1.1.1.3 2010/12/12 15:21:28 adam Exp $	*/
+/*	$NetBSD: memory.c,v 1.1.1.3.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/liblber/memory.c,v 1.64.2.7 2010/04/13 20:22:54 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,9 +64,9 @@ struct ber_mem_hdr {
 };
 
 /* Pattern at top of allocated space */
-#define LBER_MEM_JUNK 0xdeaddadaU
+#define LBER_MEM_JUNK ((ber_int_t) 0xdeaddada)
 
-static const struct ber_mem_hdr ber_int_mem_hdr = { LBER_MEM_JUNK, 0, 0 };
+static const struct ber_mem_hdr ber_int_mem_hdr = { LBER_MEM_JUNK };
 
 /* Note sequence and ber_int_meminuse are counters, but are not
  * thread safe.  If you want to use these values for multithreaded applications,
@@ -203,9 +203,10 @@ ber_memalloc_x( ber_len_t s, void *ctx )
 
 	if( ber_int_memory_fns == NULL || ctx == NULL ) {
 #ifdef LDAP_MEMORY_DEBUG
-		struct ber_mem_hdr *mh = malloc(s + sizeof(struct ber_mem_hdr) + sizeof( ber_int_t));
-		if( mh == NULL ) return NULL;
-
+		new = malloc(s + sizeof(struct ber_mem_hdr) + sizeof( ber_int_t));
+		if( new )
+		{
+		struct ber_mem_hdr *mh = new;
 		mh->bm_top = LBER_MEM_JUNK;
 		mh->bm_length = s;
 		setdatatop( mh);
@@ -224,6 +225,7 @@ ber_memalloc_x( ber_len_t s, void *ctx )
 
 		BER_MEM_VALID( &mh[1] );
 		new = &mh[1];
+		}
 #else
 		new = malloc( s );
 #endif
@@ -256,9 +258,12 @@ ber_memcalloc_x( ber_len_t n, ber_len_t s, void *ctx )
 
 	if( ber_int_memory_fns == NULL || ctx == NULL ) {
 #ifdef LDAP_MEMORY_DEBUG
-		struct ber_mem_hdr *mh = calloc(1,
-			(n * s) + sizeof(struct ber_mem_hdr) + sizeof(ber_int_t) );
-		if( mh == NULL ) return NULL;
+		new = n < (-sizeof(struct ber_mem_hdr) - sizeof(ber_int_t)) / s
+			? calloc(1, n*s + sizeof(struct ber_mem_hdr) + sizeof(ber_int_t))
+			: NULL;
+		if( new )
+		{
+		struct ber_mem_hdr *mh = new;
 
 		mh->bm_top = LBER_MEM_JUNK;
 		mh->bm_length = n*s;
@@ -275,6 +280,7 @@ ber_memcalloc_x( ber_len_t n, ber_len_t s, void *ctx )
 #endif
 		BER_MEM_VALID( &mh[1] );
 		new = &mh[1];
+		}
 #else
 		new = calloc( n, s );
 #endif
@@ -489,7 +495,6 @@ ber_dupbv_x(
 		new = dst;
 	} else {
 		if(( new = ber_memalloc_x( sizeof(struct berval), ctx )) == NULL ) {
-			ber_errno = LBER_ERROR_MEMORY;
 			return NULL;
 		}
 	}
@@ -501,7 +506,6 @@ ber_dupbv_x(
 	}
 
 	if(( new->bv_val = ber_memalloc_x( src->bv_len + 1, ctx )) == NULL ) {
-		ber_errno = LBER_ERROR_MEMORY;
 		if ( !dst )
 			ber_memfree_x( new, ctx );
 		return NULL;
@@ -544,7 +548,6 @@ ber_str2bv_x(
 		new = bv;
 	} else {
 		if(( new = ber_memalloc_x( sizeof(struct berval), ctx )) == NULL ) {
-			ber_errno = LBER_ERROR_MEMORY;
 			return NULL;
 		}
 	}
@@ -552,7 +555,6 @@ ber_str2bv_x(
 	new->bv_len = len ? len : strlen( s );
 	if ( dup ) {
 		if ( (new->bv_val = ber_memalloc_x( new->bv_len+1, ctx )) == NULL ) {
-			ber_errno = LBER_ERROR_MEMORY;
 			if ( !bv )
 				ber_memfree_x( new, ctx );
 			return NULL;
@@ -590,7 +592,6 @@ ber_mem2bv_x(
 		new = bv;
 	} else {
 		if(( new = ber_memalloc_x( sizeof(struct berval), ctx )) == NULL ) {
-			ber_errno = LBER_ERROR_MEMORY;
 			return NULL;
 		}
 	}
@@ -598,7 +599,6 @@ ber_mem2bv_x(
 	new->bv_len = len;
 	if ( dup ) {
 		if ( (new->bv_val = ber_memalloc_x( new->bv_len+1, ctx )) == NULL ) {
-			ber_errno = LBER_ERROR_MEMORY;
 			if ( !bv ) {
 				ber_memfree_x( new, ctx );
 			}
@@ -637,13 +637,10 @@ ber_strdup_x( LDAP_CONST char *s, void *ctx )
 	}
 
 	len = strlen( s ) + 1;
-
-	if ( (p = ber_memalloc_x( len, ctx )) == NULL ) {
-		ber_errno = LBER_ERROR_MEMORY;
-		return NULL;
+	if ( (p = ber_memalloc_x( len, ctx )) != NULL ) {
+		AC_MEMCPY( p, s, len );
 	}
 
-	AC_MEMCPY( p, s, len );
 	return p;
 }
 
@@ -679,14 +676,11 @@ ber_strndup_x( LDAP_CONST char *s, ber_len_t l, void *ctx )
 	}
 
 	len = ber_strnlen( s, l );
-
-	if ( (p = ber_memalloc_x( len + 1, ctx )) == NULL ) {
-		ber_errno = LBER_ERROR_MEMORY;
-		return NULL;
+	if ( (p = ber_memalloc_x( len + 1, ctx )) != NULL ) {
+		AC_MEMCPY( p, s, len );
+		p[len] = '\0';
 	}
 
-	AC_MEMCPY( p, s, len );
-	p[len] = '\0';
 	return p;
 }
 

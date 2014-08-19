@@ -1,5 +1,5 @@
 /* mmix-dis.c -- Disassemble MMIX instructions.
-   Copyright 2000, 2001, 2002, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2005, 2007, 2012 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com)
 
    This file is part of the GNU opcodes library.
@@ -19,9 +19,8 @@
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "opcode/mmix.h"
 #include "dis-asm.h"
 #include "libiberty.h"

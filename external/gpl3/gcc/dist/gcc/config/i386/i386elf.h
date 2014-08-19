@@ -1,6 +1,5 @@
 /* Target definitions for GCC for Intel 80386 using ELF
-   Copyright (C) 1988, 1991, 1995, 2000, 2001, 2002, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1988-2013 Free Software Foundation, Inc.
 
    Derived from sysv4.h written by Ron Guilmette (rfg@netcom.com).
 
@@ -19,12 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
-
-/* Use stabs instead of DWARF debug format.  */
-#undef  PREFERRED_DEBUGGING_TYPE
-#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
-
-#define TARGET_VERSION fprintf (stderr, " (i386 bare ELF target)");
 
 /* The ELF ABI for the i386 says that records and unions are returned
    in memory.  */
@@ -52,7 +45,7 @@ along with GCC; see the file COPYING3.  If not see
    generated assembly code more compact (and thus faster to assemble)
    as well as more readable.  Note that if we find subparts of the
    character sequence which end with NUL (and which are shorter than
-   STRING_LIMIT) we output those using ASM_OUTPUT_LIMITED_STRING.  */
+   ELF_STRING_LIMIT) we output those using ASM_OUTPUT_LIMITED_STRING.  */
 
 #undef ASM_OUTPUT_ASCII
 #define ASM_OUTPUT_ASCII(FILE, STR, LENGTH)				\
@@ -72,14 +65,14 @@ along with GCC; see the file COPYING3.  If not see
 	    }								\
 	  for (p = _ascii_bytes; p < limit && *p != '\0'; p++)		\
 	    continue;							\
-	  if (p < limit && (p - _ascii_bytes) <= (long) STRING_LIMIT)	\
+	  if (p < limit && (p - _ascii_bytes) <= (long) ELF_STRING_LIMIT) \
 	    {								\
 	      if (bytes_in_chunk > 0)					\
 		{							\
 		  fputc ('\n', (FILE));					\
 		  bytes_in_chunk = 0;					\
 		}							\
-	      ASM_OUTPUT_LIMITED_STRING ((FILE), _ascii_bytes);		\
+	      ASM_OUTPUT_LIMITED_STRING ((FILE), (const char *) _ascii_bytes); \
 	      _ascii_bytes = p;						\
 	    }								\
 	  else								\
@@ -88,7 +81,7 @@ along with GCC; see the file COPYING3.  If not see
 		fputs (ASM_BYTE, (FILE));				\
 	      else							\
 		fputc (',', (FILE));					\
-	      fprintf ((FILE), "0x%02x", *_ascii_bytes);		\
+	      fprintf ((FILE), "0x%02x", *_ascii_bytes);			\
 	      bytes_in_chunk += 5;					\
 	    }								\
 	}								\
@@ -102,24 +95,9 @@ along with GCC; see the file COPYING3.  If not see
 /* Switch into a generic section.  */
 #define TARGET_ASM_NAMED_SECTION  default_elf_asm_named_section
 
-/* If defined, a C expression whose value is a string containing the
-   assembler operation to identify the following data as
-   uninitialized global data.  If not defined, and neither
-   `ASM_OUTPUT_BSS' nor `ASM_OUTPUT_ALIGNED_BSS' are defined,
-   uninitialized global data will be output in the data section if
-   `-fno-common' is passed, otherwise `ASM_OUTPUT_COMMON' will be
-   used.  */
 #undef BSS_SECTION_ASM_OP
 #define BSS_SECTION_ASM_OP "\t.section\t.bss"
 
-/* Like `ASM_OUTPUT_BSS' except takes the required alignment as a
-   separate, explicit argument.  If you define this macro, it is used
-   in place of `ASM_OUTPUT_BSS', and gives you more flexibility in
-   handling the required alignment of the variable.  The alignment is
-   specified as the number of bits.
-
-   Try to use function `asm_output_aligned_bss' defined in file
-   `varasm.c' when defining this macro.  */
 #undef ASM_OUTPUT_ALIGNED_BSS
 #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
   asm_output_aligned_bss (FILE, DECL, NAME, SIZE, ALIGN)

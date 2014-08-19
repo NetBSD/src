@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.6 2012/06/05 00:42:41 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.6.2.1 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -23,7 +23,6 @@
 #define ISC_TYPES_H 1
 
 #include <isc/bind9.h>
-#include <isc/namespace.h>
 
 /*! \file isc/types.h
  * \brief
@@ -47,11 +46,11 @@
 
 typedef struct isc_appctx		isc_appctx_t;	 	/*%< Application context */
 typedef struct isc_backtrace_symmap	isc_backtrace_symmap_t; /*%< Symbol Table Entry */
-typedef struct isc_bitstring		isc_bitstring_t; 	/*%< Bitstring */
 typedef struct isc_buffer		isc_buffer_t;		/*%< Buffer */
 typedef ISC_LIST(isc_buffer_t)		isc_bufferlist_t;	/*%< Buffer List */
 typedef struct isc_constregion		isc_constregion_t;	/*%< Const region */
 typedef struct isc_consttextregion	isc_consttextregion_t;	/*%< Const Text Region */
+typedef isc_int16_t			isc_dscp_t;		/*%< Diffserv code point */
 typedef struct isc_entropy		isc_entropy_t;		/*%< Entropy */
 typedef struct isc_entropysource	isc_entropysource_t;	/*%< Entropy Source */
 typedef struct isc_event		isc_event_t;		/*%< Event */
@@ -109,7 +108,9 @@ typedef int (*isc_sockfdwatch_t)(isc_task_t *, isc_socket_t *, void *, int);
 
 /* The following cannot be listed alphabetically due to forward reference */
 typedef isc_result_t (isc_httpdaction_t)(const char *url,
+					 isc_httpdurl_t *urlinfo,
 					 const char *querystring,
+					 const char *headers,
 					 void *arg,
 					 unsigned int *retcode,
 					 const char **retmsg,
@@ -131,5 +132,12 @@ typedef enum {
 	isc_resource_residentsize,
 	isc_resource_stacksize
 } isc_resource_t;
+
+/*% Statistics formats (text file or XML) */
+typedef enum {
+	isc_statsformat_file,
+	isc_statsformat_xml,
+	isc_statsformat_json
+} isc_statsformat_t;
 
 #endif /* ISC_TYPES_H */

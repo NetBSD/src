@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_zyfer.c,v 1.1.1.1 2009/12/13 16:56:07 kardel Exp $	*/
+/*	$NetBSD: refclock_zyfer.c,v 1.1.1.1.12.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * refclock_zyfer - clock driver for the Zyfer GPSTarplus Clock
@@ -21,7 +21,9 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#ifdef HAVE_SYS_TERMIOS_H
+#if defined(HAVE_TERMIOS_H)
+# include <termios.h>
+#elif defined(HAVE_SYS_TERMIOS_H)
 # include <sys/termios.h>
 #endif
 #ifdef HAVE_SYS_PPSCLOCK_H
@@ -136,32 +138,30 @@ zyfer_start(
 	 * Open serial port.
 	 * Something like LDISC_ACTS that looked for ! would be nice...
 	 */
-	(void)sprintf(device, DEVICE, unit);
-	if ( !(fd = refclock_open(device, SPEED232, LDISC_RAW)) )
-	    return (0);
+	snprintf(device, sizeof(device), DEVICE, unit);
+	fd = refclock_open(device, SPEED232, LDISC_RAW);
+	if (fd <= 0)
+		return (0);
 
 	msyslog(LOG_NOTICE, "zyfer(%d) fd: %d dev <%s>", unit, fd, device);
 
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	if (!(up = (struct zyferunit *)
-	      emalloc(sizeof(struct zyferunit)))) {
-		(void) close(fd);
-		return (0);
-	}
-	memset((char *)up, 0, sizeof(struct zyferunit));
+	up = emalloc(sizeof(struct zyferunit));
+	memset(up, 0, sizeof(struct zyferunit));
 	pp = peer->procptr;
 	pp->io.clock_recv = zyfer_receive;
-	pp->io.srcclock = (caddr_t)peer;
+	pp->io.srcclock = peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
-		(void) close(fd);
+		close(fd);
+		pp->io.fd = -1;
 		free(up);
 		return (0);
 	}
-	pp->unitptr = (caddr_t)up;
+	pp->unitptr = up;
 
 	/*
 	 * Initialize miscellaneous variables
@@ -189,9 +189,11 @@ zyfer_shutdown(
 	struct refclockproc *pp;
 
 	pp = peer->procptr;
-	up = (struct zyferunit *)pp->unitptr;
-	io_closeclock(&pp->io);
-	free(up);
+	up = pp->unitptr;
+	if (pp->io.fd != -1)
+		io_closeclock(&pp->io);
+	if (up != NULL)
+		free(up);
 }
 
 
@@ -210,20 +212,10 @@ zyfer_receive(
 	int tfom;		/* Time Figure Of Merit */
 	int omode;		/* Operation mode */
 	u_char *p;
-#ifdef PPS
-	struct ppsclockev ppsev;
-	int request;
-#ifdef HAVE_CIOGETEV
-        request = CIOGETEV;
-#endif
-#ifdef HAVE_TIOCGPPSEV
-        request = TIOCGPPSEV;
-#endif
-#endif /* PPS */
 
-	peer = (struct peer *)rbufp->recv_srcclock;
+	peer = rbufp->recv_peer;
 	pp = peer->procptr;
-	up = (struct zyferunit *)pp->unitptr;
+	up = pp->unitptr;
 	p = (u_char *) &rbufp->recv_space;
 	/*
 	 * If lencode is 0:
@@ -292,14 +284,7 @@ zyfer_receive(
 		pp->leap = LEAP_NOTINSYNC;
 		return;
 	}
-#ifdef PPS
-	if(ioctl(fdpps,request,(caddr_t) &ppsev) >=0) {
-		ppsev.tv.tv_sec += (u_int32) JAN_1970;
-		TVTOTS(&ppsev.tv,&up->tstamp);
-	}
-	/* record the last ppsclock event time stamp */
-	pp->lastrec = up->tstamp;
-#endif /* PPS */
+
 	if (!refclock_process(pp)) {
 		refclock_report(peer, CEVNT_BADTIME);
 		return;
@@ -334,7 +319,7 @@ zyfer_poll(
 	 * side to capture a sample and check for timeouts.
 	 */
 	pp = peer->procptr;
-	up = (struct zyferunit *)pp->unitptr;
+	up = pp->unitptr;
 	if (!up->pollcnt)
 		refclock_report(peer, CEVNT_TIMEOUT);
 	else

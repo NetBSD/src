@@ -1,4 +1,4 @@
-.\"	$NetBSD: dhcpd.8,v 1.1.1.2.4.2 2013/06/23 06:26:30 tls Exp $
+.\"	$NetBSD: dhcpd.8,v 1.1.1.2.4.3 2014/08/19 23:46:42 tls Exp $
 .\"
 .\"	dhcpd.8
 .\"
@@ -30,7 +30,7 @@
 .\" Support and other services are available for ISC products - see
 .\" https://www.isc.org for more information or to learn more about ISC.
 .\"
-.\" Id: dhcpd.8,v 1.30.24.5 2011/05/20 14:33:28 tomasz Exp 
+.\" Id: dhcpd.8,v 1.35 2011/05/20 13:48:33 tomasz Exp 
 .\"
 .TH dhcpd 8
 .SH NAME
@@ -248,7 +248,7 @@ automatically before installing it.
 .BI \-T
 Test the lease file.  The server tests the lease file
 for correct syntax, but will not attempt to perform any network
-operations.  This can be used to test a new leaes file
+operations.  This can be used to test a new lease file
 automatically before installing it.
 .TP
 .BI \-tf \ tracefile
@@ -275,7 +275,7 @@ Print version number and exit.
 .I Modifying default file locations:
 The following options can be used to modify the locations 
 .B dhcpd
-uses for it's files.  Because of the importance of using the same
+uses for its files.  Because of the importance of using the same
 lease database at all times when running dhcpd in production, these
 options should be used \fBonly\fR for testing lease files or database
 files in a non-production environment.

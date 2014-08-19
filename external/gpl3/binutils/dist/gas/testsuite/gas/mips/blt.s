@@ -23,8 +23,6 @@ text_label:
 	blt	$4,$5,external_label
 	ble	$4,$5,external_label
 
-# Round to a 16 byte boundary, for ease in testing multiple targets.
-	nop
-	nop
-	nop
-	nop
+# Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
+	.align	2
+	.space	8

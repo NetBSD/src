@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.12.1 2013/06/23 06:26:19 tls Exp $
+#	$NetBSD: Makefile,v 1.19.12.2 2014/08/19 23:45:45 tls Exp $
 
 .if make(obj)
 
@@ -17,10 +17,6 @@ SUBDIR+=edlabel
 # IPv6
 SUBDIR+=x_ping6
 
-.endif
-
-.if exists(sysinst/arch/${MACHINE})
-SUBDIR+=sysinst
 .endif
 
 release:

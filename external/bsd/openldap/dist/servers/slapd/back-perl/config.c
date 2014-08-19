@@ -1,9 +1,9 @@
-/*	$NetBSD: config.c,v 1.1.1.3 2010/12/12 15:23:20 adam Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.3.12.1 2014/08/19 23:52:02 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-perl/config.c,v 1.22.2.5 2010/04/13 20:23:37 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -18,7 +18,64 @@
  */
 
 #include "perl_back.h"
+#include "../config.h"
 
+static ConfigDriver perl_cf;
+
+enum {
+	PERL_MODULE = 1,
+	PERL_PATH,
+	PERL_CONFIG
+};
+
+static ConfigTable perlcfg[] = {
+	{ "perlModule", "module", 2, 2, 0,
+		ARG_STRING|ARG_MAGIC|PERL_MODULE, perl_cf, 
+		"( OLcfgDbAt:11.1 NAME 'olcPerlModule' "
+			"DESC 'Perl module name' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "perlModulePath", "path", 2, 2, 0,
+		ARG_MAGIC|PERL_PATH, perl_cf, 
+		"( OLcfgDbAt:11.2 NAME 'olcPerlModulePath' "
+			"DESC 'Perl module path' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX OMsDirectoryString )", NULL, NULL },
+	{ "filterSearchResults", "on|off", 2, 2, 0, ARG_ON_OFF|ARG_OFFSET,
+		(void *)offsetof(PerlBackend, pb_filter_search_results),
+		"( OLcfgDbAt:11.3 NAME 'olcPerlFilterSearchResults' "
+			"DESC 'Filter search results before returning to client' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "perlModuleConfig", "args", 2, 0, 0,
+		ARG_MAGIC|PERL_CONFIG, perl_cf, 
+		"( OLcfgDbAt:11.4 NAME 'olcPerlModuleConfig' "
+			"DESC 'Perl module config directives' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX OMsDirectoryString )", NULL, NULL },
+	{ NULL }
+};
+
+static ConfigOCs perlocs[] = {
+	{ "( OLcfgDbOc:11.1 "
+		"NAME 'olcDbPerlConfig' "
+		"DESC 'Perl DB configuration' "
+		"SUP olcDatabaseConfig "
+		"MUST ( olcPerlModulePath $ olcPerlModule ) "
+		"MAY ( olcPerlFilterSearchResults $ olcPerlModuleConfig ) )",
+			Cft_Database, perlcfg, NULL, NULL },
+	{ NULL }
+};
+
+static ConfigOCs ovperlocs[] = {
+	{ "( OLcfgDbOc:11.2 "
+		"NAME 'olcovPerlConfig' "
+		"DESC 'Perl overlay configuration' "
+		"SUP olcOverlayConfig "
+		"MUST ( olcPerlModulePath $ olcPerlModule ) "
+		"MAY ( olcPerlFilterSearchResults $ olcPerlModuleConfig ) )",
+			Cft_Overlay, perlcfg, NULL, NULL },
+	{ NULL }
+};
 
 /**********************************************************
  *
@@ -27,112 +84,150 @@
  **********************************************************/
 int
 perl_back_db_config(
-	 BackendDB *be,
-	 const char *fname,
-	 int lineno,
-	 int argc,
-	 char **argv
+	BackendDB *be,
+	const char *fname,
+	int lineno,
+	int argc,
+	char **argv
 )
 {
+	int rc = config_generic_wrapper( be, fname, lineno, argc, argv );
+	/* backward compatibility: map unknown directives to perlModuleConfig */
+	if ( rc == SLAP_CONF_UNKNOWN ) {
+		char **av = ch_malloc( (argc+2) * sizeof(char *));
+		int i;
+		av[0] = "perlModuleConfig";
+		av++;
+		for ( i=0; i<argc; i++ )
+			av[i] = argv[i];
+		av[i] = NULL;
+		av--;
+		rc = config_generic_wrapper( be, fname, lineno, argc+1, av );
+		ch_free( av );
+	}
+	return rc;
+}
+
+static int
+perl_cf(
+	ConfigArgs *c
+)
+{
+	PerlBackend *pb = (PerlBackend *) c->be->be_private;
 	SV* loc_sv;
-	PerlBackend *perl_back = (PerlBackend *) be->be_private;
-	char eval_str[EVAL_BUF_SIZE];
 	int count ;
 	int args;
-	int return_code;
-	
+	int rc = 0;
+	char eval_str[EVAL_BUF_SIZE];
+	struct berval bv;
 
-	if ( strcasecmp( argv[0], "perlModule" ) == 0 ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_ANY,
-				 "%s.pm: line %d: missing module in \"perlModule <module>\" line\n",
-				fname, lineno, 0 );
-			return( 1 );
+	if ( c->op == SLAP_CONFIG_EMIT ) {
+		switch( c-> type ) {
+		case PERL_MODULE:
+			if ( !pb->pb_module_name )
+				return 1;
+			c->value_string = ch_strdup( pb->pb_module_name );
+			break;
+		case PERL_PATH:
+			if ( !pb->pb_module_path )
+				return 1;
+			ber_bvarray_dup_x( &c->rvalue_vals, pb->pb_module_path, NULL );
+			break;
+		case PERL_CONFIG:
+			if ( !pb->pb_module_config )
+				return 1;
+			ber_bvarray_dup_x( &c->rvalue_vals, pb->pb_module_config, NULL );
+			break;
 		}
-
-#ifdef PERL_IS_5_6
-		snprintf( eval_str, EVAL_BUF_SIZE, "use %s;", argv[1] );
-		eval_pv( eval_str, 0 );
-
-		if (SvTRUE(ERRSV)) {
-			STRLEN n_a;
-
-			fprintf(stderr , "Error %s\n", SvPV(ERRSV, n_a)) ;
-		}
-#else
-		snprintf( eval_str, EVAL_BUF_SIZE, "%s.pm", argv[1] );
-		perl_require_pv( eval_str );
-
-		if (SvTRUE(GvSV(errgv))) {
-			fprintf(stderr , "Error %s\n", SvPV(GvSV(errgv), na)) ;
-		}
-#endif /* PERL_IS_5_6 */
-		else {
-			dSP; ENTER; SAVETMPS;
-			PUSHMARK(sp);
-			XPUSHs(sv_2mortal(newSVpv(argv[1], 0)));
-			PUTBACK;
-
-#ifdef PERL_IS_5_6
-			count = call_method("new", G_SCALAR);
-#else
-			count = perl_call_method("new", G_SCALAR);
-#endif
-
-			SPAGAIN;
-
-			if (count != 1) {
-				croak("Big trouble in config\n") ;
-			}
-
-			perl_back->pb_obj_ref = newSVsv(POPs);
-
-			PUTBACK; FREETMPS; LEAVE ;
-		}
-
-	} else if ( strcasecmp( argv[0], "perlModulePath" ) == 0 ) {
-		if ( argc < 2 ) {
-			fprintf( stderr,
-				"%s: line %d: missing module in \"PerlModulePath <module>\" line\n",
-				fname, lineno );
-			return( 1 );
-		}
-
-		snprintf( eval_str, EVAL_BUF_SIZE, "push @INC, '%s';", argv[1] );
-#ifdef PERL_IS_5_6
-		loc_sv = eval_pv( eval_str, 0 );
-#else
-		loc_sv = perl_eval_pv( eval_str, 0 );
-#endif
-
-		/* XXX loc_sv return value is ignored. */
-
-	} else if ( strcasecmp( argv[0], "filterSearchResults" ) == 0 ) {
-		perl_back->pb_filter_search_results = 1;
-	} else {
-		return_code = SLAP_CONF_UNKNOWN;
-		/*
-		 * Pass it to Perl module if defined
+	} else if ( c->op == LDAP_MOD_DELETE ) {
+		/* FIXME: none of this affects the state of the perl
+		 * interpreter at all. We should probably destroy it
+		 * and recreate it...
 		 */
+		switch( c-> type ) {
+		case PERL_MODULE:
+			ch_free( pb->pb_module_name );
+			pb->pb_module_name = NULL;
+			break;
+		case PERL_PATH:
+			if ( c->valx < 0 ) {
+				ber_bvarray_free( pb->pb_module_path );
+				pb->pb_module_path = NULL;
+			} else {
+				int i = c->valx;
+				ch_free( pb->pb_module_path[i].bv_val );
+				for (; pb->pb_module_path[i].bv_val; i++ )
+					pb->pb_module_path[i] = pb->pb_module_path[i+1];
+			}
+			break;
+		case PERL_CONFIG:
+			if ( c->valx < 0 ) {
+				ber_bvarray_free( pb->pb_module_config );
+				pb->pb_module_config = NULL;
+			} else {
+				int i = c->valx;
+				ch_free( pb->pb_module_config[i].bv_val );
+				for (; pb->pb_module_config[i].bv_val; i++ )
+					pb->pb_module_config[i] = pb->pb_module_config[i+1];
+			}
+			break;
+		}
+	} else {
+		switch( c->type ) {
+		case PERL_MODULE:
+			snprintf( eval_str, EVAL_BUF_SIZE, "use %s;", c->argv[1] );
+			eval_pv( eval_str, 0 );
 
-		{
+			if (SvTRUE(ERRSV)) {
+				STRLEN len;
+
+				snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: error %s",
+					c->log, SvPV(ERRSV, len ));
+				Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg, 0, 0 );
+				rc = 1;
+			} else {
+				dSP; ENTER; SAVETMPS;
+				PUSHMARK(sp);
+				XPUSHs(sv_2mortal(newSVpv(c->argv[1], 0)));
+				PUTBACK;
+
+				count = call_method("new", G_SCALAR);
+
+				SPAGAIN;
+
+				if (count != 1) {
+					croak("Big trouble in config\n") ;
+				}
+
+				pb->pb_obj_ref = newSVsv(POPs);
+
+				PUTBACK; FREETMPS; LEAVE ;
+				pb->pb_module_name = ch_strdup( c->argv[1] );
+			}
+			break;
+
+		case PERL_PATH:
+			snprintf( eval_str, EVAL_BUF_SIZE, "push @INC, '%s';", c->argv[1] );
+			loc_sv = eval_pv( eval_str, 0 );
+			/* XXX loc_sv return value is ignored. */
+			ber_str2bv( c->argv[1], 0, 0, &bv );
+			value_add_one( &pb->pb_module_path, &bv );
+			break;
+
+		case PERL_CONFIG: {
 			dSP ;  ENTER ; SAVETMPS;
 
 			PUSHMARK(sp) ;
-			XPUSHs( perl_back->pb_obj_ref );
+			XPUSHs( pb->pb_obj_ref );
 
 			/* Put all arguments on the perl stack */
-			for( args = 0; args < argc; args++ ) {
-				XPUSHs(sv_2mortal(newSVpv(argv[args], 0)));
+			for( args = 1; args < c->argc; args++ ) {
+				XPUSHs(sv_2mortal(newSVpv(c->argv[args], 0)));
 			}
 
 			PUTBACK ;
 
-#ifdef PERL_IS_5_6
 			count = call_method("config", G_SCALAR);
-#else
-			count = perl_call_method("config", G_SCALAR);
-#endif
 
 			SPAGAIN ;
 
@@ -140,14 +235,20 @@ perl_back_db_config(
 				croak("Big trouble in config\n") ;
 			}
 
-			return_code = POPi;
+			rc = POPi;
 
 			PUTBACK ; FREETMPS ;  LEAVE ;
-
+			}
+			break;
 		}
-
-		return return_code;
 	}
+	return rc;
+}
 
-	return 0;
+int
+perl_back_init_cf( BackendInfo *bi )
+{
+	bi->bi_cf_ocs = perlocs;
+
+	return config_register_schema( perlcfg, perlocs );
 }

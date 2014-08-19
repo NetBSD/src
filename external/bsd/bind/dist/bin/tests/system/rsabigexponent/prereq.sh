@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,14 +14,16 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
 
-../../../tools/genrandom 400 random.data
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 if ./bigkey > /dev/null 2>&1
 then
     rm -f Kexample.*
 else
-    echo "I:This test requires that --with-openssl was used." >&2
-    exit 1
+    echo "I:This test requires cryptography" >&2
+    echo "I:configure with --with-openssl, or --with-pkcs11 and --enable-native-pkcs11" >&2
+    exit 255
 fi

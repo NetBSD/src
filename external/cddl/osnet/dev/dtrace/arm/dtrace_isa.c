@@ -30,24 +30,25 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/stack.h>
-#include <sys/pcpu.h>
 
 #include <machine/frame.h>
-#include <machine/md_var.h>
 #include <machine/reg.h>
 
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
-
 #include <machine/db_machdep.h>
-#include <machine/md_var.h>
 #include <machine/vmparam.h>
-#include <machine/stack.h>
 #include <ddb/db_sym.h>
 #include <ddb/ddb.h>
-#include <sys/kdb.h>
+
+uintptr_t kernelbase = (uintptr_t)KERNEL_BASE;
+
+/* TODO: support AAPCS */
+/* XXX: copied from sys/arch/arm/arm/db_trace.c */
+#define INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
+
+#define FR_SCP	(0)
+#define FR_RLV	(-1)
+#define FR_RSP	(-2)
+#define FR_RFP	(-3)
 
 #include "regset.h"
 
@@ -68,26 +69,30 @@ void
 dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
     uint32_t *intrpc)
 {
-	u_int32_t	*frame, *lastframe;
+	uint32_t	*frame, *lastframe;
+#if 0
 	int	scp_offset;
+#endif
 	int	depth = 0;
-	pc_t caller = (pc_t) solaris_cpu[curcpu].cpu_dtrace_caller;
+	pc_t caller = (pc_t) solaris_cpu[cpu_number()].cpu_dtrace_caller;
 
 	if (intrpc != 0)
 		pcstack[depth++] = (pc_t) intrpc;
 
 	aframes++;
 
-	frame = (u_int32_t *)__builtin_frame_address(0);;
+	frame = (uint32_t *)__builtin_frame_address(0);;
 	lastframe = NULL;
+#if 0
 	scp_offset = -(get_pc_str_offset() >> 2);
+#endif
 
 	while ((frame != NULL) && (depth < pcstack_limit)) {
 		db_addr_t	scp;
 #if 0 
-		u_int32_t	savecode;
+		uint32_t	savecode;
 		int		r;
-		u_int32_t	*rp;
+		uint32_t	*rp;
 #endif
 
 		/*
@@ -109,7 +114,7 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 		}
 
 #if 0
-		savecode = ((u_int32_t *)scp)[scp_offset];
+		savecode = ((uint32_t *)scp)[scp_offset];
 		if ((savecode & 0x0e100000) == 0x08000000) {
 			/* Looks like an STM */
 			rp = frame - 4;
@@ -128,7 +133,7 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 			break; /* Top of stack */
 
 		lastframe = frame;
-		frame = (u_int32_t *)(frame[FR_RFP]);
+		frame = (uint32_t *)(frame[FR_RFP]);
 
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */
@@ -177,27 +182,18 @@ dtrace_getarg(int arg, int aframes)
 int
 dtrace_getstackdepth(int aframes)
 {
-	u_int32_t	*frame, *lastframe;
-	int	scp_offset;
+	uint32_t	*frame, *lastframe;
 	int	depth = 1;
 
-	frame = (u_int32_t *)__builtin_frame_address(0);;
+	frame = (uint32_t *)__builtin_frame_address(0);;
 	lastframe = NULL;
-	scp_offset = -(get_pc_str_offset() >> 2);
 
 	while (frame != NULL) {
-		db_addr_t	scp;
 #if 0 
-		u_int32_t	savecode;
+		uint32_t	savecode;
 		int		r;
-		u_int32_t	*rp;
+		uint32_t	*rp;
 #endif
-
-		/*
-		 * In theory, the SCP isn't guaranteed to be in the function
-		 * that generated the stack frame.  We hope for the best.
-		 */
-		scp = frame[FR_SCP];
 
 		depth++;
 
@@ -208,7 +204,7 @@ dtrace_getstackdepth(int aframes)
 			break; /* Top of stack */
 
 		lastframe = frame;
-		frame = (u_int32_t *)(frame[FR_RFP]);
+		frame = (uint32_t *)(frame[FR_RFP]);
 
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */
@@ -229,7 +225,7 @@ dtrace_getstackdepth(int aframes)
 }
 
 ulong_t
-dtrace_getreg(struct trapframe *rp, uint_t reg)
+dtrace_getreg(struct regs *regs, uint_t reg)
 {
 
 	return (0);
@@ -241,7 +237,7 @@ dtrace_copycheck(uintptr_t uaddr, uintptr_t kaddr, size_t size)
 
 	if (uaddr + size > VM_MAXUSER_ADDRESS || uaddr + size < uaddr) {
 		DTRACE_CPUFLAG_SET(CPU_DTRACE_BADADDR);
-		cpu_core[curcpu].cpuc_dtrace_illval = uaddr;
+		cpu_core[cpu_number()].cpuc_dtrace_illval = uaddr;
 		return (0);
 	}
 
@@ -285,7 +281,7 @@ dtrace_fuword8(void *uaddr)
 {
 	if ((uintptr_t)uaddr > VM_MAXUSER_ADDRESS) {
 		DTRACE_CPUFLAG_SET(CPU_DTRACE_BADADDR);
-		cpu_core[curcpu].cpuc_dtrace_illval = (uintptr_t)uaddr;
+		cpu_core[cpu_number()].cpuc_dtrace_illval = (uintptr_t)uaddr;
 		return (0);
 	}
 	return (dtrace_fuword8_nocheck(uaddr));
@@ -296,7 +292,7 @@ dtrace_fuword16(void *uaddr)
 {
 	if ((uintptr_t)uaddr > VM_MAXUSER_ADDRESS) {
 		DTRACE_CPUFLAG_SET(CPU_DTRACE_BADADDR);
-		cpu_core[curcpu].cpuc_dtrace_illval = (uintptr_t)uaddr;
+		cpu_core[cpu_number()].cpuc_dtrace_illval = (uintptr_t)uaddr;
 		return (0);
 	}
 	return (dtrace_fuword16_nocheck(uaddr));
@@ -307,7 +303,7 @@ dtrace_fuword32(void *uaddr)
 {
 	if ((uintptr_t)uaddr > VM_MAXUSER_ADDRESS) {
 		DTRACE_CPUFLAG_SET(CPU_DTRACE_BADADDR);
-		cpu_core[curcpu].cpuc_dtrace_illval = (uintptr_t)uaddr;
+		cpu_core[cpu_number()].cpuc_dtrace_illval = (uintptr_t)uaddr;
 		return (0);
 	}
 	return (dtrace_fuword32_nocheck(uaddr));
@@ -318,7 +314,7 @@ dtrace_fuword64(void *uaddr)
 {
 	if ((uintptr_t)uaddr > VM_MAXUSER_ADDRESS) {
 		DTRACE_CPUFLAG_SET(CPU_DTRACE_BADADDR);
-		cpu_core[curcpu].cpuc_dtrace_illval = (uintptr_t)uaddr;
+		cpu_core[cpu_number()].cpuc_dtrace_illval = (uintptr_t)uaddr;
 		return (0);
 	}
 	return (dtrace_fuword64_nocheck(uaddr));

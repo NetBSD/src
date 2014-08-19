@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/12/13 08:02:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.12.1 2014/08/19 23:45:51 tls Exp $
 
 LIB=		nss_mdnsd
 SHLIB_MAJOR=	0
@@ -12,6 +12,8 @@ NOPICINSTALL=	# don't install _pic.a library
 .include <bsd.own.mk>
 
 .include "${.CURDIR}/../Makefile.inc"
+
+CPPFLAGS+=-I${NETBSDSRCDIR}/lib/libc/net
 
 SRCS=		nss_mdnsd.c
 LDADD+= 	-ldns_sd

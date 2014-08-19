@@ -3,14 +3,8 @@
  * Copyright (c) 2004, Sam Leffler <sam@errno.com>
  * Copyright (c) 2004, 2Wire, Inc
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -859,12 +853,13 @@ bsd_init(struct hostapd_data *hapd, struct wpa_init_params *params)
 
 	return drv;
 bad:
-	if (drv->sock_xmit != NULL)
-		l2_packet_deinit(drv->sock_xmit);
-	if (drv->sock >= 0)
-		close(drv->sock);
-	if (drv != NULL)
+	if (drv != NULL) {
+		if (drv->sock_xmit != NULL)
+			l2_packet_deinit(drv->sock_xmit);
+		if (drv->sock >= 0)
+			close(drv->sock);
 		os_free(drv);
+	}
 	return NULL;
 }
 
@@ -979,13 +974,6 @@ static int
 wpa_driver_bsd_deauthenticate(void *priv, const u8 *addr, int reason_code)
 {
 	return bsd_send_mlme_param(priv, IEEE80211_MLME_DEAUTH, reason_code,
-				   addr);
-}
-
-static int
-wpa_driver_bsd_disassociate(void *priv, const u8 *addr, int reason_code)
-{
-	return bsd_send_mlme_param(priv, IEEE80211_MLME_DISASSOC, reason_code,
 				   addr);
 }
 
@@ -1366,7 +1354,7 @@ wpa_driver_bsd_add_scan_entry(struct wpa_scan_results *res,
 	result->freq = sr->isr_freq;
 	result->beacon_int = sr->isr_intval;
 	result->caps = sr->isr_capinfo;
-	result->qual = sr->isr_rssi;
+	result->level = sr->isr_rssi;
 	result->noise = sr->isr_noise;
 
 	pos = (u8 *)(result + 1);
@@ -1394,8 +1382,8 @@ wpa_driver_bsd_add_scan_entry(struct wpa_scan_results *res,
 
 	result->ie_len = pos - (u8 *)(result + 1);
 
-	tmp = os_realloc(res->res,
-			 (res->num + 1) * sizeof(struct wpa_scan_res *));
+	tmp = os_realloc_array(res->res, res->num + 1,
+			       sizeof(struct wpa_scan_res *));
 	if (tmp == NULL) {
 		os_free(result);
 		return;
@@ -1630,7 +1618,6 @@ const struct wpa_driver_ops wpa_driver_bsd_ops = {
 	.scan2			= wpa_driver_bsd_scan,
 	.get_scan_results2	= wpa_driver_bsd_get_scan_results2,
 	.deauthenticate		= wpa_driver_bsd_deauthenticate,
-	.disassociate		= wpa_driver_bsd_disassociate,
 	.associate		= wpa_driver_bsd_associate,
 	.get_capa		= wpa_driver_bsd_get_capa,
 #endif /* HOSTAPD */

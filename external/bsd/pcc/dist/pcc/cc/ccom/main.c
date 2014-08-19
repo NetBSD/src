@@ -1,5 +1,5 @@
-/*	Id: main.c,v 1.118 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: main.c,v 1.1.1.5 2012/03/26 14:26:49 plunky Exp $	*/
+/*	Id: main.c,v 1.122 2014/05/07 16:46:31 ragge Exp 	*/	
+/*	$NetBSD: main.c,v 1.1.1.5.2.1 2014/08/19 23:52:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -65,11 +65,10 @@ static void
 segvcatch(int a)
 {
 	char buf[1024];
-	int dummy;
 
 	snprintf(buf, sizeof buf, "%sinternal compiler error: %s, line %d\n",
 	    nerrors ? "" : "major ", ftitle, lineno);
-	dummy = write(STDERR_FILENO, buf, strlen(buf));
+	(void)write(STDERR_FILENO, buf, strlen(buf));
 	_exit(1);
 }
 
@@ -132,6 +131,7 @@ main(int argc, char *argv[])
 {
 	int ch;
 
+//kflag = 1;
 #ifdef TIMING
 	struct timeval t1, t2;
 
@@ -296,6 +296,9 @@ main(int argc, char *argv[])
 	}
 #endif
 	complinit();
+#ifndef NO_BUILTIN
+	builtin_init();
+#endif
 
 #ifdef STABS
 	if (gflag) {
@@ -341,15 +344,16 @@ main(int argc, char *argv[])
 void
 prtstats(void)
 {
-	extern int nametabs, namestrlen, tmpallocsize, permallocsize;
-	extern int lostmem, arglistcnt, dimfuncnt, inlnodecnt, inlstatcnt;
+	extern int nametabs, namestrlen;
+	extern int arglistcnt, dimfuncnt, inlnodecnt, inlstatcnt;
 	extern int symtabcnt, suedefcnt;
+	extern size_t permallocsize, tmpallocsize, lostmem;
 
 	fprintf(stderr, "Name table entries:		%d pcs\n", nametabs);
 	fprintf(stderr, "Name string size:		%d B\n", namestrlen);
-	fprintf(stderr, "Permanent allocated memory:	%d B\n", permallocsize);
-	fprintf(stderr, "Temporary allocated memory:	%d B\n", tmpallocsize);
-	fprintf(stderr, "Lost memory:			%d B\n", lostmem);
+	fprintf(stderr, "Permanent allocated memory:	%zu B\n", permallocsize);
+	fprintf(stderr, "Temporary allocated memory:	%zu B\n", tmpallocsize);
+	fprintf(stderr, "Lost memory:			%zu B\n", lostmem);
 	fprintf(stderr, "Argument list unions:		%d pcs\n", arglistcnt);
 	fprintf(stderr, "Dimension/function unions:	%d pcs\n", dimfuncnt);
 	fprintf(stderr, "Struct/union/enum blocks:	%d pcs\n", suedefcnt);

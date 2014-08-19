@@ -35,6 +35,7 @@ const bfd_arch_info_type bfd_cr16_arch =
     1,                /* Unsigned int section alignment power.  */
     TRUE,             /* The one and only.  */
     bfd_default_compatible, 
-    bfd_default_scan ,
+    bfd_default_scan,
+    bfd_arch_default_fill,
     0,
   };

@@ -1,8 +1,8 @@
 # Makefile for -llutil
-# OpenLDAP: pkg/ldap/libraries/liblutil/Makefile.in,v 1.38.2.7 2010/04/19 16:53:01 quanah Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ## 
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,14 @@ XLIBS = $(LIBRARY) $(LDAP_LIBLBER_LA)
 
 SRCS	= base64.c entropy.c sasl.c signal.c hash.c passfile.c \
 	md5.c passwd.c sha1.c getpass.c lockf.c utils.c uuid.c sockpair.c \
-	avl.c tavl.c ldif.c fetch.c \
+	avl.c tavl.c \
 	testavl.c \
 	meter.c \
 	@LIBSRCS@ $(@PLAT@_SRCS)
 
 OBJS	= base64.o entropy.o sasl.o signal.o hash.o passfile.o \
 	md5.o passwd.o sha1.o getpass.o lockf.o utils.o uuid.o sockpair.o \
-	avl.o tavl.o ldif.o fetch.o \
+	avl.o tavl.o \
 	meter.o \
 	@LIBOBJS@ $(@PLAT@_OBJS)
 

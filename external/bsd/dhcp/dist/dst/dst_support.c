@@ -1,6 +1,5 @@
-/*	$NetBSD: dst_support.c,v 1.1.1.3.4.2 2013/06/23 06:26:29 tls Exp $	*/
-
-static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/dst_support.c,v 1.6.6.1 2009/11/20 01:49:01 sar Exp ";
+/*	$NetBSD: dst_support.c,v 1.1.1.3.4.3 2014/08/19 23:46:41 tls Exp $	*/
+static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/dst_support.c,v 1.7 2009/11/24 02:06:56 sar Exp ";
 
 
 /*
@@ -23,8 +22,7 @@ static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/dst_support.c,v 1.6.6
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dst_support.c,v 1.1.1.3.4.2 2013/06/23 06:26:29 tls Exp $");
-
+__RCSID("$NetBSD: dst_support.c,v 1.1.1.3.4.3 2014/08/19 23:46:41 tls Exp $");
 
 #include <stdio.h>
 #include <unistd.h>

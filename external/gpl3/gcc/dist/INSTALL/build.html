@@ -7,12 +7,10 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997,
-1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-2009, 2010, 2011 Free Software Foundation, Inc.
+Copyright (C) 1988-2013 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.2 or
+under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, the Front-Cover texts being (a) (see below), and
 with the Back-Cover Texts being (b) (see below).  A copy of the
@@ -130,7 +128,7 @@ following example.  This will save roughly 40% of disk space both for
 the bootstrap and the final installation.  (Libraries will still contain
 debugging information.)
 
-<pre class="smallexample">          make BOOT_CFLAGS='-O' bootstrap
+<pre class="smallexample">     make BOOT_CFLAGS='-O' bootstrap
 </pre>
    <p>You can place non-default optimization flags into <code>BOOT_CFLAGS</code>; they
 are less well tested here than the default of &lsquo;<samp><span class="samp">-g -O2</span></samp>&rsquo;, but should
@@ -185,6 +183,10 @@ examples of supported build configurations are:
 &lsquo;<samp><span class="samp">BOOT_CFLAGS='-g -O1'</span></samp>&rsquo;.
 
      <br><dt>&lsquo;<samp><span class="samp">bootstrap-O3</span></samp>&rsquo;<dd>Analogous to <code>bootstrap-O1</code>.
+
+     <br><dt>&lsquo;<samp><span class="samp">bootstrap-lto</span></samp>&rsquo;<dd>Enables Link-Time Optimization for host tools during bootstrapping. 
+&lsquo;<samp><span class="samp">BUILD_CONFIG=bootstrap-lto</span></samp>&rsquo; is equivalent to adding
+<samp><span class="option">-flto</span></samp> to &lsquo;<samp><span class="samp">BOOT_CFLAGS</span></samp>&rsquo;.
 
      <br><dt>&lsquo;<samp><span class="samp">bootstrap-debug</span></samp>&rsquo;<dd>Verifies that the compiler generates the same executable code, whether
 or not it is asked to emit debug information.  To this end, this
@@ -323,7 +325,7 @@ and network filesystems.
 <h3 class="section"><a name="TOC3"></a>Building the Ada compiler</h3>
 
 <p>In order to build GNAT, the Ada compiler, you need a working GNAT
-compiler (GCC version 3.4 or later). 
+compiler (GCC version 4.0 or later). 
 This includes GNAT tools such as <samp><span class="command">gnatmake</span></samp> and
 <samp><span class="command">gnatlink</span></samp>, since the Ada front end is written in Ada and
 uses some GNAT-specific extensions.

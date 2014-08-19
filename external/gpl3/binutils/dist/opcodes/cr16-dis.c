@@ -1,5 +1,5 @@
 /* Disassembler code for CR16.
-   Copyright 2007, 2008, 2009  Free Software Foundation, Inc.
+   Copyright 2007, 2008, 2009, 2012  Free Software Foundation, Inc.
    Contributed by M R Swami Reddy (MR.Swami.Reddy@nsc.com).
 
    This file is part of GAS, GDB and the GNU binutils.
@@ -18,8 +18,8 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-#include "dis-asm.h"
 #include "sysdep.h"
+#include "dis-asm.h"
 #include "opcode/cr16.h"
 #include "libiberty.h"
 
@@ -679,7 +679,7 @@ print_arg (argument *a, bfd_vma memaddr, struct disassemble_info *info)
 	(sign_flag) ? func (stream, "%s", "*-"): func (stream, "%s","*+");
 
       /* PR 10173: Avoid printing the 0x prefix twice.  */
-      if (info->num_symbols > 0)
+      if (info->symtab_size > 0)
 	func (stream, "%s", "0x");
       number = ((relative ? memaddr : 0) +
 		(sign_flag ? ((- a->constant) & 0xffffffe) : a->constant));

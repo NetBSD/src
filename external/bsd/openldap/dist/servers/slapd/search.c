@@ -1,9 +1,9 @@
-/*	$NetBSD: search.c,v 1.1.1.3 2010/12/12 15:22:45 adam Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.181.2.11 2010/04/13 20:23:19 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -158,10 +158,40 @@ do_search(
 		if ( slap_bv2ad( &op->ors_attrs[i].an_name,
 			&op->ors_attrs[i].an_desc, &dummy ) != LDAP_SUCCESS )
 		{
-			slap_bv2undef_ad( &op->ors_attrs[i].an_name,
+			if ( slap_bv2undef_ad( &op->ors_attrs[i].an_name,
 				&op->ors_attrs[i].an_desc, &dummy,
-				SLAP_AD_PROXIED|SLAP_AD_NOINSERT );
-		};
+				SLAP_AD_PROXIED|SLAP_AD_NOINSERT ) )
+			{
+				struct berval *bv = &op->ors_attrs[i].an_name;
+
+				/* RFC 4511 LDAPv3: All User Attributes */
+				if ( bvmatch( bv, slap_bv_all_user_attrs ) ) {
+					continue;
+				}
+
+				/* RFC 3673 LDAPv3: All Operational Attributes */
+				if ( bvmatch( bv, slap_bv_all_operational_attrs ) ) {
+					continue;
+				}
+
+				/* RFC 4529 LDAP: Requesting Attributes by Object Class */
+				if ( bv->bv_len > 1 && bv->bv_val[0] == '@' ) {
+					/* FIXME: check if remaining is valid oc name? */
+					continue;
+				}
+
+				/* add more "exceptions" to RFC 4511 4.5.1.8. */
+
+				/* invalid attribute description? remove */
+				if ( ad_keystring( bv ) ) {
+					/* NOTE: parsed in-place, don't modify;
+					 * rather add "1.1", which must be ignored */
+					BER_BVSTR( &op->ors_attrs[i].an_name, LDAP_NO_ATTRS );
+				}
+
+				/* otherwise leave in place... */
+			}
+		}
 	}
 
 	if( get_ctrls( op, rs, 1 ) != LDAP_SUCCESS ) {
@@ -276,6 +306,12 @@ fe_op_search( Operation *op, SlapReply *rs )
 			goto return_results;
 
 		} else if ( entry != NULL ) {
+			if ( get_assert( op ) &&
+				( test_filter( op, entry, get_assertion( op )) != LDAP_COMPARE_TRUE )) {
+				rs->sr_err = LDAP_ASSERTION_FAILED;
+				goto fail1;
+			}
+
 			rs->sr_err = test_filter( op, entry, op->ors_filter );
 
 			if( rs->sr_err == LDAP_COMPARE_TRUE ) {
@@ -294,9 +330,9 @@ fe_op_search( Operation *op, SlapReply *rs )
 				rs->sr_entry = NULL;
 				rs->sr_operational_attrs = NULL;
 			}
-			entry_free( entry );
-
 			rs->sr_err = LDAP_SUCCESS;
+fail1:
+			entry_free( entry );
 			send_ldap_result( op, rs );
 			goto return_results;
 		}

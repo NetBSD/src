@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.3 2012/06/05 00:42:53 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.3.2.1 2014/08/19 23:46:34 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -30,14 +30,14 @@ static void
 initialize_action(void) {
 	if (bInit)
 		return;
-	
+
 	GetSystemInfo(&SystemInfo);
 	bInit = TRUE;
 }
 
 unsigned int
 isc_os_ncpus(void) {
-	long ncpus = 1;
+	long ncpus;
 	initialize_action();
 	ncpus = SystemInfo.dwNumberOfProcessors;
 	if (ncpus <= 0)

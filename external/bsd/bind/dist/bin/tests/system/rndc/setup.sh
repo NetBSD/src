@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -16,8 +16,29 @@
 
 # Id: setup.sh,v 1.2 2011/03/21 18:06:06 each Exp 
 
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
+
 sh clean.sh
+
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 sh ../genzone.sh 2 >ns2/nil.db
 sh ../genzone.sh 2 >ns2/other.db
 sh ../genzone.sh 2 >ns2/static.db
+
+cat ns4/named.conf.in > ns4/named.conf
+
+make_key () {
+    $RNDCCONFGEN -r $RANDFILE -k key$1 -A $2 -s 10.53.0.4 -p 995${1} \
+            > ns4/key${1}.conf
+    egrep -v '(^# Start|^# End|^# Use|^[^#])' ns4/key$1.conf | cut -c3- | \
+            sed 's/allow { 10.53.0.4/allow { any/' >> ns4/named.conf
+}
+
+make_key 1 hmac-md5
+make_key 2 hmac-sha1
+make_key 3 hmac-sha224
+make_key 4 hmac-sha256
+make_key 5 hmac-sha384
+make_key 6 hmac-sha512

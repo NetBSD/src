@@ -1,7 +1,7 @@
-/*	$NetBSD: time.h,v 1.3 2012/06/05 00:42:51 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.3.2.1 2014/08/19 23:46:34 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -43,7 +43,7 @@ struct isc_interval {
 	unsigned int nanoseconds;
 };
 
-extern isc_interval_t *isc_interval_zero;
+extern const isc_interval_t * const isc_interval_zero;
 
 ISC_LANG_BEGINDECLS
 
@@ -87,7 +87,7 @@ struct isc_time {
 	unsigned int	nanoseconds;
 };
 
-extern isc_time_t *isc_time_epoch;
+extern const isc_time_t * const isc_time_epoch;
 
 void
 isc_time_set(isc_time_t *t, unsigned int seconds, unsigned int nanoseconds);
@@ -315,6 +315,16 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len);
  *\li      'len' > 0
  *\li      'buf' points to an array of at least len chars
  *
+ */
+
+isc_result_t
+isc_time_parsehttptimestamp(char *input, isc_time_t *t);
+/*%<
+ * Parse the time in 'input' into the isc_time_t pointed to by 't',
+ * expecting a format like "Mon, 30 Aug 2000 04:06:47 GMT"
+ *
+ *  Requires:
+ *\li      'buf' and 't' are not NULL.
  */
 
 void

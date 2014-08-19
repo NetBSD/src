@@ -1,5 +1,4 @@
-/*	$NetBSD: cdf.h,v 1.1.1.3.2.1 2013/02/25 00:26:06 tls Exp $	*/
-
+/*	$NetBSD: cdf.h,v 1.1.1.3.2.2 2014/08/19 23:46:47 tls Exp $	*/
 /*-
  * Copyright (c) 2008 Christos Zoulas
  * All rights reserved.
@@ -296,9 +295,13 @@ int cdf_read_dir(const cdf_info_t *, const cdf_header_t *, const cdf_sat_t *,
 int cdf_read_ssat(const cdf_info_t *, const cdf_header_t *, const cdf_sat_t *,
     cdf_sat_t *);
 int cdf_read_short_stream(const cdf_info_t *, const cdf_header_t *,
-    const cdf_sat_t *, const cdf_dir_t *, cdf_stream_t *);
+    const cdf_sat_t *, const cdf_dir_t *, cdf_stream_t *,
+    const cdf_directory_t **);
 int cdf_read_property_info(const cdf_stream_t *, const cdf_header_t *, uint32_t,
     cdf_property_info_t **, size_t *, size_t *);
+int cdf_read_user_stream(const cdf_info_t *, const cdf_header_t *,
+    const cdf_sat_t *, const cdf_sat_t *, const cdf_stream_t *,
+    const cdf_dir_t *, const char *, cdf_stream_t *);
 int cdf_read_summary_info(const cdf_info_t *, const cdf_header_t *,
     const cdf_sat_t *, const cdf_sat_t *, const cdf_stream_t *,
     const cdf_dir_t *, cdf_stream_t *);

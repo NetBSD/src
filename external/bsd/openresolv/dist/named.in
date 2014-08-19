@@ -29,7 +29,7 @@
 [ -f "@SYSCONFDIR@"/resolvconf.conf ] || exit 0
 . "@SYSCONFDIR@/resolvconf.conf" || exit 1
 [ -z "$named_zones" -a -z "$named_options" ] && exit 0
-[ -z "$RESOLVCONF" ] && eval "$(@PREFIX@/sbin/resolvconf -v)"
+[ -z "$RESOLVCONF" ] && eval "$(@SBINDIR@/resolvconf -v)"
 NL="
 "
 
@@ -78,7 +78,7 @@ done
 if type config_mkdirs >/dev/null 2>&1; then
 	config_mkdirs "$named_options" "$named_zones"
 else
-	@PREFIX@/sbin/resolvconf -D "$named_options" "$named_zones"
+	@SBINDIR@/resolvconf -D "$named_options" "$named_zones"
 fi
 
 # No point in changing files or reloading bind if the end result has not

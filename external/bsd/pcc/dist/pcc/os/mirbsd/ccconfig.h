@@ -1,5 +1,5 @@
-/* Id: ccconfig.h,v 1.8 2011/06/04 19:27:26 plunky Exp  */	
-/* $NetBSD: ccconfig.h,v 1.1.1.4 2011/09/01 12:47:17 plunky Exp $ */
+/* Id: ccconfig.h,v 1.9 2012/08/05 14:35:00 ragge Exp  */	
+/* $NetBSD: ccconfig.h,v 1.1.1.4.8.1 2014/08/19 23:52:10 tls Exp $ */
 /*-
  * Copyright (c) 2007, 2008
  *	Thorsten Glaser <tg@mirbsd.de>
@@ -26,10 +26,6 @@
 
 /* === mi part === */
 
-#ifndef LIBDIR
-#define LIBDIR			"/usr/lib/"
-#endif
-
 /* cpp MI defines */
 #define CPPADD			{		\
 	"-D__MirBSD__",				\
@@ -45,50 +41,9 @@
 	"/usr/libexec/ld.so",			\
 	NULL					\
 }
-#define STARTFILES		{		\
-	LIBDIR "crti.o",			\
-	LIBDIR "crtbegin.o",			\
-	NULL					\
-}
-#define ENDFILES		{		\
-	LIBDIR "crtend.o",			\
-	LIBDIR "crtn.o",			\
-	NULL					\
-}
 
-/* for shared libraries */
-#define STARTFILES_S		{		\
-	LIBDIR "crti.o",			\
-	LIBDIR "crtbeginS.o",			\
-	NULL					\
-}
-#define ENDFILES_S		{		\
-	LIBDIR "crtendS.o",			\
-	LIBDIR "crtn.o",			\
-	NULL					\
-}
-
-/* for statically linked binaries */
-#define STARTFILES_T		{		\
-	LIBDIR "crti.o",			\
-	LIBDIR "crtbeginT.o",			\
-	NULL					\
-}
-#define ENDFILES_T		{		\
-	LIBDIR "crtend.o",			\
-	LIBDIR "crtn.o",			\
-	NULL					\
-}
-
-/* libc contains helper functions, so -lpcc is not needed */
-#define LIBCLIBS		{		\
-	"-lc",					\
-	NULL					\
-}
-
-/* C run-time startup */
-#define CRT0FILE		LIBDIR "crt0.o"
-#define STARTLABEL		"__start"
+#define CRTEND_T	"crtend.o"
+#define DEFLIBS		{ "-lc", NULL }
 
 /* === md part === */
 

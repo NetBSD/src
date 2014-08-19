@@ -1,7 +1,7 @@
 /* Function declarations for libiberty.
 
    Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
    
    Note - certain prototypes declared in this header file are for
    functions whoes implementation copyright does not belong to the
@@ -91,6 +91,10 @@ extern void expandargv PARAMS ((int *, char ***));
 
 extern int writeargv PARAMS ((char **, FILE *));
 
+/* Return the number of elements in argv.  */
+
+extern int countargv (char**);
+
 /* Return the last component of a path name.  Note that we can't use a
    prototype here because the parameter is declared inconsistently
    across different systems, sometimes as "char *" and sometimes as
@@ -115,6 +119,17 @@ extern char *basename (const char *);
 /* A well-defined basename () that is always compiled in.  */
 
 extern const char *lbasename (const char *);
+
+/* Same, but assumes DOS semantics (drive name, backslash is also a
+   dir separator) regardless of host.  */
+
+extern const char *dos_lbasename (const char *);
+
+/* Same, but assumes Unix semantics (absolute paths always start with
+   a slash, only forward slash is accepted as dir separator)
+   regardless of host.  */
+
+extern const char *unix_lbasename (const char *);
 
 /* A well-defined realpath () that is always compiled in.  */
 
@@ -622,6 +637,12 @@ extern int vsnprintf (char *, size_t, const char *, va_list) ATTRIBUTE_PRINTF(3,
 /* Compare version strings.  */
 extern int strverscmp (const char *, const char *);
 #endif
+
+/* Set the title of a process */
+extern void setproctitle (const char *name, ...);
+
+/* Increase stack limit if possible.  */
+extern void stack_limit_increase (unsigned long);
 
 #define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 

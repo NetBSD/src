@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2002  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,10 +18,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named-checkzone.docbook,v 1.44 2011/12/22 07:32:39 each Exp  -->
 <refentry id="man.named-checkzone">
   <refentryinfo>
-    <date>June 13, 2000</date>
+    <date>February 19, 2014</date>
   </refentryinfo>
 
   <refmeta>
@@ -39,6 +38,9 @@
       <year>2009</year>
       <year>2010</year>
       <year>2011</year>
+      <year>2012</year>
+      <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -66,17 +68,20 @@
       <arg><option>-c <replaceable class="parameter">class</replaceable></option></arg>
       <arg><option>-f <replaceable class="parameter">format</replaceable></option></arg>
       <arg><option>-F <replaceable class="parameter">format</replaceable></option></arg>
+      <arg><option>-J <replaceable class="parameter">filename</replaceable></option></arg>
       <arg><option>-i <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-k <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-m <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-M <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-n <replaceable class="parameter">mode</replaceable></option></arg>
+      <arg><option>-l <replaceable class="parameter">ttl</replaceable></option></arg>
       <arg><option>-L <replaceable class="parameter">serial</replaceable></option></arg>
       <arg><option>-o <replaceable class="parameter">filename</replaceable></option></arg>
       <arg><option>-r <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-s <replaceable class="parameter">style</replaceable></option></arg>
       <arg><option>-S <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg><option>-T <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-w <replaceable class="parameter">directory</replaceable></option></arg>
       <arg><option>-D</option></arg>
       <arg><option>-W <replaceable class="parameter">mode</replaceable></option></arg>
@@ -93,14 +98,17 @@
       <arg><option>-C <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-f <replaceable class="parameter">format</replaceable></option></arg>
       <arg><option>-F <replaceable class="parameter">format</replaceable></option></arg>
+      <arg><option>-J <replaceable class="parameter">filename</replaceable></option></arg>
       <arg><option>-i <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-k <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-m <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-n <replaceable class="parameter">mode</replaceable></option></arg>
+      <arg><option>-l <replaceable class="parameter">ttl</replaceable></option></arg>
       <arg><option>-L <replaceable class="parameter">serial</replaceable></option></arg>
       <arg><option>-r <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-s <replaceable class="parameter">style</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg><option>-T <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-w <replaceable class="parameter">directory</replaceable></option></arg>
       <arg><option>-D</option></arg>
       <arg><option>-W <replaceable class="parameter">mode</replaceable></option></arg>
@@ -176,7 +184,19 @@
         <term>-j</term>
         <listitem>
           <para>
-            When loading the zone file read the journal if it exists.
+            When loading a zone file, read the journal if it exists.
+            The journal file name is assumed to be the zone file name
+	    appended with the string <filename>.jnl</filename>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-J <replaceable class="parameter">filename</replaceable></term>
+        <listitem>
+          <para>
+            When loading the zone file read the journal from the given
+            file, if it exists. (Implies -j.)
           </para>
         </listitem>
       </varlistentry>
@@ -239,8 +259,8 @@
 	<listitem>
 	  <para>
 	    Specify the format of the zone file.
-	    Possible formats are <command>"text"</command> (default)
-	    and <command>"raw"</command>.
+	    Possible formats are <command>"text"</command> (default),
+	    <command>"raw"</command>, and <command>"map"</command>.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -255,14 +275,15 @@
 	    contents.
 	  </para>
 	  <para>
-	    Possible formats are <command>"text"</command> (default)
-	    and <command>"raw"</command> or <command>"raw=N"</command>,
-            which store the zone in a binary format for rapid loading
-            by <command>named</command>.  <command>"raw=N"</command>
-            specifies the format version of the raw zone file: if N
-            is 0, the raw file can be read by any version of
-            <command>named</command>; if N is 1, the file can be read
-            by release 9.9.0 or higher.  The default is 1.
+	    Possible formats are <command>"text"</command> (default),
+	    which is the standard textual representation of the zone,
+	    and <command>"map"</command>, <command>"raw"</command>,
+            and <command>"raw=N"</command>, which store the zone in a
+            binary format for rapid loading by <command>named</command>.
+            <command>"raw=N"</command> specifies the format version of
+            the raw zone file: if N is 0, the raw file can be read by
+            any version of <command>named</command>; if N is 1, the file
+            can be read by release 9.9.0 or higher; the default is 1.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -283,12 +304,26 @@
       </varlistentry>
 
       <varlistentry>
+        <term>-l <replaceable class="parameter">ttl</replaceable></term>
+        <listitem>
+          <para>
+            Sets a maximum permissible TTL for the input file.
+            Any record with a TTL higher than this value will cause
+            the zone to be rejected.  This is similar to using the
+            <command>max-zone-ttl</command> option in
+            <filename>named.conf</filename>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>-L <replaceable class="parameter">serial</replaceable></term>
         <listitem>
           <para>
-            When compiling a zone to 'raw' format, set the "source serial" 
-            value in the header to the specified serial number.  (This is
-            expected to be used primarily for testing purposes.)
+            When compiling a zone to "raw" or "map" format, set the
+            "source serial" value in the header to the specified serial
+            number.  (This is expected to be used primarily for testing
+            purposes.)
           </para>
         </listitem>
       </varlistentry>
@@ -399,6 +434,18 @@
             run by a similarly chrooted named.
           </para>
         </listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-T <replaceable class="parameter">mode</replaceable></term>
+	<listitem>
+	  <para>
+	    Check if Sender Policy Framework records (TXT and SPF)
+	    both exist or both don't exist.  A warning is issued
+	    if they don't match.  Possible modes are
+	    <command>"warn"</command> (default), <command>"ignore"</command>.
+	  </para>
+	</listitem>
       </varlistentry>
 
       <varlistentry>

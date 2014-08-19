@@ -204,6 +204,8 @@ CONFIG_EAP_LEAP=y
 # Disable credentials for an open network by default when acting as a WPS
 # registrar.
 #CONFIG_WPS_REG_DISABLE_OPEN=y
+# Enable WPS support with NFC config method
+#CONFIG_WPS_NFC=y
 
 # EAP-IKEv2
 #CONFIG_EAP_IKEV2=y
@@ -220,6 +222,9 @@ CONFIG_SMARTCARD=y
 # Enable this if EAP-SIM or EAP-AKA is included
 #CONFIG_PCSC=y
 
+# Support HT overrides (disable HT/HT40, mask MCS rates, etc.)
+#CONFIG_HT_OVERRIDES=y
+
 # Development testing
 #CONFIG_EAPOL_TEST=y
 
@@ -227,6 +232,7 @@ CONFIG_SMARTCARD=y
 # unix = UNIX domain sockets (default for Linux/*BSD)
 # udp = UDP sockets using localhost (127.0.0.1)
 # named_pipe = Windows Named Pipe (default for Windows)
+# udp-remote = UDP sockets with remote access (only for tests systems/purpose)
 # y = use default (backwards compatibility)
 # If this option is commented out, control interface is not included in the
 # build.
@@ -303,6 +309,9 @@ CONFIG_BACKEND=file
 # eloop_none = Empty template
 #CONFIG_ELOOP=eloop
 
+# Should we use poll instead of select? Select is used by default.
+#CONFIG_ELOOP_POLL=y
+
 # Select layer 2 packet implementation
 # linux = Linux packet socket (default)
 # pcap = libpcap/libdnet/WinPcap
@@ -315,9 +324,7 @@ CONFIG_BACKEND=file
 # PeerKey handshake for Station to Station Link (IEEE 802.11e DLS)
 CONFIG_PEERKEY=y
 
-# IEEE 802.11w (management frame protection)
-# This version is an experimental implementation based on IEEE 802.11w/D1.0
-# draft and is subject to change since the standard has not yet been finalized.
+# IEEE 802.11w (management frame protection), also known as PMF
 # Driver support is also needed for IEEE 802.11w.
 #CONFIG_IEEE80211W=y
 
@@ -334,6 +341,13 @@ CONFIG_PEERKEY=y
 # implementation may not be compatible with TLS v1.1 message (ClientHello is
 # sent prior to negotiating which version will be used)
 #CONFIG_TLSV11=y
+
+# TLS-based EAP methods require at least TLS v1.0. Newer version of TLS (v1.2)
+# can be enabled to enable use of stronger crypto algorithms. It should be
+# noted that some existing TLS v1.0 -based implementation may not be compatible
+# with TLS v1.2 message (ClientHello is sent prior to negotiating which version
+# will be used)
+#CONFIG_TLSV12=y
 
 # If CONFIG_TLS=internal is used, additional library and include paths are
 # needed for LibTomMath. Alternatively, an integrated, minimal version of
@@ -400,6 +414,12 @@ CONFIG_PEERKEY=y
 # Set syslog facility for debug messages
 #CONFIG_DEBUG_SYSLOG_FACILITY=LOG_DAEMON
 
+# Add support for sending all debug messages (regardless of debug verbosity)
+# to the Linux kernel tracing facility. This helps debug the entire stack by
+# making it easy to record everything happening from the driver up into the
+# same file, e.g., using trace-cmd.
+#CONFIG_DEBUG_LINUX_TRACING=y
+
 # Enable privilege separation (see README 'Privilege separation' for details)
 #CONFIG_PRIVSEP=y
 
@@ -459,8 +479,45 @@ CONFIG_PEERKEY=y
 # IEEE 802.11n (High Throughput) support (mainly for AP mode)
 #CONFIG_IEEE80211N=y
 
+# Wireless Network Management (IEEE Std 802.11v-2011)
+# Note: This is experimental and not complete implementation.
+#CONFIG_WNM=y
+
 # Interworking (IEEE 802.11u)
 # This can be used to enable functionality to improve interworking with
 # external networks (GAS/ANQP to learn more about the networks and network
 # selection based on available credentials).
 #CONFIG_INTERWORKING=y
+
+# Hotspot 2.0
+#CONFIG_HS20=y
+
+# AP mode operations with wpa_supplicant
+# This can be used for controlling AP mode operations with wpa_supplicant. It
+# should be noted that this is mainly aimed at simple cases like
+# WPA2-Personal while more complex configurations like WPA2-Enterprise with an
+# external RADIUS server can be supported with hostapd.
+#CONFIG_AP=y
+
+# P2P (Wi-Fi Direct)
+# This can be used to enable P2P support in wpa_supplicant. See README-P2P for
+# more information on P2P operations.
+#CONFIG_P2P=y
+
+# Autoscan
+# This can be used to enable automatic scan support in wpa_supplicant.
+# See wpa_supplicant.conf for more information on autoscan usage.
+#
+# Enabling directly a module will enable autoscan support.
+# For exponential module:
+#CONFIG_AUTOSCAN_EXPONENTIAL=y
+# For periodic module:
+#CONFIG_AUTOSCAN_PERIODIC=y
+
+# Password (and passphrase, etc.) backend for external storage
+# These optional mechanisms can be used to add support for storing passwords
+# and other secrets in external (to wpa_supplicant) location. This allows, for
+# example, operating system specific key storage to be used
+#
+# External password backend for testing purposes (developer use)
+#CONFIG_EXT_PASSWORD_TEST=y

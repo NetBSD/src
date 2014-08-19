@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/preamble.sdf,v 1.70.2.11 2010/04/13 20:22:32 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
  
 #
@@ -55,7 +55,7 @@
 <P>
 <FONT COLOR="#808080" FACE="Arial,Verdana,Helvetica" SIZE="1"><B>
 ________________<BR>
-<SMALL>&copy; Copyright 2008, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
+<SMALL>&copy; Copyright 2011, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
 
 	!endblock
 !endmacro
@@ -91,7 +91,7 @@ ________________<BR>
 <P>
 <FONT COLOR="#808080" FACE="Arial,Verdana,Helvetica" SIZE="1"><B>
 ________________<BR>
-<SMALL>&copy; Copyright 2008, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
+<SMALL>&copy; Copyright 2011, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
 
 	!endblock
 !endmacro
@@ -128,14 +128,15 @@ UMLDAP|University of Michigan LDAP Team|http://www.umich.edu/~dirsvcs/ldap/ldap.
 !block products; data; sort='Name'
 Name|Jump
 Berkeley DB|http://www.oracle.com/database/berkeley-db/db/index.html
-CVS|http://www.cvshome.org/
 Cyrus|http://cyrusimap.web.cmu.edu/generalinfo.html
 Cyrus SASL|http://asg.web.cmu.edu/sasl/sasl-library.html
+Git|http://git-scm.com/
 GNU|http://www.gnu.org/software/
 GnuTLS|http://www.gnu.org/software/gnutls/
 Heimdal|http://www.pdc.kth.se/heimdal/
 JLDAP|http://www.openldap.org/jldap/
 MIT Kerberos|http://web.mit.edu/kerberos/www/
+MozNSS|http://developer.mozilla.org/en/NSS
 OpenLDAP|http://www.openldap.org/
 OpenLDAP FAQ|http://www.openldap.org/faq/
 OpenLDAP ITS|http://www.openldap.org/its/
@@ -222,6 +223,7 @@ LDAP|Lightweight Directory Access Protocol
 LDAP Sync|LDAP Content Synchronization
 LDAPv3|LDAP, version 3
 LDIF|LDAP Data Interchange Format
+LMDB|Lightning Memory-Mapped Database
 MD5|Message Digest 5
 MIB|Management Information Base
 MODDN|Modify DN
@@ -307,4 +309,5 @@ RFC4518|PS|Lightweight Directory Access Protocol (LDAP): Internationalized Strin
 RFC4519|PS|Lightweight Directory Access Protocol (LDAP): Schema for User Applications|http://www.rfc-editor.org/rfc/rfc4519.txt
 RFC4520|BCP|IANA Considerations for LDAP|http://www.rfc-editor.org/rfc/rfc4520.txt
 RFC4533|X|The Lightweight Directory Access Protocol (LDAP) Content Synchronization Operation|http://www.rfc-editor.org/rfc/rfc4533.txt
+Chu-LDAPI|ID|Using LDAP Over IPC Mechanisms|http://tools.ietf.org/html/draft-chu-ldap-ldapi-00
 !endblock

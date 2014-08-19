@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2012 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -85,6 +85,12 @@
 #include "rdata/generic/hip_55.c"
 #include "rdata/generic/spf_99.c"
 #include "rdata/generic/unspec_103.c"
+#include "rdata/generic/nid_104.c"
+#include "rdata/generic/l32_105.c"
+#include "rdata/generic/l64_106.c"
+#include "rdata/generic/lp_107.c"
+#include "rdata/generic/eui48_108.c"
+#include "rdata/generic/eui64_109.c"
 #include "rdata/generic/tkey_249.c"
 #include "rdata/any_255/tsig_250.c"
 #include "rdata/generic/uri_256.c"
@@ -192,6 +198,12 @@
 	case 55: result = fromtext_hip(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 99: result = fromtext_spf(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 103: result = fromtext_unspec(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 104: result = fromtext_nid(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 105: result = fromtext_l32(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 106: result = fromtext_l64(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 107: result = fromtext_lp(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 108: result = fromtext_eui48(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 109: result = fromtext_eui64(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 249: result = fromtext_tkey(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 250: switch (rdclass) { \
 		case 255: result = fromtext_any_tsig(rdclass, type, lexer, origin, options, target, callbacks); break; \
@@ -303,6 +315,12 @@
 	case 55: result = totext_hip(rdata, tctx, target); break; \
 	case 99: result = totext_spf(rdata, tctx, target); break; \
 	case 103: result = totext_unspec(rdata, tctx, target); break; \
+	case 104: result = totext_nid(rdata, tctx, target); break; \
+	case 105: result = totext_l32(rdata, tctx, target); break; \
+	case 106: result = totext_l64(rdata, tctx, target); break; \
+	case 107: result = totext_lp(rdata, tctx, target); break; \
+	case 108: result = totext_eui48(rdata, tctx, target); break; \
+	case 109: result = totext_eui64(rdata, tctx, target); break; \
 	case 249: result = totext_tkey(rdata, tctx, target); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = totext_any_tsig(rdata, tctx, target); break; \
@@ -414,6 +432,12 @@
 	case 55: result = fromwire_hip(rdclass, type, source, dctx, options, target); break; \
 	case 99: result = fromwire_spf(rdclass, type, source, dctx, options, target); break; \
 	case 103: result = fromwire_unspec(rdclass, type, source, dctx, options, target); break; \
+	case 104: result = fromwire_nid(rdclass, type, source, dctx, options, target); break; \
+	case 105: result = fromwire_l32(rdclass, type, source, dctx, options, target); break; \
+	case 106: result = fromwire_l64(rdclass, type, source, dctx, options, target); break; \
+	case 107: result = fromwire_lp(rdclass, type, source, dctx, options, target); break; \
+	case 108: result = fromwire_eui48(rdclass, type, source, dctx, options, target); break; \
+	case 109: result = fromwire_eui64(rdclass, type, source, dctx, options, target); break; \
 	case 249: result = fromwire_tkey(rdclass, type, source, dctx, options, target); break; \
 	case 250: switch (rdclass) { \
 		case 255: result = fromwire_any_tsig(rdclass, type, source, dctx, options, target); break; \
@@ -525,6 +549,12 @@
 	case 55: result = towire_hip(rdata, cctx, target); break; \
 	case 99: result = towire_spf(rdata, cctx, target); break; \
 	case 103: result = towire_unspec(rdata, cctx, target); break; \
+	case 104: result = towire_nid(rdata, cctx, target); break; \
+	case 105: result = towire_l32(rdata, cctx, target); break; \
+	case 106: result = towire_l64(rdata, cctx, target); break; \
+	case 107: result = towire_lp(rdata, cctx, target); break; \
+	case 108: result = towire_eui48(rdata, cctx, target); break; \
+	case 109: result = towire_eui64(rdata, cctx, target); break; \
 	case 249: result = towire_tkey(rdata, cctx, target); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = towire_any_tsig(rdata, cctx, target); break; \
@@ -636,6 +666,12 @@
 	case 55: result = compare_hip(rdata1, rdata2); break; \
 	case 99: result = compare_spf(rdata1, rdata2); break; \
 	case 103: result = compare_unspec(rdata1, rdata2); break; \
+	case 104: result = compare_nid(rdata1, rdata2); break; \
+	case 105: result = compare_l32(rdata1, rdata2); break; \
+	case 106: result = compare_l64(rdata1, rdata2); break; \
+	case 107: result = compare_lp(rdata1, rdata2); break; \
+	case 108: result = compare_eui48(rdata1, rdata2); break; \
+	case 109: result = compare_eui64(rdata1, rdata2); break; \
 	case 249: result = compare_tkey(rdata1, rdata2); break; \
 	case 250: switch (rdata1->rdclass) { \
 		case 255: result = compare_any_tsig(rdata1, rdata2); break; \
@@ -747,6 +783,12 @@
 	case 55: result = casecompare_hip(rdata1, rdata2); break; \
 	case 99: result = casecompare_spf(rdata1, rdata2); break; \
 	case 103: result = casecompare_unspec(rdata1, rdata2); break; \
+	case 104: result = casecompare_nid(rdata1, rdata2); break; \
+	case 105: result = casecompare_l32(rdata1, rdata2); break; \
+	case 106: result = casecompare_l64(rdata1, rdata2); break; \
+	case 107: result = casecompare_lp(rdata1, rdata2); break; \
+	case 108: result = casecompare_eui48(rdata1, rdata2); break; \
+	case 109: result = casecompare_eui64(rdata1, rdata2); break; \
 	case 249: result = casecompare_tkey(rdata1, rdata2); break; \
 	case 250: switch (rdata1->rdclass) { \
 		case 255: result = casecompare_any_tsig(rdata1, rdata2); break; \
@@ -858,6 +900,12 @@
 	case 55: result = fromstruct_hip(rdclass, type, source, target); break; \
 	case 99: result = fromstruct_spf(rdclass, type, source, target); break; \
 	case 103: result = fromstruct_unspec(rdclass, type, source, target); break; \
+	case 104: result = fromstruct_nid(rdclass, type, source, target); break; \
+	case 105: result = fromstruct_l32(rdclass, type, source, target); break; \
+	case 106: result = fromstruct_l64(rdclass, type, source, target); break; \
+	case 107: result = fromstruct_lp(rdclass, type, source, target); break; \
+	case 108: result = fromstruct_eui48(rdclass, type, source, target); break; \
+	case 109: result = fromstruct_eui64(rdclass, type, source, target); break; \
 	case 249: result = fromstruct_tkey(rdclass, type, source, target); break; \
 	case 250: switch (rdclass) { \
 		case 255: result = fromstruct_any_tsig(rdclass, type, source, target); break; \
@@ -969,6 +1017,12 @@
 	case 55: result = tostruct_hip(rdata, target, mctx); break; \
 	case 99: result = tostruct_spf(rdata, target, mctx); break; \
 	case 103: result = tostruct_unspec(rdata, target, mctx); break; \
+	case 104: result = tostruct_nid(rdata, target, mctx); break; \
+	case 105: result = tostruct_l32(rdata, target, mctx); break; \
+	case 106: result = tostruct_l64(rdata, target, mctx); break; \
+	case 107: result = tostruct_lp(rdata, target, mctx); break; \
+	case 108: result = tostruct_eui48(rdata, target, mctx); break; \
+	case 109: result = tostruct_eui64(rdata, target, mctx); break; \
 	case 249: result = tostruct_tkey(rdata, target, mctx); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = tostruct_any_tsig(rdata, target, mctx); break; \
@@ -1080,6 +1134,12 @@
 	case 55: freestruct_hip(source); break; \
 	case 99: freestruct_spf(source); break; \
 	case 103: freestruct_unspec(source); break; \
+	case 104: freestruct_nid(source); break; \
+	case 105: freestruct_l32(source); break; \
+	case 106: freestruct_l64(source); break; \
+	case 107: freestruct_lp(source); break; \
+	case 108: freestruct_eui48(source); break; \
+	case 109: freestruct_eui64(source); break; \
 	case 249: freestruct_tkey(source); break; \
 	case 250: switch (common->rdclass) { \
 		case 255: freestruct_any_tsig(source); break; \
@@ -1191,6 +1251,12 @@
 	case 55: result = additionaldata_hip(rdata, add, arg); break; \
 	case 99: result = additionaldata_spf(rdata, add, arg); break; \
 	case 103: result = additionaldata_unspec(rdata, add, arg); break; \
+	case 104: result = additionaldata_nid(rdata, add, arg); break; \
+	case 105: result = additionaldata_l32(rdata, add, arg); break; \
+	case 106: result = additionaldata_l64(rdata, add, arg); break; \
+	case 107: result = additionaldata_lp(rdata, add, arg); break; \
+	case 108: result = additionaldata_eui48(rdata, add, arg); break; \
+	case 109: result = additionaldata_eui64(rdata, add, arg); break; \
 	case 249: result = additionaldata_tkey(rdata, add, arg); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = additionaldata_any_tsig(rdata, add, arg); break; \
@@ -1302,6 +1368,12 @@
 	case 55: result = digest_hip(rdata, digest, arg); break; \
 	case 99: result = digest_spf(rdata, digest, arg); break; \
 	case 103: result = digest_unspec(rdata, digest, arg); break; \
+	case 104: result = digest_nid(rdata, digest, arg); break; \
+	case 105: result = digest_l32(rdata, digest, arg); break; \
+	case 106: result = digest_l64(rdata, digest, arg); break; \
+	case 107: result = digest_lp(rdata, digest, arg); break; \
+	case 108: result = digest_eui48(rdata, digest, arg); break; \
+	case 109: result = digest_eui64(rdata, digest, arg); break; \
 	case 249: result = digest_tkey(rdata, digest, arg); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = digest_any_tsig(rdata, digest, arg); break; \
@@ -1413,6 +1485,12 @@
 	case 55: result = checkowner_hip(name, rdclass, type, wildcard); break; \
 	case 99: result = checkowner_spf(name, rdclass, type, wildcard); break; \
 	case 103: result = checkowner_unspec(name, rdclass, type, wildcard); break; \
+	case 104: result = checkowner_nid(name, rdclass, type, wildcard); break; \
+	case 105: result = checkowner_l32(name, rdclass, type, wildcard); break; \
+	case 106: result = checkowner_l64(name, rdclass, type, wildcard); break; \
+	case 107: result = checkowner_lp(name, rdclass, type, wildcard); break; \
+	case 108: result = checkowner_eui48(name, rdclass, type, wildcard); break; \
+	case 109: result = checkowner_eui64(name, rdclass, type, wildcard); break; \
 	case 249: result = checkowner_tkey(name, rdclass, type, wildcard); break; \
 	case 250: switch (rdclass) { \
 		case 255: result = checkowner_any_tsig(name, rdclass, type, wildcard); break; \
@@ -1524,6 +1602,12 @@
 	case 55: result = checknames_hip(rdata, owner, bad); break; \
 	case 99: result = checknames_spf(rdata, owner, bad); break; \
 	case 103: result = checknames_unspec(rdata, owner, bad); break; \
+	case 104: result = checknames_nid(rdata, owner, bad); break; \
+	case 105: result = checknames_l32(rdata, owner, bad); break; \
+	case 106: result = checknames_l64(rdata, owner, bad); break; \
+	case 107: result = checknames_lp(rdata, owner, bad); break; \
+	case 108: result = checknames_eui48(rdata, owner, bad); break; \
+	case 109: result = checknames_eui64(rdata, owner, bad); break; \
 	case 249: result = checknames_tkey(rdata, owner, bad); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = checknames_any_tsig(rdata, owner, bad); break; \
@@ -1619,6 +1703,7 @@
 			break; \
 		case 140: \
 			RDATATYPE_COMPARE("nsap-ptr", 23, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("l64", 106, _typename, _length, _typep); \
 			break; \
 		case 122: \
 			RDATATYPE_COMPARE("sig", 24, _typename, _length, _typep); \
@@ -1666,6 +1751,7 @@
 			break; \
 		case 48: \
 			RDATATYPE_COMPARE("apl", 42, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("eui48", 108, _typename, _length, _typep); \
 			break; \
 		case 210: \
 			RDATATYPE_COMPARE("ds", 43, _typename, _length, _typep); \
@@ -1706,6 +1792,18 @@
 			break; \
 		case 145: \
 			RDATATYPE_COMPARE("unspec", 103, _typename, _length, _typep); \
+			break; \
+		case 36: \
+			RDATATYPE_COMPARE("nid", 104, _typename, _length, _typep); \
+			break; \
+		case 174: \
+			RDATATYPE_COMPARE("l32", 105, _typename, _length, _typep); \
+			break; \
+		case 32: \
+			RDATATYPE_COMPARE("lp", 107, _typename, _length, _typep); \
+			break; \
+		case 136: \
+			RDATATYPE_COMPARE("eui64", 109, _typename, _length, _typep); \
 			break; \
 		case 184: \
 			RDATATYPE_COMPARE("tkey", 249, _typename, _length, _typep); \
@@ -1793,6 +1891,12 @@
 	case 101: return (DNS_RDATATYPEATTR_RESERVED); \
 	case 102: return (DNS_RDATATYPEATTR_RESERVED); \
 	case 103: return (RRTYPE_UNSPEC_ATTRIBUTES); \
+	case 104: return (RRTYPE_NID_ATTRIBUTES); \
+	case 105: return (RRTYPE_L32_ATTRIBUTES); \
+	case 106: return (RRTYPE_L64_ATTRIBUTES); \
+	case 107: return (RRTYPE_LP_ATTRIBUTES); \
+	case 108: return (RRTYPE_EUI48_ATTRIBUTES); \
+	case 109: return (RRTYPE_EUI64_ATTRIBUTES); \
 	case 249: return (RRTYPE_TKEY_ATTRIBUTES); \
 	case 250: return (RRTYPE_TSIG_ATTRIBUTES); \
 	case 251: return (DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY); \
@@ -1864,6 +1968,12 @@
 	case 101: return (str_totext("UID", target)); \
 	case 102: return (str_totext("GID", target)); \
 	case 103: return (str_totext("UNSPEC", target)); \
+	case 104: return (str_totext("NID", target)); \
+	case 105: return (str_totext("L32", target)); \
+	case 106: return (str_totext("L64", target)); \
+	case 107: return (str_totext("LP", target)); \
+	case 108: return (str_totext("EUI48", target)); \
+	case 109: return (str_totext("EUI64", target)); \
 	case 249: return (str_totext("TKEY", target)); \
 	case 250: return (str_totext("TSIG", target)); \
 	case 251: return (str_totext("IXFR", target)); \
@@ -1873,6 +1983,5 @@
 	case 255: return (str_totext("ANY", target)); \
 	case 256: return (str_totext("URI", target)); \
 	case 32769: return (str_totext("DLV", target)); \
-	case 65533: return (str_totext("KEYDATA", target)); \
 	}
 #endif /* DNS_CODE_H */

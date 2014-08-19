@@ -23,17 +23,19 @@ Idx Name          Size      VMA       LMA       File off  Algn
   1 .tbss         0+8  0+82084  0+82084  0+84  2\*\*2
                   ALLOC, THREAD_LOCAL
 SYMBOL TABLE:
-0+80074 l    d  .text	0+ .text
-0+82084 l    d  .tbss	0+ .tbss
-0+80078 l     F .text	0+c do_test
-0+80074 g       .text	0+ _start
-0+82084 g       \*ABS\*	0+ __bss_start
-0+ g       .tbss	0+4 foo
-0+82084 g       \*ABS\*	0+ _edata
-0+820a0 g       \*ABS\*	0+ _end
-0+4 g       .tbss	0+4 bar
+0+80074 l    d  \.text	0+ \.text
+0+82084 l    d  \.tbss	0+ \.tbss
+0+ l    df \*ABS\*	0+ .*
+0+80078 l     F \.text	0+c do_test
+0+ l    df \*ABS\*	0+ .*
+0+80074 g       \.text	0+ _start
+0+82084 g       \.text	0+ __bss_start
+0+ g       \.tbss	0+4 foo
+0+82084 g       \.text	0+ _edata
+0+820a0 g       \.text	0+ _end
+0+4 g       \.tbss	0+4 bar
 #...
-Disassembly of section .text:
+Disassembly of section \.text:
 
 00080074 <_start>:
    80074:	41b2                	moveq 1,\$r11

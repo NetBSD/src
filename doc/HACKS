@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.123.2.3 2013/06/23 06:26:21 tls Exp $
+# $NetBSD: HACKS,v 1.123.2.4 2014/08/19 23:45:49 tls Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -280,6 +280,17 @@ descr
 	-fno-strict-aliasing.
 kcah
 
+hack	disable ctf for gcc-4.8 build
+mdate	April 3 2014
+who	christos
+file	external/gpl3/gcc/usr.bin/Makefile.frontend	: 1.4
+file	external/gpl3/gcc/usr.bin/Makefile.backend	: 1.5
+descr
+	nbctfconvert -g -L VERSION -g fold-const.o
+	ERROR: fold-const.c: failed to get mapping for tid 79154 \
+		((null)) <13532>
+kcak
+
 hack	emacs aborting on exit (libgcc issue)
 mdate	7 November 2011
 who	christos
@@ -341,6 +352,33 @@ pr	N/A
 descr
 	fixed in binutils-2.20.1. Linking with MKPIE=yes causes overlapping
 	sections
+kcah
+
+hack	Disable fortification for /usr/bin/makeinfo
+cdata	24 Mar 2014
+who	tron
+file	src/gnu/usr.bin/texinfo/makeinfo/Makefile	: 1.8
+pr	N/A
+descr
+	If "makeinfo" is compiled with "-D_FORTIFY_SOURCE=2" using GCC 4.8.3
+	it fails to process certain texinfo files, e.g. "cl.texi"
+	included in the Emacs 24.3 distribution.
+kcah
+
+hack	Disable Stack Smash Protection for /usr/X11R7/bin/xauth
+cdata	05 Apr 2014
+who	tron
+file	src/external/mit/xorg/bin/xauth/Makefile	: 1.4
+pr	N/A
+descr
+	If "xauth" is compile with "USE_SSP" set to "yes" it fails
+	mysteriously with an error message like this:
+
+	/usr/X11R7/bin/xauth:  file /foo/bar/.Xauthority does not exist
+	/usr/X11R7/bin/xauth:  unable to link authority file /foo/bar/.Xauthority, use /foo/bar/.Xauthority
+
+	The compiler seems to get confused about the two filename variables
+	used in the link(2) system call.
 kcah
 
 port	vax
@@ -517,6 +555,55 @@ port	vax
 		Many filesystem on-disk formats have 32 bit times.
 	kcah
 
+	hack	gcc 4.5 fsdb miscompile
+	date	Sat Nov  9 11:03:02 EST 2013
+	who	christos
+	file	src/sbin/fsdb/Makefile : 1.36 (and earlier)
+	descr
+		src/sbin/fsdb/fsdb.c: In function 'findblk':
+		src/sbin/fsdb/fsdb.c:610:1: error: unrecognizable insn:
+		(insn 941 940 942 134 src/sbin/fsdb/fsdb.c:589 (set (reg:SI 604)
+		    (subreg:SI (mem/s/j:DI (plus:SI (mult:SI (reg:SI 602)
+                        (const_int 8 [0x8]))
+                    (reg/f:SI 601)) [0 curinode.99_378->dp2.di_ib S8 A32]) 4)) \
+			-1 (nil))
+		src/sbin/fsdb/fsdb.c:610:1: internal compiler error: in \
+		extract_insn, at recog.c:2103
+	kcah
+
+	hack	gcc 4.8 gcc miscompiles
+	date	Sat Nov  9 16:35:18 EST 2013
+	who	christos
+	file	distrib/utils/x_ping/Makefile
+	file	distrib/vax/miniroot/Makefile.inc
+	file	distrib/vax/ramdisk/Makefile
+	file	external/gpl3/gdb/lib/libdecnumber/Makefile
+	file	sbin/fsdb/Makefile
+	file	sbin/newfs_ext2fs/Makefile
+	file	sbin/ping/Makefile
+	file	usr.sbin/lmcconfig/Makefile
+	file	usr.sbin/mtrace/Makefile
+	descr
+		external/gpl3/gcc/dist/gcc/expmed.c:2781:1:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
+		external/gpl3/gcc/dist/gcc/recog.c:770:1:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
+		external/gpl3/gcc/dist/libdecnumber/decNumber.c:7214:3:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
+		sbin/ping/ping.c:679:1:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
+		sbin/newfs_ext2fs/mke2fs.c:681:1:
+		internal compiler error: in reload_combine_note_use,
+		at postreload.c:1561
+		external/gpl3/gdb/dist/libdecnumber/decNumber.c:7214:3:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
+		usr.sbin/lmcconfig/lmcconfig.c:939:3:
+		internal compiler error: in reload_combine_note_use,
+		at postreload.c:1561
+		usr.sbin/mtrace/mtrace.c:1655:1:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
+	kcah
+
 port	arm
 
 	hack	gcc-unsigned-compare
@@ -586,6 +673,46 @@ port	sh3
 		-fno-loop-optimize.
 	kcah
 
+port	sh3eb
+	hack	gcc4.8.1
+	cdate	Thu Nov  7 16:31:23 EST 2013
+	who	christos
+	file	src/sys/rump/net/lib/libnetbt/Makefile	: 1.2
+	desrc
+		for profiling
+		compile l2cap_signal.c with -O0 to avoid:
+		./netbt/l2cap_signal.c:36:
+		/p/netbsd/cvsroot/src/sys/rump/net/lib/libnetbt/../../../../\
+		netbt/l2cap_signal.c: In function 'l2cap_recv_signal':
+		./sh3/byte_swap.h:20:2: error: 'asm' operand requires \
+		impossible reload
+		  __asm volatile ("swap.b %1,%0" : "=r"(rval) : "r"(x));
+	kcah
+
+port	sh3el
+	hack	gcc4.8.1
+	cdate	Fri Nov  8 19:27:01 EST 2013
+	who	christos
+	file	src/external/bsd/libevent/lib/libevent/Makefile	: 1.2
+	desrc
+		for profiling
+		compile evdns.c with -O0 to avoid:
+		./sh3/byte_swap.h:20:2: error: 'asm' operand requires \
+		impossible reload
+		  __asm volatile ("swap.b %1,%0" : "=r"(rval) : "r"(x));
+	kcah
+	
+	hack	gcc4.8.1
+	cdate	Fri Nov  8 19:34:48 EST 2013
+	who	christos
+	file	src/usr.sbin/racoon/Makefile	: 1.27
+	desrc
+		for profiling
+		compile ipsec_doi.c with -O0 to avoid:
+		./sh3/byte_swap.h:20:2: error: 'asm' operand requires \
+		impossible reload
+		  __asm volatile ("swap.b %1,%0" : "=r"(rval) : "r"(x));
+	kcah
 
 port	m68000
 
@@ -607,6 +734,17 @@ port	m68000
 		This might be related with GCC Bugzilla Bug 32424.
 	kcah
 
+port	m68k,sh3,vax
+
+	hack	gcc-4.8.1
+	cdate	Wed Nov  6 20:41:35 EST 2013
+	who	christos
+	file	src/external/gpl3/gcc/libstdc++-v3/Makefile : 1.6
+	descr
+		compile hashtable_c++0x.cc with -O2 instead of -Os to
+		produce missing instantiation of std::lower_bound expansion
+		for unsigned long.
+	kcah
 
 port	sparc
 
@@ -676,6 +814,18 @@ port	i386
 		gcc-4 does subsequent operations on "float" values within
 		the i387 FPU without rounding the intermediate results
 	kcah
+
+port	x86
+	hack	turn off optimization for biosdisk_ll.c because otherwise
+		we are pass the wrong arguments to biosdisk_read(). 
+		$ cd /usr/src/sys/arch/i386/floppies/bootflopp-com
+		$ qemu-system-i386 -nographic -fda boot-com1.fs -boot a
+	who	christos
+	file	src/sys/arch/i386/stand/lib/Makefile : 1.38
+	descr
+		Turning on DISK_DEBUG shows the problem. We should find
+		out which option is causing this.
+	hcah
 
 port	powerpc
 
@@ -796,8 +946,39 @@ cdate	Wed Jun  5 15:49:27 CEST 2013
 who	joerg
 file	src/usr.bin/rpcgen/rpc_main.c
 descr
-	It is undecided which compiler owns /usr/bin/cpp whether it should
+	It is undecided which compiler owns /usr/bin/cpp and whether it should
 	exist in a MKGCC=no world. To allow rpcgen to work out-of-the-box,
 	if either gcc or clang is installed, use /usr/bin/clang-cpp as fallback.
 	This applies only if RPCGEN_CPP is not set and /usr/bin/cpp is not executable.
 kcah
+
+port	hp700
+
+	hack	compiler error with gcc 4.5.x
+	cdate	Tue Jul 23 07:42:28 BST 2013
+	who	skrll
+	file	src/sys/lib/libkern/Makefile.libkern: 1.26
+	descr
+		workaround for unanalysed codegen bug affecting md5c.c.
+	kcah
+
+port	mips64*
+hack	compiler crashes on mips64* with optimization enabled
+cdate	Tue May 13 18:46:48 UTC 2014
+who	macallan
+file	src/external/lgpl3/gmp/lib/libgmp/arch/mips64eb/Makefile.inc: 1.6
+	src/external/lgpl3/gmp/lib/libgmp/arch/mips64eb/config.h: 1.5
+	src/external/lgpl3/gmp/lib/libgmp/arch/mips64el/Makefile.inc: 1.6
+	src/external/lgpl3/gmp/lib/libgmp/arch/mips64el/config.h: 1.5
+descr	workaround for n32 gcc doing unaligned 64bit accesses when optimizing
+pr	48696
+kcah
+
+port	vax
+hack	compile boot with -O1
+cdate	Sat May 24 09:40:58 CEST 2014
+who	martin
+file	src/sys/arch/vax/boot/boot/Makefile: 1.41
+descr	/boot does not work when compiled with -O2 and gcc 4.8
+kcah
+

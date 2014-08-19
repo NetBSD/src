@@ -1,7 +1,7 @@
-/*	$NetBSD: peer.c,v 1.3 2012/06/05 00:41:36 christos Exp $	*/
+/*	$NetBSD: peer.c,v 1.3.2.1 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -45,6 +45,7 @@
 #define SERVER_UDPSIZE_BIT		6
 #define SERVER_MAXUDP_BIT		7
 #define REQUEST_NSID_BIT                8
+#define REQUEST_SIT_BIT                 9
 
 static void
 peerlist_delete(dns_peerlist_t **list);
@@ -302,10 +303,15 @@ peer_delete(dns_peer_t **peer) {
 		isc_mem_put(mem, p->key, sizeof(dns_name_t));
 	}
 
-	if (p->transfer_source != NULL) {
+	if (p->query_source != NULL)
+		isc_mem_put(mem, p->query_source, sizeof(*p->query_source));
+
+	if (p->notify_source != NULL)
+		isc_mem_put(mem, p->notify_source, sizeof(*p->notify_source));
+
+	if (p->transfer_source != NULL)
 		isc_mem_put(mem, p->transfer_source,
 			    sizeof(*p->transfer_source));
-	}
 
 	isc_mem_put(mem, p, sizeof(*p));
 
@@ -445,6 +451,32 @@ dns_peer_getrequestnsid(dns_peer_t *peer, isc_boolean_t *retval) {
 }
 
 isc_result_t
+dns_peer_setrequestsit(dns_peer_t *peer, isc_boolean_t newval) {
+	isc_boolean_t existed;
+
+	REQUIRE(DNS_PEER_VALID(peer));
+
+	existed = DNS_BIT_CHECK(REQUEST_SIT_BIT, &peer->bitflags);
+
+	peer->request_sit = newval;
+	DNS_BIT_SET(REQUEST_SIT_BIT, &peer->bitflags);
+
+	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_getrequestsit(dns_peer_t *peer, isc_boolean_t *retval) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(retval != NULL);
+
+	if (DNS_BIT_CHECK(REQUEST_SIT_BIT, &peer->bitflags)) {
+		*retval = peer->request_sit;
+		return (ISC_R_SUCCESS);
+	} else
+		return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
 dns_peer_settransfers(dns_peer_t *peer, isc_uint32_t newval) {
 	isc_boolean_t existed;
 
@@ -535,7 +567,7 @@ dns_peer_setkeybycharp(dns_peer_t *peer, const char *keyval) {
 	isc_result_t result;
 
 	dns_fixedname_init(&fname);
-	isc_buffer_init(&b, keyval, strlen(keyval));
+	isc_buffer_constinit(&b, keyval, strlen(keyval));
 	isc_buffer_add(&b, strlen(keyval));
 	result = dns_name_fromtext(dns_fixedname_name(&fname), &b,
 				   dns_rootname, 0, NULL);
@@ -711,4 +743,58 @@ dns_peer_getmaxudp(dns_peer_t *peer, isc_uint16_t *maxudp) {
 	} else {
 		return (ISC_R_NOTFOUND);
 	}
+}
+
+isc_result_t
+dns_peer_setnotifydscp(dns_peer_t *peer, isc_dscp_t dscp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscp < 64);
+
+	peer->notify_dscp = dscp;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_getnotifydscp(dns_peer_t *peer, isc_dscp_t *dscpp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscpp != NULL);
+
+	*dscpp = peer->notify_dscp;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_settransferdscp(dns_peer_t *peer, isc_dscp_t dscp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscp < 64);
+
+	peer->transfer_dscp = dscp;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_gettransferdscp(dns_peer_t *peer, isc_dscp_t *dscpp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscpp != NULL);
+
+	*dscpp = peer->transfer_dscp;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_setquerydscp(dns_peer_t *peer, isc_dscp_t dscp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscp < 64);
+
+	peer->query_dscp = dscp;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_getquerydscp(dns_peer_t *peer, isc_dscp_t *dscpp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscpp != NULL);
+
+	*dscpp = peer->query_dscp;
+	return (ISC_R_SUCCESS);
 }

@@ -1,5 +1,5 @@
 /* Definitions of target machine for gcc for Super-H using sh-superh-elf.
-   Copyright (C) 2001, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -29,14 +29,10 @@ along with GCC; see the file COPYING3.  If not see
 
    This file is intended to override sh.h.  */
 
-
 #ifndef _SUPERH_H
 #define _SUPERH_H
 #endif
 
-
-#undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (SuperH SH special %s)", __DATE__);
 
 /* Override the linker spec strings to use the new emulation
    The specstrings are concatenated as follows
@@ -58,7 +54,8 @@ along with GCC; see the file COPYING3.  If not see
 #endif
 
 
-/* This is used by the link spec if the boardspecs file is not used (for whatever reason).
+/* This is used by the link spec if the boardspecs file is not used
+   (for whatever reason).
    If the boardspecs file overrides this then an alternative can be used. */
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS \

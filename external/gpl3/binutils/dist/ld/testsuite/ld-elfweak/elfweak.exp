@@ -1,5 +1,5 @@
 # Expect script for ld-weak tests
-#   Copyright 2001, 2002, 2003, 2004, 2005, 2007, 2010
+#   Copyright 2001, 2002, 2003, 2004, 2005, 2007, 2010, 2012
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -49,7 +49,8 @@ if {    ![istarget alpha*-*-linux*]
      && ![istarget sh\[34\]*-*-linux*]
      && ![istarget sparc*-*-elf]
      && ![istarget sparc*-*-solaris2*]
-     && ![istarget sparc*-*-linux*] } {
+     && ![istarget sparc*-*-linux*]
+     && ![istarget *-*-nacl*] } {
     return
 }
 
@@ -110,7 +111,7 @@ proc objdump_symstuff { objdump object expectfile } {
 	    perror "$expectfile doesn't exist"
 	    return 0
 	}
-	
+
 	if [file exists $tmpdir/objdump.out] then {
 	    set file_b [open $tmpdir/objdump.out r]
 	} else {
@@ -140,11 +141,11 @@ proc objdump_symstuff { objdump object expectfile } {
 	    }
 	}
 	close $file_b
-	
+
 	for { set i 0 } { $i < [llength $list_a] } { incr i } {
 	    set line_a [lindex $list_a $i]
 	    set line_b [lindex $list_b $i]
-	    
+
 
 	    verbose "\t$expectfile: $i: $line_a" 3
 	    verbose "\t/tmp/objdump.out: $i: $line_b" 3
@@ -153,20 +154,20 @@ proc objdump_symstuff { objdump object expectfile } {
 	    } else {
 		verbose -log "\t$expectfile: $i: $line_a"
 		verbose -log "\t$tmpdir/objdump.out: $i: $line_b"
-		
+
 		return 0
 	    }
 	}
-	
+
 	if { [llength $list_a] != [llength $list_b] } {
 	    verbose -log "Line count"
 	    return 0
 	}
-	
+
 	if $differences<1 then {
 	    return 1
 	}
-	
+
 	return 0
     } else {
 	verbose -log "$exec_output"
@@ -205,7 +206,7 @@ proc objdump_dynsymstuff { objdump object expectfile } {
 	    warning "$expectfile doesn't exist"
 	    return 0
 	}
-	
+
 	if [file exists $tmpdir/objdump.out] then {
 	    set file_b [open $tmpdir/objdump.out r]
 	} else {
@@ -235,15 +236,15 @@ proc objdump_dynsymstuff { objdump object expectfile } {
 	    }
 	}
 	close $file_b
-	
+
 	for { set i 0 } { $i < [llength $list_b] } { incr i } {
 	    set line_b [lindex $list_b $i]
-	    
+
 # The tests are rigged so that we should never export a symbol with the
 # word 'hide' in it.  Thus we just search for it, and bail if we find it.
 	    if [regexp "hide" $line_b] then {
 		verbose -log "\t$tmpdir/objdump.out: $i: $line_b"
-		
+
 		return 0
 	    }
 
@@ -263,20 +264,20 @@ proc objdump_dynsymstuff { objdump object expectfile } {
 
 	    if { $j >= [llength $list_a] } {
 		verbose -log "\t$tmpdir/objdump.out: $i: $line_b"
-		
+
 		return 0
 	    }
 	}
-	
+
 	if { [llength $list_a] != [llength $list_b] } {
 	    verbose -log "Line count"
 	    return 0
 	}
-	
+
 	if $differences<1 then {
 	    return 1
 	}
-	
+
 	return 0
     } else {
 	verbose -log "$exec_output"
@@ -370,7 +371,9 @@ proc build_exec { test execname objs flags dat dynsymexp symexp} {
     pass $test
 }
 
-if [istarget mips*-*-*] {
+# Old version of GCC for MIPS default to enabling -fpic
+# and get confused if it is used on the command line.
+if { [istarget mips*-*-*] && ! [at_least_gcc_version 4 3] } then {
     set picflag ""
 } else {
     # Unfortunately, the gcc argument is -fpic and the cc argument is

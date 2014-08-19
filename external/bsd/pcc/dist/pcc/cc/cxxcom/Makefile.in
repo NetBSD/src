@@ -1,5 +1,5 @@
-#	Id: Makefile.in,v 1.4 2012/03/15 09:22:12 plunky Exp 	
-#	$NetBSD: Makefile.in,v 1.1.1.2 2012/03/26 14:26:54 plunky Exp $
+#	Id: Makefile.in,v 1.5 2012/09/25 11:17:17 plunky Exp 	
+#	$NetBSD: Makefile.in,v 1.1.1.2.4.1 2014/08/19 23:52:09 tls Exp $
 #
 # Makefile.in for cxxcom
 #
@@ -31,7 +31,6 @@ exec_prefix = @exec_prefix@
 libexecdir = @libexecdir@
 datarootdir = @datarootdir@
 mandir = @mandir@
-strip = @strip@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
@@ -175,10 +174,6 @@ $(DEST): $(OBJS)
 install: $(DEST)
 	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
 	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(libexecdir)
-	@if [ $(strip) = yes ]; then				\
-		strip $(DESTDIR)$(libexecdir)/$(DEST) ;		\
-		echo strip $(DESTDIR)$(libexecdir)/$(DEST) ;	\
-	fi
 	test -z "$(DESTDIR)$(mandir)/man1" || mkdir -p "$(DESTDIR)$(mandir)/man1"
 #	$(INSTALL_DATA) $(srcdir)/ccom.1 $(DESTDIR)$(mandir)/man1/$(DEST).1
 

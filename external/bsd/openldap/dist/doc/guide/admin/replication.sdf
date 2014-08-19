@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/replication.sdf,v 1.32.2.27 2010/04/13 20:22:34 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Replication
@@ -317,11 +317,11 @@ only the final state of the entry is significant. But this approach
 may have drawbacks when the usage pattern involves single changes to
 multiple objects.
 
-For example, suppose you have a database consisting of 100,000 objects of 1 KB 
+For example, suppose you have a database consisting of 102,400 objects of 1 KB 
 each. Further, suppose you routinely run a batch job to change the value of 
-a single two-byte attribute value that appears in each of the 100,000 objects 
+a single two-byte attribute value that appears in each of the 102,400 objects 
 on the master. Not counting LDAP and TCP/IP protocol overhead, each time you 
-run this job each consumer will transfer and process {{B:1 GB}} of data to
+run this job each consumer will transfer and process {{B:100 MB}} of data to
 process {{B:200KB of changes!}}
 
 99.98% of the data that is transmitted and processed in a case like this will 
@@ -335,13 +335,18 @@ demonstrate a very real problem that is encountered in some LDAP deployments.
 
 Delta-syncrepl, a changelog-based variant of syncrepl, is designed to address 
 situations like the one described above. Delta-syncrepl works by maintaining a 
-changelog of a selectable depth on the provider. The replication consumer 
+changelog of a selectable depth in a separate database on the provider. The replication consumer 
 checks the changelog for the changes it needs and, as long as 
 the changelog contains the needed changes, the consumer fetches the changes
 from the changelog and applies them to its database. If, however, a replica 
 is too far out of sync (or completely empty), conventional syncrepl is used to 
 bring it up to date and replication then switches back to the delta-syncrepl
 mode.
+
+Note: since the database state is stored in both the changelog DB and the
+main DB on the provider, it is important to backup/restore both the changelog
+DB and the main DB using slapcat/slapadd when restoring a DB or copying
+it to another machine.
 
 For configuration, please see the {{SECT:Delta-syncrepl}} section.
 
@@ -421,9 +426,6 @@ is needed to manage which provider is currently active
 - If backing up the Berkeley database itself and periodically backing up the 
 transaction log files, then the same member of the mirror pair needs to be 
 used to collect logfiles until the next database backup is taken 
-- To ensure that both databases are consistent, each database might have to be 
-put in read-only mode while performing a slapcat. 
-* Delta-Syncrepl is not yet supported
 
 For configuration, please see the {{SECT:MirrorMode}} section below
 
@@ -863,8 +865,6 @@ H4: Mirror Node Configuration
 
 The first step is to configure the syncrepl provider the same as in the 
 {{SECT:Set up the provider slapd}} section.
-
-Note: Delta-syncrepl is not yet supported with MirrorMode.
 
 Here's a specific cut down example using {{SECT:LDAP Sync Replication}} in
 {{refreshAndPersist}} mode:

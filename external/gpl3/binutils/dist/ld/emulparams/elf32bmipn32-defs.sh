@@ -52,7 +52,7 @@ OTHER_GOT_RELOC_SECTIONS="
 # of .got.
 OTHER_GOT_SYMBOLS='
   . = .;
-  _gp = ALIGN(16) + 0x7ff0;
+  HIDDEN (_gp = ALIGN (16) + 0x7ff0);
 '
 # .got.plt is only used for the PLT psABI extension.  It should not be
 # included in the .sdata block with .got, as there is no need to access

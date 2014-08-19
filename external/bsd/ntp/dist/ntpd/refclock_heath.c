@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_heath.c,v 1.3 2012/02/01 07:46:22 kardel Exp $	*/
+/*	$NetBSD: refclock_heath.c,v 1.3.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * refclock_heath - clock driver for Heath GC-1000
@@ -224,12 +224,13 @@ heath_start(
 	 * Open serial port
 	 */
 	snprintf(device, sizeof(device), DEVICE, unit);
-	if (!(fd = refclock_open(device, speed[peer->ttl & 0x3],
-	    LDISC_REMOTE)))
+	fd = refclock_open(device, speed[peer->ttl & 0x3],
+			   LDISC_REMOTE);
+	if (fd <= 0)
 		return (0);
 	pp = peer->procptr;
 	pp->io.clock_recv = heath_receive;
-	pp->io.srcclock = (caddr_t)peer;
+	pp->io.srcclock = peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
@@ -242,7 +243,6 @@ heath_start(
 	 * Initialize miscellaneous variables
 	 */
 	peer->precision = PRECISION;
-	peer->burst = NSTAGE;
 	pp->clockdesc = DESCRIPTION;
 	memcpy(&pp->refid, REFID, 4);
 	return (1);
@@ -284,7 +284,7 @@ heath_receive(
 	/*
 	 * Initialize pointers and read the timecode and timestamp
 	 */
-	peer = (struct peer *)rbufp->recv_srcclock;
+	peer = rbufp->recv_peer;
 	pp = peer->procptr;
 	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX,
 	    &trtmp);
@@ -432,8 +432,6 @@ heath_poll(
 	if (write(pp->io.fd, "T", 1) != 1)
 		refclock_report(peer, CEVNT_FAULT);
 	ioctl(pp->io.fd, TIOCMBIS, (char *)&bits);
-	if (peer->burst > 0)
-		return;
 	if (pp->coderecv == pp->codeproc) {
 		refclock_report(peer, CEVNT_TIMEOUT);
 		return;
@@ -446,7 +444,6 @@ heath_poll(
 	    printf("heath: timecode %d %s\n", pp->lencode,
 		   pp->a_lastcode);
 #endif
-	peer->burst = MAXSTAGE;
 	pp->polls++;
 }
 

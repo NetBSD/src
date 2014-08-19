@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.14 2011/08/31 16:24:54 plunky Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.14.8.1 2014/08/19 23:45:11 tls Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_sh.c,v 1.14 2011/08/31 16:24:54 plunky Exp $");
+__RCSID("$NetBSD: c_sh.c,v 1.14.8.1 2014/08/19 23:45:11 tls Exp $");
 #endif
 
 
@@ -506,6 +506,8 @@ c_trap(wp)
 					shprintf(" %s", p->name);
 			shprintf(newline);
 		}
+#else
+		__USE(anydfl);
 #endif
 		return 0;
 	}

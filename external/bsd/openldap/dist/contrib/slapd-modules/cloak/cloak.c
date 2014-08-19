@@ -1,10 +1,10 @@
-/*	$NetBSD: cloak.c,v 1.1.1.2 2010/12/12 15:18:56 adam Exp $	*/
+/*	$NetBSD: cloak.c,v 1.1.1.2.12.1 2014/08/19 23:51:56 tls Exp $	*/
 
 /* cloak.c - Overlay to hide some attribute except if explicitely requested */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/cloak/cloak.c,v 1.2.2.4 2010/04/13 20:22:26 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2014 The OpenLDAP Foundation.
  * Portions Copyright 2008 Emmanuel Dreyfus
  * All rights reserved.
  *
@@ -27,8 +27,8 @@
 
 #include <stdio.h>
 
-#include <ac/string.h>
-#include <ac/socket.h>
+#include "ac/string.h"
+#include "ac/socket.h"
 
 #include "lutil.h"
 #include "slap.h"
@@ -161,7 +161,7 @@ cloak_cfgen( ConfigArgs *c )
 			ci_next = *cip;
 		}
 
-		*cip = (cloak_info_t *)ch_calloc( 1, sizeof( cloak_info_t ) );
+		*cip = (cloak_info_t *)SLAP_CALLOC( 1, sizeof( cloak_info_t ) );
 		(*cip)->ci_oc = oc;
 		(*cip)->ci_ad = ad;
 		(*cip)->ci_next = ci_next;
@@ -179,7 +179,7 @@ cloak_cfgen( ConfigArgs *c )
 }
 
 static int
-cloak_search_cb( Operation *op, SlapReply *rs )
+cloak_search_response_cb( Operation *op, SlapReply *rs )
 {
 	slap_callback   *sc;
 	cloak_info_t	*ci;
@@ -189,7 +189,6 @@ cloak_search_cb( Operation *op, SlapReply *rs )
 	assert( op && op->o_callback && rs );
 
 	if ( rs->sr_type != REP_SEARCH || !rs->sr_entry ) {
-		slap_freeself_cb( op, rs );
 		return ( SLAP_CB_CONTINUE );
 	}
 
@@ -223,10 +222,8 @@ cloak_search_cb( Operation *op, SlapReply *rs )
 	/*
 	 * We are now committed to cloak an attribute.
 	 */
-	if ( rs->sr_flags & REP_ENTRY_MODIFIABLE )
-		me = e;
-	else
-		me = entry_dup( e );
+	rs_entry2modifiable( op, rs, (slap_overinst *) op->o_bd->bd_info );
+	me = rs->sr_entry;
 		
 	for ( ci = (cloak_info_t *)sc->sc_private; ci; ci = ci->ci_next ) {
 		Attribute *a;
@@ -239,7 +236,7 @@ cloak_search_cb( Operation *op, SlapReply *rs )
 			if ( a->a_desc != ci->ci_ad )
 				continue;
 
-			Debug( LDAP_DEBUG_TRACE, "cloak_search_cb: cloak %s\n", 
+			Debug( LDAP_DEBUG_TRACE, "cloak_search_response_cb: cloak %s\n", 
 			       a->a_desc->ad_cname.bv_val,
 			       0, 0 );
 
@@ -253,15 +250,17 @@ cloak_search_cb( Operation *op, SlapReply *rs )
 
 	}
 
-	if ( me != e ) {
-		if ( rs->sr_flags & REP_ENTRY_MUSTBEFREED )
-			entry_free( e );
+	return ( SLAP_CB_CONTINUE );
+}
 
-		rs->sr_entry = me;
-        	rs->sr_flags |= REP_ENTRY_MODIFIABLE | REP_ENTRY_MUSTBEFREED;
+static int
+cloak_search_cleanup_cb( Operation *op, SlapReply *rs )
+{
+	if ( rs->sr_type == REP_RESULT || rs->sr_err != LDAP_SUCCESS ) {
+		slap_freeself_cb( op, rs );
 	}
 
-	return ( SLAP_CB_CONTINUE );
+	return SLAP_CB_CONTINUE;
 }
 
 static int
@@ -277,8 +276,8 @@ cloak_search( Operation *op, SlapReply *rs )
 		return SLAP_CB_CONTINUE;
 
 	sc = op->o_tmpcalloc( 1, sizeof( *sc ), op->o_tmpmemctx );
-	sc->sc_response = cloak_search_cb;
-	sc->sc_cleanup = slap_freeself_cb;
+	sc->sc_response = cloak_search_response_cb;
+	sc->sc_cleanup = cloak_search_cleanup_cb;
 	sc->sc_next = op->o_callback;
 	sc->sc_private = ci;
 	op->o_callback = sc;
@@ -300,6 +299,25 @@ static ConfigTable cloakcfg[] = {
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
 };
 
+static int
+cloak_db_destroy(
+	BackendDB *be,
+	ConfigReply *cr )
+{
+	slap_overinst *on = (slap_overinst *)be->bd_info;
+	cloak_info_t	*ci = (cloak_info_t *)on->on_bi.bi_private;
+
+	for ( ; ci; ) {
+		cloak_info_t *tmp = ci;
+		ci = ci->ci_next;
+		SLAP_FREE( tmp );
+	}
+
+	on->on_bi.bi_private = NULL;
+
+	return 0;
+}
+
 static ConfigOCs cloakocs[] = {
 	{ "( OLcfgCtOc:4.1 "
 	  "NAME 'olcCloakConfig' "
@@ -317,6 +335,7 @@ int
 cloak_initialize( void ) {
 	int rc;
 	cloak_ovl.on_bi.bi_type = "cloak";
+	cloak_ovl.on_bi.bi_db_destroy = cloak_db_destroy;
 	cloak_ovl.on_bi.bi_op_search = cloak_search;
         cloak_ovl.on_bi.bi_cf_ocs = cloakocs;
 

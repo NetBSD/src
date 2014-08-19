@@ -1,11 +1,10 @@
-/*	$NetBSD: dispatch.c,v 1.3.4.2 2013/06/23 06:26:29 tls Exp $	*/
-
+/*	$NetBSD: dispatch.c,v 1.3.4.3 2014/08/19 23:46:41 tls Exp $	*/
 /* dispatch.c
 
    I/O dispatcher. */
 
 /*
- * Copyright (c) 2004,2007-2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2007-2009,2013-2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,16 +25,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dispatch.c,v 1.3.4.2 2013/06/23 06:26:29 tls Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.3.4.3 2014/08/19 23:46:41 tls Exp $");
 
 #include "dhcpd.h"
 
@@ -906,19 +899,65 @@ isc_result_t omapi_waiter_signal_handler (omapi_object_t *h,
 	return ISC_R_NOTFOUND;
 }
 
+/** @brief calls a given function on every object
+ *
+ * @param func function to be called
+ * @param p parameter to be passed to each function instance
+ *
+ * @return result (ISC_R_SUCCESS if successful, error code otherwise)
+ */
 isc_result_t omapi_io_state_foreach (isc_result_t (*func) (omapi_object_t *,
 							   void *),
 				     void *p)
 {
-	omapi_io_object_t *io;
+	omapi_io_object_t *io = NULL;
 	isc_result_t status;
+	omapi_io_object_t *next = NULL;
 
-	for (io = omapi_io_states.next; io; io = io -> next) {
-		if (io -> inner) {
-			status = (*func) (io -> inner, p);
-			if (status != ISC_R_SUCCESS)
-				return status;
-		}
+	/*
+	 * This just calls func on every inner object on the list. It would
+	 * be much simpler in general case, but one of the operations could be
+	 * release of the objects. Therefore we need to ref count the io and
+	 * io->next pointers.
+	 */
+
+	if (omapi_io_states.next) {
+		omapi_object_reference((omapi_object_t**)&io,
+				       (omapi_object_t*)omapi_io_states.next,
+				       MDL);
 	}
+
+	while(io) {
+	    /* If there's a next object, save it */
+	    if (io->next) {
+		omapi_object_reference((omapi_object_t**)&next,
+				       (omapi_object_t*)io->next, MDL);
+	    }
+	    if (io->inner) {
+		status = (*func) (io->inner, p);
+		if (status != ISC_R_SUCCESS) {
+		    /* Something went wrong. Let's stop using io & next pointer
+		     * and bail out */
+		    omapi_object_dereference((omapi_object_t**)&io, MDL);
+		    if (next) {
+			omapi_object_dereference((omapi_object_t**)&next, MDL);
+		    }
+		    return status;
+		}
+	    }
+	    /* Update the io pointer and free the next pointer */
+	    omapi_object_dereference((omapi_object_t**)&io, MDL);
+	    if (next) {
+		omapi_object_reference((omapi_object_t**)&io,
+				       (omapi_object_t*)next,
+				       MDL);
+		omapi_object_dereference((omapi_object_t**)&next, MDL);
+	    }
+	}
+
+	/*
+	 * The only way to get here is when next is NULL. There's no need
+	 * to dereference it.
+	 */
 	return ISC_R_SUCCESS;
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: cache.h,v 1.4 2012/06/05 00:41:45 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.4.2.1 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -51,7 +51,9 @@
  ***	Imports
  ***/
 
+#include <isc/json.h>
 #include <isc/lang.h>
+#include <isc/stats.h>
 #include <isc/stdtime.h>
 
 #include <dns/types.h>
@@ -247,12 +249,6 @@ dns_cache_getcleaninginterval(dns_cache_t *cache);
  * Get the periodic cache cleaning interval to 'interval' seconds.
  */
 
-isc_uint32_t
-dns_cache_getcachesize(dns_cache_t *cache);
-/*%<
- * Get the maximum cache size.
- */
-
 const char *
 dns_cache_getname(dns_cache_t *cache);
 /*%<
@@ -260,12 +256,12 @@ dns_cache_getname(dns_cache_t *cache);
  */
 
 void
-dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size);
+dns_cache_setcachesize(dns_cache_t *cache, size_t size);
 /*%<
  * Set the maximum cache size.  0 means unlimited.
  */
 
-isc_uint32_t
+size_t
 dns_cache_getcachesize(dns_cache_t *cache);
 /*%<
  * Get the maximum cache size.
@@ -313,6 +309,40 @@ dns_cache_flushname(dns_cache_t *cache, dns_name_t *name);
  *\li	#ISC_R_NOMEMORY
  *\li	other error returns.
  */
+
+isc_stats_t *
+dns_cache_getstats(dns_cache_t *cache);
+/*
+ * Return a pointer to the stats collection object for 'cache'
+ */
+
+void
+dns_cache_dumpstats(dns_cache_t *cache, FILE *fp);
+/*
+ * Dump cache statistics and status in text to 'fp'
+ */
+
+void
+dns_cache_updatestats(dns_cache_t *cache, isc_result_t result);
+/*
+ * Update cache statistics based on result code in 'result'
+ */
+
+#ifdef HAVE_LIBXML2
+int
+dns_cache_renderxml(dns_cache_t *cache, xmlTextWriterPtr writer);
+/*
+ * Render cache statistics and status in XML for 'writer'.
+ */
+#endif /* HAVE_LIBXML2 */
+
+#ifdef HAVE_JSON
+isc_result_t
+dns_cache_renderjson(dns_cache_t *cache, json_object *cstats);
+/*
+ * Render cache statistics and status in JSON
+ */
+#endif /* HAVE_JSON */
 
 ISC_LANG_ENDDECLS
 

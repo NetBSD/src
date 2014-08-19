@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.c,v 1.4.8.1 2013/02/25 00:24:06 tls Exp $	*/
-/* $OpenBSD: dns.c,v 1.28 2012/05/23 03:28:28 djm Exp $ */
+/*	$NetBSD: dns.c,v 1.4.8.2 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: dns.c,v 1.29 2013/05/17 00:13:13 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dns.c,v 1.4.8.1 2013/02/25 00:24:06 tls Exp $");
+__RCSID("$NetBSD: dns.c,v 1.4.8.2 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -262,7 +262,7 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 
 		if (hostkey_digest_type != dnskey_digest_type) {
 			hostkey_digest_type = dnskey_digest_type;
-			xfree(hostkey_digest);
+			free(hostkey_digest);
 
 			/* Initialize host key parameters */
 			if (!dns_read_key(&hostkey_algorithm,
@@ -278,14 +278,14 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 		if (hostkey_algorithm == dnskey_algorithm &&
 		    hostkey_digest_type == dnskey_digest_type) {
 			if (hostkey_digest_len == dnskey_digest_len &&
-			    __consttime_bcmp(hostkey_digest, dnskey_digest,
-			    hostkey_digest_len) == 0)
+			    consttime_memequal(hostkey_digest, dnskey_digest,
+			    hostkey_digest_len))
 				*flags |= DNS_VERIFY_MATCH;
 		}
-		xfree(dnskey_digest);
+		free(dnskey_digest);
 	}
 
-	xfree(hostkey_digest); /* from key_fingerprint_raw() */
+	free(hostkey_digest); /* from key_fingerprint_raw() */
 	freerrset(fingerprints);
 
 	if (*flags & DNS_VERIFY_FOUND)
@@ -328,7 +328,7 @@ export_dns_rr(const char *hostname, Key *key, FILE *f, int generic)
 			for (i = 0; i < rdata_digest_len; i++)
 				fprintf(f, "%02x", rdata_digest[i]);
 			fprintf(f, "\n");
-			xfree(rdata_digest); /* from key_fingerprint_raw() */
+			free(rdata_digest); /* from key_fingerprint_raw() */
 			success = 1;
 		}
 	}

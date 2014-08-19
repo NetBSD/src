@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc-confgen.c,v 1.4.2.1 2013/06/23 06:26:23 tls Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.4.2.2 2014/08/19 23:45:58 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -59,7 +59,6 @@
 #include "util.h"
 #include "keygen.h"
 
-#define DEFAULT_KEYLENGTH	128		/*% Bits. */
 #define DEFAULT_KEYNAME		"rndc-key"
 #define DEFAULT_SERVER		"127.0.0.1"
 #define DEFAULT_PORT		953
@@ -82,7 +81,8 @@ Usage:\n\
  %s [-a] [-b bits] [-c keyfile] [-k keyname] [-p port] [-r randomfile] \
 [-s addr] [-t chrootdir] [-u user]\n\
   -a:		 generate just the key clause and write it to keyfile (%s)\n\
-  -b bits:	 from 1 through 512, default %d; total length of the secret\n\
+  -A alg:	 algorithm (default hmac-md5)\n\
+  -b bits:	 from 1 through 512, default 256; total length of the secret\n\
   -c keyfile:	 specify an alternate key file (requires -a)\n\
   -k keyname:	 the name as it will be used  in named.conf and rndc.conf\n\
   -p port:	 the port named will listen on and rndc will connect to\n\
@@ -90,7 +90,7 @@ Usage:\n\
   -s addr:	 the address to which rndc should connect\n\
   -t chrootdir:	 write a keyfile in chrootdir as well (requires -a)\n\
   -u user:	 set the keyfile owner to \"user\" (requires -a)\n",
-		 progname, keydef, DEFAULT_KEYLENGTH);
+		 progname, keydef);
 
 	exit (status);
 }
@@ -105,12 +105,12 @@ main(int argc, char **argv) {
 	const char *keyname = NULL;
 	const char *randomfile = NULL;
 	const char *serveraddr = NULL;
-	dns_secalg_t alg = DST_ALG_HMACMD5;
-	const char *algname = alg_totext(alg);
+	dns_secalg_t alg;
+	const char *algname;
 	char *p;
 	int ch;
 	int port;
-	int keysize;
+	int keysize = -1;
 	struct in_addr addr4_dummy;
 	struct in6_addr addr6_dummy;
 	char *chrootdir = NULL;
@@ -118,33 +118,37 @@ main(int argc, char **argv) {
 	isc_boolean_t keyonly = ISC_FALSE;
 	int len;
 
-	isc__mem_register();
 	keydef = keyfile = RNDC_KEYFILE;
 
 	result = isc_file_progname(*argv, program, sizeof(program));
 	if (result != ISC_R_SUCCESS)
-		memcpy(program, "rndc-confgen", 13);
+		memmove(program, "rndc-confgen", 13);
 	progname = program;
 
 	keyname = DEFAULT_KEYNAME;
-	keysize = DEFAULT_KEYLENGTH;
+	alg = DST_ALG_HMACMD5;
 	serveraddr = DEFAULT_SERVER;
 	port = DEFAULT_PORT;
 
 	isc_commandline_errprint = ISC_FALSE;
 
 	while ((ch = isc_commandline_parse(argc, argv,
-					   "ab:c:hk:Mmp:r:s:t:u:Vy")) != -1) {
+					   "aA:b:c:hk:Mmp:r:s:t:u:Vy")) != -1)
+	{
 		switch (ch) {
 		case 'a':
 			keyonly = ISC_TRUE;
+			break;
+		case 'A':
+			algname = isc_commandline_argument;
+			alg = alg_fromtext(algname);
+			if (alg == DST_ALG_UNKNOWN)
+				fatal("Unsupported algorithm '%s'", algname);
 			break;
 		case 'b':
 			keysize = strtol(isc_commandline_argument, &p, 10);
 			if (*p != '\0' || keysize < 0)
 				fatal("-b requires a non-negative number");
-			if (keysize < 1 || keysize > 512)
-				fatal("-b must be in the range 1 through 512");
 			break;
 		case 'c':
 			keyfile = isc_commandline_argument;
@@ -207,6 +211,10 @@ main(int argc, char **argv) {
 
 	if (argc > 0)
 		usage(1);
+
+	if (keysize < 0)
+		keysize = alg_bits(alg);
+	algname = alg_totext(alg);
 
 	DO("create memory context", isc_mem_create(0, 0, &mctx));
 	isc_buffer_init(&key_txtbuffer, &key_txtsecret, sizeof(key_txtsecret));

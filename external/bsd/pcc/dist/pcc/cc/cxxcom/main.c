@@ -1,5 +1,5 @@
-/*	Id: main.c,v 1.4 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: main.c,v 1.1.1.2 2012/03/26 14:26:58 plunky Exp $	*/
+/*	Id: main.c,v 1.5 2014/04/09 10:01:24 plunky Exp 	*/	
+/*	$NetBSD: main.c,v 1.1.1.2.4.1 2014/08/19 23:52:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -64,11 +64,10 @@ static void
 segvcatch(int a)
 {
 	char buf[1024];
-	int dummy;
 
 	snprintf(buf, sizeof buf, "%sinternal compiler error: %s, line %d\n",
 	    nerrors ? "" : "major ", ftitle, lineno);
-	dummy = write(STDERR_FILENO, buf, strlen(buf));
+	(void)write(STDERR_FILENO, buf, strlen(buf));
 	_exit(1);
 }
 

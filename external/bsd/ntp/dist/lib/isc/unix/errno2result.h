@@ -1,7 +1,7 @@
-/*	$NetBSD: errno2result.h,v 1.1.1.1 2009/12/13 16:54:37 kardel Exp $	*/
+/*	$NetBSD: errno2result.h,v 1.1.1.1.12.1 2014/08/19 23:51:40 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: errno2result.h,v 1.12 2007/06/19 23:47:18 tbox Exp */
+/* Id */
 
 #ifndef UNIX_ERRNO2RESULT_H
 #define UNIX_ERRNO2RESULT_H 1
@@ -33,8 +33,10 @@
 
 ISC_LANG_BEGINDECLS
 
+#define isc__errno2result(x) isc___errno2result(x, __FILE__, __LINE__)
+
 isc_result_t
-isc__errno2result(int posixerrno);
+isc___errno2result(int posixerrno, const char *file, unsigned int line);
 
 ISC_LANG_ENDDECLS
 

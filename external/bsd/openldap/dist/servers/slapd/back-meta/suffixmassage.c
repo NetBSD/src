@@ -1,10 +1,10 @@
-/*	$NetBSD: suffixmassage.c,v 1.1.1.3 2010/12/12 15:23:13 adam Exp $	*/
+/*	$NetBSD: suffixmassage.c,v 1.1.1.3.12.1 2014/08/19 23:52:02 tls Exp $	*/
 
 /* suffixmassage.c - massages ldap backend dns */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/suffixmassage.c,v 1.7.2.5 2010/04/13 20:23:31 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2010 The OpenLDAP Foundation.
+ * Copyright 2003-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

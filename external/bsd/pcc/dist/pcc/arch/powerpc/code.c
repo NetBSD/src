@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.28 2011/07/28 14:21:49 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.4 2011/09/01 12:46:47 plunky Exp $	*/
+/*	Id: code.c,v 1.31 2014/05/29 19:20:03 plunky Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.4.8.1 2014/08/19 23:52:08 tls Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -75,7 +75,8 @@ setseg(int seg, char *name)
 	case CTORS: name = ".section\t.ctors,\"aw\",@progbits"; break;
 	case DTORS: name = ".section\t.dtors,\"aw\",@progbits"; break;
 	case NMSEG: 
-		printf("\t.section %s,\"aw\",@progbits\n", name);
+		printf("\t.section %s,\"a%c\",@progbits\n", name,
+		    cftnsp ? 'x' : 'w');
 		return;
 	}
 	printf("\t%s\n", name);
@@ -475,7 +476,7 @@ bfcode(struct symtab **sp, int cnt)
  * deals with struct return here
  */
 void
-efcode()
+efcode(void)
 {
         NODE *p, *q;
         int tempnr;
@@ -520,7 +521,7 @@ struct stub nlplist;
 /* called just before final exit */
 /* flag is 1 if errors, 0 if none */
 void
-ejobcode(int flag )
+ejobcode(int flag)
 {
 
 #if defined(MACHOABI)
@@ -579,7 +580,7 @@ ejobcode(int flag )
 }
 
 void
-bjobcode()
+bjobcode(void)
 {
 	DLIST_INIT(&stublist, link);
 	DLIST_INIT(&nlplist, link);
@@ -762,7 +763,7 @@ genswitch_table(int num, struct swents **p, int n)
 			lab = p[j]->slab;
 			j++;
 		}
-		snprintf(entry, 20, ".long " LABFMT "-" LABFMT, lab, tbllabel);
+		snprintf(entry, 20, "\t.long " LABFMT "-" LABFMT "\n", lab, tbllabel);
 		send_passt(IP_ASM, entry);
 	}
 
@@ -936,7 +937,7 @@ mrst_put_entry_and_recurse(int num, struct swents **p, int n, int *state,
 
 	/* generate the table entry */
 	char *entry = tmpalloc(20);
-	snprintf(entry, 20, ".long " LABFMT "-" LABFMT, lab, tbllabel);
+	snprintf(entry, 20, "\t.long " LABFMT "-" LABFMT "\n", lab, tbllabel);
 	send_passt(IP_ASM, entry);
 
 	DPRINTF(("mrst_put_entry: table=%d, pos=%lu/%lu, label=%d\n",

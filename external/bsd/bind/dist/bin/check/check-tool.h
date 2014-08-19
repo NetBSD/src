@@ -1,7 +1,7 @@
-/*	$NetBSD: check-tool.h,v 1.3 2012/06/05 00:38:48 christos Exp $	*/
+/*	$NetBSD: check-tool.h,v 1.3.2.1 2014/08/19 23:45:58 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2010, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -39,7 +39,7 @@ setup_logging(isc_mem_t *mctx, FILE *errout, isc_log_t **logp);
 isc_result_t
 load_zone(isc_mem_t *mctx, const char *zonename, const char *filename,
 	  dns_masterformat_t fileformat, const char *classname,
-	  dns_zone_t **zonep);
+	  dns_ttl_t maxttl, dns_zone_t **zonep);
 
 isc_result_t
 dump_zone(const char *zonename, dns_zone_t *zone, const char *filename,
@@ -52,11 +52,13 @@ void DestroySockets(void);
 #endif
 
 extern int debug;
+extern const char *journal;
 extern isc_boolean_t nomerge;
 extern isc_boolean_t docheckmx;
 extern isc_boolean_t docheckns;
 extern isc_boolean_t dochecksrv;
 extern unsigned int zone_options;
+extern unsigned int zone_options2;
 
 ISC_LANG_ENDDECLS
 

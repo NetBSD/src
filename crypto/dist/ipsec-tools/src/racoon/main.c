@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2009/01/26 18:13:06 tteras Exp $	*/
+/*	$NetBSD: main.c,v 1.12.16.1 2014/08/19 23:45:15 tls Exp $	*/
 
 /* Id: main.c,v 1.25 2006/06/20 20:31:34 manubsd Exp */
 
@@ -290,6 +290,8 @@ main(ac, av)
 		/* NOTREACHED*/
 	}
 
+	ploginit();
+
 #ifdef DEBUG_RECORD_MALLOCATION
 	DRM_init();
 #endif
@@ -301,8 +303,6 @@ main(ac, av)
 	initrmconf();
 	oakley_dhinit();
 	compute_vendorids();
-
-	ploginit();
 
 	plog(LLV_INFO, LOCATION, NULL, "%s\n", version);
 	plog(LLV_INFO, LOCATION, NULL, "@(#)"

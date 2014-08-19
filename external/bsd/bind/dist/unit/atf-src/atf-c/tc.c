@@ -1,9 +1,9 @@
-/*	$NetBSD: tc.c,v 1.1.1.1 2011/09/11 17:20:28 christos Exp $	*/
+/*	$NetBSD: tc.c,v 1.1.1.1.8.1 2014/08/19 23:46:37 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -105,7 +106,7 @@ static void errno_test(struct context *, const char *, const size_t,
                        const int, const char *, const bool,
                        void (*)(struct context *, atf_dynstr_t *));
 static atf_error_t check_prog_in_dir(const char *, void *);
-static atf_error_t check_prog(struct context *, const char *, void *);
+static atf_error_t check_prog(struct context *, const char *);
 
 static void
 context_init(struct context *ctx, const atf_tc_t *tc, const char *resfile)
@@ -158,30 +159,42 @@ static atf_error_t
 write_resfile(const int fd, const char *result, const int arg,
               const atf_dynstr_t *reason)
 {
-    char buffer[1024];
-    int ret;
+    static char NL[] = "\n", CS[] = ": ";
+    char buf[64];
+    const char *r;
+    struct iovec iov[5];
+    ssize_t ret;
+    int count = 0;
 
-    if (arg == -1 && reason == NULL) {
-        if (snprintf(buffer, sizeof(buffer), "%s\n", result) <= 0)
-            goto err;
-    } else if (arg == -1 && reason != NULL) {
-        if (snprintf(buffer, sizeof(buffer), "%s: %s\n", result,
-                     atf_dynstr_cstring(reason)) <= 0)
-            goto err;
-    } else if (arg != -1 && reason != NULL) {
-        if (snprintf(buffer, sizeof(buffer), "%s(%d): %s\n", result,
-                     arg, atf_dynstr_cstring(reason)) <= 0)
-            goto err;
-    } else {
-        UNREACHABLE;
+    INV(arg == -1 || reason != NULL);
+
+#define UNCONST(a) ((void *)(unsigned long)(const void *)(a))
+    iov[count].iov_base = UNCONST(result);
+    iov[count++].iov_len = strlen(result);
+
+    if (reason != NULL) {
+        if (arg != -1) {
+            iov[count].iov_base = buf;
+            iov[count++].iov_len = snprintf(buf, sizeof(buf), "(%d)", arg);
+        }
+
+        iov[count].iov_base = CS;
+        iov[count++].iov_len = sizeof(CS) - 1;
+
+        r = atf_dynstr_cstring(reason);
+        iov[count].iov_base = UNCONST(r);
+        iov[count++].iov_len = strlen(r);
     }
+#undef UNCONST
 
-    while ((ret = write(fd, buffer, strlen(buffer))) == -1 && errno == EINTR)
-        ; /* Retry. */
+    iov[count].iov_base = NL;
+    iov[count++].iov_len = sizeof(NL) - 1;
+
+    while ((ret = writev(fd, iov, count)) == -1 && errno == EINTR)
+        continue; /* Retry. */
     if (ret != -1)
         return atf_no_error();
 
-err:
     return atf_libc_error(
         errno, "Failed to write results file; result %s, reason %s", result,
         reason == NULL ? "null" : atf_dynstr_cstring(reason));
@@ -451,7 +464,7 @@ out_p:
 }
 
 static atf_error_t
-check_prog(struct context *ctx, const char *prog, void *data)
+check_prog(struct context *ctx, const char *prog)
 {
     atf_error_t err;
     atf_fs_path_t p;
@@ -865,7 +878,7 @@ _atf_tc_pass(struct context *ctx)
 static void
 _atf_tc_require_prog(struct context *ctx, const char *prog)
 {
-    check_fatal_error(check_prog(ctx, prog, NULL));
+    check_fatal_error(check_prog(ctx, prog));
 }
 
 static void

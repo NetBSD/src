@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.8.1 2013/02/25 00:26:33 tls Exp $
+#	$NetBSD: Makefile,v 1.1.8.2 2014/08/19 23:47:18 tls Exp $
 
 PROG_CXX=	llvm-cov
 NOMAN=		yes
@@ -7,7 +7,8 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/tools/llvm-cov
 
-SRCS=	llvm-cov.cpp
+SRCS=	gcov.cpp \
+	llvm-cov.cpp
 
 LLVM_LIBS+= \
 	IR \

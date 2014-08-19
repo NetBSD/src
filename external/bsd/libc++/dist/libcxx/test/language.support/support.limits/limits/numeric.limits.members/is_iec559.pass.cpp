@@ -42,7 +42,15 @@ int main()
     test<unsigned long, false>();
     test<long long, false>();
     test<unsigned long long, false>();
+#ifndef _LIBCPP_HAS_NO_INT128
+    test<__int128_t, false>();
+    test<__uint128_t, false>();
+#endif
     test<float, true>();
     test<double, true>();
+#if (defined(__ppc__) || defined(__ppc64__))
+    test<long double, false>();
+#else
     test<long double, true>();
+#endif
 }

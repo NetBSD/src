@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.24 2012/07/27 09:10:59 pooka Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.24.2.1 2014/08/19 23:45:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -199,9 +199,11 @@ _prop_number_externalize(struct _prop_object_externalize_context *ctx,
 	 * we output in decimal.
 	 */
 	if (pn->pn_value.pnv_is_unsigned)
-		sprintf(tmpstr, "0x%" PRIx64, pn->pn_value.pnv_unsigned);
+		snprintf(tmpstr, sizeof(tmpstr), "0x%" PRIx64,
+		    pn->pn_value.pnv_unsigned);
 	else
-		sprintf(tmpstr, "%" PRIi64, pn->pn_value.pnv_signed);
+		snprintf(tmpstr, sizeof(tmpstr), "%" PRIi64,
+		    pn->pn_value.pnv_signed);
 
 	if (_prop_object_externalize_start_tag(ctx, "integer") == false ||
 	    _prop_object_externalize_append_cstring(ctx, tmpstr) == false ||
@@ -314,7 +316,7 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
 	rpn = _prop_rb_tree_insert_node(&_prop_number_tree, pn);
 	_PROP_ASSERT(rpn == pn);
 	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
-	return (pn);
+	return (rpn);
 }
 
 /*

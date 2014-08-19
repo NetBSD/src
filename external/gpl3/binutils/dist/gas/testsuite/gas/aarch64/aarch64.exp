@@ -1,0 +1,7 @@
+#
+# Some AArch64 tests
+#
+
+if {[istarget aarch64*-*-*]} {
+    run_dump_tests [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
+}

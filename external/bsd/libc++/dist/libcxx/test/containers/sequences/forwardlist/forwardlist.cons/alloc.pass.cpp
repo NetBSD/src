@@ -14,8 +14,9 @@
 #include <forward_list>
 #include <cassert>
 
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 #include "../../../NotConstructible.h"
+#include "min_allocator.h"
 
 int main()
 {
@@ -27,4 +28,14 @@ int main()
         assert(c.get_allocator() == A(12));
         assert(c.empty());
     }
+#if __cplusplus >= 201103L
+    {
+        typedef min_allocator<NotConstructible> A;
+        typedef A::value_type T;
+        typedef std::forward_list<T, A> C;
+        C c(A{});
+        assert(c.get_allocator() == A());
+        assert(c.empty());
+    }
+#endif
 }

@@ -1,5 +1,5 @@
-/*	$NetBSD: kexdhc.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: kexdhc.c,v 1.12 2010/11/10 01:33:07 djm Exp $ */
+/*	$NetBSD: kexdhc.c,v 1.3.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: kexdhc.c,v 1.13 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexdhc.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: kexdhc.c,v 1.3.8.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 
 #include <openssl/dh.h>
@@ -125,7 +125,7 @@ kexdh_client(Kex *kex)
 	if (BN_bin2bn(kbuf, kout, shared_secret) == NULL)
 		fatal("kexdh_client: BN_bin2bn failed");
 	memset(kbuf, 0, klen);
-	xfree(kbuf);
+	free(kbuf);
 
 	/* calc and verify H */
 	kex_dh_hash(
@@ -139,14 +139,14 @@ kexdh_client(Kex *kex)
 	    shared_secret,
 	    &hash, &hashlen
 	);
-	xfree(server_host_key_blob);
+	free(server_host_key_blob);
 	BN_clear_free(dh_server_pub);
 	DH_free(dh);
 
 	if (key_verify(server_host_key, signature, slen, hash, hashlen) != 1)
 		fatal("key_verify failed for server_host_key");
 	key_free(server_host_key);
-	xfree(signature);
+	free(signature);
 
 	/* save session id */
 	if (kex->session_id == NULL) {

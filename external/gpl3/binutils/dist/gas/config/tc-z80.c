@@ -1,5 +1,5 @@
 /* tc-z80.c -- Assemble code for the Zilog Z80 and ASCII R800
-   Copyright 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright 2005, 2006, 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -161,12 +161,93 @@ Default: -z80 -ignore-undocument-instructions -warn-unportable-instructions.\n")
 
 static symbolS * zero;
 
+struct reg_entry
+{
+  char* name;
+  int number;
+};
+#define R_STACKABLE (0x80)
+#define R_ARITH     (0x40)
+#define R_IX        (0x20)
+#define R_IY        (0x10)
+#define R_INDEX     (R_IX | R_IY)
+
+#define REG_A (7)
+#define REG_B (0)
+#define REG_C (1)
+#define REG_D (2)
+#define REG_E (3)
+#define REG_H (4)
+#define REG_L (5)
+#define REG_F (6 | 8)
+#define REG_I (9)
+#define REG_R (10)
+
+#define REG_AF (3 | R_STACKABLE)
+#define REG_BC (0 | R_STACKABLE | R_ARITH)
+#define REG_DE (1 | R_STACKABLE | R_ARITH)
+#define REG_HL (2 | R_STACKABLE | R_ARITH)
+#define REG_IX (REG_HL | R_IX)
+#define REG_IY (REG_HL | R_IY)
+#define REG_SP (3 | R_ARITH)
+
+static const struct reg_entry regtable[] =
+{
+  {"a",  REG_A },
+  {"af", REG_AF },
+  {"b",  REG_B },
+  {"bc", REG_BC },
+  {"c",  REG_C },
+  {"d",  REG_D },
+  {"de", REG_DE },
+  {"e",  REG_E },
+  {"f",  REG_F },
+  {"h",  REG_H },
+  {"hl", REG_HL },
+  {"i",  REG_I },
+  {"ix", REG_IX },
+  {"ixh",REG_H | R_IX },
+  {"ixl",REG_L | R_IX },
+  {"iy", REG_IY },
+  {"iyh",REG_H | R_IY },
+  {"iyl",REG_L | R_IY },
+  {"l",  REG_L },
+  {"r",  REG_R },
+  {"sp", REG_SP },
+} ;
+
+#define BUFLEN 8 /* Large enough for any keyword.  */
+
 void
 md_begin (void)
 {
-  expressionS nul;
+  expressionS nul, reg;
   char * p;
+  unsigned int i, j, k;
+  char buf[BUFLEN];
 
+  reg.X_op = O_register;
+  reg.X_md = 0;
+  reg.X_add_symbol = reg.X_op_symbol = 0;
+  for ( i = 0 ; i < ARRAY_SIZE ( regtable ) ; ++i )
+    {
+      reg.X_add_number = regtable[i].number;
+      k = strlen ( regtable[i].name );
+      buf[k] = 0;
+      if ( k+1 < BUFLEN )
+        {
+          for ( j = ( 1<<k ) ; j ; --j )
+            {
+              for ( k = 0 ; regtable[i].name[k] ; ++k )
+                {
+                  buf[k] = ( j & ( 1<<k ) ) ? TOUPPER ( regtable[i].name[k] ) : regtable[i].name[k];
+                }
+              symbolS * psym = symbol_find_or_make(buf);
+	      S_SET_SEGMENT(psym, reg_section);
+	      symbol_set_value_expression(psym, &reg);
+            }
+        }
+    }
   p = input_line_pointer;
   input_line_pointer = "0";
   nul.X_md=0;
@@ -343,62 +424,8 @@ key_cmp (const void * a, const void * b)
   return strcmp (str_a, str_b);
 }
 
-#define BUFLEN 8 /* Large enough for any keyword.  */
-
 char buf[BUFLEN];
 const char *key = buf;
-
-#define R_STACKABLE (0x80)
-#define R_ARITH     (0x40)
-#define R_IX        (0x20)
-#define R_IY        (0x10)
-#define R_INDEX     (R_IX | R_IY)
-
-#define REG_A (7)
-#define REG_B (0)
-#define REG_C (1)
-#define REG_D (2)
-#define REG_E (3)
-#define REG_H (4)
-#define REG_L (5)
-#define REG_F (6 | 8)
-#define REG_I (9)
-#define REG_R (10)
-
-#define REG_AF (3 | R_STACKABLE)
-#define REG_BC (0 | R_STACKABLE | R_ARITH)
-#define REG_DE (1 | R_STACKABLE | R_ARITH)
-#define REG_HL (2 | R_STACKABLE | R_ARITH)
-#define REG_SP (3 | R_ARITH)
-
-static const struct reg_entry
-{
-  char* name;
-  int number;
-} regtable[] =
-{
-  {"a",  REG_A },
-  {"af", REG_AF },
-  {"b",  REG_B },
-  {"bc", REG_BC },
-  {"c",  REG_C },
-  {"d",  REG_D },
-  {"de", REG_DE },
-  {"e",  REG_E },
-  {"f",  REG_F },
-  {"h",  REG_H },
-  {"hl", REG_HL },
-  {"i",  REG_I },
-  {"ix", REG_HL | R_IX },
-  {"ixh",REG_H | R_IX },
-  {"ixl",REG_L | R_IX },
-  {"iy", REG_HL | R_IY },
-  {"iyh",REG_H | R_IY },
-  {"iyl",REG_L | R_IY },
-  {"l",  REG_L },
-  {"r",  REG_R },
-  {"sp", REG_SP },
-} ;
 
 /* Prevent an error on a line from also generating
    a "junk at end of line" error message.  */
@@ -496,88 +523,90 @@ is_indir (const char *s)
   return indir;
 }
 
-/* Parse general expression.  */
+/* Check whether a symbol involves a register.  */
+static int 
+contains_register(symbolS *sym)
+{
+  if (sym)
+  {
+    expressionS * ex = symbol_get_value_expression(sym);
+    return (O_register == ex->X_op) 
+      || (ex->X_add_symbol && contains_register(ex->X_add_symbol)) 
+      || (ex->X_op_symbol && contains_register(ex->X_op_symbol));
+  }
+  else
+    return 0;
+}
+
+/* Parse general expression, not loooking for indexed adressing.  */
 static const char *
-parse_exp2 (const char *s, expressionS *op, segT *pseg)
+parse_exp_not_indexed (const char *s, expressionS *op)
 {
   const char *p;
   int indir;
-  int i;
-  const struct reg_entry * regp;
-  expressionS offset;
+  segT dummy;
 
   p = skip_space (s);
   op->X_md = indir = is_indir (p);
-  if (indir)
-    p = skip_space (p + 1);
-
-  for (i = 0; i < BUFLEN; ++i)
-    {
-      if (!ISALPHA (p[i])) /* Register names consist of letters only.  */
-	break;
-      buf[i] = TOLOWER (p[i]);
-    }
-
-  if ((i < BUFLEN) && ((p[i] == 0) || (strchr (")+-, \t", p[i]))))
-    {
-      buf[i] = 0;
-      regp = bsearch (& key, regtable, ARRAY_SIZE (regtable),
-		      sizeof (regtable[0]), key_cmp);
-      if (regp)
-	{
-	  *pseg = reg_section;
-	  op->X_add_symbol = op->X_op_symbol = 0;
-	  op->X_add_number = regp->number;
-	  op->X_op = O_register;
-	  p += strlen (regp->name);
-	  p = skip_space (p);
-	  if (indir)
-	    {
-	      if (*p == ')')
-		++p;
-	      if ((regp->number & R_INDEX) && (regp->number & R_ARITH))
-		{
-		  op->X_op = O_md1;
-
-		  if  ((*p == '+') || (*p == '-'))
-		    {
-		      input_line_pointer = (char*) p;
-		      expression (& offset);
-		      p = skip_space (input_line_pointer);
-		      if (*p != ')')
-			error (_("bad offset expression syntax"));
-		      else
-			++ p;
-		      op->X_add_symbol = make_expr_symbol (& offset);
-		      return p;
-		    }
-
-		  /* We treat (i[xy]) as (i[xy]+0), which is how it will
-		     end up anyway, unless we're processing jp (i[xy]).  */
-		  op->X_add_symbol = zero;
-		}
-	    }
-	  p = skip_space (p);
-
-	  if ((*p == 0) || (*p == ','))
-	    return p;
-	}
-    }
-  /* Not an argument involving a register; use the generic parser.  */
   input_line_pointer = (char*) s ;
-  *pseg = expression (op);
-  if (op->X_op == O_absent)
-    error (_("missing operand"));
-  if (op->X_op == O_illegal)
-    error (_("bad expression syntax"));
+  dummy = expression (op);
+  switch (op->X_op)
+    {
+    case O_absent:
+      error (_("missing operand"));
+      break;
+    case O_illegal:
+      error (_("bad expression syntax"));
+      break;
+    }
   return input_line_pointer;
 }
 
+/* Parse expression, change operator to O_md1 for indexed addressing*/
 static const char *
 parse_exp (const char *s, expressionS *op)
 {
-  segT dummy;
-  return parse_exp2 (s, op, & dummy);
+  const char* res = parse_exp_not_indexed (s, op);
+  switch (op->X_op)
+    {
+    case O_add:
+    case O_subtract:
+      if (op->X_md && (O_register == symbol_get_value_expression(op->X_add_symbol)->X_op))
+        {
+	  int rnum = symbol_get_value_expression(op->X_add_symbol)->X_add_number;
+	  if ( ((REG_IX != rnum) && (REG_IY != rnum)) || contains_register(op->X_op_symbol) )
+	    {
+	      ill_op();
+	    }
+	  else
+	    {
+	      if (O_subtract == op->X_op)
+	        {
+		  expressionS minus;
+		  minus.X_op = O_uminus;
+		  minus.X_add_number = 0;
+		  minus.X_add_symbol = op->X_op_symbol;
+		  minus.X_op_symbol = 0;
+		  op->X_op_symbol = make_expr_symbol(&minus);
+		  op->X_op = O_add;
+	        }
+	      symbol_get_value_expression(op->X_op_symbol)->X_add_number += op->X_add_number;
+	      op->X_add_number = rnum;
+	      op->X_add_symbol = op->X_op_symbol;
+	      op->X_op_symbol = 0;
+	      op->X_op = O_md1;
+	    }
+	}
+      break;
+    case O_register:
+      if ( op->X_md && ((REG_IX == op->X_add_number)||(REG_IY == op->X_add_number)) )
+        {
+	  op->X_add_symbol = zero;
+	  op->X_op = O_md1;
+	}
+	break;
+    }
+  return res;
 }
 
 /* Condition codes, including some synonyms provided by HiTech zas.  */
@@ -680,7 +709,11 @@ emit_byte (expressionS * val, bfd_reloc_code_real_type r_type)
 
   p = frag_more (1);
   *p = val->X_add_number;
-  if ((r_type == BFD_RELOC_8_PCREL) && (val->X_op == O_constant))
+  if ( contains_register(val->X_add_symbol) || contains_register(val->X_op_symbol) )
+    {
+      ill_op();
+    }
+  else if ((r_type == BFD_RELOC_8_PCREL) && (val->X_op == O_constant))
     {
       as_bad (_("cannot make a relative jump to an absolute location"));
     }
@@ -712,7 +745,9 @@ emit_word (expressionS * val)
 
   p = frag_more (2);
   if (   (val->X_op == O_register)
-      || (val->X_op == O_md1))
+      || (val->X_op == O_md1)
+      || contains_register(val->X_add_symbol)
+      || contains_register(val->X_op_symbol) )
     ill_op ();
   else
     {
@@ -888,7 +923,7 @@ emit_call (char prefix ATTRIBUTE_UNUSED, char opcode, const char * args)
   expressionS addr;
   const char *p;  char *q;
 
-  p = parse_exp (args, &addr);
+  p = parse_exp_not_indexed (args, &addr);
   if (addr.X_md)
     ill_op ();
   else
@@ -936,7 +971,7 @@ emit_jr (char prefix ATTRIBUTE_UNUSED, char opcode, const char * args)
   const char *p;
   char *q;
 
-  p = parse_exp (args, &addr);
+  p = parse_exp_not_indexed (args, &addr);
   if (addr.X_md)
     ill_op ();
   else
@@ -956,14 +991,11 @@ emit_jp (char prefix, char opcode, const char * args)
   char *q;
   int rnum;
 
-  p = parse_exp (args, & addr);
+  p = parse_exp_not_indexed (args, & addr);
   if (addr.X_md)
     {
       rnum = addr.X_add_number;
-      if ((addr.X_op == O_register && (rnum & ~R_INDEX) == REG_HL)
-	 /* An operand (i[xy]) would have been rewritten to (i[xy]+0)
-            in parse_exp ().  */
-	  || (addr.X_op == O_md1 && addr.X_add_symbol == zero))
+      if ((O_register == addr.X_op) && (REG_HL == (rnum & ~R_INDEX)))
 	{
 	  q = frag_more ((rnum & R_INDEX) ? 2 : 1);
 	  if (rnum & R_INDEX)
@@ -1217,7 +1249,7 @@ emit_ex (char prefix_in ATTRIBUTE_UNUSED,
   const char * p;
   char prefix, opcode;
 
-  p = parse_exp (args, &op);
+  p = parse_exp_not_indexed (args, &op);
   p = skip_space (p);
   if (*p++ != ',')
     {
@@ -1377,7 +1409,7 @@ emit_rst (char prefix ATTRIBUTE_UNUSED, char opcode, const char * args)
   const char *p;
   char *q;
 
-  p = parse_exp (args, &addr);
+  p = parse_exp_not_indexed (args, &addr);
   if (addr.X_op != O_constant)
     {
       error ("rst needs constant address");

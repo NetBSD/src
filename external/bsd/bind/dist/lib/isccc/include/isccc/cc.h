@@ -1,7 +1,7 @@
-/*	$NetBSD: cc.h,v 1.3 2012/06/05 00:42:59 christos Exp $	*/
+/*	$NetBSD: cc.h,v 1.3.2.1 2014/08/19 23:46:34 tls Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -43,6 +43,16 @@
 
 ISC_LANG_BEGINDECLS
 
+/*% from lib/dns/include/dst/dst.h */
+
+#define ISCCC_ALG_UNKNOWN	0
+#define ISCCC_ALG_HMACMD5	157
+#define ISCCC_ALG_HMACSHA1	161
+#define ISCCC_ALG_HMACSHA224	162
+#define ISCCC_ALG_HMACSHA256	163
+#define ISCCC_ALG_HMACSHA384	164
+#define ISCCC_ALG_HMACSHA512	165
+
 /*% Maximum Datagram Package */
 #define ISCCC_CC_MAXDGRAMPACKET		4096
 
@@ -58,23 +68,23 @@ ISC_LANG_BEGINDECLS
 /*% Send to Wire */
 isc_result_t
 isccc_cc_towire(isccc_sexpr_t *alist, isccc_region_t *target,
-	      isccc_region_t *secret);
+		isc_uint32_t algorithm, isccc_region_t *secret);
 
 /*% Get From Wire */
 isc_result_t
 isccc_cc_fromwire(isccc_region_t *source, isccc_sexpr_t **alistp,
-		isccc_region_t *secret);
+		  isc_uint32_t algorithm, isccc_region_t *secret);
 
 /*% Create Message */
 isc_result_t
 isccc_cc_createmessage(isc_uint32_t version, const char *from, const char *to,
-		     isc_uint32_t serial, isccc_time_t now,
-		     isccc_time_t expires, isccc_sexpr_t **alistp);
+		       isc_uint32_t serial, isccc_time_t now,
+		       isccc_time_t expires, isccc_sexpr_t **alistp);
 
 /*% Create Acknowledgment */
 isc_result_t
 isccc_cc_createack(isccc_sexpr_t *message, isc_boolean_t ok,
-		 isccc_sexpr_t **ackp);
+		   isccc_sexpr_t **ackp);
 
 /*% Is Ack? */
 isc_boolean_t
@@ -87,7 +97,7 @@ isccc_cc_isreply(isccc_sexpr_t *message);
 /*% Create Response */
 isc_result_t
 isccc_cc_createresponse(isccc_sexpr_t *message, isccc_time_t now,
-		      isccc_time_t expires, isccc_sexpr_t **alistp);
+			isccc_time_t expires, isccc_sexpr_t **alistp);
 
 /*% Define String */
 isccc_sexpr_t *
@@ -104,7 +114,7 @@ isccc_cc_lookupstring(isccc_sexpr_t *alist, const char *key, char **strp);
 /*% Lookup uint 32 */
 isc_result_t
 isccc_cc_lookupuint32(isccc_sexpr_t *alist, const char *key,
-		    isc_uint32_t *uintp);
+		      isc_uint32_t *uintp);
 
 /*% Create Symbol Table */
 isc_result_t
@@ -117,7 +127,7 @@ isccc_cc_cleansymtab(isccc_symtab_t *symtab, isccc_time_t now);
 /*% Check for Duplicates */
 isc_result_t
 isccc_cc_checkdup(isccc_symtab_t *symtab, isccc_sexpr_t *message,
-		   isccc_time_t now);
+		  isccc_time_t now);
 
 ISC_LANG_ENDDECLS
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: init.c,v 1.1.1.4 2010/12/12 15:23:11 adam Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.4.12.1 2014/08/19 23:52:02 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.14 2010/04/13 20:23:31 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -66,7 +66,7 @@ meta_back_initialize(
 	bi->bi_destroy = 0;
 
 	bi->bi_db_init = meta_back_db_init;
-	bi->bi_db_config = meta_back_db_config;
+	bi->bi_db_config = config_generic_wrapper;
 	bi->bi_db_open = meta_back_db_open;
 	bi->bi_db_close = 0;
 	bi->bi_db_destroy = meta_back_db_destroy;
@@ -88,7 +88,7 @@ meta_back_initialize(
 	bi->bi_connection_init = 0;
 	bi->bi_connection_destroy = meta_back_conn_destroy;
 
-	return 0;
+	return meta_back_init_cf( bi );
 }
 
 int
@@ -115,7 +115,10 @@ meta_back_db_init(
 
 	/* set default flags */
 	mi->mi_flags =
-		META_BACK_F_DEFER_ROOTDN_BIND;
+		META_BACK_F_DEFER_ROOTDN_BIND
+		| META_BACK_F_PROXYAUTHZ_ALWAYS
+		| META_BACK_F_PROXYAUTHZ_ANON
+		| META_BACK_F_PROXYAUTHZ_NOANON;
 
 	/*
 	 * At present the default is no default target;
@@ -144,6 +147,90 @@ meta_back_db_init(
 	mi->mi_ldap_extra = (ldap_extra_t *)bi->bi_extra;
 
 	be->be_private = mi;
+	be->be_cf_ocs = be->bd_info->bi_cf_ocs;
+
+	return 0;
+}
+
+int
+meta_target_finish(
+	metainfo_t *mi,
+	metatarget_t *mt,
+	const char *log,
+	char *msg,
+	size_t msize
+)
+{
+	slap_bindconf	sb = { BER_BVNULL };
+	struct berval mapped;
+	int rc;
+
+	ber_str2bv( mt->mt_uri, 0, 0, &sb.sb_uri );
+	sb.sb_version = mt->mt_version;
+	sb.sb_method = LDAP_AUTH_SIMPLE;
+	BER_BVSTR( &sb.sb_binddn, "" );
+
+	if ( META_BACK_TGT_T_F_DISCOVER( mt ) ) {
+		rc = slap_discover_feature( &sb,
+				slap_schema.si_ad_supportedFeatures->ad_cname.bv_val,
+				LDAP_FEATURE_ABSOLUTE_FILTERS );
+		if ( rc == LDAP_COMPARE_TRUE ) {
+			mt->mt_flags |= LDAP_BACK_F_T_F;
+		}
+	}
+
+	if ( META_BACK_TGT_CANCEL_DISCOVER( mt ) ) {
+		rc = slap_discover_feature( &sb,
+				slap_schema.si_ad_supportedExtension->ad_cname.bv_val,
+				LDAP_EXOP_CANCEL );
+		if ( rc == LDAP_COMPARE_TRUE ) {
+			mt->mt_flags |= LDAP_BACK_F_CANCEL_EXOP;
+		}
+	}
+
+	if ( !( mt->mt_idassert_flags & LDAP_BACK_AUTH_OVERRIDE )
+		|| mt->mt_idassert_authz != NULL )
+	{
+		mi->mi_flags &= ~META_BACK_F_PROXYAUTHZ_ALWAYS;
+	}
+
+	if ( ( mt->mt_idassert_flags & LDAP_BACK_AUTH_AUTHZ_ALL )
+		&& !( mt->mt_idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE ) )
+	{
+		snprintf( msg, msize,
+			"%s: inconsistent idassert configuration "
+			"(likely authz=\"*\" used with \"non-prescriptive\" flag)",
+			log );
+		Debug( LDAP_DEBUG_ANY, "%s (target %s)\n",
+			msg, mt->mt_uri, 0 );
+		return 1;
+	}
+
+	if ( !( mt->mt_idassert_flags & LDAP_BACK_AUTH_AUTHZ_ALL ) )
+	{
+		mi->mi_flags &= ~META_BACK_F_PROXYAUTHZ_ANON;
+	}
+
+	if ( ( mt->mt_idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE ) )
+	{
+		mi->mi_flags &= ~META_BACK_F_PROXYAUTHZ_NOANON;
+	}
+
+	BER_BVZERO( &mapped );
+	ldap_back_map( &mt->mt_rwmap.rwm_at,
+		&slap_schema.si_ad_entryDN->ad_cname, &mapped,
+		BACKLDAP_REMAP );
+	if ( BER_BVISNULL( &mapped ) || mapped.bv_val[0] == '\0' ) {
+		mt->mt_rep_flags |= REP_NO_ENTRYDN;
+	}
+
+	BER_BVZERO( &mapped );
+	ldap_back_map( &mt->mt_rwmap.rwm_at,
+		&slap_schema.si_ad_subschemaSubentry->ad_cname, &mapped,
+		BACKLDAP_REMAP );
+	if ( BER_BVISNULL( &mapped ) || mapped.bv_val[0] == '\0' ) {
+		mt->mt_rep_flags |= REP_NO_SUBSCHEMA;
+	}
 
 	return 0;
 }
@@ -154,14 +241,17 @@ meta_back_db_open(
 	ConfigReply	*cr )
 {
 	metainfo_t	*mi = (metainfo_t *)be->be_private;
+	char msg[SLAP_TEXT_BUFLEN];
 
-	int		i,
-			not_always = 0,
-			not_always_anon_proxyauthz = 0,
-			not_always_anon_non_prescriptive = 0,
-			rc;
+	int		i, rc;
 
 	if ( mi->mi_ntargets == 0 ) {
+		/* Dynamically added, nothing to check here until
+		 * some targets get added
+		 */
+		if ( slapMode & SLAP_SERVER_RUNNING )
+			return 0;
+
 		Debug( LDAP_DEBUG_ANY,
 			"meta_back_db_open: no targets defined\n",
 			0, 0, 0 );
@@ -169,92 +259,11 @@ meta_back_db_open(
 	}
 
 	for ( i = 0; i < mi->mi_ntargets; i++ ) {
-		slap_bindconf	sb = { BER_BVNULL };
 		metatarget_t	*mt = mi->mi_targets[ i ];
 
-		struct berval mapped;
-
-		ber_str2bv( mt->mt_uri, 0, 0, &sb.sb_uri );
-		sb.sb_version = mt->mt_version;
-		sb.sb_method = LDAP_AUTH_SIMPLE;
-		BER_BVSTR( &sb.sb_binddn, "" );
-
-		if ( META_BACK_TGT_T_F_DISCOVER( mt ) ) {
-			rc = slap_discover_feature( &sb,
-					slap_schema.si_ad_supportedFeatures->ad_cname.bv_val,
-					LDAP_FEATURE_ABSOLUTE_FILTERS );
-			if ( rc == LDAP_COMPARE_TRUE ) {
-				mt->mt_flags |= LDAP_BACK_F_T_F;
-			}
-		}
-
-		if ( META_BACK_TGT_CANCEL_DISCOVER( mt ) ) {
-			rc = slap_discover_feature( &sb,
-					slap_schema.si_ad_supportedExtension->ad_cname.bv_val,
-					LDAP_EXOP_CANCEL );
-			if ( rc == LDAP_COMPARE_TRUE ) {
-				mt->mt_flags |= LDAP_BACK_F_CANCEL_EXOP;
-			}
-		}
-
-		if ( not_always == 0 ) {
-			if ( !( mt->mt_idassert_flags & LDAP_BACK_AUTH_OVERRIDE )
-				|| mt->mt_idassert_authz != NULL )
-			{
-				not_always = 1;
-			}
-		}
-
-		if ( ( mt->mt_idassert_flags & LDAP_BACK_AUTH_AUTHZ_ALL )
-			&& !( mt->mt_idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE ) )
-		{
-			Debug( LDAP_DEBUG_ANY, "meta_back_db_open(%s): "
-				"target #%d inconsistent idassert configuration "
-				"(likely authz=\"*\" used with \"non-prescriptive\" flag)\n",
-				be->be_suffix[ 0 ].bv_val, i, 0 );
+		if ( meta_target_finish( mi, mt,
+			"meta_back_db_open", msg, sizeof( msg )))
 			return 1;
-		}
-
-		if ( not_always_anon_proxyauthz == 0 ) {
-			if ( !( mt->mt_idassert_flags & LDAP_BACK_AUTH_AUTHZ_ALL ) )
-			{
-				not_always_anon_proxyauthz = 1;
-			}
-		}
-
-		if ( not_always_anon_non_prescriptive == 0 ) {
-			if ( ( mt->mt_idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE ) )
-			{
-				not_always_anon_non_prescriptive = 1;
-			}
-		}
-
-		BER_BVZERO( &mapped );
-		ldap_back_map( &mt->mt_rwmap.rwm_at, 
-			&slap_schema.si_ad_entryDN->ad_cname, &mapped,
-			BACKLDAP_REMAP );
-		if ( BER_BVISNULL( &mapped ) || mapped.bv_val[0] == '\0' ) {
-			mt->mt_rep_flags |= REP_NO_ENTRYDN;
-		}
-
-		BER_BVZERO( &mapped );
-		ldap_back_map( &mt->mt_rwmap.rwm_at, 
-			&slap_schema.si_ad_subschemaSubentry->ad_cname, &mapped,
-			BACKLDAP_REMAP );
-		if ( BER_BVISNULL( &mapped ) || mapped.bv_val[0] == '\0' ) {
-			mt->mt_rep_flags |= REP_NO_SUBSCHEMA;
-		}
-	}
-
-	if ( not_always == 0 ) {
-		mi->mi_flags |= META_BACK_F_PROXYAUTHZ_ALWAYS;
-	}
-
-	if ( not_always_anon_proxyauthz == 0 ) {
-		mi->mi_flags |= META_BACK_F_PROXYAUTHZ_ANON;
-
-	} else if ( not_always_anon_non_prescriptive == 0 ) {
-		mi->mi_flags |= META_BACK_F_PROXYAUTHZ_NOANON;
 	}
 
 	return 0;
@@ -312,6 +321,15 @@ mapping_dst_free(
 	}
 }
 
+void
+meta_back_map_free( struct ldapmap *lm )
+{
+	avl_free( lm->remap, mapping_dst_free );
+	avl_free( lm->map, mapping_free );
+	lm->remap = NULL;
+	lm->map = NULL;
+}
+
 static void
 target_free(
 	metatarget_t	*mt )
@@ -320,8 +338,13 @@ target_free(
 		free( mt->mt_uri );
 		ldap_pvt_thread_mutex_destroy( &mt->mt_uri_mutex );
 	}
-	if ( mt->mt_subtree_exclude ) {
-		ber_bvarray_free( mt->mt_subtree_exclude );
+	if ( mt->mt_subtree ) {
+		meta_subtree_destroy( mt->mt_subtree );
+		mt->mt_subtree = NULL;
+	}
+	if ( mt->mt_filter ) {
+		meta_filter_destroy( mt->mt_filter );
+		mt->mt_filter = NULL;
 	}
 	if ( !BER_BVISNULL( &mt->mt_psuffix ) ) {
 		free( mt->mt_psuffix.bv_val );
@@ -358,11 +381,12 @@ target_free(
 	}
 	if ( mt->mt_rwmap.rwm_rw ) {
 		rewrite_info_delete( &mt->mt_rwmap.rwm_rw );
+		if ( mt->mt_rwmap.rwm_bva_rewrite )
+			ber_bvarray_free( mt->mt_rwmap.rwm_bva_rewrite );
 	}
-	avl_free( mt->mt_rwmap.rwm_oc.remap, mapping_dst_free );
-	avl_free( mt->mt_rwmap.rwm_oc.map, mapping_free );
-	avl_free( mt->mt_rwmap.rwm_at.remap, mapping_dst_free );
-	avl_free( mt->mt_rwmap.rwm_at.map, mapping_free );
+	meta_back_map_free( &mt->mt_rwmap.rwm_oc );
+	meta_back_map_free( &mt->mt_rwmap.rwm_at );
+	ber_bvarray_free( mt->mt_rwmap.rwm_bva_map );
 
 	free( mt );
 }

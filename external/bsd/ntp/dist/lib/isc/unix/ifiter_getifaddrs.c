@@ -1,7 +1,7 @@
-/*	$NetBSD: ifiter_getifaddrs.c,v 1.2 2011/08/16 04:45:17 christos Exp $	*/
+/*	$NetBSD: ifiter_getifaddrs.c,v 1.2.8.1 2014/08/19 23:51:40 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ifiter_getifaddrs.c,v 1.11 2008/03/20 23:47:00 tbox Exp */
+/* Id: ifiter_getifaddrs.c,v 1.13 2009/09/24 23:48:13 tbox Exp  */
 
 /*! \file
  * \brief
@@ -75,9 +75,15 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	 * Only open "/proc/net/if_inet6" if we have never seen a IPv6
 	 * address returned by getifaddrs().
 	 */
-	if (!seenv6)
+	if (!seenv6) {
 		iter->proc = fopen("/proc/net/if_inet6", "r");
-	else
+		if (iter->proc == NULL) {
+			isc__strerror(errno, strbuf, sizeof(strbuf));
+			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+				      ISC_LOGMODULE_SOCKET, ISC_LOG_WARNING,
+				      "failed to open /proc/net/if_inet6");
+		}
+	} else
 		iter->proc = NULL;
 	iter->valid = ISC_R_FAILURE;
 #endif

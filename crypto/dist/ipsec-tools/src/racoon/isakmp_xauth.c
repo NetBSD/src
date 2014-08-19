@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.24.6.1 2013/02/25 00:24:02 tls Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.24.6.2 2014/08/19 23:45:15 tls Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -591,6 +591,10 @@ xauth_login_radius(iph1, usr, pwd)
 		    rad_strerror(radius_auth_state));
 		return -1;
 	}
+
+	if (rad_put_string(radius_auth_state, RAD_CALLING_STATION_ID,
+			   saddr2str(iph1->remote)) != 0)
+		return -1;
 
 	if (isakmp_cfg_radius_common(radius_auth_state, iph1->mode_cfg->port) != 0)
 		return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chu.c,v 1.1.1.2 2012/01/31 21:25:55 kardel Exp $	*/
+/*	$NetBSD: refclock_chu.c,v 1.1.1.2.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * refclock_chu - clock driver for Canadian CHU time/frequency station
@@ -6,6 +6,8 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include "ntp_types.h"
 
 #if defined(REFCLOCK) && defined(CLOCK_CHU)
 
@@ -244,7 +246,7 @@
  */
 #define CHAR		(11. / 300.) /* character time (s) */
 #define BURST		11	/* max characters per burst */
-#define MINCHAR		9	/* min characters per burst */
+#define MINCHARS		9	/* min characters per burst */
 #define MINDIST		28	/* min burst distance (of 40)  */
 #define MINSYNC		8	/* min sync distance (of 16) */
 #define MINSTAMP	20	/* min timestamps (of 60) */
@@ -480,15 +482,16 @@ chu_start(
 	 * Open audio device. Don't complain if not there.
 	 */
 	fd_audio = audio_init(DEVICE_AUDIO, AUDIO_BUFSIZ, unit);
+
 #ifdef DEBUG
-	if (fd_audio > 0 && debug)
+	if (fd_audio >= 0 && debug)
 		audio_show();
 #endif
 
 	/*
 	 * If audio is unavailable, Open serial port in raw mode.
 	 */
-	if (fd_audio > 0) {
+	if (fd_audio >= 0) {
 		fd = fd_audio;
 	} else {
 		snprintf(device, sizeof(device), DEVICE, unit);
@@ -502,18 +505,18 @@ chu_start(
 	snprintf(device, sizeof(device), DEVICE, unit);
 	fd = refclock_open(device, SPEED232, LDISC_RAW);
 #endif /* HAVE_AUDIO */
-	if (fd <= 0)
+
+	if (fd < 0)
 		return (0);
 
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	up = emalloc(sizeof(*up));
-	memset(up, 0, sizeof(*up));
+	up = emalloc_zero(sizeof(*up));
 	pp = peer->procptr;
-	pp->unitptr = (caddr_t)up;
+	pp->unitptr = up;
 	pp->io.clock_recv = chu_receive;
-	pp->io.srcclock = (caddr_t)peer;
+	pp->io.srcclock = peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
@@ -529,7 +532,7 @@ chu_start(
 	 */
 	peer->precision = PRECISION;
 	pp->clockdesc = DESCRIPTION;
-	strcpy(up->ident, "CHU");
+	strlcpy(up->ident, "CHU", sizeof(up->ident));
 	memcpy(&pp->refid, up->ident, 4); 
 	DTOLFP(CHAR, &up->charstamp);
 #ifdef HAVE_AUDIO
@@ -594,7 +597,7 @@ chu_shutdown(
 	struct refclockproc *pp;
 
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 	if (up == NULL)
 		return;
 
@@ -620,9 +623,9 @@ chu_receive(
 	struct refclockproc *pp;
 	struct peer *peer;
 
-	peer = (struct peer *)rbufp->recv_srcclock;
+	peer = rbufp->recv_peer;
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * If the audio codec is warmed up, the buffer contains codec
@@ -660,9 +663,9 @@ chu_audio_receive(
 	int	bufcnt;		/* buffer counter */
 	l_fp	ltemp;		/* l_fp temp */
 
-	peer = (struct peer *)rbufp->recv_srcclock;
+	peer = rbufp->recv_peer;
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Main loop - read until there ain't no more. Note codec
@@ -747,7 +750,7 @@ chu_rf(
 	int	i, j;
 
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Bandpass filter. 4th-order elliptic, 500-Hz bandpass centered
@@ -966,15 +969,11 @@ chu_serial_receive(
 	struct recvbuf *rbufp	/* receive buffer structure pointer */
 	)
 {
-	struct chuunit *up;
-	struct refclockproc *pp;
 	struct peer *peer;
 
 	u_char	*dpt;		/* receive buffer pointer */
 
-	peer = (struct peer *)rbufp->recv_srcclock;
-	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	peer = rbufp->recv_peer;
 
 	dpt = (u_char *)&rbufp->recv_space;
 	chu_decode(peer, *dpt, rbufp->recv_time);
@@ -998,7 +997,7 @@ chu_decode(
 	double	dtemp;
 
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * If the interval since the last character is greater than the
@@ -1046,7 +1045,7 @@ chu_burst(
 	int	i;
 
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Correlate a block of five characters with the next block of
@@ -1054,7 +1053,7 @@ chu_burst(
 	 * of bits that match in the two blocks for format A and that
 	 * match the inverse for format B.
 	 */
-	if (up->ndx < MINCHAR) {
+	if (up->ndx < MINCHARS) {
 		up->status |= RUNT;
 		return;
 	}
@@ -1109,7 +1108,7 @@ chu_b(
 	int	i;
 
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * In a format B burst, a character is considered valid only if
@@ -1185,7 +1184,7 @@ chu_a(
 	int	i, j, k;
 
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Determine correct burst phase. There are three cases
@@ -1261,7 +1260,7 @@ chu_a(
 		up->status |= AVALID;
 		up->second = pp->second = 30 + temp;
 		offset.l_ui = 30 + temp;
-		offset.l_f = 0;
+		offset.l_uf = 0;
 		i = 0;
 		if (k < 0)
 			offset = up->charstamp;
@@ -1336,7 +1335,7 @@ chu_second(
 	double	dtemp;
 
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * This routine is called once per minute to process the
@@ -1443,7 +1442,7 @@ chu_major(
 	int	i, j, k;
 
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Majority decoder. Each burst encodes two replications at each
@@ -1504,7 +1503,7 @@ chu_clear(
 	int	i, j;
 
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Clear stuff for the minute.
@@ -1537,7 +1536,7 @@ chu_newchan(
 	int	i;
 
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * The radio can be tuned to three channels: 0 (3330 kHz), 1
@@ -1655,7 +1654,7 @@ chu_gain(
 	struct chuunit *up;
 
 	pp = peer->procptr;
-	up = (struct chuunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Apparently, the codec uses only the high order bits of the
@@ -1678,5 +1677,5 @@ chu_gain(
 
 
 #else
-int refclock_chu_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

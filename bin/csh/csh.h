@@ -1,4 +1,4 @@
-/* $NetBSD: csh.h,v 1.22.6.1 2013/02/25 00:23:50 tls Exp $ */
+/* $NetBSD: csh.h,v 1.22.6.2 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -149,9 +149,9 @@ struct rusage ru0;
  */
 time_t chktim;			/* Time mail last checked */
 Char *doldol;			/* Character pid for $$ */
-int backpid;			/* Pid of the last background process */
-int egid, gid;			/* Invokers gid */
-int euid, uid;			/* Invokers uid */
+pid_t backpid;			/* Pid of the last background process */
+gid_t egid, gid;		/* Invokers gid */
+uid_t euid, uid;		/* Invokers uid */
 int shpgrp;			/* Pgrp of shell */
 int tpgrp;			/* Terminal process group */
 
@@ -201,16 +201,16 @@ sig_t parterm;			/* Parents terminate catch */
  * The eighth/sixteenth bit of characters is used to prevent recognition,
  * and eventually stripped.
  */
-#define	META 0200
-#define	ASCII 0177
+#define	META 0x80
+#define	ASCII 0x7f
 #ifdef SHORT_STRINGS
-#define	CHAR 0377
-#define	QUOTE 0100000		/* 16nth char bit used for 'ing */
-#define	TRIM 0077777		/* Mask to strip quote bit */
+#define	CHAR ((Char)0xff)
+#define	QUOTE ((Char)0x8000)	/* 16nth char bit used for 'ing */
+#define	TRIM ((Char)0x7fff)	/* Mask to strip quote bit */
 #else
-#define	CHAR 0177
-#define	QUOTE 0200		/* Eighth char bit used for 'ing */
-#define	TRIM 0177		/* Mask to strip quote bit */
+#define	CHAR ((Char)0x7f)
+#define	QUOTE ((Char)0x80)	/* Eighth char bit used for 'ing */
+#define	TRIM ((Char)0x7f)	/* Mask to strip quote bit */
 #endif
 
 int AsciiOnly;			/* If set only 7 bits is expected in characters */
@@ -307,14 +307,14 @@ Char *lap;
  * as needed during the semantics/execution pass (sh.sem.c).
  */
 struct command {
-    short t_dtyp;		/* Type of node 		 */
+    int t_dtyp;			/* Type of node 		 */
 #define	NODE_COMMAND	1	/* t_dcom <t_dlef >t_drit	 */
 #define	NODE_PAREN	2	/* ( t_dspr ) <t_dlef >t_drit	 */
 #define	NODE_PIPE	3	/* t_dlef | t_drit		 */
 #define	NODE_LIST	4	/* t_dlef ; t_drit		 */
 #define	NODE_OR		5	/* t_dlef || t_drit		 */
 #define	NODE_AND	6	/* t_dlef && t_drit		 */
-    short t_dflg;		/* Flags, e.g. F_AMPERSAND|... 	 */
+    int t_dflg;			/* Flags, e.g. F_AMPERSAND|... 	 */
 #define	F_SAVE	(F_NICE|F_TIME|F_NOHUP)	/* save these when re-doing 	 */
 
 #define	F_AMPERSAND	(1<<0)	/* executes in background	 */

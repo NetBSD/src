@@ -1,9 +1,9 @@
-/*	$NetBSD: util-int.c,v 1.1.1.3 2010/12/12 15:21:41 adam Exp $	*/
+/*	$NetBSD: util-int.c,v 1.1.1.3.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.57.2.7 2010/04/19 16:53:01 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Portions Copyright 1998 A. Hartgers.
  * All rights reserved.
  *
@@ -60,6 +60,8 @@ extern int h_errno;
 #else
 # include <ldap_pvt_thread.h>
   ldap_pvt_thread_mutex_t ldap_int_resolv_mutex;
+  ldap_pvt_thread_mutex_t ldap_int_hostname_mutex;
+  static ldap_pvt_thread_mutex_t ldap_int_gettime_mutex;
 
 # if (defined( HAVE_CTIME_R ) || defined( HAVE_REENTRANT_FUNCTIONS)) \
 	 && defined( CTIME_R_NARGS )
@@ -109,15 +111,9 @@ char *ldap_pvt_ctime( const time_t *tp, char *buf )
 
 #else
 
-# ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &ldap_int_ctime_mutex );
-# endif
-
+	LDAP_MUTEX_LOCK( &ldap_int_ctime_mutex );
 	AC_MEMCPY( buf, ctime(tp), 26 );
-
-# ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ldap_int_ctime_mutex );
-# endif
+	LDAP_MUTEX_UNLOCK( &ldap_int_ctime_mutex );
 
 	return buf;
 #endif	
@@ -151,10 +147,7 @@ ldap_pvt_gmtime( const time_t *timep, struct tm *result )
 {
 	struct tm *tm_ptr;
 
-# ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &ldap_int_gmtime_mutex );
-# endif /* LDAP_R_COMPILE */
-
+	LDAP_MUTEX_LOCK( &ldap_int_gmtime_mutex );
 	tm_ptr = gmtime( timep );
 	if ( tm_ptr == NULL ) {
 		result = NULL;
@@ -162,10 +155,7 @@ ldap_pvt_gmtime( const time_t *timep, struct tm *result )
 	} else {
 		*result = *tm_ptr;
 	}
-
-# ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ldap_int_gmtime_mutex );
-# endif /* LDAP_R_COMPILE */
+	LDAP_MUTEX_UNLOCK( &ldap_int_gmtime_mutex );
 
 	return result;
 }
@@ -177,10 +167,7 @@ ldap_pvt_localtime( const time_t *timep, struct tm *result )
 {
 	struct tm *tm_ptr;
 
-# ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &ldap_int_gmtime_mutex );
-# endif /* LDAP_R_COMPILE */
-
+	LDAP_MUTEX_LOCK( &ldap_int_gmtime_mutex );
 	tm_ptr = localtime( timep );
 	if ( tm_ptr == NULL ) {
 		result = NULL;
@@ -188,17 +175,13 @@ ldap_pvt_localtime( const time_t *timep, struct tm *result )
 	} else {
 		*result = *tm_ptr;
 	}
-
-# ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ldap_int_gmtime_mutex );
-# endif /* LDAP_R_COMPILE */
+	LDAP_MUTEX_UNLOCK( &ldap_int_gmtime_mutex );
 
 	return result;
 }
 #endif /* !USE_LOCALTIME_R */
 
 /* return a broken out time, with microseconds
- * Must be mutex-protected.
  */
 #ifdef _WIN32
 /* Windows SYSTEMTIME only has 10 millisecond resolution, so we
@@ -221,12 +204,14 @@ ldap_pvt_gettime( struct lutil_tm *tm )
 	/* It shouldn't ever go backwards, but multiple CPUs might
 	 * be able to hit in the same tick.
 	 */
+	LDAP_MUTEX_LOCK( &ldap_int_gettime_mutex );
 	if ( count.QuadPart <= prevCount.QuadPart ) {
 		subs++;
 	} else {
 		subs = 0;
 		prevCount = count;
 	}
+	LDAP_MUTEX_UNLOCK( &ldap_int_gettime_mutex );
 
 	/* We assume Windows has at least a vague idea of
 	 * when a second begins. So we align our microsecond count
@@ -290,13 +275,15 @@ ldap_pvt_gettime( struct lutil_tm *ltm )
 	gettimeofday( &tv, NULL );
 	t = tv.tv_sec;
 
+	LDAP_MUTEX_LOCK( &ldap_int_gettime_mutex );
 	if ( tv.tv_sec < prevTv.tv_sec
-		|| ( tv.tv_sec == prevTv.tv_sec && tv.tv_usec == prevTv.tv_usec )) {
+		|| ( tv.tv_sec == prevTv.tv_sec && tv.tv_usec <= prevTv.tv_usec )) {
 		subs++;
 	} else {
 		subs = 0;
 		prevTv = tv;
 	}
+	LDAP_MUTEX_UNLOCK( &ldap_int_gettime_mutex );
 
 	ltm->tm_usub = subs;
 
@@ -387,7 +374,7 @@ int ldap_pvt_gethostbyname_a(
 	int	retval;
 	*buf = NULL;
 	
-	ldap_pvt_thread_mutex_lock( &ldap_int_resolv_mutex );
+	LDAP_MUTEX_LOCK( &ldap_int_resolv_mutex );
 	
 	he = gethostbyname( name );
 	
@@ -402,7 +389,7 @@ int ldap_pvt_gethostbyname_a(
 		retval = 0;
 	}
 	
-	ldap_pvt_thread_mutex_unlock( &ldap_int_resolv_mutex );
+	LDAP_MUTEX_UNLOCK( &ldap_int_resolv_mutex );
 	
 	return retval;
 #else	
@@ -446,13 +433,9 @@ int ldap_pvt_get_hname(
 	int rc;
 #if defined( HAVE_GETNAMEINFO )
 
-#if defined( LDAP_R_COMPILE )
-	ldap_pvt_thread_mutex_lock( &ldap_int_resolv_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &ldap_int_resolv_mutex );
 	rc = getnameinfo( sa, len, name, namelen, NULL, 0, 0 );
-#if defined( LDAP_R_COMPILE )
-	ldap_pvt_thread_mutex_unlock( &ldap_int_resolv_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &ldap_int_resolv_mutex );
 	if ( rc ) *err = (char *)AC_GAI_STRERROR( rc );
 	return rc;
 
@@ -516,9 +499,7 @@ int ldap_pvt_get_hname(
 	LDAP_FREE(buf);
 #else /* HAVE_GETHOSTBYADDR_R */
 
-#if defined( LDAP_R_COMPILE )
-	ldap_pvt_thread_mutex_lock( &ldap_int_resolv_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &ldap_int_resolv_mutex );
 	hp = gethostbyaddr( addr, alen, sa->sa_family );
 	if (hp) {
 		strncpy( name, hp->h_name, namelen );
@@ -527,9 +508,7 @@ int ldap_pvt_get_hname(
 		rc = h_errno;
 		*err = (char *)HSTRERROR( h_errno );
 	}
-#if defined( LDAP_R_COMPILE )
-	ldap_pvt_thread_mutex_unlock( &ldap_int_resolv_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &ldap_int_resolv_mutex );
 
 #endif	/* !HAVE_GETHOSTBYADDR_R */
 	return rc;
@@ -584,8 +563,7 @@ int ldap_pvt_gethostbyaddr_a(
 	int	retval;
 	*buf = NULL;   
 	
-	ldap_pvt_thread_mutex_lock( &ldap_int_resolv_mutex );
-	
+	LDAP_MUTEX_LOCK( &ldap_int_resolv_mutex );
 	he = gethostbyaddr( addr, len, type );
 	
 	if (he==NULL) {
@@ -598,8 +576,7 @@ int ldap_pvt_gethostbyaddr_a(
 		*result = resbuf;
 		retval = 0;
 	}
-	
-	ldap_pvt_thread_mutex_unlock( &ldap_int_resolv_mutex );
+	LDAP_MUTEX_UNLOCK( &ldap_int_resolv_mutex );
 	
 	return retval;
 
@@ -633,9 +610,10 @@ void ldap_int_utils_init( void )
 #endif
 	ldap_pvt_thread_mutex_init( &ldap_int_resolv_mutex );
 
-#ifdef HAVE_CYRUS_SASL
-	ldap_pvt_thread_mutex_init( &ldap_int_sasl_mutex );
-#endif
+	ldap_pvt_thread_mutex_init( &ldap_int_hostname_mutex );
+
+	ldap_pvt_thread_mutex_init( &ldap_int_gettime_mutex );
+
 #ifdef HAVE_GSSAPI
 	ldap_pvt_thread_mutex_init( &ldap_int_gssapi_mutex );
 #endif
@@ -803,7 +781,9 @@ char *ldap_pvt_gai_strerror (int code) {
 		{ EAI_NONAME, N_("Name or service not known") },
 		{ EAI_SERVICE, N_("Servname not supported for ai_socktype") },
 		{ EAI_SOCKTYPE, N_("ai_socktype not supported") },
+#ifdef EAI_SYSTEM
 		{ EAI_SYSTEM, N_("System error") },
+#endif
 		{ 0, NULL }
 	};
 

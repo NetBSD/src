@@ -1,8 +1,8 @@
 #!/bin/sh
-# OpenLDAP: pkg/ldap/tests/run.in,v 1.47.2.16 2010/04/19 19:14:26 quanah Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@ export SRCDIR TOPSRCDIR LN_S EGREP_CMD
 AC_bdb=@BUILD_BDB@
 AC_hdb=@BUILD_HDB@
 AC_ldif=yes
+AC_mdb=@BUILD_MDB@
 AC_null=@BUILD_NULL@
 
 # other backends
@@ -38,6 +39,7 @@ AC_sql=sql@BUILD_SQL@
 
 # overlays
 AC_accesslog=accesslog@BUILD_ACCESSLOG@
+AC_constraint=constraint@BUILD_CONSTRAINT@
 AC_dds=dds@BUILD_DDS@
 AC_dynlist=dynlist@BUILD_DYNLIST@
 AC_memberof=memberof@BUILD_MEMBEROF@
@@ -67,8 +69,8 @@ if test "${AC_meta}" = "metamod" && test "${AC_LIBS_DYNAMIC}" = "static" ; then
 	AC_meta="metano"
 fi
 
-export AC_bdb AC_hdb AC_ldap AC_meta AC_monitor AC_null AC_relay AC_sql \
-	AC_accesslog AC_dds AC_dynlist AC_memberof AC_pcache AC_ppolicy \
+export AC_bdb AC_hdb AC_ldap AC_mdb AC_meta AC_monitor AC_null AC_relay AC_sql \
+	AC_accesslog AC_constraint AC_dds AC_dynlist AC_memberof AC_pcache AC_ppolicy \
 	AC_refint AC_retcode AC_rwm AC_unique AC_syncprov AC_translucent \
 	AC_valsort \
 	AC_WITH_SASL AC_WITH_TLS AC_WITH_MODULES_ENABLED AC_ACI_ENABLED \
@@ -151,7 +153,7 @@ while test $# -gt 0 ; do
 done
 
 if test -z "$BACKEND" ; then
-	for b in bdb hdb ; do
+	for b in bdb hdb mdb ; do
 		if eval "test \"\$AC_$b\" != no" ; then
 			BACKEND=$b
 			break
@@ -162,11 +164,22 @@ if test -z "$BACKEND" ; then
 		exit 1
 	fi
 fi
+
 BACKENDTYPE=`eval 'echo $AC_'$BACKEND`
 if test "x$BACKENDTYPE" = "x" ; then
 	BACKENDTYPE="unknown"
 fi
-export BACKEND BACKENDTYPE WAIT KILLSERVERS PRESERVE SYNCMODE USERDATA
+
+# Backend features.  indexdb: indexing and unchecked limit.
+# maindb: main storage backend.  Currently index,limits,mode,paged results.
+INDEXDB=noindexdb MAINDB=nomaindb
+case $BACKEND in
+	bdb|hdb|mdb) INDEXDB=indexdb MAINDB=maindb ;;
+	ndb) INDEXDB=indexdb ;;
+esac
+
+export	BACKEND BACKENDTYPE INDEXDB MAINDB \
+	WAIT KILLSERVERS PRESERVE SYNCMODE USERDATA
 
 if test $# = 0 ; then
 	echo "$USAGE"; exit 1
@@ -245,6 +258,9 @@ while [ $COUNTER -le $LOOP ]; do
 	fi
 
 	if [ $RC -ne 0 ]; then
+		if [ $LOOP -gt 1 ]; then
+			echo "Failed after $COUNTER of $LOOP iterations"
+		fi
 		exit $RC
 	else
 		COUNTER=`expr $COUNTER + 1`

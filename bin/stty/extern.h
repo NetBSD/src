@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.12 2011/08/29 14:51:19 joerg Exp $ */
+/* $NetBSD: extern.h,v 1.12.8.1 2014/08/19 23:45:11 tls Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@ void	gread(struct termios *, char *);
 int	ksearch(char ***, struct info *);
 int	msearch(char ***, struct info *);
 void	optlist(void);
-void	print(struct termios *, struct winsize *, int, enum FMT);
+void	print(struct termios *, struct winsize *, int, const char *, enum FMT);
 __dead void	usage(void);
 
 extern const struct cchar cchars1[], cchars2[];

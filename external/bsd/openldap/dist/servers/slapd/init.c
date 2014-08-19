@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.1.1.3 2010/12/12 15:22:31 adam Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* init.c - initialize various things */
-/* OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.97.2.13 2010/04/19 16:53:02 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -213,12 +213,15 @@ slap_init( int mode, const char *name )
 
 int slap_startup( Backend *be )
 {
+	int rc;
 	Debug( LDAP_DEBUG_TRACE,
 		"%s startup: initiated.\n",
 		slap_name, 0, 0 );
 
-
-	return backend_startup( be );
+	rc = backend_startup( be );
+	if ( !rc && ( slapMode & SLAP_SERVER_MODE ))
+		slapMode |= SLAP_SERVER_RUNNING;
+	return rc;
 }
 
 int slap_shutdown( Backend *be )

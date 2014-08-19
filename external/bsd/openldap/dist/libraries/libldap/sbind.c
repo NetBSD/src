@@ -1,9 +1,9 @@
-/*	$NetBSD: sbind.c,v 1.1.1.3 2010/12/12 15:21:35 adam Exp $	*/
+/*	$NetBSD: sbind.c,v 1.1.1.3.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/sbind.c,v 1.25.2.5 2010/04/13 20:22:59 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

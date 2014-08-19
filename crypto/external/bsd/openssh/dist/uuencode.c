@@ -1,5 +1,5 @@
-/*	$NetBSD: uuencode.c,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
-/* $OpenBSD: uuencode.c,v 1.26 2010/08/31 11:54:45 djm Exp $ */
+/*	$NetBSD: uuencode.c,v 1.4.8.1 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: uuencode.c,v 1.27 2013/05/17 00:13:14 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,11 +25,12 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: uuencode.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: uuencode.c,v 1.4.8.1 2014/08/19 23:45:25 tls Exp $");
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <resolv.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "xmalloc.h"
 #include "uuencode.h"
@@ -68,7 +69,7 @@ uudecode(const char *src, u_char *target, size_t targsize)
 	/* and remove trailing whitespace because __b64_pton needs this */
 	*p = '\0';
 	len = __b64_pton(encoded, target, targsize);
-	xfree(encoded);
+	free(encoded);
 	return len;
 }
 
@@ -91,5 +92,5 @@ dump_base64(FILE *fp, const u_char *data, u_int len)
 	}
 	if (i % 70 != 69)
 		fprintf(fp, "\n");
-	xfree(buf);
+	free(buf);
 }

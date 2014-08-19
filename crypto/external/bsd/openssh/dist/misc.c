@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.7 2012/05/02 02:41:08 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.86 2011/09/05 05:59:08 djm Exp $ */
+/*	$NetBSD: misc.c,v 1.7.2.1 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: misc.c,v 1.91 2013/07/12 00:43:50 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.7 2012/05/02 02:41:08 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7.2.1 2014/08/19 23:45:25 tls Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -123,7 +123,7 @@ unset_nonblock(int fd)
 const char *
 ssh_gai_strerror(int gaierr)
 {
-	if (gaierr == EAI_SYSTEM)
+	if (gaierr == EAI_SYSTEM && errno != 0)
 		return strerror(errno);
 	return gai_strerror(gaierr);
 }
@@ -241,13 +241,13 @@ a2tun(const char *s, int *remote)
 		*remote = SSH_TUNID_ANY;
 		sp = xstrdup(s);
 		if ((ep = strchr(sp, ':')) == NULL) {
-			xfree(sp);
+			free(sp);
 			return (a2tun(s, NULL));
 		}
 		ep[0] = '\0'; ep++;
 		*remote = a2tun(ep, NULL);
 		tun = a2tun(sp, NULL);
-		xfree(sp);
+		free(sp);
 		return (*remote == SSH_TUNID_ERR ? *remote : tun);
 	}
 
@@ -480,7 +480,7 @@ replacearg(arglist *args, u_int which, const char *fmt, ...)
 	if (which >= args->num)
 		fatal("replacearg: tried to replace invalid arg %d >= %d",
 		    which, args->num);
-	xfree(args->list[which]);
+	free(args->list[which]);
 	args->list[which] = cp;
 }
 
@@ -491,8 +491,8 @@ freeargs(arglist *args)
 
 	if (args->list != NULL) {
 		for (i = 0; i < args->num; i++)
-			xfree(args->list[i]);
-		xfree(args->list);
+			free(args->list[i]);
+		free(args->list);
 		args->nalloc = args->num = 0;
 		args->list = NULL;
 	}
@@ -505,8 +505,8 @@ freeargs(arglist *args)
 char *
 tilde_expand_filename(const char *filename, uid_t uid)
 {
-	const char *path, *homedir;
-	char user[128], ret[MAXPATHLEN];
+	const char *path, *sep;
+	char user[128], *ret, *homedir;
 	struct passwd *pw;
 	u_int len, slash;
 
@@ -531,22 +531,21 @@ tilde_expand_filename(const char *filename, uid_t uid)
 		homedir = pw->pw_dir;
 	}
 
-	if (strlcpy(ret, homedir, sizeof(ret)) >= sizeof(ret))
-		fatal("tilde_expand_filename: Path too long");
-
 	/* Make sure directory has a trailing '/' */
 	len = strlen(homedir);
-	if ((len == 0 || homedir[len - 1] != '/') &&
-	    strlcat(ret, "/", sizeof(ret)) >= sizeof(ret))
-		fatal("tilde_expand_filename: Path too long");
+	if (len == 0 || homedir[len - 1] != '/')
+		sep = "/";
+	else
+		sep = "";
 
 	/* Skip leading '/' from specified path */
 	if (path != NULL)
 		filename = path + 1;
-	if (strlcat(ret, filename, sizeof(ret)) >= sizeof(ret))
+
+	if (xasprintf(&ret, "%s%s%s", homedir, sep, filename) >= MAXPATHLEN)
 		fatal("tilde_expand_filename: Path too long");
 
-	return (xstrdup(ret));
+	return (ret);
 }
 
 /*
@@ -854,6 +853,17 @@ ms_to_timeval(struct timeval *tv, int ms)
 		ms = 0;
 	tv->tv_sec = ms / 1000;
 	tv->tv_usec = (ms % 1000) * 1000;
+}
+
+time_t
+monotime(void)
+{
+	struct timespec ts;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+		fatal("clock_gettime: %s", strerror(errno));
+
+	return (ts.tv_sec);
 }
 
 void

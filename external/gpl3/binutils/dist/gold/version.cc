@@ -1,6 +1,6 @@
 // version.c -- print gold version information
 
-// Copyright 2006, 2007, 2008, 2009, 2010
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011
 // Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 

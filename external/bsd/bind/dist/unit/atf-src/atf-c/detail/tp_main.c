@@ -1,9 +1,9 @@
-/*	$NetBSD: tp_main.c,v 1.1.1.1 2011/09/11 17:20:33 christos Exp $	*/
+/*	$NetBSD: tp_main.c,v 1.1.1.1.8.1 2014/08/19 23:46:37 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,7 @@
 #include "atf-c/utils.h"
 
 #include "dynstr.h"
+#include "env.h"
 #include "fs.h"
 #include "map.h"
 #include "sanity.h"
@@ -127,6 +128,13 @@ print_error(const atf_error_t err)
     if (atf_error_is(err, "usage"))
         fprintf(stderr, "%s: See atf-test-program(1) for usage details.\n",
                 progname);
+}
+
+static
+void
+print_warning(const char *message)
+{
+    fprintf(stderr, "%s: WARNING: %s\n", progname, message);
 }
 
 /* ---------------------------------------------------------------------
@@ -324,11 +332,13 @@ process_params(int argc, char **argv, struct params *p)
 {
     atf_error_t err;
     int ch;
+    int old_opterr;
 
     err = params_init(p, argv[0]);
     if (atf_is_error(err))
         goto out;
 
+    old_opterr = opterr;
     opterr = 0;
     while (!atf_is_error(err) &&
            (ch = getopt(argc, argv, GETOPT_POSIX ":lr:s:v:")) != -1) {
@@ -362,6 +372,7 @@ process_params(int argc, char **argv, struct params *p)
     argv += optind;
 
     /* Clear getopt state just in case the test wants to use it. */
+    opterr = old_opterr;
     optind = 1;
 #if defined(HAVE_OPTRESET)
     optreset = 1;
@@ -485,6 +496,14 @@ run_tc(const atf_tp_t *tp, struct params *p, int *exitcode)
     if (!atf_tp_has_tc(tp, p->m_tcname)) {
         err = usage_error("Unknown test case `%s'", p->m_tcname);
         goto out;
+    }
+
+    if (!atf_env_has("__RUNNING_INSIDE_ATF_RUN") || strcmp(atf_env_get(
+        "__RUNNING_INSIDE_ATF_RUN"), "internal-yes-value") != 0)
+    {
+        print_warning("Running test cases without atf-run(1) is unsupported");
+        print_warning("No isolation nor timeout control is being applied; you "
+                      "may get unexpected failures; see atf-test-case(4)");
     }
 
     switch (p->m_tcpart) {

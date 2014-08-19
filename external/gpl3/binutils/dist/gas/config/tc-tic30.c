@@ -34,7 +34,7 @@
 static char operand_special_chars[] = "%$-+(,)*._~/<>&^!:[@]";
 static char *ordinal_names[] =
 {
-  "first", "second", "third", "fourth", "fifth"
+  N_("first"), N_("second"), N_("third"), N_("fourth"), N_("fifth")
 };
 
 const char comment_chars[]        = ";";

@@ -1,6 +1,7 @@
 /* frags.h - Header file for the frag concept.
    Copyright 1987, 1992, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2006, 2007, 2010 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2006, 2007, 2010, 2011, 2012
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -100,6 +101,9 @@ struct frag {
 #ifdef TC_FRAG_TYPE
   TC_FRAG_TYPE tc_frag_data;
 #endif
+#ifdef OBJ_FRAG_TYPE
+  OBJ_FRAG_TYPE obj_frag_data;
+#endif
 
   /* Data begins here.  */
   char fr_literal[1];
@@ -118,8 +122,7 @@ extern addressT frag_now_fix_octets (void);
 
 /* For foreign-segment symbol fixups.  */
 COMMON fragS zero_address_frag;
-/* For local common (N_BSS segment) fixups.  */
-COMMON fragS bss_address_frag;
+COMMON fragS predefined_address_frag;
 
 extern void frag_append_1_char (int);
 #define FRAG_APPEND_1_CHAR(X) frag_append_1_char (X)
@@ -152,6 +155,6 @@ char *frag_var (relax_stateT type,
 		offsetT offset,
 		char *opcode);
 
-bfd_boolean frag_offset_fixed_p (const fragS *, const fragS *, bfd_vma *);
+bfd_boolean frag_offset_fixed_p (const fragS *, const fragS *, offsetT *);
 
 #endif /* FRAGS_H */

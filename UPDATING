@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.238.2.2 2013/06/23 06:26:12 tls Exp $
+$NetBSD: UPDATING,v 1.238.2.3 2014/08/19 23:45:10 tls Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -11,10 +11,51 @@ Note that much of the advice in this UPDATING file was written before
 build.sh existed.  Nevertheless, the advice here may be useful for
 working around specific problems with build.sh.
 
+Sections are marked with "^^^^^".  After the section on "Recent changes"
+are several sections containing more general information.
+
 See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20140721:
+	The src/external/mit/lua/src directory was accidentally created
+	and then deleted in the CVS repository.  If you get errors like
+
+	cvs [update aborted]: cannot open directory
+	/cvsroot/src/external/mit/lua/src: No such file or directory
+
+	then delete your local copy of that directory tree and try again.
+
+20140530:
+	ARM eABI switched to DWARF based exception handling. This requires
+	rebuilding all C++ code. It is strongly advised to do a clean build.
+
+20140131:
+	The new compiler_rt/libc integration moved a few things. It is strongly
+	advised to do a clean build. At least lib/libc, the compat version(s)
+	of libc, libkern, rump and the kernels need to be cleaned.
+
+20131227:
+	1. The new ntpd runs in a restricted mode to prevent amplification
+	   attacks. If you need ntpdc to work you need to explicitly enable
+	   mode7 in your config file. Make sure you put the necessary restrict
+	   statements to avoid being exposed.
+	2. strncat has moved from lib/libc to common/lib/libc; you might need
+	   to make clean in libc
+
+20131129:
+	The GMP sources were updated, and builds will likely fail without
+	cleaning their build trees for both tools and in-tree, like below.
+
+20131128:
+	The MPC and MPFR sources were updated, and builds may require their
+	tools and in-tree directories cleaned for successful updates.
+
+20130605:
+	The kernel option FAST_IPSEC no longer exists, it's been renamed
+	to IPSEC (and the older IPSEC version removed).
 
 20130605:
 	Previous freetype installations eroneously installed private
@@ -639,3 +680,13 @@ Fix:    May need to build & install libs with NOLINT=1 before rebuilding lint
 Symptom:Update build fails in src/tools/gcc complaining that a variable
 	(e.g. CPPFLAGS) has changed since the previous run.
 Fix:    Run "nbmake-${ARCH} clean" in src/tools/gcc or do a clean build.
+
+Symptom:cvs [update aborted]: cannot open directory /cvsroot/src/...:
+	No such file or directory.
+Cause:	If a directory is created by mistake, then it is sometimes
+	deleted from the CVS repository using administrative commands
+	that bypass the normal cvs access controls.  If your cvs working tree
+	contains references to a directory that has been deleted on the
+	server in this way, then "cvs update" reports this error.
+Fix:	Recursively delete the affected directory from your working tree
+	and try the update again.

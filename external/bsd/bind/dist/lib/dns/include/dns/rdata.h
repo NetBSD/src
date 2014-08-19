@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata.h,v 1.4.2.2 2013/02/25 00:25:45 tls Exp $	*/
+/*	$NetBSD: rdata.h,v 1.4.2.3 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -173,12 +173,16 @@ struct dns_rdata {
 #define DNS_STYLEFLAG_COMMENT		0x00000002U
 #define DNS_STYLEFLAG_RRCOMMENT		0x00000004U
 
+/*% Output KEYDATA in human readable format. */
+#define DNS_STYLEFLAG_KEYDATA		0x00000008U
+
 #define DNS_RDATA_DOWNCASE		DNS_NAME_DOWNCASE
 #define DNS_RDATA_CHECKNAMES		DNS_NAME_CHECKNAMES
 #define DNS_RDATA_CHECKNAMESFAIL	DNS_NAME_CHECKNAMESFAIL
 #define DNS_RDATA_CHECKREVERSE		DNS_NAME_CHECKREVERSE
 #define DNS_RDATA_CHECKMX		DNS_NAME_CHECKMX
 #define DNS_RDATA_CHECKMXFAIL		DNS_NAME_CHECKMXFAIL
+#define DNS_RDATA_UNKNOWNESCAPE		0x80000000
 
 /***
  *** Initialization

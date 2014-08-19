@@ -1,4 +1,4 @@
-/*	$NetBSD: gxbn_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: gxbn_test.c,v 1.3.2.2 2014/08/19 23:46:01 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -67,10 +67,6 @@ main(int argc, char **argv) {
 
 	(void)argc;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	while (argv[1] != NULL) {
 		he = gethostbyname(argv[1]);
 		print_he(he, h_errno, "gethostbyname", argv[1]);

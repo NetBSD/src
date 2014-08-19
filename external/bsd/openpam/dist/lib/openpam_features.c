@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_features.c,v 1.1.1.1.4.2 2013/06/23 06:28:27 tls Exp $	*/
+/*	$NetBSD: openpam_features.c,v 1.1.1.1.4.3 2014/08/19 23:52:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 Dag-Erling Smørgrav
@@ -8,8 +8,7 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -29,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_features.c 608 2012-05-17 16:00:13Z des 
+ * Id: openpam_features.c 648 2013-03-05 17:54:27Z des 
  */
 
 #ifdef HAVE_CONFIG_H

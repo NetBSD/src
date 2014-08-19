@@ -1,5 +1,5 @@
-/*	Id: local.c,v 1.25 2011/07/28 11:04:14 ragge Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.4 2011/09/01 12:46:50 plunky Exp $	*/
+/*	Id: local.c,v 1.28 2012/12/13 16:01:25 ragge Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.4.8.1 2014/08/19 23:52:09 tls Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -90,30 +90,6 @@ clocal(p) NODE *p; {
 		}
 		break;
 
-	case PCONV:
-		/* do pointer conversions */
-		/* XXX fix propagation down of changed types */
-
-		/* if left is SCONV, cannot remove */
-		if (p->n_left->n_op == SCONV)
-			break;
-
-		ml = p->n_left->n_type;
-		if (ml < INT && p->n_left->n_op != ICON)
-			break;
-
-		if (coptype(p->n_left->n_op) == LTYPE) {
-			/*
-			 * pointers all have the same representation;
-			 * the type is inherited
-			 */
-			p->n_left->n_type = p->n_type;
-			p->n_left->n_df = p->n_df;
-			p->n_left->n_ap = p->n_ap;
-			p = nfree(p);
-		}
-		break;
-
 	case FORCE:
 		p->n_op = ASSIGN;
 		p->n_right = p->n_left;
@@ -125,10 +101,12 @@ clocal(p) NODE *p; {
 	case SCONV:
 		l = p->n_left;
 		ml = p->n_type;
+#if 0
 		if (ml == INT && l->n_type == UNSIGNED) {
 			p = nfree(p);
 			break;
 		}
+#endif
 		if (l->n_op == ICON) {
 			if (l->n_sp == 0) {
 				p->n_type = UNSIGNED;
@@ -328,8 +306,12 @@ defzero(struct symtab *sp)
 	off /= SZCHAR;
 	al = talign(sp->stype, sp->sap)/SZCHAR;
 
-	if (sp->sclass == STATIC)
-		printf("\t.local %s\n", name);
+	if (sp->sclass == STATIC) {
+		if (sp->slevel == 0)
+			printf("\t.local %s\n", name);
+		else
+			printf("\t.local " LABFMT "\n", sp->soffset);
+	}
 	if (sp->slevel == 0) {
 		printf("\t.comm %s,0%o,%d\n", name, off, al);
 	} else

@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.3.2.2 2014/08/19 23:46:01 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -266,10 +266,6 @@ main(int argc, char **argv) {
 	isc_result_t result;
 	void *data;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	progname = strrchr(*argv, '/');
 	if (progname != NULL)
 		progname++;
@@ -436,7 +432,7 @@ main(int argc, char **argv) {
 
 			} else if (CMDCHECK("print")) {
 				if (arg == NULL || *arg == '\0')
-					dns_rbt_printall(rbt);
+					dns_rbt_printall(rbt, NULL);
 				else
 					printf("usage: print\n");
 

@@ -1,7 +1,6 @@
 // Debugging support implementation -*- C++ -*-
 
-// Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 2003-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -31,9 +30,10 @@
 #define _GLIBCXX_DEBUG_FUNCTIONS_H 1
 
 #include <bits/c++config.h>
-#include <cstddef>                       // for ptrdiff_t
-#include <bits/stl_iterator_base_types.h> // for iterator_traits, categories
+#include <bits/stl_iterator_base_types.h> // for iterator_traits, categories and
+					  // _Iter_base
 #include <bits/cpp_type_traits.h>         // for __is_integer
+#include <debug/formatter.h>
 
 namespace __gnu_debug
 {
@@ -118,11 +118,8 @@ namespace __gnu_debug
     inline bool
     __valid_range_aux(const _InputIterator& __first,
 		      const _InputIterator& __last, std::__false_type)
-  {
-    typedef typename std::iterator_traits<_InputIterator>::iterator_category
-      _Category;
-    return __valid_range_aux2(__first, __last, _Category());
-  }
+  { return __valid_range_aux2(__first, __last,
+			      std::__iterator_category(__first)); }
 
   /** Don't know what these iterators are, or if they are even
    *  iterators (we may get an integral type for InputIterator), so
@@ -144,6 +141,13 @@ namespace __gnu_debug
 		  const _Safe_iterator<_Iterator, _Sequence>& __last)
     { return __first._M_valid_range(__last); }
 
+  /** Safe local iterators know how to check if they form a valid range. */
+  template<typename _Iterator, typename _Sequence>
+    inline bool
+    __valid_range(const _Safe_local_iterator<_Iterator, _Sequence>& __first,
+		  const _Safe_local_iterator<_Iterator, _Sequence>& __last)
+    { return __first._M_valid_range(__last); }
+
   /* Checks that [first, last) is a valid range, and then returns
    * __first. This routine is useful when we can't use a separate
    * assertion statement because, e.g., we are in a constructor.
@@ -154,7 +158,7 @@ namespace __gnu_debug
 			const _InputIterator& __last
 			__attribute__((__unused__)))
     {
-      _GLIBCXX_DEBUG_ASSERT(__valid_range(__first, __last));
+      __glibcxx_check_valid_range(__first, __last);
       return __first;
     }
 
@@ -165,7 +169,7 @@ namespace __gnu_debug
 		   const _Integer& __n __attribute__((__unused__)))
     {
 #ifdef _GLIBCXX_DEBUG_PEDANTIC
-      _GLIBCXX_DEBUG_ASSERT(__s != 0 || __n == 0);
+      __glibcxx_assert(__s != 0 || __n == 0);
 #endif
       return __s;
     }
@@ -176,7 +180,7 @@ namespace __gnu_debug
     __check_string(const _CharT* __s)
     {
 #ifdef _GLIBCXX_DEBUG_PEDANTIC
-      _GLIBCXX_DEBUG_ASSERT(__s != 0);
+      __glibcxx_assert(__s != 0);
 #endif
       return __s;
     }
@@ -207,6 +211,15 @@ namespace __gnu_debug
       return true;
     }
 
+  // For performance reason, as the iterator range has been validated, check on
+  // random access safe iterators is done using the base iterator.
+  template<typename _Iterator, typename _Sequence>
+    inline bool
+    __check_sorted_aux(const _Safe_iterator<_Iterator, _Sequence>& __first,
+		       const _Safe_iterator<_Iterator, _Sequence>& __last,
+		       std::random_access_iterator_tag __tag)
+  { return __check_sorted_aux(__first.base(), __last.base(), __tag); }
+
   // Can't check if an input iterator sequence is sorted, because we can't step
   // through the sequence.
   template<typename _InputIterator, typename _Predicate>
@@ -233,19 +246,28 @@ namespace __gnu_debug
       return true;
     }
 
+  // For performance reason, as the iterator range has been validated, check on
+  // random access safe iterators is done using the base iterator.
+  template<typename _Iterator, typename _Sequence,
+	   typename _Predicate>
+    inline bool
+    __check_sorted_aux(const _Safe_iterator<_Iterator, _Sequence>& __first,
+		       const _Safe_iterator<_Iterator, _Sequence>& __last,
+		       _Predicate __pred,
+		       std::random_access_iterator_tag __tag)
+  { return __check_sorted_aux(__first.base(), __last.base(), __pred, __tag); }
+
   // Determine if a sequence is sorted.
   template<typename _InputIterator>
     inline bool
     __check_sorted(const _InputIterator& __first, const _InputIterator& __last)
     {
-      typedef typename std::iterator_traits<_InputIterator>::iterator_category
-        _Category;
-
       // Verify that the < operator for elements in the sequence is a
       // StrictWeakOrdering by checking that it is irreflexive.
-      _GLIBCXX_DEBUG_ASSERT(__first == __last || !(*__first < *__first));
+      __glibcxx_assert(__first == __last || !(*__first < *__first));
 
-      return __check_sorted_aux(__first, __last, _Category());
+      return __check_sorted_aux(__first, __last,
+				std::__iterator_category(__first));
     }
 
   template<typename _InputIterator, typename _Predicate>
@@ -253,14 +275,12 @@ namespace __gnu_debug
     __check_sorted(const _InputIterator& __first, const _InputIterator& __last,
                    _Predicate __pred)
     {
-      typedef typename std::iterator_traits<_InputIterator>::iterator_category
-        _Category;
-
       // Verify that the predicate is StrictWeakOrdering by checking that it
       // is irreflexive.
-      _GLIBCXX_DEBUG_ASSERT(__first == __last || !__pred(*__first, *__first));
+      __glibcxx_assert(__first == __last || !__pred(*__first, *__first));
 
-      return __check_sorted_aux(__first, __last, __pred, _Category());
+      return __check_sorted_aux(__first, __last, __pred,
+				std::__iterator_category(__first));
     }
 
   template<typename _InputIterator>
@@ -335,8 +355,12 @@ namespace __gnu_debug
     {
       while (__first != __last && *__first < __value)
 	++__first;
-      while (__first != __last && !(*__first < __value))
-	++__first;
+      if (__first != __last)
+	{
+	  ++__first;
+	  while (__first != __last && !(*__first < __value))
+	    ++__first;
+	}
       return __first == __last;
     }
 
@@ -347,8 +371,12 @@ namespace __gnu_debug
     {
       while (__first != __last && !(__value < *__first))
 	++__first;
-      while (__first != __last && __value < *__first)
-	++__first;
+      if (__first != __last)
+	{
+	  ++__first;
+	  while (__first != __last && __value < *__first)
+	    ++__first;
+	}
       return __first == __last;
     }
 
@@ -361,8 +389,12 @@ namespace __gnu_debug
     {
       while (__first != __last && bool(__pred(*__first, __value)))
 	++__first;
-      while (__first != __last && !bool(__pred(*__first, __value)))
-	++__first;
+      if (__first != __last)
+	{
+	  ++__first;
+	  while (__first != __last && !bool(__pred(*__first, __value)))
+	    ++__first;
+	}
       return __first == __last;
     }
 
@@ -374,10 +406,45 @@ namespace __gnu_debug
     {
       while (__first != __last && !bool(__pred(__value, *__first)))
 	++__first;
-      while (__first != __last && bool(__pred(__value, *__first)))
-	++__first;
+      if (__first != __last)
+	{
+	  ++__first;
+	  while (__first != __last && bool(__pred(__value, *__first)))
+	    ++__first;
+	}
       return __first == __last;
     }
+
+  // Helper struct to detect random access safe iterators.
+  template<typename _Iterator>
+    struct __is_safe_random_iterator
+    {
+      enum { __value = 0 };
+      typedef std::__false_type __type;
+    };
+
+  template<typename _Iterator, typename _Sequence>
+    struct __is_safe_random_iterator<_Safe_iterator<_Iterator, _Sequence> >
+    : std::__are_same<std::random_access_iterator_tag,
+                      typename std::iterator_traits<_Iterator>::
+		      iterator_category>
+    { };
+
+  template<typename _Iterator>
+    struct _Siter_base
+    : std::_Iter_base<_Iterator, __is_safe_random_iterator<_Iterator>::__value>
+    { };
+
+  /** Helper function to extract base iterator of random access safe iterator
+      in order to reduce performance impact of debug mode.  Limited to random
+      access iterator because it is the only category for which it is possible
+      to check for correct iterators order in the __valid_range function
+      thanks to the < operator.
+  */
+  template<typename _Iterator>
+    inline typename _Siter_base<_Iterator>::iterator_type
+    __base(_Iterator __it)
+    { return _Siter_base<_Iterator>::_S_base(__it); }
 } // namespace __gnu_debug
 
 #endif

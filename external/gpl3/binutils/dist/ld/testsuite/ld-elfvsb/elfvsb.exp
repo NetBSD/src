@@ -1,5 +1,5 @@
 # Expect script for ld-visibility tests
-#   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2010
+#   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2010, 2012
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -31,6 +31,7 @@ if { ![istarget hppa*64*-*-hpux*] \
      && ![istarget hppa*-*-linux*] \
      && ![istarget i?86-*-linux*] \
      && ![istarget i?86-*-gnu*] \
+     && ![istarget *-*-nacl*] \
      && ![istarget ia64-*-linux*] \
      && ![istarget m68k-*-linux*] \
      && ![istarget mips*-*-linux*] \
@@ -95,13 +96,13 @@ if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 
 if [istarget arm*-*-linux*] {
     # On ARM section anchors can change the symbol pre-emptability for
-    # non-PIC shared libraries, causing these tests to fail.  Turn section 
+    # non-PIC shared libraries, causing these tests to fail.  Turn section
     # anchors off.
     set SHCFLAG "-fno-section-anchors"
 
-    # On targets that have MOVW the compiler will emit relocations which 
+    # On targets that have MOVW the compiler will emit relocations which
     # the linker doesn't support when compiling -shared without -fpic.  The
-    # test to find out whether we want to XFAIL the non-PIC tests requires 
+    # test to find out whether we want to XFAIL the non-PIC tests requires
     # a compile - so we pre-calculate it here.  We also note that this can
     # only affect arm*-*-*eabi targets as the old ABI doesn't support v7.
     if [istarget arm*-*-*eabi] {
@@ -117,6 +118,7 @@ if [istarget arm*-*-linux*] {
 set support_protected "no"
 
 if { [istarget *-*-linux*]
+     || [istarget *-*-nacl*]
      || [istarget *-*-gnu*] } {
     if [ld_compile "$CC -g $CFLAGS -DPROTECTED_CHECK" $srcdir/$subdir/main.c $tmpdir/main.o] {
       if [ld_simple_link $CC $tmpdir/main "$tmpdir/main.o"] {
@@ -249,7 +251,8 @@ proc visibility_run {visibility} {
 	set VSBCFLAG ""
     }}}}}}}}}
 
-    if { [istarget powerpc*-*-linux*] } {
+    if { [istarget powerpc*-*-linux*] \
+	 || ( [istarget mips*-*-linux*] && [at_least_gcc_version 4 3] )} {
 	# Testing non-PIC libraries is a waste of effort on any target.
 	# If you don't pass -fpic or -fPIC to gcc, gcc will assume quite
 	# reasonably that you are not compiling for a shared library.
@@ -302,7 +305,10 @@ proc visibility_run {visibility} {
 		    setup_xfail "sparc*-*-linux*"
 		}
 	    }
-	    setup_xfail "x86_64-*-linux*"
+	    if { [is_elf64 $tmpdir/mainnp.o] } {
+		setup_xfail "x86_64-*-linux*"
+	    }
+	    setup_xfail "x86_64-*-linux-gnux32"
 	    if { ![istarget hppa*64*-*-linux*] } {
 		setup_xfail "hppa*-*-linux*"
 	    }
@@ -343,7 +349,10 @@ proc visibility_run {visibility} {
 		setup_xfail "alpha*-*-linux*"
 		setup_xfail "mips*-*-linux*"
 	    }
-	    setup_xfail "x86_64-*-linux*"
+	    if { [is_elf64 $tmpdir/mainnp.o] } {
+		setup_xfail "x86_64-*-linux*"
+	    }
+	    setup_xfail "x86_64-*-linux-gnux32"
 	    if { ![istarget hppa*64*-*-linux*] } {
 		setup_xfail "hppa*-*-linux*"
 	    }
@@ -358,7 +367,7 @@ proc visibility_run {visibility} {
 
 	# Now compile the code using -fpic.
 
-	if { ![ld_compile "$CC -g $CFLAGS $SHCFLAG $VSBCFLAG -DSHARED $picflag" $srcdir/$subdir/sh1.c $tmpdir/sh1p.o] 
+	if { ![ld_compile "$CC -g $CFLAGS $SHCFLAG $VSBCFLAG -DSHARED $picflag" $srcdir/$subdir/sh1.c $tmpdir/sh1p.o]
 	    || ![ld_compile "$CC -g $CFLAGS $SHCFLAG $VSBCFLAG -DSHARED $picflag" $srcdir/$subdir/sh2.c $tmpdir/sh2p.o] } {
 	    unresolved "visibility ($visibility)"
 	} else {
@@ -415,7 +424,10 @@ proc visibility_run {visibility} {
 			setup_xfail "sparc*-*-linux*"
 		    }
 		}
-		setup_xfail "x86_64-*-linux*"
+		if { [is_elf64 $tmpdir/mainp.o] } {
+		    setup_xfail "x86_64-*-linux*"
+		}
+		setup_xfail "x86_64-*-linux-gnux32"
 		if { ![istarget hppa*64*-*-linux*] } {
 		    setup_xfail "hppa*-*-linux*"
 		}
@@ -447,7 +459,9 @@ proc visibility_run {visibility} {
     }}
 }
 
-if [istarget mips*-*-*] {
+# Old version of GCC for MIPS default to enabling -fpic
+# and get confused if it is used on the command line.
+if { [istarget mips*-*-*] && ! [at_least_gcc_version 4 3] } then {
     set picflag ""
 } else {
     # Unfortunately, the gcc argument is -fpic and the cc argument is

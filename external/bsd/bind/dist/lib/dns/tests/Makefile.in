@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -26,8 +26,9 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	-I. -Iinclude ${DNS_INCLUDES} ${ISC_INCLUDES} @DST_OPENSSL_INC@
-CDEFINES =	@USE_OPENSSL@ -DTESTS="\"${top_builddir}/lib/dns/tests/\""
+CINCLUDES =	-I. -Iinclude ${DNS_INCLUDES} ${ISC_INCLUDES} \
+		@DST_OPENSSL_INC@
+CDEFINES =	@CRYPTO@ -DTESTS="\"${top_builddir}/lib/dns/tests/\""
 
 ISCLIBS =	../../isc/libisc.@A@
 ISCDEPLIBS =	../../isc/libisc.@A@
@@ -37,24 +38,55 @@ DNSDEPLIBS =	../libdns.@A@
 LIBS =		@LIBS@ @ATFLIBS@
 
 OBJS =		dnstest.@O@
-SRCS =		dnstest.c master_test.c dbiterator_test.c time_test.c \
-		private_test.c update_test.c zonemgr_test.c zt_test.c \
-		dbdiff_test.c nsec3_test.c rdataset_test.c rdata_test.c
+SRCS =		db_test.c \
+		dbdiff_test.c \
+		dbiterator_test.c \
+		dispatch_test.c \
+		dnstest.c \
+		geoip_test.c \
+		gost_test.c \
+		master_test.c \
+		nsec3_test.c \
+		private_test.c \
+		rbt_test.c \
+		rdata_test.c \
+		rdataset_test.c \
+		rdatasetstats_test.c \
+		time_test.c \
+		update_test.c \
+		zonemgr_test.c \
+		zt_test.c 
 
 SUBDIRS =
-TARGETS =	master_test@EXEEXT@ dbiterator_test@EXEEXT@ time_test@EXEEXT@ \
-		private_test@EXEEXT@ update_test@EXEEXT@ zonemgr_test@EXEEXT@ \
-		zt_test@EXEEXT@ dbversion_test@EXEEXT@ dbdiff_test@EXEEXT@ \
-		nsec3_test@EXEEXT@ rdataset_test@EXEEXT@ rdata_test@EXEEXT@
+TARGETS =	db_test@EXEEXT@ \
+		dbdiff_test@EXEEXT@ \
+		dbiterator_test@EXEEXT@ \
+		dbversion_test@EXEEXT@ \
+		dispatch_test@EXEEXT@ \
+		geoip_test@EXEEXT@ \
+		gost_test@EXEEXT@ \
+		master_test@EXEEXT@ \
+		nsec3_test@EXEEXT@ \
+		private_test@EXEEXT@ \
+		rbt_test@EXEEXT@ \
+		rdata_test@EXEEXT@ \
+		rdataset_test@EXEEXT@ \
+		rdatasetstats_test@EXEEXT@ \
+		time_test@EXEEXT@ \
+		update_test@EXEEXT@ \
+		zonemgr_test@EXEEXT@ \
+		zt_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
 
 master_test@EXEEXT@: master_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${PERL} mkraw.pl < testdata/master/master12.data.in \
+	test -d testdata || mkdir testdata
+	test -d testdata/master || mkdir testdata/master
+	${PERL} ${srcdir}/mkraw.pl < ${srcdir}/testdata/master/master12.data.in \
 		> testdata/master/master12.data
-	${PERL} mkraw.pl < testdata/master/master13.data.in \
+	${PERL} ${srcdir}/mkraw.pl < ${srcdir}/testdata/master/master13.data.in \
 		> testdata/master/master13.data
-	${PERL} mkraw.pl < testdata/master/master14.data.in \
+	${PERL} ${srcdir}/mkraw.pl < ${srcdir}/testdata/master/master14.data.in \
 		> testdata/master/master14.data
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			master_test.@O@ dnstest.@O@ ${DNSLIBS} \
@@ -95,7 +127,8 @@ dbversion_test@EXEEXT@: dbversion_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIB
 			dbversion_test.@O@ dnstest.@O@ ${DNSLIBS} \
 				${ISCLIBS} ${LIBS}
 
-zt_test@EXEEXT@: zt_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+zt_test@EXEEXT@: zt_test.@O@ dnstest.@O@ \
+		${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			zt_test.@O@ dnstest.@O@ ${DNSLIBS} \
 				${ISCLIBS} ${LIBS}
@@ -110,9 +143,40 @@ rdataset_test@EXEEXT@: rdataset_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 			rdataset_test.@O@ dnstest.@O@ ${DNSLIBS} \
 				${ISCLIBS} ${LIBS}
 
+dispatch_test@EXEEXT@: dispatch_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			dispatch_test.@O@ dnstest.@O@ ${DNSLIBS} \
+				${ISCLIBS} ${LIBS}
+
+rdatasetstats_test@EXEEXT@: rdatasetstats_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			rdatasetstats_test.@O@ dnstest.@O@ ${DNSLIBS} \
+				${ISCLIBS} ${LIBS}
+
+rbt_test@EXEEXT@: rbt_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			rbt_test.@O@ dnstest.@O@ ${DNSLIBS} \
+				${ISCLIBS} ${LIBS}
+
 rdata_test@EXEEXT@: rdata_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
-			rdata_test.@O@ ${DNSLIBS} ${ISCLIBS} ${LIBS}
+			rdata_test.@O@ ${DNSLIBS} \
+			${ISCLIBS} ${LIBS}
+
+geoip_test@EXEEXT@: geoip_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			geoip_test.@O@ dnstest.@O@ ${DNSLIBS} \
+			${ISCLIBS} ${LIBS}
+
+db_test@EXEEXT@: db_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			db_test.@O@ ${DNSLIBS} \
+			${ISCLIBS} ${LIBS}
+
+gost_test@EXEEXT@: gost_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			gost_test.@O@ dnstest.@O@ ${DNSLIBS} \
+			${ISCLIBS} ${LIBS}
 
 unit::
 	sh ${top_srcdir}/unit/unittest.sh
@@ -122,3 +186,4 @@ clean distclean::
 	rm -f atf.out
 	rm -f testdata/master/master12.data testdata/master/master13.data \
 		testdata/master/master14.data 
+	rm -f zone.bin

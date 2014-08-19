@@ -158,7 +158,6 @@ const char RAND_version[]="RAND" OPENSSL_VERSION_PTEXT;
 static void ssleay_rand_cleanup(void);
 static void ssleay_rand_seed(const void *buf, int num);
 static void ssleay_rand_add(const void *buf, int num, double add_entropy);
-static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo);
 static int ssleay_rand_nopseudo_bytes(unsigned char *buf, int num);
 static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num);
 static int ssleay_rand_status(void);
@@ -195,6 +194,9 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 	unsigned char local_md[MD_DIGEST_LENGTH];
 	EVP_MD_CTX m;
 	int do_not_lock;
+
+	if (!num)
+		return;
 
 	/*
 	 * (Based on the rand(3) manpage)
@@ -329,7 +331,7 @@ static void ssleay_rand_seed(const void *buf, int num)
 	ssleay_rand_add(buf, num, (double)num);
 	}
 
-static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
+int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo, int lock)
 	{
 	static volatile int stirred_pool = 0;
 	int i,j,k,st_num,st_idx;
@@ -378,8 +380,8 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 	 * are fed into the hash function and the results are kept in the
 	 * global 'md'.
 	 */
-
-	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+	if (lock)
+		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 
 	/* prevent ssleay_rand_bytes() from trying to obtain the lock again */
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND2);
@@ -396,6 +398,11 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 
 		RAND_poll();
 		ok = (entropy >= ENTROPY_NEEDED);
+
+		}
+
+	if (!ok)
+		{
 
 		/* If the PRNG state is not yet unpredictable, then seeing
 		 * the PRNG output may help attackers to determine the new
@@ -456,7 +463,8 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 
 	/* before unlocking, we must clear 'crypto_lock_rand' */
 	crypto_lock_rand = 0;
-	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+	if (lock)
+		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
 	while (num > 0)
 		{
@@ -508,10 +516,12 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 	MD_Init(&m);
 	MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c));
 	MD_Update(&m,local_md,MD_DIGEST_LENGTH);
-	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+	if (lock)
+		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	MD_Update(&m,md,MD_DIGEST_LENGTH);
 	MD_Final(&m,md);
-	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+	if (lock)
+		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
 	EVP_MD_CTX_cleanup(&m);
 	if (ok)
@@ -529,14 +539,14 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 
 static int ssleay_rand_nopseudo_bytes(unsigned char *buf, int num)
 	{
-	return ssleay_rand_bytes(buf, num, 0);
+	return ssleay_rand_bytes(buf, num, 0, 1);
 	}
 
 /* pseudo-random bytes that are guaranteed to be unique but not
    unpredictable */
 static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num) 
 	{
-	return ssleay_rand_bytes(buf, num, 1);
+	return ssleay_rand_bytes(buf, num, 1, 1);
 	}
 
 static int ssleay_rand_status(void)

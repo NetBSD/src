@@ -10,11 +10,14 @@
 // <string>
 
 // int compare(size_type pos1, size_type n1, const basic_string& str,
-//             size_type pos2, size_type n2) const;
+//             size_type pos2, size_type n2=npos) const;
+//  the "=npos" was added in C++14
 
 #include <string>
 #include <stdexcept>
 #include <cassert>
+
+#include "min_allocator.h"
 
 int sign(int x)
 {
@@ -42,8 +45,24 @@ test(const S& s, typename S::size_type pos1, typename S::size_type n1,
     }
 }
 
-typedef std::string S;
+template <class S>
+void
+test_npos(const S& s, typename S::size_type pos1, typename S::size_type n1,
+     const S& str, typename S::size_type pos2, int x)
+{
+    try
+    {
+        assert(sign(s.compare(pos1, n1, str, pos2)) == sign(x));
+        assert(pos1 <= s.size());
+        assert(pos2 <= str.size());
+    }
+    catch (std::out_of_range&)
+    {
+        assert(pos1 > s.size() || pos2 > str.size());
+    }
+}
 
+template <class S>
 void test0()
 {
     test(S(""), 0, 0, S(""), 0, 0, 0);
@@ -148,6 +167,7 @@ void test0()
     test(S(""), 0, 1, S("abcde"), 6, 0, 0);
 }
 
+template <class S>
 void test1()
 {
     test(S(""), 0, 1, S("abcdefghij"), 0, 0, 0);
@@ -252,6 +272,7 @@ void test1()
     test(S(""), 1, 0, S("abcdefghijklmnopqrst"), 0, 1, 0);
 }
 
+template <class S>
 void test2()
 {
     test(S(""), 1, 0, S("abcdefghijklmnopqrst"), 0, 10, 0);
@@ -356,6 +377,7 @@ void test2()
     test(S("abcde"), 0, 1, S("abcde"), 0, 0, 1);
 }
 
+template <class S>
 void test3()
 {
     test(S("abcde"), 0, 1, S("abcde"), 0, 1, 0);
@@ -460,6 +482,7 @@ void test3()
     test(S("abcde"), 0, 2, S("abcdefghij"), 0, 9, -7);
 }
 
+template <class S>
 void test4()
 {
     test(S("abcde"), 0, 2, S("abcdefghij"), 0, 10, -8);
@@ -564,6 +587,7 @@ void test4()
     test(S("abcde"), 0, 4, S("abcdefghijklmnopqrst"), 0, 21, -16);
 }
 
+template <class S>
 void test5()
 {
     test(S("abcde"), 0, 4, S("abcdefghijklmnopqrst"), 1, 0, 4);
@@ -668,6 +692,7 @@ void test5()
     test(S("abcde"), 0, 6, S("abcde"), 0, 5, 0);
 }
 
+template <class S>
 void test6()
 {
     test(S("abcde"), 0, 6, S("abcde"), 0, 6, 0);
@@ -772,6 +797,7 @@ void test6()
     test(S("abcde"), 1, 0, S("abcdefghij"), 1, 1, -1);
 }
 
+template <class S>
 void test7()
 {
     test(S("abcde"), 1, 0, S("abcdefghij"), 1, 4, -4);
@@ -876,6 +902,7 @@ void test7()
     test(S("abcde"), 1, 1, S("abcdefghijklmnopqrst"), 1, 18, -17);
 }
 
+template <class S>
 void test8()
 {
     test(S("abcde"), 1, 1, S("abcdefghijklmnopqrst"), 1, 19, -18);
@@ -980,6 +1007,7 @@ void test8()
     test(S("abcde"), 1, 3, S("abcde"), 1, 2, 1);
 }
 
+template <class S>
 void test9()
 {
     test(S("abcde"), 1, 3, S("abcde"), 1, 3, 0);
@@ -1084,6 +1112,7 @@ void test9()
     test(S("abcde"), 1, 4, S("abcdefghij"), 1, 10, -5);
 }
 
+template <class S>
 void test10()
 {
     test(S("abcde"), 1, 4, S("abcdefghij"), 5, 0, 4);
@@ -1188,6 +1217,7 @@ void test10()
     test(S("abcde"), 1, 5, S("abcdefghijklmnopqrst"), 10, 1, -9);
 }
 
+template <class S>
 void test11()
 {
     test(S("abcde"), 1, 5, S("abcdefghijklmnopqrst"), 10, 5, -9);
@@ -1292,6 +1322,7 @@ void test11()
     test(S("abcde"), 2, 1, S("abcde"), 2, 0, 1);
 }
 
+template <class S>
 void test12()
 {
     test(S("abcde"), 2, 1, S("abcde"), 2, 1, 0);
@@ -1396,6 +1427,7 @@ void test12()
     test(S("abcde"), 2, 2, S("abcdefghij"), 5, 4, -3);
 }
 
+template <class S>
 void test13()
 {
     test(S("abcde"), 2, 2, S("abcdefghij"), 5, 5, -3);
@@ -1500,6 +1532,7 @@ void test13()
     test(S("abcde"), 2, 3, S("abcdefghijklmnopqrst"), 10, 11, -8);
 }
 
+template <class S>
 void test14()
 {
     test(S("abcde"), 2, 3, S("abcdefghijklmnopqrst"), 19, 0, 3);
@@ -1604,6 +1637,7 @@ void test14()
     test(S("abcde"), 4, 0, S("abcde"), 2, 4, -3);
 }
 
+template <class S>
 void test15()
 {
     test(S("abcde"), 4, 0, S("abcde"), 4, 0, 0);
@@ -1708,6 +1742,7 @@ void test15()
     test(S("abcde"), 4, 1, S("abcdefghij"), 9, 1, -5);
 }
 
+template <class S>
 void test16()
 {
     test(S("abcde"), 4, 1, S("abcdefghij"), 9, 2, -5);
@@ -1812,6 +1847,7 @@ void test16()
     test(S("abcde"), 4, 2, S("abcdefghijklmnopqrst"), 20, 0, 1);
 }
 
+template <class S>
 void test17()
 {
     test(S("abcde"), 4, 2, S("abcdefghijklmnopqrst"), 20, 1, 1);
@@ -1916,6 +1952,7 @@ void test17()
     test(S("abcde"), 5, 1, S("abcde"), 5, 0, 0);
 }
 
+template <class S>
 void test18()
 {
     test(S("abcde"), 5, 1, S("abcde"), 5, 1, 0);
@@ -2020,6 +2057,7 @@ void test18()
     test(S("abcde"), 6, 0, S("abcdefghij"), 11, 0, 0);
 }
 
+template <class S>
 void test19()
 {
     test(S("abcde"), 6, 0, S("abcdefghijklmnopqrst"), 0, 0, 0);
@@ -2124,6 +2162,7 @@ void test19()
     test(S("abcdefghij"), 0, 1, S(""), 0, 1, 1);
 }
 
+template <class S>
 void test20()
 {
     test(S("abcdefghij"), 0, 1, S(""), 1, 0, 0);
@@ -2228,6 +2267,7 @@ void test20()
     test(S("abcdefghij"), 0, 5, S("abcdefghij"), 0, 1, 4);
 }
 
+template <class S>
 void test21()
 {
     test(S("abcdefghij"), 0, 5, S("abcdefghij"), 0, 5, 0);
@@ -2332,6 +2372,7 @@ void test21()
     test(S("abcdefghij"), 0, 9, S("abcdefghijklmnopqrst"), 0, 19, -10);
 }
 
+template <class S>
 void test22()
 {
     test(S("abcdefghij"), 0, 9, S("abcdefghijklmnopqrst"), 0, 20, -11);
@@ -2436,6 +2477,7 @@ void test22()
     test(S("abcdefghij"), 0, 11, S("abcde"), 0, 2, 8);
 }
 
+template <class S>
 void test23()
 {
     test(S("abcdefghij"), 0, 11, S("abcde"), 0, 4, 6);
@@ -2540,6 +2582,7 @@ void test23()
     test(S("abcdefghij"), 1, 0, S("abcdefghij"), 0, 11, -10);
 }
 
+template <class S>
 void test24()
 {
     test(S("abcdefghij"), 1, 0, S("abcdefghij"), 1, 0, 0);
@@ -2644,6 +2687,7 @@ void test24()
     test(S("abcdefghij"), 1, 1, S("abcdefghijklmnopqrst"), 1, 1, 0);
 }
 
+template <class S>
 void test25()
 {
     test(S("abcdefghij"), 1, 1, S("abcdefghijklmnopqrst"), 1, 9, -8);
@@ -2748,6 +2792,7 @@ void test25()
     test(S("abcdefghij"), 1, 8, S("abcde"), 1, 0, 8);
 }
 
+template <class S>
 void test26()
 {
     test(S("abcdefghij"), 1, 8, S("abcde"), 1, 1, 7);
@@ -2852,6 +2897,7 @@ void test26()
     test(S("abcdefghij"), 1, 9, S("abcdefghij"), 1, 8, 1);
 }
 
+template <class S>
 void test27()
 {
     test(S("abcdefghij"), 1, 9, S("abcdefghij"), 1, 9, 0);
@@ -2956,6 +3002,7 @@ void test27()
     test(S("abcdefghij"), 1, 10, S("abcdefghijklmnopqrst"), 1, 20, -10);
 }
 
+template <class S>
 void test28()
 {
     test(S("abcdefghij"), 1, 10, S("abcdefghijklmnopqrst"), 10, 0, 9);
@@ -3060,6 +3107,7 @@ void test28()
     test(S("abcdefghij"), 5, 1, S("abcde"), 1, 4, 4);
 }
 
+template <class S>
 void test29()
 {
     test(S("abcdefghij"), 5, 1, S("abcde"), 1, 5, 4);
@@ -3164,6 +3212,7 @@ void test29()
     test(S("abcdefghij"), 5, 2, S("abcdefghij"), 5, 1, 1);
 }
 
+template <class S>
 void test30()
 {
     test(S("abcdefghij"), 5, 2, S("abcdefghij"), 5, 2, 0);
@@ -3268,6 +3317,7 @@ void test30()
     test(S("abcdefghij"), 5, 4, S("abcdefghijklmnopqrst"), 10, 9, -5);
 }
 
+template <class S>
 void test31()
 {
     test(S("abcdefghij"), 5, 4, S("abcdefghijklmnopqrst"), 10, 10, -5);
@@ -3372,6 +3422,7 @@ void test31()
     test(S("abcdefghij"), 5, 6, S("abcde"), 2, 2, 3);
 }
 
+template <class S>
 void test32()
 {
     test(S("abcdefghij"), 5, 6, S("abcde"), 2, 3, 3);
@@ -3476,6 +3527,7 @@ void test32()
     test(S("abcdefghij"), 9, 0, S("abcdefghij"), 5, 6, -5);
 }
 
+template <class S>
 void test33()
 {
     test(S("abcdefghij"), 9, 0, S("abcdefghij"), 9, 0, 0);
@@ -3580,6 +3632,7 @@ void test33()
     test(S("abcdefghij"), 9, 1, S("abcdefghijklmnopqrst"), 19, 1, -10);
 }
 
+template <class S>
 void test34()
 {
     test(S("abcdefghij"), 9, 1, S("abcdefghijklmnopqrst"), 19, 2, -10);
@@ -3684,6 +3737,7 @@ void test34()
     test(S("abcdefghij"), 10, 0, S("abcde"), 4, 1, -1);
 }
 
+template <class S>
 void test35()
 {
     test(S("abcdefghij"), 10, 0, S("abcde"), 4, 2, -1);
@@ -3788,6 +3842,7 @@ void test35()
     test(S("abcdefghij"), 10, 1, S("abcdefghij"), 10, 0, 0);
 }
 
+template <class S>
 void test36()
 {
     test(S("abcdefghij"), 10, 1, S("abcdefghij"), 10, 1, 0);
@@ -3892,6 +3947,7 @@ void test36()
     test(S("abcdefghij"), 11, 0, S("abcdefghijklmnopqrst"), 21, 0, 0);
 }
 
+template <class S>
 void test37()
 {
     test(S("abcdefghijklmnopqrst"), 0, 0, S(""), 0, 0, 0);
@@ -3996,6 +4052,7 @@ void test37()
     test(S("abcdefghijklmnopqrst"), 0, 1, S("abcde"), 6, 0, 0);
 }
 
+template <class S>
 void test38()
 {
     test(S("abcdefghijklmnopqrst"), 0, 1, S("abcdefghij"), 0, 0, 1);
@@ -4100,6 +4157,7 @@ void test38()
     test(S("abcdefghijklmnopqrst"), 0, 10, S("abcdefghijklmnopqrst"), 0, 1, 9);
 }
 
+template <class S>
 void test39()
 {
     test(S("abcdefghijklmnopqrst"), 0, 10, S("abcdefghijklmnopqrst"), 0, 10, 0);
@@ -4204,6 +4262,7 @@ void test39()
     test(S("abcdefghijklmnopqrst"), 0, 20, S("abcde"), 0, 0, 20);
 }
 
+template <class S>
 void test40()
 {
     test(S("abcdefghijklmnopqrst"), 0, 20, S("abcde"), 0, 1, 19);
@@ -4308,6 +4367,7 @@ void test40()
     test(S("abcdefghijklmnopqrst"), 0, 21, S("abcdefghij"), 0, 9, 11);
 }
 
+template <class S>
 void test41()
 {
     test(S("abcdefghijklmnopqrst"), 0, 21, S("abcdefghij"), 0, 10, 10);
@@ -4412,6 +4472,7 @@ void test41()
     test(S("abcdefghijklmnopqrst"), 1, 0, S("abcdefghijklmnopqrst"), 0, 21, -20);
 }
 
+template <class S>
 void test42()
 {
     test(S("abcdefghijklmnopqrst"), 1, 0, S("abcdefghijklmnopqrst"), 1, 0, 0);
@@ -4516,6 +4577,7 @@ void test42()
     test(S("abcdefghijklmnopqrst"), 1, 9, S("abcde"), 0, 5, 1);
 }
 
+template <class S>
 void test43()
 {
     test(S("abcdefghijklmnopqrst"), 1, 9, S("abcde"), 0, 6, 1);
@@ -4620,6 +4682,7 @@ void test43()
     test(S("abcdefghijklmnopqrst"), 1, 18, S("abcdefghij"), 1, 1, 17);
 }
 
+template <class S>
 void test44()
 {
     test(S("abcdefghijklmnopqrst"), 1, 18, S("abcdefghij"), 1, 4, 14);
@@ -4724,6 +4787,7 @@ void test44()
     test(S("abcdefghijklmnopqrst"), 1, 19, S("abcdefghijklmnopqrst"), 1, 18, 1);
 }
 
+template <class S>
 void test45()
 {
     test(S("abcdefghijklmnopqrst"), 1, 19, S("abcdefghijklmnopqrst"), 1, 19, 0);
@@ -4828,6 +4892,7 @@ void test45()
     test(S("abcdefghijklmnopqrst"), 10, 0, S("abcde"), 1, 2, -2);
 }
 
+template <class S>
 void test46()
 {
     test(S("abcdefghijklmnopqrst"), 10, 0, S("abcde"), 1, 3, -3);
@@ -4932,6 +4997,7 @@ void test46()
     test(S("abcdefghijklmnopqrst"), 10, 1, S("abcdefghij"), 1, 10, 9);
 }
 
+template <class S>
 void test47()
 {
     test(S("abcdefghijklmnopqrst"), 10, 1, S("abcdefghij"), 5, 0, 1);
@@ -5036,6 +5102,7 @@ void test47()
     test(S("abcdefghijklmnopqrst"), 10, 5, S("abcdefghijklmnopqrst"), 10, 1, 4);
 }
 
+template <class S>
 void test48()
 {
     test(S("abcdefghijklmnopqrst"), 10, 5, S("abcdefghijklmnopqrst"), 10, 5, 0);
@@ -5140,6 +5207,7 @@ void test48()
     test(S("abcdefghijklmnopqrst"), 10, 10, S("abcde"), 2, 0, 10);
 }
 
+template <class S>
 void test49()
 {
     test(S("abcdefghijklmnopqrst"), 10, 10, S("abcde"), 2, 1, 8);
@@ -5244,6 +5312,7 @@ void test49()
     test(S("abcdefghijklmnopqrst"), 10, 11, S("abcdefghij"), 5, 4, 5);
 }
 
+template <class S>
 void test50()
 {
     test(S("abcdefghijklmnopqrst"), 10, 11, S("abcdefghij"), 5, 5, 5);
@@ -5348,6 +5417,7 @@ void test50()
     test(S("abcdefghijklmnopqrst"), 19, 0, S("abcdefghijklmnopqrst"), 10, 11, -10);
 }
 
+template <class S>
 void test51()
 {
     test(S("abcdefghijklmnopqrst"), 19, 0, S("abcdefghijklmnopqrst"), 19, 0, 0);
@@ -5452,6 +5522,7 @@ void test51()
     test(S("abcdefghijklmnopqrst"), 19, 2, S("abcde"), 2, 4, 17);
 }
 
+template <class S>
 void test52()
 {
     test(S("abcdefghijklmnopqrst"), 19, 2, S("abcde"), 4, 0, 1);
@@ -5556,6 +5627,7 @@ void test52()
     test(S("abcdefghijklmnopqrst"), 20, 0, S("abcdefghij"), 9, 1, -1);
 }
 
+template <class S>
 void test53()
 {
     test(S("abcdefghijklmnopqrst"), 20, 0, S("abcdefghij"), 9, 2, -1);
@@ -5660,6 +5732,7 @@ void test53()
     test(S("abcdefghijklmnopqrst"), 20, 1, S("abcdefghijklmnopqrst"), 20, 0, 0);
 }
 
+template <class S>
 void test54()
 {
     test(S("abcdefghijklmnopqrst"), 20, 1, S("abcdefghijklmnopqrst"), 20, 1, 0);
@@ -5740,61 +5813,136 @@ void test54()
     test(S("abcdefghijklmnopqrst"), 21, 0, S("abcdefghijklmnopqrst"), 21, 0, 0);
 }
 
+template<class S>
+void test55()
+{
+    test_npos(S(""), 0, 0, S(""), 0, 0);
+    test_npos(S(""), 0, 0, S("abcde"), 0, -5);
+    test_npos(S("abcde"), 0, 0, S("abcdefghij"), 0, -10);
+    test_npos(S("abcde"), 0, 0, S("abcdefghij"), 1, -9);
+    test_npos(S("abcde"), 0, 0, S("abcdefghij"), 5, -5);
+}
+
 int main()
 {
-    test0();
-    test1();
-    test2();
-    test3();
-    test4();
-    test5();
-    test6();
-    test7();
-    test8();
-    test9();
-    test10();
-    test11();
-    test12();
-    test13();
-    test14();
-    test15();
-    test16();
-    test17();
-    test18();
-    test19();
-    test20();
-    test21();
-    test22();
-    test23();
-    test24();
-    test25();
-    test26();
-    test27();
-    test28();
-    test29();
-    test30();
-    test31();
-    test32();
-    test33();
-    test34();
-    test35();
-    test36();
-    test37();
-    test38();
-    test39();
-    test40();
-    test41();
-    test42();
-    test43();
-    test44();
-    test45();
-    test46();
-    test47();
-    test48();
-    test49();
-    test50();
-    test51();
-    test52();
-    test53();
-    test54();
+    {
+    typedef std::string S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    test3<S>();
+    test4<S>();
+    test5<S>();
+    test6<S>();
+    test7<S>();
+    test8<S>();
+    test9<S>();
+    test10<S>();
+    test11<S>();
+    test12<S>();
+    test13<S>();
+    test14<S>();
+    test15<S>();
+    test16<S>();
+    test17<S>();
+    test18<S>();
+    test19<S>();
+    test20<S>();
+    test21<S>();
+    test22<S>();
+    test23<S>();
+    test24<S>();
+    test25<S>();
+    test26<S>();
+    test27<S>();
+    test28<S>();
+    test29<S>();
+    test30<S>();
+    test31<S>();
+    test32<S>();
+    test33<S>();
+    test34<S>();
+    test35<S>();
+    test36<S>();
+    test37<S>();
+    test38<S>();
+    test39<S>();
+    test40<S>();
+    test41<S>();
+    test42<S>();
+    test43<S>();
+    test44<S>();
+    test45<S>();
+    test46<S>();
+    test47<S>();
+    test48<S>();
+    test49<S>();
+    test50<S>();
+    test51<S>();
+    test52<S>();
+    test53<S>();
+    test54<S>();
+    test55<S>();
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    test3<S>();
+    test4<S>();
+    test5<S>();
+    test6<S>();
+    test7<S>();
+    test8<S>();
+    test9<S>();
+    test10<S>();
+    test11<S>();
+    test12<S>();
+    test13<S>();
+    test14<S>();
+    test15<S>();
+    test16<S>();
+    test17<S>();
+    test18<S>();
+    test19<S>();
+    test20<S>();
+    test21<S>();
+    test22<S>();
+    test23<S>();
+    test24<S>();
+    test25<S>();
+    test26<S>();
+    test27<S>();
+    test28<S>();
+    test29<S>();
+    test30<S>();
+    test31<S>();
+    test32<S>();
+    test33<S>();
+    test34<S>();
+    test35<S>();
+    test36<S>();
+    test37<S>();
+    test38<S>();
+    test39<S>();
+    test40<S>();
+    test41<S>();
+    test42<S>();
+    test43<S>();
+    test44<S>();
+    test45<S>();
+    test46<S>();
+    test47<S>();
+    test48<S>();
+    test49<S>();
+    test50<S>();
+    test51<S>();
+    test52<S>();
+    test53<S>();
+    test54<S>();
+    test55<S>();
+    }
+#endif
 }

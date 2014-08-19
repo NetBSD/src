@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_odbc_driver.c,v 1.3 2012/06/05 00:39:39 christos Exp $	*/
+/*	$NetBSD: dlz_odbc_driver.c,v 1.3.2.1 2014/08/19 23:46:21 tls Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -736,7 +736,7 @@ odbc_get_resultset(const char *zone, const char *record,
 static isc_result_t
 odbc_getField(SQLHSTMT *stmnt, SQLSMALLINT field, char **data) {
 
-	SQLINTEGER size;
+	SQLLEN size;
 
 	REQUIRE(data != NULL && *data == NULL);
 
@@ -765,7 +765,7 @@ odbc_getManyFields(SQLHSTMT *stmnt, SQLSMALLINT startField,
 		   SQLSMALLINT endField, char **retData) {
 
 	isc_result_t result;
-	SQLINTEGER size;
+	SQLLEN size;
 	int totSize = 0;
 	SQLSMALLINT i;
 	int j = 0;
@@ -965,13 +965,16 @@ odbc_process_rs(dns_sdlzlookup_t *lookup, dbinstance_t *dbi)
 /*% determine if the zone is supported by (in) the database */
 
 static isc_result_t
-odbc_findzone(void *driverarg, void *dbdata, const char *name)
+odbc_findzone(void *driverarg, void *dbdata, const char *name,
+	      dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo)
 {
 
 	isc_result_t result;
 	dbinstance_t *dbi = NULL;
 
 	UNUSED(driverarg);
+	UNUSED(methods);
+	UNUSED(clientinfo);
 
 	/* run the query and get the result set from the database. */
 	/* if result != ISC_R_SUCCESS cursor and mutex already cleaned up. */
@@ -1009,7 +1012,7 @@ odbc_allowzonexfr(void *driverarg, void *dbdata, const char *name,
 	UNUSED(driverarg);
 
 	/* first check if the zone is supported by the database. */
-	result = odbc_findzone(driverarg, dbdata, name);
+	result = odbc_findzone(driverarg, dbdata, name, NULL, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (ISC_R_NOTFOUND);
 

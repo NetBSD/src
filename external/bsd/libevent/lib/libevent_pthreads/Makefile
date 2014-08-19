@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2013/06/23 06:28:19 tls Exp $
+#	$NetBSD: Makefile,v 1.1.4.3 2014/08/19 23:47:16 tls Exp $
 
 LIB=event_pthreads
 
 COPTS+=-pthread
 
-SRCS= \
-evthread_pthread.c
+SRCS=		evthread_pthread.c
 
-LIBDPLIBS+=     pthread  ${NETBSDSRCDIR}/lib/libpthread
+LIBDPLIBS+= \
+	event	${.CURDIR}/../libevent \
+	pthread	${NETBSDSRCDIR}/lib/libpthread
 
 .include <bsd.lib.mk>

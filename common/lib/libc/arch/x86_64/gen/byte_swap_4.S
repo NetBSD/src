@@ -1,8 +1,8 @@
-/*	$NetBSD: byte_swap_4.S,v 1.2 2006/02/04 21:53:31 uwe Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.2.56.1 2014/08/19 23:45:14 tls Exp $	*/
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: byte_swap_4.S,v 1.2 2006/02/04 21:53:31 uwe Exp $")
+	RCSID("$NetBSD: byte_swap_4.S,v 1.2.56.1 2014/08/19 23:45:14 tls Exp $")
 #endif
 
 #if defined(_KERNEL) || defined(_STANDALONE)
@@ -16,3 +16,10 @@ _PROF_PROLOGUE
 	movl	%edi,%eax
 	bswapl	%eax
 	ret
+#if defined(_KERNEL) || defined(_STANDALONE)
+END(_C_LABEL(bswap32))
+#else
+END(_C_LABEL(__bswap32))
+#endif
+END(_C_LABEL(ntohl))
+END(_C_LABEL(htonl))

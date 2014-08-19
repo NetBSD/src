@@ -1,4 +1,4 @@
-/*	$NetBSD: sf-pcap-ng.h,v 1.1.1.1.12.1 2013/06/23 06:28:19 tls Exp $	*/
+/*	$NetBSD: sf-pcap-ng.h,v 1.1.1.1.12.2 2014/08/19 23:47:17 tls Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -28,6 +28,7 @@
 #ifndef sf_pcap_ng_h
 #define	sf_pcap_ng_h
 
-extern int pcap_ng_check_header(pcap_t *, bpf_u_int32, FILE *, char *);
+extern pcap_t *pcap_ng_check_header(bpf_u_int32 magic, FILE *fp,
+    u_int precision, char *errbuf, int *err);
 
 #endif

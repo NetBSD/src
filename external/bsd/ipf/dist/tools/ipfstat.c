@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.3.2.1 2014/08/19 23:46:48 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -799,7 +799,6 @@ printlivelist(fiop, out, set, fp, group, comment)
 	struct	frentry	fb;
 	ipfruleiter_t rule;
 	frentry_t zero;
-	frgroup_t *g;
 	ipfobj_t obj;
 	void *buf;
 	size_t bufsiz;
@@ -833,7 +832,7 @@ printlivelist(fiop, out, set, fp, group, comment)
 	if ((buf = malloc(bufsiz = sizeof(*fp) + 10240)) == NULL)
 		return 0;
 
-	do {
+	while (rule.iri_rule != NULL) {
 		memset(buf, 0xff, bufsiz);
 		fp = buf;
 		rule.iri_rule = fp;
@@ -857,8 +856,13 @@ printlivelist(fiop, out, set, fp, group, comment)
 			if (fp->fr_family != 0 && fp->fr_family != AF_INET)
 				continue;
 		}
-		if (fp->fr_data != NULL)
-			fp->fr_data = (char *)fp + fp->fr_size;
+		if (fp->fr_data != NULL) {
+			fp->fr_data = calloc(1, fp->fr_dsize);
+			if (fp->fr_data != NULL) {
+				memcpy(fp->fr_data, (char *)fp + fp->fr_size,
+				    fp->fr_dsize);
+			}
+		}
 
 		rules++;
 
@@ -886,35 +890,11 @@ printlivelist(fiop, out, set, fp, group, comment)
 			if (fp->fr_data != NULL && fp->fr_dsize > 0)
 				binprint(fp->fr_data, fp->fr_dsize);
 		}
-		if (fp->fr_grhead != -1) {
-			for (g = grtop; g != NULL; g = g->fg_next) {
-				if (!strncmp(fp->fr_names + fp->fr_grhead,
-					     g->fg_name,
-					     FR_GROUPLEN))
-					break;
-			}
-			if (g == NULL) {
-				g = calloc(1, sizeof(*g));
-
-				if (g != NULL) {
-					strncpy(g->fg_name,
-						fp->fr_names + fp->fr_grhead,
-						FR_GROUPLEN);
-					if (grtop == NULL) {
-						grtop = g;
-						grtail = g;
-					} else {
-						grtail->fg_next = g;
-						grtail = g;
-					}
-				}
-			}
-		}
 		if (fp->fr_type == FR_T_CALLFUNC) {
 			rules += printlivelist(fiop, out, set, fp->fr_data,
 					       group, "# callfunc: ");
 		}
-	} while (fp->fr_next != NULL);
+	}
 
 	num = IPFGENITER_IPF;
 	(void) ioctl(ipf_fd,SIOCIPFDELTOK, &num);

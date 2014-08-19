@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.1.1.1 2009/12/13 16:55:02 kardel Exp $	*/
+/*	$NetBSD: getopt.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * getopt - get option letter from argv
@@ -15,6 +15,7 @@
 
 /*LINTLIBRARY*/
 
+#include <config.h>
 #include <stdio.h>
 
 #include "ntp_stdlib.h"

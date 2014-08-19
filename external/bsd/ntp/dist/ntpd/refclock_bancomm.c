@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_bancomm.c,v 1.1.1.2 2012/01/31 21:25:09 kardel Exp $	*/
+/*	$NetBSD: refclock_bancomm.c,v 1.1.1.2.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /* refclock_bancomm.c - clock driver for the  Datum/Bancomm bc635VME 
  * Time and Frequency Processor. It requires the BANCOMM bc635VME/
@@ -148,11 +148,6 @@ typedef void *SYMMT_PCI_HANDLE;
 extern u_long current_time;     /* current time(s) */
 
 /*
- * Imported from ntpd module
- */
-extern volatile int debug;               /* global debug flag */
-
-/*
  * VME unit control structure.
  * Changes made to vmeunit structure. Most members are now available in the 
  * new refclockproc structure in ntp_refclock.h - 07/99 - Ganesh Ramasivan
@@ -268,21 +263,21 @@ vme_start(
 	/*
 	 * Allocate unit structure
 	 */
-	vme = (struct vmeunit *)emalloc(sizeof(struct vmeunit));
-	bzero((char *)vme, sizeof(struct vmeunit));
+	vme = emalloc_zero(sizeof(struct vmeunit));
 
 
 	/*
 	 * Set up the structures
 	 */
 	pp = peer->procptr;
-	pp->unitptr = (caddr_t) vme;
+	pp->unitptr = vme;
 	pp->timestarted = current_time;
 
 	pp->io.clock_recv = vme_receive;
-	pp->io.srcclock = (caddr_t)peer;
+	pp->io.srcclock = peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd_vme;
+	/* shouldn't there be an io_addclock() call? */
 
 	/*
 	 * All done.  Initialize a few random peer variables, then
@@ -311,7 +306,7 @@ vme_shutdown(
 	 * Tell the I/O module to turn us off.  We're history.
 	 */
 	pp = peer->procptr;
-	vme = (struct vmeunit *)pp->unitptr;
+	vme = pp->unitptr;
 	io_closeclock(&pp->io);
 	pp->unitptr = NULL;
 	if (NULL != vme)
@@ -351,7 +346,7 @@ vme_poll(
 	struct tm *tadr;
         
 	pp = peer->procptr;	 
-	vme = (struct vmeunit *)pp->unitptr;        /* Here is the structure */
+	vme = pp->unitptr;        /* Here is the structure */
 
 	tptr = &vme->vmedata; 
 	if ((tptr = get_datumtime(tptr)) == NULL ) {
@@ -456,7 +451,7 @@ get_datumtime(struct vmedate *time_vme)
 			 * the time.
 			 */
 			if(ioctl (fd_vme, SELTIMEFORMAT, TIME_DECIMAL)){	
-					msyslog(LOG_ERR, "Could not set time format\n");
+					msyslog(LOG_ERR, "Could not set time format");
 					return (NULL);	
 			}
 			/* read the time */

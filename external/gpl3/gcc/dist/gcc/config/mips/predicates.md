@@ -1,5 +1,5 @@
 ;; Predicate definitions for MIPS.
-;; Copyright (C) 2004, 2007, 2008 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -59,7 +59,7 @@
 
 (define_predicate "reg_or_0_operand"
   (ior (and (match_operand 0 "const_0_operand")
-	    (match_test "!TARGET_MIPS16"))
+	    (not (match_test "TARGET_MIPS16")))
        (match_operand 0 "register_operand")))
 
 (define_predicate "const_1_operand"
@@ -73,8 +73,15 @@
 ;; This is used for indexing into vectors, and hence only accepts const_int.
 (define_predicate "const_0_or_1_operand"
   (and (match_code "const_int")
-       (ior (match_test "op == CONST0_RTX (GET_MODE (op))")
-	    (match_test "op == CONST1_RTX (GET_MODE (op))"))))
+       (match_test "IN_RANGE (INTVAL (op), 0, 1)")))
+
+(define_predicate "const_2_or_3_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 2, 3)")))
+
+(define_predicate "const_0_to_3_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, 3)")))
 
 (define_predicate "qi_mask_operand"
   (and (match_code "const_int")
@@ -100,7 +107,7 @@
 
 (define_predicate "and_reg_operand"
   (ior (match_operand 0 "register_operand")
-       (and (match_test "!TARGET_MIPS16")
+       (and (not (match_test "TARGET_MIPS16"))
 	    (match_operand 0 "const_uns_arith_operand"))
        (match_operand 0 "low_bitmask_operand")
        (match_operand 0 "si_mask_operand")))
@@ -127,8 +134,10 @@
   (and (match_code "reg,subreg")
        (match_test "ST_REG_P (true_regnum (op))")))
 
-(define_special_predicate "pc_or_label_operand"
-  (match_code "pc,label_ref"))
+(define_predicate "muldiv_target_operand"
+  (if_then_else (match_test "TARGET_MIPS16")
+		(match_operand 0 "hilo_operand")
+		(match_operand 0 "register_operand")))
 
 (define_predicate "const_call_insn_operand"
   (match_code "const,symbol_ref,label_ref")
@@ -173,7 +182,7 @@
 (define_predicate "splittable_const_int_operand"
   (match_code "const_int")
 {
-  /* When generating mips16 code, LEGITIMATE_CONSTANT_P rejects
+  /* When generating mips16 code, TARGET_LEGITIMATE_CONSTANT_P rejects
      CONST_INTs that can't be loaded using simple insns.  */
   if (TARGET_MIPS16)
     return false;
@@ -189,7 +198,9 @@
 })
 
 (define_predicate "move_operand"
-  (match_operand 0 "general_operand")
+  ;; Allow HI and LO to be used as the source of a MIPS16 move.
+  (ior (match_operand 0 "general_operand")
+       (match_operand 0 "hilo_operand"))
 {
   enum mips_symbol_type symbol_type;
 
@@ -274,12 +285,20 @@
 	  && type == SYMBOL_ABSOLUTE);
 })
 
+(define_predicate "symbolic_operand_with_high"
+  (match_code "const,symbol_ref,label_ref")
+{
+  enum mips_symbol_type type;
+  return (mips_symbolic_constant_p (op, SYMBOL_CONTEXT_LEA, &type)
+	  && mips_hi_relocs[(int) type]);
+})
+
 (define_predicate "force_to_mem_operand"
   (match_code "const,symbol_ref,label_ref")
 {
   enum mips_symbol_type symbol_type;
   return (mips_symbolic_constant_p (op, SYMBOL_CONTEXT_LEA, &symbol_type)
-	  && symbol_type == SYMBOL_FORCE_TO_MEM);
+	  && mips_use_pcrel_pool_p[(int) symbol_type]);
 })
 
 (define_predicate "got_disp_operand"
@@ -296,6 +315,14 @@
   enum mips_symbol_type type;
   return (mips_symbolic_constant_p (op, SYMBOL_CONTEXT_LEA, &type)
 	  && type == SYMBOL_GOT_PAGE_OFST);
+})
+
+(define_predicate "tls_reloc_operand"
+  (match_code "const,symbol_ref,label_ref")
+{
+  enum mips_symbol_type type;
+  return (mips_symbolic_constant_p (op, SYMBOL_CONTEXT_LEA, &type)
+	  && (type == SYMBOL_DTPREL || type == SYMBOL_TPREL));
 })
 
 (define_predicate "symbol_ref_operand"
@@ -335,8 +362,12 @@
 
 (define_predicate "mips_cstore_operator"
   (ior (match_code "eq,gt,gtu,ge,geu,lt,ltu,le,leu")
-       (and (match_code "ne") (match_test "!TARGET_MIPS16"))))
+       (and (match_code "ne") (not (match_test "TARGET_MIPS16")))))
 
 (define_predicate "small_data_pattern"
   (and (match_code "set,parallel,unspec,unspec_volatile,prefetch")
        (match_test "mips_small_data_pattern_p (op)")))
+
+(define_predicate "mem_noofs_operand"
+  (and (match_code "mem")
+       (match_code "reg" "0")))

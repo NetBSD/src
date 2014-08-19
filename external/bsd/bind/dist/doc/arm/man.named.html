@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004-2012 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2014 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -47,10 +47,10 @@
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<div class="cmdsynopsis"><p><code class="command">named</code>  [<code class="option">-4</code>] [<code class="option">-6</code>] [<code class="option">-c <em class="replaceable"><code>config-file</code></em></code>] [<code class="option">-d <em class="replaceable"><code>debug-level</code></em></code>] [<code class="option">-E <em class="replaceable"><code>engine-name</code></em></code>] [<code class="option">-f</code>] [<code class="option">-g</code>] [<code class="option">-m <em class="replaceable"><code>flag</code></em></code>] [<code class="option">-n <em class="replaceable"><code>#cpus</code></em></code>] [<code class="option">-p <em class="replaceable"><code>port</code></em></code>] [<code class="option">-s</code>] [<code class="option">-S <em class="replaceable"><code>#max-socks</code></em></code>] [<code class="option">-t <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-U <em class="replaceable"><code>#listeners</code></em></code>] [<code class="option">-u <em class="replaceable"><code>user</code></em></code>] [<code class="option">-v</code>] [<code class="option">-V</code>] [<code class="option">-x <em class="replaceable"><code>cache-file</code></em></code>]</p></div>
+<div class="cmdsynopsis"><p><code class="command">named</code>  [<code class="option">-4</code>] [<code class="option">-6</code>] [<code class="option">-c <em class="replaceable"><code>config-file</code></em></code>] [<code class="option">-d <em class="replaceable"><code>debug-level</code></em></code>] [<code class="option">-D <em class="replaceable"><code>string</code></em></code>] [<code class="option">-E <em class="replaceable"><code>engine-name</code></em></code>] [<code class="option">-f</code>] [<code class="option">-g</code>] [<code class="option">-m <em class="replaceable"><code>flag</code></em></code>] [<code class="option">-n <em class="replaceable"><code>#cpus</code></em></code>] [<code class="option">-p <em class="replaceable"><code>port</code></em></code>] [<code class="option">-s</code>] [<code class="option">-S <em class="replaceable"><code>#max-socks</code></em></code>] [<code class="option">-t <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-U <em class="replaceable"><code>#listeners</code></em></code>] [<code class="option">-u <em class="replaceable"><code>user</code></em></code>] [<code class="option">-v</code>] [<code class="option">-V</code>] [<code class="option">-x <em class="replaceable"><code>cache-file</code></em></code>]</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2639405"></a><h2>DESCRIPTION</h2>
+<a name="id2644717"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">named</strong></span>
       is a Domain Name System (DNS) server,
       part of the BIND 9 distribution from ISC.  For more
@@ -65,7 +65,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2639436"></a><h2>OPTIONS</h2>
+<a name="id2645841"></a><h2>OPTIONS</h2>
 <div class="variablelist"><dl>
 <dt><span class="term">-4</span></dt>
 <dd><p>
@@ -97,14 +97,29 @@
             Debugging traces from <span><strong class="command">named</strong></span> become
             more verbose as the debug level increases.
           </p></dd>
-<dt><span class="term">-E <em class="replaceable"><code>engine-name</code></em></span></dt>
+<dt><span class="term">-D <em class="replaceable"><code>string</code></em></span></dt>
 <dd><p>
-            Use a crypto hardware (OpenSSL engine) for the crypto operations
-            it supports, for instance re-signing with private keys from
-            a secure key store. When compiled with PKCS#11 support
-            <em class="replaceable"><code>engine-name</code></em>
-            defaults to pkcs11, the empty name resets it to no engine.
+	    Specifies a string that is used to identify a instance of
+	    <span><strong class="command">named</strong></span> in a process listing.  The contents
+	    of <em class="replaceable"><code>string</code></em> are
+	    not examined.
           </p></dd>
+<dt><span class="term">-E <em class="replaceable"><code>engine-name</code></em></span></dt>
+<dd>
+<p>
+            When applicable, specifies the hardware to use for
+            cryptographic operations, such as a secure key store used
+            for signing.
+          </p>
+<p>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
+          </p>
+</dd>
 <dt><span class="term">-f</span></dt>
 <dd><p>
             Run the server in the foreground (i.e. do not daemonize).
@@ -157,6 +172,9 @@
 <p>
 	    Allow <span><strong class="command">named</strong></span> to use up to
 	    <em class="replaceable"><code>#max-socks</code></em> sockets.
+            The default value is 4096 on systems built with default
+            configuration options, and 21000 on systems built with
+            "configure --with-tuning=large".
 	  </p>
 <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;">
 <h3 class="title">Warning</h3>
@@ -201,9 +219,12 @@
             Use <em class="replaceable"><code>#listeners</code></em>
             worker threads to listen for incoming UDP packets on each
             address.  If not specified, <span><strong class="command">named</strong></span> will
-            use all of the worker threads for this purpose; the
-            <code class="option">-U</code> option allows the number to be
-            decreased but not increased.
+            calculate a default value based on the number of detected
+            CPUs: 1 for 1 CPU, 2 for 2-4 CPUs, and the number of
+            detected CPUs divided by 2 for values higher than 4.
+            If <code class="option">-n</code> has been set to a higher value than
+            the number of detected CPUs, then <code class="option">-U</code> may
+            be increased as high as that value, but no higher.
           </p></dd>
 <dt><span class="term">-u <em class="replaceable"><code>user</code></em></span></dt>
 <dd>
@@ -255,7 +276,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2642478"></a><h2>SIGNALS</h2>
+<a name="id2678883"></a><h2>SIGNALS</h2>
 <p>
       In routine operation, signals should not be used to control
       the nameserver; <span><strong class="command">rndc</strong></span> should be used
@@ -276,7 +297,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2642529"></a><h2>CONFIGURATION</h2>
+<a name="id2678933"></a><h2>CONFIGURATION</h2>
 <p>
       The <span><strong class="command">named</strong></span> configuration file is too complex
       to describe in detail here.  A complete description is provided
@@ -293,7 +314,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2642578"></a><h2>FILES</h2>
+<a name="id2678982"></a><h2>FILES</h2>
 <div class="variablelist"><dl>
 <dt><span class="term"><code class="filename">/etc/named.conf</code></span></dt>
 <dd><p>
@@ -306,7 +327,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2677233"></a><h2>SEE ALSO</h2>
+<a name="id2679026"></a><h2>SEE ALSO</h2>
 <p><em class="citetitle">RFC 1033</em>,
       <em class="citetitle">RFC 1034</em>,
       <em class="citetitle">RFC 1035</em>,
@@ -319,7 +340,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2677303"></a><h2>AUTHOR</h2>
+<a name="id2679096"></a><h2>AUTHOR</h2>
 <p><span class="corpauthor">Internet Systems Consortium</span>
     </p>
 </div>

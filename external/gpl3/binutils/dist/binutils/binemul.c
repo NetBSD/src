@@ -1,5 +1,6 @@
 /* Binutils emulation layer.
-   Copyright 2002, 2003, 2005, 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2002, 2003, 2005, 2007, 2008, 2010
+   Free Software Foundation, Inc.
    Written by Tom Rix, Red Hat Inc.
 
    This file is part of GNU Binutils.
@@ -50,9 +51,16 @@ ar_emul_append (bfd **after_bfd, char *file_name, const char *target,
 }
 
 static bfd_boolean
-do_ar_emul_default_append (bfd **after_bfd, bfd *new_bfd,
-			   bfd_boolean verbose, bfd_boolean flatten)
-  {
+any_ok (bfd *new_bfd ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+do_ar_emul_append (bfd **after_bfd, bfd *new_bfd,
+		   bfd_boolean verbose, bfd_boolean flatten,
+		   bfd_boolean (*check) (bfd *))
+{
   /* When flattening, add the members of an archive instead of the
      archive itself.  */
   if (flatten && bfd_check_format (new_bfd, bfd_archive))
@@ -64,7 +72,7 @@ do_ar_emul_default_append (bfd **after_bfd, bfd *new_bfd,
            elt;
            elt = bfd_openr_next_archived_file (new_bfd, elt))
         {
-          if (do_ar_emul_default_append (after_bfd, elt, verbose, TRUE))
+          if (do_ar_emul_append (after_bfd, elt, verbose, TRUE, check))
             {
               added = TRUE;
               after_bfd = &((*after_bfd)->archive_next);
@@ -73,6 +81,9 @@ do_ar_emul_default_append (bfd **after_bfd, bfd *new_bfd,
 
       return added;
     }
+
+  if (!check (new_bfd))
+    return FALSE;
 
   AR_EMUL_APPEND_PRINT_VERBOSE (verbose, new_bfd->filename);
 
@@ -91,7 +102,7 @@ ar_emul_default_append (bfd **after_bfd, char *file_name,
 
   new_bfd = bfd_openr (file_name, target);
   AR_EMUL_ELEMENT_CHECK (new_bfd, file_name);
-  return do_ar_emul_default_append (after_bfd, new_bfd, verbose, flatten);
+  return do_ar_emul_append (after_bfd, new_bfd, verbose, flatten, any_ok);
 }
 
 bfd_boolean
@@ -109,15 +120,15 @@ bfd_boolean
 ar_emul_default_replace (bfd **after_bfd, char *file_name,
 			 const char *target, bfd_boolean verbose)
 {
-  bfd *temp;
+  bfd *new_bfd;
 
-  temp = *after_bfd;
-  *after_bfd = bfd_openr (file_name, target);
+  new_bfd = bfd_openr (file_name, target);
+  AR_EMUL_ELEMENT_CHECK (new_bfd, file_name);
 
-  AR_EMUL_ELEMENT_CHECK (*after_bfd, file_name);
   AR_EMUL_REPLACE_PRINT_VERBOSE (verbose, file_name);
 
-  (*after_bfd)->archive_next = temp;
+  new_bfd->archive_next = *after_bfd;
+  *after_bfd = new_bfd;
 
   return TRUE;
 }

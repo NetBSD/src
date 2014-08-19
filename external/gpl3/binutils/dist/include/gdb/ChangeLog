@@ -1,3 +1,44 @@
+2012-06-23  Doug Evans  <dje@google.com>
+
+	* gdb-index.h: New file.
+
+2012-05-24  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/7205
+
+        Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
+
+2012-05-24  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/7205
+
+	Replace target_signal with gdb_signal throughout.
+
+2012-04-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* callback.h (CB_SYS_argc, CB_SYS_argnlen, CB_SYS_argn): Define.
+
+2012-02-03  Kevin Buettner  <kevinb@redhat.com>
+
+	* sim-rl78.h: New file.
+
+2011-12-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* callback.h (cb_get_string): New prototype.
+
+2011-04-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* remote-sim.h (sim_complete_command): New prototype.
+
+2011-03-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-bfin.h: New file.
+
+2011-01-11  Andrew Burgess  <aburgess@broadcom.com>
+
+	* remote-sim.h (sim_store_register): Update the API
+	documentation for this function.
+
 2010-09-06  Pedro Alves  <pedro@codesourcery.com>
 
 	* signals.def: Replace all ANY uses by SET with specific numbers.

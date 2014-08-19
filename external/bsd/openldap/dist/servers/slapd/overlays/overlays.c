@@ -1,10 +1,10 @@
-/*	$NetBSD: overlays.c,v 1.1.1.3 2010/12/12 15:23:36 adam Exp $	*/
+/*	$NetBSD: overlays.c,v 1.1.1.3.12.1 2014/08/19 23:52:03 tls Exp $	*/
 
 /* overlays.c - Static overlay framework */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/overlays.c,v 1.24.2.5 2010/04/13 20:23:44 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2010 The OpenLDAP Foundation.
+ * Copyright 2003-2014 The OpenLDAP Foundation.
  * Copyright 2003 by Howard Chu.
  * All rights reserved.
  *

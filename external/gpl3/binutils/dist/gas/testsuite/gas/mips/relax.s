@@ -1,5 +1,9 @@
 # Source file used to test relaxation.
 
+	.ifdef	atk0
+	.set	at=$k0
+	.endif
+
 	.text
 foo:
 	b	bar
@@ -55,3 +59,7 @@ bar:
 
 	bltzall	$2, foo
 	bgezall	$3, foo
+
+# Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
+	.align	2
+	.space	8

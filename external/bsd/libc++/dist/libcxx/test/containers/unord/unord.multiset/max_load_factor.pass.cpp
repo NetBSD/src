@@ -16,8 +16,14 @@
 // float max_load_factor() const;
 // void max_load_factor(float mlf);
 
+#ifdef _LIBCPP_DEBUG
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <unordered_set>
 #include <cassert>
+
+#include "min_allocator.h"
 
 int main()
 {
@@ -35,4 +41,30 @@ int main()
         c.max_load_factor(2.5);
         assert(c.max_load_factor() == 2.5);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_multiset<int, std::hash<int>,
+                                      std::equal_to<int>, min_allocator<int>> C;
+        typedef int P;
+        const C c;
+        assert(c.max_load_factor() == 1);
+    }
+    {
+        typedef std::unordered_multiset<int, std::hash<int>,
+                                      std::equal_to<int>, min_allocator<int>> C;
+        typedef int P;
+        C c;
+        assert(c.max_load_factor() == 1);
+        c.max_load_factor(2.5);
+        assert(c.max_load_factor() == 2.5);
+    }
+#endif
+#if _LIBCPP_DEBUG_LEVEL >= 1
+    {
+        typedef std::unordered_multiset<int> C;
+        C c;
+        c.max_load_factor(0);
+        assert(false);
+    }
+#endif
 }

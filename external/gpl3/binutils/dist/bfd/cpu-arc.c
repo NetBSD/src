@@ -1,5 +1,5 @@
 /* BFD support for the ARC processor
-   Copyright 1994, 1995, 1997, 2001, 2002, 2005, 2007
+   Copyright 1994, 1995, 1997, 2001, 2002, 2005, 2007, 2012
    Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
@@ -37,6 +37,7 @@
     default_p,				\
     bfd_default_compatible,		\
     bfd_default_scan,			\
+    bfd_arch_default_fill,		\
     next,				\
   }
 
@@ -57,11 +58,10 @@ const bfd_arch_info_type bfd_arc_arch =
 /* Given cpu type NAME, return its bfd_mach_arc_xxx value.
    Returns -1 if not found.  */
 
-int arc_get_mach PARAMS ((char *));
+int arc_get_mach (char *);
 
 int
-arc_get_mach (name)
-     char *name;
+arc_get_mach (char *name)
 {
   const bfd_arch_info_type *p;
 

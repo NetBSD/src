@@ -1,8 +1,8 @@
-/* $NetBSD: dhcp.h,v 1.1.1.11.2.2 2013/06/23 06:26:31 tls Exp $ */
+/* $NetBSD: dhcp.h,v 1.1.1.11.2.3 2014/08/19 23:46:43 tls Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include <limits.h>
 #include <stdint.h>
 
+#include "auth.h"
 #include "dhcp-common.h"
 
 /* UDP port numbers for DHCP */
@@ -58,6 +59,7 @@
 #define DHCP_NAK            6
 #define DHCP_RELEASE        7
 #define DHCP_INFORM         8
+#define DHCP_FORCERENEW     9
 
 /* Constants taken from RFC 2131. */
 #define T1			0.5
@@ -68,14 +70,15 @@
 #define DHCP_RAND_MAX		1
 #define DHCP_ARP_FAIL		2
 
-/* number of usecs in a second. */
-#define USECS_SECOND		1000000
-/* As we use timevals, we should use the usec part for
- * greater randomisation. */
-#define DHCP_RAND_MIN_U		DHCP_RAND_MIN * USECS_SECOND
-#define DHCP_RAND_MAX_U		DHCP_RAND_MAX * USECS_SECOND
-#define PROBE_MIN_U		PROBE_MIN * USECS_SECOND
-#define PROBE_MAX_U		PROBE_MAX * USECS_SECOND
+#ifdef RFC2131_STRICT
+/* Be strictly conformant for section 4.1.1 */
+#  define DHCP_MIN_DELAY	1
+#  define DHCP_MAX_DELAY	10
+#else
+/* or mirror the more modern IPv6RS and DHCPv6 delays */
+#  define DHCP_MIN_DELAY	0
+#  define DHCP_MAX_DELAY	1
+#endif
 
 /* DHCP options */
 enum DHO {
@@ -107,8 +110,13 @@ enum DHO {
 	DHO_USERCLASS              = 77,  /* RFC 3004 */
 	DHO_RAPIDCOMMIT            = 80,  /* RFC 4039 */
 	DHO_FQDN                   = 81,
+	DHO_AUTHENTICATION         = 90,  /* RFC 3118 */
+	DHO_AUTOCONFIGURE          = 116, /* RFC 2563 */
 	DHO_DNSSEARCH              = 119, /* RFC 3397 */
 	DHO_CSR                    = 121, /* RFC 3442 */
+	DHO_VIVCO                  = 124, /* RFC 3925 */
+	DHO_VIVSO                  = 125, /* RFC 3925 */
+	DHO_FORCERENEW_NONCE       = 145, /* RFC 6704 */
 	DHO_SIXRD                  = 212, /* RFC 5969 */
 	DHO_MSCSR                  = 249, /* MS code for RFC 3442 */
 	DHO_END                    = 255
@@ -176,7 +184,6 @@ struct dhcp_lease {
 	uint32_t rebindtime;
 	struct in_addr server;
 	time_t leasedfrom;
-	struct timeval boundtime;
 	uint8_t frominfo;
 	uint32_t cookie;
 };
@@ -224,10 +231,12 @@ struct dhcp_state {
 	struct in_addr net;
 	struct in_addr dst;
 
-	char leasefile[PATH_MAX];
+	char leasefile[sizeof(LEASEFILE) + IF_NAMESIZE];
 	time_t start_uptime;
 
 	unsigned char *clientid;
+
+	struct authstate auth;
 };
 
 #define D_STATE(ifp)							       \
@@ -237,40 +246,37 @@ struct dhcp_state {
 
 #include "dhcpcd.h"
 #include "if-options.h"
-#include "net.h"
 
 #ifdef INET
-extern const struct dhcp_opt dhcp_opts[];
+char *decode_rfc3361(const uint8_t *, size_t);
+ssize_t decode_rfc3442(char *, size_t, const uint8_t *p, size_t);
+ssize_t decode_rfc5969(char *, size_t, const uint8_t *p, size_t);
 
-char *decode_rfc3361(int dl, const uint8_t *data);
-ssize_t decode_rfc3442(char *out, ssize_t len, int pl, const uint8_t *p);
-ssize_t decode_rfc5969(char *out, ssize_t len, int pl, const uint8_t *p);
-
-void dhcp_printoptions(void);
-char *get_option_string(const struct dhcp_message *, uint8_t);
-int get_option_addr(struct in_addr *, const struct dhcp_message *, uint8_t);
-int get_option_uint32(uint32_t *, const struct dhcp_message *, uint8_t);
-int get_option_uint16(uint16_t *, const struct dhcp_message *, uint8_t);
-int get_option_uint8(uint8_t *, const struct dhcp_message *, uint8_t);
-#define is_bootp(m) (m &&						\
+void dhcp_printoptions(const struct dhcpcd_ctx *,
+    const struct dhcp_opt *, size_t);
+int get_option_addr(struct dhcpcd_ctx *,struct in_addr *,
+    const struct dhcp_message *, uint8_t);
+#define is_bootp(i, m) ((m) &&						\
 	    !IN_LINKLOCAL(htonl((m)->yiaddr)) &&			\
-	    get_option_uint8(NULL, m, DHO_MESSAGETYPE) == -1)
+	    get_option_uint8((i)->ctx, NULL, (m), DHO_MESSAGETYPE) == -1)
 struct rt_head *get_option_routes(struct interface *,
     const struct dhcp_message *);
 ssize_t dhcp_env(char **, const char *, const struct dhcp_message *,
     const struct interface *);
 
 uint32_t dhcp_xid(const struct interface *);
-struct dhcp_message *dhcp_message_new(struct in_addr *addr,
-    struct in_addr *mask);
+struct dhcp_message *dhcp_message_new(const struct in_addr *addr,
+    const struct in_addr *mask);
 int dhcp_message_add_addr(struct dhcp_message *, uint8_t, struct in_addr);
 ssize_t make_message(struct dhcp_message **, const struct interface *,
     uint8_t);
 int valid_dhcp_packet(unsigned char *);
 
 ssize_t write_lease(const struct interface *, const struct dhcp_message *);
-struct dhcp_message *read_lease(const struct interface *);
-void get_lease(struct dhcp_lease *, const struct dhcp_message *);
+struct dhcp_message *read_lease(struct interface *);
+
+void dhcp_handleifa(int, struct interface *,
+    const struct in_addr *, const struct in_addr *, const struct in_addr *);
 
 void dhcp_drop(struct interface *, const char *);
 void dhcp_start(struct interface *);
@@ -279,12 +285,11 @@ void dhcp_decline(struct interface *);
 void dhcp_discover(void *);
 void dhcp_inform(struct interface *);
 void dhcp_bind(void *);
-void dhcp_reboot_newopts(struct interface *, int);
+void dhcp_reboot_newopts(struct interface *, unsigned long long);
 void dhcp_close(struct interface *);
 void dhcp_free(struct interface *);
-int dhcp_dump(const char *);
+int dhcp_dump(struct interface *);
 #else
-#define dhcp_printoptions
 #define dhcp_drop(a, b)
 #define dhcp_start(a) {}
 #define dhcp_reboot(a, b) b = b

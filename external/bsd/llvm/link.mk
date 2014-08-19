@@ -1,4 +1,4 @@
-#	$NetBSD: link.mk,v 1.2.2.1 2013/06/23 06:28:21 tls Exp $
+#	$NetBSD: link.mk,v 1.2.2.2 2014/08/19 23:47:17 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -14,10 +14,22 @@ LDADD+=	-L${MCLINKER_OBJDIR.${l}} -lMCLinker${l}
 DPADD+=	${MCLINKER_OBJDIR.${l}}/libMCLinker${l}.a
 .endfor
 
+.for l in ${LLDB_LIBS}
+LLDB_OBJDIR.${l}!=	cd ${LIB_BASE}/liblldb${l} && ${PRINTOBJDIR}
+LDADD+=	-L${LLDB_OBJDIR.${l}} -llldb${l}
+DPADD+=	${LLDB_OBJDIR.${l}}/liblldb${l}.a
+.endfor
+
 .for l in ${CLANG_LIBS}
 CLANG_OBJDIR.${l}!=	cd ${LIB_BASE}/lib${l} && ${PRINTOBJDIR}
 LDADD+=	-L${CLANG_OBJDIR.${l}} -l${l}
 DPADD+=	${CLANG_OBJDIR.${l}}/lib${l}.a
+.endfor
+
+.for l in ${LLD_LIBS}
+LLD_OBJDIR.${l}!=	cd ${LIB_BASE}/lib${l} && ${PRINTOBJDIR}
+LDADD+=	-L${LLD_OBJDIR.${l}} -l${l}
+DPADD+=	${LLD_OBJDIR.${l}}/lib${l}.a
 .endfor
 
 .for l in ${LLVM_LIBS}
@@ -27,8 +39,12 @@ DPADD+=	${LLVM_OBJDIR.${l}}/libLLVM${l}.a
 .endfor
 
 .if defined(HOSTPROG)
-LDADD_NEED_DL=	cat ${LLVM_TOOLCONF_OBJDIR}/need-dl 2> /dev/null
-LDADD+=	${LDADD_NEED_DL:sh}
+LDADD_NEED_DL=		cat ${LLVM_TOOLCONF_OBJDIR}/need-dl 2> /dev/null
+LDADD_NEED_TERMINFO=	cat ${LLVM_TOOLCONF_OBJDIR}/need-terminfo 2> /dev/null
+LDADD+=	${LDADD_NEED_DL:sh} ${LDADD_NEED_TERMINFO:sh}
+.else
+LDADD+=	-lterminfo
+DPADD+=	${LIBTERMINFO}
 .endif
 
 LDADD+=	-lpthread

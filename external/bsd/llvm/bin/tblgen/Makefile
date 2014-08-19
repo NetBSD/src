@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.2.3 2013/06/23 06:28:22 tls Exp $
+#	$NetBSD: Makefile,v 1.14.2.4 2014/08/19 23:47:18 tls Exp $
 
 PROG_CXX=	llvm-tblgen
 NOMAN=		yes
@@ -33,9 +33,7 @@ SRCS=	AsmMatcherEmitter.cpp \
 	OptParserEmitter.cpp \
 	PseudoLoweringEmitter.cpp \
 	RegisterInfoEmitter.cpp \
-	SetTheory.cpp \
 	SubtargetEmitter.cpp \
-	TGValueTypes.cpp \
 	TableGen.cpp \
 	X86DisassemblerTables.cpp \
 	X86ModRMFilters.cpp \

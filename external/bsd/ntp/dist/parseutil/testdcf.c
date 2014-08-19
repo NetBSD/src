@@ -1,4 +1,4 @@
-/*	$NetBSD: testdcf.c,v 1.1.1.1 2009/12/13 16:56:36 kardel Exp $	*/
+/*	$NetBSD: testdcf.c,v 1.1.1.1.12.1 2014/08/19 23:51:43 tls Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/parseutil/testdcf.c,v 4.10 2005/08/06 14:18:43 kardel RELEASE_20050806_A
@@ -36,6 +36,7 @@
  *
  */
 
+#include <config.h>
 #include "ntp_stdlib.h"
 
 #include <sys/ioctl.h>

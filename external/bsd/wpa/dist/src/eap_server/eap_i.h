@@ -2,14 +2,8 @@
  * hostapd / EAP Authenticator state machine internal structures (RFC 4137)
  * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef EAP_I_H
@@ -157,7 +151,7 @@ struct eap_sm {
 	int user_eap_method_index;
 	int init_phase2;
 	void *ssl_ctx;
-	void *eap_sim_db_priv;
+	struct eap_sim_db_data *eap_sim_db_priv;
 	Boolean backend_auth;
 	Boolean update_user;
 	int eap_server;

@@ -1,9 +1,9 @@
-/*	$NetBSD: sha1.c,v 1.1.1.3 2010/12/12 15:22:11 adam Exp $	*/
+/*	$NetBSD: sha1.c,v 1.1.1.3.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/liblutil/sha1.c,v 1.26.2.5 2010/04/13 20:23:07 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@
 
 
 /*	Acquired from:
- *	OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp	*/
+ *	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 /*
  * SHA-1 in C
  * By Steve Reid <steve@edmweb.com>
@@ -213,7 +213,7 @@ lutil_SHA1Final( unsigned char *digest, lutil_SHA1_CTX *context )
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "OpenBSD: sha1hl.c,v 1.1 1997/07/12 20:06:03 millert Exp";
+static char rcsid[] = "$OpenBSD: sha1hl.c,v 1.1 1997/07/12 20:06:03 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>

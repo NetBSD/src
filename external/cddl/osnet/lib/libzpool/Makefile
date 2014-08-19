@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.12.1 2013/06/23 06:28:31 tls Exp $
+#	$NetBSD: Makefile,v 1.6.12.2 2014/08/19 23:52:23 tls Exp $
 
 .include "${.CURDIR}/../../dist/uts/common/Makefile.files"
 .include "../../Makefile.zfs"
@@ -9,17 +9,19 @@
 .PATH: ${.CURDIR}/../../dist/uts/common/fs/zfs
 .PATH: ${.CURDIR}/../../dist/uts/common/os
 
+LIBDPLIBS+= \
+	avl	${.CURDIR}/../libavl \
+	nvpair	${.CURDIR}/../libnvpair \
+	pthread	${NETBSDSRCDIR}/lib/libpthread \
+	umem	${.CURDIR}/../libumem \
+	z	${NETBSDSRCDIR}/lib/libz \
+
 LIB=		zpool
-DPADD=		${LIBPTHREAD} ${LIBZ}
-LDADD=		-lpthread -lz
 CPPFLAGS+=	-std=c99
 #CPPFLAGS+=-Wall -Wno-unknown-pragmas
 
 # Local stuff
-SRCS=		kernel.c kernel2.c
-.if ${MACHINE_ARCH} == "arm"
-SRCS+=		atomic.c
-.endif
+SRCS=		kernel.c kernel2.c atomic.c
 
 # Sun stuff
 SRCS+=		${ZFS_COMMON_OBJS:C/.o$/.c/}

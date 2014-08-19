@@ -1,4 +1,4 @@
-/*	$NetBSD: ippool.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ippool.c,v 1.3.2.1 2014/08/19 23:46:48 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -409,16 +409,12 @@ poolstats(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int c, type, role, live_kernel;
+	int c, type, role;
 	ipf_pool_stat_t plstat;
 	ipf_dstl_stat_t dlstat;
-	char *kernel, *core;
 	iphtstat_t htstat;
 	iplookupop_t op;
 
-	core = NULL;
-	kernel = NULL;
-	live_kernel = 1;
 	type = IPLT_ALL;
 	role = IPL_LOGALL;
 
@@ -431,12 +427,8 @@ poolstats(argc, argv)
 			opts |= OPT_DEBUG;
 			break;
 		case 'M' :
-			live_kernel = 0;
-			core = optarg;
 			break;
 		case 'N' :
-			live_kernel = 0;
-			kernel = optarg;
 			break;
 		case 'o' :
 			role = getrole(optarg);

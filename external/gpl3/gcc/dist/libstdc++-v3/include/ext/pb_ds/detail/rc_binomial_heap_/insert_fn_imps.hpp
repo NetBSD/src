@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file insert_fn_imps.hpp
+ * @file rc_binomial_heap_/insert_fn_imps.hpp
  * Contains an implementation for rc_binomial_heap_.
  */
 
@@ -43,33 +43,33 @@ inline typename PB_DS_CLASS_C_DEC::point_iterator
 PB_DS_CLASS_C_DEC::
 push(const_reference r_val)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 
-    make_0_exposed();
+  make_0_exposed();
 
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 
-    node_pointer p_nd = base_type::get_new_node_for_insert(r_val);
+  node_pointer p_nd = base_type::get_new_node_for_insert(r_val);
 
-  p_nd->m_p_l_child = p_nd->m_p_prev_or_parent = NULL;
+  p_nd->m_p_l_child = p_nd->m_p_prev_or_parent = 0;
   p_nd->m_metadata = 0;
 
-  if (base_type::m_p_max == NULL || Cmp_Fn::operator()(base_type::m_p_max->m_value, r_val))
+  if (base_type::m_p_max == 0 || Cmp_Fn::operator()(base_type::m_p_max->m_value, r_val))
     base_type::m_p_max = p_nd;
 
   p_nd->m_p_next_sibling = base_type::m_p_root;
 
-  if (base_type::m_p_root != NULL)
+  if (base_type::m_p_root != 0)
     base_type::m_p_root->m_p_prev_or_parent = p_nd;
 
   base_type::m_p_root = p_nd;
 
-  if (p_nd->m_p_next_sibling != NULL&&  p_nd->m_p_next_sibling->m_metadata == 0)
+  if (p_nd->m_p_next_sibling != 0&&  p_nd->m_p_next_sibling->m_metadata == 0)
     m_rc.push(p_nd);
 
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 
-    return point_iterator(p_nd);
+  return point_iterator(p_nd);
 }
 
 PB_DS_CLASS_T_DEC
@@ -77,16 +77,16 @@ void
 PB_DS_CLASS_C_DEC::
 modify(point_iterator it, const_reference r_new_val)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 
-    make_binomial_heap();
+  make_binomial_heap();
 
   base_type::modify(it, r_new_val);
 
   base_type::find_max();
 
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-    }
+  PB_DS_ASSERT_VALID((*this))
+}
 
 PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::node_pointer
@@ -95,14 +95,14 @@ link_with_next_sibling(node_pointer p_nd)
 {
   node_pointer p_next = p_nd->m_p_next_sibling;
 
-  _GLIBCXX_DEBUG_ASSERT(p_next != NULL);
+  _GLIBCXX_DEBUG_ASSERT(p_next != 0);
   _GLIBCXX_DEBUG_ASSERT(p_next->m_p_prev_or_parent == p_nd);
 
   if (Cmp_Fn::operator()(p_nd->m_value, p_next->m_value))
     {
       p_next->m_p_prev_or_parent = p_nd->m_p_prev_or_parent;
 
-      if (p_next->m_p_prev_or_parent == NULL)
+      if (p_next->m_p_prev_or_parent == 0)
 	base_type::m_p_root = p_next;
       else
 	p_next->m_p_prev_or_parent->m_p_next_sibling = p_next;
@@ -119,7 +119,7 @@ link_with_next_sibling(node_pointer p_nd)
 
   p_nd->m_p_next_sibling = p_next->m_p_next_sibling;
 
-  if (p_nd->m_p_next_sibling != NULL)
+  if (p_nd->m_p_next_sibling != 0)
     p_nd->m_p_next_sibling->m_p_prev_or_parent = p_nd;
 
   if (base_type::m_p_max == p_next)
@@ -144,11 +144,11 @@ make_0_exposed()
 
   m_rc.pop();
 
-  _GLIBCXX_DEBUG_ASSERT(p_nd->m_p_next_sibling != NULL);
+  _GLIBCXX_DEBUG_ASSERT(p_nd->m_p_next_sibling != 0);
   _GLIBCXX_DEBUG_ASSERT(p_nd->m_metadata == p_nd->m_p_next_sibling->m_metadata);
 
   node_pointer p_res = link_with_next_sibling(p_nd);
 
-  if (p_res->m_p_next_sibling != NULL&&  p_res->m_metadata == p_res->m_p_next_sibling->m_metadata)
+  if (p_res->m_p_next_sibling != 0&&  p_res->m_metadata == p_res->m_p_next_sibling->m_metadata)
     m_rc.push(p_res);
 }

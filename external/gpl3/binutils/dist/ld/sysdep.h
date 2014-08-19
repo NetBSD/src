@@ -1,5 +1,5 @@
 /* sysdep.h -- handle host dependencies for the GNU linker
-   Copyright 1995, 1996, 1997, 1999, 2002, 2003, 2005, 2007
+   Copyright 1995, 1996, 1997, 1999, 2002, 2003, 2005, 2007, 2012
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -22,6 +22,10 @@
 #ifndef LD_SYSDEP_H
 #define LD_SYSDEP_H
 
+#ifdef PACKAGE
+#error sysdep.h must be included in lieu of config.h
+#endif
+
 #include "config.h"
 
 #include <stdio.h>
@@ -29,6 +33,10 @@
 #include <sys/stat.h>
 #include <stdarg.h>
 
+#ifdef STRING_WITH_STRINGS
+#include <string.h>
+#include <strings.h>
+#else
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
@@ -37,6 +45,7 @@
 #else
 extern char *strchr ();
 extern char *strrchr ();
+#endif
 #endif
 #endif
 

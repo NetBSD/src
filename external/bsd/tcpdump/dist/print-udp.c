@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-udp.c,v 1.142 2007-08-08 17:20:58 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -474,6 +474,26 @@ udp_print(register const u_char *bp, u_int length,
 			    0);
 #endif
 			break;
+
+		case PT_RADIUS:
+			udpipaddr_print(ip, sport, dport);
+			radius_print(cp, length);
+			break;
+
+		case PT_VXLAN:
+			udpipaddr_print(ip, sport, dport);
+			vxlan_print((const u_char *)(up + 1), length);
+			break;
+
+		case PT_PGM:
+		case PT_PGM_ZMTP1:
+			udpipaddr_print(ip, sport, dport);
+			pgm_print(cp, length, bp2);
+			break;
+		case PT_LMP:
+			udpipaddr_print(ip, sport, dport);
+			lmp_print(cp, length);
+			break;
 		}
 		return;
 	}
@@ -597,7 +617,7 @@ udp_print(register const u_char *bp, u_int length,
 		else if (ISPORT(NETBIOS_DGRAM_PORT))
 			nbt_udp138_print((const u_char *)(up + 1), length);
 #endif
-		else if (dport == 3456)
+		else if (dport == VAT_PORT)
 			vat_print((const void *)(up + 1), up);
 		else if (ISPORT(ZEPHYR_SRV_PORT) || ISPORT(ZEPHYR_CLT_PORT))
 			zephyr_print((const void *)(up + 1), length);
@@ -620,7 +640,7 @@ udp_print(register const u_char *bp, u_int length,
 		/*
 		 * Kludge in test for whiteboard packets.
 		 */
-		else if (dport == 4567)
+		else if (dport == WB_PORT)
 			wb_print((const void *)(up + 1), length);
 		else if (ISPORT(CISCO_AUTORP_PORT))
 			cisco_autorp_print((const void *)(up + 1), length);
@@ -663,6 +683,10 @@ udp_print(register const u_char *bp, u_int length,
 			sip_print((const u_char *)(up + 1), length);
                 else if (ISPORT(SYSLOG_PORT))
 			syslog_print((const u_char *)(up + 1), length);
+                else if (ISPORT(OTV_PORT))
+			otv_print((const u_char *)(up + 1), length);
+                else if (ISPORT(VXLAN_PORT))
+			vxlan_print((const u_char *)(up + 1), length);
 		else
 			(void)printf("UDP, length %u",
 			    (u_int32_t)(ulen - sizeof(*up)));

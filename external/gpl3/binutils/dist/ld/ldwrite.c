@@ -1,6 +1,6 @@
 /* ldwrite.c -- write out the linked file
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2010
+   2003, 2004, 2005, 2006, 2007, 2008, 2010, 2012
    Free Software Foundation, Inc.
    Written by Steve Chamberlain sac@cygnus.com
 
@@ -183,6 +183,7 @@ build_link_order (lang_statement_union_type *statement)
 	  default:
 	    abort ();
 	  }
+	link_order->u.data.size = link_order->size;
       }
       break;
 
@@ -240,7 +241,7 @@ build_link_order (lang_statement_union_type *statement)
 	   attached */
 	asection *i = statement->input_section.section;
 
-	if (!((lang_input_statement_type *) i->owner->usrdata)->just_syms_flag
+	if (i->sec_info_type != SEC_INFO_TYPE_JUST_SYMS
 	    && (i->flags & SEC_EXCLUDE) == 0)
 	  {
 	    asection *output_section = i->output_section;

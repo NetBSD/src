@@ -1,0 +1,20 @@
+#
+# mach-o tests
+#
+
+# We're testing bits in obj-mach-o -- don't run on anything else.
+
+if {[istarget "*-*-darwin*"]} then {
+
+load_lib gas-dg.exp
+ 
+run_dump_tests [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
+
+dg-init
+
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/err-*.s $srcdir/$subdir/warn-*.s]] "" ""
+
+dg-finish
+    
+} 
+# mach-o

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.h,v 1.1.1.1 2009/12/13 16:54:51 kardel Exp $	*/
+/*	$NetBSD: ntp_crypto.h,v 1.1.1.1.12.1 2014/08/19 23:51:38 tls Exp $	*/
 
 /*
  * ntp_crypto.h - definitions for cryptographic operations
@@ -7,22 +7,27 @@
 #define NTP_CRYPTO_H
 
 /*
- * Configuration codes (also needed for parser without OPENSSL)
+ * Configuration codes (also needed for parser without AUTOKEY)
  */
 #define CRYPTO_CONF_NONE  0	/* nothing doing */
-#define CRYPTO_CONF_PRIV  1	/* host keys file name */
-#define CRYPTO_CONF_SIGN  2	/* signature keys file name */
+#define CRYPTO_CONF_PRIV  1	/* host name */
+#define CRYPTO_CONF_IDENT 2	/* group name */
 #define CRYPTO_CONF_CERT  3	/* certificate file name */
 #define CRYPTO_CONF_RAND  4	/* random seed file name */
 #define CRYPTO_CONF_IFFPAR 5	/* IFF parameters file name */
 #define CRYPTO_CONF_GQPAR 6	/* GQ parameters file name */
 #define	CRYPTO_CONF_MVPAR 7	/* MV parameters file name */
 #define CRYPTO_CONF_PW	  8	/* private key password */
-#define	CRYPTO_CONF_IDENT 9	/* specify identity scheme */
-#define	CRYPTO_CONF_NID   10	/* specify digest name */
+#define	CRYPTO_CONF_NID   9	/* specify digest name */
 
-#ifdef OPENSSL
+#ifdef AUTOKEY
+#ifndef OPENSSL
+#error AUTOKEY should be defined only if OPENSSL is.
+invalidsyntax: AUTOKEY should be defined only if OPENSSL is.
+#endif
+
 #include "openssl/evp.h"
+
 
 /*
  * The following bits are set by the CRYPTO_ASSOC message from
@@ -126,7 +131,7 @@ struct value {			/* network byte order */
 	tstamp_t tstamp;	/* timestamp */
 	tstamp_t fstamp;	/* filestamp */
 	u_int32	vallen;		/* value length */
-	u_char	*ptr;		/* data pointer (various) */
+	void	*ptr;		/* data pointer (various) */
 	u_int32	siglen;		/* signature length */
 	u_char	*sig;		/* signature */
 };
@@ -181,5 +186,5 @@ extern	int	crypto_nid;	/* digest nid */
 extern	struct value hostval;	/* host name/value */
 extern	struct cert_info *cinfo; /* host certificate information */
 extern	struct value tai_leap;	/* leapseconds table */
-#endif /* OPENSSL */
+#endif /* AUTOKEY */
 #endif /* NTP_CRYPTO_H */

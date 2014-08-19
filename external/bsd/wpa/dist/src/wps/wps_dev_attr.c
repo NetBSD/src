@@ -2,14 +2,8 @@
  * Wi-Fi Protected Setup - device attributes
  * Copyright (c) 2008, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -205,6 +199,20 @@ int wps_build_os_version(struct wps_device_data *dev, struct wpabuf *msg)
 	wpabuf_put_be16(msg, ATTR_OS_VERSION);
 	wpabuf_put_be16(msg, 4);
 	wpabuf_put_be32(msg, 0x80000000 | dev->os_version);
+	return 0;
+}
+
+
+int wps_build_vendor_ext_m1(struct wps_device_data *dev, struct wpabuf *msg)
+{
+	if (dev->vendor_ext_m1 != NULL) {
+		wpa_hexdump(MSG_DEBUG, "WPS:  * Vendor Extension M1",
+			    wpabuf_head_u8(dev->vendor_ext_m1),
+			    wpabuf_len(dev->vendor_ext_m1));
+		wpabuf_put_be16(msg, ATTR_VENDOR_EXT);
+		wpabuf_put_be16(msg, wpabuf_len(dev->vendor_ext_m1));
+		wpabuf_put_buf(msg, dev->vendor_ext_m1);
+	}
 	return 0;
 }
 

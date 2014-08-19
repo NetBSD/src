@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -64,7 +64,7 @@ namespace __gnu_parallel
 
     public:
       /** @brief Constructor. Not to be called concurrent, of course.
-       *  @param _M_max_size Maximal number of elements to be contained. */
+       *  @param __max_size Maximal number of elements to be contained. */
       _RestrictedBoundedConcurrentQueue(_SequenceIndex __max_size)
       {
         _M_max_size = __max_size;

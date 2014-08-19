@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipsec,v 1.11.14.1 2013/06/23 06:26:22 tls Exp $
+# $NetBSD: ipsec,v 1.11.14.2 2014/08/19 23:45:51 tls Exp $
 #
 
 # PROVIDE: ipsec
@@ -37,14 +37,33 @@ ipsec_getip() {
 	done
 }
 
+ipsec_load() {
+	if [ -z "$1" ]; then
+		/sbin/setkey -f /etc/ipsec.conf
+	else
+		sed -e "s/@LOCAL_ADDR@/$1/" < /etc/ipsec.conf | \
+		    /sbin/setkey -f -
+	fi
+}
+
+ipsec_configure() {
+	while true; do
+		local addr="$(ipsec_getip "$ipsec_flags")"
+		case "$addr" in
+		'')		sleep 1;;
+		"0.0.0.0")	sleep 1;;
+		*)		ipsec_load "$addr"; return;;
+		esac
+	done &
+}
+
 ipsec_start()
 {
 	echo "Installing ipsec manual keys/policies."
 	if [ -n "$ipsec_flags" ]; then
-		sed -e "s/@LOCAL_ADDR@/$(ipsec_getip "$ipsec_flags")/" \
-		    < /etc/ipsec.conf | /sbin/setkey -f -
+		ipsec_configure
 	else
-		/sbin/setkey -f /etc/ipsec.conf
+		ipsec_load
 	fi
 }
 

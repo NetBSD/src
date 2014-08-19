@@ -1,4 +1,4 @@
-/* Copyright (C) 2009 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -151,6 +151,14 @@ __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 __rord (unsigned int __X, int __C)
 {
   return (__X >> __C) | (__X << (32 - __C));
+}
+
+/* Pause */
+extern __inline void
+__attribute__((__gnu_inline__, __always_inline__, __artificial__))
+__pause (void)
+{
+  __builtin_ia32_pause ();
 }
 
 #ifdef __x86_64__

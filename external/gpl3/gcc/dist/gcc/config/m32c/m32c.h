@@ -1,6 +1,5 @@
 /* Target Definitions for R8C/M16C/M32C
-   Copyright (C) 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2013 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -27,6 +26,13 @@
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC "crt0.o%s crtbegin.o%s"
 
+#undef  ENDFILE_SPEC
+#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
+
+#undef  LINK_SPEC
+#define LINK_SPEC "%{h*} %{v:-V} \
+		   %{static:-Bstatic} %{shared:-shared} %{symbolic:-Bsymbolic}"
+
 /* There are four CPU series we support, but they basically break down
    into two families - the R8C/M16C families, with 16-bit address
    registers and one set of opcodes, and the M32CM/M32C group, with
@@ -47,13 +53,13 @@
    family.  Most of the logic here is making sure we do the right
    thing when no CPU is specified, which defaults to R8C.  */
 #undef  LIB_SPEC
-#define LIB_SPEC "-( -lc %{msim*:-lsim}%{!msim*:-lnosys} -) \
-%{msim*:%{!T*: %{mcpu=m32cm:%Tsim24.ld}%{mcpu=m32c:%Tsim24.ld} \
-	%{!mcpu=m32cm:%{!mcpu=m32c:%Tsim16.ld}}}} \
-%{!T*:%{!msim*: %{mcpu=m16c:%Tm16c.ld} \
-		%{mcpu=m32cm:%Tm32cm.ld} \
-		%{mcpu=m32c:%Tm32c.ld} \
-		%{!mcpu=m16c:%{!mcpu=m32cm:%{!mcpu=m32c:%Tr8c.ld}}}}} \
+#define LIB_SPEC "-( -lc %{msim:-lsim}%{!msim:-lnosys} -) \
+%{msim:%{!T*: %{mcpu=m32cm:%Tsim24.ld}%{mcpu=m32c:%Tsim24.ld} \
+       %{!mcpu=m32cm:%{!mcpu=m32c:%Tsim16.ld}}}} \
+%{!T*:%{!msim: %{mcpu=m16c:%Tm16c.ld} \
+	       %{mcpu=m32cm:%Tm32cm.ld} \
+	       %{mcpu=m32c:%Tm32c.ld} \
+	       %{!mcpu=m16c:%{!mcpu=m32cm:%{!mcpu=m32c:%Tr8c.ld}}}}} \
 "
 
 /* Run-time Target Specification */
@@ -79,7 +85,6 @@
    beginning of the file.  This variable starts off TRUE and later
    becomes FALSE.  */
 extern int ok_to_change_target_memregs;
-extern int target_memregs;
 
 /* TARGET_CPU is a multi-way option set in m32c.opt.  While we could
    use enums or defines for this, this and m32c.opt are the only
@@ -93,10 +98,6 @@ extern int target_memregs;
    to select between the two CPU families in general.  */
 #define TARGET_A16	(TARGET_R8C || TARGET_M16C)
 #define TARGET_A24	(TARGET_M32CM || TARGET_M32C)
-
-#define TARGET_VERSION fprintf (stderr, " (m32c)");
-
-#define OVERRIDE_OPTIONS m32c_override_options ()
 
 /* Defining data structures for per-function information */
 
@@ -192,6 +193,15 @@ machine_function;
 #undef UINTPTR_TYPE
 #define UINTPTR_TYPE (TARGET_A16 ? "unsigned int" : "long unsigned int")
 
+#undef  SIZE_TYPE
+#define SIZE_TYPE "unsigned int"
+
+#undef  WCHAR_TYPE
+#define WCHAR_TYPE "long int"
+
+#undef  WCHAR_TYPE_SIZE
+#define WCHAR_TYPE_SIZE 32
+
 /* REGISTER USAGE */
 
 /* Register Basics */
@@ -229,8 +239,6 @@ machine_function;
 			      1, 1, 1, 0, \
 			      1, 1, 1, 1, \
 			      1, 1, 1, 1, 1, 1, 1, 1 }
-
-#define CONDITIONAL_REGISTER_USAGE m32c_conditional_register_usage ();
 
 /* The *_REGNO theme matches m32c.md and most register number
    arguments; the PC_REGNUM is the odd one out.  */
@@ -279,19 +287,15 @@ machine_function;
   { 0x00000003 }, /* R02 - r0r2 */\
   { 0x0000000c }, /* R13 - r1r3 */\
   { 0x00000005 }, /* HL  - r0 r1 */\
-  { 0x00000005 }, /* QI  - r0 r1 */\
   { 0x0000000a }, /* R23 - r2 r3 */\
   { 0x0000000f }, /* R03 - r0r2 r1r3 */\
-  { 0x0000000f }, /* DI  - r0r2r1r3 + mems */\
   { 0x00000010 }, /* A0  - a0 */\
   { 0x00000020 }, /* A1  - a1 */\
   { 0x00000030 }, /* A   - a0 a1 */\
   { 0x000000f0 }, /* AD  - a0 a1 sb fp */\
   { 0x000001f0 }, /* PS  - a0 a1 sb fp sp */\
-  { 0x0000000f }, /* SI  - r0r2 r1r3 a0a1 */\
-  { 0x0000003f }, /* HI  - r0 r1 r2 r3 a0 a1 */\
   { 0x00000033 }, /* R02A  - r0r2 a0 a1 */ \
-  { 0x0000003f }, /* RA  - r0..r3 a0 a1 */\
+  { 0x0000003f }, /* RA  - r0 r1 r2 r3 a0 a1 */\
   { 0x0000007f }, /* GENERAL */\
   { 0x00000400 }, /* FLG */\
   { 0x000001ff }, /* HC  - r0l r1 r2 r3 a0 a1 sb fb sp */\
@@ -302,8 +306,13 @@ machine_function;
   { 0x000ff00f }, /* R03_MEM */\
   { 0x000ff03f }, /* A_HI_MEM */\
   { 0x000ff0ff }, /* A_AD_CR_MEM_SI */\
-  { 0x000ff1ff }, /* ALL */\
+  { 0x000ff5ff }, /* ALL */\
 }
+
+#define QI_REGS HL_REGS
+#define HI_REGS RA_REGS
+#define SI_REGS R03_REGS
+#define DI_REGS R03_REGS
 
 enum reg_class
 {
@@ -319,17 +328,13 @@ enum reg_class
   R02_REGS,
   R13_REGS,
   HL_REGS,
-  QI_REGS,
   R23_REGS,
   R03_REGS,
-  DI_REGS,
   A0_REGS,
   A1_REGS,
   A_REGS,
   AD_REGS,
   PS_REGS,
-  SI_REGS,
-  HI_REGS,
   R02A_REGS,
   RA_REGS,
   GENERAL_REGS,
@@ -361,17 +366,13 @@ enum reg_class
 "R02_REGS", \
 "R13_REGS", \
 "HL_REGS", \
-"QI_REGS", \
 "R23_REGS", \
 "R03_REGS", \
-"DI_REGS", \
 "A0_REGS", \
 "A1_REGS", \
 "A_REGS", \
 "AD_REGS", \
 "PS_REGS", \
-"SI_REGS", \
-"HI_REGS", \
 "R02A_REGS", \
 "RA_REGS", \
 "GENERAL_REGS", \
@@ -403,41 +404,18 @@ enum reg_class
    A - addresses (currently unused)
 */
 
-#define CONSTRAINT_LEN(CHAR,STR) \
-	((CHAR) == 'I' ? 3 \
-	 : (CHAR) == 'R' ? 3 \
-	 : (CHAR) == 'S' ? 2 \
-	 : (CHAR) == 'A' ? 2 \
-	 : DEFAULT_CONSTRAINT_LEN(CHAR,STR))
-#define REG_CLASS_FROM_CONSTRAINT(CHAR,STR) \
-	m32c_reg_class_from_constraint (CHAR, STR)
-
 #define REGNO_OK_FOR_BASE_P(NUM) m32c_regno_ok_for_base_p (NUM)
 #define REGNO_OK_FOR_INDEX_P(NUM) 0
 
-#define PREFERRED_RELOAD_CLASS(X,CLASS) m32c_preferred_reload_class (X, CLASS)
-#define PREFERRED_OUTPUT_RELOAD_CLASS(X,CLASS) m32c_preferred_output_reload_class (X, CLASS)
-#define LIMIT_RELOAD_CLASS(MODE,CLASS) m32c_limit_reload_class (MODE, CLASS)
+#define LIMIT_RELOAD_CLASS(MODE,CLASS) \
+  (enum reg_class) m32c_limit_reload_class (MODE, CLASS)
 
-#define SECONDARY_RELOAD_CLASS(CLASS,MODE,X) m32c_secondary_reload_class (CLASS, MODE, X)
+#define SECONDARY_RELOAD_CLASS(CLASS,MODE,X) \
+  (enum reg_class) m32c_secondary_reload_class (CLASS, MODE, X)
 
-#define SMALL_REGISTER_CLASSES 1
-
-#define CLASS_LIKELY_SPILLED_P(C) m32c_class_likely_spilled_p (C)
-
-#define CLASS_MAX_NREGS(C,M) m32c_class_max_nregs (C, M)
+#define TARGET_SMALL_REGISTER_CLASSES_FOR_MODE_P hook_bool_mode_true
 
 #define CANNOT_CHANGE_MODE_CLASS(F,T,C) m32c_cannot_change_mode_class(F,T,C)
-
-#define CONST_OK_FOR_CONSTRAINT_P(VALUE,C,STR) \
-	m32c_const_ok_for_constraint_p (VALUE, C, STR)
-#define CONST_DOUBLE_OK_FOR_CONSTRAINT_P(VALUE,C,STR) 0
-#define EXTRA_CONSTRAINT_STR(VALUE,C,STR) \
-	m32c_extra_constraint_p (VALUE, C, STR)
-#define EXTRA_MEMORY_CONSTRAINT(C,STR) \
-	m32c_extra_memory_constraint (C, STR)
-#define EXTRA_ADDRESS_CONSTRAINT(C,STR) \
-	m32c_extra_address_constraint (C, STR)
 
 /* STACK AND CALLING */
 
@@ -503,13 +481,9 @@ enum reg_class
 
 #define PUSH_ARGS 1
 #define PUSH_ROUNDING(N) m32c_push_rounding (N)
-#define RETURN_POPS_ARGS(D,T,S) 0
 #define CALL_POPS_ARGS(C) 0
 
 /* Passing Arguments in Registers */
-
-#define FUNCTION_ARG(CA,MODE,TYPE,NAMED) \
-	m32c_function_arg (&(CA),MODE,TYPE,NAMED)
 
 typedef struct m32c_cumulative_args
 {
@@ -526,14 +500,7 @@ typedef struct m32c_cumulative_args
 #define CUMULATIVE_ARGS m32c_cumulative_args
 #define INIT_CUMULATIVE_ARGS(CA,FNTYPE,LIBNAME,FNDECL,N_NAMED_ARGS) \
 	m32c_init_cumulative_args (&(CA),FNTYPE,LIBNAME,FNDECL,N_NAMED_ARGS)
-#define FUNCTION_ARG_ADVANCE(CA,MODE,TYPE,NAMED) \
-	m32c_function_arg_advance (&(CA),MODE,TYPE,NAMED)
-#define FUNCTION_ARG_BOUNDARY(MODE,TYPE) (TARGET_A16 ? 8 : 16)
 #define FUNCTION_ARG_REGNO_P(r) m32c_function_arg_regno_p (r)
-
-/* How Scalar Function Values Are Returned */
-
-#define FUNCTION_VALUE_REGNO_P(r) m32c_function_value_regno_p (r)
 
 /* How Large Values Are Returned */
 
@@ -579,18 +546,13 @@ typedef struct m32c_cumulative_args
 	if (m32c_legitimize_reload_address(&(X),MODE,OPNUM,TYPE,IND_LEVELS)) \
 	  goto WIN;
 
-#define LEGITIMATE_CONSTANT_P(X) m32c_legitimate_constant_p (X)
+/* Address spaces.  */
+#define ADDR_SPACE_FAR	1
+
 
 /* Condition Code Status */
 
 #define REVERSIBLE_CC_MODE(MODE) 1
-
-/* Describing Relative Costs of Operations */
-
-#define REGISTER_MOVE_COST(MODE,FROM,TO) \
-	m32c_register_move_cost (MODE, FROM, TO)
-#define MEMORY_MOVE_COST(MODE,CLASS,IN) \
-	m32c_memory_move_cost (MODE, CLASS, IN)
 
 /* Dividing the Output into Sections (Texts, Data, ...) */
 
@@ -634,15 +596,18 @@ typedef struct m32c_cumulative_args
   {"a0a1", 4}, \
   {"r0r2r1r3", 0} }
 
-#define PRINT_OPERAND(S,X,C) m32c_print_operand (S, X, C)
-#define PRINT_OPERAND_PUNCT_VALID_P(C) m32c_print_operand_punct_valid_p (C)
-#define PRINT_OPERAND_ADDRESS(S,X) m32c_print_operand_address (S, X)
-
 #undef USER_LABEL_PREFIX
 #define USER_LABEL_PREFIX "_"
 
 #define ASM_OUTPUT_REG_PUSH(S,R) m32c_output_reg_push (S, R)
 #define ASM_OUTPUT_REG_POP(S,R) m32c_output_reg_pop (S, R)
+
+#define ASM_OUTPUT_ALIGNED_DECL_COMMON(STREAM, DECL, NAME, SIZE, ALIGNMENT) \
+	m32c_output_aligned_common (STREAM, DECL, NAME, SIZE, ALIGNMENT, 1)
+
+#define ASM_OUTPUT_ALIGNED_DECL_LOCAL(STREAM, DECL, NAME, SIZE, ALIGNMENT) \
+	m32c_output_aligned_common (STREAM, DECL, NAME, SIZE, ALIGNMENT, 0)
+
 
 /* Output of Dispatch Tables */
 

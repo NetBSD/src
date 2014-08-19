@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.12.1 2013/06/23 06:26:25 tls Exp $
+#	$NetBSD: Makefile,v 1.2.12.2 2014/08/19 23:46:39 tls Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -22,17 +22,23 @@ UNIX_SRCS=	app.c backtrace.c dir.c entropy.c errno2result.c file.c \
 		backtrace-emptytbl.c
 NLS_SRCS=	msgcat.c
 PTHREAD_SRCS=	condition.c mutex.c thread.c
-API_SRCS=	app_api.c mem_api.c socket_api.c task_api.c timer_api.c 
 
-SRCS=		assertions.c base32.c base64.c bitstring.c buffer.c \
-		bufferlist.c commandline.c error.c event.c \
+.if ${MKCRYPTO} != "no"
+CRYPTO_SRCS=	aes.c
+.endif
+
+SRCS=		assertions.c base32.c base64.c bind9.c buffer.c \
+		bufferlist.c commandline.c crc64.c error.c event.c \
 		hash.c heap.c hex.c hmacmd5.c hmacsha.c httpd.c inet_aton.c \
 		iterated_hash.c lex.c lfsr.c lib.c log.c md5.c mem.c \
 		mutexblock.c netaddr.c netscope.c ondestroy.c parseint.c \
-		portset.c quota.c radix.c random.c ratelimiter.c refcount.c \
-		region.c result.c rwlock.c serial.c sha1.c sha2.c sockaddr.c \
-		stats.c string.c strtoul.c symtab.c task.c taskpool.c timer.c \
-		version.c ${UNIX_SRCS} ${NLS_SRCS} ${PTHREAD_SRCS} ${API_SRCS}
+		pool.c portset.c quota.c radix.c random.c ratelimiter.c \
+		refcount.c regex.c \
+		region.c result.c rwlock.c safe.c serial.c sha1.c sha2.c \
+		sockaddr.c stats.c string.c strtoul.c symtab.c task.c \
+		taskpool.c timer.c tm.c version.c \
+		${UNIX_SRCS} ${NLS_SRCS} ${PTHREAD_SRCS} ${CRYPTO_SRCS}
+
 
 
 .if (${USE_INET6} == "no")

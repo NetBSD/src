@@ -29,7 +29,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ntp.c,v 1.43 2007-11-30 13:45:10 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ntp.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-ntp.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -57,7 +57,7 @@ static void p_sfix(const struct s_fixedpt *);
 static void p_ntp_time(const struct l_fixedpt *);
 static void p_ntp_delta(const struct l_fixedpt *, const struct l_fixedpt *);
 
-static struct tok ntp_mode_values[] = {
+static const struct tok ntp_mode_values[] = {
     { MODE_UNSPEC,    "unspecified" },
     { MODE_SYM_ACT,   "symmetric active" },
     { MODE_SYM_PAS,   "symmetric passive" },
@@ -69,7 +69,7 @@ static struct tok ntp_mode_values[] = {
     { 0, NULL }
 };
 
-static struct tok ntp_leapind_values[] = {
+static const struct tok ntp_leapind_values[] = {
     { NO_WARNING,     "" },
     { PLUS_SEC,       "+1s" },
     { MINUS_SEC,      "-1s" },
@@ -77,7 +77,7 @@ static struct tok ntp_leapind_values[] = {
     { 0, NULL }
 };
 
-static struct tok ntp_stratum_values[] = {
+static const struct tok ntp_stratum_values[] = {
 	{ UNSPECIFIED,	"unspecified" },
 	{ PRIM_REF, 	"primary reference" },
 	{ 0, NULL }
@@ -122,7 +122,7 @@ ntp_print(register const u_char *cp, u_int length)
 		tok2str(ntp_stratum_values, (bp->stratum >=2 && bp->stratum<=15) ? "secondary reference" : "reserved", bp->stratum));
 
 	TCHECK(bp->ppoll);
-	printf(", poll %us", bp->ppoll);
+	printf(", poll %u (%us)", bp->ppoll, 1 << bp->ppoll);
 
 	/* Can't TCHECK bp->precision bitfield so bp->distance + 0 instead */
 	TCHECK2(bp->root_delay, 0);

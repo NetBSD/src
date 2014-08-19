@@ -22,7 +22,9 @@
 
 template <class char_type>
 void
-test(const char_type* A, std::ctype_base::mask expected, bool icase = false)
+test(const char_type* A,
+     typename std::regex_traits<char_type>::char_class_type expected,
+     bool icase = false)
 {
     std::regex_traits<char_type> t;
     typedef forward_iterator<const char_type*> F;
@@ -115,9 +117,9 @@ int main()
     test("xdigit", std::ctype_base::xdigit, true);
     test("Xdigit", std::ctype_base::xdigit, true);
 
-    test("dig", 0);
-    test("", 0);
-    test("digits", 0);
+    test("dig", std::ctype_base::mask());
+    test("", std::ctype_base::mask());
+    test("digits", std::ctype_base::mask());
 
     test(L"d", std::ctype_base::digit);
     test(L"D", std::ctype_base::digit);
@@ -203,7 +205,7 @@ int main()
     test(L"xdigit", std::ctype_base::xdigit, true);
     test(L"Xdigit", std::ctype_base::xdigit, true);
 
-    test(L"dig", 0);
-    test(L"", 0);
-    test(L"digits", 0);
+    test(L"dig", std::ctype_base::mask());
+    test(L"", std::ctype_base::mask());
+    test(L"digits", std::ctype_base::mask());
 }

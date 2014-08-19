@@ -1,11 +1,11 @@
-#	$NetBSD: NetBSD.dist.earm,v 1.1.4.2 2013/06/23 06:26:21 tls Exp $
+#	$NetBSD: NetBSD.dist.earm,v 1.1.4.3 2014/08/19 23:45:51 tls Exp $
 
 ./lib/oabi
 ./lib/oabi/npf
 ./usr/lib/oabi
 ./usr/lib/oabi/i18n
 ./usr/lib/oabi/lua
-./usr/lib/oabi/lua/5.1
+./usr/lib/oabi/lua/5.3
 ./usr/lib/oabi/security
 ./usr/libdata/debug/lib/oabi
 ./usr/libdata/debug/lib/oabi/npf

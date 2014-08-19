@@ -1,4 +1,4 @@
-/*	$NetBSD: private.c,v 1.4 2012/06/05 00:41:37 christos Exp $	*/
+/*	$NetBSD: private.c,v 1.4.2.1 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -301,6 +301,9 @@ isc_result_t
 dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 	isc_result_t result;
 
+	if (private->length < 5)
+		return (ISC_R_NOTFOUND);
+
 	if (private->data[0] == 0) {
 		unsigned char nsec3buf[DNS_NSEC3PARAM_BUFFERSIZE];
 		unsigned char newbuf[DNS_NSEC3PARAM_BUFFERSIZE];
@@ -341,7 +344,7 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 
 		if (remove && !nonsec)
 			isc_buffer_putstr(buf, " / creating NSEC chain");
-	} else {
+	} else if (private->length == 5) {
 		unsigned char alg = private->data[0];
 		dns_keytag_t keyid = (private->data[2] | private->data[1] << 8);
 		char keybuf[BUFSIZ], algbuf[DNS_SECALG_FORMATSIZE];
@@ -360,7 +363,8 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 		dns_secalg_format(alg, algbuf, sizeof(algbuf));
 		sprintf(keybuf, "key %d/%s", keyid, algbuf);
 		isc_buffer_putstr(buf, keybuf);
-	}
+	} else
+		return (ISC_R_NOTFOUND);
 
 	isc_buffer_putuint8(buf, 0);
 	result = ISC_R_SUCCESS;

@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.41 2011/06/04 07:41:11 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.3 2011/09/01 12:46:42 plunky Exp $	*/
+/*	Id: code.c,v 1.42 2012/04/22 21:07:40 plunky Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.3.8.1 2014/08/19 23:52:08 tls Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -68,7 +68,7 @@ defloc(struct symtab *sp)
  * code for the end of a function
  */
 void
-efcode()
+efcode(void)
 {
 }
 
@@ -114,14 +114,14 @@ bfcode(struct symtab **sp, int cnt)
 
 
 void
-bjobcode()
+bjobcode(void)
 {
 }
 
 /* called just before final exit */
 /* flag is 1 if errors, 0 if none */
 void
-ejobcode(int flag )
+ejobcode(int flag)
 {
 }
 

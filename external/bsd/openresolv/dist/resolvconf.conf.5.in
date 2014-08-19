@@ -240,7 +240,7 @@ Location of the unbound pidfile.
 and
 .Xr resolvconf 8 .
 .Sh AUTHORS
-.An Roy Marples Aq roy@marples.name
+.An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
 Each distribution is a special snowflake and likes to name the same thing
 differently, namely the named service script.

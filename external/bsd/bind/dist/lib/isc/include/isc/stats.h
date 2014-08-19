@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.3 2012/06/05 00:42:40 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.3.2.1 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
  * Copyright (C) 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -113,6 +113,26 @@ isc_stats_dump(isc_stats_t *stats, isc_stats_dumper_t dump_fn, void *arg,
  * in stats, dump_fn is called with its current value and the given argument
  * arg.  By default counters that have a value of 0 is skipped; if options has
  * the ISC_STATSDUMP_VERBOSE flag, even such counters are dumped.
+ *
+ * Requires:
+ *\li	'stats' is a valid isc_stats_t.
+ */
+
+void
+isc_stats_set(isc_stats_t *stats, isc_uint64_t val,
+	      isc_statscounter_t counter);
+/*%<
+ * Set the given counter to the specfied value.
+ *
+ * Requires:
+ *\li	'stats' is a valid isc_stats_t.
+ */
+
+void
+isc_stats_set(isc_stats_t *stats, isc_uint64_t val,
+	      isc_statscounter_t counter);
+/*%<
+ * Set the given counter to the specfied value.
  *
  * Requires:
  *\li	'stats' is a valid isc_stats_t.

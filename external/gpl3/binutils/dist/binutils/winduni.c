@@ -194,6 +194,94 @@ unicode_from_ascii (rc_uint_type *length, unichar **unicode, const char *ascii)
   unicode_from_codepage (length, unicode, ascii, wind_current_codepage);
 }
 
+/* Convert an ASCII string with length A_LENGTH to a unicode string.  We just
+   copy it, expanding chars to shorts, rather than doing something intelligent.
+   This routine converts also \0 within a string.  */
+
+void
+unicode_from_ascii_len (rc_uint_type *length, unichar **unicode, const char *ascii, rc_uint_type a_length)
+{
+  char *tmp, *p;
+  rc_uint_type tlen, elen, idx = 0;
+
+  *unicode = NULL;
+
+  if (!a_length)
+    {
+      if (length)
+        *length = 0;
+      return;
+    }
+
+  /* Make sure we have zero terminated string.  */
+  p = tmp = (char *) alloca (a_length + 1);
+  memcpy (tmp, ascii, a_length);
+  tmp[a_length] = 0;
+
+  while (a_length > 0)
+    {
+      unichar *utmp, *up;
+
+      tlen = strlen (p);
+
+      if (tlen > a_length)
+        tlen = a_length;
+      if (*p == 0)
+        {
+	  /* Make room for one more character.  */
+	  utmp = (unichar *) res_alloc (sizeof (unichar) * (idx + 1));
+	  if (idx > 0)
+	    {
+	      memcpy (utmp, *unicode, idx * sizeof (unichar));
+	    }
+	  *unicode = utmp;
+	  utmp[idx++] = 0;
+	  --a_length;
+	  p++;
+	  continue;
+	}
+      utmp = NULL;
+      elen = 0;
+      elen = wind_MultiByteToWideChar (wind_current_codepage, p, NULL, 0);
+      if (elen)
+	{
+	  utmp = ((unichar *) res_alloc (elen + sizeof (unichar) * 2));
+	  wind_MultiByteToWideChar (wind_current_codepage, p, utmp, elen);
+	  elen /= sizeof (unichar);
+	  elen --;
+	}
+      else
+        {
+	  /* Make room for one more character.  */
+	  utmp = (unichar *) res_alloc (sizeof (unichar) * (idx + 1));
+	  if (idx > 0)
+	    {
+	      memcpy (utmp, *unicode, idx * sizeof (unichar));
+	    }
+	  *unicode = utmp;
+	  utmp[idx++] = ((unichar) *p) & 0xff;
+	  --a_length;
+	  p++;
+	  continue;
+	}
+      p += tlen;
+      a_length -= tlen;
+
+      up = (unichar *) res_alloc (sizeof (unichar) * (idx + elen));
+      if (idx > 0)
+	memcpy (up, *unicode, idx * sizeof (unichar));
+
+      *unicode = up;
+      if (elen)
+	memcpy (&up[idx], utmp, sizeof (unichar) * elen);
+
+      idx += elen;
+    }
+
+  if (length)
+    *length = idx;
+}
+
 /* Convert an unicode string to an ASCII string.  We just copy it,
    shrink shorts to chars, rather than doing something intelligent.
    Shorts with not within the char range are replaced by '_'.  */

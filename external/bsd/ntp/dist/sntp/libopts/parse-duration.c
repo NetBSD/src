@@ -1,20 +1,20 @@
-/*	$NetBSD: parse-duration.c,v 1.3 2012/02/03 21:36:40 christos Exp $	*/
+/*	$NetBSD: parse-duration.c,v 1.3.6.1 2014/08/19 23:51:47 tls Exp $	*/
 
 /* Parse a time duration and return a seconds count
-   Copyright (C) 2008-2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2013 Free Software Foundation, Inc.
    Written by Bruce Korb <bkorb@gnu.org>, 2008.
 
    This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   it under the terms of the GNU Lesser General Public License as published by
+   the Free Software Foundation; either version 2.1 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
+   You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
@@ -56,14 +56,14 @@ typedef enum {
 #define TIME_MAX        0x7FFFFFFF
 
 /* Wrapper around strtoul that does not require a cast.  */
-inline static unsigned long 
+static unsigned long
 str_const_to_ul (cch_t * str, cch_t ** ppz, int base)
 {
   return strtoul (str, (char **)(intptr_t)ppz, base);
 }
 
 /* Wrapper around strtol that does not require a cast.  */
-inline static long
+static long
 str_const_to_l (cch_t * str, cch_t ** ppz, int base)
 {
   return strtol (str, (char **)(intptr_t)ppz, base);
@@ -72,7 +72,7 @@ str_const_to_l (cch_t * str, cch_t ** ppz, int base)
 /* Returns BASE + VAL * SCALE, interpreting BASE = BAD_TIME
    with errno set as an error situation, and returning BAD_TIME
    with errno set in an error situation.  */
-inline static time_t
+static time_t
 scale_n_add (time_t base, time_t val, int scale)
 {
   if (base == BAD_TIME)

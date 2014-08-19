@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.17 2011/07/30 08:10:36 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.4 2011/09/01 12:46:51 plunky Exp $	*/
+/*	Id: code.c,v 1.25 2014/04/19 07:47:50 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.4.8.1 2014/08/19 23:52:09 tls Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -44,21 +44,41 @@ setseg(int seg, char *name)
 {
 	switch (seg) {
 	case PROG: name = ".text"; break;
+
 	case DATA:
 	case LDATA: name = ".data"; break;
+
 	case STRNG:
 	case RDATA: name = ".section .rodata"; break;
+
 	case UDATA: break;
-	case PICLDATA:
-	case PICDATA:
-	case PICRDATA:
+
+	case DTORS:
+		name = ".section .dtors,\"aw\",@progbits";
+		break;
+	case CTORS:
+		name = ".section .ctors,\"aw\",@progbits";
+		break;
+
 	case TLSDATA:
 	case TLSUDATA:
-	case CTORS:
-	case DTORS:
-		uerror("FIXME: unsupported segment");
+		uerror("FIXME: unsupported segment %d", seg);
+		break;
+
+	case PICRDATA:
+		name = ".section .data.rel.ro.local,\"aw\",@progbits";
+		break;
+
+	case PICDATA:
+		name = ".section .data.rel,\"aw\",@progbits";
+		break;
+	case PICLDATA:
+		name = ".section .data.rel.local,\"aw\",@progbits";
+		break;
+
 	case NMSEG: 
-		printf("\t.section %s,\"aw\",@progbits\n", name);
+		printf("\t.section %s,\"a%c\",@progbits\n", name,
+		    cftnsp ? 'x' : 'w');
 		return;
 	}
 	printf("\t%s\n", name);
@@ -78,8 +98,13 @@ defloc(struct symtab *sp)
 
 	if (sp->sclass == EXTDEF) {
 		printf("\t.globl %s\n", name);
-		printf("\t.type %s,@%s\n", name,
-		    ISFTN(sp->stype)? "function" : "object");
+		if (ISFTN(sp->stype)) {
+			printf("\t.type %s,@function\n", name);
+		} else {
+			printf("\t.type %s,@object\n", name);
+			printf("\t.size %s,%d\n", name,
+			    (int)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR);
+		}
 	}
 	if (sp->slevel == 0)
 		printf("%s:\n", name);
@@ -90,7 +115,7 @@ defloc(struct symtab *sp)
 static int strtemp;
 
 void
-efcode()
+efcode(void)
 {
 	TWORD t;
 	NODE *p, *q;
@@ -152,36 +177,41 @@ bfcode(struct symtab **sp, int n)
 }
 
 void
-ejobcode( flag ){
+ejobcode(int flag)
+{
 	/* called just before final exit */
 	/* flag is 1 if errors, 0 if none */
-	}
+}
 
 void
-bjobcode()
+bjobcode(void)
 {
 	astypnames[INT] = astypnames[UNSIGNED] = "\t.long";
 	astypnames[SHORT] = astypnames[USHORT] = "\t.word";
 }
 
 #if 0
-aobeg(){
+aobeg(void)
+{
 	/* called before removing automatics from stab */
-	}
+}
 
-aocode(p) struct symtab *p; {
+aocode(struct symtab *p)
+{
 	/* called when automatic p removed from stab */
-	}
+}
 
-aoend(){
+aoend(void)
+{
 	/* called after removing all automatics from stab */
-	}
+}
 #endif
 
 void
-fldty( p ) struct symtab *p; { /* fix up type of field p */
-	;
-	}
+fldty(struct symtab *p)
+{
+	/* fix up type of field p */
+}
 
 /*
  * XXX - fix genswitch.
@@ -195,7 +225,8 @@ mygenswitch(int num, TWORD type, struct swents **p, int n)
 #ifdef notyet
 struct sw heapsw[SWITSZ];	/* heap for switches */
 
-genswitch(p,n) register struct sw *p;{
+genswitch(register struct sw *p, int n)
+{
 	/*	p points to an array of structures, each consisting
 		of a constant value and a label.
 		The first is >=0 if there is a default label;
@@ -259,10 +290,9 @@ genswitch(p,n) register struct sw *p;{
 		}
 
 	if( p->slab>=0 ) branch( p->slab );
-	}
+}
 
-makeheap(p, m, n)
-register struct sw *p;
+makeheap(register struct sw *p, int m, int n)
 {
 	register int q;
 
@@ -272,7 +302,8 @@ register struct sw *p;
 	if( q<m ) makeheap(p+q, m-q, 2*n+1);
 }
 
-select(m) {
+select(int m)
+{
 	register int l,i,k;
 
 	for(i=1; ; i*=2)
@@ -281,10 +312,9 @@ select(m) {
 	return( l + (m-k < l ? m-k : l));
 }
 
-walkheap(start, limit)
+walkheap(int start, int limit)
 {
 	int label;
-
 
 	if( start > limit ) return;
 	printf("	cmpl	r0,$%d\n",  heapsw[start].sval);
@@ -305,6 +335,7 @@ walkheap(start, limit)
 	}
 }
 #endif
+
 /*
  * Called with a function call with arguments as argument.
  * This is done early in buildtree() and only done once.
@@ -338,12 +369,11 @@ funcode(NODE *p)
  * Generate the builtin code for FFS.
  */
 NODE *
-builtin_ffs(NODE *f, NODE *a, TWORD t)
+builtin_ffs(const struct bitable *bt, NODE *a)
 {
 	NODE *p, *q, *r;
 
-	nfree(f);
-	p = tempnode(0, t, 0, 0);
+	p = tempnode(0, bt->rt, 0, 0);
 	r = block(XARG, ccopy(p), NIL, INT, 0, 0);
 	r->n_name = "=&r";
 	q = block(XARG, a, NIL, INT, 0, 0);
@@ -351,21 +381,34 @@ builtin_ffs(NODE *f, NODE *a, TWORD t)
 	q = block(CM, r, q, INT, 0, 0);
 	q = block(XASM, q, block(ICON, 0, 0, STRTY, 0, 0), INT, 0, 0);
 	q->n_name = "ffs $0,$32,%1,%0;bneq 1f;mnegl $1,%0;1:;incl %0";
-	p = block(COMOP, q, p, t, 0, 0);
+	p = block(COMOP, q, p, bt->rt, 0, 0);
 	return p;
 }
 
-NODE *
-vax_builtin_return_address(NODE *f, NODE *a, TWORD t)
-{
+NODE *  
+builtin_ffsl(const struct bitable *bt, NODE *a)
+{       
+	return builtin_ffs(bt, a);
+}
 
-	if (a == NULL || a->n_op != ICON)
+NODE *  
+builtin_ffsll(const struct bitable *bt, NODE *a)
+{
+	cerror("builtin_ffsll unimplemented");
+	return NIL;
+}
+
+NODE *
+builtin_return_address(const struct bitable *bt, NODE *a)
+{
+	NODE *f;
+
+	if (a->n_op != ICON)
 		goto bad;
 
 	if (a->n_lval != 0)
 		werror("unsupported argument");
 
-	tfree(f);
 	tfree(a);
 
 	f = block(REG, NIL, NIL, INCREF(PTR+CHAR), 0, 0);
@@ -382,16 +425,16 @@ bad:
 }
 
 NODE *
-vax_builtin_frame_address(NODE *f, NODE *a, TWORD t)
+builtin_frame_address(const struct bitable *bt, NODE *a)
 {
 	int nframes;
+	NODE *f;
 
-	if (a == NULL || a->n_op != ICON)
+	if (a->n_op != ICON)
 		goto bad;
 
 	nframes = a->n_lval;
 
-	tfree(f);
 	tfree(a);
 
 	f = block(REG, NIL, NIL, PTR+CHAR, 0, 0);
@@ -408,6 +451,16 @@ vax_builtin_frame_address(NODE *f, NODE *a, TWORD t)
 	return f;
 bad:
 	uerror("bad argument to __builtin_frame_address");
+	return bcon(0);
+}
+
+/*
+ * Return "canonical frame address".
+ */
+NODE *
+builtin_cfa(const struct bitable *bt, NODE *a)
+{
+	uerror("missing builtin_cfa");
 	return bcon(0);
 }
 

@@ -49,4 +49,8 @@ if [istarget z8k-*-*] then {
 # labels starting with register names test
 
      run_dump_test "reglabel"
+
+# translate operations
+
+     run_dump_test "translate-ops"
 }

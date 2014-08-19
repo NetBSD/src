@@ -1,7 +1,6 @@
 /* -*- indented-text -*- */
 /* Process source files and output type information.
-   Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,7 +21,11 @@ along with GCC; see the file COPYING3.  If not see
 %option noinput
 
 %{
+#ifdef GENERATOR_FILE
 #include "bconfig.h"
+#else
+#include "config.h"
+#endif
 #include "system.h"
 
 #define malloc xmalloc
@@ -46,12 +49,15 @@ update_lineno (const char *l, size_t len)
 
 %}
 
-ID	[[:alpha:]_][[:alnum:]_]*
+CID	[[:alpha:]_][[:alnum:]_]*
 WS	[[:space:]]+
 HWS	[ \t\r\v\f]*
-IWORD	short|long|(un)?signed|char|int|HOST_WIDE_INT|HOST_WIDEST_INT|bool|size_t|BOOL_BITFIELD|CPPCHAR_SIGNED_T|ino_t|dev_t
+IWORD	short|long|(un)?signed|char|int|HOST_WIDE_INT|HOST_WIDEST_INT|bool|size_t|BOOL_BITFIELD|CPPCHAR_SIGNED_T|ino_t|dev_t|HARD_REG_SET
 ITYPE	{IWORD}({WS}{IWORD})*
+    /* Include '::' in identifiers to capture C++ scope qualifiers.  */
+ID	{CID}({HWS}::{HWS}{CID})*
 EOID	[^[:alnum:]_]
+CXX_KEYWORD inline|public:|private:|protected:|template|operator|friend
 
 %x in_struct in_struct_comment in_comment
 %option warn noyywrap nounput nodefault perf-report
@@ -79,6 +85,10 @@ EOID	[^[:alnum:]_]
   BEGIN(in_struct);
   return UNION;
 }
+^{HWS}class/{EOID} {
+  BEGIN(in_struct);
+  return STRUCT;
+}
 ^{HWS}extern/{EOID} {
   BEGIN(in_struct);
   return EXTERN;
@@ -87,36 +97,32 @@ EOID	[^[:alnum:]_]
   BEGIN(in_struct);
   return STATIC;
 }
-
-^{HWS}DEF_VEC_[OP]/{EOID} {
-  BEGIN(in_struct);
-  return DEFVEC_OP;
-}
-^{HWS}DEF_VEC_I/{EOID} {
-  BEGIN(in_struct);
-  return DEFVEC_I;
-}
-^{HWS}DEF_VEC_ALLOC_[IOP]/{EOID} {
-  BEGIN(in_struct);
-  return DEFVEC_ALLOC;
-}
 }
 
+    /* Parsing inside a struct, union or class declaration.  */
 <in_struct>{
-
 "/*"				{ BEGIN(in_struct_comment); }
+"//".*\n			{ lexer_line.line++; }
 
 {WS}				{ update_lineno (yytext, yyleng); }
 \\\n				{ lexer_line.line++; }
 
 "const"/{EOID}			/* don't care */
+{CXX_KEYWORD}/{EOID}			|
+"~"					|
+"&"					{
+    *yylval = XDUPVAR (const char, yytext, yyleng, yyleng + 1);
+    return IGNORABLE_CXX_KEYWORD;
+}
 "GTY"/{EOID}			{ return GTY_TOKEN; }
-"VEC"/{EOID}			{ return VEC_TOKEN; }
 "union"/{EOID}			{ return UNION; }
 "struct"/{EOID}			{ return STRUCT; }
+"class"/{EOID}			{ return STRUCT; }
+"typedef"/{EOID}		{ return TYPEDEF; }
 "enum"/{EOID}			{ return ENUM; }
 "ptr_alias"/{EOID}	  	{ return PTR_ALIAS; }
 "nested_ptr"/{EOID}		{ return NESTED_PTR; }
+"user"/{EOID}			{ return USER_GTY; }
 [0-9]+				{ return NUM; }
 "param"[0-9]*"_is"/{EOID}		{
   *yylval = XDUPVAR (const char, yytext, yyleng, yyleng+1);
@@ -134,7 +140,6 @@ EOID	[^[:alnum:]_]
   update_lineno (yytext, yyleng);
   return SCALAR;
 }
-
 
 {ID}/{EOID}			{
   *yylval = XDUPVAR (const char, yytext, yyleng, yyleng+1);
@@ -156,7 +161,7 @@ EOID	[^[:alnum:]_]
 }
 
 "..."				{ return ELLIPSIS; }
-[(){},*:<>;=%|-]		{ return yytext[0]; }
+[(){},*:<>;=%|+\!\?\.-]		{ return yytext[0]; }
 
    /* ignore pp-directives */
 ^{HWS}"#"{HWS}[a-z_]+[^\n]*\n   {lexer_line.line++;}
@@ -167,6 +172,7 @@ EOID	[^[:alnum:]_]
 }
 
 "/*"			{ BEGIN(in_comment); }
+"//".*\n		{ lexer_line.line++; }
 \n			{ lexer_line.line++; }
 {ID}			|
 "'"("\\".|[^\\])"'"	|
@@ -180,6 +186,7 @@ EOID	[^[:alnum:]_]
 [^*\n]		/* do nothing */
 "*"/[^/]	/* do nothing */
 }
+
 <in_comment>"*/"	{ BEGIN(INITIAL); } 
 <in_struct_comment>"*/"	{ BEGIN(in_struct); }
 
@@ -202,7 +209,7 @@ yybegin (const char *fname)
       perror (fname);
       exit (1);
     }
-  lexer_line.file = fname;
+  lexer_line.file = input_file_by_name (fname);
   lexer_line.line = 1;
 }
 

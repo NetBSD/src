@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.120 2012/03/20 18:42:28 matt Exp $	*/
+/*	$NetBSD: print.c,v 1.120.2.1 2014/08/19 23:45:11 tls Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.120 2012/03/20 18:42:28 matt Exp $");
+__RCSID("$NetBSD: print.c,v 1.120.2.1 2014/08/19 23:45:11 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,12 +93,12 @@ __RCSID("$NetBSD: print.c,v 1.120 2012/03/20 18:42:28 matt Exp $");
 #include "ps.h"
 
 static char *cmdpart(char *);
-static void  printval(void *, VAR *, int);
+static void  printval(void *, VAR *, enum mode);
 static int   titlecmp(char *, char **);
 
-static void  doubleprintorsetwidth(VAR *, double, int, int);
-static void  intprintorsetwidth(VAR *, int, int);
-static void  strprintorsetwidth(VAR *, const char *, int);
+static void  doubleprintorsetwidth(VAR *, double, int, enum mode);
+static void  intprintorsetwidth(VAR *, int, enum mode);
+static void  strprintorsetwidth(VAR *, const char *, enum mode);
 
 static time_t now;
 
@@ -218,7 +218,7 @@ titlecmp(char *name, char **argv)
 }
 
 static void
-doubleprintorsetwidth(VAR *v, double val, int prec, int mode)
+doubleprintorsetwidth(VAR *v, double val, int prec, enum mode mode)
 {
 	int fmtlen;
 
@@ -240,7 +240,7 @@ doubleprintorsetwidth(VAR *v, double val, int prec, int mode)
 }
 
 static void
-intprintorsetwidth(VAR *v, int val, int mode)
+intprintorsetwidth(VAR *v, int val, enum mode mode)
 {
 	int fmtlen;
 
@@ -261,7 +261,7 @@ intprintorsetwidth(VAR *v, int val, int mode)
 }
 
 static void
-strprintorsetwidth(VAR *v, const char *str, int mode)
+strprintorsetwidth(VAR *v, const char *str, enum mode mode)
 {
 	int len;
 
@@ -278,7 +278,7 @@ strprintorsetwidth(VAR *v, const char *str, int mode)
 }
 
 void
-command(void *arg, VARENT *ve, int mode)
+command(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *ki;
 	VAR *v;
@@ -359,7 +359,7 @@ command(void *arg, VARENT *ve, int mode)
 }
 
 void
-groups(void *arg, VARENT *ve, int mode)
+groups(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *ki;
 	VAR *v;
@@ -397,7 +397,7 @@ groups(void *arg, VARENT *ve, int mode)
 }
 
 void
-groupnames(void *arg, VARENT *ve, int mode)
+groupnames(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *ki;
 	VAR *v;
@@ -434,7 +434,7 @@ groupnames(void *arg, VARENT *ve, int mode)
 }
 
 void
-ucomm(void *arg, VARENT *ve, int mode)
+ucomm(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -445,7 +445,7 @@ ucomm(void *arg, VARENT *ve, int mode)
 }
 
 void
-emul(void *arg, VARENT *ve, int mode)
+emul(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -456,7 +456,7 @@ emul(void *arg, VARENT *ve, int mode)
 }
 
 void
-logname(void *arg, VARENT *ve, int mode)
+logname(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -467,7 +467,7 @@ logname(void *arg, VARENT *ve, int mode)
 }
 
 void
-state(void *arg, VARENT *ve, int mode)
+state(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	int flag, is_zombie;
@@ -551,7 +551,7 @@ state(void *arg, VARENT *ve, int mode)
 }
 
 void
-lstate(void *arg, VARENT *ve, int mode)
+lstate(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_lwp *k;
 	int flag;
@@ -610,7 +610,7 @@ lstate(void *arg, VARENT *ve, int mode)
 }
 
 void
-pnice(void *arg, VARENT *ve, int mode)
+pnice(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -621,7 +621,7 @@ pnice(void *arg, VARENT *ve, int mode)
 }
 
 void
-pri(void *arg, VARENT *ve, int mode)
+pri(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_lwp *l;
 	VAR *v;
@@ -632,7 +632,7 @@ pri(void *arg, VARENT *ve, int mode)
 }
 
 void
-uname(void *arg, VARENT *ve, int mode)
+uname(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -643,7 +643,7 @@ uname(void *arg, VARENT *ve, int mode)
 }
 
 void
-runame(void *arg, VARENT *ve, int mode)
+runame(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -654,7 +654,7 @@ runame(void *arg, VARENT *ve, int mode)
 }
 
 void
-svuname(void *arg, VARENT *ve, int mode)
+svuname(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -665,7 +665,7 @@ svuname(void *arg, VARENT *ve, int mode)
 }
 
 void
-gname(void *arg, VARENT *ve, int mode)
+gname(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -676,7 +676,7 @@ gname(void *arg, VARENT *ve, int mode)
 }
 
 void
-rgname(void *arg, VARENT *ve, int mode)
+rgname(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -687,7 +687,7 @@ rgname(void *arg, VARENT *ve, int mode)
 }
 
 void
-svgname(void *arg, VARENT *ve, int mode)
+svgname(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -698,7 +698,7 @@ svgname(void *arg, VARENT *ve, int mode)
 }
 
 void
-tdev(void *arg, VARENT *ve, int mode)
+tdev(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -722,7 +722,7 @@ tdev(void *arg, VARENT *ve, int mode)
 }
 
 void
-tname(void *arg, VARENT *ve, int mode)
+tname(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -757,7 +757,7 @@ tname(void *arg, VARENT *ve, int mode)
 }
 
 void
-longtname(void *arg, VARENT *ve, int mode)
+longtname(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -779,7 +779,7 @@ longtname(void *arg, VARENT *ve, int mode)
 }
 
 void
-started(void *arg, VARENT *ve, int mode)
+started(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -815,7 +815,7 @@ started(void *arg, VARENT *ve, int mode)
 }
 
 void
-lstarted(void *arg, VARENT *ve, int mode)
+lstarted(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -844,7 +844,7 @@ lstarted(void *arg, VARENT *ve, int mode)
 }
 
 void
-elapsed(void *arg, VARENT *ve, int mode)
+elapsed(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -938,7 +938,7 @@ elapsed(void *arg, VARENT *ve, int mode)
 }
 
 void
-wchan(void *arg, VARENT *ve, int mode)
+wchan(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_lwp *l;
 	VAR *v;
@@ -968,7 +968,7 @@ wchan(void *arg, VARENT *ve, int mode)
 #define	pgtok(a)        (((a)*(size_t)getpagesize())/1024)
 
 void
-vsize(void *arg, VARENT *ve, int mode)
+vsize(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -979,7 +979,7 @@ vsize(void *arg, VARENT *ve, int mode)
 }
 
 void
-rssize(void *arg, VARENT *ve, int mode)
+rssize(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -991,7 +991,7 @@ rssize(void *arg, VARENT *ve, int mode)
 }
 
 void
-p_rssize(void *arg, VARENT *ve, int mode)	/* doesn't account for text */
+p_rssize(void *arg, VARENT *ve, enum mode mode)	/* doesn't account for text */
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -1002,7 +1002,7 @@ p_rssize(void *arg, VARENT *ve, int mode)	/* doesn't account for text */
 }
 
 void
-cpuid(void *arg, VARENT *ve, int mode)
+cpuid(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_lwp *l;
 	VAR *v;
@@ -1012,29 +1012,11 @@ cpuid(void *arg, VARENT *ve, int mode)
 	intprintorsetwidth(v, l->l_cpuid, mode);
 }
 
-void
-cputime(void *arg, VARENT *ve, int mode)
+static void
+cputime1(int32_t secs, int32_t psecs, VAR *v, enum mode mode)
 {
-	struct kinfo_proc2 *k;
-	VAR *v;
-	int32_t secs;
-	int32_t psecs;	/* "parts" of a second. first micro, then centi */
 	int fmtlen;
 
-	k = arg;
-	v = ve->var;
-
-	/*
-	 * This counts time spent handling interrupts.  We could
-	 * fix this, but it is not 100% trivial (and interrupt
-	 * time fractions only work on the sparc anyway).	XXX
-	 */
-	secs = k->p_rtime_sec;
-	psecs = k->p_rtime_usec;
-	if (sumrusage) {
-		secs += k->p_uctime_sec;
-		psecs += k->p_uctime_usec;
-	}
 	/*
 	 * round and scale to 100's
 	 */
@@ -1066,6 +1048,49 @@ cputime(void *arg, VARENT *ve, int mode)
 	}
 }
 
+void
+cputime(void *arg, VARENT *ve, enum mode mode)
+{
+	struct kinfo_proc2 *k;
+	VAR *v;
+	int32_t secs;
+	int32_t psecs;	/* "parts" of a second. first micro, then centi */
+
+	k = arg;
+	v = ve->var;
+
+	/*
+	 * This counts time spent handling interrupts.  We could
+	 * fix this, but it is not 100% trivial (and interrupt
+	 * time fractions only work on the sparc anyway).	XXX
+	 */
+	secs = k->p_rtime_sec;
+	psecs = k->p_rtime_usec;
+	if (sumrusage) {
+		secs += k->p_uctime_sec;
+		psecs += k->p_uctime_usec;
+	}
+
+	cputime1(secs, psecs, v, mode);
+}
+
+void
+lcputime(void *arg, VARENT *ve, enum mode mode)
+{
+	struct kinfo_lwp *l;
+	VAR *v;
+	int32_t secs;
+	int32_t psecs;	/* "parts" of a second. first micro, then centi */
+
+	l = arg;
+	v = ve->var;
+
+	secs = l->l_rtime_sec;
+	psecs = l->l_rtime_usec;
+
+	cputime1(secs, psecs, v, mode);
+}
+
 double
 getpcpu(const struct kinfo_proc2 *k)
 {
@@ -1087,7 +1112,7 @@ getpcpu(const struct kinfo_proc2 *k)
 }
 
 void
-pcpu(void *arg, VARENT *ve, int mode)
+pcpu(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -1119,7 +1144,7 @@ getpmem(const struct kinfo_proc2 *k)
 }
 
 void
-pmem(void *arg, VARENT *ve, int mode)
+pmem(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -1130,7 +1155,7 @@ pmem(void *arg, VARENT *ve, int mode)
 }
 
 void
-pagein(void *arg, VARENT *ve, int mode)
+pagein(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -1141,7 +1166,7 @@ pagein(void *arg, VARENT *ve, int mode)
 }
 
 void
-maxrss(void *arg, VARENT *ve, int mode)
+maxrss(void *arg, VARENT *ve, enum mode mode)
 {
 	VAR *v;
 
@@ -1152,7 +1177,7 @@ maxrss(void *arg, VARENT *ve, int mode)
 }
 
 void
-tsize(void *arg, VARENT *ve, int mode)
+tsize(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
@@ -1167,7 +1192,7 @@ tsize(void *arg, VARENT *ve, int mode)
  * structures.
  */
 static void
-printval(void *bp, VAR *v, int mode)
+printval(void *bp, VAR *v, enum mode mode)
 {
 	static char ofmt[32] = "%";
 	int width, vok, fmtlen;
@@ -1365,7 +1390,7 @@ printval(void *bp, VAR *v, int mode)
 }
 
 void
-pvar(void *arg, VARENT *ve, int mode)
+pvar(void *arg, VARENT *ve, enum mode mode)
 {
 	VAR *v;
 
@@ -1380,7 +1405,7 @@ pvar(void *arg, VARENT *ve, int mode)
 }
 
 void
-putimeval(void *arg, VARENT *ve, int mode)
+putimeval(void *arg, VARENT *ve, enum mode mode)
 {
 	VAR *v = ve->var;
 	struct kinfo_proc2 *k = arg;
@@ -1432,7 +1457,7 @@ putimeval(void *arg, VARENT *ve, int mode)
 }
 
 void
-lname(void *arg, VARENT *ve, int mode)
+lname(void *arg, VARENT *ve, enum mode mode)
 {
 	struct kinfo_lwp *l;
 	VAR *v;

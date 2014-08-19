@@ -34,13 +34,20 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.61 2008-02-05 19:34:25 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-isakmp.c,v 1.3.8.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.3.8.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
 #define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
+/* The functions from print-esp.c used in this file are only defined when both
+ * OpenSSL and evp.h are detected. Employ the same preprocessor device here.
+ */
+#ifndef HAVE_OPENSSL_EVP_H
+#undef HAVE_LIBCRYPTO
 #endif
 
 #include <tcpdump-stdinc.h>
@@ -550,7 +557,6 @@ ikev1_sa_print(netdissect_options *ndo, u_char tpay _U_,
 {
 	const struct ikev1_pl_sa *p;
 	struct ikev1_pl_sa sa;
-	const u_int32_t *q;
 	u_int32_t doi, sit, ident;
 	const u_char *cp, *np;
 	int t;
@@ -569,7 +575,6 @@ ikev1_sa_print(netdissect_options *ndo, u_char tpay _U_,
 	}
 
 	ND_PRINT((ndo," doi=ipsec"));
-	q = (u_int32_t *)&sa.sit;
 	ND_PRINT((ndo," situation="));
 	t = 0;
 	if (sit & 0x01) {
@@ -1773,7 +1778,6 @@ ikev2_n_print(netdissect_options *ndo, u_char tpay _U_,
 {
 	struct ikev2_n *p, n;
 	const u_char *cp;
-	u_char *ep2;
 	u_char showspi, showdata, showsomedata;
 	const char *notify_name;
 	u_int32_t type;
@@ -1950,7 +1954,6 @@ ikev2_n_print(netdissect_options *ndo, u_char tpay _U_,
 	}
 
 	cp = (u_char *)(p + 1) + n.spi_size;
-	ep2 = (u_char *)p + item_len;
 
 	if(3 < ndo->ndo_vflag) {
 		showdata = 1;
@@ -2267,7 +2270,6 @@ ikev1_print(netdissect_options *ndo,
 	
 	if (ndo->ndo_vflag) {
 		const struct isakmp_gen *ext;
-		int nparen;
 		
 		ND_PRINT((ndo,":"));
 		
@@ -2281,7 +2283,6 @@ ikev1_print(netdissect_options *ndo,
 			goto done;
 		}
 		
-		nparen = 0;
 		CHECKLEN(p + 1, base->np);
 		np = base->np;
 		ext = (struct isakmp_gen *)(p + 1);
@@ -2424,7 +2425,6 @@ ikev2_print(netdissect_options *ndo,
 
 	if (ndo->ndo_vflag) {
 		const struct isakmp_gen *ext;
-		int nparen;
 
 		ND_PRINT((ndo, ":"));
 
@@ -2438,7 +2438,6 @@ ikev2_print(netdissect_options *ndo,
 			goto done;
 		}
 
-		nparen = 0;
 		CHECKLEN(p + 1, base->np)
 
 		np = base->np;
@@ -2522,9 +2521,6 @@ isakmp_rfc3948_print(netdissect_options *ndo,
 		     const u_char *bp, u_int length,
 		     const u_char *bp2)
 {
-	const u_char *ep;
-	ep = ndo->ndo_snapend;
-
 	if(length == 1 && bp[0]==0xff) {
 		ND_PRINT((ndo, "isakmp-nat-keep-alive"));
 		return;

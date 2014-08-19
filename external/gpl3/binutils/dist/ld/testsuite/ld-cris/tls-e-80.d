@@ -50,11 +50,11 @@ SYMBOL TABLE:
 0+4 g       \.tdata	0+4 z
 0+80094 g       \.text	0+ _start
 0+80098 g     F \.text	0+6 tlsfn
-0+820f0 g       \*ABS\*	0+ __bss_start
+0+820f0 g       \.got	0+ __bss_start
 0+800b0 g     F \.text	0+6 tlsdsofn
 0+8 g       \.tdata	0+4 \.hidden x1
-0+820f0 g       \*ABS\*	0+ _edata
-0+82100 g       \*ABS\*	0+ _end
+0+820f0 g       \.got	0+ _edata
+0+82100 g       \.got	0+ _end
 0+10 g       \.tbss	0+40 gx
 0+800b8 g     F \.text	0+6 tlsdsofn10
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: ntpaths.c,v 1.1.1.1 2009/12/13 16:54:40 kardel Exp $	*/
+/*	$NetBSD: ntpaths.c,v 1.1.1.1.12.1 2014/08/19 23:51:40 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ntpaths.c,v 1.11 2007/06/18 23:47:49 tbox Exp */
+/* Id: ntpaths.c,v 1.15 2009/07/14 22:54:57 each Exp  */
 
 /*
  * This module fetches the required path information that is specific
@@ -46,6 +46,7 @@ static char lwresd_defaultpidfile[MAX_PATH];
 static char local_state_dir[MAX_PATH];
 static char sys_conf_dir[MAX_PATH];
 static char rndc_keyFile[MAX_PATH];
+static char session_keyFile[MAX_PATH];
 
 static DWORD baseLen = MAX_PATH;
 static BOOL Initialized = FALSE;
@@ -59,7 +60,7 @@ isc_ntpaths_init() {
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, BIND_SUBKEY, 0, KEY_READ, &hKey)
 		!= ERROR_SUCCESS)
 		keyFound = FALSE;
-	
+
 	if (keyFound == TRUE) {
 		/* Get the named directory */
 		if (RegQueryValueEx(hKey, "InstallDir", NULL, NULL,
@@ -86,6 +87,9 @@ isc_ntpaths_init() {
 	strcpy(rndc_keyFile, namedBase);
 	strcat(rndc_keyFile, "\\etc\\rndc.key");
 
+	strcpy(session_keyFile, namedBase);
+	strcat(session_keyFile, "\\etc\\session.key");
+
 	strcpy(rndc_confFile, namedBase);
 	strcat(rndc_confFile, "\\etc\\rndc.conf");
 	strcpy(ns_defaultpidfile, namedBase);
@@ -99,7 +103,7 @@ isc_ntpaths_init() {
 
 	strcpy(sys_conf_dir, namedBase);
 	strcat(sys_conf_dir, "\\etc");
-	
+
 	Initialized = TRUE;
 }
 
@@ -135,6 +139,9 @@ isc_ntpaths_get(int ind) {
 		break;
 	case RNDC_KEY_PATH:
 		return (rndc_keyFile);
+		break;
+	case SESSION_KEY_PATH:
+		return (session_keyFile);
 		break;
 	default:
 		return (NULL);

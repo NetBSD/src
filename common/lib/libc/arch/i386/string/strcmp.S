@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.1.56.1 2014/08/19 23:45:13 tls Exp $")
 #endif
 
 ENTRY(strcmp)
@@ -75,3 +75,4 @@ ENTRY(strcmp)
 	popl	%ebx
 	popl	%esi
 	ret
+END(strcmp)

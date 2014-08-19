@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_sysctl.c,v 1.1.1.2 2012/01/31 21:22:54 kardel Exp $	*/
+/*	$NetBSD: ifiter_sysctl.c,v 1.1.1.2.6.1 2014/08/19 23:51:40 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ifiter_sysctl.c,v 1.25 2007/06/19 23:47:18 tbox Exp */
+/* Id: ifiter_sysctl.c,v 1.25 2007/06/19 23:47:18 tbox Exp  */
 
 /*! \file
  * \brief
@@ -161,6 +161,10 @@ internal_current(isc_interfaceiter_t *iter) {
 	ifam = (struct ifa_msghdr *) ((char *) iter->buf + iter->pos);
 	ifam_end = (struct ifa_msghdr *) ((char *) iter->buf + iter->bufused);
 
+	// Skip wrong RTM version headers
+	if (ifam->ifam_version != RTM_VERSION)
+		return (ISC_R_IGNORE);
+
 	if (ifam->ifam_type == RTM_IFINFO) {
 		struct if_msghdr *ifm = (struct if_msghdr *) ifam;
 		struct sockaddr_dl *sdl = (struct sockaddr_dl *) (ifm + 1);
@@ -274,10 +278,11 @@ internal_current(isc_interfaceiter_t *iter) {
 
 		return (ISC_R_SUCCESS);
 	} else {
-		printf(isc_msgcat_get(isc_msgcat, ISC_MSGSET_IFITERSYSCTL,
-				      ISC_MSG_UNEXPECTEDTYPE,
-				      "warning: unexpected interface list "
-				      "message type\n"));
+		printf("%s", isc_msgcat_get(isc_msgcat,
+					    ISC_MSGSET_IFITERSYSCTL,
+					    ISC_MSG_UNEXPECTEDTYPE,
+					    "warning: unexpected interface "
+					    "list message type\n"));
 		return (ISC_R_IGNORE);
 	}
 }

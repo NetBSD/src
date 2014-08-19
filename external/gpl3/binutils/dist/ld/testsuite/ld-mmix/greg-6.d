@@ -41,6 +41,7 @@
 SYMBOL TABLE:
 0+0 l    d  \.text	0+ (|\.text)
 0+100 l    d  \.MMIX\.reg_contents	0+ (|\.MMIX\.reg_contents)
+0+ l    df \*ABS\*	0+ .*
 0+20 l       \*REG\*	0+ P
 0+21 l       \*REG\*	0+ O
 0+22 l       \*REG\*	0+ N
@@ -57,6 +58,7 @@ SYMBOL TABLE:
 0+2d l       \*REG\*	0+ C
 0+2e l       \*REG\*	0+ B
 0+2f l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+30 l       \*REG\*	0+ P
 0+31 l       \*REG\*	0+ O
 0+32 l       \*REG\*	0+ N
@@ -73,6 +75,7 @@ SYMBOL TABLE:
 0+3d l       \*REG\*	0+ C
 0+3e l       \*REG\*	0+ B
 0+3f l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+40 l       \*REG\*	0+ P
 0+41 l       \*REG\*	0+ O
 0+42 l       \*REG\*	0+ N
@@ -89,6 +92,7 @@ SYMBOL TABLE:
 0+4d l       \*REG\*	0+ C
 0+4e l       \*REG\*	0+ B
 0+4f l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+50 l       \*REG\*	0+ P
 0+51 l       \*REG\*	0+ O
 0+52 l       \*REG\*	0+ N
@@ -105,6 +109,7 @@ SYMBOL TABLE:
 0+5d l       \*REG\*	0+ C
 0+5e l       \*REG\*	0+ B
 0+5f l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+60 l       \*REG\*	0+ P
 0+61 l       \*REG\*	0+ O
 0+62 l       \*REG\*	0+ N
@@ -121,6 +126,7 @@ SYMBOL TABLE:
 0+6d l       \*REG\*	0+ C
 0+6e l       \*REG\*	0+ B
 0+6f l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+70 l       \*REG\*	0+ P
 0+71 l       \*REG\*	0+ O
 0+72 l       \*REG\*	0+ N
@@ -137,6 +143,7 @@ SYMBOL TABLE:
 0+7d l       \*REG\*	0+ C
 0+7e l       \*REG\*	0+ B
 0+7f l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+80 l       \*REG\*	0+ P
 0+81 l       \*REG\*	0+ O
 0+82 l       \*REG\*	0+ N
@@ -153,6 +160,7 @@ SYMBOL TABLE:
 0+8d l       \*REG\*	0+ C
 0+8e l       \*REG\*	0+ B
 0+8f l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+90 l       \*REG\*	0+ P
 0+91 l       \*REG\*	0+ O
 0+92 l       \*REG\*	0+ N
@@ -169,6 +177,7 @@ SYMBOL TABLE:
 0+9d l       \*REG\*	0+ C
 0+9e l       \*REG\*	0+ B
 0+9f l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+a0 l       \*REG\*	0+ P
 0+a1 l       \*REG\*	0+ O
 0+a2 l       \*REG\*	0+ N
@@ -185,6 +194,7 @@ SYMBOL TABLE:
 0+ad l       \*REG\*	0+ C
 0+ae l       \*REG\*	0+ B
 0+af l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+b0 l       \*REG\*	0+ P
 0+b1 l       \*REG\*	0+ O
 0+b2 l       \*REG\*	0+ N
@@ -201,6 +211,7 @@ SYMBOL TABLE:
 0+bd l       \*REG\*	0+ C
 0+be l       \*REG\*	0+ B
 0+bf l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+c0 l       \*REG\*	0+ P
 0+c1 l       \*REG\*	0+ O
 0+c2 l       \*REG\*	0+ N
@@ -217,6 +228,7 @@ SYMBOL TABLE:
 0+cd l       \*REG\*	0+ C
 0+ce l       \*REG\*	0+ B
 0+cf l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+d0 l       \*REG\*	0+ P
 0+d1 l       \*REG\*	0+ O
 0+d2 l       \*REG\*	0+ N
@@ -233,6 +245,7 @@ SYMBOL TABLE:
 0+dd l       \*REG\*	0+ C
 0+de l       \*REG\*	0+ B
 0+df l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+e0 l       \*REG\*	0+ P
 0+e1 l       \*REG\*	0+ O
 0+e2 l       \*REG\*	0+ N
@@ -249,25 +262,40 @@ SYMBOL TABLE:
 0+ed l       \*REG\*	0+ C
 0+ee l       \*REG\*	0+ B
 0+ef l       \*REG\*	0+ A
+0+ l    df \*ABS\*	0+ .*
 0+f0 l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+f1 l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+f2 l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+f3 l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+f4 l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+f5 l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+f6 l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+f7 l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+f8 l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+f9 l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+fa l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+fb l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+fc l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+fd l       \*REG\*	0+ lsym
+0+ l    df \*ABS\*	0+ .*
 0+14 g       \.text	0+ _start
 0+fe g       \*REG\*	0+ areg
-2000000000000000 g       \*ABS\*	0+ __bss_start
-2000000000000000 g       \*ABS\*	0+ _edata
-2000000000000000 g       \*ABS\*	0+ _end
+2000000000000000 g       \.text	0+ __bss_start
+2000000000000000 g       \.text	0+ _edata
+2000000000000000 g       \.text	0+ _end
 0+14 g       \.text	0+ _start\.
 0+10 g       \.text	0+ a
 

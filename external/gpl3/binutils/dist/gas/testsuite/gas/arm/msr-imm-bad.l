@@ -1,5 +1,5 @@
 [^:]*: Assembler messages:
-[^:]*:9: Error: Thumb encoding does not support an immediate here -- `msr APSR,#0xc0000004'
+[^:]*:9: Error: Thumb encoding does not support an immediate here -- `msr APSR_nzcvq,#0xc0000004'
 [^:]*:10: Error: Thumb encoding does not support an immediate here -- `msr APSR_g,#0xc0000004'
 [^:]*:11: Error: Thumb encoding does not support an immediate here -- `msr APSR_nzcvq,#0xc0000004'
 [^:]*:12: Error: Thumb encoding does not support an immediate here -- `msr APSR_nzcvqg,#0xc0000004'

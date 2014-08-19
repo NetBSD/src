@@ -1,10 +1,10 @@
-/*	$NetBSD: ad.c,v 1.1.1.3 2010/12/12 15:22:16 adam Exp $	*/
+/*	$NetBSD: ad.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* ad.c - routines for dealing with attribute descriptions */
-/* OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.95.2.10 2010/04/13 20:23:10 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -76,9 +76,11 @@ static int option_count = 1;
 
 static int msad_range_hack = 0;
 
+static int ad_count;
+
 static Attr_option *ad_find_option_definition( const char *opt, int optlen );
 
-static int ad_keystring(
+int ad_keystring(
 	struct berval *bv )
 {
 	ber_len_t i;
@@ -384,6 +386,9 @@ done:;
 		d2->ad_flags = desc.ad_flags;
 		d2->ad_cname.bv_len = desc.ad_type->sat_cname.bv_len;
 		d2->ad_tags.bv_len = desc.ad_tags.bv_len;
+		ldap_pvt_thread_mutex_lock( &ad_index_mutex );
+		d2->ad_index = ++ad_count;
+		ldap_pvt_thread_mutex_unlock( &ad_index_mutex );
 
 		if (dlen == 0) {
 			d2->ad_cname.bv_val = d2->ad_type->sat_cname.bv_val;
@@ -772,6 +777,7 @@ int slap_bv2undef_ad(
 
 		/* shouldn't we protect this for concurrency? */
 		desc->ad_type = at;
+		desc->ad_index = 0;
 		ldap_pvt_thread_mutex_lock( &ad_undef_mutex );
 		desc->ad_next = desc->ad_type->sat_ad;
 		desc->ad_type->sat_ad = desc;
@@ -840,6 +846,9 @@ undef_promote(
 			tmp->ad_next = NULL;
 			/* ad_cname was contiguous, no leak here */
 			tmp->ad_cname = nat->sat_cname;
+			ldap_pvt_thread_mutex_lock( &ad_index_mutex );
+			tmp->ad_index = ++ad_count;
+			ldap_pvt_thread_mutex_unlock( &ad_index_mutex );
 			*n_ad = tmp;
 			n_ad = &tmp->ad_next;
 		} else {

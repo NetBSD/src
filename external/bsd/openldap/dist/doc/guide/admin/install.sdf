@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/install.sdf,v 1.38.2.9 2010/04/13 20:22:33 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Building and Installing OpenLDAP Software
@@ -63,15 +63,16 @@ installation instructions provided with it.
 
 H3: {{TERM[expand]TLS}}
 
-OpenLDAP clients and servers require installation of either {{PRD:OpenSSL}}
-or {{PRD:GnuTLS}}
+OpenLDAP clients and servers require installation of {{PRD:OpenSSL}},
+ {{PRD:GnuTLS}}, or {{PRD:MozNSS}}
 {{TERM:TLS}} libraries to provide {{TERM[expand]TLS}} services.  Though
 some operating systems may provide these libraries as part of the
-base system or as an optional software component, OpenSSL and GnuTLS often
-require separate installation.
+base system or as an optional software component, OpenSSL, GnuTLS, and
+Mozilla NSS often require separate installation.
 
 OpenSSL is available from {{URL: http://www.openssl.org/}}.
 GnuTLS is available from {{URL: http://www.gnu.org/software/gnutls/}}.
+Mozilla NSS is available from {{URL: http://developer.mozilla.org/en/NSS}}.
 
 OpenLDAP Software will not be fully LDAPv3 compliant unless OpenLDAP's
 {{EX:configure}} detects a usable TLS library.
@@ -166,10 +167,10 @@ and their usage.
 !endif
 >	./configure --help
 
-The {{EX:configure}} script will also look at various environment variables
-for certain settings.  These environment variables include:
+The {{EX:configure}} script also looks for certain variables
+on the command line and in the environment.  These include:
 
-!block table; align=Center; coltags="EX,N"; title="Table 4.1: Environment Variables"
+!block table; align=Center; coltags="EX,N"; title="Table 4.1: Variables"
 Variable	Description
 CC      	Specify alternative C Compiler
 CFLAGS  	Specify additional compiler flags
@@ -179,29 +180,26 @@ LIBS    	Specify additional libraries
 !endblock
 
 Now run the configure script with any desired configuration options or
-environment variables.
+variables.
 
->	[[env] settings] ./configure [options]
+>	./configure [options] [variable=value ...]
 
 As an example, let's assume that we want to install OpenLDAP with
 BDB backend and TCP Wrappers support.  By default, BDB
 is enabled and TCP Wrappers is not.  So, we just need to specify
-{{EX:--with-wrappers}} to include TCP Wrappers support:
+{{EX:--enable-wrappers}} to include TCP Wrappers support:
 
->	./configure --with-wrappers
+>	./configure --enable-wrappers
 
 However, this will fail to locate dependent software not
 installed in system directories.  For example, if TCP Wrappers
 headers and libraries are installed in {{F:/usr/local/include}}
 and {{F:/usr/local/lib}} respectively, the {{EX:configure}}
-script should be called as follows:
+script should typically be called as follows:
 
->	env CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" \
->		./configure --with-wrappers
-
-Note: Some shells, such as those derived from the Bourne {{sh}}(1),
-do not require use of the {{env}}(1) command.  In some cases, environmental
-variables have to be specified using alternative syntaxes.
+>	./configure --enable-wrappers \
+>		CPPFLAGS="-I/usr/local/include" \
+>		LDFLAGS="-L/usr/local/lib -Wl,-rpath,/usr/local/lib"
 
 The {{EX:configure}} script will normally auto-detect appropriate
 settings.  If you have problems at this stage, consult any platform

@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# The Atf_Check variable is set by atf-sh.
+# The Atf_Check and Atf-Shell variables are set by atf-sh.
 
 h_pass()
 {
@@ -36,7 +36,7 @@ h_pass()
     echo "Running [atf-check $*] against [${cmd}]"
 
     cat >script.sh <<EOF
-#! $(atf-config -t atf_shell)
+#! ${Atf_Shell}
 ${cmd}
 EOF
     chmod +x script.sh
@@ -54,7 +54,7 @@ h_fail()
     echo "Running [atf-check $*] against [${cmd}]"
 
     cat >script.sh <<EOF
-#! $(atf-config -t atf_shell)
+#! ${Atf_Shell}
 ${cmd}
 EOF
     chmod +x script.sh
@@ -211,10 +211,10 @@ oflag_inline_body()
     h_pass "echo foo bar" -o inline:"foo bar\n"
     h_pass "printf 'foo bar'" -o inline:"foo bar"
     h_pass "printf '\t\n\t\n'" -o inline:"\t\n\t\n"
-    # XXX Ugly hack to workaround the lack of \e in FreeBSD.  Look for a
-    # nicer solution...
+    # XXX Ugly hack to workaround the lack of \e in FreeBSD.  Also, \e doesn't
+    # seem to work as expected in Linux.  Look for a nicer solution.
     case $(uname) in
-    FreeBSD)
+    Darwin|FreeBSD|Linux)
         h_pass "printf '\a\b\f\n\r\t\v'" -o inline:"\a\b\f\n\r\t\v"
         ;;
     *)
@@ -234,6 +234,7 @@ oflag_match_head()
 }
 oflag_match_body()
 {
+    h_pass "printf no-newline" -o "match:^no-newline"
     h_pass "echo line1; echo foo bar" -o "match:^foo"
     h_pass "echo foo bar" -o "match:o b"
     h_fail "echo foo bar" -o "match:baz"
@@ -330,10 +331,10 @@ eflag_inline_body()
     h_pass "echo foo bar 1>&2" -e inline:"foo bar\n"
     h_pass "printf 'foo bar' 1>&2" -e inline:"foo bar"
     h_pass "printf '\t\n\t\n' 1>&2" -e inline:"\t\n\t\n"
-    # XXX Ugly hack to workaround the lack of \e in FreeBSD.  Look for a
-    # nicer solution...
+    # XXX Ugly hack to workaround the lack of \e in FreeBSD.  Also, \e doesn't
+    # seem to work as expected in Linux.  Look for a nicer solution.
     case $(uname) in
-    FreeBSD)
+    Darwin|FreeBSD|Linux)
         h_pass "printf '\a\b\f\n\r\t\v' 1>&2" -e inline:"\a\b\f\n\r\t\v"
         ;;
     *)
@@ -365,6 +366,7 @@ eflag_match_head()
 }
 eflag_match_body()
 {
+    h_pass "printf no-newline 1>&2" -e "match:^no-newline"
     h_pass "echo line1 1>&2; echo foo bar 1>&2" -e "match:^foo"
     h_pass "echo foo bar 1>&2" -e "match:o b"
     h_fail "echo foo bar 1>&2" -e "match:baz"
@@ -396,6 +398,17 @@ eflag_negated_body()
 
     h_pass "echo foo bar 1>&2" -e match:foo
     h_fail "echo foo bar 1>&2" -e not-match:foo
+}
+
+atf_test_case stdin
+stdin_head()
+{
+    atf_set "descr" "Tests that stdin is preserved"
+}
+stdin_body()
+{
+    echo "hello" | ${Atf_Check} -o match:"hello" cat || \
+        atf_fail "atf-check does not seem to respect stdin"
 }
 
 atf_test_case invalid_umask
@@ -441,6 +454,8 @@ atf_init_test_cases()
     atf_add_test_case eflag_save
     atf_add_test_case eflag_multiple
     atf_add_test_case eflag_negated
+
+    atf_add_test_case stdin
 
     atf_add_test_case invalid_umask
 }

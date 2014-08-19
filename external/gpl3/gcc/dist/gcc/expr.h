@@ -1,7 +1,5 @@
 /* Definitions for code generation pass of GNU compiler.
-   Copyright (C) 1987, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -34,11 +32,6 @@ along with GCC; see the file COPYING3.  If not see
 /* For GET_MODE_BITSIZE, word_mode */
 #include "machmode.h"
 
-/* The default branch cost is 1.  */
-#ifndef BRANCH_COST
-#define BRANCH_COST(speed_p, predictable_p) 1
-#endif
-
 /* This is the 4th arg to `expand_expr'.
    EXPAND_STACK_PARM means we are possibly expanding a call param onto
    the stack.
@@ -60,37 +53,6 @@ enum expand_modifier {EXPAND_NORMAL = 0, EXPAND_STACK_PARM, EXPAND_SUM,
 /* Allow the compiler to defer stack pops.  See inhibit_defer_pop for
    more information.  */
 #define OK_DEFER_POP (inhibit_defer_pop -= 1)
-
-/* If a memory-to-memory move would take MOVE_RATIO or more simple
-   move-instruction sequences, we will do a movmem or libcall instead.  */
-
-#ifndef MOVE_RATIO
-#if defined (HAVE_movmemqi) || defined (HAVE_movmemhi) || defined (HAVE_movmemsi) || defined (HAVE_movmemdi) || defined (HAVE_movmemti)
-#define MOVE_RATIO(speed) 2
-#else
-/* If we are optimizing for space (-Os), cut down the default move ratio.  */
-#define MOVE_RATIO(speed) ((speed) ? 15 : 3)
-#endif
-#endif
-
-/* If a clear memory operation would take CLEAR_RATIO or more simple
-   move-instruction sequences, we will do a setmem or libcall instead.  */
-
-#ifndef CLEAR_RATIO
-#if defined (HAVE_setmemqi) || defined (HAVE_setmemhi) || defined (HAVE_setmemsi) || defined (HAVE_setmemdi) || defined (HAVE_setmemti)
-#define CLEAR_RATIO(speed) 2
-#else
-/* If we are optimizing for space, cut down the default clear ratio.  */
-#define CLEAR_RATIO(speed) ((speed) ? 15 :3)
-#endif
-#endif
-
-/* If a memory set (to value other than zero) operation would take
-   SET_RATIO or more simple move-instruction sequences, we will do a movmem
-   or libcall instead.  */
-#ifndef SET_RATIO
-#define SET_RATIO(speed) MOVE_RATIO(speed)
-#endif
 
 enum direction {none, upward, downward};
 
@@ -166,106 +128,6 @@ do {								\
 ((SIZE).var == 0 ? GEN_INT ((SIZE).constant)			\
  : expand_normal (ARGS_SIZE_TREE (SIZE)))
 
-/* Supply a default definition for FUNCTION_ARG_PADDING:
-   usually pad upward, but pad short args downward on
-   big-endian machines.  */
-
-#define DEFAULT_FUNCTION_ARG_PADDING(MODE, TYPE)			\
-  (! BYTES_BIG_ENDIAN							\
-   ? upward								\
-   : (((MODE) == BLKmode						\
-       ? ((TYPE) && TREE_CODE (TYPE_SIZE (TYPE)) == INTEGER_CST		\
-	  && int_size_in_bytes (TYPE) < (PARM_BOUNDARY / BITS_PER_UNIT)) \
-       : GET_MODE_BITSIZE (MODE) < PARM_BOUNDARY)			\
-      ? downward : upward))
-
-#ifndef FUNCTION_ARG_PADDING
-#define FUNCTION_ARG_PADDING(MODE, TYPE)	\
-  DEFAULT_FUNCTION_ARG_PADDING ((MODE), (TYPE))
-#endif
-
-/* Supply a default definition for FUNCTION_ARG_BOUNDARY.  Normally, we let
-   FUNCTION_ARG_PADDING, which also pads the length, handle any needed
-   alignment.  */
-
-#ifndef FUNCTION_ARG_BOUNDARY
-#define FUNCTION_ARG_BOUNDARY(MODE, TYPE)	PARM_BOUNDARY
-#endif
-
-/* Supply a default definition of STACK_SAVEAREA_MODE for emit_stack_save.
-   Normally move_insn, so Pmode stack pointer.  */
-
-#ifndef STACK_SAVEAREA_MODE
-#define STACK_SAVEAREA_MODE(LEVEL) Pmode
-#endif
-
-/* Supply a default definition of STACK_SIZE_MODE for
-   allocate_dynamic_stack_space.  Normally PLUS/MINUS, so word_mode.  */
-
-#ifndef STACK_SIZE_MODE
-#define STACK_SIZE_MODE word_mode
-#endif
-
-/* Provide default values for the macros controlling stack checking.  */
-
-/* The default is neither full builtin stack checking...  */
-#ifndef STACK_CHECK_BUILTIN
-#define STACK_CHECK_BUILTIN 0
-#endif
-
-/* ...nor static builtin stack checking.  */
-#ifndef STACK_CHECK_STATIC_BUILTIN
-#define STACK_CHECK_STATIC_BUILTIN 0
-#endif
-
-/* The default interval is one page (4096 bytes).  */
-#ifndef STACK_CHECK_PROBE_INTERVAL_EXP
-#define STACK_CHECK_PROBE_INTERVAL_EXP 12
-#endif
-
-/* The default is not to move the stack pointer.  */
-#ifndef STACK_CHECK_MOVING_SP
-#define STACK_CHECK_MOVING_SP 0
-#endif
-
-/* This is a kludge to try to capture the discrepancy between the old
-   mechanism (generic stack checking) and the new mechanism (static
-   builtin stack checking).  STACK_CHECK_PROTECT needs to be bumped
-   for the latter because part of the protection area is effectively
-   included in STACK_CHECK_MAX_FRAME_SIZE for the former.  */
-#ifdef STACK_CHECK_PROTECT
-#define STACK_OLD_CHECK_PROTECT STACK_CHECK_PROTECT
-#else
-#define STACK_OLD_CHECK_PROTECT \
- (USING_SJLJ_EXCEPTIONS ? 75 * UNITS_PER_WORD : 8 * 1024)
-#endif
-
-/* Minimum amount of stack required to recover from an anticipated stack
-   overflow detection.  The default value conveys an estimate of the amount
-   of stack required to propagate an exception.  */
-#ifndef STACK_CHECK_PROTECT
-#define STACK_CHECK_PROTECT \
- (USING_SJLJ_EXCEPTIONS ? 75 * UNITS_PER_WORD : 12 * 1024)
-#endif
-
-/* Make the maximum frame size be the largest we can and still only need
-   one probe per function.  */
-#ifndef STACK_CHECK_MAX_FRAME_SIZE
-#define STACK_CHECK_MAX_FRAME_SIZE \
-  ((1 << STACK_CHECK_PROBE_INTERVAL_EXP) - UNITS_PER_WORD)
-#endif
-
-/* This is arbitrary, but should be large enough everywhere.  */
-#ifndef STACK_CHECK_FIXED_FRAME_SIZE
-#define STACK_CHECK_FIXED_FRAME_SIZE (4 * UNITS_PER_WORD)
-#endif
-
-/* Provide a reasonable default for the maximum size of an object to
-   allocate in the fixed frame.  We may need to be able to make this
-   controllable by the user at some point.  */
-#ifndef STACK_CHECK_MAX_VAR_SIZE
-#define STACK_CHECK_MAX_VAR_SIZE (STACK_CHECK_MAX_FRAME_SIZE / 100)
-#endif
 
 /* This structure is used to pass around information about exploded
    unary, binary and trinary expressions between expand_expr_real_1 and
@@ -273,9 +135,9 @@ do {								\
 typedef struct separate_ops
 {
   enum tree_code code;
+  location_t location;
   tree type;
   tree op0, op1, op2;
-  location_t location;
 } *sepops;
 
 /* Functions from optabs.c, commonly used, and without need for the optabs
@@ -309,9 +171,6 @@ extern rtx expand_simple_unop (enum machine_mode, enum rtx_code, rtx, rtx,
    perform the operation described by CODE and MODE.  */
 extern int have_insn_for (enum rtx_code, enum machine_mode);
 
-extern rtx prepare_operand (int, rtx, int, enum machine_mode, enum machine_mode,
-			    int);
-
 /* Emit code to make a call to a constant function or a library call.  */
 extern void emit_libcall_block (rtx, rtx, rtx, rtx);
 
@@ -329,7 +188,7 @@ extern int have_sub2_insn (rtx, rtx);
 /* Emit a pair of rtl insns to compare two rtx's and to jump
    to a label if the comparison is true.  */
 extern void emit_cmp_and_jump_insns (rtx, rtx, enum rtx_code, rtx,
-				     enum machine_mode, int, rtx);
+				     enum machine_mode, int, rtx, int prob=-1);
 
 /* Generate code to indirectly jump to a location given in the rtx LOC.  */
 extern void emit_indirect_jump (rtx);
@@ -351,11 +210,20 @@ int can_conditionally_move_p (enum machine_mode mode);
 rtx emit_conditional_add (rtx, enum rtx_code, rtx, rtx, enum machine_mode,
 			  rtx, rtx, enum machine_mode, int);
 
-rtx expand_val_compare_and_swap (rtx, rtx, rtx, rtx);
-rtx expand_bool_compare_and_swap (rtx, rtx, rtx, rtx);
 rtx expand_sync_operation (rtx, rtx, enum rtx_code);
 rtx expand_sync_fetch_operation (rtx, rtx, enum rtx_code, bool, rtx);
 rtx expand_sync_lock_test_and_set (rtx, rtx, rtx);
+
+rtx expand_atomic_exchange (rtx, rtx, rtx, enum memmodel);
+rtx expand_atomic_load (rtx, rtx, enum memmodel);
+rtx expand_atomic_store (rtx, rtx, enum memmodel, bool);
+rtx expand_atomic_fetch_op (rtx, rtx, rtx, enum rtx_code, enum memmodel, 
+			      bool);
+rtx expand_atomic_test_and_set (rtx, rtx, enum memmodel);
+rtx expand_atomic_clear (rtx, enum memmodel);
+void expand_atomic_thread_fence (enum memmodel);
+void expand_atomic_signal_fence (enum memmodel);
+
 
 /* Functions from expmed.c:  */
 
@@ -373,6 +241,13 @@ extern rtx emit_store_flag (rtx, enum rtx_code, rtx, rtx, enum machine_mode,
 /* Like emit_store_flag, but always succeeds.  */
 extern rtx emit_store_flag_force (rtx, enum rtx_code, rtx, rtx,
 				  enum machine_mode, int, int);
+
+/* Choose a minimal N + 1 bit approximation to 1/D that can be used to
+   replace division by D, and put the least significant N bits of the result
+   in *MULTIPLIER_PTR and return the most significant bit.  */
+extern unsigned HOST_WIDE_INT choose_multiplier (unsigned HOST_WIDE_INT, int,
+						 int, unsigned HOST_WIDE_INT *,
+						 int *, int *);
 
 /* Functions from builtins.c:  */
 extern rtx expand_builtin (tree, rtx, rtx, enum machine_mode, int);
@@ -457,13 +332,23 @@ extern rtx emit_group_move_into_temps (rtx);
    PARALLEL.  */
 extern void emit_group_store (rtx, rtx, tree, int);
 
+extern rtx maybe_emit_group_store (rtx, tree);
+
 /* Copy BLKmode object from a set of registers.  */
-extern rtx copy_blkmode_from_reg (rtx, rtx, tree);
+extern void copy_blkmode_from_reg (rtx, rtx, tree);
+
+/* Mark REG as holding a parameter for the next CALL_INSN.
+   Mode is TYPE_MODE of the non-promoted parameter, or VOIDmode.  */
+extern void use_reg_mode (rtx *, rtx, enum machine_mode);
 
 extern rtx copy_blkmode_to_reg (enum machine_mode, tree);
 
 /* Mark REG as holding a parameter for the next CALL_INSN.  */
-extern void use_reg (rtx *, rtx);
+static inline void
+use_reg (rtx *fusage, rtx reg)
+{
+  use_reg_mode (fusage, reg, VOIDmode);
+}
 
 /* Mark NREGS consecutive regs, starting at REGNO, as holding parameters
    for the next CALL_INSN.  */
@@ -484,10 +369,9 @@ rtx set_storage_via_libcall (rtx, rtx, rtx, bool);
 extern bool set_storage_via_setmem (rtx, rtx, rtx, unsigned int,
 				    unsigned int, HOST_WIDE_INT);
 
-/* Determine whether the LEN bytes can be moved by using several move
-   instructions.  Return nonzero if a call to move_by_pieces should
-   succeed.  */
-extern int can_move_by_pieces (unsigned HOST_WIDE_INT, unsigned int);
+extern unsigned HOST_WIDE_INT move_by_pieces_ninsns (unsigned HOST_WIDE_INT,
+						     unsigned int,
+						     unsigned int);
 
 /* Return nonzero if it is desirable to store LEN bytes generated by
    CONSTFUN with several move instructions by store_by_pieces
@@ -601,8 +485,8 @@ extern void do_compare_rtx_and_jump (rtx, rtx, enum rtx_code, int,
 				     enum machine_mode, rtx, rtx, rtx, int);
 
 /* Two different ways of generating switch statements.  */
-extern int try_casesi (tree, tree, tree, tree, rtx, rtx, rtx);
-extern int try_tablejump (tree, tree, tree, tree, rtx, rtx);
+extern int try_casesi (tree, tree, tree, tree, rtx, rtx, rtx, int);
+extern int try_tablejump (tree, tree, tree, tree, rtx, rtx, int);
 
 /* Functions from alias.c */
 #include "alias.h"
@@ -629,14 +513,16 @@ extern rtx expand_call (tree, rtx, int);
 extern void fixup_tail_calls (void);
 
 #ifdef TREE_CODE
-extern rtx expand_shift (enum tree_code, enum machine_mode, rtx, tree, rtx,
-			 int);
+extern rtx expand_variable_shift (enum tree_code, enum machine_mode,
+				  rtx, tree, rtx, int);
+extern rtx expand_shift (enum tree_code, enum machine_mode, rtx, int, rtx,
+			     int);
 extern rtx expand_divmod (int, enum tree_code, enum machine_mode, rtx, rtx,
 			  rtx, int);
 #endif
 
-extern void locate_and_pad_parm (enum machine_mode, tree, int, int, tree,
-				 struct args_size *,
+extern void locate_and_pad_parm (enum machine_mode, tree, int, int, int,
+				 tree, struct args_size *,
 				 struct locate_and_pad_arg_data *);
 
 /* Return the CODE_LABEL rtx for a LABEL_DECL, creating it if necessary.  */
@@ -671,11 +557,27 @@ extern rtx change_address (rtx, enum machine_mode, rtx);
 /* Return a memory reference like MEMREF, but with its mode changed
    to MODE and its address offset by OFFSET bytes.  */
 #define adjust_address(MEMREF, MODE, OFFSET) \
-  adjust_address_1 (MEMREF, MODE, OFFSET, 1, 1)
+  adjust_address_1 (MEMREF, MODE, OFFSET, 1, 1, 0, 0)
 
 /* Likewise, but the reference is not required to be valid.  */
 #define adjust_address_nv(MEMREF, MODE, OFFSET) \
-  adjust_address_1 (MEMREF, MODE, OFFSET, 0, 1)
+  adjust_address_1 (MEMREF, MODE, OFFSET, 0, 1, 0, 0)
+
+/* Return a memory reference like MEMREF, but with its mode changed
+   to MODE and its address offset by OFFSET bytes.  Assume that it's
+   for a bitfield and conservatively drop the underlying object if we
+   cannot be sure to stay within its bounds.  */
+#define adjust_bitfield_address(MEMREF, MODE, OFFSET) \
+  adjust_address_1 (MEMREF, MODE, OFFSET, 1, 1, 1, 0)
+
+/* As for adjust_bitfield_address, but specify that the width of
+   BLKmode accesses is SIZE bytes.  */
+#define adjust_bitfield_address_size(MEMREF, MODE, OFFSET, SIZE) \
+  adjust_address_1 (MEMREF, MODE, OFFSET, 1, 1, 1, SIZE)
+
+/* Likewise, but the reference is not required to be valid.  */
+#define adjust_bitfield_address_nv(MEMREF, MODE, OFFSET) \
+  adjust_address_1 (MEMREF, MODE, OFFSET, 0, 1, 1, 0)
 
 /* Return a memory reference like MEMREF, but with its mode changed
    to MODE and its address changed to ADDR, which is assumed to be
@@ -687,7 +589,8 @@ extern rtx change_address (rtx, enum machine_mode, rtx);
 #define adjust_automodify_address_nv(MEMREF, MODE, ADDR, OFFSET) \
   adjust_automodify_address_1 (MEMREF, MODE, ADDR, OFFSET, 0)
 
-extern rtx adjust_address_1 (rtx, enum machine_mode, HOST_WIDE_INT, int, int);
+extern rtx adjust_address_1 (rtx, enum machine_mode, HOST_WIDE_INT, int, int,
+			     int, HOST_WIDE_INT);
 extern rtx adjust_automodify_address_1 (rtx, enum machine_mode, rtx,
 					HOST_WIDE_INT, int);
 
@@ -771,17 +674,19 @@ extern void anti_adjust_stack_and_probe (rtx, bool);
 enum save_level {SAVE_BLOCK, SAVE_FUNCTION, SAVE_NONLOCAL};
 
 /* Save the stack pointer at the specified level.  */
-extern void emit_stack_save (enum save_level, rtx *, rtx);
+extern void emit_stack_save (enum save_level, rtx *);
 
 /* Restore the stack pointer from a save area of the specified level.  */
-extern void emit_stack_restore (enum save_level, rtx, rtx);
+extern void emit_stack_restore (enum save_level, rtx);
 
 /* Invoke emit_stack_save for the nonlocal_goto_save_area.  */
 extern void update_nonlocal_goto_save_area (void);
 
-/* Allocate some space on the stack dynamically and return its address.  An rtx
-   says how many bytes.  */
-extern rtx allocate_dynamic_stack_space (rtx, rtx, int);
+/* Allocate some space on the stack dynamically and return its address.  */
+extern rtx allocate_dynamic_stack_space (rtx, unsigned, unsigned, bool);
+
+/* Emit one stack probe at ADDRESS, an address within the stack.  */
+extern void emit_stack_probe (rtx);
 
 /* Probe a range of stack addresses from FIRST to FIRST+SIZE, inclusive.
    FIRST is a constant and size is a Pmode RTX.  These are offsets from
@@ -793,18 +698,13 @@ extern void probe_stack_range (HOST_WIDE_INT, rtx);
    in its original home.  This becomes invalid if any more code is emitted.  */
 extern rtx hard_libcall_value (enum machine_mode, rtx);
 
-/* Return the mode desired by operand N of a particular bitfield
-   insert/extract insn, or MAX_MACHINE_MODE if no such insn is
-   available.  */
-
-enum extraction_pattern { EP_insv, EP_extv, EP_extzv };
-extern enum machine_mode
-mode_for_extraction (enum extraction_pattern, int);
-
 extern void store_bit_field (rtx, unsigned HOST_WIDE_INT,
-			     unsigned HOST_WIDE_INT, enum machine_mode, rtx);
+			     unsigned HOST_WIDE_INT,
+			     unsigned HOST_WIDE_INT,
+			     unsigned HOST_WIDE_INT,
+			     enum machine_mode, rtx);
 extern rtx extract_bit_field (rtx, unsigned HOST_WIDE_INT,
-			      unsigned HOST_WIDE_INT, int, rtx,
+			      unsigned HOST_WIDE_INT, int, bool, rtx,
 			      enum machine_mode, enum machine_mode);
 extern rtx extract_low_bits (enum machine_mode, enum machine_mode, rtx);
 extern rtx expand_mult (enum machine_mode, rtx, rtx, rtx, int);
@@ -818,7 +718,7 @@ extern bool split_comparison (enum rtx_code, enum machine_mode,
 /* Call this once to initialize the contents of the optabs
    appropriately for the current target machine.  */
 extern void init_optabs (void);
-extern void init_all_optabs (void);
+extern void init_all_optabs (struct target_optabs *);
 
 /* Call this to initialize an optab function entry.  */
 extern rtx init_one_libfunc (const char *);
@@ -830,6 +730,13 @@ extern tree build_libfunc_function (const char *);
 /* Get the personality libfunc for a function decl.  */
 rtx get_personality_function (tree);
 
-extern int vector_mode_valid_p (enum machine_mode);
+
+/* In stmt.c */
+
+/* Expand a GIMPLE_SWITCH statement.  */
+extern void expand_case (gimple);
+
+/* Like expand_case but special-case for SJLJ exception dispatching.  */
+extern void expand_sjlj_dispatch_table (rtx, vec<tree> );
 
 #endif /* GCC_EXPR_H */

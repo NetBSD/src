@@ -1,7 +1,7 @@
 /* bfd back-end for HP PA-RISC SOM objects.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011,
+   2012  Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah.
@@ -23,8 +23,8 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
-#include "alloca-conf.h"
 #include "sysdep.h"
+#include "alloca-conf.h"
 #include "bfd.h"
 
 #include "libbfd.h"
@@ -6741,6 +6741,7 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
   _bfd_generic_copy_link_hash_symbol_type
 #define som_bfd_final_link                      _bfd_generic_final_link
 #define som_bfd_gc_sections		        bfd_generic_gc_sections
+#define som_bfd_lookup_section_flags            bfd_generic_lookup_section_flags
 #define som_bfd_merge_sections		        bfd_generic_merge_sections
 #define som_bfd_is_group_section	        bfd_generic_is_group_section
 #define som_bfd_discard_group		        bfd_generic_discard_group
@@ -6768,6 +6769,7 @@ const bfd_target som_vec =
   0,
   '/',				/* AR_pad_char.  */
   14,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

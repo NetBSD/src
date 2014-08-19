@@ -1,5 +1,5 @@
 /* Morpho Technologies mRISC opcode support, for GNU Binutils.  -*- C -*-
-   Copyright 2001, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright 2001, 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
 
    Contributed by Red Hat Inc; developed under contract from
    Morpho Technologies.
@@ -447,7 +447,7 @@ print_dollarhex (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 {
   disassemble_info *info = (disassemble_info *) dis_info;
 
-  info->fprintf_func (info->stream, "$%lx", value);
+  info->fprintf_func (info->stream, "$%lx", value & 0xffffffff);
 
   if (0)
     print_normal (cd, dis_info, value, attrs, pc, length);

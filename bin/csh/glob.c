@@ -1,4 +1,4 @@
-/* $NetBSD: glob.c,v 1.25.40.1 2013/02/25 00:23:51 tls Exp $ */
+/* $NetBSD: glob.c,v 1.25.40.2 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.25.40.1 2013/02/25 00:23:51 tls Exp $");
+__RCSID("$NetBSD: glob.c,v 1.25.40.2 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: glob.c,v 1.25.40.1 2013/02/25 00:23:51 tls Exp $");
 #include <errno.h>
 #include <glob.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -87,7 +88,7 @@ static Char *handleone(Char *, Char **, int);
 static Char **libglob(Char **);
 static Char **globexpand(Char **);
 static int globbrace(Char *, Char *, Char ***);
-static void expbrace(Char ***, Char ***, int);
+static void expbrace(Char ***, Char ***, size_t);
 static int pmatch(Char *, Char *);
 static void pword(void);
 static void psave(int);
@@ -130,7 +131,7 @@ globbrace(Char *s, Char *p, Char ***bl)
     int i, len, size;
 
     size = GLOBSPACE;
-    nv = vl = (Char **)xmalloc((size_t) sizeof(Char *) * size);
+    nv = vl = xmalloc(sizeof(Char *) * (size_t)size);
     *vl = NULL;
     len = 0;
     /* copy part up to the brace */
@@ -211,7 +212,7 @@ globbrace(Char *s, Char *p, Char ***bl)
 }
 
 static void
-expbrace(Char ***nvp, Char ***elp, int size)
+expbrace(Char ***nvp, Char ***elp, size_t size)
 {
     Char **ex, **nv, *s, **vl;
 
@@ -244,10 +245,10 @@ expbrace(Char ***nvp, Char ***elp, int size)
 	    }
 	    len = blklen(bl);
 	    if (&ex[len] >= &nv[size]) {
-		int e, l;
+		ptrdiff_t l, e;
 
 		l = &ex[len] - &nv[size];
-		size += GLOBSPACE > l ? GLOBSPACE : l;
+		size += (size_t)(GLOBSPACE > l ? GLOBSPACE : l);
 		l = vl - nv;
 		e = ex - nv;
 		nv = (Char **)xrealloc((ptr_t)nv,
@@ -277,10 +278,10 @@ static Char **
 globexpand(Char **v)
 {
     Char **ex, **nv, *s, **vl;
-    int size;
+    size_t size;
 
     size = GLOBSPACE;
-    nv = vl = (Char **)xmalloc((size_t)sizeof(Char *) * size);
+    nv = vl = xmalloc(sizeof(Char *) * size);
     *vl = NULL;
 
     /*
@@ -308,7 +309,7 @@ globexpand(Char **v)
 	    if (vl == &nv[size]) {
 		size += GLOBSPACE;
 		nv = (Char **)xrealloc((ptr_t)nv,
-		    (size_t)size * sizeof(Char *));
+		    size * sizeof(Char *));
 		vl = &nv[size - GLOBSPACE];
 	    }
 	}
@@ -515,7 +516,7 @@ void
 ginit(void)
 {
     gargsiz = GLOBSPACE;
-    gargv = (Char **)xmalloc((size_t)sizeof(Char *) * gargsiz);
+    gargv = xmalloc(sizeof(Char *) * (size_t)gargsiz);
     gargv[0] = 0;
     gargc = 0;
 }
@@ -594,7 +595,7 @@ dobackp(Char *cp, int literal)
 	blkfree(pargv);
     }
     pargsiz = GLOBSPACE;
-    pargv = (Char **)xmalloc((size_t)sizeof(Char *) * pargsiz);
+    pargv = xmalloc(sizeof(Char *) * (size_t)pargsiz);
     pargv[0] = NULL;
     pargcp = pargs = word;
     pargc = 0;
@@ -632,7 +633,8 @@ backeval(Char *cp, int literal)
     struct command faket;
     char tibuf[BUFSIZE];
     Char ibuf[BUFSIZE], *fakecom[2], *ip;
-    int pvec[2], c, icnt, quoted;
+    int pvec[2], c, quoted;
+    ssize_t icnt;
     int hadnl;
 
     hadnl = 0;
@@ -770,7 +772,7 @@ psave(int c)
 {
     if (--pnleft <= 0)
 	stderror(ERR_WTOOLONG);
-    *pargcp++ = c;
+    *pargcp++ = (Char)c;
 }
 
 static void
@@ -802,7 +804,7 @@ Gmatch(Char *string, Char *pattern)
 	pattern++;
     }
 
-    blk = (Char **)xmalloc(GLOBSPACE * sizeof(Char *));
+    blk = xmalloc(GLOBSPACE * sizeof(Char *));
     blk[0] = Strsave(pattern);
     blk[1] = NULL;
 
@@ -873,7 +875,7 @@ void
 Gcat(Char *s1, Char *s2)
 {
     Char *p, *q;
-    int n;
+    ptrdiff_t n;
 
     for (p = s1; *p++;)
 	continue;
@@ -886,7 +888,7 @@ Gcat(Char *s1, Char *s2)
 	    (size_t)gargsiz * sizeof(Char *));
     }
     gargv[gargc] = 0;
-    p = gargv[gargc - 1] = (Char *)xmalloc((size_t)n * sizeof(Char));
+    p = gargv[gargc - 1] = xmalloc((size_t)n * sizeof(Char));
     for (q = s1; (*p++ = *q++) != '\0';)
 	continue;
     for (p--, q = s2; (*p++ = *q++) != '\0';)

@@ -1,0 +1,87 @@
+#	$NetBSD: Makefile,v 1.3.4.2 2014/08/19 23:51:28 tls Exp $
+
+LIB=	lldbCore
+
+.include <bsd.init.mk>
+
+.PATH: ${LLDB_SRCDIR}/source/Core
+
+CPPFLAGS.IOHandler.cpp+= -DLLDB_DISABLE_CURSES
+
+SRCS+=	Address.cpp \
+	AddressRange.cpp \
+	AddressResolver.cpp \
+	AddressResolverFileLine.cpp \
+	AddressResolverName.cpp \
+	ArchSpec.cpp \
+	Baton.cpp \
+	Broadcaster.cpp \
+	Communication.cpp \
+	Connection.cpp \
+	ConnectionFileDescriptor.cpp \
+	ConnectionMachPort.cpp \
+	ConnectionSharedMemory.cpp \
+	ConstString.cpp \
+	DataBufferHeap.cpp \
+	DataBufferMemoryMap.cpp \
+	DataEncoder.cpp \
+	DataExtractor.cpp \
+	Debugger.cpp \
+	Disassembler.cpp \
+	DynamicLoader.cpp \
+	EmulateInstruction.cpp \
+	Error.cpp \
+	Event.cpp \
+	FastDemangle.cpp \
+	FileLineResolver.cpp \
+	FileSpecList.cpp \
+	History.cpp \
+	IOHandler.cpp \
+	Language.cpp \
+	Listener.cpp \
+	Log.cpp \
+	Mangled.cpp \
+	Module.cpp \
+	ModuleChild.cpp \
+	ModuleList.cpp \
+	Opcode.cpp \
+	PluginManager.cpp \
+	RegisterValue.cpp \
+	RegularExpression.cpp \
+	Scalar.cpp \
+	SearchFilter.cpp \
+	Section.cpp \
+	SourceManager.cpp \
+	State.cpp \
+	Stream.cpp \
+	StreamAsynchronousIO.cpp \
+	StreamCallback.cpp \
+	StreamFile.cpp \
+	StreamGDBRemote.cpp \
+	StreamString.cpp \
+	StringList.cpp \
+	StructuredData.cpp \
+	Timer.cpp \
+	UserID.cpp \
+	UserSettingsController.cpp \
+	UUID.cpp \
+	Value.cpp \
+	ValueObject.cpp \
+	ValueObjectCast.cpp \
+	ValueObjectChild.cpp \
+	ValueObjectConstResult.cpp \
+	ValueObjectConstResultChild.cpp \
+	ValueObjectConstResultImpl.cpp \
+	ValueObjectDynamicValue.cpp \
+	ValueObjectList.cpp \
+	ValueObjectMemory.cpp \
+	ValueObjectRegister.cpp \
+	ValueObjectSyntheticFilter.cpp \
+	ValueObjectVariable.cpp \
+	VMRange.cpp
+
+.if defined(HOSTLIB)
+.include <bsd.hostlib.mk>
+.else
+.include <bsd.lib.mk>
+.endif

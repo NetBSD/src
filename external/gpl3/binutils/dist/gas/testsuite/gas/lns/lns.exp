@@ -17,7 +17,11 @@ if {
      && ![istarget s390*-*-*]
 } {
     # Use alternate file for targets using DW_LNS_fixed_advance_pc opcodes.
-    if { [istarget xtensa*-*-*] } {
+    if {    [istarget xtensa*-*-*]
+	 || [istarget am3*-*-*]
+	 || [istarget cr16-*-*]
+	 || [istarget crx-*-*]
+	 || [istarget mn10*-*-*] } {
       run_dump_test "lns-common-1-alt"
       run_dump_test "lns-big-delta"
     } elseif { [istarget ia64*-*-*] } {

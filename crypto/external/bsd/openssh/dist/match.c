@@ -1,5 +1,5 @@
-/*	$NetBSD: match.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: match.c,v 1.27 2008/06/10 23:06:19 djm Exp $ */
+/*	$NetBSD: match.c,v 1.2.12.1 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: match.c,v 1.28 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,10 +37,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: match.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: match.c,v 1.2.12.1 2014/08/19 23:45:25 tls Exp $");
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "xmalloc.h"
@@ -227,14 +228,14 @@ match_user(const char *user, const char *host, const char *ipaddr,
 
 	if ((ret = match_pattern(user, pat)) == 1)
 		ret = match_host_and_ip(host, ipaddr, p);
-	xfree(pat);
+	free(pat);
 
 	return ret;
 }
 
 /*
  * Returns first item from client-list that is also supported by server-list,
- * caller must xfree() returned string.
+ * caller must free the returned string.
  */
 #define	MAX_PROP	40
 #define	SEP	","
@@ -265,15 +266,15 @@ match_list(const char *client, const char *server, u_int *next)
 				if (next != NULL)
 					*next = (cp == NULL) ?
 					    strlen(c) : (u_int)(cp - c);
-				xfree(c);
-				xfree(s);
+				free(c);
+				free(s);
 				return ret;
 			}
 		}
 	}
 	if (next != NULL)
 		*next = strlen(c);
-	xfree(c);
-	xfree(s);
+	free(c);
+	free(s);
 	return NULL;
 }

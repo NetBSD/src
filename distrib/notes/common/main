@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.489.2.3 2013/06/23 06:26:17 tls Exp $
+.\"	$NetBSD: main,v 1.489.2.4 2014/08/19 23:45:41 tls Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,10 +43,10 @@
 .nr DOC_XR 1
 .ds MACHINE_LIST acorn26 acorn32 algor alpha amd64 amiga amigappc arc atari
 .as MACHINE_LIST " bebox cats cesfic cobalt dreamcast evbarm evbmips evbppc
-.as MACHINE_LIST " evbsh3 ews4800mips hp300 hp700 hpcarm hpcmips hpcsh i386
+.as MACHINE_LIST " evbsh3 ews4800mips hp300 hppa hpcarm hpcmips hpcsh i386
 .as MACHINE_LIST " ibmnws iyonix landisk luna68k mac68k macppc mipsco mmeye
 .as MACHINE_LIST " mvme68k mvmeppc netwinder news68k newsmips next68k ofppc
-.as MACHINE_LIST " pmax prep rs6000 sandpoint sbmips
+.as MACHINE_LIST " playstation2 pmax prep rs6000 sandpoint sbmips
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
@@ -1023,7 +1023,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .Pp
 .
 .
-.Bl -column xxx "Jun-ichiro itojun Hagino" ".Mt sommerfeld@NetBSD.org" ".Sy ews4800mips"
+.Bl -column xxx "Jun-ichiro itojun Hagino" ".Mt sommerfeld@NetBSD.org" ".Sy playstation2"
 .
 .br_ne 1i
 .It Em "The NetBSD core group:"
@@ -1057,7 +1057,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Steve Woodford                 Ta Mt                  scw Ta Sy evbppc
 .It Ta Izumi Tsutsui                  Ta Mt              tsutsui Ta Sy ews4800mips
 .It Ta Izumi Tsutsui                  Ta Mt              tsutsui Ta Sy hp300
-.It Ta Nick Hudson                    Ta Mt                skrll Ta Sy hp700
+.It Ta Nick Hudson                    Ta Mt                skrll Ta Sy hppa
 .It Ta Valeriy E. Ushakov             Ta Mt                  uwe Ta Sy hpcsh
 .It Ta Matt Thomas                    Ta Mt                 matt Ta Sy ibmnws
 .It Ta Gavan Fantom                   Ta Mt                gavan Ta Sy iyonix
@@ -1151,6 +1151,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Thomas Cort Ta Mt tcort@NetBSD.org
 .It Ta Chuck Cranor Ta Mt chuck@NetBSD.org
 .It Ta Alistair Crooks Ta Mt agc@NetBSD.org
+.It Ta Masatake Daimon Ta Mt pho@NetBSD.org
 .It Ta Johan Danielsson Ta Mt joda@NetBSD.org
 .It Ta John Darrow Ta Mt jdarrow@NetBSD.org
 .It Ta Jed Davis Ta Mt jld@NetBSD.org
@@ -1166,6 +1167,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Emmanuel Dreyfus Ta Mt manu@NetBSD.org
 .It Ta Matthias Drochner Ta Mt drochner@NetBSD.org
 .It Ta Jun Ebihara Ta Mt jun@NetBSD.org
+.It Ta Elad Efrat Ta Mt elad@NetBSD.org
 .It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
 .It Ta Jaime A Fournier Ta Mt ober@NetBSD.org
 .It Ta Stoned Elipot Ta Mt seb@NetBSD.org
@@ -1206,6 +1208,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Charles M. Hannum Ta Mt mycroft@NetBSD.org
 .It Ta Yorick Hardy Ta Mt yhardy@NetBSD.org
 .It Ta Ben Harris Ta Mt bjh21@NetBSD.org
+.It Ta Kenichi Hashimoto Ta Mt hkenken@NetBSD.org
 .It Ta Eric Haszlakiewicz Ta Mt erh@NetBSD.org
 .It Ta John Hawkinson Ta Mt jhawk@NetBSD.org
 .It Ta Emile Heitor Ta Mt imil@NetBSD.org
@@ -1272,6 +1275,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Joel Lindholm Ta Mt joel@NetBSD.org
 .It Ta Tonnerre Lombard Ta Mt tonnerre@NetBSD.org
 .It Ta Mike Long Ta Mt mikel@NetBSD.org
+.It Ta Sergio Lopez Ta Mt slp@NetBSD.org
 .It Ta Michael Lorenz Ta Mt macallan@NetBSD.org
 .It Ta Warner Losh Ta Mt imp@NetBSD.org
 .It Ta Tomasz Luchowski Ta Mt zuntum@NetBSD.org
@@ -1280,8 +1284,10 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Brett Lymn Ta Mt blymn@NetBSD.org
 .It Ta MAEKAWA Masahide Ta Mt gehenna@NetBSD.org
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.org
+.It Ta Anthony Mallet Ta Mt tho@NetBSD.org
 .It Ta John Marino Ta Mt marino@NetBSD.org
 .It Ta Roy Marples Ta Mt roy@NetBSD.org
+.It Ta Pedro Martelletto Ta Mt pedro@NetBSD.org
 .It Ta Cherry G. Mathew Ta Mt cherry@NetBSD.org
 .It Ta David Maxwell Ta Mt david@NetBSD.org
 .It Ta Gregory McGarry Ta Mt gmcgarry@NetBSD.org
@@ -1295,6 +1301,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Brook Milligan Ta Mt brook@NetBSD.org
 .It Ta Minoura Makoto Ta Mt minoura@NetBSD.org
 .It Ta Simas Mockevicius Ta Mt symka@NetBSD.org
+.It Ta Ryosuke Moro Ta Mt szptvlfn@NetBSD.org
 .It Ta der Mouse Ta Mt mouse@NetBSD.org
 .It Ta Constantine A. Murenin Ta Mt cnst@NetBSD.org
 .It Ta Joseph Myers Ta Mt jsm@NetBSD.org
@@ -1318,6 +1325,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Ryo ONODERA Ta Mt ryoon@NetBSD.org
 .It Ta Atsushi Onoe Ta Mt onoe@NetBSD.org
 .It Ta Greg Oster Ta Mt oster@NetBSD.org
+.It Ta Ryota Ozaki Ta Mt ozaki-r@NetBSD.org
 .It Ta Jonathan Perkin Ta Mt sketch@NetBSD.org
 .It Ta Fredrik Pettai Ta Mt pettai@NetBSD.org
 .It Ta Herb Peyerl Ta Mt hpeyerl@NetBSD.org
@@ -1368,6 +1376,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Daniel Sieger Ta Mt dsieger@NetBSD.org
 .It Ta Chuck Silvers Ta Mt chs@NetBSD.org
 .It Ta Thor Lancelot Simon Ta Mt tls@NetBSD.org
+.It Ta Nathanial Sloss Ta Mt nat@NetBSD.org
 .It Ta Jeff Smith Ta Mt jeffs@NetBSD.org
 .It Ta Noriyuki Soda Ta Mt soda@NetBSD.org
 .It Ta Wolfgang Solfrank Ta Mt ws@NetBSD.org
@@ -1378,6 +1387,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Bill Squier Ta Mt groo@NetBSD.org
 .It Ta Adrian Steinmann Ta Mt ast@NetBSD.org
 .It Ta Bill Studenmund Ta Mt wrstuden@NetBSD.org
+.It Ta Hiroki Suenaga Ta Mt hsuenaga@NetBSD.org
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.org
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.org
 .It Ta Gr\('egoire Sutre Ta Mt gsutre@NetBSD.org
@@ -1399,6 +1409,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Shuichiro URATA Ta Mt ur@NetBSD.org
 .It Ta Valeriy E. Ushakov Ta Mt uwe@NetBSD.org
 .It Ta Todd Vierling Ta Mt tv@NetBSD.org
+.It Ta Maxime Villard Ta Mt maxv@NetBSD.org
 .It Ta Aymeric Vincent Ta Mt aymeric@NetBSD.org
 .It Ta Paul Vixie Ta Mt vixie@NetBSD.org
 .It Ta Mike M. Volokhov Ta Mt mishka@NetBSD.org
@@ -1407,6 +1418,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Lex Wennmacher Ta Mt wennmach@NetBSD.org
 .It Ta Leo Weppelman Ta Mt leo@NetBSD.org
 .It Ta Assar Westerlund Ta Mt assar@NetBSD.org
+.It Ta Sebastian Wiedenroth Ta Mt wiedi@NetBSD.org
 .It Ta Frank Wille Ta Mt phx@NetBSD.org
 .It Ta Nathan Williams Ta Mt nathanw@NetBSD.org
 .It Ta Rob Windsor Ta Mt windsor@NetBSD.org

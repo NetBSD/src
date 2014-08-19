@@ -1,5 +1,5 @@
 ;; Constraints for the DEC VAX port.
-;; Copyright (C) 2007, 2009 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -99,7 +99,8 @@
 (define_memory_constraint "Q"
    "operand is a MEM that does not have a mode-dependent address."
    (and (match_code "mem")
-	(match_test "!mode_dependent_address_p (XEXP (op, 0))")))
+	(match_test "!mode_dependent_address_p (XEXP (op, 0),
+					        MEM_ADDR_SPACE (op))")))
 
 (define_memory_constraint "B"
     ""
@@ -113,6 +114,6 @@
 
 (define_constraint "T"
     "@internal satisfies CONSTANT_P and, if pic is enabled, is not a SYMBOL_REF, LABEL_REF, or CONST."
-   (and (match_test "CONSTANT_P (op)")
-	(ior (not (match_code "const,symbol_ref,label_ref"))
+  (and (match_test ("CONSTANT_P (op)"))
+       (ior (not (match_code "symbol_ref,label_ref,const"))
 	     (match_test "!flag_pic"))))

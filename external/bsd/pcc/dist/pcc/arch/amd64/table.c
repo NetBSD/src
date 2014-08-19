@@ -1,5 +1,5 @@
-/*	Id: table.c,v 1.50 2011/12/13 17:46:18 ragge Exp 	*/	
-/*	$NetBSD: table.c,v 1.1.1.4 2012/01/11 20:32:42 plunky Exp $	*/
+/*	Id: table.c,v 1.54 2014/07/01 16:52:20 ragge Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.4.6.1 2014/08/19 23:52:08 tls Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2008 Anders Magnusson (ragge@ludd.ltu.se).
@@ -60,7 +60,33 @@ struct optab table[] = {
 	SAREG,	TPOINT,
 		NASL|NAREG,	RESC1,
 		"	movl AL,Z1\n", },/* amd64 zero-extends 32-bit movl */
-	
+
+{ PCONV,	INAREG,
+	SAREG|SOREG|SNAME,	TCHAR,
+	SAREG,			TPOINT,
+		NAREG|NASL,	RESC1,
+		"	movsbq AL,A1\n", },
+
+{ PCONV,	INAREG,
+	SAREG|SOREG|SNAME,	TUCHAR,
+	SAREG,			TPOINT,
+		NAREG|NASL,	RESC1,
+		"	movsbq AL,A1\n", },
+
+/* short to ptr */
+{ PCONV,	INAREG,
+	SAREG|SOREG|SNAME,	TSHORT,
+	SAREG,			TPOINT,
+		NAREG|NASL,	RESC1,
+		"	movswq AL,A1\n", },
+
+/* ushort to ptr */
+{ PCONV,	INAREG,
+	SAREG|SOREG|SNAME,	TUSHORT,
+	SAREG,			TPOINT,
+		NAREG|NASL,	RESC1,
+		"	movzwq AL,A1\n", },
+
 
 /*
  * On amd64 casts from larger to smaller integer type in register do nothing.
@@ -1282,7 +1308,7 @@ struct optab table[] = {
 		"	cmpl AR,AL\n", },
 
 { OPLOG,	FORCC,
-	SCON|SAREG,	TWORD,
+	/* SCON| XXX fix switch in tree of L/R */ SAREG,	TWORD,
 	SAREG|SOREG|SNAME,	TWORD,
 		0, 	RESCC,
 		"	cmpl AR,AL\n", },
@@ -1399,6 +1425,12 @@ struct optab table[] = {
 	SMIXOR,	TANY,
 		NAREG,	RESC1,
 		"	xorq A1,A1\n", },
+
+{ OPLTYPE,	INAREG,
+	SANY,	TANY,
+	SCON,	TLL|TPOINT,
+		NAREG,	RESC1,
+		"	movabsq AL,A1\n", },
 
 { OPLTYPE,	INAREG,
 	SANY,	TANY,

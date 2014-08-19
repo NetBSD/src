@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.6 2012/04/22 07:23:42 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.6.2.1 2014/08/19 23:45:38 tls Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -122,7 +122,6 @@
 #		(default: no)
 #
 
-.include <bsd.sys.mk>		# for HOST_SH
 .include <bsd.own.mk> 		#
 .include <bsd.endian.mk>	# for TARGET_ENDIANNESS
 
@@ -391,7 +390,7 @@ ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 CLEANFILES+=	${IMGBASE}.img.gz ${IMGBASE}.img.gz.tmp
 
 ${IMGBASE}.img.gz:	${IMGBASE}.img
-	${TOOL_GZIP} -9c ${IMGBASE}.img > ${.TARGET}.tmp
+	${TOOL_GZIP_N} -9c ${IMGBASE}.img > ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 
 clean:

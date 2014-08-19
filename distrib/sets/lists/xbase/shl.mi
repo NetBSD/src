@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.45.2.1 2013/06/23 06:26:19 tls Exp $
+# $NetBSD: shl.mi,v 1.45.2.2 2014/08/19 23:45:44 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -186,12 +186,12 @@
 ./usr/X11R7/lib/libSM.so			-unknown-		xorg
 ./usr/X11R7/lib/libSM.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libSM.so.7.0			-unknown-		xorg
-./usr/X11R7/lib/libX11.so			-unknown-		xorg
-./usr/X11R7/lib/libX11.so.7			-unknown-		xorg
-./usr/X11R7/lib/libX11.so.7.0			-unknown-		xorg
 ./usr/X11R7/lib/libX11-xcb.so			-unknown-		xorg
 ./usr/X11R7/lib/libX11-xcb.so.1			-unknown-		xorg
 ./usr/X11R7/lib/libX11-xcb.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libX11.so			-unknown-		xorg
+./usr/X11R7/lib/libX11.so.7			-unknown-		xorg
+./usr/X11R7/lib/libX11.so.7.0			-unknown-		xorg
 ./usr/X11R7/lib/libXRes.so			-unknown-		xorg
 ./usr/X11R7/lib/libXRes.so.2			-unknown-		xorg
 ./usr/X11R7/lib/libXRes.so.2.0			-unknown-		xorg
@@ -319,8 +319,8 @@
 ./usr/X11R7/lib/libfontenc.so.2			-unknown-		xorg
 ./usr/X11R7/lib/libfontenc.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libfreetype.so			-unknown-		xorg
-./usr/X11R7/lib/libfreetype.so.7		-unknown-		xorg
-./usr/X11R7/lib/libfreetype.so.7.4		-unknown-		xorg
+./usr/X11R7/lib/libfreetype.so.17		-unknown-		xorg
+./usr/X11R7/lib/libfreetype.so.17.2.11		-unknown-		xorg
 ./usr/X11R7/lib/libglut.so			-unknown-		xorg
 ./usr/X11R7/lib/libglut.so.4			-unknown-		xorg
 ./usr/X11R7/lib/libglut.so.4.0			-unknown-		xorg
@@ -351,6 +351,9 @@
 ./usr/X11R7/lib/libxcb-dri2.so			-unknown-		xorg
 ./usr/X11R7/lib/libxcb-dri2.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-dri2.so.0.1		-unknown-		xorg
+./usr/X11R7/lib/libxcb-dri3.so			-unknown-		xorg
+./usr/X11R7/lib/libxcb-dri3.so.0		-unknown-		xorg
+./usr/X11R7/lib/libxcb-dri3.so.0.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-event.so			-unknown-		xorg
 ./usr/X11R7/lib/libxcb-event.so.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-event.so.1.0		-unknown-		xorg
@@ -366,6 +369,9 @@
 ./usr/X11R7/lib/libxcb-keysyms.so		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-keysyms.so.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-keysyms.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libxcb-present.so		-unknown-		xorg
+./usr/X11R7/lib/libxcb-present.so.0		-unknown-		xorg
+./usr/X11R7/lib/libxcb-present.so.0.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-property.so		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-property.so.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-property.so.1.0		-unknown-		xorg
@@ -411,6 +417,9 @@
 ./usr/X11R7/lib/libxcb-xinerama.so		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xinerama.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xinerama.so.0.1		-unknown-		xorg
+./usr/X11R7/lib/libxcb-xkb.so			-unknown-		xorg
+./usr/X11R7/lib/libxcb-xkb.so.0			-unknown-		xorg
+./usr/X11R7/lib/libxcb-xkb.so.0.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xtest.so			-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xtest.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xtest.so.0.1		-unknown-		xorg

@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: misc.h,v 1.48 2011/03/29 18:54:17 stevesk Exp $ */
+/*	$NetBSD: misc.h,v 1.5.8.1 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: misc.h,v 1.49 2013/06/01 13:15:52 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,6 +40,7 @@ char	*tohex(const void *, size_t);
 void	 sanitise_stdfd(void);
 void	 ms_subtract_diff(struct timeval *, int *);
 void	 ms_to_timeval(struct timeval *, int);
+time_t	 monotime(void);
 
 int	 timingsafe_bcmp(const void *, const void *, size_t);
 long long strtonum(const char *, long long, long long, const char **);

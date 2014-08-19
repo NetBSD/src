@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapi_link.c,v 1.4.2.1 2013/02/25 00:25:42 tls Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.4.2.2 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -49,7 +49,7 @@
 
 #define GBUFFER_TO_REGION(gb, r) \
 	do { \
-		(r).length = (gb).length; \
+	  (r).length = (unsigned int)(gb).length; \
 		(r).base = (gb).value; \
 	} while (/*CONSTCOND*/0)
 
@@ -182,7 +182,7 @@ gssapi_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	 * Copy the output into our buffer space, and release the gssapi
 	 * allocated space.
 	 */
-	isc_buffer_putmem(sig, gsig.value, gsig.length);
+	isc_buffer_putmem(sig, gsig.value, (unsigned int)gsig.length);
 	if (gsig.length != 0U)
 		gss_release_buffer(&minor, &gsig);
 
@@ -218,7 +218,7 @@ gssapi_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	buf = isc_mem_allocate(dst__memory_pool, sig->length);
 	if (buf == NULL)
 		return (ISC_R_FAILURE);
-	memcpy(buf, sig->base, sig->length);
+	memmove(buf, sig->base, sig->length);
 	r.base = buf;
 	r.length = sig->length;
 	REGION_TO_GBUFFER(r, gsig);
@@ -288,7 +288,7 @@ gssapi_destroy(dst_key_t *key) {
 static isc_result_t
 gssapi_restore(dst_key_t *key, const char *keystr) {
 	OM_uint32 major, minor;
-	size_t len;
+	unsigned int len;
 	isc_buffer_t *b = NULL;
 	isc_region_t r;
 	gss_buffer_desc gssbuffer;
@@ -348,18 +348,19 @@ gssapi_dump(dst_key_t *key, isc_mem_t *mctx, char **buffer, int *length) {
 		gss_release_buffer(&minor, &gssbuffer);
 		return (ISC_R_NOMEMORY);
 	}
-	isc_buffer_init(&b, buf, len);
+	isc_buffer_init(&b, buf, (unsigned int)len);
 	GBUFFER_TO_REGION(gssbuffer, r);
 	result = isc_base64_totext(&r, 0, "", &b);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	gss_release_buffer(&minor, &gssbuffer);
 	*buffer = buf;
-	*length = len;
+	*length = (int)len;
 	return (ISC_R_SUCCESS);
 }
 
 static dst_func_t gssapi_functions = {
 	gssapi_create_signverify_ctx,
+	NULL, /*%< createctx2 */
 	gssapi_destroy_signverify_ctx,
 	gssapi_adddata,
 	gssapi_sign,

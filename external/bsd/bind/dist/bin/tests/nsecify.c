@@ -1,4 +1,4 @@
-/*	$NetBSD: nsecify.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: nsecify.c,v 1.3.2.2 2014/08/19 23:46:01 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -201,10 +201,6 @@ main(int argc, char *argv[]) {
 	int i;
 	isc_result_t result;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	dns_result_register();
 
 	result = isc_mem_create(0, 0, &mctx);

@@ -4,6 +4,7 @@
 #as: --64 -march=l1om
 #ld: -m elf_l1om
 #objdump: -rs -j .text
+#target: x86_64-*-linux*
 
 .*:     file format .*
 

@@ -194,7 +194,18 @@ extern fragS *mmix_opcode_frag;
    fixups are done and relocs are output.  Similarly for each unknown
    symbol.  */
 extern void mmix_frob_file (void);
-#define tc_frob_file_before_fix mmix_frob_file
+#define tc_frob_file_before_fix()					\
+  do									\
+    {									\
+      int i = 0;							\
+									\
+      /* It's likely mmix_frob_file changed (removed) sections, so make	\
+	 sure sections are correctly numbered as per renumber_sections,	\
+	 (static to write.c where this macro is called).  */		\
+      mmix_frob_file ();						\
+      bfd_map_over_sections (stdoutput, renumber_sections, &i);		\
+    }									\
+  while (0)
 
 /* Used by mmix_frob_file.  Hangs on section symbols and unknown symbols.  */
 struct mmix_symbol_gregs;

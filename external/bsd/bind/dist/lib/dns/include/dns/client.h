@@ -1,7 +1,7 @@
-/*	$NetBSD: client.h,v 1.3 2012/06/05 00:41:46 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.3.2.1 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -79,10 +79,14 @@ ISC_LANG_BEGINDECLS
 /*%
  * Optional flags for dns_client_(start)resolve.
  */
-/*%< Disable DNSSEC validation. */
+/*%< Do not return DNSSEC data (e.g. RRSIGS) with response. */
 #define DNS_CLIENTRESOPT_NODNSSEC	0x01
 /*%< Allow running external context. */
 #define DNS_CLIENTRESOPT_ALLOWRUN	0x02
+/*%< Don't validate responses. */
+#define DNS_CLIENTRESOPT_NOVALIDATE	0x04
+/*%< Don't set the CD flag on upstream queries. */
+#define DNS_CLIENTRESOPT_NOCDFLAG	0x08
 
 /*%
  * Optional flags for dns_client_(start)request.
@@ -151,6 +155,13 @@ isc_result_t
 dns_client_createx(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
 		   isc_socketmgr_t *socketmgr, isc_timermgr_t *timermgr,
 		   unsigned int options, dns_client_t **clientp);
+
+isc_result_t
+dns_client_createx2(isc_mem_t *mctx, isc_appctx_t *actx,
+	   isc_taskmgr_t *taskmgr, isc_socketmgr_t *socketmgr,
+	   isc_timermgr_t *timermgr, unsigned int options,
+	   dns_client_t **clientp,
+	   isc_sockaddr_t *localaddr4, isc_sockaddr_t *localaddr6);
 /*%<
  * Create a DNS client.  These functions create a new client object with
  * minimal internal resources such as the default 'view' for the IN class and
@@ -162,6 +173,12 @@ dns_client_createx(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
  * the managers internally.  A DNS client object created via
  * dns_client_create() is expected to be used by an application that only needs
  * simple synchronous services or by a thread-based application.
+ *
+ * dns_client_createx2 takes two additional parameters, 'localaddr4' and
+ * 'localaddr6', to specify the local address to use for each family. If
+ * both are set to NULL, then wildcard addresses will be used for both
+ * families. If only one is NULL, then the other address will be used
+ * as the local address, and the other protocol family will not be used.
  *
  * If the DNS_CLIENTCREATEOPT_USECACHE flag is set in 'options',
  * dns_client_create(x) will create a cache database with the view.
@@ -242,6 +259,26 @@ dns_client_clearservers(dns_client_t *client, dns_rdataclass_t rdclass,
  *\li	'client' is a valid client.
  *
  *\li	'namespace' is NULL or a valid name.
+ *
+ * Returns:
+ *
+ *\li	#ISC_R_SUCCESS				On success.
+ *
+ *\li	Anything else				Failure.
+ */
+
+isc_result_t
+dns_client_setdlv(dns_client_t *client, dns_rdataclass_t rdclass,
+		  const char *dlvname);
+/*%<
+ * Specify a name to use for DNSSEC lookaside validation (e.g.,
+ * "dlv.isc.org"). If a trusted key has been added for that name,
+ * then DLV will be used during validation.  If 'dlvname' is NULL,
+ * then DLV will no longer be used for this client.
+ *
+ * Requires:
+ *
+ *\li	'client' is a valid client.
  *
  * Returns:
  *

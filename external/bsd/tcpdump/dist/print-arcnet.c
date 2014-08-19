@@ -26,7 +26,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-arcnet.c,v 1.20 2005-04-06 21:32:38 mcr Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-arcnet.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-arcnet.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: print-arcnet.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 static int arcnet_encap_print(u_char arctype, const u_char *p,
     u_int length, u_int caplen);
 
-struct tok arctypemap[] = {
+static const struct tok arctypemap[] = {
 	{ ARCTYPE_IP_OLD,	"oldip" },
 	{ ARCTYPE_ARP_OLD,	"oldarp" },
 	{ ARCTYPE_IP,		"ip" },

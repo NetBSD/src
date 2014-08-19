@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-tftp.c,v 1.39 2008-04-11 16:47:38 gianluca Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tftp.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-tftp.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: print-tftp.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 #include "tftp.h"
 
 /* op code to string mapping */
-static struct tok op2str[] = {
+static const struct tok op2str[] = {
 	{ RRQ,		"RRQ" },	/* read request */
 	{ WRQ,		"WRQ" },	/* write request */
 	{ DATA,		"DATA" },	/* data packet */
@@ -61,7 +61,7 @@ static struct tok op2str[] = {
 };
 
 /* error code to string mapping */
-static struct tok err2str[] = {
+static const struct tok err2str[] = {
 	{ EUNDEF,	"EUNDEF" },	/* not defined */
 	{ ENOTFOUND,	"ENOTFOUND" },	/* file not found */
 	{ EACCESS,	"EACCESS" },	/* access violation */

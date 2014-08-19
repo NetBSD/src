@@ -1,7 +1,7 @@
-/*	$NetBSD: log.c,v 1.4 2012/06/05 00:42:29 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.4.2.1 2014/08/19 23:46:32 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -207,6 +207,7 @@ LIBISC_EXTERNAL_DATA isc_logmodule_t isc_modules[] = {
 	{ "interface", 0 },
 	{ "timer", 0 },
 	{ "file", 0 },
+	{ "other", 0 },
 	{ NULL, 0 }
 };
 
@@ -277,7 +278,8 @@ isc_log_create(isc_mem_t *mctx, isc_log_t **lctxp, isc_logconfig_t **lcfgp) {
 
 	lctx = isc_mem_get(mctx, sizeof(*lctx));
 	if (lctx != NULL) {
-		lctx->mctx = mctx;
+		lctx->mctx = NULL;
+		isc_mem_attach(mctx, &lctx->mctx);
 		lctx->categories = NULL;
 		lctx->category_count = 0;
 		lctx->modules = NULL;
@@ -288,7 +290,7 @@ isc_log_create(isc_mem_t *mctx, isc_log_t **lctxp, isc_logconfig_t **lcfgp) {
 
 		result = isc_mutex_init(&lctx->lock);
 		if (result != ISC_R_SUCCESS) {
-			isc_mem_put(mctx, lctx, sizeof(*lctx));
+			isc_mem_putanddetach(&mctx, lctx, sizeof(*lctx));
 			return (result);
 		}
 
@@ -495,7 +497,7 @@ isc_log_destroy(isc_log_t **lctxp) {
 	lctx->mctx = NULL;
 	lctx->magic = 0;
 
-	isc_mem_put(mctx, lctx, sizeof(*lctx));
+	isc_mem_putanddetach(&mctx, lctx, sizeof(*lctx));
 
 	*lctxp = NULL;
 }
@@ -768,7 +770,7 @@ isc_log_createchannel(isc_logconfig_t *lcfg, const char *name,
 		break;
 
 	default:
-		isc_mem_put(mctx, channel->name, strlen(channel->name) + 1);
+		isc_mem_free(mctx, channel->name);
 		isc_mem_put(mctx, channel, sizeof(*channel));
 		return (ISC_R_UNEXPECTED);
 	}
@@ -1131,7 +1133,7 @@ sync_channellist(isc_logconfig_t *lcfg) {
 	if (lcfg->channellist_count != 0) {
 		bytes = lcfg->channellist_count *
 			sizeof(ISC_LIST(isc_logchannellist_t));
-		memcpy(lists, lcfg->channellists, bytes);
+		memmove(lists, lcfg->channellists, bytes);
 		isc_mem_put(lctx->mctx, lcfg->channellists, bytes);
 	}
 
@@ -1147,7 +1149,7 @@ greatest_version(isc_logchannel_t *channel, int *greatestp) {
 	char *basename, *digit_end;
 	const char *dirname;
 	int version, greatest = -1;
-	unsigned int basenamelen;
+	size_t basenamelen;
 	isc_dir_t dir;
 	isc_result_t result;
 	char sep = '/';
@@ -1414,7 +1416,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 	const char *iformat;
 	struct stat statbuf;
 	isc_boolean_t matched = ISC_FALSE;
-	isc_boolean_t printtime, printtag;
+	isc_boolean_t printtime, printtag, printcolon;
 	isc_boolean_t printcategory, printmodule, printlevel;
 	isc_logconfig_t *lcfg;
 	isc_logchannel_t *channel;
@@ -1634,6 +1636,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 
 					TIME_NOW(&new->time);
 
+					ISC_LINK_INIT(new, link);
 					ISC_LIST_APPEND(lctx->messages,
 							new, link);
 				}
@@ -1642,7 +1645,10 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 
 		printtime     = ISC_TF((channel->flags & ISC_LOG_PRINTTIME)
 				       != 0);
-		printtag      = ISC_TF((channel->flags & ISC_LOG_PRINTTAG)
+		printtag      = ISC_TF((channel->flags &
+					(ISC_LOG_PRINTTAG|ISC_LOG_PRINTPREFIX))
+				       != 0 && lcfg->tag != NULL);
+		printcolon    = ISC_TF((channel->flags & ISC_LOG_PRINTTAG)
 				       != 0 && lcfg->tag != NULL);
 		printcategory = ISC_TF((channel->flags & ISC_LOG_PRINTCATEGORY)
 				       != 0);
@@ -1696,11 +1702,12 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 			/* FALLTHROUGH */
 
 		case ISC_LOG_TOFILEDESC:
-			fprintf(FILE_STREAM(channel), "%s%s%s%s%s%s%s%s%s%s\n",
+			fprintf(FILE_STREAM(channel),
+				"%s%s%s%s%s%s%s%s%s%s\n",
 				printtime     ? time_string	: "",
 				printtime     ? " "		: "",
 				printtag      ? lcfg->tag	: "",
-				printtag      ? ": "		: "",
+				printcolon    ? ": "		: "",
 				printcategory ? category->name	: "",
 				printcategory ? ": "		: "",
 				printmodule   ? (module != NULL ? module->name
@@ -1743,11 +1750,12 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 			       printtime     ? time_string	: "",
 			       printtime     ? " "		: "",
 			       printtag      ? lcfg->tag	: "",
-			       printtag      ? ": "		: "",
+			       printcolon    ? ": "		: "",
 			       printcategory ? category->name	: "",
 			       printcategory ? ": "		: "",
-			       printmodule   ? (module != NULL	? module->name
-								: "no_module")
+			       printmodule   ? (module != NULL
+						 ? module->name
+						 : "no_module")
 								: "",
 			       printmodule   ? ": "		: "",
 			       printlevel    ? level_string	: "",

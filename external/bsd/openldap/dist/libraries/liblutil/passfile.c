@@ -1,9 +1,9 @@
-/*	$NetBSD: passfile.c,v 1.1.1.3 2010/12/12 15:22:09 adam Exp $	*/
+/*	$NetBSD: passfile.c,v 1.1.1.3.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/liblutil/passfile.c,v 1.8.2.6 2010/04/13 20:23:06 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,7 @@ lutil_get_filed_password(
 	passwd->bv_val = (char *) ber_memalloc( passwd->bv_len + 1 );
 	if( passwd->bv_val == NULL ) {
 		perror( filename );
+		fclose( f );
 		return -1;
 	}
 
@@ -81,6 +82,7 @@ lutil_get_filed_password(
 				ber_memfree( passwd->bv_val );
 				passwd->bv_val = NULL;
 				passwd->bv_len = 0;
+				fclose( f );
 				return -1;
 			}
 			nleft = passwd->bv_len;
@@ -94,6 +96,7 @@ lutil_get_filed_password(
 			ber_memfree( passwd->bv_val );
 			passwd->bv_val = NULL;
 			passwd->bv_len = 0;
+			fclose( f );
 			return -1;
 		}
 

@@ -1,13 +1,12 @@
-/*	$NetBSD: dst_api.c,v 1.3.4.2 2013/06/23 06:26:29 tls Exp $	*/
-
+/*	$NetBSD: dst_api.c,v 1.3.4.3 2014/08/19 23:46:41 tls Exp $	*/
 #ifndef LINT
-static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/dst_api.c,v 1.9.6.1 2012/04/11 15:43:55 sar Exp ";
+static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/dst_api.c,v 1.10 2012/04/11 15:43:34 sar Exp ";
 #endif
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
  * Portions Copyright (c) 2007,2009 by Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (c) 2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (c) 2012-2013 by Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,8 +23,7 @@ static const char rcsid[] = "Header: /tmp/cvstest/DHCP/dst/dst_api.c,v 1.9.6.1 2
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dst_api.c,v 1.3.4.2 2013/06/23 06:26:29 tls Exp $");
-
+__RCSID("$NetBSD: dst_api.c,v 1.3.4.3 2014/08/19 23:46:41 tls Exp $");
 /*
  * This file contains the interface between the DST API and the crypto API.
  * This is the only file that needs to be changed if the crypto system is
@@ -106,7 +104,6 @@ dst_init()
 	done_init = 1;
 
 	s = getenv("DSTKEYPATH");
-	len = 0;
 	if (s) {
 		struct stat statbuf;
 
@@ -373,7 +370,7 @@ dst_read_key(const char *in_keyname, const unsigned in_id,
 					pubkey->dk_alg) == 0)
 		dg_key = dst_free_key(dg_key);
 
-	pubkey = dst_free_key(pubkey);
+	(void) dst_free_key(pubkey);
 	return (dg_key);
 }
 
@@ -1021,7 +1018,7 @@ dst_free_key(DST_KEY *f_key)
 			 f_key->dk_alg));
 	}
 	if (f_key->dk_KEY_struct) {
-		SAFE_FREE2(f_key->dk_KEY_struct, 0);
+		SAFE_FREE2(f_key->dk_KEY_struct,0);
 	}
 	if (f_key->dk_key_name)
 		SAFE_FREE(f_key->dk_key_name);

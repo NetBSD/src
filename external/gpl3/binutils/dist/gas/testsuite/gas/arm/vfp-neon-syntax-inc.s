@@ -1,5 +1,6 @@
 @ VFP with Neon-style syntax
 	.syntax unified
+	.arch armv7-a
 
 	.include "itblock.s"
 

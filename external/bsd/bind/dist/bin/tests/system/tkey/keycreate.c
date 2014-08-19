@@ -1,7 +1,7 @@
-/*	$NetBSD: keycreate.c,v 1.3.2.1 2013/06/23 06:26:25 tls Exp $	*/
+/*	$NetBSD: keycreate.c,v 1.3.2.2 2014/08/19 23:46:17 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -152,14 +152,14 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 	isc_sockaddr_fromin(&address, &inaddr, PORT);
 
 	dns_fixedname_init(&keyname);
-	isc_buffer_init(&namestr, "tkeytest.", 9);
+	isc_buffer_constinit(&namestr, "tkeytest.", 9);
 	isc_buffer_add(&namestr, 9);
 	result = dns_name_fromtext(dns_fixedname_name(&keyname), &namestr,
 				   NULL, 0, NULL);
 	CHECK("dns_name_fromtext", result);
 
 	dns_fixedname_init(&ownername);
-	isc_buffer_init(&namestr, ownername_str, strlen(ownername_str));
+	isc_buffer_constinit(&namestr, ownername_str, strlen(ownername_str));
 	isc_buffer_add(&namestr, strlen(ownername_str));
 	result = dns_name_fromtext(dns_fixedname_name(&ownername), &namestr,
 				   NULL, 0, NULL);
@@ -191,8 +191,9 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 
 	request = NULL;
 	result = dns_request_create(requestmgr, query, &address,
-				    0, initialkey, TIMEOUT, task,
-				    recvquery, query, &request);
+				    DNS_REQUESTOPT_TCP, initialkey,
+				    TIMEOUT, task, recvquery, query,
+				    &request);
 	CHECK("dns_request_create", result);
 }
 
@@ -216,10 +217,6 @@ main(int argc, char *argv[]) {
 	isc_result_t result;
 	int type;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	RUNCHECK(isc_app_start());
 
 	if (argc < 2) {
@@ -234,11 +231,12 @@ main(int argc, char *argv[]) {
 	dns_result_register();
 
 	mctx = NULL;
+	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 	RUNCHECK(isc_mem_create(0, 0, &mctx));
 
 	ectx = NULL;
 	RUNCHECK(isc_entropy_create(mctx, &ectx));
-	RUNCHECK(isc_entropy_createfilesource(ectx, "random.data"));
+	RUNCHECK(isc_entropy_createfilesource(ectx, "../random.data"));
 	RUNCHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE));
 
 	log = NULL;

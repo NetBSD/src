@@ -1,11 +1,11 @@
-/*	$NetBSD: mbg_gps166.h,v 1.1.1.2 2012/01/31 21:23:16 kardel Exp $	*/
+/*	$NetBSD: mbg_gps166.h,v 1.1.1.2.6.1 2014/08/19 23:51:38 tls Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/include/mbg_gps166.h,v 4.7 2006/06/22 18:41:43 kardel RELEASE_20060622_A
  *
  * mbg_gps166.h,v 4.7 2006/06/22 18:41:43 kardel RELEASE_20060622_A
  *
- * Created: Sun Jul 20 09:20:50 1997
+ * $Created: Sun Jul 20 09:20:50 1997 $
  *
  * File GPSSERIO.H Copyright (c) by Meinberg Funkuhren (www.meinberg.de)
  *
@@ -199,7 +199,7 @@ typedef struct {
 /* by the user. The status field can be checked to see which corrections */
 /* have been applied. */
 
-#ifndef _TM_DEFINED
+#ifndef GPS166_TM_DEFINED
   typedef struct {
     short year;          /* 0..9999 */
     char month;          /* 1..12 */
@@ -223,7 +223,7 @@ typedef struct {
 #  define TM_LS_ANN     0x10   /* leap second will be inserted */
 #  define TM_LS_ENB     0x20   /* current second is leap second */
 
-#  define _TM_DEFINED
+#  define GPS166_TM_DEFINED
 #endif
 
 

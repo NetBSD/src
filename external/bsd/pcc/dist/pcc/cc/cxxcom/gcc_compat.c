@@ -1,5 +1,5 @@
-/*      Id: gcc_compat.c,v 1.2 2012/03/22 18:04:41 plunky Exp      */	
-/*      $NetBSD: gcc_compat.c,v 1.1.1.2 2012/03/26 14:26:57 plunky Exp $     */
+/*      Id: gcc_compat.c,v 1.9 2014/06/07 07:04:09 plunky Exp      */	
+/*      $NetBSD: gcc_compat.c,v 1.1.1.2.4.1 2014/08/19 23:52:09 tls Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -98,7 +98,7 @@ static char *g77n[] = { "__g77_integer", "__g77_uinteger",
 	"__g77_longint", "__g77_ulongint" };
 
 void
-gcc_init()
+gcc_init(void)
 {
 	struct kw *kwp;
 	NODE *p;
@@ -117,7 +117,6 @@ gcc_init()
 		defid(p, TYPEDEF);
 		nfree(p);
 	}
-
 }
 
 #define	TS	"\n#pragma tls\n# %d\n"
@@ -229,7 +228,7 @@ struct atax {
 	CS(xxxATTR_BASETYP)	{ 0, NULL },
 	CS(ATTR_QUALTYP)	{ 0, NULL },
 	CS(ATTR_STRUCT)		{ 0, NULL },
-	CS(GCC_ATYP_ALIGNED)	{ A_0ARG|A_1ARG, "aligned" },
+	CS(ATTR_ALIGNED)	{ A_0ARG|A_1ARG, "aligned" },
 	CS(GCC_ATYP_PACKED)	{ A_0ARG|A_1ARG, "packed" },
 	CS(GCC_ATYP_SECTION)	{ A_1ARG|A1_STR, "section" },
 	CS(GCC_ATYP_TRANSP_UNION) { A_0ARG, "transparent_union" },
@@ -263,6 +262,7 @@ struct atax {
 	CS(GCC_ATYP_ALW_INL)	{ A_0ARG, "always_inline" },
 	CS(GCC_ATYP_TLSMODEL)	{ A_1ARG|A1_STR, "tls_model" },
 	CS(GCC_ATYP_ALIASWEAK)	{ A_1ARG|A1_STR, "aliasweak" },
+	CS(GCC_ATYP_REGPARM)	{ A_1ARG, "regparm" },
 
 	CS(GCC_ATYP_BOUNDED)	{ A_3ARG|A_MANY|A1_NAME, "bounded" },
 };
@@ -320,7 +320,7 @@ setaarg(int str, union aarg *aa, NODE *p)
 		    ((str & (A1_NAME|A2_NAME|A3_NAME)) && p->n_op != NAME))
 			uerror("bad arg to attribute");
 		if (p->n_op == STRING) {
-			aa->sarg = newstring(p->n_name, strlen(p->n_name)+1);
+			aa->sarg = newstring(p->n_name, strlen(p->n_name));
 		} else
 			aa->sarg = (char *)p->n_sp;
 		nfree(p);
@@ -349,7 +349,7 @@ gcc_attribs(NODE *p)
 		cerror("bad variable attribute");
 
 	if ((attr = amatch(name, atax, GCC_ATYP_MAX)) == 0) {
-		werror("unsupported attribute '%s'", name);
+		warner(Wattributes, name);
 		ap = NULL;
 		goto out;
 	}
@@ -398,7 +398,7 @@ gcc_attribs(NODE *p)
 
 	/* some attributes must be massaged special */
 	switch (attr) {
-	case GCC_ATYP_ALIGNED:
+	case ATTR_ALIGNED:
 		if (narg == 0)
 			ap->aa[0].iarg = ALMAX;
 		else
@@ -502,7 +502,7 @@ gcc_tcattrfix(NODE *p)
 
 	ap = attr_find(p->n_ap, ATTR_STRUCT);
 	ap->amsize = csz;
-	ap = attr_find(p->n_ap, GCC_ATYP_ALIGNED);
+	ap = attr_find(p->n_ap, ATTR_ALIGNED);
 	ap->iarg(0) = mxal;
 
 }
@@ -514,41 +514,29 @@ int
 pragmas_gcc(char *t)
 {
 	char u;
-	int ign, warn, err, i;
-	extern bittype warnary[], werrary[];
-	extern char *flagstr[], *pragstore;
+	extern char *pragstore;
 
 	if (strcmp((t = pragtok(NULL)), "diagnostic") == 0) {
-		ign = warn = err = 0;
+		int warn, err;
+
 		if (strcmp((t = pragtok(NULL)), "ignored") == 0)
-			ign = 1;
+			warn = 0, err = 0;
 		else if (strcmp(t, "warning") == 0)
-			warn = 1;
+			warn = 1, err = 0;
 		else if (strcmp(t, "error") == 0)
-			err = 1;
+			warn = 1, err = 1;
 		else
 			return 1;
+
 		if (eat('\"') || eat('-'))
 			return 1;
+
 		for (t = pragstore; *t && *t != '\"'; t++)
 			;
+
 		u = *t;
 		*t = 0;
-		for (i = 0; i < NUMW; i++) {
-			if (strcmp(flagstr[i], pragstore+1) != 0)
-				continue;
-			if (err) {
-				BITSET(warnary, i);
-				BITSET(werrary, i);
-			} else if (warn) {
-				BITSET(warnary, i);
-				BITCLEAR(werrary, i);
-			} else {
-				BITCLEAR(warnary, i);
-				BITCLEAR(werrary, i);
-			}
-			return 0;
-		}
+		Wset(pragstore + 1, warn, err);
 		*t = u;
 	} else if (strcmp(t, "poison") == 0) {
 		/* currently ignore */;

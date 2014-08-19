@@ -1,6 +1,6 @@
 /* BFD back-end for Motorola 88000 COFF "Binary Compatibility Standard" files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2005, 2007, 2008   Free Software Foundation, Inc.
+   2001, 2002, 2003, 2005, 2007, 2008, 2012   Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -28,12 +28,8 @@
 #include "coff/internal.h"
 #include "libcoff.h"
 
-static bfd_boolean m88k_is_local_label_name PARAMS ((bfd *, const char *));
 static bfd_reloc_status_type m88k_special_reloc
-  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
-static void rtype2howto PARAMS ((arelent *, struct internal_reloc *));
-static void reloc_processing
-  PARAMS ((arelent *, struct internal_reloc *, asymbol **, bfd *, asection *));
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (3)
 
@@ -45,23 +41,19 @@ static void reloc_processing
 #define coff_bfd_is_local_label_name m88k_is_local_label_name
 
 static bfd_boolean
-m88k_is_local_label_name (abfd, name)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     const char *name;
+m88k_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED, const char *name)
 {
   return name[0] == '@';
 }
 
 static bfd_reloc_status_type
-m88k_special_reloc (abfd, reloc_entry, symbol, data,
-		    input_section, output_bfd, error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data;
-     asection *input_section;
-     bfd *output_bfd;
-     char **error_message ATTRIBUTE_UNUSED;
+m88k_special_reloc (bfd *abfd,
+		    arelent *reloc_entry,
+		    asymbol *symbol,
+		    void * data,
+		    asection *input_section,
+		    bfd *output_bfd,
+		    char **error_message ATTRIBUTE_UNUSED)
 {
   reloc_howto_type *howto = reloc_entry->howto;
 
@@ -236,9 +228,7 @@ static reloc_howto_type howto_table[] =
 /* Code to turn an external r_type into a pointer to an entry in the
    above howto table.  */
 static void
-rtype2howto (cache_ptr, dst)
-     arelent *cache_ptr;
-     struct internal_reloc *dst;
+rtype2howto (arelent *cache_ptr, struct internal_reloc *dst)
 {
   if (dst->r_type >= R_PCR16L && dst->r_type <= R_VRT32)
     {
@@ -260,12 +250,11 @@ rtype2howto (cache_ptr, dst)
   reloc_processing(relent, reloc, symbols, abfd, section)
 
 static void
-reloc_processing (relent, reloc, symbols, abfd, section)
-     arelent *relent;
-     struct internal_reloc *reloc;
-     asymbol **symbols;
-     bfd *abfd;
-     asection *section;
+reloc_processing (arelent *relent,
+		  struct internal_reloc *reloc,
+		  asymbol **symbols,
+		  bfd *abfd,
+		  asection *section)
 {
   relent->address = reloc->r_vaddr;
   rtype2howto (relent, reloc);

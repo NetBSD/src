@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-chdlc.c,v 1.43 2005-11-29 08:56:19 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-chdlc.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-chdlc.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: print-chdlc.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 
 static void chdlc_slarp_print(const u_char *, u_int);
 
-const struct tok chdlc_cast_values[] = { 
+static const struct tok chdlc_cast_values[] = { 
     { CHDLC_UNICAST, "unicast" },
     { CHDLC_BCAST, "bcast" },
     { 0, NULL}

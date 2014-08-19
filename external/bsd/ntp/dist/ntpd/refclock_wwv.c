@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_wwv.c,v 1.1.1.1 2009/12/13 16:56:07 kardel Exp $	*/
+/*	$NetBSD: refclock_wwv.c,v 1.1.1.1.12.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * refclock_wwv - clock driver for NIST WWV/H time/frequency station
@@ -65,7 +65,7 @@
  *
  * Fudge factors
  *
- * Fudge flag4 causes the dubugging output described above to be
+ * Fudge flag4 causes the debugging output described above to be
  * recorded in the clockstats file. Fudge flag2 selects the audio input
  * port, where 0 is the mike port (default) and 1 is the line-in port.
  * It does not seem useful to select the compact disc player port. Fudge
@@ -83,8 +83,8 @@
 #define	AUDIO_BUFSIZ	320	/* audio buffer size (50 ms) */
 #define	PRECISION	(-10)	/* precision assumed (about 1 ms) */
 #define	DESCRIPTION	"WWV/H Audio Demodulator/Decoder" /* WRU */
-#define SECOND		8000	/* second epoch (sample rate) (Hz) */
-#define MINUTE		(SECOND * 60) /* minute epoch */
+#define WWV_SEC		8000	/* second epoch (sample rate) (Hz) */
+#define WWV_MIN		(WWV_SEC * 60) /* minute epoch */
 #define OFFSET		128	/* companded sample offset */
 #define SIZE		256	/* decompanding table size */
 #define	MAXAMP		6000.	/* max signal level reference */
@@ -203,10 +203,10 @@
  * Tone frequency definitions. The increments are for 4.5-deg sine
  * table.
  */
-#define MS		(SECOND / 1000) /* samples per millisecond */
-#define IN100		((100 * 80) / SECOND) /* 100 Hz increment */
-#define IN1000		((1000 * 80) / SECOND) /* 1000 Hz increment */
-#define IN1200		((1200 * 80) / SECOND) /* 1200 Hz increment */
+#define MS		(WWV_SEC / 1000) /* samples per millisecond */
+#define IN100		((100 * 80) / WWV_SEC) /* 100 Hz increment */
+#define IN1000		((1000 * 80) / WWV_SEC) /* 1000 Hz increment */
+#define IN1200		((1200 * 80) / WWV_SEC) /* 1200 Hz increment */
 
 /*
  * Acquisition and tracking time constants
@@ -598,7 +598,7 @@ static	void	wwv_corr4	(struct peer *, struct decvec *,
 				    double [], double [][4]);
 static	void	wwv_gain	(struct peer *);
 static	void	wwv_tsec	(struct peer *);
-static	int	timecode	(struct wwvunit *, char *);
+static	int	timecode	(struct wwvunit *, char *, size_t);
 static	double	wwv_snr		(double, double);
 static	int	carry		(struct decvec *);
 static	int	wwv_newchan	(struct peer *);
@@ -661,15 +661,10 @@ wwv_start(
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	if (!(up = (struct wwvunit *)emalloc(sizeof(struct wwvunit)))) {
-		close(fd);
-		return (0);
-	}
-	memset(up, 0, sizeof(struct wwvunit));
+	up = emalloc_zero(sizeof(*up));
 	pp = peer->procptr;
-	pp->unitptr = (caddr_t)up;
 	pp->io.clock_recv = wwv_receive;
-	pp->io.srcclock = (caddr_t)peer;
+	pp->io.srcclock = peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
@@ -677,6 +672,7 @@ wwv_start(
 		free(up);
 		return (0);
 	}
+	pp->unitptr = up;
 
 	/*
 	 * Initialize miscellaneous variables
@@ -695,10 +691,10 @@ wwv_start(
 	for (i = 3; i < OFFSET; i++) {
 		up->comp[i] = up->comp[i - 1] + step;
 		up->comp[OFFSET + i] = -up->comp[i];
-                if (i % 16 == 0)
-		    step *= 2.;
+		if (i % 16 == 0)
+			step *= 2.;
 	}
-	DTOLFP(1. / SECOND, &up->tick);
+	DTOLFP(1. / WWV_SEC, &up->tick);
 
 	/*
 	 * Initialize the decoding matrix with the radix for each digit
@@ -767,7 +763,7 @@ wwv_shutdown(
 	struct wwvunit *up;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 	if (up == NULL)
 		return;
 
@@ -805,15 +801,15 @@ wwv_receive(
 	int	bufcnt;		/* buffer counter */
 	l_fp	ltemp;
 
-	peer = (struct peer *)rbufp->recv_srcclock;
+	peer = rbufp->recv_peer;
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Main loop - read until there ain't no more. Note codec
 	 * samples are bit-inverted.
 	 */
-	DTOLFP((double)rbufp->recv_length / SECOND, &ltemp);
+	DTOLFP((double)rbufp->recv_length / WWV_SEC, &ltemp);
 	L_SUB(&rbufp->recv_time, &ltemp);
 	up->timestamp = rbufp->recv_time;
 	dpt = rbufp->recv_buffer;
@@ -841,7 +837,7 @@ wwv_receive(
 		 * per second, which results in a frequency change of
 		 * 125 PPM.
 		 */
-		up->phase += (up->freq + clock_codec) / SECOND;
+		up->phase += (up->freq + clock_codec) / WWV_SEC;
 		if (up->phase >= .5) {
 			up->phase -= 1.;
 		} else if (up->phase < -.5) {
@@ -886,7 +882,7 @@ wwv_poll(
 	struct wwvunit *up;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 	if (up->errflg)
 		refclock_report(peer, up->errflg);
 	up->errflg = 0;
@@ -970,7 +966,7 @@ wwv_rf(
 	static double hsiamp;	/* wwvh I tick amplitude */
 	static double hsqamp;	/* wwvh Q tick amplitude */
 
-	static double epobuf[SECOND]; /* second sync comb filter */
+	static double epobuf[WWV_SEC]; /* second sync comb filter */
 	static double epomax, nxtmax; /* second sync amplitude buffer */
 	static int epopos;	/* epoch second sync position buffer */
 
@@ -980,7 +976,7 @@ wwv_rf(
 	int	i;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	if (!iniflg) {
 		iniflg = 1;
@@ -1097,8 +1093,8 @@ wwv_rf(
 	 * while the second counter (epoch) counts the samples in the
 	 * second.
 	 */
-	up->mphase = (up->mphase + 1) % MINUTE;
-	epoch = up->mphase % SECOND;
+	up->mphase = (up->mphase + 1) % WWV_MIN;
+	epoch = up->mphase % WWV_SEC;
 
 	/*
 	 * WWV
@@ -1126,7 +1122,7 @@ wwv_rf(
 	sp = &up->mitig[up->achan].wwv;
 	sp->amp = sqrt(ciamp * ciamp + cqamp * cqamp) / SYNCYC;
 	if (!(up->status & MSYNC))
-		wwv_qrz(peer, sp, (int)(pp->fudgetime1 * SECOND));
+		wwv_qrz(peer, sp, (int)(pp->fudgetime1 * WWV_SEC));
 
 	/*
 	 * WWVH
@@ -1154,7 +1150,7 @@ wwv_rf(
 	rp = &up->mitig[up->achan].wwvh;
 	rp->amp = sqrt(hiamp * hiamp + hqamp * hqamp) / SYNCYC;
 	if (!(up->status & MSYNC))
-		wwv_qrz(peer, rp, (int)(pp->fudgetime2 * SECOND));
+		wwv_qrz(peer, rp, (int)(pp->fudgetime2 * WWV_SEC));
 	jptr = (jptr + 1) % SYNSIZ;
 	kptr = (kptr + 1) % TCKSIZ;
 
@@ -1182,9 +1178,9 @@ wwv_rf(
 			 * don't miss a beat.
 			 */
 			if (up->status & LEPSEC) {
-				up->mphase -= SECOND;
+				up->mphase -= WWV_SEC;
 				if (up->mphase < 0)
-					up->mphase += MINUTE;
+					up->mphase += WWV_MIN;
 			}
 		}
 	}
@@ -1208,9 +1204,9 @@ wwv_rf(
 		wwv_epoch(peer);
 	} else if (up->sptr != NULL) {
 		sp = up->sptr;
-		if (sp->metric >= TTHR && epoch == sp->mepoch % SECOND)
+		if (sp->metric >= TTHR && epoch == sp->mepoch % WWV_SEC)
  		    {
-			up->rsec = (60 - sp->mepoch / SECOND) % 60;
+			up->rsec = (60 - sp->mepoch / WWV_SEC) % 60;
 			up->rphase = 0;
 			up->status |= MSYNC;
 			up->watch = 0;
@@ -1258,7 +1254,7 @@ wwv_rf(
 		epopos = epoch;
 		j = epoch - 6 * MS;
 		if (j < 0)
-			j += SECOND;
+			j += WWV_SEC;
 		nxtmax = fabs(epobuf[j]);
 	}
 	if (epoch == 0) {
@@ -1266,7 +1262,7 @@ wwv_rf(
 		up->eposnr = wwv_snr(epomax, nxtmax);
 		epopos -= TCKCYC * MS;
 		if (epopos < 0)
-			epopos += SECOND;
+			epopos += WWV_SEC;
 		wwv_endpoc(peer, epopos);
 		if (!(up->status & SSYNC))
 			up->alarm |= SYNERR;
@@ -1310,7 +1306,7 @@ wwv_qrz(
 	long	epoch;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Find the sample with peak amplitude, which defines the minute
@@ -1319,7 +1315,7 @@ wwv_qrz(
 	 */
 	epoch = up->mphase - pdelay - SYNSIZ;
 	if (epoch < 0)
-		epoch += MINUTE;
+		epoch += WWV_MIN;
 	if (sp->amp > sp->maxeng) {
 		sp->maxeng = sp->amp;
 		sp->pos = epoch;
@@ -1336,15 +1332,15 @@ wwv_qrz(
 	if (up->mphase == 0) {
 		sp->synmax = sp->maxeng;
 		sp->synsnr = wwv_snr(sp->synmax, (sp->noieng -
-		    sp->synmax) / MINUTE);
+		    sp->synmax) / WWV_MIN);
 		if (sp->count == 0)
 			sp->lastpos = sp->pos;
-		epoch = (sp->pos - sp->lastpos) % MINUTE;
+		epoch = (sp->pos - sp->lastpos) % WWV_MIN;
 		sp->reach <<= 1;
 		if (sp->reach & (1 << AMAX))
 			sp->count--;
 		if (sp->synmax > ATHR && sp->synsnr > ASNR) {
-			if (abs(epoch) < AWND * MS) {
+			if (labs(epoch) < AWND * MS) {
 				sp->reach |= 1;
 				sp->count++;
 				sp->mepoch = sp->lastpos = sp->pos;
@@ -1357,11 +1353,11 @@ wwv_qrz(
 		else
 			sp->metric = wwv_metric(sp);
 		if (pp->sloppyclockflag & CLK_FLAG4) {
-			sprintf(tbuf,
+			snprintf(tbuf, sizeof(tbuf),
 			    "wwv8 %04x %3d %s %04x %.0f %.0f/%.1f %ld %ld",
 			    up->status, up->gain, sp->refid,
 			    sp->reach & 0xffff, sp->metric, sp->synmax,
-			    sp->synsnr, sp->pos % SECOND, epoch);
+			    sp->synsnr, sp->pos % WWV_SEC, epoch);
 			record_clock_stats(&peer->srcadr, tbuf);
 #ifdef DEBUG
 			if (debug)
@@ -1411,10 +1407,10 @@ wwv_endpoc(
 	int tmp2;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 	if (!iniflg) {
 		iniflg = 1;
-		memset((char *)epoch_mf, 0, sizeof(epoch_mf));
+		ZERO(epoch_mf);
 	}
 
 	/*
@@ -1468,7 +1464,7 @@ wwv_endpoc(
 	 * interval while the comb filter charges up and noise
 	 * dissapates..
 	 */
-	tmp2 = (tepoch - xepoch) % SECOND;
+	tmp2 = (tepoch - xepoch) % WWV_SEC;
 	if (tmp2 == 0) {
 		syncnt++;
 		if (syncnt > SCMP && up->status & MSYNC && (up->status &
@@ -1484,7 +1480,7 @@ wwv_endpoc(
 	}
 	if ((pp->sloppyclockflag & CLK_FLAG4) && !(up->status &
 	    MSYNC)) {
-		sprintf(tbuf,
+		snprintf(tbuf, sizeof(tbuf),
 		    "wwv1 %04x %3d %4d %5.0f %5.1f %5d %4d %4d %4d",
 		    up->status, up->gain, tepoch, up->epomax,
 		    up->eposnr, tmp2, avgcnt, syncnt,
@@ -1544,16 +1540,16 @@ wwv_endpoc(
 	 * to zero; if it decrements to -3, the interval is halved and
 	 * the counter set to zero.
 	 */
-	dtemp = (mepoch - zepoch) % SECOND;
+	dtemp = (mepoch - zepoch) % WWV_SEC;
 	if (up->status & FGATE) {
-		if (abs(dtemp) < MAXFREQ * MINAVG) {
+		if (fabs(dtemp) < MAXFREQ * MINAVG) {
 			up->freq += (dtemp / 2.) / ((mcount - zcount) *
 			    FCONST);
 			if (up->freq > MAXFREQ)
 				up->freq = MAXFREQ;
 			else if (up->freq < -MAXFREQ)
 				up->freq = -MAXFREQ;
-			if (abs(dtemp) < MAXFREQ * MINAVG / 2.) {
+			if (fabs(dtemp) < MAXFREQ * MINAVG / 2.) {
 				if (avginc < 3) {
 					avginc++;
 				} else {
@@ -1575,11 +1571,11 @@ wwv_endpoc(
 		}
 	}
 	if (pp->sloppyclockflag & CLK_FLAG4) {
-		sprintf(tbuf,
+		snprintf(tbuf, sizeof(tbuf),
 		    "wwv2 %04x %5.0f %5.1f %5d %4d %4d %4d %4.0f %7.2f",
 		    up->status, up->epomax, up->eposnr, mepoch,
 		    up->avgint, maxrun, mcount - zcount, dtemp,
-		    up->freq * 1e6 / SECOND);
+		    up->freq * 1e6 / WWV_SEC);
 		record_clock_stats(&peer->srcadr, tbuf);
 #ifdef DEBUG
 		if (debug)
@@ -1627,7 +1623,7 @@ wwv_epoch(
 	static double sigmin, sigzer, sigone, engmax, engmin;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Find the maximum minute sync pulse energy for both the
@@ -1701,7 +1697,7 @@ wwv_epoch(
 	 * next pulse.
 	 */
 	up->rphase++;
-	if (up->mphase % SECOND == up->repoch) {
+	if (up->mphase % WWV_SEC == up->repoch) {
 		up->status &= ~(DGATE | BGATE);
 		engmin = sqrt(up->irig * up->irig + up->qrig *
 		    up->qrig);
@@ -1765,10 +1761,10 @@ wwv_rsec(
 	int	sw, arg, nsec;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 	if (!iniflg) {
 		iniflg = 1;
-		memset((char *)bitvec, 0, sizeof(bitvec));
+		ZERO(bitvec);
 	}
 
 	/*
@@ -1862,7 +1858,7 @@ wwv_rsec(
 		}
 		rp->metric = wwv_metric(rp);
 		if (pp->sloppyclockflag & CLK_FLAG4) {
-			sprintf(tbuf,
+			snprintf(tbuf, sizeof(tbuf),
 			    "wwv5 %04x %3d %4d %.0f/%.1f %.0f/%.1f %s %04x %.0f %.0f/%.1f %s %04x %.0f %.0f/%.1f",
 			    up->status, up->gain, up->yepoch,
 			    up->epomax, up->eposnr, up->datsig,
@@ -2027,7 +2023,7 @@ wwv_rsec(
 	}
 	if ((pp->sloppyclockflag & CLK_FLAG4) && !(up->status &
 	    DSYNC)) {
-		sprintf(tbuf,
+		snprintf(tbuf, sizeof(tbuf),
 		    "wwv3 %2d %04x %3d %4d %5.0f %5.1f %5.0f %5.1f %5.0f",
 		    nsec, up->status, up->gain, up->yepoch, up->epomax,
 		    up->eposnr, up->datsig, up->datsnr, bit);
@@ -2061,7 +2057,7 @@ wwv_clock(
 	l_fp	offset;		/* offset in NTP seconds */
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 	if (!(up->status & SSYNC))
 		up->alarm |= SYNERR;
 	if (up->digcnt < 9)
@@ -2097,7 +2093,8 @@ wwv_clock(
 			refclock_receive(peer);
 		}
 	}
-	pp->lencode = timecode(up, pp->a_lastcode);
+	pp->lencode = timecode(up, pp->a_lastcode,
+			       sizeof(pp->a_lastcode));
 	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 #ifdef DEBUG
 	if (debug)
@@ -2134,7 +2131,7 @@ wwv_corr4(
 	int	i, j;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Correlate digit vector with each BCD coefficient vector. If
@@ -2195,7 +2192,7 @@ wwv_corr4(
 	}
 	if ((pp->sloppyclockflag & CLK_FLAG4) && !(up->status &
 	    INSYNC)) {
-		sprintf(tbuf,
+		snprintf(tbuf, sizeof(tbuf),
 		    "wwv4 %2d %04x %3d %4d %5.0f %2d %d %d %d %5.0f %5.1f",
 		    up->rsec - 1, up->status, up->gain, up->yepoch,
 		    up->epomax, vp->radix, vp->digit, mldigit,
@@ -2227,7 +2224,7 @@ wwv_tsec(
 	int temp;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Advance minute unit of the day. Don't propagate carries until
@@ -2406,7 +2403,7 @@ wwv_newchan(
 	int i, j, rval;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Search all five station pairs looking for the channel with
@@ -2498,7 +2495,7 @@ wwv_newgame(
 	int i;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Initialize strategic values. Note we set the leap bits
@@ -2523,9 +2520,11 @@ wwv_newgame(
 		cp = &up->mitig[i];
 		cp->gain = up->gain;
 		cp->wwv.select = SELV;
-		sprintf(cp->wwv.refid, "WV%.0f", floor(qsy[i])); 
+		snprintf(cp->wwv.refid, sizeof(cp->wwv.refid), "WV%.0f",
+		    floor(qsy[i])); 
 		cp->wwvh.select = SELH;
-		sprintf(cp->wwvh.refid, "WH%.0f", floor(qsy[i])); 
+		snprintf(cp->wwvh.refid, sizeof(cp->wwvh.refid), "WH%.0f",
+		    floor(qsy[i])); 
 	}
 	up->dchan = (DCHAN + NCHAN - 1) % NCHAN;
 	wwv_newchan(peer);
@@ -2575,7 +2574,7 @@ wwv_qsy(
 	struct wwvunit *up;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 	if (up->fd_icom > 0) {
 		up->mitig[up->achan].gain = up->gain;
 		rval = icom_freq(up->fd_icom, peer->ttl & 0x7f,
@@ -2616,7 +2615,8 @@ wwv_qsy(
 static int
 timecode(
 	struct wwvunit *up,	/* driver structure pointer */
-	char *ptr		/* target string */
+	char *		tc,	/* target string */
+	size_t		tcsiz	/* target max chars */
 	)
 {
 	struct sync *sp;
@@ -2641,20 +2641,23 @@ timecode(
 	dut = up->misc & 0x7;
 	if (!(up->misc & DUTS))
 		dut = -dut;
-	sprintf(ptr, "%c%1X", synchar, up->alarm);
-	sprintf(cptr, " %4d %03d %02d:%02d:%02d %c%c %+d",
-	    year, day, hour, minute, second, leapchar, dst, dut);
-	strcat(ptr, cptr);
+	snprintf(tc, tcsiz, "%c%1X", synchar, up->alarm);
+	snprintf(cptr, sizeof(cptr),
+		 " %4d %03d %02d:%02d:%02d %c%c %+d",
+		 year, day, hour, minute, second, leapchar, dst, dut);
+	strlcat(tc, cptr, tcsiz);
 
 	/*
 	 * Specific variable-format fields
 	 */
 	sp = up->sptr;
-	sprintf(cptr, " %d %d %s %.0f %d %.1f %d", up->watch,
-	    up->mitig[up->dchan].gain, sp->refid, sp->metric,
-	    up->errcnt, up->freq / SECOND * 1e6, up->avgint);
-	strcat(ptr, cptr);
-	return (strlen(ptr));
+	snprintf(cptr, sizeof(cptr), " %d %d %s %.0f %d %.1f %d",
+		 up->watch, up->mitig[up->dchan].gain, sp->refid,
+		 sp->metric, up->errcnt, up->freq / WWV_SEC * 1e6,
+		 up->avgint);
+	strlcat(tc, cptr, tcsiz);
+
+	return strlen(tc);
 }
 
 
@@ -2678,7 +2681,7 @@ wwv_gain(
 	struct wwvunit *up;
 
 	pp = peer->procptr;
-	up = (struct wwvunit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Apparently, the codec uses only the high order bits of the

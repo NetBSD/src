@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2009/01/24 13:43:21 tsutsui Exp $	*/
+/*	$NetBSD: main.c,v 1.10.14.1 2014/08/19 23:45:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -32,17 +32,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(\
-"@(#) Copyright (c) 1988 Mark Nudelman.\
-@(#) Copyright (c) 1988, 1993\
-Regents of the University of California.  All rights reserved.");
+__COPYRIGHT("@(#) Copyright (c) 1988 Mark Nudelman.");
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993 "
+"Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 2009/01/24 13:43:21 tsutsui Exp $");
+__RCSID("$NetBSD: main.c,v 1.10.14.1 2014/08/19 23:45:45 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,7 +251,7 @@ main(argc, argv)
 	char **argv;
 {
 	int envargc, argcnt;
-	char *envargv[2];
+	char *envargv[3];
 
 	/*
 	 * Process command line arguments and MORE environment arguments.

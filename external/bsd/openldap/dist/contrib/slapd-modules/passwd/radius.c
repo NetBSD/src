@@ -1,9 +1,9 @@
-/*	$NetBSD: radius.c,v 1.1.1.3 2010/12/12 15:19:13 adam Exp $	*/
+/*	$NetBSD: radius.c,v 1.1.1.3.12.1 2014/08/19 23:51:57 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/radius.c,v 1.2.2.7 2010/04/13 20:22:29 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@
 
 #include <radlib.h>
 
+extern char *global_host;	/* from slapd */
 static LUTIL_PASSWD_CHK_FUNC chk_radius;
 static const struct berval scheme = BER_BVC("{RADIUS}");
 static char *config_filename;
@@ -86,6 +87,10 @@ chk_radius(
 	}
 
 	if ( rad_put_string( h, RAD_USER_PASSWORD, cred->bv_val ) != 0 ) {
+		goto done;
+	}
+
+	if ( rad_put_string( h, RAD_NAS_IDENTIFIER, global_host ) != 0 ) {
 		goto done;
 	}
 

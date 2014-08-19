@@ -1,7 +1,7 @@
-/*	$NetBSD: event.h,v 1.4 2012/06/05 00:42:35 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.4.2.1 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -94,7 +94,7 @@ isc_event_t *
 isc_event_allocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
 		   isc_taskaction_t action, const void *arg, size_t size);
 /*%<
- * Allocate an event structure. 
+ * Allocate an event structure.
  *
  * Allocate and initialize in a structure with initial elements
  * defined by:
@@ -105,7 +105,7 @@ isc_event_allocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
  *		...
  *	};
  * \endcode
- *	
+ *
  * Requires:
  *\li	'size' >= sizeof(struct isc_event)
  *\li	'action' to be non NULL

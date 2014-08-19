@@ -1,7 +1,7 @@
-/*	$NetBSD: zt.c,v 1.4.2.1 2013/02/25 00:25:44 tls Exp $	*/
+/*	$NetBSD: zt.c,v 1.4.2.2 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -76,8 +76,7 @@ static isc_result_t
 doneloading(dns_zt_t *zt, dns_zone_t *zone, isc_task_t *task);
 
 isc_result_t
-dns_zt_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, dns_zt_t **ztp)
-{
+dns_zt_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, dns_zt_t **ztp) {
 	dns_zt_t *zt;
 	isc_result_t result;
 
@@ -536,6 +535,5 @@ auto_detach(void *data, void *arg) {
 	dns_zone_t *zone = data;
 
 	UNUSED(arg);
-
 	dns_zone_detach(&zone);
 }

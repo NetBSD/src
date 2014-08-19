@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- perl -*-
 
-#   Copyright (C) 2001, 2007
+#   Copyright (C) 2001, 2007, 2010
 #   Free Software Foundation
 #
 # This file is part of the libiberty library.
@@ -76,7 +76,7 @@ sub missing {
     for $f (sort keys %listed) {
 	if ($f =~ /(.*)\.c$/) {
 	    $base = $1;
-	    if (! $listed{"$base.o"}) {
+	    if (! $listed{"./$base.o"}) {
 		print "O $f\n";
 	    }
 	}
@@ -222,7 +222,7 @@ sub deps {
 
     opendir(INC, $incdir);
     while ($f = readdir INC) {
-	next unless $f =~ /\.h$/;
+	next unless $f =~ /\.h$/ || $f =~ /\.def$/;
 	$mine{$f} = "\$(INCDIR)/$f";
 	$deps{$f} = join(' ', &deps_for("$incdir/$f"));
     }
@@ -264,7 +264,7 @@ sub deps {
 	    }
 	    @deps = sort { &locals_first($a,$b) } keys %scanned;
 	    $obj = $f;
-	    $obj =~ s/\.c$/.o/;
+	    $obj =~ s/\.c$/.\$(objext)/;
 	    $obj = "./$obj:";
 	    if ($#deps >= 0) {
 		print OUT "$obj \$(srcdir)/$f";

@@ -1,8 +1,7 @@
 /* Configuration common to all targets running the GNU system.  */
 
 /*
-Copyright (C) 1994, 1995, 1997, 1998, 1999, 2002, 2003, 2004, 2007, 2008 Free
-Software Foundation, Inc.
+Copyright (C) 1994-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,23 +21,19 @@ along with GCC.  If not, see <http://www.gnu.org/licenses/>.
 
 /* Provide GCC options for standard feature-test macros.  */
 #undef CPP_SPEC
-#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{bsd:-D_BSD_SOURCE}"
+#define CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
 
-/* Default C library spec.  Use -lbsd-compat for gcc -bsd.  */
+/* Default C library spec.  */
 #undef LIB_SPEC
-#define LIB_SPEC "%{pthread:-lpthread} %{bsd:-lbsd-compat} %{pg|p|profile:-lc_p;:-lc}"
+#define LIB_SPEC "%{pthread:-lpthread} %{pg|p|profile:-lc_p;:-lc}"
 
-/* Standard include directory.  In GNU, "/usr" is a four-letter word.  */
-#undef STANDARD_INCLUDE_DIR
-#define STANDARD_INCLUDE_DIR "/include"
-
-#undef LINUX_TARGET_OS_CPP_BUILTINS
-#define LINUX_TARGET_OS_CPP_BUILTINS()		\
+#undef GNU_USER_TARGET_OS_CPP_BUILTINS
+#define GNU_USER_TARGET_OS_CPP_BUILTINS()		\
     do {					\
 	builtin_define ("__gnu_hurd__");	\
 	builtin_define ("__GNU__");		\
 	builtin_define_std ("unix");		\
-	builtin_define_std ("MACH");		\
+	builtin_define ("__MACH__");		\
 	builtin_assert ("system=gnu");		\
 	builtin_assert ("system=mach");		\
 	builtin_assert ("system=unix");		\

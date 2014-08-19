@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.5 2011/08/25 16:54:58 christos Exp $	*/
+/*	$NetBSD: ssh.c,v 1.5.8.1 2014/08/19 23:45:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -417,7 +417,7 @@ int
 cmd_run(int argc, char *argv[])
 {
 	struct sigaction sa;
-	int pid, err, cstat;
+	int pid, cstat;
 	char file[MAXPATHLEN];
 	int background;
 	char *opt, *ifile, *ofile, *efile;
@@ -494,7 +494,7 @@ cmd_run(int argc, char *argv[])
 			sigaction(SIGINT,  &sa, NULL);
 			sigaction(SIGQUIT, &sa, NULL);
 		}
-		err = execve(file, argv, environ);
+		execve(file, argv, environ);
 		perror(argv[0]);
 		return 1;
 	}

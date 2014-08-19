@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_tpro.c,v 1.1.1.2 2012/01/31 21:25:47 kardel Exp $	*/
+/*	$NetBSD: refclock_tpro.c,v 1.1.1.2.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * refclock_tpro - clock driver for the KSI/Odetics TPRO-S IRIG-B reader
@@ -89,20 +89,18 @@ tpro_start(
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	up = emalloc(sizeof(*up));
-	memset(up, 0, sizeof(*up));
+	up = emalloc_zero(sizeof(*up));
 	pp = peer->procptr;
 	pp->io.clock_recv = noentry;
-	pp->io.srcclock = (caddr_t)peer;
+	pp->io.srcclock = peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
-	pp->unitptr = (caddr_t)up;
+	pp->unitptr = up;
 
 	/*
 	 * Initialize miscellaneous peer variables
 	 */
 	peer->precision = PRECISION;
-	peer->burst = NSTAGE;
 	pp->clockdesc = DESCRIPTION;
 	memcpy((char *)&pp->refid, REFID, 4);
 	return (1);
@@ -122,7 +120,7 @@ tpro_shutdown(
 	struct refclockproc *pp;
 
 	pp = peer->procptr;
-	up = (struct tprounit *)pp->unitptr;
+	up = pp->unitptr;
 	io_closeclock(&pp->io);
 	if (NULL != up)
 		free(up);
@@ -147,7 +145,7 @@ tpro_poll(
 	 * board and tacks on a local timestamp.
 	 */
 	pp = peer->procptr;
-	up = (struct tprounit *)pp->unitptr;
+	up = pp->unitptr;
 
 	tp = &up->tprodata;
 	if (read(pp->io.fd, (char *)tp, sizeof(struct tproval)) < 0) {
@@ -163,7 +161,7 @@ tpro_poll(
 	 * proper format, we declare bad format and exit. Note: we
 	 * can't use the sec/usec conversion produced by the driver,
 	 * since the year may be suspect. All format error checking is
-	 * done by the sprintf() and sscanf() routines.
+	 * done by the snprintf() and sscanf() routines.
 	 *
 	 * Note that the refclockproc usec member has now become nsec.
 	 * We could either multiply the read-in usec value by 1000 or
@@ -198,8 +196,6 @@ tpro_poll(
 		refclock_report(peer, CEVNT_BADTIME);
 		return;
 	}
-	if (peer->burst > 0)
-		return;
 	if (pp->coderecv == pp->codeproc) {
 		refclock_report(peer, CEVNT_TIMEOUT);
 		return;
@@ -207,7 +203,6 @@ tpro_poll(
 	pp->lastref = pp->lastrec;
 	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 	refclock_receive(peer);
-	peer->burst = NSTAGE;
 }
 
 #else

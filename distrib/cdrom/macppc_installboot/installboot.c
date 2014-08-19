@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 2009/03/25 15:26:49 tsutsui Exp $	*/
+/*	$NetBSD: installboot.c,v 1.4.12.1 2014/08/19 23:45:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -118,12 +118,11 @@ main(int argc, char **argv)
 
 	params->stage2 = argv[3];
 
-	bb = malloc(MACPPC_BOOT_BLOCK_MAX_SIZE);
+	bb = calloc(1, MACPPC_BOOT_BLOCK_MAX_SIZE);
 	if (bb == NULL)
 		err(1, "Allocating %ul bytes for bbinfo",
 		    MACPPC_BOOT_BLOCK_MAX_SIZE);
 
-	memset(bb, 0, sizeof(bb));
 	rv = read(params->s1fd, bb, params->s1stat.st_size);
 
 	if (rv == -1)

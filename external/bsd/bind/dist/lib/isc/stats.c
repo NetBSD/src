@@ -1,7 +1,7 @@
-/*	$NetBSD: stats.c,v 1.3 2012/06/05 00:42:31 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.3.2.1 2014/08/19 23:46:32 tls Exp $	*/
 
 /*
- * Copyright (C) 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -277,8 +277,8 @@ copy_counters(isc_stats_t *stats) {
 	}
 #else
 	UNUSED(i);
-	memcpy(stats->copiedcounters, stats->counters,
-	       stats->ncounters * sizeof(isc_stat_t));
+	memmove(stats->copiedcounters, stats->counters,
+		stats->ncounters * sizeof(isc_stat_t));
 #endif
 
 #ifdef ISC_RWLOCK_USEATOMIC
@@ -326,3 +326,31 @@ isc_stats_dump(isc_stats_t *stats, isc_stats_dumper_t dump_fn,
 		dump_fn((isc_statscounter_t)i, stats->copiedcounters[i], arg);
 	}
 }
+
+void
+isc_stats_set(isc_stats_t *stats, isc_uint64_t val,
+	      isc_statscounter_t counter)
+{
+	REQUIRE(ISC_STATS_VALID(stats));
+	REQUIRE(counter < stats->ncounters);
+
+#ifdef ISC_RWLOCK_USEATOMIC
+	/*
+	 * We use a "write" lock before "reading" the statistics counters as
+	 * an exclusive lock.
+	 */
+	isc_rwlock_lock(&stats->counterlock, isc_rwlocktype_write);
+#endif
+
+#if ISC_STATS_USEMULTIFIELDS
+	stats->counters[counter].hi = (isc_uint32_t)((val >> 32) & 0xffffffff);
+	stats->counters[counter].lo = (isc_uint32_t)(val & 0xffffffff);
+#else
+	stats->counters[counter] = val;
+#endif
+
+#ifdef ISC_RWLOCK_USEATOMIC
+	isc_rwlock_unlock(&stats->counterlock, isc_rwlocktype_write);
+#endif
+}
+

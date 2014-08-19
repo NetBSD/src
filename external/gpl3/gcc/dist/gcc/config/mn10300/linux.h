@@ -1,6 +1,6 @@
 /* Definitions of taret machine for GNU compiler.
    Matsushita AM33/2.0
-   Copyright 2001, 2002, 2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva <aoliva@redhat.com>
 
    This file is part of GCC.
@@ -22,7 +22,7 @@
 #undef  PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 
-#define TARGET_OS_CPP_BUILTINS() LINUX_TARGET_OS_CPP_BUILTINS()
+#define TARGET_OS_CPP_BUILTINS() GNU_USER_TARGET_OS_CPP_BUILTINS()
 
 #undef  CPP_SPEC
 #define CPP_SPEC "%{mam33:-D__AM33__} %{!mam33:-D__AM33__=2 -D__AM33_2__} \
@@ -30,7 +30,7 @@
   %{pthread:-D_REENTRANT -D_PTHREADS}"
 
 #undef  ASM_SPEC
-#define ASM_SPEC "%{Wa,*:%*}"
+#define ASM_SPEC ""
 
 #define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
 
@@ -38,14 +38,11 @@
 #define LINK_SPEC "%{mrelax:--relax} %{shared:-shared} \
    %{!static: \
      %{rdynamic:-export-dynamic} \
-     %{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER "}} \
+     -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
    %{static:-static}"
 
 #undef  PROCESSOR_DEFAULT
 #define PROCESSOR_DEFAULT PROCESSOR_AM33_2
-
-#undef  TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (AM33/2.0 GNU/Linux)");
 
 #define DBX_REGISTER_NUMBER(REGNO) (REGNO)
 
@@ -56,7 +53,7 @@ extern int mn10300_protect_label;
   do						\
     {						\
       mn10300_protect_label = 1;		\
-      print_operand ((FILE), (X), (CODE));	\
+      mn10300_print_operand ((FILE), (X), (CODE));	\
       mn10300_protect_label = 0;		\
     }						\
   while (0)
@@ -66,7 +63,7 @@ extern int mn10300_protect_label;
   do						\
     {						\
       mn10300_protect_label = 1;		\
-      print_operand_address ((FILE), (X));	\
+      mn10300_print_operand_address ((FILE), (X));	\
       mn10300_protect_label = 0;		\
     }						\
    while (0)
@@ -84,3 +81,7 @@ extern int mn10300_protect_label;
     }						\
   while (0)           
 
+#undef SIZE_TYPE
+#undef PTRDIFF_TYPE
+#undef WCHAR_TYPE
+#undef WCHAR_TYPE_SIZE

@@ -1,10 +1,10 @@
-/*	$NetBSD: dn2id.c,v 1.1.1.4 2010/12/12 15:22:54 adam Exp $	*/
+/*	$NetBSD: dn2id.c,v 1.1.1.4.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* dn2id.c - routines to deal with the dn2id index */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.23 2010/06/23 15:57:26 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,32 +24,6 @@
 #include "back-bdb.h"
 #include "idl.h"
 #include "lutil.h"
-
-#define bdb_dn2id_lock					BDB_SYMBOL(dn2id_lock)
-
-static int
-bdb_dn2id_lock( struct bdb_info *bdb, struct berval *dn,
-	int rw, DB_TXN *txn, DB_LOCK *lock )
-{
-	int       rc;
-	DBT       lockobj;
-	int       db_rw;
-
-	if (!txn)
-		return 0;
-
-	if (rw)
-		db_rw = DB_LOCK_WRITE;
-	else
-		db_rw = DB_LOCK_READ;
-
-	lockobj.data = dn->bv_val;
-	lockobj.size = dn->bv_len;
-
-	rc = LOCK_GET(bdb->bi_dbenv, TXN_ID(txn), DB_LOCK_NOWAIT,
-					&lockobj, db_rw, lock);
-	return rc;
-}
 
 #ifndef BDB_HIER
 int
@@ -179,7 +153,6 @@ bdb_dn2id_delete(
 	DB *db = bdb->bi_dn2id->bdi_db;
 	char		*buf;
 	DBT		key;
-	DB_LOCK	lock;
 	struct berval	pdn, ptr;
 	int		rc;
 
@@ -196,10 +169,6 @@ bdb_dn2id_delete(
 	ptr.bv_len = e->e_nname.bv_len;
 	AC_MEMCPY( ptr.bv_val, e->e_nname.bv_val, e->e_nname.bv_len );
 	ptr.bv_val[ptr.bv_len] = '\0';
-
-	/* We hold this lock until the TXN completes */
-	rc = bdb_dn2id_lock( bdb, &e->e_nname, 1, txn, &lock );
-	if ( rc ) goto done;
 
 	/* delete it */
 	rc = db->del( db, txn, &key, 0 );
@@ -283,11 +252,10 @@ bdb_dn2id(
 	struct berval	*dn,
 	EntryInfo *ei,
 	DB_TXN *txn,
-	DB_LOCK *lock )
+	DBC **cursor )
 {
 	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	DB *db = bdb->bi_dn2id->bdi_db;
-	DBC	*cursor;
 	int		rc;
 	DBT		key, data;
 	ID		nid;
@@ -306,18 +274,11 @@ bdb_dn2id(
 	data.ulen = sizeof(ID);
 	data.flags = DB_DBT_USERMEM;
 
-	rc = db->cursor( db, txn, &cursor, bdb->bi_db_opflags );
-	if ( rc ) goto func_leave;
-
-	rc = bdb_dn2id_lock( bdb, dn, 0, txn, lock );
-	if ( rc ) goto nolock;
+	rc = db->cursor( db, txn, cursor, bdb->bi_db_opflags );
 
 	/* fetch it */
-	rc = cursor->c_get( cursor, &key, &data, DB_SET );
-
-nolock:
-	cursor->c_close( cursor );
-func_leave:
+	if ( !rc )
+		rc = (*cursor)->c_get( *cursor, &key, &data, DB_SET );
 
 	if( rc != 0 ) {
 		Debug( LDAP_DEBUG_TRACE, "<= bdb_dn2id: get failed: %s (%d)\n",
@@ -654,7 +615,6 @@ hdb_dn2id_delete(
 	int rc;
 	ID	nid;
 	unsigned char dlen[2];
-	DB_LOCK	lock;
 
 	Debug( LDAP_DEBUG_TRACE, "=> hdb_dn2id_delete 0x%lx: \"%s\"\n",
 		e->e_id, e->e_ndn, 0 );
@@ -684,10 +644,6 @@ hdb_dn2id_delete(
 	rc = db->cursor( db, txn, &cursor, bdb->bi_db_opflags );
 	if ( rc ) goto func_leave;
 
-	/* We hold this lock until the TXN completes */
-	rc = bdb_dn2id_lock( bdb, &e->e_nname, 1, txn, &lock );
-	if ( rc ) goto nolock;
-
 	/* Delete our ID from the parent's list */
 	rc = cursor->c_get( cursor, &key, &data, DB_GET_BOTH_RANGE );
 	if ( rc == 0 ) {
@@ -709,7 +665,6 @@ hdb_dn2id_delete(
 			rc = cursor->c_del( cursor, 0 );
 	}
 
-nolock:
 	cursor->c_close( cursor );
 func_leave:
 	op->o_tmpfree( d, op->o_tmpmemctx );
@@ -747,12 +702,11 @@ hdb_dn2id(
 	struct berval	*in,
 	EntryInfo	*ei,
 	DB_TXN *txn,
-	DB_LOCK *lock )
+	DBC **cursor )
 {
 	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	DB *db = bdb->bi_dn2id->bdi_db;
 	DBT		key, data;
-	DBC	*cursor;
 	int		rc = 0, nrlen;
 	diskNode *d;
 	char	*ptr;
@@ -778,7 +732,7 @@ hdb_dn2id(
 	data.dlen = data.ulen;
 	data.flags = DB_DBT_USERMEM | DB_DBT_PARTIAL;
 
-	rc = db->cursor( db, txn, &cursor, bdb->bi_db_opflags );
+	rc = db->cursor( db, txn, cursor, bdb->bi_db_opflags );
 	if ( rc ) return rc;
 
 	d = op->o_tmpalloc( data.size * 3, op->o_tmpmemctx );
@@ -790,10 +744,7 @@ hdb_dn2id(
 	*ptr = '\0';
 	data.data = d;
 
-	rc = bdb_dn2id_lock( bdb, in, 0, txn, lock );
-	if ( rc ) goto func_leave;
-
-	rc = cursor->c_get( cursor, &key, &data, DB_GET_BOTH_RANGE );
+	rc = (*cursor)->c_get( *cursor, &key, &data, DB_GET_BOTH_RANGE );
 	if ( rc == 0 && (dlen[1] != d->nrdnlen[1] || dlen[0] != d->nrdnlen[0] ||
 		strncmp( d->nrdn, in->bv_val, nrlen ))) {
 		rc = DB_NOTFOUND;
@@ -810,13 +761,11 @@ hdb_dn2id(
 			/* FIXME: do we need to lock the parent
 			 * entryinfo? Seems safe...
 			 */
-			cursor->c_count( cursor, &dkids, 0 );
+			(*cursor)->c_count( *cursor, &dkids, 0 );
 			ei->bei_parent->bei_dkids = dkids;
 		}
 	}
 
-func_leave:
-	cursor->c_close( cursor );
 	op->o_tmpfree( d, op->o_tmpmemctx );
 	if( rc != 0 ) {
 		Debug( LDAP_DEBUG_TRACE, "<= hdb_dn2id: get failed: %s (%d)\n",
@@ -998,6 +947,7 @@ hdb_dn2idl_internal(
 			cx->rc = bdb_idl_cache_get(cx->bdb, cx->db, &cx->key, ids);
 			if ( cx->rc == LDAP_SUCCESS ) {
 				if ( cx->depth ) {
+					bdb_idl_delete( cx->tmp, cx->id );	/* ITS#6983, drop our own ID */
 					bdb_idl_append( cx->ids, cx->tmp );
 					cx->need_sort = 1;
 				}

@@ -1,9 +1,10 @@
-/*	$NetBSD: hextoint.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
+/*	$NetBSD: hextoint.c,v 1.2.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * hextoint - convert an ascii string in hex to an unsigned
  *	      long, with error checking
  */
+#include <config.h>
 #include <ctype.h>
 
 #include "ntp_stdlib.h"

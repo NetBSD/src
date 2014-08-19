@@ -1,9 +1,9 @@
-/*	$NetBSD: ppolicy.c,v 1.1.1.3 2010/12/12 15:21:34 adam Exp $	*/
+/*	$NetBSD: ppolicy.c,v 1.1.1.3.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/ppolicy.c,v 1.11.2.6 2010/04/13 20:22:59 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2010 The OpenLDAP Foundation.
+ * Copyright 2004-2014 The OpenLDAP Foundation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * Portions Copyright 2004 Howard Chu, Symas Corp.
  * All rights reserved.
@@ -135,6 +135,11 @@ ldap_parse_passwordpolicy_control(
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
 	assert( ctrl != NULL );
+
+	if ( !ctrl->ldctl_value.bv_val ) {
+		ld->ld_errno = LDAP_DECODING_ERROR;
+		return(ld->ld_errno);
+	}
 
 	/* Create a BerElement from the berval returned in the control. */
 	ber = ber_init(&ctrl->ldctl_value);

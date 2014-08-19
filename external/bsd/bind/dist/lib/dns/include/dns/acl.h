@@ -1,7 +1,7 @@
-/*	$NetBSD: acl.h,v 1.4 2012/06/05 00:41:45 christos Exp $	*/
+/*	$NetBSD: acl.h,v 1.4.2.1 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -40,9 +40,16 @@
 #include <isc/netaddr.h>
 #include <isc/refcount.h>
 
+#ifdef HAVE_GEOIP
+#include <dns/geoip.h>
+#endif
 #include <dns/name.h>
 #include <dns/types.h>
 #include <dns/iptable.h>
+
+#ifdef HAVE_GEOIP
+#include <GeoIP.h>
+#endif
 
 /***
  *** Types
@@ -54,8 +61,11 @@ typedef enum {
 	dns_aclelementtype_nestedacl,
 	dns_aclelementtype_localhost,
 	dns_aclelementtype_localnets,
+#ifdef HAVE_GEOIP
+	dns_aclelementtype_geoip,
+#endif /* HAVE_GEOIP */
 	dns_aclelementtype_any
-} dns_aclelemettype_t;
+} dns_aclelementtype_t;
 
 typedef struct dns_aclipprefix dns_aclipprefix_t;
 
@@ -65,9 +75,12 @@ struct dns_aclipprefix {
 };
 
 struct dns_aclelement {
-	dns_aclelemettype_t	type;
+	dns_aclelementtype_t	type;
 	isc_boolean_t		negative;
 	dns_name_t		keyname;
+#ifdef HAVE_GEOIP
+	dns_geoip_elem_t	geoip_elem;
+#endif /* HAVE_GEOIP */
 	dns_acl_t		*nestedacl;
 	int			node_num;
 };
@@ -90,6 +103,9 @@ struct dns_aclenv {
 	dns_acl_t *localhost;
 	dns_acl_t *localnets;
 	isc_boolean_t match_mapped;
+#ifdef HAVE_GEOIP
+	dns_geoip_databases_t *geoip;
+#endif
 };
 
 #define DNS_ACL_MAGIC		ISC_MAGIC('D','a','c','l')
@@ -215,6 +231,10 @@ dns_acl_match(const isc_netaddr_t *reqaddr,
  * If there is a match in the element list (either positive or negative)
  * and 'matchelt' is non-NULL, *matchelt will be pointed to the matching
  * element.
+ *
+ * 'env' points to the current ACL environment, including the
+ * current values of localhost and localnets and (if applicable)
+ * the GeoIP context.
  *
  * Returns:
  *\li	#ISC_R_SUCCESS		Always succeeds.

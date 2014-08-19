@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-ecdsa.c,v 1.3 2012/05/02 02:41:08 christos Exp $	*/
-/* $OpenBSD: ssh-ecdsa.c,v 1.5 2012/01/08 13:17:11 miod Exp $ */
+/*	$NetBSD: ssh-ecdsa.c,v 1.3.2.1 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: ssh-ecdsa.c,v 1.6 2013/05/17 00:13:14 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ecdsa.c,v 1.3 2012/05/02 02:41:08 christos Exp $");
+__RCSID("$NetBSD: ssh-ecdsa.c,v 1.3.2.1 2014/08/19 23:45:25 tls Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -118,16 +118,16 @@ ssh_ecdsa_verify(const Key *key, const u_char *signature, u_int signaturelen,
 	if (strcmp(key_ssh_name_plain(key), ktype) != 0) {
 		error("%s: cannot handle type %s", __func__, ktype);
 		buffer_free(&b);
-		xfree(ktype);
+		free(ktype);
 		return -1;
 	}
-	xfree(ktype);
+	free(ktype);
 	sigblob = buffer_get_string(&b, &len);
 	rlen = buffer_len(&b);
 	buffer_free(&b);
 	if (rlen != 0) {
 		error("%s: remaining bytes in signature %d", __func__, rlen);
-		xfree(sigblob);
+		free(sigblob);
 		return -1;
 	}
 
@@ -148,7 +148,7 @@ ssh_ecdsa_verify(const Key *key, const u_char *signature, u_int signaturelen,
 
 	/* clean up */
 	memset(sigblob, 0, len);
-	xfree(sigblob);
+	free(sigblob);
 
 	/* hash the data */
 	EVP_DigestInit(&md, evp_md);

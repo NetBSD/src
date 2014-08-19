@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.29.6.2 2013/06/23 06:26:14 tls Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.29.6.3 2014/08/19 23:45:15 tls Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -766,6 +766,12 @@ kernel_handle_message(msg)
 	case RTM_CHANGE:
 	case RTM_GET:
 	case RTM_MISS:
+#ifdef RTM_LOSING
+	case RTM_LOSING:
+#endif
+#ifdef RTM_REDIRECT
+	case RTM_REDIRECT:
+#endif
 	case RTM_IFINFO:
 #ifdef RTM_OIFINFO
 	case RTM_OIFINFO:
@@ -776,6 +782,9 @@ kernel_handle_message(msg)
 #endif
 #ifdef RTM_IFANNOUNCE
 	case RTM_IFANNOUNCE:
+#endif
+#ifdef RTM_IEEE80211
+	case RTM_IEEE80211:
 #endif
 		break;
 	default:

@@ -1,10 +1,10 @@
-/*	$NetBSD: entry.c,v 1.1.1.3 2010/12/12 15:23:14 adam Exp $	*/
+/*	$NetBSD: entry.c,v 1.1.1.3.12.1 2014/08/19 23:52:02 tls Exp $	*/
 
 /* entry.c - monitor backend entry handling routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/entry.c,v 1.21.2.7 2010/04/13 20:23:32 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -153,7 +153,7 @@ monitor_entry_test_flags(
 }
 
 monitor_entry_t *
-monitor_entrypriv_create( void )
+monitor_back_entrypriv_create( void )
 {
 	monitor_entry_t	*mp;
 
@@ -176,17 +176,19 @@ monitor_entry_stub(
 	struct berval *pndn,
 	struct berval *rdn,
 	ObjectClass *oc,
-	monitor_info_t	*mi,
 	struct berval *create,
 	struct berval *modify
 )
 {
+	monitor_info_t *mi;
 	AttributeDescription *nad = NULL;
 	Entry *e;
 	struct berval nat;
 	char *ptr;
 	const char *text;
 	int rc;
+
+	mi = ( monitor_info_t * )be_monitor->be_private;
 
 	nat = *rdn;
 	ptr = strchr( nat.bv_val, '=' );

@@ -1,4 +1,4 @@
-# $NetBSD: md.prep,v 1.27.8.1 2013/02/25 00:24:33 tls Exp $
+# $NetBSD: md.prep,v 1.27.8.2 2014/08/19 23:45:43 tls Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/prep				comp-c-include
 ./usr/include/prep/_G_config.h			comp-obsolete		obsolete
@@ -54,6 +54,8 @@
 ./usr/include/prep/rwlock.h			comp-c-include
 ./usr/include/prep/setjmp.h			comp-c-include
 ./usr/include/prep/signal.h			comp-c-include
+./usr/include/prep/sljitarch.h			comp-obsolete		obsolete
+./usr/include/prep/sljit_machdep.h		comp-c-include
 ./usr/include/prep/spkr.h			comp-c-include
 ./usr/include/prep/spr.h			comp-obsolete		obsolete
 ./usr/include/prep/stdarg.h			comp-obsolete		obsolete

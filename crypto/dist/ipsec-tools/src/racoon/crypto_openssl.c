@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.21.2.1 2013/02/25 00:24:02 tls Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.21.2.2 2014/08/19 23:45:15 tls Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -601,26 +601,47 @@ eay_get_x509subjectaltname(cert, altname, type, pos)
 	/* read IP address */
 	else if (gen->type == GEN_IPADD)
 	{
-		unsigned char p[5], *ip;
-		ip = p;
-		
-		/* only support IPv4 */
-		if (gen->d.ip->length != 4)
-			goto end;
-		
-		/* convert Octet String to String
-		 * XXX ???????
-		 */
-		/*i2d_ASN1_OCTET_STRING(gen->d.ip,&ip);*/
-		ip = gen->d.ip->data;
+		switch (gen->d.iPAddress->length) {
+		case 4: /* IPv4 */
+			*altname = racoon_malloc(4*3 + 3 + 1); /* digits + decimals + null */
+			if (!*altname)
+				goto end;
 
-		/* XXX Magic, enough for an IPv4 address
-		 */
-		*altname = racoon_malloc(20);
-		if (!*altname)
+			snprintf(*altname, 12+3+1, "%u.%u.%u.%u",
+			         (unsigned)gen->d.iPAddress->data[0],
+			         (unsigned)gen->d.iPAddress->data[1],
+			         (unsigned)gen->d.iPAddress->data[2],
+			         (unsigned)gen->d.iPAddress->data[3]);
+			break;
+		case 16: { /* IPv6 */
+			int i;
+
+			*altname = racoon_malloc(16*2 + 7 + 1); /* digits + colons + null */
+			if (!*altname)
+				goto end;
+
+			/* Make NULL terminated IPv6 address */
+			for (i=0; i<16; ++i) {
+				int pos = i*2 + i/2;
+
+				if (i>0 && i%2==0)
+					(*altname)[pos-1] = ':';
+
+				snprintf(*altname + pos, 3, "%02x",
+				         (unsigned)gen->d.iPAddress->data[i]);
+
+			}
+			plog(LLV_INFO, LOCATION, NULL,
+			     "Remote X509 IPv6 addr: %s", *altname);
+			break;
+		}
+		default:
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "Unknown IP address length: %u octects.",
+			     gen->d.iPAddress->length);
 			goto end;
-		
-		sprintf(*altname, "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+		}
+
 		*type = gen->type;
 		error = 0;
 	}

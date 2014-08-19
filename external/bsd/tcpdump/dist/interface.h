@@ -38,13 +38,19 @@
 
 #if !defined(HAVE_SNPRINTF)
 int snprintf(char *, size_t, const char *, ...)
-     __attribute__((format(printf, 3, 4)));
-#endif
+#ifdef __ATTRIBUTE___FORMAT_OK
+     __attribute__((format(printf, 3, 4)))
+#endif /* __ATTRIBUTE___FORMAT_OK */
+     ;
+#endif /* !defined(HAVE_SNPRINTF) */
 
 #if !defined(HAVE_VSNPRINTF)
 int vsnprintf(char *, size_t, const char *, va_list)
-     __attribute__((format(printf, 3, 0)));
-#endif
+#ifdef __ATTRIBUTE___FORMAT_OK
+     __attribute__((format(printf, 3, 0)))
+#endif /* __ATTRIBUTE___FORMAT_OK */
+     ;
+#endif /* !defined(HAVE_VSNPRINTF) */
 
 #ifndef HAVE_STRLCAT
 extern size_t strlcat(char *, const char *, size_t);
@@ -70,7 +76,13 @@ extern char *strsep(char **, const char *);
 #define PT_CNFP		7	/* Cisco NetFlow protocol */
 #define PT_TFTP		8	/* trivial file transfer protocol */
 #define PT_AODV		9	/* Ad-hoc On-demand Distance Vector Protocol */
-#define PT_CARP         10      /* Common Address Redundancy Protocol */
+#define PT_CARP		10	/* Common Address Redundancy Protocol */
+#define PT_RADIUS	11	/* RADIUS authentication Protocol */
+#define PT_ZMTP1	12	/* ZeroMQ Message Transport Protocol 1.0 */
+#define PT_VXLAN	13	/* Virtual eXtensible Local Area Network */
+#define PT_PGM		14	/* [UDP-encapsulated] Pragmatic General Multicast */
+#define PT_PGM_ZMTP1	15	/* ZMTP/1.0 inside PGM (native or UDP-encapsulated) */
+#define PT_LMP		16	/* Link Management Protocol */
 
 #ifndef min
 #define min(a,b) ((a)>(b)?(b):(a))
@@ -131,8 +143,16 @@ extern const char *tok2strary_internal(const char **, int, const char *, int);
 extern const char *dnaddr_string(u_short);
 
 extern void error(const char *, ...)
-    __attribute__((noreturn, format (printf, 1, 2)));
-extern void warning(const char *, ...) __attribute__ ((format (printf, 1, 2)));
+     __attribute__((noreturn))
+#ifdef __ATTRIBUTE___FORMAT_OK
+     __attribute__((format (printf, 1, 2)))
+#endif /* __ATTRIBUTE___FORMAT_OK */
+     ;
+extern void warning(const char *, ...)
+#ifdef __ATTRIBUTE___FORMAT_OK
+     __attribute__((format (printf, 1, 2)))
+#endif /* __ATTRIBUTE___FORMAT_OK */
+     ;
 
 extern char *read_infile(char *);
 extern char *copy_argv(char **);
@@ -215,10 +235,14 @@ extern u_int llap_print(const u_char *, u_int);
 extern u_int ltalk_if_print(const struct pcap_pkthdr *, const u_char *);
 extern void msdp_print(const unsigned char *, u_int);
 extern void nfsreply_print(const u_char *, u_int, const u_char *);
+extern void nfsreply_print_noaddr(const u_char *, u_int, const u_char *);
 extern void nfsreq_print(const u_char *, u_int, const u_char *);
+extern void nfsreq_print_noaddr(const u_char *, u_int, const u_char *);
 extern void ns_print(const u_char *, u_int, int);
+extern const u_char * ns_nprint (register const u_char *, register const u_char *);
 extern void ntp_print(const u_char *, u_int);
 extern u_int null_if_print(const struct pcap_pkthdr *, const u_char *);
+extern void openflow_print(const u_char *, u_int);
 extern void ospf_print(const u_char *, u_int, const u_char *);
 extern void olsr_print (const u_char *, u_int, int);
 extern void pimv1_print(const u_char *, u_int);
@@ -311,13 +335,18 @@ extern void forces_print(const u_char *, u_int);
 extern void mpls_print(const u_char *, u_int);
 extern void mpls_lsp_ping_print(const u_char *, u_int);
 extern void zephyr_print(const u_char *, int);
+extern void zmtp1_print(const u_char *, u_int);
+extern void zmtp1_print_datagram(const u_char *, u_int);
 extern void hsrp_print(const u_char *, u_int);
 extern void bfd_print(const u_char *, u_int, u_int);
 extern void sip_print(const u_char *, u_int);
 extern void syslog_print(const u_char *, u_int);
+extern int mptcp_print(const u_char *, u_int, u_char);
 extern u_int bt_if_print(const struct pcap_pkthdr *, const u_char *);
 extern u_int usb_linux_48_byte_print(const struct pcap_pkthdr *, const u_char *);
 extern u_int usb_linux_64_byte_print(const struct pcap_pkthdr *, const u_char *);
+extern void vxlan_print(const u_char *, u_int);
+extern void otv_print(const u_char *, u_int);
 
 
 #ifdef INET6

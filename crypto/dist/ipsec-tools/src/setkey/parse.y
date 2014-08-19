@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.15 2012/01/09 15:25:13 drochner Exp $	*/
+/*	$NetBSD: parse.y,v 1.15.6.1 2014/08/19 23:45:15 tls Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -954,7 +954,6 @@ setkeymsg_spdaddr(type, upper, policy, srcs, splen, dsts, dplen)
 	int plen;
 	struct sockaddr *sa;
 	int salen;
-	struct sadb_x_policy *sp;
 #ifdef HAVE_POLICY_FWD
 	struct sadb_x_ipsecrequest *ps = NULL;
 	int saved_level, saved_id = 0;
@@ -969,7 +968,6 @@ setkeymsg_spdaddr(type, upper, policy, srcs, splen, dsts, dplen)
 	setkeymsg0(msg, type, SADB_SATYPE_UNSPEC, 0);
 	l = sizeof(struct sadb_msg);
 
-	sp = (struct sadb_x_policy*) (buf + l);
 	memcpy(buf + l, policy->buf, policy->len);
 	l += policy->len;
 
@@ -1094,11 +1092,10 @@ setkeymsg_spdaddr_tag(type, tag, policy)
 {
 	struct sadb_msg *msg;
 	char buf[BUFSIZ];
-	int l, l0;
+	int l;
 #ifdef SADB_X_EXT_TAG
 	struct sadb_x_tag m_tag;
 #endif
-	int n;
 
 	msg = (struct sadb_msg *)buf;
 
@@ -1108,9 +1105,6 @@ setkeymsg_spdaddr_tag(type, tag, policy)
 
 	memcpy(buf + l, policy->buf, policy->len);
 	l += policy->len;
-
-	l0 = l;
-	n = 0;
 
 #ifdef SADB_X_EXT_TAG
 	memset(&m_tag, 0, sizeof(m_tag));

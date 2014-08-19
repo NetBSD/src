@@ -167,7 +167,7 @@ dt_pid_create_glob_offset_probes(struct ps_prochandle *P, dtrace_hdl_t *dtp,
 		char name[sizeof (i) * 2 + 1];
 
 		for (i = 0; i < symp->st_size; i += 4) {
-			(void) sprintf(name, "%lx", i);
+			(void) snprintf(name, sizeof(name), "%lx", i);
 			if (gmatch(name, pattern))
 				ftp->ftps_offs[ftp->ftps_noffs++] = i;
 		}

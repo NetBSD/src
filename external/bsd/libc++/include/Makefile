@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2013/06/23 06:28:16 tls Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2014/08/19 23:47:15 tls Exp $
 
 .include <bsd.init.mk>
 
 .PATH: ${LIBCXX_SRCDIR}/include
-.PATH: ${LIBCXX_SRCDIR}/include/ext
+
+INCSDIR=	/usr/include/c++
 
 INCS=	__bit_reference \
 	__config \
@@ -82,6 +83,7 @@ INCS=	__bit_reference \
 	regex \
 	scoped_allocator \
 	set \
+	shared_mutex \
 	sstream \
 	stack \
 	stdexcept \
@@ -99,17 +101,18 @@ INCS=	__bit_reference \
 	unordered_set \
 	utility \
 	valarray \
-	vector \
-	__hash \
-	hash_map \
-	hash_set
+	vector
 
 INCS+=		cxxabi.h
 
-INCSDIR=	/usr/include/c++
-.for f in __hash hash_map hash_set
-INCSDIR_${f}=	/usr/include/c++/ext
-.endfor
+INCS+=	ext/__hash \
+	ext/hash_map \
+	ext/hash_set
+INCS+=	experimental/__config \
+	experimental/dynarray \
+	experimental/optional \
+	experimental/string_view \
+	experimental/utility
 
 cxxabi.h: ${LIBCXXRT_SRCDIR}/src/cxxabi.h
 	cp ${LIBCXXRT_SRCDIR}/src/cxxabi.h .
@@ -118,4 +121,5 @@ DPSRCS+=	cxxabi.h
 CLEANFILES+=	cxxabi.h
 
 .include <bsd.inc.mk>
+.include <bsd.clean.mk>
 .include <bsd.obj.mk>

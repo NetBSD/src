@@ -20,12 +20,12 @@ SECTIONS
     /* FIXME: Move .init, .fini, .ctors and .dtors to their own sections.  */
     ${RELOCATING+ PROVIDE (_init_start = .);}
     ${RELOCATING+ PROVIDE (_init = .);}
-    ${RELOCATING+ KEEP (*(.init))}
+    ${RELOCATING+ KEEP (*(SORT_NONE(.init)))}
     ${RELOCATING+ PROVIDE (_init_end = .);}
 
     ${RELOCATING+ PROVIDE (_fini_start = .);}
     ${RELOCATING+ PROVIDE (_fini = .);}
-    ${RELOCATING+ KEEP (*(.fini))}
+    ${RELOCATING+ KEEP (*(SORT_NONE(.fini)))}
     ${RELOCATING+ PROVIDE (_fini_end = .);}
 
     /* FIXME: Align ctors, dtors, ehframe.  */
@@ -57,11 +57,54 @@ SECTIONS
     ${RELOCATING+KEEP (*(.eh_frame))}
     ${RELOCATING+*(.gcc_except_table)}
 
-    ${RELOCATING+ PROVIDE(etext = .);}
-    ${RELOCATING+ PROVIDE(_etext = .);}
-    ${RELOCATING+ PROVIDE(__etext = .);}
     ${RELOCATING+Main = DEFINED (Main) ? Main : (DEFINED (_start) ? _start : ADDR (.text));}
   }
+
+  /* The following NOP assignment and those after .data and .bss, are
+     necessary to get orphan sections adopted by the .text inserted before
+     the following end-section symbols.  An output section would also serve
+     this purpose, but we can't do that.  */
+  . = .;
+  ${RELOCATING+ PROVIDE(etext = .);}
+  ${RELOCATING+ PROVIDE(_etext = .);}
+  ${RELOCATING+ PROVIDE(__etext = .);}
+
+  .data ${RELOCATING+ ${DATA_ADDR}}:
+  {
+    ${RELOCATING+ PROVIDE(__Sdata = .);}
+
+    *(.data);
+    ${RELOCATING+*(.data.*)}
+    ${RELOCATING+*(.gnu.linkonce.d*)}
+  }
+  . = .;
+  ${RELOCATING+ PROVIDE(__Edata = .);}
+  /* Deprecated, use __Edata.  */
+  ${RELOCATING+ PROVIDE(edata = .);}
+  ${RELOCATING+ PROVIDE(_edata = .);}
+  ${RELOCATING+ PROVIDE(__edata = .);}
+
+  /* At the moment, although perhaps we should, we can't map sections
+     without contents to sections *with* contents due to FIXME: a BFD bug.
+     Anyway, the mmo back-end ignores sections without contents when
+     writing out sections, so this works fine.   */
+  .bss :
+  {
+    ${RELOCATING+ PROVIDE(__Sbss = .);}
+    ${RELOCATING+ PROVIDE(__bss_start = .);}
+    ${RELOCATING+ *(.sbss);}
+    ${RELOCATING+ *(.bss);}
+    ${RELOCATING+*(.bss.*)}
+    ${RELOCATING+ *(COMMON);}
+  }
+  . = .;
+  ${RELOCATING+ PROVIDE(__Ebss = .);}
+
+  /* Deprecated, use __Ebss or __Eall as appropriate.  */
+  ${RELOCATING+ PROVIDE(end = .);}
+  ${RELOCATING+ PROVIDE(_end = .);}
+  ${RELOCATING+ PROVIDE(__end = .);}
+  ${RELOCATING+ PROVIDE(__Eall = .);}
 
   .stab 0 : { *(.stab) }
   .stabstr 0 : { *(.stabstr) }
@@ -80,42 +123,12 @@ SECTIONS
   .debug_macinfo  0 : { *(.debug_macinfo) }
   .debug_ranges   0 : { *(.debug_ranges) }
 
-  .data ${RELOCATING+ ${DATA_ADDR}}:
-  {
-    ${RELOCATING+ PROVIDE(__Sdata = .);}
+  /* DWARF 3 */
+  .debug_pubtypes 0 : { *(.debug_pubtypes) }
+  .debug_ranges   0 : { *(.debug_ranges) }
 
-    *(.data);
-    ${RELOCATING+*(.data.*)}
-    ${RELOCATING+*(.gnu.linkonce.d*)}
-
-    ${RELOCATING+ PROVIDE(__Edata = .);}
-
-    /* Deprecated, use __Edata.  */
-    ${RELOCATING+ PROVIDE(edata = .);}
-    ${RELOCATING+ PROVIDE(_edata = .);}
-    ${RELOCATING+ PROVIDE(__edata = .);}
-  }
-
-  /* At the moment, although perhaps we should, we can't map sections
-     without contents to sections *with* contents due to FIXME: a BFD bug.
-     Anyway, the mmo back-end ignores sections without contents when
-     writing out sections, so this works fine.   */
-  .bss :
-  {
-    ${RELOCATING+ PROVIDE(__Sbss = .);}
-    ${RELOCATING+ PROVIDE(__bss_start = .);}
-    ${RELOCATING+ *(.sbss);}
-    ${RELOCATING+ *(.bss);}
-    ${RELOCATING+*(.bss.*)}
-    ${RELOCATING+ *(COMMON);}
-    ${RELOCATING+ PROVIDE(__Ebss = .);}
-  }
-
-  /* Deprecated, use __Ebss or __Eall as appropriate.  */
-  ${RELOCATING+ PROVIDE(end = .);}
-  ${RELOCATING+ PROVIDE(_end = .);}
-  ${RELOCATING+ PROVIDE(__end = .);}
-  ${RELOCATING+ PROVIDE(__Eall = .);}
+  /* DWARF Extension.  */
+  .debug_macro    0 : { *(.debug_macro) }
 
   .MMIX.reg_contents :
   {
@@ -133,5 +146,7 @@ SECTIONS
      It can probably be fixed with some amount of work.  */
   /DISCARD/ :
   { ${RELOCATING+ *(.gnu.warning.*);} }
+
+  .gnu.attributes 0 : { KEEP (*(.gnu.attributes)) }
 }
 EOF

@@ -1,10 +1,10 @@
-/*	$NetBSD: back-ldap.h,v 1.1.1.4 2010/12/12 15:23:02 adam Exp $	*/
+/*	$NetBSD: back-ldap.h,v 1.1.1.4.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* back-ldap.h - ldap backend header file */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.18 2010/04/19 19:28:14 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -34,16 +34,11 @@ struct ldapinfo_t;
 
 /* stuff required for monitoring */
 typedef struct ldap_monitor_info_t {
-	monitor_subsys_t	lmi_mss;
-	struct ldapinfo_t	*lmi_li;
+	monitor_subsys_t	lmi_mss[2];
 
-	struct berval		lmi_rdn;
-	struct berval		lmi_nrdn;
-	monitor_callback_t	*lmi_cb;
-	struct berval		lmi_base;
-	int			lmi_scope;
-	struct berval		lmi_filter;
-	struct berval		lmi_more_filter;
+	struct berval		lmi_ndn;
+	struct berval		lmi_conn_rdn;
+	struct berval		lmi_ops_rdn;
 } ldap_monitor_info_t;
 
 enum {
@@ -177,6 +172,7 @@ typedef struct ldapconn_t {
 #define	LDAP_BACK_CONN_CACHED_CLEAR(lc)		LDAP_BACK_CONN_CLEAR((lc), LDAP_BACK_FCONN_CACHED)
 
 	LDAP			*lc_ld;
+	unsigned long		lc_connid;
 	struct berval		lc_cred;
 	struct berval 		lc_bound_ndn;
 	unsigned		lc_flags;
@@ -335,6 +331,8 @@ typedef struct ldapinfo_t {
 #define LDAP_BACK_F_NOREFS		(0x00080000U)
 #define LDAP_BACK_F_NOUNDEFFILTER	(0x00100000U)
 
+#define LDAP_BACK_F_ONERR_STOP		(0x00200000U)
+
 #define	LDAP_BACK_ISSET_F(ff,f)		( ( (ff) & (f) ) == (f) )
 #define	LDAP_BACK_ISMASK_F(ff,m,f)	( ( (ff) & (m) ) == (f) )
 
@@ -376,7 +374,11 @@ typedef struct ldapinfo_t {
 #define	LDAP_BACK_NOREFS(li)		LDAP_BACK_ISSET( (li), LDAP_BACK_F_NOREFS)
 #define	LDAP_BACK_NOUNDEFFILTER(li)	LDAP_BACK_ISSET( (li), LDAP_BACK_F_NOUNDEFFILTER)
 
+#define	LDAP_BACK_ONERR_STOP(li)	LDAP_BACK_ISSET( (li), LDAP_BACK_F_ONERR_STOP)
+
 	int			li_version;
+
+	unsigned long		li_conn_nextid;
 
 	/* cached connections; 
 	 * special conns are in tailq rather than in tree */
@@ -408,6 +410,9 @@ typedef struct ldapinfo_t {
 	time_t			li_conn_ttl;
 	time_t			li_idle_timeout;
 	time_t			li_timeout[ SLAP_OP_LAST ];
+
+	ldap_pvt_thread_mutex_t li_counter_mutex;
+	ldap_pvt_mp_t		li_ops_completed[SLAP_OP_LAST];
 } ldapinfo_t;
 
 #define	LDAP_ERR_OK(err) ((err) == LDAP_SUCCESS || (err) == LDAP_COMPARE_FALSE || (err) == LDAP_COMPARE_TRUE)
@@ -453,9 +458,9 @@ typedef struct ldap_extra_t {
 	int (*proxy_authz_ctrl)( Operation *op, SlapReply *rs, struct berval *bound_ndn,
 		int version, slap_idassert_t *si, LDAPControl	*ctrl );
 	int (*controls_free)( Operation *op, SlapReply *rs, LDAPControl ***pctrls );
-	int (*idassert_authzfrom_parse_cf)( const char *fname, int lineno, const char *arg, slap_idassert_t *si );
+	int (*idassert_authzfrom_parse)( struct config_args_s *ca, slap_idassert_t *si );
 	int (*idassert_passthru_parse_cf)( const char *fname, int lineno, const char *arg, slap_idassert_t *si );
-	int (*idassert_parse_cf)( const char *fname, int lineno, int argc, char *argv[], slap_idassert_t *si );
+	int (*idassert_parse)( struct config_args_s *ca, slap_idassert_t *si );
 	void (*retry_info_destroy)( slap_retry_info_t *ri );
 	int (*retry_info_parse)( char *in, slap_retry_info_t *ri, char *buf, ber_len_t buflen );
 	int (*retry_info_unparse)( slap_retry_info_t *ri, struct berval *bvout );

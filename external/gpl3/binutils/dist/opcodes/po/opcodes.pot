@@ -8,10 +8,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2010-11-05 11:32+0100\n"
+"POT-Creation-Date: 2011-11-02 12:03+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -110,23 +111,23 @@ msgstr ""
 msgid "must specify .jd or no nullify suffix"
 msgstr ""
 
-#: arm-dis.c:1990
+#: arm-dis.c:2000
 msgid "<illegal precision>"
 msgstr ""
 
 #. XXX - should break 'option' at following delimiter.
-#: arm-dis.c:4357
+#: arm-dis.c:4395
 #, c-format
 msgid "Unrecognised register name set: %s\n"
 msgstr ""
 
 #. XXX - should break 'option' at following delimiter.
-#: arm-dis.c:4365
+#: arm-dis.c:4403
 #, c-format
 msgid "Unrecognised disassembler option: %s\n"
 msgstr ""
 
-#: arm-dis.c:4950
+#: arm-dis.c:4995
 #, c-format
 msgid ""
 "\n"
@@ -134,25 +135,25 @@ msgid ""
 "the -M switch:\n"
 msgstr ""
 
-#: avr-dis.c:115 avr-dis.c:125
+#: avr-dis.c:115 avr-dis.c:136
 #, c-format
 msgid "undefined"
 msgstr ""
 
-#: avr-dis.c:187
+#: avr-dis.c:198
 #, c-format
 msgid "Internal disassembler error"
 msgstr ""
 
-#: avr-dis.c:236
+#: avr-dis.c:251
 #, c-format
 msgid "unknown constraint `%c'"
 msgstr ""
 
-#: cgen-asm.c:336 fr30-ibld.c:201 frv-ibld.c:201 ip2k-ibld.c:201
-#: iq2000-ibld.c:201 lm32-ibld.c:201 m32c-ibld.c:201 m32r-ibld.c:201
-#: mep-ibld.c:201 mt-ibld.c:201 openrisc-ibld.c:201 xc16x-ibld.c:201
-#: xstormy16-ibld.c:201
+#: cgen-asm.c:336 epiphany-ibld.c:201 fr30-ibld.c:201 frv-ibld.c:201
+#: ip2k-ibld.c:201 iq2000-ibld.c:201 lm32-ibld.c:201 m32c-ibld.c:201
+#: m32r-ibld.c:201 mep-ibld.c:201 mt-ibld.c:201 openrisc-ibld.c:201
+#: xc16x-ibld.c:201 xstormy16-ibld.c:201
 #, c-format
 msgid "operand out of range (%ld not between %ld and %ld)"
 msgstr ""
@@ -178,6 +179,198 @@ msgstr ""
 msgid "Address 0x%s is out of bounds.\n"
 msgstr ""
 
+#: epiphany-asm.c:68
+msgid "register unavailable for short instructions"
+msgstr ""
+
+#: epiphany-asm.c:115
+msgid "register name used as immediate value"
+msgstr ""
+
+#. Don't treat "mov ip,ip" as a move-immediate.
+#: epiphany-asm.c:178 epiphany-asm.c:234
+msgid "register source in immediate move"
+msgstr ""
+
+#: epiphany-asm.c:187
+msgid "byte relocation unsupported"
+msgstr ""
+
+#. -- assembler routines inserted here.
+#. -- asm.c
+#: epiphany-asm.c:193 frv-asm.c:972 iq2000-asm.c:56 lm32-asm.c:95
+#: lm32-asm.c:127 lm32-asm.c:157 lm32-asm.c:187 lm32-asm.c:217 lm32-asm.c:247
+#: m32c-asm.c:140 m32c-asm.c:235 m32c-asm.c:276 m32c-asm.c:334 m32c-asm.c:355
+#: m32r-asm.c:53 mep-asm.c:241 mep-asm.c:259 mep-asm.c:274 mep-asm.c:289
+#: mep-asm.c:301 openrisc-asm.c:54
+msgid "missing `)'"
+msgstr ""
+
+#: epiphany-asm.c:270
+msgid "ABORT: unknown operand"
+msgstr ""
+
+#: epiphany-asm.c:296
+msgid "Not a pc-relative address."
+msgstr ""
+
+#: epiphany-asm.c:455 fr30-asm.c:310 frv-asm.c:1263 ip2k-asm.c:511
+#: iq2000-asm.c:459 lm32-asm.c:349 m32c-asm.c:1584 m32r-asm.c:328
+#: mep-asm.c:1286 mt-asm.c:595 openrisc-asm.c:241 xc16x-asm.c:376
+#: xstormy16-asm.c:276
+#, c-format
+msgid "Unrecognized field %d while parsing.\n"
+msgstr ""
+
+#: epiphany-asm.c:506 fr30-asm.c:361 frv-asm.c:1314 ip2k-asm.c:562
+#: iq2000-asm.c:510 lm32-asm.c:400 m32c-asm.c:1635 m32r-asm.c:379
+#: mep-asm.c:1337 mt-asm.c:646 openrisc-asm.c:292 xc16x-asm.c:427
+#: xstormy16-asm.c:327
+msgid "missing mnemonic in syntax string"
+msgstr ""
+
+#. We couldn't parse it.
+#: epiphany-asm.c:641 epiphany-asm.c:645 epiphany-asm.c:734 epiphany-asm.c:841
+#: fr30-asm.c:496 fr30-asm.c:500 fr30-asm.c:589 fr30-asm.c:696 frv-asm.c:1449
+#: frv-asm.c:1453 frv-asm.c:1542 frv-asm.c:1649 ip2k-asm.c:697 ip2k-asm.c:701
+#: ip2k-asm.c:790 ip2k-asm.c:897 iq2000-asm.c:645 iq2000-asm.c:649
+#: iq2000-asm.c:738 iq2000-asm.c:845 lm32-asm.c:535 lm32-asm.c:539
+#: lm32-asm.c:628 lm32-asm.c:735 m32c-asm.c:1770 m32c-asm.c:1774
+#: m32c-asm.c:1863 m32c-asm.c:1970 m32r-asm.c:514 m32r-asm.c:518
+#: m32r-asm.c:607 m32r-asm.c:714 mep-asm.c:1472 mep-asm.c:1476 mep-asm.c:1565
+#: mep-asm.c:1672 mt-asm.c:781 mt-asm.c:785 mt-asm.c:874 mt-asm.c:981
+#: openrisc-asm.c:427 openrisc-asm.c:431 openrisc-asm.c:520 openrisc-asm.c:627
+#: xc16x-asm.c:562 xc16x-asm.c:566 xc16x-asm.c:655 xc16x-asm.c:762
+#: xstormy16-asm.c:462 xstormy16-asm.c:466 xstormy16-asm.c:555
+#: xstormy16-asm.c:662
+msgid "unrecognized instruction"
+msgstr ""
+
+#: epiphany-asm.c:688 fr30-asm.c:543 frv-asm.c:1496 ip2k-asm.c:744
+#: iq2000-asm.c:692 lm32-asm.c:582 m32c-asm.c:1817 m32r-asm.c:561
+#: mep-asm.c:1519 mt-asm.c:828 openrisc-asm.c:474 xc16x-asm.c:609
+#: xstormy16-asm.c:509
+#, c-format
+msgid "syntax error (expected char `%c', found `%c')"
+msgstr ""
+
+#: epiphany-asm.c:698 fr30-asm.c:553 frv-asm.c:1506 ip2k-asm.c:754
+#: iq2000-asm.c:702 lm32-asm.c:592 m32c-asm.c:1827 m32r-asm.c:571
+#: mep-asm.c:1529 mt-asm.c:838 openrisc-asm.c:484 xc16x-asm.c:619
+#: xstormy16-asm.c:519
+#, c-format
+msgid "syntax error (expected char `%c', found end of instruction)"
+msgstr ""
+
+#: epiphany-asm.c:728 fr30-asm.c:583 frv-asm.c:1536 ip2k-asm.c:784
+#: iq2000-asm.c:732 lm32-asm.c:622 m32c-asm.c:1857 m32r-asm.c:601
+#: mep-asm.c:1559 mt-asm.c:868 openrisc-asm.c:514 xc16x-asm.c:649
+#: xstormy16-asm.c:549
+msgid "junk at end of line"
+msgstr ""
+
+#: epiphany-asm.c:840 fr30-asm.c:695 frv-asm.c:1648 ip2k-asm.c:896
+#: iq2000-asm.c:844 lm32-asm.c:734 m32c-asm.c:1969 m32r-asm.c:713
+#: mep-asm.c:1671 mt-asm.c:980 openrisc-asm.c:626 xc16x-asm.c:761
+#: xstormy16-asm.c:661
+msgid "unrecognized form of instruction"
+msgstr ""
+
+#: epiphany-asm.c:854 fr30-asm.c:709 frv-asm.c:1662 ip2k-asm.c:910
+#: iq2000-asm.c:858 lm32-asm.c:748 m32c-asm.c:1983 m32r-asm.c:727
+#: mep-asm.c:1685 mt-asm.c:994 openrisc-asm.c:640 xc16x-asm.c:775
+#: xstormy16-asm.c:675
+#, c-format
+msgid "bad instruction `%.50s...'"
+msgstr ""
+
+#: epiphany-asm.c:857 fr30-asm.c:712 frv-asm.c:1665 ip2k-asm.c:913
+#: iq2000-asm.c:861 lm32-asm.c:751 m32c-asm.c:1986 m32r-asm.c:730
+#: mep-asm.c:1688 mt-asm.c:997 openrisc-asm.c:643 xc16x-asm.c:778
+#: xstormy16-asm.c:678
+#, c-format
+msgid "bad instruction `%.50s'"
+msgstr ""
+
+#. Default text to print if an instruction isn't recognized.
+#: epiphany-dis.c:41 fr30-dis.c:41 frv-dis.c:41 ip2k-dis.c:41 iq2000-dis.c:41
+#: lm32-dis.c:41 m32c-dis.c:41 m32r-dis.c:41 mep-dis.c:41 mmix-dis.c:277
+#: mt-dis.c:41 openrisc-dis.c:41 xc16x-dis.c:41 xstormy16-dis.c:41
+msgid "*unknown*"
+msgstr ""
+
+#: epiphany-dis.c:277 fr30-dis.c:299 frv-dis.c:396 ip2k-dis.c:288
+#: iq2000-dis.c:189 lm32-dis.c:147 m32c-dis.c:891 m32r-dis.c:279
+#: mep-dis.c:1187 mt-dis.c:290 openrisc-dis.c:135 xc16x-dis.c:420
+#: xstormy16-dis.c:168
+#, c-format
+msgid "Unrecognized field %d while printing insn.\n"
+msgstr ""
+
+#: epiphany-ibld.c:164 fr30-ibld.c:164 frv-ibld.c:164 ip2k-ibld.c:164
+#: iq2000-ibld.c:164 lm32-ibld.c:164 m32c-ibld.c:164 m32r-ibld.c:164
+#: mep-ibld.c:164 mt-ibld.c:164 openrisc-ibld.c:164 xc16x-ibld.c:164
+#: xstormy16-ibld.c:164
+#, c-format
+msgid "operand out of range (%ld not between %ld and %lu)"
+msgstr ""
+
+#: epiphany-ibld.c:185 fr30-ibld.c:185 frv-ibld.c:185 ip2k-ibld.c:185
+#: iq2000-ibld.c:185 lm32-ibld.c:185 m32c-ibld.c:185 m32r-ibld.c:185
+#: mep-ibld.c:185 mt-ibld.c:185 openrisc-ibld.c:185 xc16x-ibld.c:185
+#: xstormy16-ibld.c:185
+#, c-format
+msgid "operand out of range (0x%lx not between 0 and 0x%lx)"
+msgstr ""
+
+#: epiphany-ibld.c:872 fr30-ibld.c:727 frv-ibld.c:853 ip2k-ibld.c:604
+#: iq2000-ibld.c:710 lm32-ibld.c:631 m32c-ibld.c:1728 m32r-ibld.c:662
+#: mep-ibld.c:1205 mt-ibld.c:746 openrisc-ibld.c:630 xc16x-ibld.c:749
+#: xstormy16-ibld.c:675
+#, c-format
+msgid "Unrecognized field %d while building insn.\n"
+msgstr ""
+
+#: epiphany-ibld.c:1166 fr30-ibld.c:932 frv-ibld.c:1170 ip2k-ibld.c:679
+#: iq2000-ibld.c:885 lm32-ibld.c:735 m32c-ibld.c:2889 m32r-ibld.c:799
+#: mep-ibld.c:1804 mt-ibld.c:966 openrisc-ibld.c:730 xc16x-ibld.c:969
+#: xstormy16-ibld.c:821
+#, c-format
+msgid "Unrecognized field %d while decoding insn.\n"
+msgstr ""
+
+#: epiphany-ibld.c:1309 fr30-ibld.c:1078 frv-ibld.c:1448 ip2k-ibld.c:753
+#: iq2000-ibld.c:1016 lm32-ibld.c:824 m32c-ibld.c:3506 m32r-ibld.c:912
+#: mep-ibld.c:2274 mt-ibld.c:1166 openrisc-ibld.c:807 xc16x-ibld.c:1190
+#: xstormy16-ibld.c:931
+#, c-format
+msgid "Unrecognized field %d while getting int operand.\n"
+msgstr ""
+
+#: epiphany-ibld.c:1434 fr30-ibld.c:1206 frv-ibld.c:1708 ip2k-ibld.c:809
+#: iq2000-ibld.c:1129 lm32-ibld.c:895 m32c-ibld.c:4105 m32r-ibld.c:1007
+#: mep-ibld.c:2726 mt-ibld.c:1348 openrisc-ibld.c:866 xc16x-ibld.c:1393
+#: xstormy16-ibld.c:1023
+#, c-format
+msgid "Unrecognized field %d while getting vma operand.\n"
+msgstr ""
+
+#: epiphany-ibld.c:1566 fr30-ibld.c:1337 frv-ibld.c:1975 ip2k-ibld.c:868
+#: iq2000-ibld.c:1249 lm32-ibld.c:973 m32c-ibld.c:4692 m32r-ibld.c:1108
+#: mep-ibld.c:3139 mt-ibld.c:1537 openrisc-ibld.c:932 xc16x-ibld.c:1597
+#: xstormy16-ibld.c:1122
+#, c-format
+msgid "Unrecognized field %d while setting int operand.\n"
+msgstr ""
+
+#: epiphany-ibld.c:1688 fr30-ibld.c:1458 frv-ibld.c:2232 ip2k-ibld.c:917
+#: iq2000-ibld.c:1359 lm32-ibld.c:1041 m32c-ibld.c:5269 m32r-ibld.c:1199
+#: mep-ibld.c:3542 mt-ibld.c:1716 openrisc-ibld.c:988 xc16x-ibld.c:1791
+#: xstormy16-ibld.c:1211
+#, c-format
+msgid "Unrecognized field %d while setting vma operand.\n"
+msgstr ""
+
 #: fr30-asm.c:93 m32c-asm.c:872 m32c-asm.c:879
 msgid "Register number is not valid"
 msgstr ""
@@ -194,145 +387,6 @@ msgstr ""
 msgid "Register list is not valid"
 msgstr ""
 
-#: fr30-asm.c:310 frv-asm.c:1263 ip2k-asm.c:511 iq2000-asm.c:459
-#: lm32-asm.c:349 m32c-asm.c:1584 m32r-asm.c:328 mep-asm.c:1286 mt-asm.c:595
-#: openrisc-asm.c:241 xc16x-asm.c:376 xstormy16-asm.c:276
-#, c-format
-msgid "Unrecognized field %d while parsing.\n"
-msgstr ""
-
-#: fr30-asm.c:361 frv-asm.c:1314 ip2k-asm.c:562 iq2000-asm.c:510
-#: lm32-asm.c:400 m32c-asm.c:1635 m32r-asm.c:379 mep-asm.c:1337 mt-asm.c:646
-#: openrisc-asm.c:292 xc16x-asm.c:427 xstormy16-asm.c:327
-msgid "missing mnemonic in syntax string"
-msgstr ""
-
-#. We couldn't parse it.
-#: fr30-asm.c:496 fr30-asm.c:500 fr30-asm.c:589 fr30-asm.c:696 frv-asm.c:1449
-#: frv-asm.c:1453 frv-asm.c:1542 frv-asm.c:1649 ip2k-asm.c:697 ip2k-asm.c:701
-#: ip2k-asm.c:790 ip2k-asm.c:897 iq2000-asm.c:645 iq2000-asm.c:649
-#: iq2000-asm.c:738 iq2000-asm.c:845 lm32-asm.c:535 lm32-asm.c:539
-#: lm32-asm.c:628 lm32-asm.c:735 m32c-asm.c:1770 m32c-asm.c:1774
-#: m32c-asm.c:1863 m32c-asm.c:1970 m32r-asm.c:514 m32r-asm.c:518
-#: m32r-asm.c:607 m32r-asm.c:714 mep-asm.c:1472 mep-asm.c:1476 mep-asm.c:1565
-#: mep-asm.c:1672 mt-asm.c:781 mt-asm.c:785 mt-asm.c:874 mt-asm.c:981
-#: openrisc-asm.c:427 openrisc-asm.c:431 openrisc-asm.c:520 openrisc-asm.c:627
-#: xc16x-asm.c:562 xc16x-asm.c:566 xc16x-asm.c:655 xc16x-asm.c:762
-#: xstormy16-asm.c:462 xstormy16-asm.c:466 xstormy16-asm.c:555
-#: xstormy16-asm.c:662
-msgid "unrecognized instruction"
-msgstr ""
-
-#: fr30-asm.c:543 frv-asm.c:1496 ip2k-asm.c:744 iq2000-asm.c:692
-#: lm32-asm.c:582 m32c-asm.c:1817 m32r-asm.c:561 mep-asm.c:1519 mt-asm.c:828
-#: openrisc-asm.c:474 xc16x-asm.c:609 xstormy16-asm.c:509
-#, c-format
-msgid "syntax error (expected char `%c', found `%c')"
-msgstr ""
-
-#: fr30-asm.c:553 frv-asm.c:1506 ip2k-asm.c:754 iq2000-asm.c:702
-#: lm32-asm.c:592 m32c-asm.c:1827 m32r-asm.c:571 mep-asm.c:1529 mt-asm.c:838
-#: openrisc-asm.c:484 xc16x-asm.c:619 xstormy16-asm.c:519
-#, c-format
-msgid "syntax error (expected char `%c', found end of instruction)"
-msgstr ""
-
-#: fr30-asm.c:583 frv-asm.c:1536 ip2k-asm.c:784 iq2000-asm.c:732
-#: lm32-asm.c:622 m32c-asm.c:1857 m32r-asm.c:601 mep-asm.c:1559 mt-asm.c:868
-#: openrisc-asm.c:514 xc16x-asm.c:649 xstormy16-asm.c:549
-msgid "junk at end of line"
-msgstr ""
-
-#: fr30-asm.c:695 frv-asm.c:1648 ip2k-asm.c:896 iq2000-asm.c:844
-#: lm32-asm.c:734 m32c-asm.c:1969 m32r-asm.c:713 mep-asm.c:1671 mt-asm.c:980
-#: openrisc-asm.c:626 xc16x-asm.c:761 xstormy16-asm.c:661
-msgid "unrecognized form of instruction"
-msgstr ""
-
-#: fr30-asm.c:709 frv-asm.c:1662 ip2k-asm.c:910 iq2000-asm.c:858
-#: lm32-asm.c:748 m32c-asm.c:1983 m32r-asm.c:727 mep-asm.c:1685 mt-asm.c:994
-#: openrisc-asm.c:640 xc16x-asm.c:775 xstormy16-asm.c:675
-#, c-format
-msgid "bad instruction `%.50s...'"
-msgstr ""
-
-#: fr30-asm.c:712 frv-asm.c:1665 ip2k-asm.c:913 iq2000-asm.c:861
-#: lm32-asm.c:751 m32c-asm.c:1986 m32r-asm.c:730 mep-asm.c:1688 mt-asm.c:997
-#: openrisc-asm.c:643 xc16x-asm.c:778 xstormy16-asm.c:678
-#, c-format
-msgid "bad instruction `%.50s'"
-msgstr ""
-
-#. Default text to print if an instruction isn't recognized.
-#: fr30-dis.c:41 frv-dis.c:41 ip2k-dis.c:41 iq2000-dis.c:41 lm32-dis.c:41
-#: m32c-dis.c:41 m32r-dis.c:41 mep-dis.c:41 mmix-dis.c:277 mt-dis.c:41
-#: openrisc-dis.c:41 xc16x-dis.c:41 xstormy16-dis.c:41
-msgid "*unknown*"
-msgstr ""
-
-#: fr30-dis.c:299 frv-dis.c:396 ip2k-dis.c:288 iq2000-dis.c:189 lm32-dis.c:147
-#: m32c-dis.c:891 m32r-dis.c:279 mep-dis.c:1187 mt-dis.c:290
-#: openrisc-dis.c:135 xc16x-dis.c:420 xstormy16-dis.c:168
-#, c-format
-msgid "Unrecognized field %d while printing insn.\n"
-msgstr ""
-
-#: fr30-ibld.c:164 frv-ibld.c:164 ip2k-ibld.c:164 iq2000-ibld.c:164
-#: lm32-ibld.c:164 m32c-ibld.c:164 m32r-ibld.c:164 mep-ibld.c:164
-#: mt-ibld.c:164 openrisc-ibld.c:164 xc16x-ibld.c:164 xstormy16-ibld.c:164
-#, c-format
-msgid "operand out of range (%ld not between %ld and %lu)"
-msgstr ""
-
-#: fr30-ibld.c:185 frv-ibld.c:185 ip2k-ibld.c:185 iq2000-ibld.c:185
-#: lm32-ibld.c:185 m32c-ibld.c:185 m32r-ibld.c:185 mep-ibld.c:185
-#: mt-ibld.c:185 openrisc-ibld.c:185 xc16x-ibld.c:185 xstormy16-ibld.c:185
-#, c-format
-msgid "operand out of range (0x%lx not between 0 and 0x%lx)"
-msgstr ""
-
-#: fr30-ibld.c:727 frv-ibld.c:853 ip2k-ibld.c:604 iq2000-ibld.c:710
-#: lm32-ibld.c:631 m32c-ibld.c:1728 m32r-ibld.c:662 mep-ibld.c:1205
-#: mt-ibld.c:746 openrisc-ibld.c:630 xc16x-ibld.c:749 xstormy16-ibld.c:675
-#, c-format
-msgid "Unrecognized field %d while building insn.\n"
-msgstr ""
-
-#: fr30-ibld.c:932 frv-ibld.c:1170 ip2k-ibld.c:679 iq2000-ibld.c:885
-#: lm32-ibld.c:735 m32c-ibld.c:2889 m32r-ibld.c:799 mep-ibld.c:1804
-#: mt-ibld.c:966 openrisc-ibld.c:730 xc16x-ibld.c:969 xstormy16-ibld.c:821
-#, c-format
-msgid "Unrecognized field %d while decoding insn.\n"
-msgstr ""
-
-#: fr30-ibld.c:1078 frv-ibld.c:1448 ip2k-ibld.c:753 iq2000-ibld.c:1016
-#: lm32-ibld.c:824 m32c-ibld.c:3506 m32r-ibld.c:912 mep-ibld.c:2274
-#: mt-ibld.c:1166 openrisc-ibld.c:807 xc16x-ibld.c:1190 xstormy16-ibld.c:931
-#, c-format
-msgid "Unrecognized field %d while getting int operand.\n"
-msgstr ""
-
-#: fr30-ibld.c:1206 frv-ibld.c:1708 ip2k-ibld.c:809 iq2000-ibld.c:1129
-#: lm32-ibld.c:895 m32c-ibld.c:4105 m32r-ibld.c:1007 mep-ibld.c:2726
-#: mt-ibld.c:1348 openrisc-ibld.c:866 xc16x-ibld.c:1393 xstormy16-ibld.c:1023
-#, c-format
-msgid "Unrecognized field %d while getting vma operand.\n"
-msgstr ""
-
-#: fr30-ibld.c:1337 frv-ibld.c:1975 ip2k-ibld.c:868 iq2000-ibld.c:1249
-#: lm32-ibld.c:973 m32c-ibld.c:4692 m32r-ibld.c:1108 mep-ibld.c:3139
-#: mt-ibld.c:1537 openrisc-ibld.c:932 xc16x-ibld.c:1597 xstormy16-ibld.c:1122
-#, c-format
-msgid "Unrecognized field %d while setting int operand.\n"
-msgstr ""
-
-#: fr30-ibld.c:1458 frv-ibld.c:2232 ip2k-ibld.c:917 iq2000-ibld.c:1359
-#: lm32-ibld.c:1041 m32c-ibld.c:5269 m32r-ibld.c:1199 mep-ibld.c:3542
-#: mt-ibld.c:1716 openrisc-ibld.c:988 xc16x-ibld.c:1791 xstormy16-ibld.c:1211
-#, c-format
-msgid "Unrecognized field %d while setting vma operand.\n"
-msgstr ""
-
 #: frv-asm.c:608
 msgid "missing `]'"
 msgstr ""
@@ -347,15 +401,6 @@ msgstr ""
 
 #: frv-asm.c:944
 msgid "register number must be even"
-msgstr ""
-
-#. -- assembler routines inserted here.
-#. -- asm.c
-#: frv-asm.c:972 iq2000-asm.c:56 lm32-asm.c:95 lm32-asm.c:127 lm32-asm.c:157
-#: lm32-asm.c:187 lm32-asm.c:217 lm32-asm.c:247 m32c-asm.c:140 m32c-asm.c:235
-#: m32c-asm.c:276 m32c-asm.c:334 m32c-asm.c:355 m32r-asm.c:53 mep-asm.c:241
-#: mep-asm.c:259 mep-asm.c:274 mep-asm.c:289 mep-asm.c:301 openrisc-asm.c:54
-msgid "missing `)'"
 msgstr ""
 
 #: h8300-dis.c:314
@@ -379,11 +424,11 @@ msgstr ""
 msgid "%02x\t\t*unknown*"
 msgstr ""
 
-#: i386-dis.c:10671
+#: i386-dis.c:10504
 msgid "<internal disassembler error>"
 msgstr ""
 
-#: i386-dis.c:10968
+#: i386-dis.c:10801
 #, c-format
 msgid ""
 "\n"
@@ -392,126 +437,126 @@ msgid ""
 "with the -M switch (multiple options should be separated by commas):\n"
 msgstr ""
 
-#: i386-dis.c:10972
+#: i386-dis.c:10805
 #, c-format
 msgid "  x86-64      Disassemble in 64bit mode\n"
 msgstr ""
 
-#: i386-dis.c:10973
+#: i386-dis.c:10806
 #, c-format
 msgid "  i386        Disassemble in 32bit mode\n"
 msgstr ""
 
-#: i386-dis.c:10974
+#: i386-dis.c:10807
 #, c-format
 msgid "  i8086       Disassemble in 16bit mode\n"
 msgstr ""
 
-#: i386-dis.c:10975
+#: i386-dis.c:10808
 #, c-format
 msgid "  att         Display instruction in AT&T syntax\n"
 msgstr ""
 
-#: i386-dis.c:10976
+#: i386-dis.c:10809
 #, c-format
 msgid "  intel       Display instruction in Intel syntax\n"
 msgstr ""
 
-#: i386-dis.c:10977
+#: i386-dis.c:10810
 #, c-format
 msgid ""
 "  att-mnemonic\n"
 "              Display instruction in AT&T mnemonic\n"
 msgstr ""
 
-#: i386-dis.c:10979
+#: i386-dis.c:10812
 #, c-format
 msgid ""
 "  intel-mnemonic\n"
 "              Display instruction in Intel mnemonic\n"
 msgstr ""
 
-#: i386-dis.c:10981
+#: i386-dis.c:10814
 #, c-format
 msgid "  addr64      Assume 64bit address size\n"
 msgstr ""
 
-#: i386-dis.c:10982
+#: i386-dis.c:10815
 #, c-format
 msgid "  addr32      Assume 32bit address size\n"
 msgstr ""
 
-#: i386-dis.c:10983
+#: i386-dis.c:10816
 #, c-format
 msgid "  addr16      Assume 16bit address size\n"
 msgstr ""
 
-#: i386-dis.c:10984
+#: i386-dis.c:10817
 #, c-format
 msgid "  data32      Assume 32bit data size\n"
 msgstr ""
 
-#: i386-dis.c:10985
+#: i386-dis.c:10818
 #, c-format
 msgid "  data16      Assume 16bit data size\n"
 msgstr ""
 
-#: i386-dis.c:10986
+#: i386-dis.c:10819
 #, c-format
 msgid "  suffix      Always display instruction suffix in AT&T syntax\n"
 msgstr ""
 
-#: i386-gen.c:459 ia64-gen.c:307
+#: i386-gen.c:483 ia64-gen.c:307
 #, c-format
 msgid "%s: Error: "
 msgstr ""
 
-#: i386-gen.c:591
+#: i386-gen.c:615
 #, c-format
 msgid "%s: %d: Unknown bitfield: %s\n"
 msgstr ""
 
-#: i386-gen.c:593
+#: i386-gen.c:617
 #, c-format
 msgid "Unknown bitfield: %s\n"
 msgstr ""
 
-#: i386-gen.c:649
+#: i386-gen.c:673
 #, c-format
 msgid "%s: %d: Missing `)' in bitfield: %s\n"
 msgstr ""
 
-#: i386-gen.c:914
+#: i386-gen.c:938
 #, c-format
 msgid "can't find i386-opc.tbl for reading, errno = %s\n"
 msgstr ""
 
-#: i386-gen.c:1045
+#: i386-gen.c:1069
 #, c-format
 msgid "can't find i386-reg.tbl for reading, errno = %s\n"
 msgstr ""
 
-#: i386-gen.c:1122
+#: i386-gen.c:1146
 #, c-format
 msgid "can't create i386-init.h, errno = %s\n"
 msgstr ""
 
-#: i386-gen.c:1211 ia64-gen.c:2820
+#: i386-gen.c:1235 ia64-gen.c:2820
 #, c-format
 msgid "unable to change directory to \"%s\", errno = %s\n"
 msgstr ""
 
-#: i386-gen.c:1218
+#: i386-gen.c:1242
 #, c-format
 msgid "%d unused bits in i386_cpu_flags.\n"
 msgstr ""
 
-#: i386-gen.c:1225
+#: i386-gen.c:1249
 #, c-format
 msgid "%d unused bits in i386_operand_type.\n"
 msgstr ""
 
-#: i386-gen.c:1239
+#: i386-gen.c:1263
 #, c-format
 msgid "can't create i386-tbl.h, errno = %s\n"
 msgstr ""
@@ -829,26 +874,41 @@ msgstr ""
 msgid "Value is not aligned enough"
 msgstr ""
 
-#: mips-dis.c:841
+#: mips-dis.c:947
 msgid "# internal error, incomplete extension sequence (+)"
 msgstr ""
 
-#: mips-dis.c:975
+#: mips-dis.c:1113
 #, c-format
 msgid "# internal error, undefined extension sequence (+%c)"
 msgstr ""
 
-#: mips-dis.c:1335
+#: mips-dis.c:1485
 #, c-format
 msgid "# internal error, undefined modifier (%c)"
 msgstr ""
 
-#: mips-dis.c:1939
+#: mips-dis.c:2089
 #, c-format
 msgid "# internal disassembler error, unrecognised modifier (%c)"
 msgstr ""
 
-#: mips-dis.c:2177
+#: mips-dis.c:2664
+#, c-format
+msgid "# internal disassembler error, unrecognized modifier (+%c)"
+msgstr ""
+
+#: mips-dis.c:2894
+#, c-format
+msgid "# internal disassembler error, unrecognized modifier (m%c)"
+msgstr ""
+
+#: mips-dis.c:2904
+#, c-format
+msgid "# internal disassembler error, unrecognized modifier (%c)"
+msgstr ""
+
+#: mips-dis.c:3052
 #, c-format
 msgid ""
 "\n"
@@ -856,7 +916,7 @@ msgid ""
 "with the -M switch (multiple options should be separated by commas):\n"
 msgstr ""
 
-#: mips-dis.c:2181
+#: mips-dis.c:3056
 #, c-format
 msgid ""
 "\n"
@@ -864,7 +924,7 @@ msgid ""
 "                           Default: based on binary being disassembled.\n"
 msgstr ""
 
-#: mips-dis.c:2185
+#: mips-dis.c:3060
 #, c-format
 msgid ""
 "\n"
@@ -872,7 +932,7 @@ msgid ""
 "                           Default: numeric.\n"
 msgstr ""
 
-#: mips-dis.c:2189
+#: mips-dis.c:3064
 #, c-format
 msgid ""
 "\n"
@@ -881,7 +941,7 @@ msgid ""
 "                           Default: based on binary being disassembled.\n"
 msgstr ""
 
-#: mips-dis.c:2194
+#: mips-dis.c:3069
 #, c-format
 msgid ""
 "\n"
@@ -890,7 +950,7 @@ msgid ""
 "                           Default: based on binary being disassembled.\n"
 msgstr ""
 
-#: mips-dis.c:2199
+#: mips-dis.c:3074
 #, c-format
 msgid ""
 "\n"
@@ -898,7 +958,7 @@ msgid ""
 "                           specified ABI.\n"
 msgstr ""
 
-#: mips-dis.c:2203
+#: mips-dis.c:3078
 #, c-format
 msgid ""
 "\n"
@@ -906,7 +966,7 @@ msgid ""
 "                           specified architecture.\n"
 msgstr ""
 
-#: mips-dis.c:2207
+#: mips-dis.c:3082
 #, c-format
 msgid ""
 "\n"
@@ -914,12 +974,12 @@ msgid ""
 "   "
 msgstr ""
 
-#: mips-dis.c:2212 mips-dis.c:2220 mips-dis.c:2222
+#: mips-dis.c:3087 mips-dis.c:3095 mips-dis.c:3097
 #, c-format
 msgid "\n"
 msgstr ""
 
-#: mips-dis.c:2214
+#: mips-dis.c:3089
 #, c-format
 msgid ""
 "\n"
@@ -994,43 +1054,51 @@ msgid ""
 "the -M switch:\n"
 msgstr ""
 
-#: ppc-opc.c:878 ppc-opc.c:906
+#: ppc-opc.c:906 ppc-opc.c:936
 msgid "invalid conditional option"
 msgstr ""
 
-#: ppc-opc.c:908
-msgid "attempt to set y bit when using + or - modifier"
+#: ppc-opc.c:908 ppc-opc.c:938
+msgid "invalid counter access"
 msgstr ""
 
 #: ppc-opc.c:940
+msgid "attempt to set y bit when using + or - modifier"
+msgstr ""
+
+#: ppc-opc.c:972
 msgid "invalid mask field"
 msgstr ""
 
-#: ppc-opc.c:966
+#: ppc-opc.c:998
 msgid "ignoring invalid mfcr mask"
 msgstr ""
 
-#: ppc-opc.c:1016 ppc-opc.c:1051
+#: ppc-opc.c:1048 ppc-opc.c:1083
 msgid "illegal bitmask"
 msgstr ""
 
-#: ppc-opc.c:1171
+#: ppc-opc.c:1170
+msgid "address register in load range"
+msgstr ""
+
+#: ppc-opc.c:1223
 msgid "index register in load range"
 msgstr ""
 
-#: ppc-opc.c:1187
+#: ppc-opc.c:1239 ppc-opc.c:1295
 msgid "source and target register operands must be different"
 msgstr ""
 
-#: ppc-opc.c:1202
+#: ppc-opc.c:1254
 msgid "invalid register operand when updating"
 msgstr ""
 
-#: ppc-opc.c:1281
+#: ppc-opc.c:1349
 msgid "invalid sprg number"
 msgstr ""
 
-#: ppc-opc.c:1451
+#: ppc-opc.c:1519
 msgid "invalid constant"
 msgstr ""
 
@@ -1057,32 +1125,32 @@ msgstr ""
 msgid "<illegal instruction>"
 msgstr ""
 
-#: sparc-dis.c:283
+#: sparc-dis.c:285
 #, c-format
 msgid "Internal error:  bad sparc-opcode.h: \"%s\", %#.8lx, %#.8lx\n"
 msgstr ""
 
-#: sparc-dis.c:294
+#: sparc-dis.c:296
 #, c-format
 msgid "Internal error: bad sparc-opcode.h: \"%s\", %#.8lx, %#.8lx\n"
 msgstr ""
 
-#: sparc-dis.c:344
+#: sparc-dis.c:346
 #, c-format
 msgid "Internal error: bad sparc-opcode.h: \"%s\" == \"%s\"\n"
 msgstr ""
 
 #. Mark as non-valid instruction.
-#: sparc-dis.c:1015
+#: sparc-dis.c:1028
 msgid "unknown"
 msgstr ""
 
-#: v850-dis.c:365
+#: v850-dis.c:372
 #, c-format
 msgid "unknown operand shift: %x\n"
 msgstr ""
 
-#: v850-dis.c:377
+#: v850-dis.c:384
 #, c-format
 msgid "unknown reg: %d\n"
 msgstr ""

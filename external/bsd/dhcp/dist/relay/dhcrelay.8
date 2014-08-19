@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcrelay.8,v 1.1.1.2.4.2 2013/06/23 06:26:29 tls Exp $
+.\"	$NetBSD: dhcrelay.8,v 1.1.1.2.4.3 2014/08/19 23:46:42 tls Exp $
 .\"
 .\"	dhcrelay.8
 .\"
-.\" Copyright (c) 2009-2012 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2009-2013 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1997-2003 by Internet Software Consortium
 .\"
@@ -30,7 +30,7 @@
 .\" Support and other services are available for ISC products - see
 .\" https://www.isc.org for more information or to learn more about ISC.
 .\"
-.\" Id: dhcrelay.8,v 1.16.24.4 2012/05/14 23:20:00 sar Exp 
+.\" Id: dhcrelay.8,v 1.20 2012/05/14 23:17:43 sar Exp 
 .\"
 .TH dhcrelay 8
 .SH NAME
@@ -104,6 +104,10 @@ dhcrelay - Dynamic Host Configuration Protocol Relay Agent
 ]
 [
 .B --no-pid
+]
+[
+.B -s
+.I subscriber-id
 ]
 .B -l
 .I lower0
@@ -224,6 +228,11 @@ automatically sent when there are two or more downstream interfaces
 in use, to disambiguate between them.  The \fB-I\fR option causes
 dhcrelay to send the option even if there is only one downstream
 interface.
+.TP
+-s subscriber-id
+Add an option with the specified subscriber-id into the packet.  This
+feature is for testing rather than production as it will put the same
+subscriber-id into the packet for all clients.
 .TP
 -l [\fIaddress%\fR]\fIifname\fR[\fI#index\fR]
 Specifies the ``lower'' network interface for DHCPv6 relay mode: the

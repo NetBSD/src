@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.3 2013/06/23 06:28:25 tls Exp $
+#	$NetBSD: Makefile,v 1.6.2.4 2014/08/19 23:51:25 tls Exp $
 
 LIB=	clangAST
 
@@ -12,6 +12,7 @@ SRCS+=	APValue.cpp \
 	ASTDiagnostic.cpp \
 	ASTDumper.cpp \
 	ASTImporter.cpp \
+	ASTTypeTraits.cpp \
 	AttrImpl.cpp \
 	CXXInheritance.cpp \
 	Comment.cpp \
@@ -30,7 +31,6 @@ SRCS+=	APValue.cpp \
 	DeclOpenMP.cpp \
 	DeclPrinter.cpp \
 	DeclTemplate.cpp \
-	DumpXML.cpp \
 	Expr.cpp \
 	ExprClassification.cpp \
 	ExprConstant.cpp \
@@ -39,8 +39,8 @@ SRCS+=	APValue.cpp \
 	InheritViz.cpp \
 	ItaniumCXXABI.cpp \
 	ItaniumMangle.cpp \
-	LambdaMangleContext.cpp \
 	Mangle.cpp \
+	MangleNumberingContext.cpp \
 	MicrosoftCXXABI.cpp \
 	MicrosoftMangle.cpp \
 	NSAPI.cpp \

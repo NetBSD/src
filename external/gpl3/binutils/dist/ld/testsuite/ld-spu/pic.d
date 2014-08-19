@@ -28,7 +28,7 @@ Disassembly of section \.text:
   24:	18 1f 82 04 	a	\$4,\$4,\$126
 			24: SPU_ADD_PIC	before\+0x4
   28:	18 1f 82 85 	a	\$5,\$5,\$126
-			28: SPU_ADD_PIC	after\+0xfffffffc
+			28: SPU_ADD_PIC	after-0x4
   2c:	18 1f 83 06 	a	\$6,\$6,\$126
 			2c: SPU_ADD_PIC	_start
   30:	18 1f 83 87 	a	\$7,\$7,\$126
@@ -55,7 +55,7 @@ Disassembly of section \.text:
 			58: SPU_ADDR18	glob
   5c:	18 1f 84 06 	a	\$6,\$8,\$126
 			5c: SPU_ADD_PIC	glob
-  60:	42 00 90 09 	ila	\$9,120 <__bss_start>
+  60:	42 00 90 09 	ila	\$9,120 .*
 			60: SPU_ADDR18	_end
   64:	18 1f 84 89 	a	\$9,\$9,\$126
 			64: SPU_ADD_PIC	_end

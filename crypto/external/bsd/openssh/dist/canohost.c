@@ -1,5 +1,5 @@
-/*	$NetBSD: canohost.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: canohost.c,v 1.66 2010/01/13 01:20:20 dtucker Exp $ */
+/*	$NetBSD: canohost.c,v 1.5.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: canohost.c,v 1.67 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: canohost.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.5.8.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -42,7 +42,7 @@ static int cached_port = -1;
 
 /*
  * Return the canonical name of the host at the other end of the socket. The
- * caller should free the returned string with xfree.
+ * caller should free the returned string.
  */
 
 static char *
@@ -285,10 +285,8 @@ get_local_name(int fd)
 void
 clear_cached_addr(void)
 {
-	if (canonical_host_ip != NULL) {
-		xfree(canonical_host_ip);
-		canonical_host_ip = NULL;
-	}
+	free(canonical_host_ip);
+	canonical_host_ip = NULL;
 	cached_port = -1;
 }
 

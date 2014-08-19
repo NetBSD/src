@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2001, 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+#   Copyright 2001, 2002, 2003, 2005, 2007, 2012 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -38,6 +38,8 @@ elfmmix_before_parse (void)
      full system with shared libraries and demand paging, you will want to
      exclude this file.  */
   config.magic_demand_paged = FALSE;
+
+  config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo TRUE ; else echo FALSE ; fi`;
 }
 EOF
 

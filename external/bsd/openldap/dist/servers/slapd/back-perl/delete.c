@@ -1,9 +1,9 @@
-/*	$NetBSD: delete.c,v 1.1.1.3 2010/12/12 15:23:20 adam Exp $	*/
+/*	$NetBSD: delete.c,v 1.1.1.3.12.1 2014/08/19 23:52:02 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-perl/delete.c,v 1.20.2.5 2010/04/13 20:23:37 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -27,9 +27,7 @@ perl_back_delete(
 	PerlBackend *perl_back = (PerlBackend *) op->o_bd->be_private;
 	int count;
 
-#if defined(HAVE_WIN32_ASPERL) || defined(USE_ITHREADS)
 	PERL_SET_CONTEXT( PERL_INTERPRETER );
-#endif
 	ldap_pvt_thread_mutex_lock( &perl_interpreter_mutex );	
 
 	{
@@ -37,15 +35,11 @@ perl_back_delete(
 
 		PUSHMARK(sp);
 		XPUSHs( perl_back->pb_obj_ref );
-		XPUSHs(sv_2mortal(newSVpv( op->o_req_dn.bv_val , 0 )));
+		XPUSHs(sv_2mortal(newSVpv( op->o_req_dn.bv_val , op->o_req_dn.bv_len )));
 
 		PUTBACK;
 
-#ifdef PERL_IS_5_6
 		count = call_method("delete", G_SCALAR);
-#else
-		count = perl_call_method("delete", G_SCALAR);
-#endif
 
 		SPAGAIN;
 

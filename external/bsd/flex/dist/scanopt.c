@@ -1,4 +1,4 @@
-/*	$NetBSD: scanopt.c,v 1.2.12.1 2013/06/23 06:26:33 tls Exp $	*/
+/*	$NetBSD: scanopt.c,v 1.2.12.2 2014/08/19 23:46:47 tls Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -539,10 +539,6 @@ static int scanopt_err (s, opt_offset, is_short, err)
 {
 	const char *optname = "";
 	char    optchar[2];
-	const optspec_t *opt = NULL;
-
-	if (opt_offset >= 0)
-		opt = s->options + opt_offset;
 
 	if (!s->no_err_msg) {
 

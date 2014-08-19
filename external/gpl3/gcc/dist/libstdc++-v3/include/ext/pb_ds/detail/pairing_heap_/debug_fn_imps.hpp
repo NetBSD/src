@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file debug_fn_imps.hpp
+ * @file pairing_heap_/debug_fn_imps.hpp
  * Contains an implementation class for a pairing heap.
  */
 
@@ -43,11 +43,11 @@
 PB_DS_CLASS_T_DEC
 void
 PB_DS_CLASS_C_DEC::
-assert_valid() const
+assert_valid(const char* __file, int __line) const
 {
-  _GLIBCXX_DEBUG_ASSERT(base_type::m_p_root == NULL 
-		        || base_type::m_p_root->m_p_next_sibling == NULL);
-  base_type::assert_valid();
+  PB_DS_DEBUG_VERIFY(base_type::m_p_root == 0 
+		        || base_type::m_p_root->m_p_next_sibling == 0);
+  base_type::assert_valid(__file, __line);
 }
 
 #endif 

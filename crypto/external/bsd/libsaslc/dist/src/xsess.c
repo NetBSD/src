@@ -1,4 +1,4 @@
-/* $NetBSD: xsess.c,v 1.6 2011/02/20 01:59:46 christos Exp $ */
+/* $NetBSD: xsess.c,v 1.6.10.1 2014/08/19 23:45:22 tls Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: xsess.c,v 1.6 2011/02/20 01:59:46 christos Exp $");
+__RCSID("$NetBSD: xsess.c,v 1.6.10.1 2014/08/19 23:45:22 tls Exp $");
 
 #include <assert.h>
 #include <saslc.h>
@@ -91,7 +91,7 @@ normalize_list_string(char *opts)
 			break;
 		if (p > opts && p[-1] != ',')
 			*p++ = ',';
-		p = skip_WS(++p);
+		p = skip_WS(p + 1);
 	}
 }
 

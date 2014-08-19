@@ -1,4 +1,4 @@
-/*	$NetBSD: jitter.c,v 1.1.1.1 2009/12/13 16:57:28 kardel Exp $	*/
+/*	$NetBSD: jitter.c,v 1.1.1.1.12.1 2014/08/19 23:51:49 tls Exp $	*/
 
 /*
  * This program can be used to calibrate the clock reading jitter of a
@@ -23,7 +23,6 @@
 #define JAN_1970 2208988800UL		/* Unix base epoch */
 #define CLOCK_GETTIME			/* Solaris hires clock */
 
-int debug;
 char progname[10];
 double sys_residual;
 double average;

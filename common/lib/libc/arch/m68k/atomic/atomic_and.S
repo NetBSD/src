@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and.S,v 1.6 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: atomic_and.S,v 1.6.24.1 2014/08/19 23:45:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,10 +34,11 @@
 	.text
 
 ENTRY(_atomic_and_32)
-	movl	%sp@(4), %a0
-	movl	%sp@(8), %d0
-	andl	%d0, %a0@
+	movl	4(%sp), %a0
+	movl	8(%sp), %d0
+	andl	%d0, (%a0)
 	rts
+END(_atomic_and_32)
 ATOMIC_OP_ALIAS(atomic_and_32,_atomic_and_32)
 ATOMIC_OP_ALIAS(atomic_and_uint,_atomic_and_32)
 STRONG_ALIAS(_atomic_and_uint,_atomic_and_32)
@@ -47,13 +48,15 @@ ATOMIC_OP_ALIAS(atomic_and_ptr,_atomic_and_32)
 STRONG_ALIAS(_atomic_and_ptr,_atomic_and_32)
 
 ENTRY(_atomic_and_32_nv)
-	movl	%sp@(4), %a0
-1:	movl	%a0@, %d0
+	movl	4(%sp), %a0
+1:	movl	(%a0), %d0
 	movl	%d0, %d1
-	andl	%sp@(8), %d0
-	casl	%d1, %d0, %a0@
+	andl	8(%sp), %d0
+	casl	%d1, %d0, (%a0)
 	bne	1b
+	movl	%d0, %a0
 	rts
+END(_atomic_and_32_nv)
 ATOMIC_OP_ALIAS(atomic_and_32_nv,_atomic_and_32_nv)
 ATOMIC_OP_ALIAS(atomic_and_uint_nv,_atomic_and_32_nv)
 STRONG_ALIAS(_atomic_and_uint_nv,_atomic_and_32_nv)
@@ -61,3 +64,65 @@ ATOMIC_OP_ALIAS(atomic_and_ulong_nv,_atomic_and_32_nv)
 STRONG_ALIAS(_atomic_and_ulong_nv,_atomic_and_32_nv)
 ATOMIC_OP_ALIAS(atomic_and_ptr_nv,_atomic_and_32_nv)
 STRONG_ALIAS(_atomic_and_ptr_nv,_atomic_and_32_nv)
+CRT_ALIAS(__sync_and_and_fetch_4,_atomic_and_32_nv)
+
+ENTRY(__sync_fetch_and_and_4)
+	movl	4(%sp), %a0
+1:	movl	(%a0), %d0
+	movl	%d0, %d1
+	andl	8(%sp), %d1
+	casl	%d0, %d1, (%a0)
+	bne	1b
+	movl	%d0, %a0
+	rts
+END(__sync_fetch_and_and_4)
+
+
+ENTRY(_atomic_and_16_nv)
+	movl	4(%sp), %a0
+1:	movw	(%a0), %d0
+	movw	%d0, %d1
+	andw	8(%sp), %d0
+	casw	%d1, %d0, (%a0)
+	bne	1b
+	rts
+END(_atomic_and_16_nv)
+
+CRT_ALIAS(__sync_and_and_fetch_2,_atomic_and_16_nv)
+
+ENTRY(__sync_fetch_and_and_2)
+	movl	4(%sp), %a0
+1:	movw	(%a0), %d0
+	movw	%d0, %d1
+	andw	8(%sp), %d1
+	casw	%d0, %d1, (%a0)
+	bne	1b
+	rts
+END(__sync_fetch_and_and_2)
+
+
+ENTRY(_atomic_and_8_nv)
+	movl	4(%sp), %a0
+1:	movb	(%a0), %d0
+	movb	%d0, %d1
+	andb	8(%sp), %d0
+	casb	%d1, %d0, (%a0)
+	bne	1b
+	rts
+END(_atomic_and_8_nv)
+
+CRT_ALIAS(__sync_and_and_fetch_1,_atomic_and_8_nv)
+
+ENTRY(__sync_fetch_and_and_1)
+	movl	4(%sp), %a0
+1:	movb	(%a0), %d0
+	movb	%d0, %d1
+	andb	8(%sp), %d1
+	casb	%d0, %d1, (%a0)
+	bne	1b
+	rts
+END(__sync_fetch_and_and_1)
+
+CRT_ALIAS(__atomic_fetch_and_1,__sync_fetch_and_and_1)
+CRT_ALIAS(__atomic_fetch_and_2,__sync_fetch_and_and_2)
+CRT_ALIAS(__atomic_fetch_and_4,__sync_fetch_and_and_4)

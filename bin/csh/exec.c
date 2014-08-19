@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.28 2009/02/14 07:12:29 lukem Exp $ */
+/* $NetBSD: exec.c,v 1.28.12.1 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.28 2009/02/14 07:12:29 lukem Exp $");
+__RCSID("$NetBSD: exec.c,v 1.28.12.1 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,11 +87,11 @@ static Char *expath;		/* Path for exerr */
 #define	HSHSIZ 8192	/* 1k bytes */
 #define HSHMASK	(HSHSIZ - 1)
 #define HSHMUL 243
-static char xhash[HSHSIZ / 8];
+static unsigned char xhash[HSHSIZ / 8];
 
 #define hash(a, b) (((a) * HSHMUL + (b)) & HSHMASK)
 #define bit(h, b) ((h)[(b) >> 3] & 1 << ((b) & 7))	/* bit test */
-#define bis(h, b) ((h)[(b) >> 3] |= 1 << ((b) & 7))	/* bit set */
+#define bis(h, b) ((h)[(b) >> 3] |= (unsigned char)(1 << ((b) & 7)))	/* bit set */
 static int hits, misses;
 
 /* Dummy search path for just absolute search when no path */
@@ -665,13 +665,13 @@ tellmewhat(struct wordent *lexp, Char *str)
 	case '"':
 	    qc = *s2++;
 	    while (*s2 && *s2 != qc)
-		*s1++ = *s2++ | QUOTE;
+		*s1++ = (Char)(*s2++ | QUOTE);
 	    if (*s2)
 		s2++;
 	    break;
 	case '\\':
 	    if (*++s2)
-		*s1++ = *s2++ | QUOTE;
+		*s1++ = (Char)(*s2++ | QUOTE);
 	    break;
 	default:
 	    *s1++ = *s2++;

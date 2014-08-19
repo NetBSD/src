@@ -1,16 +1,16 @@
 
-.*thumb2-b-interwork:     file format elf32-.*arm
+.*thumb2-b-interwork:     file format elf32-.*arm.*
 
 Disassembly of section .text:
 
-00008000 <_start>:
-    8000:	f000 b802 	b.w	8008 <__bar_from_thumb>
+[0-9a-f]+ <_start>:
+ +[0-9a-f]+:	f000 b802 	b.w	[0-9a-f]+ <__bar_from_thumb>
 
-00008004 <bar>:
-    8004:	e12fff1e 	bx	lr
+[0-9a-f]+ <bar>:
+ +[0-9a-f]+:	e12fff1e 	bx	lr
 
-00008008 <__bar_from_thumb>:
-    8008:	4778      	bx	pc
-    800a:	46c0      	nop			; \(mov r8, r8\)
-    800c:	eafffffc 	b	8004 <bar>
+[0-9a-f]+ <__bar_from_thumb>:
+ +[0-9a-f]+:	4778      	bx	pc
+ +[0-9a-f]+:	46c0      	nop			; \(mov r8, r8\)
+ +[0-9a-f]+:	eafffffc 	b	[0-9a-f]+ <bar>
 
