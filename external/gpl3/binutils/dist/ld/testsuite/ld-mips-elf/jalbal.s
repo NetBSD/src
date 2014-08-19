@@ -15,4 +15,7 @@ s3:
 	nop
 	jal	s2
 	nop
-	nop
+
+# Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
+	.align	2
+	.space	8

@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.21 2011/07/28 14:12:07 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.4 2011/09/01 12:46:38 plunky Exp $	*/
+/*	Id: code.c,v 1.24 2014/04/19 07:47:51 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.4.8.1 2014/08/19 23:52:08 tls Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -57,7 +57,8 @@ setseg(int seg, char *name)
 	case CTORS: name = ".section\t.ctors,\"aw\",@progbits"; break;
 	case DTORS: name = ".section\t.dtors,\"aw\",@progbits"; break;
 	case NMSEG: 
-		printf("\t.section %s,\"aw\",@progbits\n", name);
+		printf("\t.section %s,\"a%c\",@progbits\n", name,
+		    cftnsp ? 'x' : 'w');
 		return;
 	}
 	printf("\t%s\n", name);
@@ -113,7 +114,7 @@ static int rvnr;
  * deals with struct return here
  */
 void
-efcode()
+efcode(void)
 {
 	NODE *p, *q;
 	int tempnr;
@@ -417,12 +418,12 @@ bfcode(struct symtab **sp, int cnt)
 /* called just before final exit */
 /* flag is 1 if errors, 0 if none */
 void
-ejobcode(int flag )
+ejobcode(int flag)
 {
 }
 
 void
-bjobcode()
+bjobcode(void)
 {
 	printf("\t.section .mdebug.abi32\n");
 	printf("\t.previous\n");
@@ -703,3 +704,25 @@ funcode(NODE *p)
 
 	return p;
 }
+
+NODE *
+builtin_cfa(const struct bitable *bt, NODE *a)
+{
+	uerror("missing builtin_cfa");
+	return bcon(0);
+}
+
+NODE *
+builtin_frame_address(const struct bitable *bt, NODE *a)
+{
+	uerror("missing builtin_frame_address");
+	return bcon(0);
+}
+
+NODE *
+builtin_return_address(const struct bitable *bt, NODE *a)
+{       
+	uerror("missing builtin_return_address");
+	return bcon(0);
+}
+

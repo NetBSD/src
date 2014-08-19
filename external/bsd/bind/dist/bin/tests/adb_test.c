@@ -1,7 +1,7 @@
-/*	$NetBSD: adb_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: adb_test.c,v 1.3.2.2 2014/08/19 23:46:01 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -206,19 +206,21 @@ create_view(void) {
 
 		attrs = DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_UDP;
 		RUNTIME_CHECK(dns_dispatch_getudp(dispatchmgr, socketmgr,
-						  taskmgr, &any4, 512, 6, 1024,
-						  17, 19, attrs, attrs, &disp4)
+						  taskmgr, &any4,
+						  512, 6, 1024, 17, 19,
+						  attrs, attrs, &disp4)
 			      == ISC_R_SUCCESS);
 		INSIST(disp4 != NULL);
 
 		attrs = DNS_DISPATCHATTR_IPV6 | DNS_DISPATCHATTR_UDP;
 		RUNTIME_CHECK(dns_dispatch_getudp(dispatchmgr, socketmgr,
-						  taskmgr, &any6, 512, 6, 1024,
-						  17, 19, attrs, attrs, &disp6)
+						  taskmgr, &any6,
+						  512, 6, 1024, 17, 19,
+						  attrs, attrs, &disp6)
 			      == ISC_R_SUCCESS);
 		INSIST(disp6 != NULL);
 
-		RUNTIME_CHECK(dns_view_createresolver(view, taskmgr, 10,
+		RUNTIME_CHECK(dns_view_createresolver(view, taskmgr, 10, 1,
 						      socketmgr,
 						      timermgr, 0,
 						      dispatchmgr,
@@ -247,7 +249,7 @@ lookup(const char *target) {
 	INSIST(target != NULL);
 
 	client = new_client();
-	isc_buffer_init(&t, target, strlen(target));
+	isc_buffer_constinit(&t, target, strlen(target));
 	isc_buffer_add(&t, strlen(target));
 	isc_buffer_init(&namebuf, namedata, sizeof(namedata));
 	dns_name_init(&name, NULL);
@@ -291,10 +293,6 @@ main(int argc, char **argv) {
 	UNUSED(argc);
 	UNUSED(argv);
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	dns_result_register();
 	result = isc_app_start();
 	check_result(result, "isc_app_start()");

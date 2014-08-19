@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/06/23 02:16:53 matt Exp $
+#	$NetBSD: Makefile,v 1.2.24.1 2014/08/19 23:45:38 tls Exp $
 #
 
 .include <bsd.own.mk>
@@ -15,4 +15,3 @@ UUDECODE_FILES=chg_pid.ttp gzip.ttp rawwrite.ttp aptck.ttp file2swp.ttp
 UUDECODE_FILES+=loadbsd.ttp
 
 .include <bsd.files.mk>
-.include <bsd.prog.mk>

@@ -1,6 +1,6 @@
 /* hash.c -- gas hash table code
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
-   2000, 2001, 2002, 2003, 2005, 2007, 2008, 2009
+   2000, 2001, 2002, 2003, 2005, 2007, 2008, 2009, 2011, 2013
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -78,40 +78,16 @@ static unsigned long gas_hash_table_size = 65537;
 void
 set_gas_hash_table_size (unsigned long size)
 {
-  gas_hash_table_size = size;
-}
-
-/* FIXME: This function should be amalgmated with bfd/hash.c:bfd_hash_set_default_size().  */
-static unsigned long
-get_gas_hash_table_size (void)
-{
-  /* Extend this prime list if you want more granularity of hash table size.  */
-  static const unsigned long hash_size_primes[] =
-    {
-      1021, 4051, 8599, 16699, 65537
-    };
-  unsigned int hindex;
-
-  /* Work out the best prime number near the hash_size.
-     FIXME: This could be a more sophisticated algorithm,
-     but is it really worth implementing it ?   */
-  for (hindex = 0; hindex < ARRAY_SIZE (hash_size_primes) - 1; ++ hindex)
-    if (gas_hash_table_size <= hash_size_primes[hindex])
-      break;
-
-  return hash_size_primes[hindex];
+  gas_hash_table_size = bfd_hash_set_default_size (size);
 }
 
 /* Create a hash table.  This return a control block.  */
 
 struct hash_control *
-hash_new (void)
+hash_new_sized (unsigned long size)
 {
-  unsigned long size;
   unsigned long alloc;
   struct hash_control *ret;
-
-  size = get_gas_hash_table_size ();
 
   ret = (struct hash_control *) xmalloc (sizeof *ret);
   obstack_begin (&ret->memory, chunksize);
@@ -130,6 +106,12 @@ hash_new (void)
 #endif
 
   return ret;
+}
+
+struct hash_control *
+hash_new (void)
+{
+  return hash_new_sized (gas_hash_table_size);
 }
 
 /* Delete a hash table, freeing all allocated memory.  */

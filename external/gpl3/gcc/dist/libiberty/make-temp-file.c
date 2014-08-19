@@ -1,5 +1,6 @@
 /* Utility to pick a temporary filename prefix.
-   Copyright (C) 1996, 1997, 1998, 2001, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998, 2001, 2009, 2010
+   Free Software Foundation, Inc.
 
 This file is part of the libiberty library.
 Libiberty is free software; you can redistribute it and/or
@@ -121,7 +122,12 @@ choose_tmpdir (void)
 #endif
       
 #ifdef P_tmpdir
-      base = try_dir (P_tmpdir, base);
+      /* We really want a directory name here as if concatenated with say \dir
+	 we do not end up with a double \\ which defines an UNC path.  */
+      if (strcmp (P_tmpdir, "\\") == 0)
+	base = try_dir ("\\.", base);
+      else
+	base = try_dir (P_tmpdir, base);
 #endif
 
       /* Try /var/tmp, /usr/tmp, then /tmp.  */

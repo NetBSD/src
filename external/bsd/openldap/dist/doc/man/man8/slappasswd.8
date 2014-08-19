@@ -1,7 +1,7 @@
 .TH SLAPPASSWD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man8/slappasswd.8,v 1.21.2.11 2010/04/13 20:22:46 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slappasswd \- OpenLDAP password utility
 .SH SYNOPSIS
@@ -18,7 +18,8 @@ slappasswd \- OpenLDAP password utility
 .BI \-c \ salt-format\fR]
 [\c
 .BR \-n ]
-.B 
+[\c
+.BI \-o \ option\fR[ = value\fR]]
 .LP
 .SH DESCRIPTION
 .LP
@@ -154,6 +155,21 @@ which provides 31 characters of salt.
 .BI \-n
 Omit the trailing newline; useful to pipe the credentials
 into a command.
+.TP
+.BI \-o \ option\fR[ = value\fR]
+Specify an
+.I option
+with a(n optional)
+.IR value .
+Possible generic options/values are:
+.LP
+.nf
+              module\-path=<pathspec> (see `\fBmodulepath\fP' in slapd.conf(5))
+              module\-load=<filename> (see `\fBmoduleload\fP' in slapd.conf(5))
+
+.in
+You can load a dynamically loadable password hash module by
+using this option.
 .SH LIMITATIONS
 The practice of storing hashed passwords in userPassword violates
 Standard Track (RFC 4519) schema specifications and may hinder

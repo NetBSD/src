@@ -1,7 +1,7 @@
-/*	$NetBSD: fsaccess_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: fsaccess_test.c,v 1.3.2.2 2014/08/19 23:46:01 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -24,6 +24,8 @@
 #include <config.h>
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include <sys/types.h>		/* Non-portable. */
 #include <sys/stat.h>		/* Non-portable. */
@@ -37,14 +39,24 @@ int
 main(void) {
 	isc_fsaccess_t access;
 	isc_result_t result;
+	FILE *fp;
+	int n;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
-	remove(PATH);
-	fopen(PATH, "w");
-	chmod(PATH, 0);
+	n = remove(PATH);
+	if (n != 0 && errno != ENOENT) {
+		fprintf(stderr, "unable to remove(%s)\n", PATH);
+		exit(1);
+	}
+	fp = fopen(PATH, "w");
+	if (fp == NULL) {
+		fprintf(stderr, "unable to fopen(%s)\n", PATH);
+		exit(1);
+	}
+	n = chmod(PATH, 0);
+	if (n != 0) {
+		fprintf(stderr, "unable chmod(%s, 0)\n", PATH);
+		exit(1);
+	}
 
 	access = 0;
 
@@ -61,6 +73,7 @@ main(void) {
 	result = isc_fsaccess_set(PATH, access);
 	if (result != ISC_R_SUCCESS)
 		fprintf(stderr, "result = %s\n", isc_result_totext(result));
+	(void)fclose(fp);
 
 	return (0);
 }

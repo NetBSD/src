@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.22.12.1 2012/11/20 02:57:56 tls Exp $
+# $NetBSD: named,v 1.22.12.2 2014/08/19 23:45:51 tls Exp $
 #
 
 # PROVIDE: named
@@ -63,6 +63,11 @@ named_migrate()
 
 named_precmd()
 {
+	if [ ! -e "/etc/rndc.key" ]; then
+		echo "Generating rndc.key"
+		/usr/sbin/rndc-confgen -a
+	fi
+
 	if [ -z "$named_chrootdir" ]; then
 		if [ ! -d "/etc/namedb/keys" ]; then
 			mkdir -m 775 "/etc/namedb/keys"
@@ -96,7 +101,7 @@ named_precmd()
 		;;
 	esac
 
-	for i in null random; do
+	for i in null random urandom; do
 		if [ ! -c "${named_chrootdir}/dev/$i" ]; then
 			rm -f "${named_chrootdir}/dev/$i"
 			(cd /dev && 

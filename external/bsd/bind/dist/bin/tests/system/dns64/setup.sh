@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,10 +14,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.4 2010/12/18 11:45:01 marka Exp 
-
 sh clean.sh
 
-../../../tools/genrandom 400 random.data
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
+
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 cd ns1 && sh sign.sh

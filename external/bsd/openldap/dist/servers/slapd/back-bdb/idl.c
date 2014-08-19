@@ -1,10 +1,10 @@
-/*	$NetBSD: idl.c,v 1.1.1.3 2010/12/12 15:22:56 adam Exp $	*/
+/*	$NetBSD: idl.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* idl.c - ldap id list handling routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.124.2.12 2010/04/13 20:23:24 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,10 +24,9 @@
 #include "back-bdb.h"
 #include "idl.h"
 
-#define IDL_MAX(x,y)	( x > y ? x : y )
-#define IDL_MIN(x,y)	( x < y ? x : y )
-
-#define IDL_CMP(x,y)	( x < y ? -1 : ( x > y ? 1 : 0 ) )
+#define IDL_MAX(x,y)	( (x) > (y) ? (x) : (y) )
+#define IDL_MIN(x,y)	( (x) < (y) ? (x) : (y) )
+#define IDL_CMP(x,y)	( (x) < (y) ? -1 : (x) > (y) )
 
 #define IDL_LRU_DELETE( bdb, e ) do { \
 	if ( (e) == (bdb)->bi_idl_lru_head ) { \
@@ -111,7 +110,7 @@ unsigned bdb_idl_search( ID *ids, ID id )
 	 * if not found, returns first postion greater than id
 	 */
 	unsigned base = 0;
-	unsigned cursor = 0;
+	unsigned cursor = 1;
 	int val = 0;
 	unsigned n = ids[0];
 
@@ -120,27 +119,26 @@ unsigned bdb_idl_search( ID *ids, ID id )
 #endif
 
 	while( 0 < n ) {
-		int pivot = n >> 1;
-		cursor = base + pivot;
-		val = IDL_CMP( id, ids[cursor + 1] );
+		unsigned pivot = n >> 1;
+		cursor = base + pivot + 1;
+		val = IDL_CMP( id, ids[cursor] );
 
 		if( val < 0 ) {
 			n = pivot;
 
 		} else if ( val > 0 ) {
-			base = cursor + 1;
+			base = cursor;
 			n -= pivot + 1;
 
 		} else {
-			return cursor + 1;
+			return cursor;
 		}
 	}
 	
 	if( val > 0 ) {
-		return cursor + 2;
-	} else {
-		return cursor + 1;
+		++cursor;
 	}
+	return cursor;
 
 #else
 	/* (reverse) linear search */
@@ -173,11 +171,11 @@ int bdb_idl_insert( ID *ids, ID id )
 
 	if (BDB_IDL_IS_RANGE( ids )) {
 		/* if already in range, treat as a dup */
-		if (id >= BDB_IDL_FIRST(ids) && id <= BDB_IDL_LAST(ids))
+		if (id >= BDB_IDL_RANGE_FIRST(ids) && id <= BDB_IDL_RANGE_LAST(ids))
 			return -1;
-		if (id < BDB_IDL_FIRST(ids))
+		if (id < BDB_IDL_RANGE_FIRST(ids))
 			ids[1] = id;
-		else if (id > BDB_IDL_LAST(ids))
+		else if (id > BDB_IDL_RANGE_LAST(ids))
 			ids[2] = id;
 		return 0;
 	}
@@ -221,7 +219,7 @@ int bdb_idl_insert( ID *ids, ID id )
 	return 0;
 }
 
-static int bdb_idl_delete( ID *ids, ID id )
+int bdb_idl_delete( ID *ids, ID id )
 {
 	unsigned x;
 
@@ -1093,8 +1091,8 @@ bdb_idl_intersection(
 	 * turn it into a range.
 	 */
 	if ( BDB_IDL_IS_RANGE( b )
-		&& BDB_IDL_FIRST( b ) <= BDB_IDL_FIRST( a )
-		&& BDB_IDL_LAST( b ) >= BDB_IDL_LAST( a ) ) {
+		&& BDB_IDL_RANGE_FIRST( b ) <= BDB_IDL_FIRST( a )
+		&& BDB_IDL_RANGE_LAST( b ) >= BDB_IDL_LLAST( a ) ) {
 		if (idmax - idmin + 1 == a[0])
 		{
 			a[0] = NOID;
@@ -1313,11 +1311,11 @@ int bdb_idl_append_one( ID *ids, ID id )
 {
 	if (BDB_IDL_IS_RANGE( ids )) {
 		/* if already in range, treat as a dup */
-		if (id >= BDB_IDL_FIRST(ids) && id <= BDB_IDL_LAST(ids))
+		if (id >= BDB_IDL_RANGE_FIRST(ids) && id <= BDB_IDL_RANGE_LAST(ids))
 			return -1;
-		if (id < BDB_IDL_FIRST(ids))
+		if (id < BDB_IDL_RANGE_FIRST(ids))
 			ids[1] = id;
-		else if (id > BDB_IDL_LAST(ids))
+		else if (id > BDB_IDL_RANGE_LAST(ids))
 			ids[2] = id;
 		return 0;
 	}
@@ -1361,6 +1359,10 @@ int bdb_idl_append( ID *a, ID *b )
 		return 0;
 	}
 
+	if ( b[0] == 1 ) {
+		return bdb_idl_append_one( a, BDB_IDL_FIRST( b ));
+	}
+
 	ida = BDB_IDL_LAST( a );
 	idb = BDB_IDL_LAST( b );
 	if ( BDB_IDL_IS_RANGE( a ) || BDB_IDL_IS_RANGE(b) ||
@@ -1371,7 +1373,7 @@ int bdb_idl_append( ID *a, ID *b )
 		return 0;
 	}
 
-	if ( b[0] > 1 && ida > idb ) {
+	if ( ida > idb ) {
 		swap = idb;
 		a[a[0]] = idb;
 		b[b[0]] = ida;
@@ -1386,7 +1388,7 @@ int bdb_idl_append( ID *a, ID *b )
 	a[0]++;
 	a[a[0]] = tmp;
 
-	if ( b[0] > 1 ) {
+	{
 		int i = b[0] - 1;
 		AC_MEMCPY(a+a[0]+1, b+2, i * sizeof(ID));
 		a[0] += i;
@@ -1472,7 +1474,7 @@ bdb_idl_sort( ID *ids, ID *tmp )
 /* 8 bit Radix sort + insertion sort
  * 
  * based on code from http://www.cubic.org/docs/radix.htm
- * with improvements by mbackes@symas.com and hyc@symas.com
+ * with improvements by ebackes@symas.com and hyc@symas.com
  *
  * This code is O(n) but has a relatively high constant factor. For lists
  * up to ~50 Quicksort is slightly faster; up to ~100 they are even.

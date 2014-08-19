@@ -1,9 +1,9 @@
-/*	$NetBSD: deref.c,v 1.1.1.2 2010/12/12 15:21:30 adam Exp $	*/
+/*	$NetBSD: deref.c,v 1.1.1.2.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/deref.c,v 1.2.2.3 2010/04/13 20:22:56 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -122,7 +122,7 @@ ldap_create_deref_control(
 
 	ld->ld_errno = ldap_create_deref_control_value( ld, ds, &value );
 	if ( ld->ld_errno == LDAP_SUCCESS ) {
-		ld->ld_errno = ldap_control_create( LDAP_CONTROL_PAGEDRESULTS,
+		ld->ld_errno = ldap_control_create( LDAP_CONTROL_X_DEREF,
 			iscritical, &value, 0, ctrlp );
 		if ( ld->ld_errno != LDAP_SUCCESS ) {
 			LDAP_FREE( value.bv_val );

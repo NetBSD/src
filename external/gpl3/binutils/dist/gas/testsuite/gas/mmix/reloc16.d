@@ -9,4 +9,4 @@ Disassembly of section \.text:
    4:	f82d0000 	pop 45,0
 			6: R_MMIX_16	bar\+0x2a
    8:	fd2a0000 	swym 42,0,0
-			a: R_MMIX_16	baz\+0xfffffffffffff6d7
+			a: R_MMIX_16	baz-0x929

@@ -1,4 +1,4 @@
-/*	$NetBSD: nss_mdnsd.c,v 1.3 2009/11/04 23:34:59 tsarna Exp $	*/
+/*	$NetBSD: nss_mdnsd.c,v 1.3.12.1 2014/08/19 23:45:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@
 #include <unistd.h>
 #include <time.h>
 
+
+#include "hostent.h"
 
 /*
  * Pool of mdnsd connections
@@ -154,7 +156,6 @@ typedef struct search_iter {
     char            buf[MAXHOSTNAMELEN];
 } search_iter;
 
-static hostent_ctx h_ctx;
 static DNSServiceFlags svc_flags = 0;
 
 ns_mtab *nss_module_register(const char *, u_int *, nss_module_unregister_fn *);
@@ -170,11 +171,12 @@ static void _mdns_addrinfo_init(addrinfo_ctx *, const struct addrinfo *);
 static void _mdns_addrinfo_add_ai(addrinfo_ctx *, struct addrinfo *);
 static struct addrinfo *_mdns_addrinfo_done(addrinfo_ctx *);
 
-static int _mdns_gethtbyname_abs(const char *, int, svc_ref **, short);
+static int _mdns_gethtbyname_abs(struct getnamaddr *, struct hostent_ctx *,
+    const char *, int, svc_ref **, short);
 static void _mdns_hostent_init(hostent_ctx *, int, int);
 static void _mdns_hostent_add_host(hostent_ctx *, const char *);
 static void _mdns_hostent_add_addr(hostent_ctx *, const void *, uint16_t);
-static struct hostent *_mdns_hostent_done(hostent_ctx *);
+static int _mdns_hostent_done(struct getnamaddr *, hostent_ctx *);
 
 static void _mdns_addrinfo_cb(DNSServiceRef, DNSServiceFlags,
     uint32_t, DNSServiceErrorType, const char *, const struct sockaddr *,
@@ -357,6 +359,7 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
     DNSServiceRef sdRef;
     svc_ref *sr;
     bool retry = true;
+    struct getnamaddr *info = cbrv;
 
     UNUSED(cbdata);
     
@@ -369,7 +372,7 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
         /* if mcast-only don't bother for non-LinkLocal addrs) */
         if (svc_flags & kDNSServiceFlagsForceMulticast) {
             if ((addr[0] != 169) || (addr[1] != 254)) {
-                h_errno = HOST_NOT_FOUND;
+                *info->he = HOST_NOT_FOUND;
                 return NS_NOTFOUND;
             }
         }
@@ -383,7 +386,7 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
         /* if mcast-only don't bother for non-LinkLocal addrs) */
         if (svc_flags & kDNSServiceFlagsForceMulticast) {
             if ((addr[0] != 0xfe) || ((addr[1] & 0xc0) != 0x80)) {
-                h_errno = HOST_NOT_FOUND;
+                *info->he = HOST_NOT_FOUND;
                 return NS_NOTFOUND;
             }
         }
@@ -397,27 +400,28 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
             if (advance > 0 && qp + advance < ep)
                 qp += advance;
             else {
-                h_errno = NETDB_INTERNAL;
+                *info->he = NETDB_INTERNAL;
                 return NS_NOTFOUND;
             }
         }
         if (strlcat(qbuf, "ip6.arpa", sizeof(qbuf)) >= sizeof(qbuf)) {
-            h_errno = NETDB_INTERNAL;
+            *info->he = NETDB_INTERNAL;
             return NS_NOTFOUND;
         }
         break;
 
     default:
-        h_errno = NO_RECOVERY;
+        *info->he = NO_RECOVERY;
         return NS_UNAVAIL;
     }
 
+    hostent_ctx h_ctx;
     _mdns_hostent_init(&h_ctx, af, addrlen);
     _mdns_hostent_add_addr(&h_ctx, addr, addrlen);
 
     sr = get_svc_ref();
     if (!sr) {
-        h_errno = NETDB_INTERNAL;
+        *info->he = NETDB_INTERNAL;
         return NS_UNAVAIL;
     }
     
@@ -444,7 +448,7 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
 
     if (err) {
         put_svc_ref(sr);
-        h_errno = NETDB_INTERNAL;
+        *info->he = NETDB_INTERNAL;
         return NS_UNAVAIL;
     }
 
@@ -454,11 +458,9 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
     put_svc_ref(sr);
 
     if (h_ctx.naliases) {
-        *(struct hostent **)cbrv = _mdns_hostent_done(&h_ctx);
-    
-        return NS_SUCCESS;
+        return _mdns_hostent_done(info, &h_ctx);
     } else {
-        h_errno = HOST_NOT_FOUND;
+        *info->he = HOST_NOT_FOUND;
         return NS_NOTFOUND;
     }
 }
@@ -473,6 +475,7 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
     DNSServiceRef sdRef;
     search_iter iter;
     svc_ref *sr;
+    struct getnamaddr *info = cbrv;
 
     UNUSED(cbdata);
     
@@ -494,13 +497,13 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
         break;
 
     default:
-        h_errno = NO_RECOVERY;
+        *info->he = NO_RECOVERY;
         return NS_UNAVAIL;
     }
 
     sr = get_svc_ref();
     if (!sr) {
-        h_errno = NETDB_INTERNAL;
+        *info->he = NETDB_INTERNAL;
         return NS_UNAVAIL;
     }
     
@@ -509,11 +512,13 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
         return err;
     }
 
+    hostent_ctx h_ctx;
     _mdns_hostent_init(&h_ctx, af, addrlen);
 
     err = NS_NOTFOUND;
     while (sr && sname && (err != NS_SUCCESS)) {
-        err = _mdns_gethtbyname_abs(sname, rrtype, &sr, iter.conf->timeout);
+        err = _mdns_gethtbyname_abs(info, &h_ctx, sname, rrtype, &sr,
+	    iter.conf->timeout);
         if (err != NS_SUCCESS) {
             sname = search_next(&iter);
         }
@@ -522,19 +527,18 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
     search_done(&iter);
     put_svc_ref(sr);
     
-    if (err == NS_SUCCESS) {
-        _mdns_hostent_add_host(&h_ctx, sname);
-        _mdns_hostent_add_host(&h_ctx, name);
-        *(struct hostent **)cbrv = _mdns_hostent_done(&h_ctx);
-    }
-    
-    return err;
+    if (err != NS_SUCCESS)
+	return err;
+    _mdns_hostent_add_host(&h_ctx, sname);
+    _mdns_hostent_add_host(&h_ctx, name);
+    return _mdns_hostent_done(info, &h_ctx);
 }
 
 
 
 static int
-_mdns_gethtbyname_abs(const char *name, int rrtype, svc_ref **sr, short timeout)
+_mdns_gethtbyname_abs(struct getnamaddr *info, struct hostent_ctx *ctx,
+    const char *name, int rrtype, svc_ref **sr, short timeout)
 {
     DNSServiceErrorType err = kDNSServiceErr_ServiceNotRunning;
     DNSServiceRef sdRef;
@@ -555,25 +559,25 @@ _mdns_gethtbyname_abs(const char *name, int rrtype, svc_ref **sr, short timeout)
             rrtype,
             kDNSServiceClass_IN,
             _mdns_hostent_cb,
-            &h_ctx
+            ctx
         );
         
         retry = retry_query(sr, err);
     }
 
     if (err) {
-        h_errno = NETDB_INTERNAL;
+        *info->he = NETDB_INTERNAL;
         return NS_UNAVAIL;
     }
 
-    _mdns_eventloop(*sr, (void *)&h_ctx, timeout);
+    _mdns_eventloop(*sr, (void *)ctx, timeout);
 
     DNSServiceRefDeallocate(sdRef);
 
-    if (h_ctx.naddrs) {
+    if (ctx->naddrs) {
         return NS_SUCCESS;
     } else {
-        h_errno = HOST_NOT_FOUND;
+        *info->he = HOST_NOT_FOUND;
         return NS_NOTFOUND;
     }
 }
@@ -706,16 +710,37 @@ _mdns_hostent_add_addr(hostent_ctx *ctx, const void *addr, uint16_t len)
 
 
 
-static struct hostent *
-_mdns_hostent_done(hostent_ctx *ctx)
+static int
+_mdns_hostent_done(struct getnamaddr *info, hostent_ctx *ctx)
 {
-    if (ctx->naliases) {
-        /* terminate array */
-        ctx->host.h_aliases[ctx->naliases - 1] = NULL;
-        ctx->host.h_addr_list[ctx->naddrs] = NULL;
-    }
-    
-    return &(ctx->host);
+    int i;
+    char *ptr = info->buf;
+    size_t len = info->buflen;
+    struct hostent *hp = info->hp;
+    struct hostent *chp = &ctx->host;
+
+    hp->h_length = ctx->host.h_length;
+    hp->h_addrtype = ctx->host.h_addrtype;
+    HENT_ARRAY(hp->h_addr_list, ctx->naddrs, ptr, len);
+    HENT_ARRAY(hp->h_aliases, ctx->naliases - 1, ptr, len);
+
+    for (i = 0; i < ctx->naddrs; i++)
+	HENT_COPY(hp->h_addr_list[i], chp->h_addr_list[i],
+	    hp->h_length, ptr, len);
+
+    hp->h_addr_list[ctx->naddrs] = NULL;
+
+    HENT_SCOPY(hp->h_name, chp->h_name, ptr, len);
+
+    for (i = 0; i < ctx->naliases - 1; i++)
+	    HENT_SCOPY(hp->h_aliases[i], chp->h_aliases[i], ptr, len);
+    hp->h_aliases[ctx->naliases - 1] = NULL;
+    *info->he = 0;
+    return NS_SUCCESS;
+nospc:
+    *info->he = NETDB_INTERNAL;
+    errno = ENOSPC;
+    return NS_UNAVAIL;
 }
 
 

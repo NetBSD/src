@@ -1,10 +1,10 @@
-/*	$NetBSD: io.c,v 1.1.1.4 2010/12/12 15:21:28 adam Exp $	*/
+/*	$NetBSD: io.c,v 1.1.1.4.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
 /* io.c - ber general i/o routines */
-/* OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.111.2.12 2010/04/13 20:22:54 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -397,6 +397,10 @@ int ber_flatten2(
 		bv->bv_val = NULL;
 		bv->bv_len = 0;
 
+	} else if ( ber->ber_sos_ptr != NULL ) {
+		/* unmatched "{" and "}" */
+		return -1;
+
 	} else {
 		/* copy the berval */
 		ber_len_t len = ber_pvt_ber_write( ber );
@@ -551,11 +555,7 @@ ber_get_next(
 				}
 				/* Did we run out of bytes? */
 				if ((char *)p == ber->ber_rwptr) {
-#if defined( EWOULDBLOCK )
 					sock_errset(EWOULDBLOCK);
-#elif defined( EAGAIN )
-					sock_errset(EAGAIN);
-#endif			
 					return LBER_DEFAULT;
 				}
 			}
@@ -564,11 +564,7 @@ ber_get_next(
 		}
 
 		if ( ber->ber_ptr == ber->ber_rwptr ) {
-#if defined( EWOULDBLOCK )
 			sock_errset(EWOULDBLOCK);
-#elif defined( EAGAIN )
-			sock_errset(EAGAIN);
-#endif			
 			return LBER_DEFAULT;
 		}
 
@@ -583,11 +579,7 @@ ber_get_next(
 			}
 			/* Not enough bytes? */
 			if (ber->ber_rwptr - (char *)p < llen) {
-#if defined( EWOULDBLOCK )
 				sock_errset(EWOULDBLOCK);
-#elif defined( EAGAIN )
-				sock_errset(EAGAIN);
-#endif			
 				return LBER_DEFAULT;
 			}
 			for (i=0; i<llen; i++) {
@@ -674,11 +666,7 @@ ber_get_next(
 		ber->ber_rwptr+=res;
 		
 		if (res<to_go) {
-#if defined( EWOULDBLOCK )
 			sock_errset(EWOULDBLOCK);
-#elif defined( EAGAIN )
-			sock_errset(EAGAIN);
-#endif			
 			return LBER_DEFAULT;
 		}
 done:

@@ -630,5 +630,7 @@ text_label:
 	mttr		$13,$14,1,6,1
 	mttr		$13,$14,1,7,1
 
+	pause
+
 # Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
 	.space	8

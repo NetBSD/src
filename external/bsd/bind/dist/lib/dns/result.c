@@ -1,7 +1,7 @@
-/*	$NetBSD: result.c,v 1.4 2012/06/05 00:41:39 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.4.2.1 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -162,8 +162,9 @@ static const char *text[DNS_R_NRESULTS] = {
 
 	"not master",			       /*%< 105 DNS_R_NOTMASTER */
 	"broken trust chain",		       /*%< 106 DNS_R_BROKENCHAIN */
-	"expired",			       /*%< 106 DNS_R_EXPIRED */
-	"not dynamic",			       /*%< 107 DNS_R_NOTDYNAMIC */
+	"expired",			       /*%< 107 DNS_R_EXPIRED */
+	"not dynamic",			       /*%< 108 DNS_R_NOTDYNAMIC */
+	"bad EUI"			       /*%< 109 DNS_R_BADEUI */
 };
 
 static const char *rcode_text[DNS_R_NRCODERESULTS] = {
@@ -267,6 +268,7 @@ dns_result_torcode(isc_result_t result) {
 	case DNS_R_TOOMANYHOPS:
 	case DNS_R_TSIGERRORSET:
 	case DNS_R_UNKNOWN:
+	case DNS_R_NAMETOOLONG:
 		rcode = dns_rcode_formerr;
 		break;
 	case DNS_R_DISALLOWED:

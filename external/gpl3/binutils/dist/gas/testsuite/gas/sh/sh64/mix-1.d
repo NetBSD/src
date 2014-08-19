@@ -19,12 +19,12 @@ Disassembly of section \.text\.media:
 
 0+ <mediacode>:
 [ 	]+0:[ 	]+cc000190[ 	]+movi	0,r25
-[ 	]+0:[ 	]+R_SH_IMM_MEDLOW16_PCREL	\.text\+0xf*fffffffe
+[ 	]+0:[ 	]+R_SH_IMM_MEDLOW16_PCREL	\.text-0x2
 [ 	]+4:[ 	]+c8000190[ 	]+shori	0,r25
 [ 	]+4:[ 	]+R_SH_IMM_LOW16_PCREL	\.text\+0x2
 [ 	]+8:[ 	]+6bf56640[ 	]+ptrel/l	r25,tr4
 [ 	]+c:[ 	]+cc000190[ 	]+movi	0,r25
-[ 	]+c:[ 	]+R_SH_IMM_MEDLOW16_PCREL	\.text\+0xf*fffffffc
+[ 	]+c:[ 	]+R_SH_IMM_MEDLOW16_PCREL	\.text-0x4
 [ 	]+10:[ 	]+c8000190[ 	]+shori	0,r25
 [ 	]+10:[ 	]+R_SH_IMM_LOW16_PCREL	\.text
 [ 	]+14:[ 	]+6bf56650[ 	]+ptrel/l	r25,tr5

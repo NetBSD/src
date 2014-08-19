@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.6.2.1 2013/06/23 06:26:14 tls Exp $	*/
-/* $OpenBSD: authfile.c,v 1.95 2013/01/08 18:49:04 markus Exp $ */
+/*	$NetBSD: authfile.c,v 1.6.2.2 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: authfile.c,v 1.97 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.6.2.1 2013/06/23 06:26:14 tls Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.6.2.2 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -86,7 +86,7 @@ key_private_rsa1_to_blob(Key *key, Buffer *blob, const char *passphrase,
 	u_char buf[100], *cp;
 	int i, cipher_num;
 	CipherContext ciphercontext;
-	Cipher *cipher;
+	const Cipher *cipher;
 	u_int32_t rnd;
 
 	/*
@@ -412,7 +412,7 @@ key_parse_private_rsa1(Buffer *blob, const char *passphrase, char **commentp)
 	Buffer decrypted;
 	u_char *cp;
 	CipherContext ciphercontext;
-	Cipher *cipher;
+	const Cipher *cipher;
 	Key *prv = NULL;
 	Buffer copy;
 
@@ -500,8 +500,8 @@ key_parse_private_rsa1(Buffer *blob, const char *passphrase, char **commentp)
 	return prv;
 
 fail:
-	if (commentp)
-		xfree(*commentp);
+	if (commentp != NULL)
+		free(*commentp);
 	key_free(prv);
 	return NULL;
 }
@@ -818,10 +818,10 @@ key_load_cert(const char *filename)
 	pub = key_new(KEY_UNSPEC);
 	xasprintf(&file, "%s-cert.pub", filename);
 	if (key_try_load_public(pub, file, NULL) == 1) {
-		xfree(file);
+		free(file);
 		return pub;
 	}
-	xfree(file);
+	free(file);
 	key_free(pub);
 	return NULL;
 }

@@ -29,9 +29,25 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcat_naive.S,v 1.1.8.2 2013/02/25 00:23:57 tls Exp $")
+RCSID("$NetBSD: strcat_naive.S,v 1.1.8.3 2014/08/19 23:45:12 tls Exp $")
 
 ENTRY(strcat)
+	mov	ip, r0			/* need to preserve r0 */
+#if defined(__thumb__)
+1:	ldrb	r2, [r0]		/* load next byte */
+	adds	r0, r0, #1		/* advance */
+	cmp	r2, #0			/* was it a NUL? */
+	bne	1b			/*   no, get next byte */
+	subs	r0, r0, #1		/* back up one to the NUL */
+	subs	r1, r1, r0		/* save one increment */
+2:	ldrb	r2, [r1, r0]		/* load next byte from append */
+	strb	r2, [r0]		/* store it */
+	adds	r0, r0, #1		/* advance */
+	cmp	r2, #0			/* was it a NUL? */
+	bne	2b			/*   no, get next byte */
+	mov	r0, ip			/* restore dst address */
+	RET				/* return */
+#else /* !__thumb__ */
 	mov	ip, r0			/* need to preserve r0 */
 1:	ldrb	r2, [ip], #1		/* load next byte */
 	teq	r2, #0			/* was it a NUL? */
@@ -42,4 +58,5 @@ ENTRY(strcat)
 	teq	r2, #0			/* was it a NUL? */
 	bne	2b			/*   no, get next byte */
 	RET				/* return */
+#endif
 END(strcat)

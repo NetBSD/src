@@ -1,4 +1,4 @@
-/* $NetBSD: str.c,v 1.13.60.1 2013/02/25 00:23:51 tls Exp $ */
+/* $NetBSD: str.c,v 1.13.60.2 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: str.c,v 1.13.60.1 2013/02/25 00:23:51 tls Exp $");
+__RCSID("$NetBSD: str.c,v 1.13.60.2 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ blk2short(char **src)
      */
     for (n = 0; src[n] != NULL; n++)
 	continue;
-    sdst = dst = (Char **)xmalloc((size_t)((n + 1) * sizeof(Char *)));
+    sdst = dst = xmalloc((size_t)((n + 1) * sizeof(*dst)));
 
     for (; *src != NULL; src++)
 	*dst++ = SAVE(*src);
@@ -85,7 +85,7 @@ short2blk(Char *const *src)
      */
     for (n = 0; src[n] != NULL; n++)
 	continue;
-    sdst = dst = (char **)xmalloc((size_t)((n + 1) * sizeof(char *)));
+    sdst = dst = xmalloc((size_t)((n + 1) * sizeof(*dst)));
 
     for (; *src != NULL; src++)
 	*dst++ = strsave(short2str(*src));
@@ -105,7 +105,7 @@ str2short(const char *src)
 
     if (sdst == (NULL)) {
 	dstsize = MALLOC_INCR;
-	sdst = (Char *)xmalloc((size_t)dstsize * sizeof(Char));
+	sdst = xmalloc((size_t)dstsize * sizeof(*sdst));
     }
 
     dst = sdst;
@@ -114,8 +114,8 @@ str2short(const char *src)
 	*dst++ = (Char) ((unsigned char) *src++);
 	if (dst == edst) {
 	    dstsize += MALLOC_INCR;
-	    sdst = (Char *)xrealloc((ptr_t)sdst,
-	        (size_t)dstsize * sizeof(Char));
+	    sdst = xrealloc((ptr_t)sdst,
+	        (size_t)dstsize * sizeof(*sdst));
 	    edst = &sdst[dstsize];
 	    dst = &edst[-MALLOC_INCR];
 	}
@@ -136,7 +136,7 @@ short2str(const Char *src)
 
     if (sdst == NULL) {
 	dstsize = MALLOC_INCR;
-	sdst = (char *)xmalloc((size_t)dstsize * sizeof(char));
+	sdst = xmalloc((size_t)dstsize * sizeof(*sdst));
     }
     dst = sdst;
     edst = &dst[dstsize];
@@ -144,8 +144,8 @@ short2str(const Char *src)
 	*dst++ = (char) *src++;
 	if (dst == edst) {
 	    dstsize += MALLOC_INCR;
-	    sdst = (char *)xrealloc((ptr_t)sdst,
-	        (size_t)dstsize * sizeof(char));
+	    sdst = xrealloc((ptr_t)sdst,
+	        (size_t)dstsize * sizeof(*sdst));
 	    edst = &sdst[dstsize];
 	    dst = &edst[-MALLOC_INCR];
 	}
@@ -314,7 +314,7 @@ s_strsave(const Char *s)
 	s = STRNULL;
     for (p = s; *p++;)
 	continue;
-    p = n = xmalloc((size_t)((p - s) * sizeof(Char)));
+    p = n = xmalloc((size_t)(p - s) * sizeof(*n));
     while ((*n++ = *s++) != '\0')
 	continue;
     return __UNCONST(p);
@@ -334,7 +334,7 @@ s_strspl(const Char *cp, const Char *dp)
 	continue;
     for (q = dp; *q++;)
 	continue;
-    ep = xmalloc((size_t)(((p - cp) + (q - dp) - 1) * sizeof(Char)));
+    ep = xmalloc((size_t)((p - cp) + (q - dp) - 1) * sizeof(*ep));
     for (d = ep, q = cp; (*d++ = *q++) != '\0';)
 	continue;
     for (d--, q = dp; (*d++ = *q++) != '\0';)
@@ -380,7 +380,7 @@ short2qstr(const Char *src)
 
     if (sdst == NULL) {
 	dstsize = MALLOC_INCR;
-	sdst = (char *)xmalloc((size_t)dstsize * sizeof(char));
+	sdst = xmalloc((size_t)dstsize * sizeof(*sdst));
     }
     dst = sdst;
     edst = &dst[dstsize];
@@ -390,8 +390,8 @@ short2qstr(const Char *src)
 	    *dst++ = '\\';
 	    if (dst == edst) {
 		dstsize += MALLOC_INCR;
-		sdst = (char *)xrealloc((ptr_t) sdst, 
-		    (size_t)dstsize * sizeof(char));
+		sdst = xrealloc((ptr_t) sdst, 
+		    (size_t)dstsize * sizeof(*sdst));
 		edst = &sdst[dstsize];
 		dst = &edst[-MALLOC_INCR];
 	    }
@@ -399,8 +399,8 @@ short2qstr(const Char *src)
 	*dst++ = (char) *src++;
 	if (dst == edst) {
 	    dstsize += MALLOC_INCR;
-	    sdst = (char *)xrealloc((ptr_t) sdst,
-	        (size_t)dstsize * sizeof(char));
+	    sdst = xrealloc((ptr_t) sdst,
+	        (size_t)dstsize * sizeof(*sdst));
 	    edst = &sdst[dstsize];
 	    dst = &edst[-MALLOC_INCR];
 	}
@@ -425,11 +425,11 @@ vis_str(const Char *cp)
     
     for (dp = cp; *dp++;)
 	continue;
-    n = ((dp - cp) << 2) + 1; /* 4 times + NULL */
+    n = ((size_t)(dp - cp) << 2) + 1; /* 4 times + NULL */
     if (dstsize < n) {
-	sdst = (char *) (dstsize ? 
-	    xrealloc(sdst, (size_t)n * sizeof(char)) :
-	    xmalloc((size_t)n * sizeof(char)));
+	sdst = (dstsize ? 
+	    xrealloc(sdst, (size_t)n * sizeof(*sdst)) :
+	    xmalloc((size_t)n * sizeof(*sdst)));
 	dstsize = n;
     }
     /* 

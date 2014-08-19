@@ -3,23 +3,22 @@ PROG=${1-UNKNOWN}
 
 ConfStr="$PROG"
 
-ConfStr="$ConfStr 4.2.6p5"
+ConfStr="$ConfStr 4.2.7p404"
 
 case "$CSET" in
  '') ;;
  *) ConfStr="$ConfStr@$CSET" ;;
 esac
 
-case "-lcrypto" in
+case "o" in
  '') ;;
- -lcrypto)
-    ConfStr="${ConfStr}-o" ;;
- *) ConfStr="${ConfStr}-?" ;;
+ *) ConfStr="${ConfStr}-o" ;;
 esac
 
 ifile="`dirname $0`/../importdate"
 
 if [ -f "$ifile" ]; then
+  # NetBSD MKREPRO: Don't embed current date/time/run number
   ConfStr="$ConfStr "`cat "$ifile"`
 else
   ConfStr="$ConfStr `LC_TIME=C TZ= date`"

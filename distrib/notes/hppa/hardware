@@ -1,0 +1,14 @@
+.\"	$NetBSD: hardware,v 1.1.8.2 2014/08/19 23:45:42 tls Exp $
+.
+Since
+.Nx*M
+is an experimental port, the hardware support is in a constant state of flux.
+Check the
+.Mt port-hppa@NetBSD.org
+mailing list and the
+.Nx*M
+port homepage for an up-to-date list of known supported hardware.
+.Lk http://www.NetBSD.org/ports/hppa/
+.Pp
+.Nx*M
+\*V works from local disk, once installed, or diskless via netboot.

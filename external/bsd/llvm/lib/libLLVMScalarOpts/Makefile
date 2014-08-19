@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.2.2 2013/02/25 00:26:39 tls Exp $
+#	$NetBSD: Makefile,v 1.7.2.3 2014/08/19 23:51:25 tls Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -7,36 +7,42 @@ LIB=	LLVMScalarOpts
 .PATH: ${LLVM_SRCDIR}/lib/Transforms/Scalar
 
 SRCS+=	ADCE.cpp \
-	BasicBlockPlacement.cpp \
-	CodeGenPrepare.cpp \
+	ConstantHoisting.cpp \
 	ConstantProp.cpp \
 	CorrelatedValuePropagation.cpp \
 	DCE.cpp \
 	DeadStoreElimination.cpp \
 	EarlyCSE.cpp \
-	GlobalMerge.cpp \
+	FlattenCFGPass.cpp \
 	GVN.cpp \
 	IndVarSimplify.cpp \
 	JumpThreading.cpp \
 	LICM.cpp \
+	LoadCombine.cpp \
 	LoopDeletion.cpp \
 	LoopIdiomRecognize.cpp \
 	LoopInstSimplify.cpp \
+	LoopRerollPass.cpp \
 	LoopRotation.cpp \
 	LoopStrengthReduce.cpp \
 	LoopUnrollPass.cpp \
 	LoopUnswitch.cpp \
 	LowerAtomic.cpp \
 	MemCpyOptimizer.cpp \
+	MergedLoadStoreMotion.cpp \
+	PartiallyInlineLibCalls.cpp \
 	Reassociate.cpp \
 	Reg2Mem.cpp \
 	SCCP.cpp \
 	SROA.cpp \
+	SampleProfile.cpp \
 	Scalar.cpp \
 	ScalarReplAggregates.cpp \
+	Scalarizer.cpp \
+	SeparateConstOffsetFromGEP.cpp \
 	SimplifyCFGPass.cpp \
-	SimplifyLibCalls.cpp \
 	Sink.cpp \
+	StructurizeCFG.cpp \
 	TailRecursionElimination.cpp
 
 .if defined(HOSTLIB)

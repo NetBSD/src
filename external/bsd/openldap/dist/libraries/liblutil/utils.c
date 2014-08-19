@@ -1,9 +1,9 @@
-/*	$NetBSD: utils.c,v 1.1.1.3 2010/12/12 15:22:11 adam Exp $	*/
+/*	$NetBSD: utils.c,v 1.1.1.3.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.33.2.29 2010/06/10 17:23:20 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,6 +17,7 @@
 
 #include "portable.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <ac/stdlib.h>
 #include <ac/stdarg.h>
@@ -516,14 +517,25 @@ lutil_atoux( unsigned *v, const char *s, int x )
 int
 lutil_atolx( long *v, const char *s, int x )
 {
-	char		*next;
-	long		l;
+	char *next;
+	long l;
+	int save_errno;
 
 	assert( s != NULL );
 	assert( v != NULL );
 
+	if ( isspace( s[ 0 ] ) ) {
+		return -1;
+	}
+
+	errno = 0;
 	l = strtol( s, &next, x );
+	save_errno = errno;
 	if ( next == s || next[ 0 ] != '\0' ) {
+		return -1;
+	}
+
+	if ( ( l == LONG_MIN || l == LONG_MAX ) && save_errno != 0 ) {
 		return -1;
 	}
 
@@ -535,19 +547,26 @@ lutil_atolx( long *v, const char *s, int x )
 int
 lutil_atoulx( unsigned long *v, const char *s, int x )
 {
-	char		*next;
-	unsigned long	ul;
+	char *next;
+	unsigned long ul;
+	int save_errno;
 
 	assert( s != NULL );
 	assert( v != NULL );
 
 	/* strtoul() has an odd interface */
-	if ( s[ 0 ] == '-' ) {
+	if ( s[ 0 ] == '-' || isspace( s[ 0 ] ) ) {
 		return -1;
 	}
 
+	errno = 0;
 	ul = strtoul( s, &next, x );
+	save_errno = errno;
 	if ( next == s || next[ 0 ] != '\0' ) {
+		return -1;
+	}
+
+	if ( ( ul == 0 || ul == ULONG_MAX ) && save_errno != 0 ) {
 		return -1;
 	}
 
@@ -555,6 +574,87 @@ lutil_atoulx( unsigned long *v, const char *s, int x )
 
 	return 0;
 }
+
+#ifdef HAVE_LONG_LONG
+#if defined(HAVE_STRTOLL) || defined(HAVE_STRTOQ)
+int
+lutil_atollx( long long *v, const char *s, int x )
+{
+	char *next;
+	long long ll;
+	int save_errno;
+
+	assert( s != NULL );
+	assert( v != NULL );
+
+	if ( isspace( s[ 0 ] ) ) {
+		return -1;
+	}
+
+	errno = 0;
+#ifdef HAVE_STRTOLL
+	ll = strtoll( s, &next, x );
+#else /* HAVE_STRTOQ */
+	ll = (unsigned long long)strtoq( s, &next, x );
+#endif /* HAVE_STRTOQ */
+	save_errno = errno;
+	if ( next == s || next[ 0 ] != '\0' ) {
+		return -1;
+	}
+
+	/* LLONG_MIN, LLONG_MAX are C99 only */
+#if defined (LLONG_MIN) && defined(LLONG_MAX)
+	if ( ( ll == LLONG_MIN || ll == LLONG_MAX ) && save_errno != 0 ) {
+		return -1;
+	}
+#endif /* LLONG_MIN && LLONG_MAX */
+
+	*v = ll;
+
+	return 0;
+}
+#endif /* HAVE_STRTOLL || HAVE_STRTOQ */
+
+#if defined(HAVE_STRTOULL) || defined(HAVE_STRTOUQ)
+int
+lutil_atoullx( unsigned long long *v, const char *s, int x )
+{
+	char *next;
+	unsigned long long ull;
+	int save_errno;
+
+	assert( s != NULL );
+	assert( v != NULL );
+
+	/* strtoull() has an odd interface */
+	if ( s[ 0 ] == '-' || isspace( s[ 0 ] ) ) {
+		return -1;
+	}
+
+	errno = 0;
+#ifdef HAVE_STRTOULL
+	ull = strtoull( s, &next, x );
+#else /* HAVE_STRTOUQ */
+	ull = (unsigned long long)strtouq( s, &next, x );
+#endif /* HAVE_STRTOUQ */
+	save_errno = errno;
+	if ( next == s || next[ 0 ] != '\0' ) {
+		return -1;
+	}
+
+	/* ULLONG_MAX is C99 only */
+#if defined(ULLONG_MAX)
+	if ( ( ull == 0 || ull == ULLONG_MAX ) && save_errno != 0 ) {
+		return -1;
+	}
+#endif /* ULLONG_MAX */
+
+	*v = ull;
+
+	return 0;
+}
+#endif /* HAVE_STRTOULL || HAVE_STRTOUQ */
+#endif /* HAVE_LONG_LONG */
 
 /* Multiply an integer by 100000000 and add new */
 typedef struct lutil_int_decnum {
@@ -616,8 +716,6 @@ scale( int new, lutil_int_decnum *prev, unsigned char *tmp )
  * Output buffer must be provided, bv_len must indicate buffer size
  * Hex input can be "0x1234" or "'1234'H"
  *
- * Temporarily modifies the input string.
- *
  * Note: High bit of binary form is always the sign bit. If the number
  * is supposed to be positive but has the high bit set, a zero byte
  * is prepended. It is assumed that this has already been handled on
@@ -626,7 +724,7 @@ scale( int new, lutil_int_decnum *prev, unsigned char *tmp )
 int
 lutil_str2bin( struct berval *in, struct berval *out, void *ctx )
 {
-	char *pin, *pout, ctmp;
+	char *pin, *pout;
 	char *end;
 	int i, chunk, len, rc = 0, hex = 0;
 	if ( !out || !out->bv_val || out->bv_len < in->bv_len )
@@ -651,6 +749,8 @@ lutil_str2bin( struct berval *in, struct berval *out, void *ctx )
 	if ( hex ) {
 #define HEXMAX	(2 * sizeof(long))
 		unsigned long l;
+		char tbuf[HEXMAX+1];
+
 		/* Convert a longword at a time, but handle leading
 		 * odd bytes first
 		 */
@@ -660,11 +760,10 @@ lutil_str2bin( struct berval *in, struct berval *out, void *ctx )
 
 		while ( len ) {
 			int ochunk;
-			ctmp = pin[chunk];
-			pin[chunk] = '\0';
+			memcpy( tbuf, pin, chunk );
+			tbuf[chunk] = '\0';
 			errno = 0;
-			l = strtoul( pin, &end, 16 );
-			pin[chunk] = ctmp;
+			l = strtoul( tbuf, &end, 16 );
 			if ( errno )
 				return -1;
 			ochunk = (chunk + 1)/2;
@@ -680,10 +779,12 @@ lutil_str2bin( struct berval *in, struct berval *out, void *ctx )
 		out->bv_len = pout - out->bv_val;
 	} else {
 	/* Decimal */
+#define	DECMAX	8	/* 8 digits at a time */
 		char tmpbuf[64], *tmp;
 		lutil_int_decnum num;
 		int neg = 0;
 		long l;
+		char tbuf[DECMAX+1];
 
 		len = in->bv_len;
 		pin = in->bv_val;
@@ -697,8 +798,6 @@ lutil_str2bin( struct berval *in, struct berval *out, void *ctx )
 			pin++;
 		}
 
-#define	DECMAX	8	/* 8 digits at a time */
-
 		/* tmp must be at least as large as outbuf */
 		if ( out->bv_len > sizeof(tmpbuf)) {
 			tmp = ber_memalloc_x( out->bv_len, ctx );
@@ -710,11 +809,10 @@ lutil_str2bin( struct berval *in, struct berval *out, void *ctx )
 			chunk = DECMAX;
 
 		while ( len ) {
-			ctmp = pin[chunk];
-			pin[chunk] = '\0';
+			memcpy( tbuf, pin, chunk );
+			tbuf[chunk] = '\0';
 			errno = 0;
-			l = strtol( pin, &end, 10 );
-			pin[chunk] = ctmp;
+			l = strtol( tbuf, &end, 10 );
 			if ( errno ) {
 				rc = -1;
 				goto decfail;

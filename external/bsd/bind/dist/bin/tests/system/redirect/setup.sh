@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -16,8 +16,12 @@
 
 # Id: setup.sh,v 1.3 2011/03/01 23:48:06 tbox Exp 
 
+SYSTEMTESTTOP=..
+
 sh clean.sh
 
-../../../tools/genrandom 400 random.data
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
+cp ns2/redirect.db.in ns2/redirect.db
+cp ns2/example.db.in ns2/example.db
 cd ns1 && sh sign.sh

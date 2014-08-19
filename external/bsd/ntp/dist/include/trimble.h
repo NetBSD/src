@@ -1,11 +1,11 @@
-/*	$NetBSD: trimble.h,v 1.1.1.1 2009/12/13 16:54:55 kardel Exp $	*/
+/*	$NetBSD: trimble.h,v 1.1.1.1.12.1 2014/08/19 23:51:38 tls Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/include/trimble.h,v 4.6 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
  * trimble.h,v 4.6 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
- * Created: Sun Aug  2 16:16:49 1998
+ * $Created: Sun Aug  2 16:16:49 1998 $
  *
  * Copyright (c) 1998-2005 by Frank Kardel <kardel <AT> ntp.org>
  *

@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/appendix-recommended-versions.sdf,v 1.3.2.7 2010/04/13 20:22:33 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Recommended OpenLDAP Software Dependency Versions
@@ -17,6 +17,7 @@ Feature|Software|Version
 {{TERM[expand]TLS}}:
 |{{PRD:OpenSSL}}|0.9.7+
 |{{PRD:GnuTLS}}|2.0.1
+|{{PRD:MozNSS}}|3.12.9
 {{TERM[expand]SASL}}|{{PRD:Cyrus SASL}}|2.1.21+
 {{TERM[expand]Kerberos}}:
 |{{PRD:Heimdal}}|Version
@@ -26,6 +27,9 @@ Database Software|{{PRD:Berkeley DB}}:|
 ||4.5
 ||4.6
 ||4.7
+||4.8
+||5.0
+||5.1
 ||Note: It is highly recommended to apply the patches from Oracle for a given release.
 Threads:
 |POSIX {{pthreads}}|Version

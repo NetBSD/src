@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.35 2011/11/09 19:16:01 christos Exp $ */
+/* $NetBSD: proc.c,v 1.35.6.1 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.35 2011/11/09 19:16:01 christos Exp $");
+__RCSID("$NetBSD: proc.c,v 1.35.6.1 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -431,7 +431,7 @@ pclrcurr(struct process *pp)
 
 /* +4 here is 1 for '\0', 1 ea for << >& >> */
 static Char command[PMAXLEN + 4];
-static int cmdlen;
+static size_t cmdlen;
 static Char *cmdp;
 
 /*
@@ -561,7 +561,7 @@ padd(struct command *t)
 static void
 pads(Char *cp)
 {
-    int i;
+    size_t i;
 
     /*
      * Avoid the Quoted Space alias hack! Reported by:
@@ -927,7 +927,7 @@ dokill(Char **v, struct command *t)
 {
     Char *signame;
     char *name;
-    int signum;
+    long signum;
     char *ep;
 
     signum = SIGTERM;
@@ -987,7 +987,7 @@ dokill(Char **v, struct command *t)
 	}
 	v++;
     }
-    pkill(v, signum);
+    pkill(v, (int)signum);
 }
 
 static void
@@ -1054,7 +1054,7 @@ pkill(Char **v, int signum)
 	else if (!(Isdigit(*cp) || *cp == '-'))
 	    stderror(ERR_NAME | ERR_JOBARGS);
 	else {
-	    pid = strtoul(short2str(cp), &ep, 0);
+	    pid = (pid_t)strtoul(short2str(cp), &ep, 0);
 	    if (*ep) {
 		(void)fprintf(csherr, "%s: Badly formed number\n",
 		    short2str(cp));

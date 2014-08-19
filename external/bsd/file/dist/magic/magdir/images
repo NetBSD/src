@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: images,v 1.81 2013/03/09 22:36:00 christos Exp $
+# $File: images,v 1.91 2014/04/30 21:41:02 christos Exp $
 # images:  file(1) magic for image formats (see also "iff", and "c-lang" for
 # XPM bitmaps)
 #
@@ -18,55 +18,58 @@
 # `xv' recognizes only a subset of the following (RGB with pixelsize = 24)
 # `tgatoppm' recognizes a superset (Index may be anything)
 1	belong&0xfff7ffff	0x01010000	Targa image data - Map
+!:strength + 2
 >2	byte&8			8		- RLE
->12	leshort			>0		%hd x
->14	leshort			>0		%hd
+>12	leshort			>0		%d x
+>14	leshort			>0		%d
 1	belong&0xfff7ffff	0x00020000	Targa image data - RGB
+!:strength + 2
 >2	byte&8			8		- RLE
->12	leshort			>0		%hd x
->14	leshort			>0		%hd
+>12	leshort			>0		%d x
+>14	leshort			>0		%d
 1	belong&0xfff7ffff	0x00030000	Targa image data - Mono
+!:strength + 2
 >2	byte&8			8		- RLE
->12	leshort			>0		%hd x
->14	leshort			>0		%hd
+>12	leshort			>0		%d x
+>14	leshort			>0		%d
 
 # PBMPLUS images
 # The next byte following the magic is always whitespace.
 # strength is changed to try these patterns before "x86 boot sector"
 0	search/1	P1		
->3	regex		=[0-9]*\ [0-9]*		Netpbm PBM image text
->3	regex		=[0-9]+\ 		\b, size = %sx
->>3	regex		=\ [0-9]+	\b%s
+>3	regex		=[0-9]{0,50}\ [0-9]{0,50}		Netpbm PBM image text
+>3	regex		=[0-9]{1,50}\ 		\b, size = %sx
+>>3	regex		=\ [0-9]{1,50}	\b%s
 !:strength + 45
 !:mime	image/x-portable-bitmap
 0	search/1	P2		
->3	regex		=[0-9]*\ [0-9]*		Netpbm PGM image text
->3	regex		=[0-9]+\ 		\b, size = %sx
->>3	regex		=\ [0-9]+	\b%s
+>3	regex		=[0-9]{0,50}\ [0-9]{0,50}		Netpbm PGM image text
+>3	regex		=[0-9]{1,50}\ 		\b, size = %sx
+>>3	regex		=\ [0-9]{1,50}	\b%s
 !:strength + 45
 !:mime	image/x-portable-greymap
-0	search/1	P3		Netpbm PPM image text
->3	regex		=[0-9]*\ [0-9]*		Netpbm PPM image text
->3	regex		=[0-9]+\ 		\b, size = %sx
->>3	regex		=\ [0-9]+	\b%s
+0	search/1	P3
+>3	regex		=[0-9]{0,50}\ [0-9]{0,50}		Netpbm PPM image text
+>3	regex		=[0-9]{1,50}\ 		\b, size = %sx
+>>3	regex		=\ [0-9]{1,50}	\b%s
 !:strength + 45
 !:mime	image/x-portable-pixmap
 0	string		P4		
->3	regex		=[0-9]*\ [0-9]*		Netpbm PBM "rawbits" image data
->3	regex		=[0-9]+\ 		\b, size = %sx
->>3	regex		=\ [0-9]+	\b%s
+>3	regex		=[0-9]{0,50}\ [0-9]{0,50}		Netpbm PBM "rawbits" image data
+>3	regex		=[0-9]{1,50}\ 		\b, size = %sx
+>>3	regex		=\ [0-9]{1,50}	\b%s
 !:strength + 45
 !:mime	image/x-portable-bitmap
 0	string		P5		
->3	regex		=[0-9]*\ [0-9]*		Netpbm PGM "rawbits" image data
->3	regex		=[0-9]+\ 		\b, size = %sx
->>3	regex		=\ [0-9]+	\b%s
+>3	regex		=[0-9]{0,50}\ [0-9]{0,50}		Netpbm PGM "rawbits" image data
+>3	regex		=[0-9]{1,50}\ 		\b, size = %sx
+>>3	regex		=\ [0-9]{1,50}	\b%s
 !:strength + 45
 !:mime	image/x-portable-greymap
 0	string		P6		
->3	regex		=[0-9]*\ [0-9]*		Netpbm PPM "rawbits" image data
->3	regex		=[0-9]+\ 		\b, size = %sx
->>3	regex		=\ [0-9]+	\b%s
+>3	regex		=[0-9]{0,50}\ [0-9]{0,50}		Netpbm PPM "rawbits" image data
+>3	regex		=[0-9]{1,50}\ 		\b, size = %sx
+>>3	regex		=\ [0-9]{1,50}	\b%s
 !:strength + 45
 !:mime	image/x-portable-pixmap
 0	string		P7		Netpbm PAM image file
@@ -128,8 +131,8 @@
 #
 0	string		\x89PNG\x0d\x0a\x1a\x0a		PNG image data
 !:mime	image/png
->16	belong		x		\b, %ld x
->20	belong		x		%ld,
+>16	belong		x		\b, %d x
+>20	belong		x		%d,
 >24	byte		x		%d-bit
 >25	byte		0		grayscale,
 >25	byte		2		\b/color RGB,
@@ -164,8 +167,8 @@
 !:apple	8BIMGIFf
 >4	string		7a		\b, version 8%s,
 >4	string		9a		\b, version 8%s,
->6	leshort		>0		%hd x
->8	leshort		>0		%hd
+>6	leshort		>0		%d x
+>8	leshort		>0		%d
 #>10	byte		&0x80		color mapped,
 #>10	byte&0x07	=0x00		2 colors
 #>10	byte&0x07	=0x01		4 colors
@@ -256,6 +259,8 @@
 # at offset 8 starts imagedata followed by "RGB " marker
 
 # PC bitmaps (OS/2, Windows BMP files)  (Greg Roelofs, newt@uchicago.edu)
+# http://en.wikipedia.org/wiki/BMP_file_format#DIB_header_.\
+# 28bitmap_information_header.29
 0	string		BM
 >14	leshort		12		PC bitmap, OS/2 1.x format
 !:mime	image/x-ms-bmp
@@ -266,6 +271,16 @@
 >>18	leshort		x		\b, %d x
 >>20	leshort		x		%d
 >14	leshort		40		PC bitmap, Windows 3.x format
+!:mime	image/x-ms-bmp
+>>18	lelong		x		\b, %d x
+>>22	lelong		x		%d x
+>>28	leshort		x		%d
+>14	leshort		124		PC bitmap, Windows 98/2000 and newer format
+!:mime	image/x-ms-bmp
+>>18	lelong		x		\b, %d x
+>>22	lelong		x		%d x
+>>28	leshort		x		%d
+>14	leshort		108		PC bitmap, Windows 95/NT4 and newer format
 !:mime	image/x-ms-bmp
 >>18	lelong		x		\b, %d x
 >>22	lelong		x		%d x
@@ -471,7 +486,7 @@
 >>>>1	ubyte		3	ver. 2.8 image data, without palette
 >>>>1	ubyte		4	for Windows image data
 >>>>1	ubyte		5	ver. 3.0 image data
->>>>4	uleshort	x	bounding box [%hd,
+>>>>4	uleshort	x	bounding box [%d,
 >>>>6	uleshort	x	%d] -
 >>>>8	uleshort	x	[%d,
 >>>>10	uleshort	x	%d],
@@ -606,7 +621,7 @@
 # Author: Hans-Joachim Baader <hjb@pro-linux.de>
 0		string	PaRtImAgE-VoLuMe	PartImage
 >0x0020		string	0.6.1		file version %s
->>0x0060	lelong	>-1		volume %ld
+>>0x0060	lelong	>-1		volume %d
 #>>0x0064 8 byte identifier
 #>>0x007c reserved
 >>0x0200	string	>\0		type %s
@@ -629,8 +644,8 @@
 # Kodak Cineon format for scanned negatives
 # http://www.kodak.com/US/en/motion/support/dlad/
 0	lelong  0xd75f2a80	Cineon image data
->200	belong  >0		\b, %ld x
->204	belong  >0		%ld
+>200	belong  >0		\b, %d x
+>204	belong  >0		%d
 
 
 # Bio-Rad .PIC is an image format used by microscope control systems
@@ -642,10 +657,10 @@
 14	leshort <2
 >62	leshort <2
 >>54	leshort 12345		Bio-Rad .PIC Image File
->>>0	leshort >0		%hd x
->>>2	leshort >0		%hd,
+>>>0	leshort >0		%d x
+>>>2	leshort >0		%d,
 >>>4	leshort =1		1 image in file
->>>4	leshort >1		%hd images in file
+>>>4	leshort >1		%d images in file
 
 # From Jan "Yenya" Kasprzak <kas@fi.muni.cz>
 # The description of *.mrw format can be found at
@@ -734,6 +749,15 @@
 !:mime	application/x-hdf
 0	string	\211HDF\r\n\032\n	Hierarchical Data Format (version 5) data
 !:mime	application/x-hdf
+512	string	\211HDF\r\n\032\n	Hierarchical Data Format (version 5) with 512 bytes user block
+!:mime	application/x-hdf
+1024	string	\211HDF\r\n\032\n	Hierarchical Data Format (version 5) with 1k user block
+!:mime	application/x-hdf
+2048	string	\211HDF\r\n\032\n	Hierarchical Data Format (version 5) with 2k user block
+!:mime	application/x-hdf
+4096	string	\211HDF\r\n\032\n	Hierarchical Data Format (version 5) with 4k user block
+!:mime	application/x-hdf
+
 
 # From: Tobias Burnus <burnus@net-b.de>
 # Xara (for a while: Corel Xara) is a graphic package, see
@@ -769,12 +793,40 @@
 # From Tano M Fotang <mfotang@quanteq.com>
 0	string	\xff\xa0\xff\xa8\x00	Wavelet Scalar Quantization image data
 
+# Type:		PCO B16 image files
+# URL:		http://www.pco.de/fileadmin/user_upload/db/download/MA_CWDCOPIE_0412b.pdf
+# From:		Florian Philipp <florian.philipp@binarywings.net>
+# Extension:	.b16
+# Description:	Pixel image format produced by PCO Camware, typically used
+#		together with PCO cameras.
+# Note:		Different versions exist for e.g. 8 bit and 16 bit images.
+#		Documentation is incomplete.
+0	string/b	PCO-	PCO B16 image data
+>12	lelong		x	\b, %dx
+>16	lelong		x	\b%d
+>20	lelong		0	\b, short header
+>20	lelong		-1	\b, extended header
+>>24	lelong		0	\b, grayscale
+>>>36	lelong		0	linear LUT
+>>>36	lelong		1	logarithmic LUT
+>>>28	lelong		x	[%d
+>>>32	lelong		x	\b,%d]
+>>24	lelong		1	\b, color
+>>>64	lelong		0	linear LUT
+>>>64	lelong		1	logarithmic LUT
+>>>40	lelong		x	r[%d
+>>>44	lelong		x	\b,%d]
+>>>48	lelong		x	g[%d
+>>>52	lelong		x	\b,%d]
+>>>56	lelong		x	b[%d
+>>>60	lelong		x	\b,%d]
+
 # Polar Monitor Bitmap (.pmb) used as logo for Polar Electro watches
 # From: Markus Heidelberg <markus.heidelberg at web.de>
 0	string/t	[BitmapInfo2]	Polar Monitor Bitmap text
 !:mime	image/x-polar-monitor-bitmap
 
-# From: Rick Richardson <rick.richardson@comcast.net>
+# From: Rick Richardson <rickrich@gmail.com>
 0	string	GARMIN\ BITMAP\ 01	Garmin Bitmap file
 
 # Type:	Ulead Photo Explorer5 (.pe5)
@@ -838,3 +890,8 @@
 # Not really an image.
 # From: "Tano M. Fotang" <mfotang@quanteq.com>
 0	string	\x46\x4d\x52\x00	ISO/IEC 19794-2 Format Minutiae Record (FMR)
+
+# WEBP https://developers.google.com/speed/webp/docs/riff_container
+0	string	RIFF
+>8	string	WEBP	Web/P image data
+>>4	lelong	x	\b, %d bytes

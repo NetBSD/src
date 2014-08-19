@@ -1,5 +1,4 @@
-/*	$NetBSD: getline.c,v 1.1.1.2.2.1 2013/06/23 06:26:33 tls Exp $	*/
-
+/*	$NetBSD: getline.c,v 1.1.1.2.2.2 2014/08/19 23:46:47 tls Exp $	*/
 /*	NetBSD: fgetln.c,v 1.9 2008/04/29 06:53:03 martin Exp 	*/
 
 /*-

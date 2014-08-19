@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.24.6.1 2013/02/25 00:23:50 tls Exp $ */
+/* $NetBSD: extern.h,v 1.24.6.2 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -111,7 +111,7 @@ int exp0(Char ***, int);
  * file.c
  */
 #ifdef FILEC
-int tenex(Char *, int);
+ssize_t tenex(Char *, size_t);
 #endif
 
 /*
@@ -216,7 +216,7 @@ int dcopy(int, int);
 int dmove(int, int);
 void donefds(void);
 Char lastchr(Char *);
-void lshift(Char **, int);
+void lshift(Char **, size_t);
 int number(Char *);
 int prefix(Char *, Char *);
 Char **saveblk(Char **);

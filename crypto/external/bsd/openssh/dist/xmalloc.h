@@ -1,5 +1,5 @@
-/*	$NetBSD: xmalloc.h,v 1.2 2009/06/07 22:38:48 christos Exp $	*/
-/* $OpenBSD: xmalloc.h,v 1.13 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: xmalloc.h,v 1.2.12.1 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: xmalloc.h,v 1.14 2013/05/17 00:13:14 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -20,7 +20,6 @@
 void	*xmalloc(size_t);
 void	*xcalloc(size_t, size_t);
 void	*xrealloc(void *, size_t, size_t);
-void     xfree(void *);
 char	*xstrdup(const char *);
 int	 xasprintf(char **, const char *, ...)
                 __attribute__((__format__ (printf, 2, 3)))

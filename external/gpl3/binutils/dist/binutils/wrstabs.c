@@ -27,6 +27,7 @@
 #include <assert.h>
 #include "bfd.h"
 #include "libiberty.h"
+#include "filenames.h"
 #include "safe-ctype.h"
 #include "bucomm.h"
 #include "debug.h"
@@ -1311,9 +1312,7 @@ stab_start_struct_type (void *p, const char *tag, unsigned int id,
   struct stab_write_handle *info = (struct stab_write_handle *) p;
   long tindex;
   bfd_boolean definition;
-  char *buf;
-
-  buf = (char *) xmalloc (40);
+  char buf[40];
 
   if (id == 0)
     {
@@ -2261,7 +2260,7 @@ stab_lineno (void *p, const char *file, unsigned long lineno, bfd_vma addr)
   if (addr > info->last_text_address)
     info->last_text_address = addr;
 
-  if (strcmp (file, info->lineno_filename) != 0)
+  if (filename_cmp (file, info->lineno_filename) != 0)
     {
       if (! stab_write_symbol (info, N_SOL, 0, addr, file))
 	return FALSE;

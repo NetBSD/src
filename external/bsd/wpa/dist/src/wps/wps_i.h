@@ -1,21 +1,18 @@
 /*
  * Wi-Fi Protected Setup - internal definitions
- * Copyright (c) 2008-2009, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2008-2012, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef WPS_I_H
 #define WPS_I_H
 
 #include "wps.h"
+#include "wps_attr_parse.h"
+
+struct wps_nfc_pw_token;
 
 /**
  * struct wps_data - WPS registration protocol data
@@ -120,99 +117,10 @@ struct wps_data {
 	u8 p2p_dev_addr[ETH_ALEN]; /* P2P Device Address of the client or
 				    * 00:00:00:00:00:00 if not a P2p client */
 	int pbc_in_m1;
+
+	struct wps_nfc_pw_token *nfc_pw_token;
 };
 
-
-struct wps_parse_attr {
-	/* fixed length fields */
-	const u8 *version; /* 1 octet */
-	const u8 *version2; /* 1 octet */
-	const u8 *msg_type; /* 1 octet */
-	const u8 *enrollee_nonce; /* WPS_NONCE_LEN (16) octets */
-	const u8 *registrar_nonce; /* WPS_NONCE_LEN (16) octets */
-	const u8 *uuid_r; /* WPS_UUID_LEN (16) octets */
-	const u8 *uuid_e; /* WPS_UUID_LEN (16) octets */
-	const u8 *auth_type_flags; /* 2 octets */
-	const u8 *encr_type_flags; /* 2 octets */
-	const u8 *conn_type_flags; /* 1 octet */
-	const u8 *config_methods; /* 2 octets */
-	const u8 *sel_reg_config_methods; /* 2 octets */
-	const u8 *primary_dev_type; /* 8 octets */
-	const u8 *rf_bands; /* 1 octet */
-	const u8 *assoc_state; /* 2 octets */
-	const u8 *config_error; /* 2 octets */
-	const u8 *dev_password_id; /* 2 octets */
-	const u8 *oob_dev_password; /* WPS_OOB_DEVICE_PASSWORD_ATTR_LEN (54)
-				     * octets */
-	const u8 *os_version; /* 4 octets */
-	const u8 *wps_state; /* 1 octet */
-	const u8 *authenticator; /* WPS_AUTHENTICATOR_LEN (8) octets */
-	const u8 *r_hash1; /* WPS_HASH_LEN (32) octets */
-	const u8 *r_hash2; /* WPS_HASH_LEN (32) octets */
-	const u8 *e_hash1; /* WPS_HASH_LEN (32) octets */
-	const u8 *e_hash2; /* WPS_HASH_LEN (32) octets */
-	const u8 *r_snonce1; /* WPS_SECRET_NONCE_LEN (16) octets */
-	const u8 *r_snonce2; /* WPS_SECRET_NONCE_LEN (16) octets */
-	const u8 *e_snonce1; /* WPS_SECRET_NONCE_LEN (16) octets */
-	const u8 *e_snonce2; /* WPS_SECRET_NONCE_LEN (16) octets */
-	const u8 *key_wrap_auth; /* WPS_KWA_LEN (8) octets */
-	const u8 *auth_type; /* 2 octets */
-	const u8 *encr_type; /* 2 octets */
-	const u8 *network_idx; /* 1 octet */
-	const u8 *network_key_idx; /* 1 octet */
-	const u8 *mac_addr; /* ETH_ALEN (6) octets */
-	const u8 *key_prov_auto; /* 1 octet (Bool) */
-	const u8 *dot1x_enabled; /* 1 octet (Bool) */
-	const u8 *selected_registrar; /* 1 octet (Bool) */
-	const u8 *request_type; /* 1 octet */
-	const u8 *response_type; /* 1 octet */
-	const u8 *ap_setup_locked; /* 1 octet */
-	const u8 *settings_delay_time; /* 1 octet */
-	const u8 *network_key_shareable; /* 1 octet (Bool) */
-	const u8 *request_to_enroll; /* 1 octet (Bool) */
-
-	/* variable length fields */
-	const u8 *manufacturer;
-	size_t manufacturer_len;
-	const u8 *model_name;
-	size_t model_name_len;
-	const u8 *model_number;
-	size_t model_number_len;
-	const u8 *serial_number;
-	size_t serial_number_len;
-	const u8 *dev_name;
-	size_t dev_name_len;
-	const u8 *public_key;
-	size_t public_key_len;
-	const u8 *encr_settings;
-	size_t encr_settings_len;
-	const u8 *ssid; /* <= 32 octets */
-	size_t ssid_len;
-	const u8 *network_key; /* <= 64 octets */
-	size_t network_key_len;
-	const u8 *eap_type; /* <= 8 octets */
-	size_t eap_type_len;
-	const u8 *eap_identity; /* <= 64 octets */
-	size_t eap_identity_len;
-	const u8 *authorized_macs; /* <= 30 octets */
-	size_t authorized_macs_len;
-	const u8 *sec_dev_type_list; /* <= 128 octets */
-	size_t sec_dev_type_list_len;
-
-	/* attributes that can occur multiple times */
-#define MAX_CRED_COUNT 10
-	const u8 *cred[MAX_CRED_COUNT];
-	size_t cred_len[MAX_CRED_COUNT];
-	size_t num_cred;
-
-#define MAX_REQ_DEV_TYPE_COUNT 10
-	const u8 *req_dev_type[MAX_REQ_DEV_TYPE_COUNT];
-	size_t num_req_dev_type;
-
-	const u8 *vendor_ext[MAX_WPS_PARSE_VENDOR_EXT];
-	size_t vendor_ext_len[MAX_WPS_PARSE_VENDOR_EXT];
-	size_t num_vendor_ext;
-};
 
 /* wps_common.c */
 void wps_kdf(const u8 *key, const u8 *label_prefix, size_t label_prefix_len,
@@ -229,15 +137,8 @@ void wps_pwd_auth_fail_event(struct wps_context *wps, int enrollee, int part);
 void wps_pbc_overlap_event(struct wps_context *wps);
 void wps_pbc_timeout_event(struct wps_context *wps);
 
-extern struct oob_device_data oob_ufd_device_data;
-extern struct oob_device_data oob_nfc_device_data;
-extern struct oob_nfc_device_data oob_nfc_pn531_device_data;
-
 struct wpabuf * wps_build_wsc_ack(struct wps_data *wps);
 struct wpabuf * wps_build_wsc_nack(struct wps_data *wps);
-
-/* wps_attr_parse.c */
-int wps_parse_msg(const struct wpabuf *msg, struct wps_parse_attr *attr);
 
 /* wps_attr_build.c */
 int wps_build_public_key(struct wps_data *wps, struct wpabuf *msg);
@@ -261,7 +162,9 @@ int wps_build_auth_type_flags(struct wps_data *wps, struct wpabuf *msg);
 int wps_build_encr_type_flags(struct wps_data *wps, struct wpabuf *msg);
 int wps_build_conn_type_flags(struct wps_data *wps, struct wpabuf *msg);
 int wps_build_assoc_state(struct wps_data *wps, struct wpabuf *msg);
-int wps_build_oob_dev_password(struct wpabuf *msg, struct wps_context *wps);
+int wps_build_oob_dev_pw(struct wpabuf *msg, u16 dev_pw_id,
+			 const struct wpabuf *pubkey, const u8 *dev_pw,
+			 size_t dev_pw_len);
 struct wpabuf * wps_ie_encapsulate(struct wpabuf *data);
 
 /* wps_attr_process.c */
@@ -294,9 +197,7 @@ void wps_registrar_selected_registrar_changed(struct wps_registrar *reg);
 const u8 * wps_authorized_macs(struct wps_registrar *reg, size_t *count);
 int wps_registrar_pbc_overlap(struct wps_registrar *reg,
 			      const u8 *addr, const u8 *uuid_e);
-
-/* ndef.c */
-struct wpabuf * ndef_parse_wifi(struct wpabuf *buf);
-struct wpabuf * ndef_build_wifi(struct wpabuf *buf);
+void wps_registrar_remove_nfc_pw_token(struct wps_registrar *reg,
+				       struct wps_nfc_pw_token *token);
 
 #endif /* WPS_I_H */

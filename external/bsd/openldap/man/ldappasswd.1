@@ -1,11 +1,20 @@
-.TH LDAPPASSWD 1 "2010/06/30" "OpenLDAP 2.4.23"
-.\" OpenLDAP: pkg/ldap/doc/man/man1/ldappasswd.1,v 1.39.2.9 2010/04/13 20:22:36 kurt Exp
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH LDAPPASSWD 1 "2014/01/26" "OpenLDAP 2.4.39"
+.\" $OpenLDAP$
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldappasswd \- change the password of an LDAP entry
 .SH SYNOPSIS
 .B ldappasswd
+[\c
+.BR \-V [ V ]]
+[\c
+.BI \-d \ debuglevel\fR]
+[\c
+.BR \-n ]
+[\c
+.BR \-v ]
 [\c
 .BR \-A ]
 [\c
@@ -13,25 +22,15 @@ ldappasswd \- change the password of an LDAP entry
 [\c
 .BI \-t \ oldpasswdfile\fR]
 [\c
-.BI \-D \ binddn\fR]
-[\c
-.BI \-d \ debuglevel\fR]
-[\c
-.BI \-H \ ldapuri\fR]
-[\c
-.BI \-h \ ldaphost\fR]
-[\c
-.BR \-n ]
-[\c
-.BI \-p \ ldapport\fR]
-[\c
 .BR \-S ]
 [\c
 .BI \-s \ newPasswd\fR]
 [\c
 .BI \-T \ newpasswdfile\fR]
 [\c
-.BR \-v ]
+.BR \-x ]
+[\c
+.BI \-D \ binddn\fR]
 [\c
 .BR \-W ]
 [\c
@@ -39,17 +38,29 @@ ldappasswd \- change the password of an LDAP entry
 [\c
 .BI \-y \ passwdfile\fR]
 [\c
+.BI \-H \ ldapuri\fR]
+[\c
+.BI \-h \ ldaphost\fR]
+[\c
+.BI \-p \ ldapport\fR]
+[\c
+.BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
+[\c
+.BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
+[\c
+.BI \-o \ opt \fR[= optparam \fR]]
+[\c
 .BI \-O \ security-properties\fR]
 [\c
 .BR \-I ]
 [\c
 .BR \-Q ]
 [\c
+.BR \-N ]
+[\c
 .BI \-U \ authcid\fR]
 [\c
 .BI \-R \ realm\fR]
-[\c
-.BR \-x ]
 [\c
 .BI \-X \ authzid\fR]
 [\c
@@ -79,6 +90,22 @@ is neither designed nor intended to be a replacement for
 and should not be installed as such.
 .SH OPTIONS
 .TP
+.BR \-V [ V ]
+Print version info.
+If \fB\-VV\fP is given, only the version information is printed.
+.TP
+.BI \-d \ debuglevel
+Set the LDAP debugging level to \fIdebuglevel\fP.
+.B ldappasswd
+must be compiled with LDAP_DEBUG defined for this option to have any effect.
+.TP
+.B \-n
+Do not set password. (Can be useful when used in conjunction with
+\fB\-v\fP or \fB\-d\fP)
+.TP
+.B \-v
+Increase the verbosity of output.  Can be specified multiple times.
+.TP
 .BI \-A
 Prompt for old password.
 This is used instead of specifying the password on the command line.
@@ -89,6 +116,16 @@ Set the old password to \fIoldPasswd\fP.
 .BI \-t \ oldPasswdFile
 Set the old password to the contents of \fIoldPasswdFile\fP.
 .TP
+.BI \-S
+Prompt for new password.
+This is used instead of specifying the password on the command line.
+.TP
+.BI \-s \ newPasswd
+Set the new password to \fInewPasswd\fP.
+.TP
+.BI \-T \ newPasswdFile
+Set the new password to the contents of \fInewPasswdFile\fP.
+.TP
 .B \-x 
 Use simple authentication instead of SASL.
 .TP
@@ -96,10 +133,16 @@ Use simple authentication instead of SASL.
 Use the Distinguished Name \fIbinddn\fP to bind to the LDAP directory.
 For SASL binds, the server is expected to ignore this value.
 .TP
-.BI \-d \ debuglevel
-Set the LDAP debugging level to \fIdebuglevel\fP.
-.B ldappasswd
-must be compiled with LDAP_DEBUG defined for this option to have any effect.
+.BI \-W
+Prompt for bind password.
+This is used instead of specifying the password on the command line.
+.TP
+.BI \-w \ passwd
+Use \fIpasswd\fP as the password to bind with.
+.TP
+.BI \-y \ passwdfile
+Use complete contents of \fIpasswdfile\fP as the password for
+simple authentication.
 .TP
 .BI \-H \ ldapuri
 Specify URI(s) referring to the ldap server(s); only the protocol/host/port
@@ -114,33 +157,45 @@ Deprecated in favor of \fB\-H\fP.
 Specify an alternate TCP port where the ldap server is listening.
 Deprecated in favor of \fB\-H\fP.
 .TP
-.B \-n
-Do not set password. (Can be useful when used in conjunction with
-\fB\-v\fP or \fB\-d\fP)
+.BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
 .TP
-.BI \-S
-Prompt for new password.
-This is used instead of specifying the password on the command line.
+.BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
+
+Specify general extensions with \fB\-e\fP and passwd modify extensions with \fB\-E\fP.
+\'\fB!\fP\' indicates criticality.
+
+General extensions:
+.nf
+  [!]assert=<filter>    (an RFC 4515 Filter)
+  !authzid=<authzid>    ("dn:<dn>" or "u:<user>")
+  [!]bauthzid           (RFC 3829 authzid control)
+  [!]chaining[=<resolve>[/<cont>]]
+  [!]manageDSAit
+  [!]noop
+  ppolicy
+  [!]postread[=<attrs>] (a comma-separated attribute list)
+  [!]preread[=<attrs>]  (a comma-separated attribute list)
+  [!]relax
+  sessiontracking
+  abandon,cancel,ignore (SIGINT sends abandon/cancel,
+  or ignores response; if critical, doesn't wait for SIGINT.
+  not really controls)
+.fi
+
+Passwd Modify extensions:
+.nf
+  (none)
+.fi
 .TP
-.BI \-s \ newPasswd
-Set the new password to \fInewPasswd\fP.
-.TP
-.BI \-T \ newPasswdFile
-Set the new password to the contents of \fInewPasswdFile\fP.
-.TP
-.B \-v
-Increase the verbosity of output.  Can be specified multiple times.
-.TP
-.BI \-W
-Prompt for bind password.
-This is used instead of specifying the password on the command line.
-.TP
-.BI \-w \ passwd
-Use \fIpasswd\fP as the password to bind with.
-.TP
-.BI \-y \ passwdfile
-Use complete contents of \fIpasswdfile\fP as the password for
-simple authentication.
+.BI \-o \ opt \fR[= optparam \fR]]
+
+Specify general options.
+
+General options:
+.nf
+  nettimeout=<timeout>  (in seconds, or "none" or "max")
+  ldif-wrap=<width>     (in columns, or "no" for no wrapping)
+.fi
 .TP
 .BI \-O \ security-properties
 Specify SASL security properties.
@@ -151,6 +206,9 @@ only as needed.
 .TP
 .B \-Q
 Enable SASL Quiet mode.  Never prompt.
+.TP
+.B \-N
+Do not use reverse DNS to canonicalize SASL host name.
 .TP
 .BI \-U \ authcid
 Specify the authentication ID for SASL bind. The form of the ID
@@ -182,8 +240,10 @@ Issue StartTLS (Transport Layer Security) extended operation. If you use
 .SH AUTHOR
 The OpenLDAP Project <http://www.openldap.org/>
 .SH ACKNOWLEDGEMENTS
+.lf 1 ./../Project
 .\" Shared Project Acknowledgement Text
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from University of Michigan LDAP 3.3 Release.  
+.lf 243 stdin

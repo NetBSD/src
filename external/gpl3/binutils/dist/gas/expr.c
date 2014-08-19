@@ -1,7 +1,7 @@
 /* expr.c -operands, expressions-
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011,
+   2012 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1746,7 +1746,7 @@ expr (int rankarg,		/* Larger # is higher rank.  */
   while (op_left != O_illegal && op_rank[(int) op_left] > rank)
     {
       segT rightseg;
-      bfd_vma frag_off;
+      offsetT frag_off;
 
       input_line_pointer += op_chars;	/* -> after operator.  */
 
@@ -2030,7 +2030,7 @@ resolve_expression (expressionS *expressionP)
   valueT left, right;
   segT seg_left, seg_right;
   fragS *frag_left, *frag_right;
-  bfd_vma frag_off;
+  offsetT frag_off;
 
   switch (op)
     {

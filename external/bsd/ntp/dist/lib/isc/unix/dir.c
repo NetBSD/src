@@ -1,7 +1,7 @@
-/*	$NetBSD: dir.c,v 1.1.1.1 2009/12/13 16:54:38 kardel Exp $	*/
+/*	$NetBSD: dir.c,v 1.1.1.1.12.1 2014/08/19 23:51:40 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dir.c,v 1.25.332.3 2009/02/16 23:47:15 tbox Exp */
+/* Id */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -37,6 +37,7 @@
 #include <isc/util.h>
 
 #include "errno2result.h"
+#include "ntp_stdlib.h"		/* NTP change for strlcpy, strlcat */
 
 #define ISC_DIR_MAGIC		ISC_MAGIC('D', 'I', 'R', '*')
 #define VALID_DIR(dir)		ISC_MAGIC_VALID(dir, ISC_DIR_MAGIC)
@@ -60,6 +61,7 @@ isc_dir_init(isc_dir_t *dir) {
 isc_result_t
 isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	char *p;
+	size_t octets;
 	isc_result_t result = ISC_R_SUCCESS;
 
 	REQUIRE(VALID_DIR(dir));
@@ -69,10 +71,11 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	 * Copy directory name.  Need to have enough space for the name,
 	 * a possible path separator, the wildcard, and the final NUL.
 	 */
-	if (strlen(dirname) + 3 > sizeof(dir->dirname))
+	octets = strlen(dirname) + 1;
+	if (octets + 2 > sizeof(dir->dirname))
 		/* XXXDCL ? */
 		return (ISC_R_NOSPACE);
-	strcpy(dir->dirname, dirname);
+	strlcpy(dir->dirname, dirname, octets);
 
 	/*
 	 * Append path separator, if needed, and "*".
@@ -81,7 +84,7 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	if (dir->dirname < p && *(p - 1) != '/')
 		*p++ = '/';
 	*p++ = '*';
-	*p++ = '\0';
+	*p = '\0';
 
 	/*
 	 * Open stream.
@@ -104,6 +107,7 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 isc_result_t
 isc_dir_read(isc_dir_t *dir) {
 	struct dirent *entry;
+	size_t octets;
 
 	REQUIRE(VALID_DIR(dir) && dir->handle != NULL);
 
@@ -118,10 +122,11 @@ isc_dir_read(isc_dir_t *dir) {
 	/*
 	 * Make sure that the space for the name is long enough.
 	 */
-	if (sizeof(dir->entry.name) <= strlen(entry->d_name))
-	    return (ISC_R_UNEXPECTED);
+	octets = strlen(entry->d_name) + 1;
+	if (sizeof(dir->entry.name) < octets)
+		return (ISC_R_UNEXPECTED);
 
-	strcpy(dir->entry.name, entry->d_name);
+	strlcpy(dir->entry.name, entry->d_name, octets);
 
 	/*
 	 * Some dirents have d_namlen, but it is not portable.

@@ -57,6 +57,10 @@ set regclm "-plugin-opt registerclaimfile"
 set regas "-plugin-opt registerallsymbolsread"
 set regcln "-plugin-opt registercleanup"
 
+if { [istarget m681*-*-*] || [istarget m68hc1*-*-*] || [istarget m9s12x*-*-*] } {
+    # otherwise get FAILS due to _.frame
+    set CFLAGS "$CFLAGS -fomit-frame-pointer"
+}
 # In order to define symbols in plugin options in the list of tests below,
 # we need to know if the platform prepends an underscore to C symbols,
 # which we find out by compiling the test objects now.  If there is any

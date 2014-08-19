@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.17 2011/08/09 16:14:41 jruoho Exp $
+#	$NetBSD: TODO,v 1.17.8.1 2014/08/19 23:45:49 tls Exp $
 
 THINGS TO BE DONE:
 
@@ -39,9 +39,6 @@ User programs:
     rwall nfs-mountees on shutdown
     add detachment to window(1)
     clean up gas config files, set up common defines
-
-Pie-in-the-Sky:
-    someone should actually test all the netiso stuff.
 
 Documentation:
     modify sys docs to reflect NetBSD/arch-specific stuff

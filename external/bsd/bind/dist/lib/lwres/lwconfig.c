@@ -1,7 +1,7 @@
-/*	$NetBSD: lwconfig.c,v 1.4 2012/06/05 00:43:04 christos Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.4.2.1 2014/08/19 23:46:35 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -457,16 +457,16 @@ lwres_create_addr(const char *buffer, lwres_addr_t *addr, int convert_zero) {
 			unsigned char zeroaddress[] = {0, 0, 0, 0};
 			unsigned char loopaddress[] = {127, 0, 0, 1};
 			if (memcmp(&v4, zeroaddress, 4) == 0)
-				memcpy(&v4, loopaddress, 4);
+				memmove(&v4, loopaddress, 4);
 		}
 		addr->family = LWRES_ADDRTYPE_V4;
 		addr->length = NS_INADDRSZ;
-		memcpy((void *)addr->address, &v4, NS_INADDRSZ);
+		memmove((void *)addr->address, &v4, NS_INADDRSZ);
 
 	} else if (lwres_net_pton(AF_INET6, buffer, &v6) == 1) {
 		addr->family = LWRES_ADDRTYPE_V6;
 		addr->length = NS_IN6ADDRSZ;
-		memcpy((void *)addr->address, &v6, NS_IN6ADDRSZ);
+		memmove((void *)addr->address, &v6, NS_IN6ADDRSZ);
 	} else {
 		return (LWRES_R_FAILURE); /* Unrecognised format. */
 	}

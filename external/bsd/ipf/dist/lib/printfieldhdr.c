@@ -1,4 +1,4 @@
-/*	$NetBSD: printfieldhdr.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: printfieldhdr.c,v 1.2.2.1 2014/08/19 23:46:48 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -18,10 +18,9 @@ printfieldhdr(words, field)
 {
 	wordtab_t *w;
 	char *s, *t;
-	int i;
 
 	if (field->w_value == -2) {
-		for (i = 0, w = words; w->w_word != NULL; ) {
+		for (w = words; w->w_word != NULL; ) {
 			if (w->w_value > 0) {
 				printfieldhdr(words, w);
 				w++;

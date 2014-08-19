@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_update.c,v 1.4 2010/02/22 10:48:32 darran Exp $	*/
+/*	$NetBSD: elf_update.c,v 1.4.12.1 2014/08/19 23:47:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008 Joseph Koshy
@@ -357,7 +357,7 @@ _libelf_resync_sections(Elf *e, off_t rc)
 static off_t
 _libelf_resync_elf(Elf *e)
 {
-	int ec, eh_class, eh_type;
+	int ec, eh_class;
 	unsigned int eh_byteorder, eh_version;
 	size_t align, fsz;
 	size_t phnum, shnum;
@@ -386,14 +386,12 @@ _libelf_resync_elf(Elf *e)
 		eh_class     = eh32->e_ident[EI_CLASS];
 		phoff        = (uint64_t) eh32->e_phoff;
 		shoff        = (uint64_t) eh32->e_shoff;
-		eh_type      = eh32->e_type;
 		eh_version   = eh32->e_version;
 	} else {
 		eh_byteorder = eh64->e_ident[EI_DATA];
 		eh_class     = eh64->e_ident[EI_CLASS];
 		phoff        = eh64->e_phoff;
 		shoff        = eh64->e_shoff;
-		eh_type      = eh64->e_type;
 		eh_version   = eh64->e_version;
 	}
 

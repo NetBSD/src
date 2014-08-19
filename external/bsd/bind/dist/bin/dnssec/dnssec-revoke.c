@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.3.2.2 2014/08/19 23:45:59 tls Exp $	*/
 
 /*
- * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,6 @@
 
 #include <config.h>
 
-#include <libgen.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -41,6 +40,10 @@
 
 #include <dst/dst.h>
 
+#ifdef PKCS11CRYPTO
+#include <pk11/result.h>
+#endif
+
 #include "dnssectool.h"
 
 const char *program = "dnssec-revoke";
@@ -56,7 +59,10 @@ usage(void) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr,	"    %s [options] keyfile\n\n", program);
 	fprintf(stderr, "Version: %s\n", VERSION);
-#ifdef USE_PKCS11
+#if defined(PKCS11CRYPTO)
+	fprintf(stderr, "    -E engine:    specify PKCS#11 provider "
+					"(default: %s)\n", PK11_LIB_LOCATION);
+#elif defined(USE_PKCS11)
 	fprintf(stderr, "    -E engine:    specify OpenSSL engine "
 					   "(default \"pkcs11\")\n");
 #else
@@ -79,7 +85,7 @@ int
 main(int argc, char **argv) {
 	isc_result_t result;
 #ifdef USE_PKCS11
-	const char *engine = "pkcs11";
+	const char *engine = PKCS11_ENGINE;
 #else
 	const char *engine = NULL;
 #endif
@@ -99,11 +105,13 @@ main(int argc, char **argv) {
 	if (argc == 1)
 		usage();
 
-	isc__mem_register();
 	result = isc_mem_create(0, 0, &mctx);
 	if (result != ISC_R_SUCCESS)
 		fatal("Out of memory");
 
+#ifdef PKCS11CRYPTO
+	pk11_result_register();
+#endif
 	dns_result_register();
 
 	isc_commandline_errprint = ISC_FALSE;

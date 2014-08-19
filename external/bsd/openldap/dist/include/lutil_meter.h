@@ -1,10 +1,10 @@
-/*	$NetBSD: lutil_meter.h,v 1.1.1.1 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: lutil_meter.h,v 1.1.1.1.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
 /* lutil_meter.h - progress meters */
-/* OpenLDAP: pkg/ldap/include/lutil_meter.h,v 1.1.2.1 2009/02/05 20:10:59 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright (c) 2009 by Matthew Backes, Symas Corp.
+ * Copyright (c) 2009 by Emily Backes, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 /* ACKNOWLEDGEMENTS:
- * This work was initially developed by Matthew Backes for inclusion
+ * This work was initially developed by Emily Backes for inclusion
  * in OpenLDAP software.
  */
 

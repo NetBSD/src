@@ -1,5 +1,5 @@
-/*	$NetBSD: bufbn.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: bufbn.c,v 1.6 2007/06/02 09:04:58 djm Exp $*/
+/*	$NetBSD: bufbn.c,v 1.2.12.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: bufbn.c,v 1.7 2013/05/17 00:13:13 djm Exp $*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: bufbn.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: bufbn.c,v 1.2.12.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -71,7 +71,7 @@ buffer_put_bignum_ret(Buffer *buffer, const BIGNUM *value)
 	if (oi != bin_size) {
 		error("buffer_put_bignum_ret: BN_bn2bin() failed: oi %d != bin_size %d",
 		    oi, bin_size);
-		xfree(buf);
+		free(buf);
 		return (-1);
 	}
 
@@ -82,7 +82,7 @@ buffer_put_bignum_ret(Buffer *buffer, const BIGNUM *value)
 	buffer_append(buffer, buf, oi);
 
 	memset(buf, 0, bin_size);
-	xfree(buf);
+	free(buf);
 
 	return (0);
 }
@@ -169,13 +169,13 @@ buffer_put_bignum2_ret(Buffer *buffer, const BIGNUM *value)
 	if (oi < 0 || (u_int)oi != bytes - 1) {
 		error("buffer_put_bignum2_ret: BN_bn2bin() failed: "
 		    "oi %d != bin_size %d", oi, bytes);
-		xfree(buf);
+		free(buf);
 		return (-1);
 	}
 	hasnohigh = (buf[1] & 0x80) ? 0 : 1;
 	buffer_put_string(buffer, buf+hasnohigh, bytes-hasnohigh);
 	memset(buf, 0, bytes);
-	xfree(buf);
+	free(buf);
 	return (0);
 }
 
@@ -199,21 +199,21 @@ buffer_get_bignum2_ret(Buffer *buffer, BIGNUM *value)
 
 	if (len > 0 && (bin[0] & 0x80)) {
 		error("buffer_get_bignum2_ret: negative numbers not supported");
-		xfree(bin);
+		free(bin);
 		return (-1);
 	}
 	if (len > 8 * 1024) {
 		error("buffer_get_bignum2_ret: cannot handle BN of size %d",
 		    len);
-		xfree(bin);
+		free(bin);
 		return (-1);
 	}
 	if (BN_bin2bn(bin, len, value) == NULL) {
 		error("buffer_get_bignum2_ret: BN_bin2bn failed");
-		xfree(bin);
+		free(bin);
 		return (-1);
 	}
-	xfree(bin);
+	free(bin);
 	return (0);
 }
 

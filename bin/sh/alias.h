@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.h,v 1.7 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: alias.h,v 1.7.8.1 2014/08/19 23:45:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,6 +43,6 @@ struct alias {
 	int flag;
 };
 
-struct alias *lookupalias(char *, int);
-char *get_alias_text(char *);
+struct alias *lookupalias(const char *, int);
+const char *alias_text(void *, const char *);
 void rmaliases(void);

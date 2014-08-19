@@ -1,7 +1,7 @@
-/*	$NetBSD: errno2result.c,v 1.3 2012/06/05 00:42:51 christos Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.3.2.1 2014/08/19 23:46:34 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -59,6 +59,10 @@ isc__errno2resultx(int posixerrno, const char *file, int line) {
 		return (ISC_R_IOERROR);
 	case ENOMEM:
 		return (ISC_R_NOMEMORY);
+#ifdef EOVERFLOW
+	case EOVERFLOW:
+		return (ISC_R_RANGE);
+#endif
 	case ENFILE:
 	case EMFILE:
 	case WSAEMFILE:

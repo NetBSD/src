@@ -1,9 +1,9 @@
-/*	$NetBSD: sasl.c,v 1.1.1.3 2010/12/12 15:22:39 adam Exp $	*/
+/*	$NetBSD: sasl.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.239.2.23 2010/04/15 18:41:32 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1092,7 +1092,6 @@ slapd_rw_destroy( void *private )
 	assert( private != NULL );
 
 	ch_free( md->base.bv_val );
-	ch_free( md->filter.bv_val );
 	ch_free( md );
 
 	return 0;
@@ -1592,7 +1591,7 @@ int slap_sasl_bind( Operation *op, SlapReply *rs )
 		/* EXTERNAL */
 
 		if( op->orb_cred.bv_len ) {
-			rs->sr_text = "proxy authorization not support";
+			rs->sr_text = "proxy authorization not supported";
 			rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 			send_ldap_result( op, rs );
 

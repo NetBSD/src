@@ -1,5 +1,5 @@
 /* Debug counter for debugging support
-   Copyright (C) 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,10 +22,8 @@ See dbgcnt.def for usage information.  */
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "errors.h"
-#include "tm.h"
-#include "rtl.h"
-#include "output.h"
+#include "diagnostic-core.h"
+#include "dumpfile.h"
 
 #include "dbgcnt.h"
 
@@ -132,7 +130,7 @@ dbg_cnt_process_opt (const char *arg)
      {
        char *buffer = XALLOCAVEC (char, arg - start + 2);
        sprintf (buffer, "%*c", (int)(1 + (arg - start)), '^');
-       error ("Can not find a valid counter:value pair:");
+       error ("cannot find a valid counter:value pair:");
        error ("-fdbg-cnt=%s", start);
        error ("          %s", buffer);
      }

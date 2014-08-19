@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.24 2011/06/05 10:19:24 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.3 2011/09/01 12:46:37 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.25 2014/06/01 11:35:02 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.3.8.1 2014/08/19 23:52:08 tls Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -111,7 +111,6 @@ typedef long long OFFSZ;
 /* Definitions mostly used in pass2 */
 
 #define BYTEOFF(x)	1
-#define BITOOR(x)	((x)/SZCHAR)	/* bit offset to oreg offset */
 
 #define STOARG(p)
 #define STOFARG(p)

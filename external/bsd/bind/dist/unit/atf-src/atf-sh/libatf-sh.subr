@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,9 +33,6 @@ set -e
 # GLOBAL VARIABLES
 # ------------------------------------------------------------------------
 
-# The list of all test cases defined by the test program.
-Defined_Test_Cases=
-
 # Values for the expect property.
 Expect=pass
 Expect_Reason=
@@ -61,9 +58,7 @@ Test_Case=
 Test_Case_Vars=
 
 # The list of all test cases provided by the test program.
-# Subset of ${Defined_Test_Cases}.
 Test_Cases=
-Test_Cases_With_Cleanup=
 
 # ------------------------------------------------------------------------
 # PUBLIC INTERFACE
@@ -79,9 +74,6 @@ Test_Cases_With_Cleanup=
 #
 atf_add_test_case()
 {
-    _atf_is_tc_defined "${1}" || \
-        _atf_error 128 "Test case ${1} was not correctly defined by" \
-                       "this test program"
     Test_Cases="${Test_Cases} ${1}"
 }
 
@@ -157,7 +149,7 @@ atf_expect_death()
     _atf_validate_expect
 
     Expect=death
-    _atf_create_resfile expected_death -1 "${@}"
+    _atf_create_resfile "expected_death: ${*}"
 }
 
 #
@@ -170,7 +162,7 @@ atf_expect_timeout()
     _atf_validate_expect
 
     Expect=timeout
-    _atf_create_resfile expected_timeout -1 "${@}"
+    _atf_create_resfile "expected_timeout: ${*}"
 }
 
 #
@@ -185,7 +177,11 @@ atf_expect_exit()
     _atf_validate_expect
 
     Expect=exit
-    _atf_create_resfile expected_exit "${_exitcode}" "${@}"
+    if [ "${_exitcode}" = "-1" ]; then
+        _atf_create_resfile "expected_exit: ${*}"
+    else
+        _atf_create_resfile "expected_exit(${_exitcode}): ${*}"
+    fi
 }
 
 #
@@ -226,7 +222,11 @@ atf_expect_signal()
     _atf_validate_expect
 
     Expect=signal
-    _atf_create_resfile expected_signal "${_signo}" "${@}"
+    if [ "${_signo}" = "-1" ]; then
+        _atf_create_resfile "expected_signal: ${*}"
+    else
+        _atf_create_resfile "expected_signal(${_signo}): ${*}"
+    fi
 }
 
 #
@@ -238,7 +238,7 @@ atf_expect_signal()
 #
 atf_expected_failure()
 {
-    _atf_create_resfile expected_failure -1 "${Expect_Reason}:" "${@}"
+    _atf_create_resfile "expected_failure: ${Expect_Reason}: ${*}"
     exit 0
 }
 
@@ -256,7 +256,7 @@ atf_fail()
             atf_expected_failure "${@}"
             ;;
         pass)
-            _atf_create_resfile failed -1 "${@}"
+            _atf_create_resfile "failed: ${*}"
             exit 1
             ;;
         *)
@@ -284,18 +284,7 @@ atf_get()
 #
 atf_get_srcdir()
 {
-    _atf_internal_get srcdir
-}
-
-#
-# atf_init_test_cases
-#
-#   The function in charge of registering the test cases that have to
-#   be made available to the user.  Must be redefined.
-#
-atf_init_test_cases()
-{
-    _atf_error 128 "No test cases defined"
+    echo ${Source_Dir}
 }
 
 #
@@ -312,7 +301,7 @@ atf_pass()
             atf_fail "Test case was expecting a failure but got a pass instead"
             ;;
         pass)
-            _atf_create_resfile passed -1
+            _atf_create_resfile passed
             exit 0
             ;;
         *)
@@ -377,7 +366,7 @@ atf_set()
 #
 atf_skip()
 {
-    _atf_create_resfile skipped -1 "${@}"
+    _atf_create_resfile "skipped: ${*}"
     exit 0
 }
 
@@ -391,12 +380,10 @@ atf_skip()
 #
 atf_test_case()
 {
-    Defined_Test_Cases="${Defined_Test_Cases} ${1}"
-
     eval "${1}_head() { :; }"
-    eval "${1}_body() { :; }"
+    eval "${1}_body() { atf_fail 'Test case not implemented'; }"
     if [ "${2}" = cleanup ]; then
-        Test_Cases_With_Cleanup="${Test_Cases_With_Cleanup} ${1}"
+        eval __has_cleanup_${1}=true
         eval "${1}_cleanup() { :; }"
     else
         eval "${1}_cleanup() {
@@ -440,67 +427,18 @@ _atf_config_set_from_str()
 }
 
 #
-# _atf_create_resfile result arg [reason ...]
+# _atf_create_resfile contents
 #
 #   Creates the results file.
 #
 _atf_create_resfile()
 {
-    _result="${1}"; shift
-    if [ "${1}" -eq -1 ]; then
-        _arg=""
-        shift
-    else
-        _arg="(${1})"
-        shift
-    fi
-    if [ ${#} -gt 0 ]; then
-        _reason=": ${*}"
-    else
-        _reason=""
-    fi
-
     if [ -n "${Results_File}" ]; then
-        echo "${_result}${_arg}${_reason}" >"${Results_File}" || \
+        echo "${*}" >"${Results_File}" || \
             _atf_error 128 "Cannot create results file '${Results_File}'"
     else
-        echo "${_result}${_arg}${_reason}"
+        echo "${*}"
     fi
-}
-
-#
-# _atf_ensure_boolean var
-#
-#   Ensures that the test case defined the variable 'var' to a boolean
-#   value.
-#
-_atf_ensure_boolean()
-{
-    _atf_ensure_not_empty ${1}
-
-    case $(atf_get ${1}) in
-    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee])
-        atf_set ${1} true
-        ;;
-    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee])
-        atf_set ${1} false
-        ;;
-    *)
-        _atf_error 128 "Invalid value for boolean variable \`${1}'"
-        ;;
-    esac
-}
-
-#
-# _atf_ensure_not_empty var
-#
-#   Ensures that the test case defined the variable 'var' to a non-empty
-#   value.
-#
-_atf_ensure_not_empty()
-{
-    [ -n "$(atf_get ${1})" ] || \
-        _atf_error 128 "Undefined or empty variable \`${1}'"
 }
 
 #
@@ -520,6 +458,17 @@ _atf_error()
 
     echo "${Prog_Name}: ERROR:" "$@" 1>&2
     exit ${_error_code}
+}
+
+#
+# _atf_warning msg1 [.. msgN]
+#
+#   Prints the given warning message (which can be composed of multiple
+#   arguments, in which case are joined by a single space).
+#
+_atf_warning()
+{
+    echo "${Prog_Name}: WARNING:" "$@" 1>&2
 }
 
 #
@@ -556,46 +505,9 @@ _atf_find_in_path()
 _atf_has_tc()
 {
     for _tc in ${Test_Cases}; do
-        if [ ${_tc} = ${1} ]; then
-            return 0
-        fi
+        [ "${_tc}" != "${1}" ] || return 0
     done
     return 1
-}
-
-#
-# _atf_get_bool varname
-#
-#   Evaluates a test case-specific variable as a boolean and returns its
-#   value.
-#
-_atf_get_bool()
-{
-    eval $(atf_get ${1})
-}
-
-#
-# _atf_internal_get varname
-#
-#   Prints the value of a test case-specific internal variable.  Given
-#   that one should not get the value of non-existent variables, it is
-#   fine to always use this function as 'val=$(_atf_internal_get var)'.
-#
-_atf_internal_get()
-{
-    eval echo \${__tc_internal_var_${Test_Case}_${1}}
-}
-
-#
-# _atf_internal_set varname val1 [.. valN]
-#
-#   Sets the test case's private variable 'varname' to the specified
-#   values which are concatenated using a single blank space.
-#
-_atf_internal_set()
-{
-    _var=${1}; shift
-    eval __tc_internal_var_${Test_Case}_${_var}=\"\${*}\"
 }
 
 #
@@ -640,7 +552,6 @@ _atf_normalize()
 #
 _atf_parse_head()
 {
-    ${Parsing_Head} && _atf_error 128 "_atf_parse_head called recursively"
     Parsing_Head=true
 
     Test_Case="${1}"
@@ -650,11 +561,8 @@ _atf_parse_head()
         atf_set has.cleanup "true"
     fi
 
-    atf_set ident "${1}"
     ${1}_head
-    _atf_ensure_not_empty ident
-    test $(atf_get ident) = "${1}" || \
-        _atf_error 128 "Test case redefined ident"
+    atf_set ident "${1}"
 
     Parsing_Head=false
 }
@@ -684,72 +592,37 @@ _atf_run_tc()
         ;;
     esac
 
-    if _atf_has_tc ${_tcname}; then
-        _atf_parse_head ${_tcname}
+    _atf_has_tc "${_tcname}" || _atf_syntax_error "Unknown test case \`${1}'"
 
-        _atf_internal_set srcdir "${Source_Dir}"
-
-        case ${_tcpart} in
-        body)
-            if ${_tcname}_body; then
-                _atf_validate_expect
-                _atf_create_resfile passed -1
-            else
-                Expect=pass
-                atf_fail "Test case body returned a non-ok exit code, but" \
-                    "this is not allowed"
-            fi
-            ;;
-        cleanup)
-            if _atf_has_cleanup "${_tcname}"; then
-                if ${_tcname}_cleanup; then
-                    :
-                else
-                    _atf_error 128 "The test case cleanup returned a non-ok" \
-                        "exit code, but this is not allowed"
-                fi
-            fi
-            ;;
-        *)
-            _atf_error 128 "Unknown test case part"
-            ;;
-        esac
-    else
-        _atf_syntax_error "Unknown test case \`${1}'"
+    if [ "${__RUNNING_INSIDE_ATF_RUN}" != "internal-yes-value" ]; then
+        _atf_warning "Running test cases without atf-run(1) is unsupported"
+        _atf_warning "No isolation nor timeout control is being applied;" \
+            "you may get unexpected failures; see atf-test-case(4)"
     fi
-}
 
-#
-# _atf_sighup_handler
-#
-#   Handler for the SIGHUP signal that registers its occurrence so that
-#   it can be processed at a later stage.
-#
-_atf_sighup_handler()
-{
-    Held_Signals="${Held_Signals} SIGHUP"
-}
+    _atf_parse_head ${_tcname}
 
-#
-# _atf_sigint_handler
-#
-#   Handler for the SIGINT signal that registers its occurrence so that
-#   it can be processed at a later stage.
-#
-_atf_sigint_handler()
-{
-    Held_Signals="${Held_Signals} SIGINT"
-}
-
-#
-# _atf_sigterm_handler
-#
-#   Handler for the SIGTERM signal that registers its occurrence so that
-#   it can be processed at a later stage.
-#
-_atf_sigterm_handler()
-{
-    Held_Signals="${Held_Signals} SIGTERM"
+    case ${_tcpart} in
+    body)
+        if ${_tcname}_body; then
+            _atf_validate_expect
+            _atf_create_resfile passed
+        else
+            Expect=pass
+            atf_fail "Test case body returned a non-ok exit code, but" \
+                "this is not allowed"
+        fi
+        ;;
+    cleanup)
+        if _atf_has_cleanup "${_tcname}"; then
+            ${_tcname}_cleanup || _atf_error 128 "The test case cleanup" \
+                "returned a non-ok exit code, but this is not allowed"
+        fi
+        ;;
+    *)
+        _atf_error 128 "Unknown test case part"
+        ;;
+    esac
 }
 
 #
@@ -766,20 +639,6 @@ _atf_syntax_error()
 }
 
 #
-# _atf_is_tc_defined tc-name
-#
-#   Returns a boolean indicating if the given test case was defined by the
-#   test program or not.
-#
-_atf_is_tc_defined()
-{
-    for _tc in ${Defined_Test_Cases}; do
-        [ ${_tc} = ${1} ] && return 0
-    done
-    return 1
-}
-
-#
 # _atf_has_cleanup tc-name
 #
 #   Returns a boolean indicating if the given test case has a cleanup
@@ -787,10 +646,9 @@ _atf_is_tc_defined()
 #
 _atf_has_cleanup()
 {
-    for _tc in ${Test_Cases_With_Cleanup}; do
-        [ ${_tc} = ${1} ] && return 0
-    done
-    return 1
+    _found=true
+    eval "[ x\"\${__has_cleanup_${1}}\" = xtrue ] || _found=false"
+    [ "${_found}" = true ]
 }
 
 #
@@ -897,17 +755,6 @@ main()
     [ -f ${Source_Dir}/${Prog_Name} ] || \
         _atf_error 1 "Cannot find the test program in the source" \
                      "directory \`${Source_Dir}'"
-
-    # Set some global variables useful to the user.  Not specific to the
-    # test case because they may be needed during initialization too.
-    # XXX I'm not too fond on this though.  Sure, it is very useful in some
-    # situations -- such as in NetBSD's fs/tmpfs/* tests where each test
-    # program includes a helper subroutines file -- but there are also
-    # other, maybe better ways to achieve the same.  Because, for example,
-    # at the moment it is not possible to detect failures in the inclusion
-    # and report them nicely.  Plus this change is difficult to implement
-    # in the current C++ API.
-    _atf_internal_set srcdir "${Source_Dir}"
 
     # Call the test program's hook to register all available test cases.
     atf_init_test_cases

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file constructors_destructor_fn_imps.hpp
+ * @file bin_search_tree_/constructors_destructor_fn_imps.hpp
  * Contains an implementation class for bin_search_tree_.
  */
 
@@ -44,36 +44,36 @@ PB_DS_CLASS_C_DEC::s_node_allocator;
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME() : m_p_head(s_node_allocator.allocate(1)), m_size(0)
+PB_DS_BIN_TREE_NAME() : m_p_head(s_node_allocator.allocate(1)), m_size(0)
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(structure_only_assert_valid();)
+  PB_DS_STRUCT_ONLY_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const Cmp_Fn& r_cmp_fn) :
+PB_DS_BIN_TREE_NAME(const Cmp_Fn& r_cmp_fn) :
   Cmp_Fn(r_cmp_fn), m_p_head(s_node_allocator.allocate(1)), m_size(0)
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(structure_only_assert_valid();)
+  PB_DS_STRUCT_ONLY_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const Cmp_Fn& r_cmp_fn, const node_update& r_node_update) :
+PB_DS_BIN_TREE_NAME(const Cmp_Fn& r_cmp_fn, const node_update& r_node_update) :
   Cmp_Fn(r_cmp_fn),
   node_update(r_node_update),
   m_p_head(s_node_allocator.allocate(1)),
   m_size(0)
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(structure_only_assert_valid();)
+  PB_DS_STRUCT_ONLY_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const PB_DS_CLASS_C_DEC& other) :
+PB_DS_BIN_TREE_NAME(const PB_DS_CLASS_C_DEC& other) :
 #ifdef _GLIBCXX_DEBUG
   debug_base(other),
 #endif 
@@ -87,12 +87,12 @@ PB_DS_CLASS_NAME(const PB_DS_CLASS_C_DEC& other) :
 {
   initialize();
   m_size = other.m_size;
-  _GLIBCXX_DEBUG_ONLY(other.structure_only_assert_valid();)
+  PB_DS_STRUCT_ONLY_ASSERT_VALID(other)
 
     __try
       {
         m_p_head->m_p_parent = recursive_copy_node(other.m_p_head->m_p_parent);
-        if (m_p_head->m_p_parent != NULL)
+        if (m_p_head->m_p_parent != 0)
 	  m_p_head->m_p_parent->m_p_parent = m_p_head;
         m_size = other.m_size;
         initialize_min_max();
@@ -103,7 +103,7 @@ PB_DS_CLASS_NAME(const PB_DS_CLASS_C_DEC& other) :
 	s_node_allocator.deallocate(m_p_head, 1);
         __throw_exception_again;
       }
-  _GLIBCXX_DEBUG_ONLY(structure_only_assert_valid();)
+  PB_DS_STRUCT_ONLY_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
@@ -111,12 +111,12 @@ void
 PB_DS_CLASS_C_DEC::
 swap(PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(structure_only_assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.structure_only_assert_valid();)
+  PB_DS_STRUCT_ONLY_ASSERT_VALID((*this))
+  PB_DS_STRUCT_ONLY_ASSERT_VALID(other)
   value_swap(other);
   std::swap((Cmp_Fn& )(*this), (Cmp_Fn& )other);
-  _GLIBCXX_DEBUG_ONLY(structure_only_assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.structure_only_assert_valid();)
+  PB_DS_STRUCT_ONLY_ASSERT_VALID((*this))
+  PB_DS_STRUCT_ONLY_ASSERT_VALID(other)
 }
 
 PB_DS_CLASS_T_DEC
@@ -131,7 +131,7 @@ value_swap(PB_DS_CLASS_C_DEC& other)
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-~PB_DS_CLASS_NAME()
+~PB_DS_BIN_TREE_NAME()
 {
   clear();
   s_node_allocator.deallocate(m_p_head, 1);
@@ -142,7 +142,7 @@ void
 PB_DS_CLASS_C_DEC::
 initialize()
 {
-  m_p_head->m_p_parent = NULL;
+  m_p_head->m_p_parent = 0;
   m_p_head->m_p_left = m_p_head;
   m_p_head->m_p_right = m_p_head;
   m_size = 0;
@@ -153,8 +153,8 @@ typename PB_DS_CLASS_C_DEC::node_pointer
 PB_DS_CLASS_C_DEC::
 recursive_copy_node(const node_pointer p_nd)
 {
-  if (p_nd == NULL)
-    return (NULL);
+  if (p_nd == 0)
+    return (0);
 
   node_pointer p_ret = s_node_allocator.allocate(1);
   __try
@@ -167,7 +167,7 @@ recursive_copy_node(const node_pointer p_nd)
       __throw_exception_again;
     }
 
-  p_ret->m_p_left = p_ret->m_p_right = NULL;
+  p_ret->m_p_left = p_ret->m_p_right = 0;
 
   __try
     {
@@ -180,13 +180,13 @@ recursive_copy_node(const node_pointer p_nd)
       __throw_exception_again;
     }
 
-  if (p_ret->m_p_left != NULL)
+  if (p_ret->m_p_left != 0)
     p_ret->m_p_left->m_p_parent = p_ret;
 
-  if (p_ret->m_p_right != NULL)
+  if (p_ret->m_p_right != 0)
     p_ret->m_p_right->m_p_parent = p_ret;
 
-  _GLIBCXX_DEBUG_ONLY(assert_node_consistent(p_ret);)
+  PB_DS_ASSERT_NODE_CONSISTENT(p_ret)
   return p_ret;
 }
 
@@ -195,7 +195,7 @@ void
 PB_DS_CLASS_C_DEC::
 initialize_min_max()
 {
-  if (m_p_head->m_p_parent == NULL)
+  if (m_p_head->m_p_parent == 0)
     {
       m_p_head->m_p_left = m_p_head->m_p_right = m_p_head;
       return;
@@ -203,14 +203,14 @@ initialize_min_max()
 
   {
     node_pointer p_min = m_p_head->m_p_parent;
-    while (p_min->m_p_left != NULL)
+    while (p_min->m_p_left != 0)
       p_min = p_min->m_p_left;
     m_p_head->m_p_left = p_min;
   }
 
   {
     node_pointer p_max = m_p_head->m_p_parent;
-    while (p_max->m_p_right != NULL)
+    while (p_max->m_p_right != 0)
       p_max = p_max->m_p_right;
     m_p_head->m_p_right = p_max;
   }

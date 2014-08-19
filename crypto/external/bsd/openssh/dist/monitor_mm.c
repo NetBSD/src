@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_mm.c,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
-/* $OpenBSD: monitor_mm.c,v 1.16 2009/06/22 05:39:28 dtucker Exp $ */
+/*	$NetBSD: monitor_mm.c,v 1.3.12.1 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: monitor_mm.c,v 1.17.2.1 2013/11/08 01:33:56 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_mm.c,v 1.3 2009/12/27 01:40:47 christos Exp $");
+__RCSID("$NetBSD: monitor_mm.c,v 1.3.12.1 2014/08/19 23:45:25 tls Exp $");
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/tree.h>
@@ -34,6 +34,7 @@ __RCSID("$NetBSD: monitor_mm.c,v 1.3 2009/12/27 01:40:47 christos Exp $");
 
 #include <errno.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "xmalloc.h"
@@ -63,7 +64,7 @@ mm_make_entry(struct mm_master *mm, struct mmtree *head,
 	struct mm_share *tmp, *tmp2;
 
 	if (mm->mmalloc == NULL)
-		tmp = xmalloc(sizeof(struct mm_share));
+		tmp = xcalloc(1, sizeof(struct mm_share));
 	else
 		tmp = mm_xmalloc(mm->mmalloc, sizeof(struct mm_share));
 	tmp->address = address;
@@ -86,7 +87,7 @@ mm_create(struct mm_master *mmalloc, size_t size)
 	struct mm_master *mm;
 
 	if (mmalloc == NULL)
-		mm = xmalloc(sizeof(struct mm_master));
+		mm = xcalloc(1, sizeof(struct mm_master));
 	else
 		mm = mm_xmalloc(mmalloc, sizeof(struct mm_master));
 
@@ -124,7 +125,7 @@ mm_freelist(struct mm_master *mmalloc, struct mmtree *head)
 		next = RB_NEXT(mmtree, head, mms);
 		RB_REMOVE(mmtree, head, mms);
 		if (mmalloc == NULL)
-			xfree(mms);
+			free(mms);
 		else
 			mm_free(mmalloc, mms);
 	}
@@ -142,7 +143,7 @@ mm_destroy(struct mm_master *mm)
 		fatal("munmap(%p, %lu): %s", mm->address, (u_long)mm->size,
 		    strerror(errno));
 	if (mm->mmalloc == NULL)
-		xfree(mm);
+		free(mm);
 	else
 		mm_free(mm->mmalloc, mm);
 }
@@ -155,6 +156,7 @@ mm_xmalloc(struct mm_master *mm, size_t size)
 	address = mm_malloc(mm, size);
 	if (address == NULL)
 		fatal("%s: mm_malloc(%lu)", __func__, (u_long)size);
+	memset(address, 0, size);
 	return (address);
 }
 
@@ -193,7 +195,7 @@ mm_malloc(struct mm_master *mm, size_t size)
 	if (mms->size == 0) {
 		RB_REMOVE(mmtree, &mm->rb_free, mms);
 		if (mm->mmalloc == NULL)
-			xfree(mms);
+			free(mms);
 		else
 			mm_free(mm->mmalloc, mms);
 	}
@@ -249,7 +251,7 @@ mm_free(struct mm_master *mm, void *address)
 		prev->size += mms->size;
 		RB_REMOVE(mmtree, &mm->rb_free, mms);
 		if (mm->mmalloc == NULL)
-			xfree(mms);
+			free(mms);
 		else
 			mm_free(mm->mmalloc, mms);
 	} else
@@ -273,7 +275,7 @@ mm_free(struct mm_master *mm, void *address)
 	RB_REMOVE(mmtree, &mm->rb_free, mms);
 
 	if (mm->mmalloc == NULL)
-		xfree(mms);
+		free(mms);
 	else
 		mm_free(mm->mmalloc, mms);
 }

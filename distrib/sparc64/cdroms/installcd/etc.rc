@@ -1,4 +1,4 @@
-# $NetBSD: etc.rc,v 1.1 2010/04/18 12:58:57 martin Exp $
+# $NetBSD: etc.rc,v 1.1.12.1 2014/08/19 23:45:45 tls Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -44,8 +44,8 @@ mount -t tmpfs tmpfs /tmp
 mount -t tmpfs tmpfs /var
 mount -t tmpfs -o union tmpfs /etc
 
-# prepare important directories in the tmpfses, so dhcpcd will work
-mkdir -p /var/run /var/db
+# prepare important directories in the tmpfses, so dhcpcd and vi will work
+mkdir -p /var/run /var/db /var/tmp
 
 # create a gettytab to autologin and run sysinst (etc/gettytab is a symlink
 # to /tmp/gettytab)

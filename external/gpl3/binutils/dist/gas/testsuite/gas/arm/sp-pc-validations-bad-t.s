@@ -1,6 +1,6 @@
 .syntax unified
+.arch armv7-a
 .thumb
-
 .macro it_test opcode operands:vararg
 itt eq
 \opcode\()eq r15, \operands
@@ -78,16 +78,22 @@ ldrbt	sp, [r0, #4]			@ ditto
 @ LDRD (immediate)
 ldrd pc, r0, [r1]			@ BadReg
 ldrd sp, r0, [r1]			@ ditto
+ldrd r12, [r1]				@ ditto
+ldrd r14, [r1]				@ ditto
 ldrd r0, pc, [r1]			@ ditto
 ldrd r0, sp, [r1]			@ ditto
 ldrd pc, r0, [r1], #4			@ ditto
 ldrd sp, r0, [r1], #4			@ ditto
 ldrd r0, pc, [r1], #4			@ ditto
 ldrd r0, sp, [r1], #4			@ ditto
+ldrd r12, [r1], #4			@ ditto
+ldrd r14, [r1], #4			@ ditto
 ldrd pc, r0, [r1, #4]!			@ ditto
 ldrd sp, r0, [r1, #4]!			@ ditto
 ldrd r0, pc, [r1, #4]!			@ ditto
 ldrd r0, sp, [r1, #4]!			@ ditto
+ldrd r12, [r1, #4]!			@ ditto
+ldrd r14, [r1, #4]!			@ ditto
 
 @ LDRD (literal)
 ldrd pc, r0, label			@ BadReg

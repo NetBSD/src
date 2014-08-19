@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.12.1 2012/11/20 02:58:04 tls Exp $
+# $NetBSD: Makefile,v 1.2.12.2 2014/08/19 23:52:16 tls Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -15,6 +15,7 @@ authsrv.c \
 beacon.c \
 ctrl_iface_ap.c \
 drv_callbacks.c \
+eap_user_db.c \
 hostapd.c \
 ieee802_11_auth.c \
 ieee802_11_shared.c \
@@ -39,11 +40,13 @@ wpa_ctrl.c
 # drivers
 SRCS+= \
 driver_bsd.c \
+driver_common.c \
 drivers.c
 
 # radius
 SRCS+= \
 radius.c \
+radius_das.c \
 radius_client.c \
 radius_server.c
 
@@ -84,8 +87,7 @@ eap_server_methods.c
 SRCS+= \
 md5.c \
 random.c \
-sha1.c \
-sha1-pbkdf2.c
+sha1-prf.c
 
 .PATH.c: \
 	${HOSTAPD_DISTDIR} \

@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.27.12.1 2013/02/25 00:23:51 tls Exp $ */
+/* $NetBSD: lex.c,v 1.27.12.2 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.27.12.1 2013/02/25 00:23:51 tls Exp $");
+__RCSID("$NetBSD: lex.c,v 1.27.12.2 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,8 +89,8 @@ static struct wordent *dosub(int, struct wordent *, int);
  * Getdol invokes history substitution, hence the extra peek, peekd,
  * which it can ungetD to be before history substitutions.
  */
-static Char peekc = 0, peekd = 0;
-static Char peekread = 0;
+static int peekc = 0, peekd = 0;
+static int peekread = 0;
 
 /* (Tail of) current word from ! subst */
 static Char *exclp = NULL;
@@ -128,7 +128,7 @@ static int hadhist = 0;
  */
 int     hleft;
 
-static Char getCtmp;
+static int getCtmp;
 
 #define getC(f) ((getCtmp = peekc) ? (peekc = 0, getCtmp) : getC1(f))
 #define	ungetC(c) peekc = c
@@ -160,7 +160,7 @@ lex(struct wordent *hp)
     do {
 	struct wordent *new;
 
-	new = (struct wordent *)xmalloc((size_t)sizeof(*wdp));
+	new = xmalloc(sizeof(*wdp));
 	new->word = 0;
 	new->prev = wdp;
 	new->next = hp;
@@ -228,7 +228,7 @@ copylex(struct wordent *hp, struct wordent *fp)
     do {
 	struct wordent *new;
 
-	new = (struct wordent *)xmalloc((size_t)sizeof(*wdp));
+	new = xmalloc(sizeof(*wdp));
 	new->prev = wdp;
 	new->next = hp;
 	wdp->next = new;
@@ -257,8 +257,7 @@ static Char *
 word(void)
 {
     Char wbuf[BUFSIZE], *wp;
-    int i;
-    Char c, c1;
+    int i, c, c1;
     int dolflg;
 
     wp = wbuf;
@@ -272,10 +271,10 @@ loop:
 	case '|':
 	case '<':
 	case '>':
-	    *wp++ = c;
+	    *wp++ = (Char)c;
 	    c1 = getC(DOALL);
 	    if (c1 == c)
-		*wp++ = c1;
+		*wp++ = (Char)c1;
 	    else
 		ungetC(c1);
 	    goto ret;
@@ -296,7 +295,7 @@ loop:
 	case '(':
 	case ')':
 	case '\n':
-	    *wp++ = c;
+	    *wp++ = (Char)c;
 	    goto ret;
 
 	case '\\':
@@ -361,7 +360,7 @@ loop:
 	    }
 	}
 	if (--i > 0) {
-	    *wp++ = c;
+	    *wp++ = (Char)c;
 	    c = getC(dolflg);
 	}
 	else {
@@ -378,7 +377,7 @@ ret:
 static int
 getC1(int flag)
 {
-    Char c;
+    int c;
 
     for (;;) {
 	if ((c = peekc) != '\0') {
@@ -447,10 +446,10 @@ getdol(void)
 	return;
     }
     if (c == '{')
-	*np++ = c, c = getC(DOEXCL);
+	*np++ = (Char)c, c = getC(DOEXCL);
     if (c == '#' || c == '?')
-	special++, *np++ = c, c = getC(DOEXCL);
-    *np++ = c;
+	special++, *np++ = (Char)c, c = getC(DOEXCL);
+    *np++ = (Char)c;
     switch (c) {
     case '<':
     case '$':
@@ -491,7 +490,7 @@ getdol(void)
 		if (!Isdigit(c))
 		    break;
 		if (np < ep)
-		    *np++ = c;
+		    *np++ = (Char)c;
 		else
 		    toolong = 1;
 	    }
@@ -505,7 +504,7 @@ getdol(void)
 		if (!letter(c) && !Isdigit(c))
 		    break;
 		if (np < ep)
-		    *np++ = c;
+		    *np++ = (Char)c;
 		else
 		    toolong = 1;
 	    }
@@ -525,7 +524,7 @@ getdol(void)
 	break;
     }
     if (c == '[') {
-	*np++ = c;
+	*np++ = (Char)c;
 	/*
 	 * Name up to here is a max of MAXVARLEN + 8.
 	 */
@@ -545,7 +544,7 @@ getdol(void)
 		return;
 	    }
 	    if (np < ep)
-		*np++ = c;
+		*np++ = (Char)c;
 	} while (c != ']');
 	*np = '\0';
 	if (np >= ep) {
@@ -568,35 +567,35 @@ getdol(void)
 	amodflag = 0;
 	gmodflag = 0;
 	do {
-	    *np++ = c, c = getC(DOEXCL);
+	    *np++ = (Char)c, c = getC(DOEXCL);
 	    if (c == 'g' || c == 'a') {
 		if (c == 'g')
 		    gmodflag++;
 		else
 		    amodflag++;
-		*np++ = c; c = getC(DOEXCL);
+		*np++ = (Char)c; c = getC(DOEXCL);
 	    }
 	    if ((c == 'g' && !gmodflag) || (c == 'a' && !amodflag)) {
 		if (c == 'g')
 		    gmodflag++;
 		else
 		    amodflag++;
-		*np++ = c; c = getC(DOEXCL);
+		*np++ = (Char)c, c = getC(DOEXCL);
 	    }
-	    *np++ = c;
+	    *np++ = (Char)c;
 	    /* scan s// [eichin:19910926.0512EST] */
 	    if (c == 's') {
 		int delimcnt = 2;
 		int delim = getC(0);
-		*np++ = delim;
+		*np++ = (Char)delim;
 		
 		if (!delim || letter(delim)
 		    || Isdigit(delim) || any(" \t\n", delim)) {
 		    seterror(ERR_BADSUBST);
 		    break;
 		}	
-		while ((c = getC(0)) != (-1)) {
-		    *np++ = c;
+		while ((c = getC(0)) != -1) {
+		    *np++ = (Char)c;
 		    if(c == delim) delimcnt--;
 		    if(!delimcnt) break;
 		}
@@ -629,7 +628,7 @@ getdol(void)
 	    addla(name);
 	    return;
 	}
-	*np++ = c;
+	*np++ = (Char)c;
     }
     *np = 0;
     addla(name);
@@ -808,7 +807,7 @@ getsub(struct wordent *en)
 		    if (c != delim && c != '\\')
 			*cp++ = '\\';
 		}
-		*cp++ = c;
+		*cp++ = (Char)c;
 	    }
 	    if (cp != lhsb)
 		*cp++ = 0;
@@ -845,7 +844,7 @@ getsub(struct wordent *en)
 		    if (c != delim /* && c != '~' */ )
 			*cp++ = '\\';
 		}
-		*cp++ = c;
+		*cp++ = (Char)c;
 	    }
 	    *cp++ = 0;
 	    break;
@@ -922,7 +921,7 @@ subword(Char *cp, int type, int *adid)
 {
     Char wbuf[BUFSIZE];
     Char *mp, *np, *wp;
-    int i;
+    ssize_t i;
 
     *adid = 0;
     switch (type) {
@@ -958,7 +957,7 @@ subword(Char *cp, int type, int *adid)
 			*wp++ = *np;
 			continue;
 		    case '&':
-			i -= Strlen(lhsb);
+			i -= (ssize_t)Strlen(lhsb);
 			if (i < 0) {
 			    seterror(ERR_SUBOVFL);
 			    return (STRNULL);
@@ -969,7 +968,7 @@ subword(Char *cp, int type, int *adid)
 			continue;
 		    }
 		mp += Strlen(lhsb);
-		i -= Strlen(mp);
+		i -= (ssize_t)Strlen(mp);
 		if (i < 0) {
 		    seterror(ERR_SUBOVFL);
 		    return (STRNULL);
@@ -1169,7 +1168,7 @@ gethent(int sc)
 		else
 		    event = -1;
 		if (np < &lhsb[sizeof(lhsb) / sizeof(Char) - 2])
-		    *np++ = c;
+		    *np++ = (Char)c;
 		c = getC(0);
 	    }
 	    unreadc(c);
@@ -1201,7 +1200,7 @@ gethent(int sc)
 		if (c == '?')
 		    break;
 		if (np < &lhsb[sizeof(lhsb) / sizeof(Char) - 2])
-		    *np++ = c;
+		    *np++ = (Char)c;
 	    }
 	    if (np == lhsb) {
 		if (lhsb[0] == 0) {
@@ -1417,7 +1416,8 @@ bgetc(void)
 #ifdef FILEC
     char tbuf[BUFSIZE + 1];
     Char ttyline[BUFSIZE];
-    int c, buf, numleft, off, roomleft;
+    int buf, off;
+    ssize_t c, numleft, roomleft;
 
     numleft = 0; 
 #else /* FILEC */
@@ -1445,7 +1445,7 @@ bgetc(void)
 	}
 	c = fbuf[0][fseekp - fbobp];
 	fseekp++;
-	return (c);
+	return (int)(c);
     }
 
 again:
@@ -1475,10 +1475,11 @@ again:
 #ifdef EDIT
 		if (editing) {
 			const char *p;
-			if ((p = el_gets(el, &c)) != NULL) {
+			int d;
+			if ((p = el_gets(el, &d)) != NULL) {
 				size_t i;
 				/* XXX: Truncation */
-				numleft = c > BUFSIZE ? BUFSIZE : c;
+				numleft = d > BUFSIZE ? BUFSIZE : d;
 				for (i = 0; *p && i < BUFSIZE; i++, p++)
 					ttyline[i] = *p;
 				ttyline[i - (i == BUFSIZE)] = '\0';
@@ -1493,12 +1494,13 @@ again:
 		    goto again;
 		}
 		if (c > 0)
-		    (void)memcpy(fbuf[buf] + off, ttyline, c * sizeof(Char));
+		    (void)memcpy(fbuf[buf] + off, ttyline,
+			(size_t)c * sizeof(**fbuf));
 		numleft = 0;
 	    }
 	    else {
 #endif
-		c = read(SHIN, tbuf, roomleft);
+		c = read(SHIN, tbuf, (size_t)roomleft);
 		if (c > 0) {
 		    int     i;
 		    Char   *ptr = fbuf[buf] + off;
@@ -1533,7 +1535,7 @@ again:
     }
     c = fbuf[buf][(int)fseekp % BUFSIZE];
     fseekp++;
-    return (c);
+    return (int)(c);
 }
 
 static void

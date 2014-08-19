@@ -1,4 +1,4 @@
-/*	$NetBSD: tickadj.c,v 1.1.1.2 2012/01/31 21:28:02 kardel Exp $	*/
+/*	$NetBSD: tickadj.c,v 1.1.1.2.6.1 2014/08/19 23:51:49 tls Exp $	*/
 
 /*
  * tickadj - read, and possibly modify, the kernel `tick' and
@@ -23,9 +23,12 @@
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 
-#ifdef HAVE___ADJTIMEX		/* Linux */
+#ifdef HAVE_SYS_TIMEX_H
+# include <sys/timex.h>
+#endif
 
-#include <sys/timex.h>
+#ifdef HAVE_ADJTIMEX	/* Linux */
+
 struct timex txc;
 
 #if 0
@@ -59,9 +62,9 @@ main(
 				txc.tickadj = i;
 				txc.modes |= ADJ_TICKADJ;
 			} else {
-				(void) fprintf(stderr,
-				       "%s: unlikely value for tickadj: %s\n",
-				       progname, ntp_optarg);
+				fprintf(stderr,
+					"%s: unlikely value for tickadj: %s\n",
+					progname, ntp_optarg);
 				errflg++;
 			}
 			break;
@@ -93,7 +96,7 @@ main(
 	}
 
 	if (!errflg) {
-		if (__adjtimex(&txc) < 0)
+		if (adjtimex(&txc) < 0)
 			perror("adjtimex");
 		else if (!quiet)
 			printf("tick     = %ld\ntick_adj = %d\n",
@@ -147,8 +150,8 @@ main(
 #endif
 #endif
 	}
-    
-	if (__adjtimex(&txc) < 0)
+
+	if (adjtimex(&txc) < 0)
 	{
 		perror("adjtimex");
 	}
@@ -165,7 +168,7 @@ main(
 }
 #endif
 
-#else /* not Linux... kmem tweaking: */
+#else	/* not Linux... kmem tweaking: */
 
 #ifdef HAVE_SYS_FILE_H
 # include <sys/file.h>
@@ -215,7 +218,6 @@ main(
 #define	STREQ(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 
 char *progname;
-volatile int debug;
 
 int dokmem = 1;
 int writetickadj = 0;
@@ -257,6 +259,8 @@ main(
 	int hz_int, hz_hundredths;
 	int recommend_tickadj;
 	long tmp;
+
+	init_lib();
 
 	progname = argv[0];
 	while ((c = ntp_getopt(argc, argv, "a:Adkpqst:")) != EOF)

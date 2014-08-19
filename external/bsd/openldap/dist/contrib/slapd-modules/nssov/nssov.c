@@ -1,11 +1,12 @@
-/*	$NetBSD: nssov.c,v 1.1.1.3 2010/12/12 15:19:09 adam Exp $	*/
+/*	$NetBSD: nssov.c,v 1.1.1.3.12.1 2014/08/19 23:51:57 tls Exp $	*/
 
 /* nssov.c - nss-ldap overlay for slapd */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.c,v 1.1.2.6 2010/04/13 20:22:28 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2014 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
+ * Portions Copyright 2013 by Ted C. Cheng, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -252,19 +253,58 @@ static int read_header(TFILE *fp,int32_t *action)
   return 0;
 }
 
+int nssov_config(nssov_info *ni,TFILE *fp,Operation *op)
+{
+	int opt;
+	int32_t tmpint32;
+	struct berval *msg = BER_BVC("");
+	int rc = NSLCD_PAM_SUCCESS;
+
+	READ_INT32(fp,opt);
+
+	Debug(LDAP_DEBUG_TRACE, "nssov_config (%d)\n",opt,0,0);
+
+	switch (opt) {
+	case NSLCD_CONFIG_PAM_PASSWORD_PROHIBIT_MESSAGE:
+		/* request for pam password_prothibit_message */
+		/* nssov_pam prohibits password  */
+		if (!BER_BVISEMPTY(&ni->ni_pam_password_prohibit_message)) {
+			Debug(LDAP_DEBUG_TRACE,"nssov_config(): %s (%s)\n",
+				"password_prohibit_message",
+				ni->ni_pam_password_prohibit_message.bv_val,0);
+			msg = &ni->ni_pam_password_prohibit_message;
+			rc = NSLCD_PAM_PERM_DENIED;
+		}
+		/* fall through */
+	default:
+		break;
+	}
+
+done:;
+	WRITE_INT32(fp,NSLCD_VERSION);
+	WRITE_INT32(fp,NSLCD_ACTION_CONFIG_GET);
+	WRITE_INT32(fp,NSLCD_RESULT_BEGIN);
+	WRITE_BERVAL(fp,msg);
+	WRITE_INT32(fp,NSLCD_RESULT_END);
+	return 0;
+}
+
+
 /* read a request message, returns <0 in case of errors,
    this function closes the socket */
 static void handleconnection(nssov_info *ni,int sock,Operation *op)
 {
   TFILE *fp;
   int32_t action;
-  struct timeval readtimeout,writetimeout;
+  int readtimeout,writetimeout;
   uid_t uid;
   gid_t gid;
   char authid[sizeof("gidNumber=4294967295+uidNumber=424967295,cn=peercred,cn=external,cn=auth")];
+  char peerbuf[8];
+  struct berval peerbv = { sizeof(peerbuf), peerbuf };
 
   /* log connection */
-  if (lutil_getpeereid(sock,&uid,&gid))
+  if (LUTIL_GETPEEREID(sock,&uid,&gid,&peerbv))
     Debug( LDAP_DEBUG_TRACE,"nssov: connection from unknown client: %s\n",strerror(errno),0,0);
   else
     Debug( LDAP_DEBUG_TRACE,"nssov: connection from uid=%d gid=%d\n",
@@ -272,17 +312,19 @@ static void handleconnection(nssov_info *ni,int sock,Operation *op)
 
   /* Should do authid mapping too */
   op->o_dn.bv_len = sprintf(authid,"gidNumber=%d+uidNumber=%d,cn=peercred,cn=external,cn=auth",
-  	(int)uid, (int)gid );
+	(int)gid, (int)uid );
   op->o_dn.bv_val = authid;
   op->o_ndn = op->o_dn;
 
-  /* set the timeouts */
-  readtimeout.tv_sec=0; /* clients should send their request quickly */
-  readtimeout.tv_usec=500000;
-  writetimeout.tv_sec=5; /* clients could be taking some time to process the results */
-  writetimeout.tv_usec=0;
+  /* set the timeouts:
+   * read timeout is half a second because clients should send their request
+   * quickly, write timeout is 60 seconds because clients could be taking some
+   * time to process the results
+   */
+  readtimeout = 500;
+  writetimeout = 60000;
   /* create a stream object */
-  if ((fp=tio_fdopen(sock,&readtimeout,&writetimeout,
+  if ((fp=tio_fdopen(sock,readtimeout,writetimeout,
                      READBUFFER_MINSIZE,READBUFFER_MAXSIZE,
                      WRITEBUFFER_MINSIZE,WRITEBUFFER_MAXSIZE))==NULL)
   {
@@ -334,6 +376,7 @@ static void handleconnection(nssov_info *ni,int sock,Operation *op)
 	case NSLCD_ACTION_PAM_SESS_O:		if (uid==0) (void)pam_sess_o(ni,fp,op); break;
 	case NSLCD_ACTION_PAM_SESS_C:		if (uid==0) (void)pam_sess_c(ni,fp,op); break;
 	case NSLCD_ACTION_PAM_PWMOD:		(void)pam_pwmod(ni,fp,op); break;
+	case NSLCD_ACTION_CONFIG_GET:			(void)nssov_config(ni,fp,op); break;
     default:
       Debug( LDAP_DEBUG_ANY,"nssov: invalid request id: %d",(int)action,0,0);
       break;
@@ -492,11 +535,35 @@ static ConfigTable nsscfg[] = {
 			"DESC 'Default template login name' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
-	{ "nssov-pam-session", "service", 2, 2, 0, ARG_MAGIC|ARG_BERVAL|NSS_PAMSESS,
+	{ "nssov-pam-session", "service", 2, 2, 0, ARG_MAGIC|NSS_PAMSESS,
 		nss_cf_gen, "(OLcfgCtAt:3.11 NAME 'olcNssPamSession' "
 			"DESC 'Services for which sessions will be recorded' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
+	{ "nssov-pam-password-prohibit-message",
+		"password_prohibit_message", 2, 2, 0,
+		ARG_OFFSET|ARG_BERVAL,
+		(void *)offsetof(struct nssov_info, ni_pam_password_prohibit_message),
+		"(OLcfgCtAt:3.12 NAME 'olcNssPamPwdProhibitMsg' "
+			"DESC 'Prohibit password modification message' "
+			"EQUALITY caseIgnoreMatch "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "nssov-pam-pwdmgr-dn",
+		"pwdmgr_dn", 2, 2, 0,
+		ARG_OFFSET|ARG_BERVAL,
+		(void *)offsetof(struct nssov_info, ni_pam_pwdmgr_dn),
+		"(OLcfgCtAt:3.13 NAME 'olcPamPwdmgrDn' "
+			"DESC 'Password Manager DN' "
+			"EQUALITY distinguishedNameMatch "
+			"SYNTAX OMsDN SINGLE-VALUE )", NULL, NULL },
+	{ "nssov-pam-pwdmgr-pwd",
+		"pwdmgr_pwd", 2, 2, 0,
+		ARG_OFFSET|ARG_BERVAL,
+		(void *)offsetof(struct nssov_info, ni_pam_pwdmgr_pwd),
+		"(OLcfgCtAt:3.14 NAME 'olcPamPwdmgrPwd' "
+			"DESC 'Password Manager Pwd' "
+			"EQUALITY octetStringMatch "
+			"SYNTAX OMsOctetString SINGLE-VALUE )", NULL, NULL },
 	{ NULL, NULL, 0,0,0, ARG_IGNORED }
 };
 
@@ -694,6 +761,7 @@ nss_cf_gen(ConfigArgs *c)
 		ch_free( c->value_dn.bv_val );
 		break;
 	case NSS_PAMSESS:
+		ber_str2bv( c->argv[1], 0, 1, &c->value_bv );
 		ber_bvarray_add( &ni->ni_pam_sessions, &c->value_bv );
 		break;
 	}
@@ -881,18 +949,20 @@ nssov_db_close(
 	slap_overinst *on = (slap_overinst *)be->bd_info;
 	nssov_info *ni = on->on_bi.bi_private;
 
-	/* close socket if it's still in use */
-	if (ni->ni_socket >= 0);
-	{
-		if (close(ni->ni_socket))
-			Debug( LDAP_DEBUG_ANY,"problem closing server socket (ignored): %s",strerror(errno),0,0);
-		ni->ni_socket = -1;
-	}
-	/* remove existing named socket */
-	if (unlink(NSLCD_SOCKET)<0)
-	{
-		Debug( LDAP_DEBUG_TRACE,"unlink() of "NSLCD_SOCKET" failed (ignored): %s",
-			strerror(errno),0,0);
+	if ( slapMode & SLAP_SERVER_MODE ) {
+		/* close socket if it's still in use */
+		if (ni->ni_socket >= 0);
+		{
+			if (close(ni->ni_socket))
+				Debug( LDAP_DEBUG_ANY,"problem closing server socket (ignored): %s",strerror(errno),0,0);
+			ni->ni_socket = -1;
+		}
+		/* remove existing named socket */
+		if (unlink(NSLCD_SOCKET)<0)
+		{
+			Debug( LDAP_DEBUG_TRACE,"unlink() of "NSLCD_SOCKET" failed (ignored): %s",
+				strerror(errno),0,0);
+		}
 	}
 }
 

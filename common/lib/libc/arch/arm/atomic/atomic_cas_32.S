@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_32.S,v 1.3.2.1 2012/11/20 02:57:28 tls Exp $	*/
+/*	$NetBSD: atomic_cas_32.S,v 1.3.2.2 2014/08/19 23:45:12 tls Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,21 +36,25 @@
  * and kernel.
  */
 ENTRY_NP(_atomic_cas_32)
-	mov	r3, r0			/* we need r0 for return value */
+	mov	ip, r0			/* we need r0 for return value */
 1:
-	ldrex	r0, [r3]		/* load old value */
-	teq	r0, r1			/*   compare? */
+	ldrex	r0, [ip]		/* load old value */
+	cmp	r0, r1			/*   compare? */
+#ifdef __thumb__
+	bne	2f			/*     return if different */
+#else
 	RETc(ne)			/*     return if different */
-	strex	ip, r2, [r3]		/* store new value */
-	cmp	ip, #0			/*   succeed? */
+#endif
+	strex	r3, r2, [ip]		/* store new value */
+	cmp	r3, #0			/*   succeed? */
 	bne	1b			/*     nope, try again. */
 #ifdef _ARM_ARCH_7
 	dsb
 #else
-	mcr	p15, 0, ip, c7, c10, 4	/* data synchronization barrier */
+	mcr	p15, 0, r3, c7, c10, 4	/* data synchronization barrier */
 #endif
-	RET				/* return. */
-	END(_atomic_cas_32)
+2:	RET				/* return. */
+END(_atomic_cas_32)
 
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
@@ -60,6 +64,7 @@ ATOMIC_OP_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ulong_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr_ni,_atomic_cas_32)
+CRT_ALIAS(__sync_val_compare_and_swap_4,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)

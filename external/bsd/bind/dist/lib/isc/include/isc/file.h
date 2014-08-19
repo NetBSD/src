@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.4.2.1 2013/02/25 00:25:51 tls Exp $	*/
+/*	$NetBSD: file.h,v 1.4.2.2 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -117,8 +117,8 @@ isc_result_t
 isc_file_bopenuniquemode(char *templet, int mode, FILE **fp);
 /*!<
  * \brief Create and open a file with a unique name based on 'templet'.
- *	isc_file_bopen*() open the file in binary mode in Windows. 
- *	isc_file_open*() open the file in text mode in Windows. 
+ *	isc_file_bopen*() open the file in binary mode in Windows.
+ *	isc_file_open*() open the file in text mode in Windows.
  *
  * Notes:
  *\li	'template' is a reserved work in C++.  If you want to complain
@@ -200,6 +200,9 @@ isc_file_isabsolute(const char *filename);
 
 isc_result_t
 isc_file_isplainfile(const char *name);
+
+isc_result_t
+isc_file_isplainfilefd(int fd);
 /*!<
  * \brief Check that the file is a plain file
  *
@@ -215,6 +218,22 @@ isc_file_isplainfile(const char *name);
  *		permitted in addition to ISC_R_SUCCESS. This is done since
  *		the next call in logconf.c is to isc_stdio_open(), which
  *		will create the file if it can.
+ *\li	#other ISC_R_* errors translated from errno
+ *		These occur when stat returns -1 and an errno.
+ */
+
+isc_result_t
+isc_file_isdirectory(const char *name);
+/*!<
+ * \brief Check that 'name' exists and is a directory.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *		Success, file is a directory.
+ *\li	#ISC_R_INVALIDFILE
+ *		File is not a directory.
+ *\li	#ISC_R_FILENOTFOUND
+ *		File does not exist.
  *\li	#other ISC_R_* errors translated from errno
  *		These occur when stat returns -1 and an errno.
  */
@@ -310,6 +329,42 @@ isc_file_splitpath(isc_mem_t *mctx, char *path,
  * - ISC_R_SUCCESS on success
  * - ISC_R_INVALIDFILE if 'path' is empty or ends with '/'
  * - ISC_R_NOMEMORY if unable to allocate memory
+ */
+
+isc_result_t
+isc_file_getsize(const char *file, off_t *size);
+/*%<
+ * Return the size of the file (stored in the parameter pointed
+ * to by 'size') in bytes.
+ *
+ * Returns:
+ * - ISC_R_SUCCESS on success
+ */
+
+isc_result_t
+isc_file_getsizefd(int fd, off_t *size);
+/*%<
+ * Return the size of the file (stored in the parameter pointed
+ * to by 'size') in bytes.
+ *
+ * Returns:
+ * - ISC_R_SUCCESS on success
+ */
+
+void *
+isc_file_mmap(void *addr, size_t len, int prot,
+	      int flags, int fd, off_t offset);
+/*%<
+ * Portable front-end to mmap().  If mmap() is not defined on this
+ * platform, then we simulate it by calling malloc() and read().
+ * (In this event, the addr, prot, and flags parameters are ignored).
+ */
+
+int
+isc_file_munmap(void *addr, size_t len);
+/*%<
+ * Portable front-end to munmap().  If munmap() is not defined on
+ * this platform, then we simply free the memory.
  */
 
 ISC_LANG_ENDDECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.1.10.1 2014/08/19 23:45:20 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
@@ -235,7 +235,7 @@ socket_set_portrange (rk_socket_t sock, int restr, int af)
 	}
 #endif
 }
-	
+
 /*
  * Enable debug on `sock'.
  */

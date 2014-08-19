@@ -5,5 +5,5 @@
 
 Symbol table for image:
 #...
-[ 	]*[0-9]+ +[0-9]+: [0-9a-fA-F]* +0 +OBJECT +LOCAL +DEFAULT +ABS foo
+[ 	]*[0-9]+ +[0-9]+: [0-9a-fA-F]* +0 +OBJECT +LOCAL +DEFAULT .* foo
 #pass

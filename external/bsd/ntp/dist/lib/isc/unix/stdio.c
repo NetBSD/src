@@ -1,7 +1,7 @@
-/*	$NetBSD: stdio.c,v 1.1.1.1 2009/12/13 16:54:38 kardel Exp $	*/
+/*	$NetBSD: stdio.c,v 1.1.1.1.12.1 2014/08/19 23:51:40 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: stdio.c,v 1.8 2007/06/19 23:47:18 tbox Exp */
+/* Id */
 
 #include <config.h>
 
@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include <isc/stdio.h>
+#include <isc/stat.h>
 
 #include "errno2result.h"
 
@@ -106,12 +107,23 @@ isc_stdio_flush(FILE *f) {
 		return (isc__errno2result(errno));
 }
 
+/*
+ * OpenBSD has deprecated ENOTSUP in favor of EOPNOTSUPP.
+ */
+#if defined(EOPNOTSUPP) && !defined(ENOTSUP)
+#define ENOTSUP EOPNOTSUPP
+#endif
+
 isc_result_t
 isc_stdio_sync(FILE *f) {
 	int r;
 
 	r = fsync(fileno(f));
-	if (r == 0)
+	/*
+	 * fsync is not supported on sockets and pipes which
+	 * result in EINVAL / ENOTSUP.
+	 */
+	if (r == 0 || errno == EINVAL || errno == ENOTSUP)
 		return (ISC_R_SUCCESS);
 	else
 		return (isc__errno2result(errno));

@@ -1,4 +1,4 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1996, 2002, 2006
+@c Copyright 1991, 1992, 1993, 1994, 1995, 1996, 2002, 2006, 2011
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -18,6 +18,7 @@
 * Floating Point-i960::         Floating Point
 * Directives-i960::             i960 Machine Directives
 * Opcodes for i960::            i960 Opcodes
+* Syntax of i960::              i960 Syntax
 @end menu
 
 @c FIXME! Add Syntax sec with discussion of bitfields here, at least so
@@ -297,3 +298,28 @@ and the instruction pairs they may expand into:
     cmpobne&   cmpojne&       cmpo; bne\cr}
 @end tex
 @c END TEXI2ROFF-KILL
+
+@node Syntax of i960
+@section Syntax for the i960
+@menu
+* i960-Chars::                Special Characters
+@end menu
+
+@node i960-Chars
+@subsection Special Characters
+
+@cindex line comment character, i960
+@cindex i960 line comment character
+The presence of a @samp{#} on a line indicates the start of a comment
+that extends to the end of the current line.
+
+If a @samp{#} appears as the first character of a line, the whole line
+is treated as a comment, but in this case the line can also be a
+logical line number directive (@pxref{Comments}) or a
+preprocessor control command (@pxref{Preprocessing}).
+
+@cindex line separator, i960
+@cindex statement separator, i960
+@cindex i960 line separator
+The @samp{;} character can be used to separate statements on the same
+line.

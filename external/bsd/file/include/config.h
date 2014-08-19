@@ -245,7 +245,9 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
+#if 0
 #define PACKAGE_VERSION "5.14"
+#endif
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -275,8 +277,10 @@
 #endif
 
 
+#if 0
 /* Version number of package */
 #define VERSION "5.14"
+#endif
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

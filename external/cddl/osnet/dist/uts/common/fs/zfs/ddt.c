@@ -56,7 +56,7 @@ ddt_object_create(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
 	boolean_t prehash = zio_checksum_table[ddt->ddt_checksum].ci_dedup;
 	char name[DDT_NAMELEN];
 
-	ddt_object_name(ddt, type, class, name);
+	ddt_object_name(ddt, type, class, name, sizeof(name));
 
 	ASSERT(*objectp == 0);
 	VERIFY(ddt_ops[type]->ddt_op_create(os, objectp, tx, prehash) == 0);
@@ -79,7 +79,7 @@ ddt_object_destroy(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
 	uint64_t *objectp = &ddt->ddt_object[type][class];
 	char name[DDT_NAMELEN];
 
-	ddt_object_name(ddt, type, class, name);
+	ddt_object_name(ddt, type, class, name, sizeof(name));
 
 	ASSERT(*objectp != 0);
 	ASSERT(ddt_object_count(ddt, type, class) == 0);
@@ -97,7 +97,7 @@ ddt_object_load(ddt_t *ddt, enum ddt_type type, enum ddt_class class)
 	char name[DDT_NAMELEN];
 	int error;
 
-	ddt_object_name(ddt, type, class, name);
+	ddt_object_name(ddt, type, class, name, sizeof(name));
 
 	error = zap_lookup(ddt->ddt_os, DMU_POOL_DIRECTORY_OBJECT, name,
 	    sizeof (uint64_t), 1, &ddt->ddt_object[type][class]);
@@ -119,7 +119,7 @@ ddt_object_sync(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
 {
 	char name[DDT_NAMELEN];
 
-	ddt_object_name(ddt, type, class, name);
+	ddt_object_name(ddt, type, class, name, sizeof(name));
 
 	VERIFY(zap_update(ddt->ddt_os, ddt->ddt_spa->spa_ddt_stat_object, name,
 	    sizeof (uint64_t), sizeof (ddt_histogram_t) / sizeof (uint64_t),
@@ -195,9 +195,9 @@ ddt_object_exists(ddt_t *ddt, enum ddt_type type, enum ddt_class class)
 
 void
 ddt_object_name(ddt_t *ddt, enum ddt_type type, enum ddt_class class,
-    char *name)
+    char *name, size_t namelen)
 {
-	(void) sprintf(name, DMU_POOL_DDT,
+	(void) snprintf(name, namelen, DMU_POOL_DDT,
 	    zio_checksum_table[ddt->ddt_checksum].ci_name,
 	    ddt_ops[type]->ddt_op_name, ddt_class_name[class]);
 }

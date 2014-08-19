@@ -1,5 +1,4 @@
-/*	$NetBSD: t_api_dhcp.c,v 1.1.1.1.4.2 2013/06/23 06:26:30 tls Exp $	*/
-
+/*	$NetBSD: t_api_dhcp.c,v 1.1.1.1.4.3 2014/08/19 23:46:42 tls Exp $	*/
 /*
  * We have to have a number of symbols defined in order to build a
  * DHCP program.

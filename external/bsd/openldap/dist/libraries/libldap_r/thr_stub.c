@@ -1,10 +1,10 @@
-/*	$NetBSD: thr_stub.c,v 1.1.1.4 2010/12/12 15:21:43 adam Exp $	*/
+/*	$NetBSD: thr_stub.c,v 1.1.1.4.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
 /* thr_stub.c - stubs for the threads */
-/* OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.27.2.11 2010/04/13 20:23:03 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -202,6 +202,18 @@ ldap_pvt_thread_pool_destroy (
 	ldap_pvt_thread_pool_t *pool, int run_pending )
 {
 	return(0);
+}
+
+void
+ldap_pvt_thread_pool_idle ( ldap_pvt_thread_pool_t *pool )
+{
+	return;
+}
+
+void
+ldap_pvt_thread_pool_unidle ( ldap_pvt_thread_pool_t *pool )
+{
+	return;
 }
 
 int ldap_pvt_thread_pool_getkey (

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2011/07/16 15:52:21 tsutsui Exp $
+#	$NetBSD: list,v 1.1.8.1 2014/08/19 23:45:40 tls Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -43,6 +43,7 @@ PROG	sbin/route
 PROG	sbin/shutdown
 PROG	sbin/slattach
 PROG	sbin/swapctl	sbin/swapon
+PROG	sbin/sysctl
 PROG	sbin/umount
 
 PROG	usr/bin/ftp
@@ -65,6 +66,8 @@ SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
 LIBS	libhack.o -ledit -lutil -lcurses -lterminfo -lrmt -ll -lm -lz -lprop
+
+COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group

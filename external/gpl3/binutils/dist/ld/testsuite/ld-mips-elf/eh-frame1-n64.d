@@ -1,7 +1,7 @@
 #name: MIPS eh-frame 1, n64
 #source: eh-frame1.s
 #source: eh-frame1.s
-#as: -EB -64 --defsym alignment=3 --defsym fill=0x40
+#as: -march=from-abi -EB -64 --defsym alignment=3 --defsym fill=0x40
 #readelf: --relocs -wf
 #ld: -shared -melf64btsmip -Teh-frame1.ld
 #warning: fde encoding in.*prevents \.eh_frame_hdr table being created.

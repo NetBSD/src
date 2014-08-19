@@ -1,12 +1,8 @@
-/*	$NetBSD: ntp_proto.h,v 1.1.1.1 2009/12/13 16:54:52 kardel Exp $	*/
+/*	$NetBSD: ntp_proto.h,v 1.1.1.1.12.1 2014/08/19 23:51:38 tls Exp $	*/
 
-#ifndef __ntp_proto_h
-#define __ntp_proto_h
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#ifndef NTP_PROTO_H
+#define NTP_PROTO_H
 
 #define NTP_MAXFREQ	500e-6
  
-#endif /* __ntp_proto_h */
+#endif	/* NTP_PROTO_H */

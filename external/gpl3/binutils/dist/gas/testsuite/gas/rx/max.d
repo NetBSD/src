@@ -22,8 +22,8 @@ Disassembly of section \.text:
   45:	fd 70 4f 00 00 00 80          	max	#0x80000000, r15
   4c:	fd 70 40 ff ff ff 7f          	max	#0x7fffffff, r0
   53:	fd 70 4f ff ff ff 7f          	max	#0x7fffffff, r15
-  5a:	fc 13 00                      	max	r0, r0
-  5d:	fc 13 0f                      	max	r0, r15
+  5a:	fc 13 10                      	max	r1, r0
+  5d:	fc 13 1f                      	max	r1, r15
   60:	fc 13 f0                      	max	r15, r0
   63:	fc 13 ff                      	max	r15, r15
   66:	fc 10 00                      	max	\[r0\]\.ub, r0

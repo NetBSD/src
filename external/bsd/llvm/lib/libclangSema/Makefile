@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.2.2 2013/06/23 06:28:25 tls Exp $
+#	$NetBSD: Makefile,v 1.9.2.3 2014/08/19 23:51:26 tls Exp $
 
 LIB=	clangSema
 
@@ -50,7 +50,7 @@ SRCS+=	AnalysisBasedWarnings.cpp \
 	SemaTemplateInstantiateDecl.cpp \
 	SemaTemplateVariadic.cpp \
 	SemaType.cpp \
-	TargetAttributesSema.cpp
+	TypeLocBuilder.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

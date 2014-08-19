@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-signzone.8,v 1.4 2012/06/05 00:38:57 christos Exp $
+.\"	$NetBSD: dnssec-signzone.8,v 1.4.2.1 2014/08/19 23:45:59 tls Exp $
 .\"
-.\" Copyright (C) 2004-2009, 2011 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2009, 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -22,11 +22,11 @@
 .\"     Title: dnssec\-signzone
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
-.\"      Date: June 05, 2009
+.\"      Date: February 18, 2014
 .\"    Manual: BIND9
 .\"    Source: BIND9
 .\"
-.TH "DNSSEC\-SIGNZONE" "8" "June 05, 2009" "BIND9" "BIND9"
+.TH "DNSSEC\-SIGNZONE" "8" "February 18, 2014" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -35,7 +35,7 @@
 dnssec\-signzone \- DNSSEC zone signing tool
 .SH "SYNOPSIS"
 .HP 16
-\fBdnssec\-signzone\fR [\fB\-a\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-d\ \fR\fB\fIdirectory\fR\fR] [\fB\-D\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-e\ \fR\fB\fIend\-time\fR\fR] [\fB\-f\ \fR\fB\fIoutput\-file\fR\fR] [\fB\-g\fR] [\fB\-h\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-k\ \fR\fB\fIkey\fR\fR] [\fB\-L\ \fR\fB\fIserial\fR\fR] [\fB\-l\ \fR\fB\fIdomain\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-I\ \fR\fB\fIinput\-format\fR\fR] [\fB\-j\ \fR\fB\fIjitter\fR\fR] [\fB\-N\ \fR\fB\fIsoa\-serial\-format\fR\fR] [\fB\-o\ \fR\fB\fIorigin\fR\fR] [\fB\-O\ \fR\fB\fIoutput\-format\fR\fR] [\fB\-P\fR] [\fB\-p\fR] [\fB\-R\fR] [\fB\-r\ \fR\fB\fIrandomdev\fR\fR] [\fB\-S\fR] [\fB\-s\ \fR\fB\fIstart\-time\fR\fR] [\fB\-T\ \fR\fB\fIttl\fR\fR] [\fB\-t\fR] [\fB\-u\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-X\ \fR\fB\fIextended\ end\-time\fR\fR] [\fB\-x\fR] [\fB\-z\fR] [\fB\-3\ \fR\fB\fIsalt\fR\fR] [\fB\-H\ \fR\fB\fIiterations\fR\fR] [\fB\-A\fR] {zonefile} [key...]
+\fBdnssec\-signzone\fR [\fB\-a\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-d\ \fR\fB\fIdirectory\fR\fR] [\fB\-D\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-e\ \fR\fB\fIend\-time\fR\fR] [\fB\-f\ \fR\fB\fIoutput\-file\fR\fR] [\fB\-g\fR] [\fB\-h\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-k\ \fR\fB\fIkey\fR\fR] [\fB\-L\ \fR\fB\fIserial\fR\fR] [\fB\-l\ \fR\fB\fIdomain\fR\fR] [\fB\-M\ \fR\fB\fIdomain\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-I\ \fR\fB\fIinput\-format\fR\fR] [\fB\-j\ \fR\fB\fIjitter\fR\fR] [\fB\-N\ \fR\fB\fIsoa\-serial\-format\fR\fR] [\fB\-o\ \fR\fB\fIorigin\fR\fR] [\fB\-O\ \fR\fB\fIoutput\-format\fR\fR] [\fB\-P\fR] [\fB\-p\fR] [\fB\-R\fR] [\fB\-r\ \fR\fB\fIrandomdev\fR\fR] [\fB\-S\fR] [\fB\-s\ \fR\fB\fIstart\-time\fR\fR] [\fB\-T\ \fR\fB\fIttl\fR\fR] [\fB\-t\fR] [\fB\-u\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-X\ \fR\fB\fIextended\ end\-time\fR\fR] [\fB\-x\fR] [\fB\-z\fR] [\fB\-3\ \fR\fB\fIsalt\fR\fR] [\fB\-H\ \fR\fB\fIiterations\fR\fR] [\fB\-A\fR] {zonefile} [key...]
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-signzone\fR
@@ -79,13 +79,15 @@ files in
 Output only those record types automatically managed by
 \fBdnssec\-signzone\fR, i.e. RRSIG, NSEC, NSEC3 and NSEC3PARAM records. If smart signing (\fB\-S\fR) is used, DNSKEY records are also included. The resulting file can be included in the original zone file with
 \fB$INCLUDE\fR. This option cannot be combined with
-\fB\-O raw\fR
-or serial number updating.
+\fB\-O raw\fR,
+\fB\-O map\fR, or serial number updating.
 .RE
 .PP
 \-E \fIengine\fR
 .RS 4
-Uses a crypto hardware (OpenSSL engine) for the crypto operations it supports, for instance signing with private keys from a secure key store. When compiled with PKCS#11 support it defaults to pkcs11; the empty name resets it to no engine.
+When applicable, specifies the hardware to use for cryptographic operations, such as a secure key store used for signing.
+.sp
+When BIND is built with OpenSSL PKCS#11 support, this defaults to the string "pkcs11", which identifies an OpenSSL engine that can drive a cryptographic accelerator or hardware service module. When BIND is built with native PKCS#11 cryptography (\-\-enable\-native\-pkcs11), it defaults to the path of the PKCS#11 provider library specified via "\-\-with\-pkcs11".
 .RE
 .PP
 \-g
@@ -110,6 +112,19 @@ Treat specified key as a key signing key ignoring any key flags. This option may
 \-l \fIdomain\fR
 .RS 4
 Generate a DLV set in addition to the key (DNSKEY) and DS sets. The domain is appended to the name of the records.
+.RE
+.PP
+\-M \fImaxttl\fR
+.RS 4
+Sets the maximum TTL for the signed zone. Any TTL higher than
+\fImaxttl\fR
+in the input zone will be reduced to
+\fImaxttl\fR
+in the output. This provides certainty as to the largest possible TTL in the signed zone, which is useful to know when rolling keys because it is the longest possible time before signatures that have been retrieved by resolvers will expire from resolver caches. Zones that are signed with this option should be configured to use a matching
+\fBmax\-zone\-ttl\fR
+in
+\fInamed.conf\fR. (Note: This option is incompatible with
+\fB\-D\fR, because it modifies non\-DNSSEC data in the output zone.)
 .RE
 .PP
 \-s \fIstart\-time\fR
@@ -180,8 +195,9 @@ generates signatures that are valid for 30 days, with a cycle interval of 7.5 da
 .RS 4
 The format of the input zone file. Possible formats are
 \fB"text"\fR
-(default) and
-\fB"raw"\fR. This option is primarily intended to be used for dynamic signed zones so that the dumped zone file in a non\-text format containing updates can be signed directly. The use of this option does not make much sense for non\-dynamic zones.
+(default),
+\fB"raw"\fR, and
+\fB"map"\fR. This option is primarily intended to be used for dynamic signed zones so that the dumped zone file in a non\-text format containing updates can be signed directly. The use of this option does not make much sense for non\-dynamic zones.
 .RE
 .PP
 \-j \fIjitter\fR
@@ -195,7 +211,7 @@ Signature lifetime jitter also to some extent benefits validators and servers by
 .PP
 \-L \fIserial\fR
 .RS 4
-When writing a signed zone to 'raw' format, set the "source serial" value in the header to the specified serial number. (This is expected to be used primarily for testing purposes.)
+When writing a signed zone to "raw" or "map" format, set the "source serial" value in the header to the specified serial number. (This is expected to be used primarily for testing purposes.)
 .RE
 .PP
 \-n \fIncpus\fR
@@ -239,15 +255,15 @@ The zone origin. If not specified, the name of the zone file is assumed to be th
 .RS 4
 The format of the output file containing the signed zone. Possible formats are
 \fB"text"\fR
-(default)
-\fB"full"\fR, which is text output in a format suitable for processing by external scripts, and
-\fB"raw"\fR
-or
-\fB"raw=N"\fR, which store the zone in a binary format for rapid loading by
+(default), which is the standard textual representation of the zone;
+\fB"full"\fR, which is text output in a format suitable for processing by external scripts; and
+\fB"map"\fR,
+\fB"raw"\fR, and
+\fB"raw=N"\fR, which store the zone in binary formats for rapid loading by
 \fBnamed\fR.
 \fB"raw=N"\fR
 specifies the format version of the raw zone file: if N is 0, the raw file can be read by any version of
-\fBnamed\fR; if N is 1, the file can be read by release 9.9.0 or higher. The default is 1.
+\fBnamed\fR; if N is 1, the file can be read by release 9.9.0 or higher; the default is 1.
 .RE
 .PP
 \-p
@@ -262,15 +278,25 @@ Disable post sign verification tests.
 The post sign verification test ensures that for each algorithm in use there is at least one non revoked self signed KSK key, that all revoked KSK keys are self signed, and that all records in the zone are signed by the algorithm. This option skips these tests.
 .RE
 .PP
-\-R
+\-Q
 .RS 4
-Remove signatures from keys that no longer exist.
+Remove signatures from keys that are no longer active.
 .sp
 Normally, when a previously\-signed zone is passed as input to the signer, and a DNSKEY record has been removed and replaced with a new one, signatures from the old key that are still within their validity period are retained. This allows the zone to continue to validate with cached copies of the old DNSKEY RRset. The
-\fB\-R\fR
+\fB\-Q\fR
 forces
 \fBdnssec\-signzone\fR
-to remove all orphaned signatures.
+to remove signatures from keys that are no longer active. This enables ZSK rollover using the procedure described in RFC 4641, section 4.2.1.1 ("Pre\-Publish Key Rollover").
+.RE
+.PP
+\-R
+.RS 4
+Remove signatures from keys that are no longer published.
+.sp
+This option is similar to
+\fB\-Q\fR, except it forces
+\fBdnssec\-signzone\fR
+to signatures from keys that are no longer published. This enables ZSK rollover using the procedure described in RFC 4641, section 4.2.1.2 ("Double Signature Zone Signing Key Rollover").
 .RE
 .PP
 \-r \fIrandomdev\fR
@@ -361,7 +387,7 @@ Generate an NSEC3 chain with the given hex encoded salt. A dash (\fIsalt\fR) can
 .PP
 \-H \fIiterations\fR
 .RS 4
-When generating an NSEC3 chain, use this many interations. The default is 10.
+When generating an NSEC3 chain, use this many iterations. The default is 10.
 .RE
 .PP
 \-A
@@ -425,12 +451,13 @@ db.example.com.signed
 .PP
 \fBdnssec\-keygen\fR(8),
 BIND 9 Administrator Reference Manual,
-RFC 4033.
+RFC 4033,
+RFC 4641.
 .SH "AUTHOR"
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2009, 2011 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2009, 2011\-2014 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000\-2003 Internet Software Consortium.
 .br

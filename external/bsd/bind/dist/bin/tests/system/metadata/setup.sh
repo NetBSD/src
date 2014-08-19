@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,18 +14,14 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.5 2011/03/21 23:47:21 tbox Exp 
-
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
-. ./clean.sh
+sh ./clean.sh
 
-RANDFILE=./random.data
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 pzone=parent.nil
 czone=child.parent.nil
-
-../../../tools/genrandom 400 $RANDFILE
 
 echo "I:generating keys"
 

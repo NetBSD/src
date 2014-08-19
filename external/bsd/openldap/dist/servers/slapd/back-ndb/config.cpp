@@ -1,8 +1,8 @@
 /* config.cpp - ndb backend configuration file routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ndb/config.cpp,v 1.3.2.3 2010/04/13 20:23:34 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

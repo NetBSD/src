@@ -1,5 +1,5 @@
-#	Id: Makefile.in,v 1.7 2012/03/15 09:22:12 plunky Exp 	
-#	$NetBSD: Makefile.in,v 1.1.1.2 2012/03/26 14:27:03 plunky Exp $
+#	Id: Makefile.in,v 1.9 2012/09/25 11:17:17 plunky Exp 	
+#	$NetBSD: Makefile.in,v 1.1.1.2.2.1 2014/08/19 23:52:09 tls Exp $
 #
 # Makefile.in for the cc driver part of pcc.
 #
@@ -15,7 +15,6 @@ libexecdir = @libexecdir@
 includedir = @includedir@
 datarootdir = @datarootdir@
 mandir = @mandir@
-strip = @strip@
 CC = @CC@
 EXEEXT = @EXEEXT@
 TARGOS = @targos@
@@ -26,12 +25,12 @@ VERSION = @PACKAGE_VERSION@
 PCCLIBDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/lib
 PCCINCDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/include
 CFLAGS = @CFLAGS@ @ADD_CFLAGS@
-CPPFLAGS = @CPPFLAGS@ -DLIBEXECDIR=\"${libexecdir}/\" \
-	@ADD_CPPFLAGS@ -DINCLUDEDIR=\"${includedir}/\" \
-	-DPCCINCDIR=\"${PCCINCDIR}/\" -DPCCLIBDIR=\"${PCCLIBDIR}/\" \
-	-DTARGOS=\"${TARGOS}\" -DTARGOSVER=${TARGOSVER} -Dos_${TARGOS} \
-	-DTARGMACH=\"${TARGMACH}\" -Dmach_${TARGMACH} \
-	-I${top_builddir} -I${top_srcdir}/os/${TARGOS} -I${MIPDIR} -I${MDIR}
+CPPFLAGS = @CPPFLAGS@ -DLIBEXECDIR=\"$(libexecdir)/\" \
+	@ADD_CPPFLAGS@ -DINCLUDEDIR=\"$(includedir)/\" \
+	-DPCCINCDIR=\"$(PCCINCDIR)/\" -DPCCLIBDIR=\"$(PCCLIBDIR)/\" \
+	-DTARGOS=\"$(TARGOS)\" -DTARGOSVER=$(TARGOSVER) -Dos_$(TARGOS) \
+	-DTARGMACH=\"$(TARGMACH)\" -Dmach_$(TARGMACH) \
+	-I$(top_builddir) -I$(top_srcdir)/os/$(TARGOS) -I$(MIPDIR) -I$(MDIR)
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
 INSTALL = @INSTALL@
@@ -41,27 +40,23 @@ INSTALL_DATA = @INSTALL_DATA@
 OBJS=driver.o platform.o strlist.o xalloc.o
 DEST=@BINPREFIX@pcc$(EXEEXT)
 
-MIPDIR=${top_srcdir}/mip
-MDIR=${top_srcdir}/arch/$(TARGMACH)
+MIPDIR=$(top_srcdir)/mip
+MDIR=$(top_srcdir)/arch/$(TARGMACH)
 
-all: ${DEST}
+all: $(DEST)
 
-${DEST}: $(OBJS)
+$(DEST): $(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
 
 .c.o:
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 install:
-	test -z "${DESTDIR}$(bindir)" || mkdir -p "${DESTDIR}$(bindir)"
-	${INSTALL_PROGRAM} ${DEST} ${DESTDIR}${bindir}
-	@if [ ${strip} = yes ]; then		\
-		strip ${DESTDIR}${bindir}/${DEST} ;	\
-		echo strip ${DESTDIR}${bindir}/${DEST} ;	\
-	fi
+	test -z "$(DESTDIR)$(bindir)" || mkdir -p "$(DESTDIR)$(bindir)"
+	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(bindir)
 
 clean:
-	rm -f  $(OBJS) ${DEST}
+	rm -f  $(OBJS) $(DEST)
 
 distclean: clean
 	rm -f  Makefile

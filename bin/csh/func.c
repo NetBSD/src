@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.39 2012/06/09 02:50:43 christos Exp $ */
+/* $NetBSD: func.c,v 1.39.2.1 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.39 2012/06/09 02:50:43 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.39.2.1 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: func.c,v 1.39 2012/06/09 02:50:43 christos Exp $");
 #include <sys/types.h>
 
 #include <locale.h>
+#include <inttypes.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -278,7 +279,7 @@ doif(Char **v, struct command *kp)
      * munging it so we can reexecute it.
      */
     if (i) {
-	lshift(kp->t_dcom, vv - kp->t_dcom);
+	lshift(kp->t_dcom, (size_t)(vv - kp->t_dcom));
 	reexecute(kp);
 	donefds();
     }
@@ -597,7 +598,7 @@ search(int type, int level, Char *goal)
     int wlevel = 0;
 
     aword = wordbuf;
-    Stype = type;
+    Stype = (Char)type;
     Sgoal = goal;
     if (type == T_GOTO) {
 	struct Ain a;
@@ -738,7 +739,7 @@ getword(Char *wp)
 	    if (c < 0)
 		goto past;
 	    if (wp) {
-		*wp++ = c;
+		*wp++ = (Char)c;
 		*wp = 0;	/* end the string b4 test */
 	    }
 	} while ((d || (!(kwd = keyword(owp)) && c != ' '
@@ -977,7 +978,7 @@ dounsetenv(Char **v, struct command *t)
 	    maxi = i;
     }
 
-    name = (Char *)xmalloc((size_t) (maxi + 1) * sizeof(Char));
+    name = xmalloc((size_t)(maxi + 1) * sizeof(Char));
 
     while (++v && *v)
 	for (maxi = 1; maxi;)
@@ -1071,7 +1072,7 @@ void
 doumask(Char **v, struct command *t)
 {
     Char *cp;
-    int i;
+    mode_t i;
 
     cp = v[1];
     if (cp == 0) {
@@ -1082,8 +1083,8 @@ doumask(Char **v, struct command *t)
     }
     i = 0;
     while (Isdigit(*cp) && *cp != '8' && *cp != '9')
-	i = i * 8 + *cp++ - '0';
-    if (*cp || i < 0 || i > 0777)
+	i = i * 8 + (mode_t)(*cp++ - '0');
+    if (*cp || i > 0777)
 	stderror(ERR_NAME | ERR_MASK);
     (void)umask(i);
 }
@@ -1168,51 +1169,51 @@ static  RLIM_TYPE
 getval(const struct limits *lp, Char **v)
 {
     Char *cp;
-    float f;
+    double d;
 
     cp = *v++;
-    f = atof(short2str(cp));
+    d = atof(short2str(cp));
 
     while (Isdigit(*cp) || *cp == '.' || *cp == 'e' || *cp == 'E')
 	cp++;
     if (*cp == 0) {
 	if (*v == 0)
-	    return ((RLIM_TYPE)((f + 0.5) * lp->limdiv));
+	    return ((RLIM_TYPE)((d + 0.5) * lp->limdiv));
 	cp = *v;
     }
     switch (*cp) {
     case ':':
 	if (lp->limconst != RLIMIT_CPU)
 	    goto badscal;
-	return ((RLIM_TYPE)(f * 60.0 + atof(short2str(cp + 1))));
+	return ((RLIM_TYPE)(d * 60.0 + atof(short2str(cp + 1))));
     case 'M':
 	if (lp->limconst == RLIMIT_CPU)
 	    goto badscal;
 	*cp = 'm';
 	limtail(cp, "megabytes");
-	f *= 1024.0 * 1024.0;
+	d *= 1024.0 * 1024.0;
 	break;
     case 'h':
 	if (lp->limconst != RLIMIT_CPU)
 	    goto badscal;
 	limtail(cp, "hours");
-	f *= 3600.0;
+	d *= 3600.0;
 	break;
     case 'k':
 	if (lp->limconst == RLIMIT_CPU)
 	    goto badscal;
 	limtail(cp, "kbytes");
-	f *= 1024.0;
+	d *= 1024.0;
 	break;
     case 'm':
 	if (lp->limconst == RLIMIT_CPU) {
 	    limtail(cp, "minutes");
-	    f *= 60.0;
+	    d *= 60.0;
 	    break;
 	}
 	*cp = 'm';
 	limtail(cp, "megabytes");
-	f *= 1024.0 * 1024.0;
+	d *= 1024.0 * 1024.0;
 	break;
     case 's':
 	if (lp->limconst != RLIMIT_CPU)
@@ -1227,11 +1228,11 @@ getval(const struct limits *lp, Char **v)
 	stderror(ERR_NAME | ERR_SCALEF);
 	/* NOTREACHED */
     }
-    f += 0.5;
-    if (f > (float) RLIM_INFINITY)
+    d += 0.5;
+    if (d > (double) RLIM_INFINITY)
 	return RLIM_INFINITY;
     else
-	return ((RLIM_TYPE)f);
+	return ((RLIM_TYPE)d);
 }
 
 static void
@@ -1261,8 +1262,8 @@ plim(const struct limits *lp, Char hard)
     else if (lp->limconst == RLIMIT_CPU)
 	psecs((long) limit);
     else
-	(void)fprintf(cshout, "%ld %s", (long) (limit / lp->limdiv),
-	    lp->limscale);
+	(void)fprintf(cshout, "%jd %s",
+	    (intmax_t) (limit / (RLIM_TYPE)lp->limdiv), lp->limscale);
     (void)fputc('\n', cshout);
 }
 

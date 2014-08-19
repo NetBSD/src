@@ -1,7 +1,7 @@
-/*	$NetBSD: dispatch.h,v 1.4 2012/06/05 00:41:47 christos Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.4.2.1 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -56,6 +56,7 @@
 
 #include <isc/buffer.h>
 #include <isc/lang.h>
+#include <isc/mutex.h>
 #include <isc/socket.h>
 #include <isc/types.h>
 
@@ -88,6 +89,18 @@ struct dns_dispatchevent {
 	struct in6_pktinfo	pktinfo;	/*%< reply info for v6 */
 	isc_buffer_t	        buffer;		/*%< data buffer */
 	isc_uint32_t		attributes;	/*%< mirrored from socket.h */
+};
+
+/*%
+ * This is a set of one or more dispatches which can be retrieved
+ * round-robin fashion.
+ */
+struct dns_dispatchset {
+	isc_mem_t		*mctx;
+	dns_dispatch_t		**dispatches;
+	int			ndisp;
+	int			cur;
+	isc_mutex_t		lock;
 };
 
 /*@{*/
@@ -505,6 +518,58 @@ dns_dispatch_importrecv(dns_dispatch_t *disp, isc_event_t *event);
  * Requires:
  *\li 	disp is valid, and the attribute DNS_DISPATCHATTR_NOLISTEN is set.
  * 	event != NULL
+ */
+
+dns_dispatch_t *
+dns_dispatchset_get(dns_dispatchset_t *dset);
+/*%<
+ * Retrieve the next dispatch from dispatch set 'dset', and increment
+ * the round-robin counter.
+ *
+ * Requires:
+ *\li 	dset != NULL
+ */
+
+isc_result_t
+dns_dispatchset_create(isc_mem_t *mctx, isc_socketmgr_t *sockmgr,
+		       isc_taskmgr_t *taskmgr, dns_dispatch_t *source,
+		       dns_dispatchset_t **dsetp, int n);
+/*%<
+ * Given a valid dispatch 'source', create a dispatch set containing
+ * 'n' UDP dispatches, with the remainder filled out by clones of the
+ * source.
+ *
+ * Requires:
+ *\li 	source is a valid UDP dispatcher
+ *\li 	dsetp != NULL, *dsetp == NULL
+ */
+
+void
+dns_dispatchset_cancelall(dns_dispatchset_t *dset, isc_task_t *task);
+/*%<
+ * Cancel socket operations for the dispatches in 'dset'.
+ */
+
+void
+dns_dispatchset_destroy(dns_dispatchset_t **dsetp);
+/*%<
+ * Dereference all the dispatches in '*dsetp', free the dispatchset
+ * memory, and set *dsetp to NULL.
+ *
+ * Requires:
+ *\li 	dset is valid
+ */
+
+void
+dns_dispatch_setdscp(dns_dispatch_t *disp, isc_dscp_t dscp);
+isc_dscp_t
+dns_dispatch_getdscp(dns_dispatch_t *disp);
+/*%<
+ * Set/get the DSCP value to be used when sending responses to clients,
+ * as defined in the "listen-on" or "listen-on-v6" statements.
+ *
+ * Requires:
+ *\li	disp is valid.
  */
 
 ISC_LANG_ENDDECLS

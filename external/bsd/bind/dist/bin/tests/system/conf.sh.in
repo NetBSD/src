@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -14,8 +14,6 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
-
-# Id: conf.sh.in,v 1.71 2011/12/05 17:10:50 each Exp 
 
 #
 # Common configuration data for system tests, to be sourced into
@@ -33,34 +31,48 @@ NAMED=$TOP/bin/named/named
 # if the program is libtoolized.
 LWRESD="$TOP/bin/named/named -l"
 DIG=$TOP/bin/dig/dig
+DELV=$TOP/bin/delv/delv
 RNDC=$TOP/bin/rndc/rndc
 NSUPDATE=$TOP/bin/nsupdate/nsupdate
 DDNSCONFGEN=$TOP/bin/confgen/ddns-confgen
+TSIGKEYGEN=$TOP/bin/confgen/tsig-keygen
+RNDCCONFGEN=$TOP/bin/confgen/rndc-confgen
 KEYGEN=$TOP/bin/dnssec/dnssec-keygen
 KEYFRLAB=$TOP/bin/dnssec/dnssec-keyfromlabel
 SIGNER=$TOP/bin/dnssec/dnssec-signzone
 REVOKE=$TOP/bin/dnssec/dnssec-revoke
 SETTIME=$TOP/bin/dnssec/dnssec-settime
 DSFROMKEY=$TOP/bin/dnssec/dnssec-dsfromkey
+IMPORTKEY=$TOP/bin/dnssec/dnssec-importkey
 CHECKDS=$TOP/bin/python/dnssec-checkds
+COVERAGE=$TOP/bin/python/dnssec-coverage
 CHECKZONE=$TOP/bin/check/named-checkzone
 CHECKCONF=$TOP/bin/check/named-checkconf
-PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -s ${SLOT:-0} -p 1234"
-PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p 1234"
-PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p 1234"
+PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
 JOURNALPRINT=$TOP/bin/tools/named-journalprint
 VERIFY=$TOP/bin/dnssec/dnssec-verify
+ARPANAME=$TOP/bin/tools/arpaname
+RESOLVE=$TOP/lib/samples/resolve
+RRCHECKER=$TOP/bin/tools/named-rrchecker
+GENRANDOM=$TOP/bin/tools/genrandom
+
+RANDFILE=$TOP/bin/tests/system/random.data
 
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
 # v6synth
-SUBDIRS="acl allow_query addzone autosign builtin cacheclean checkconf
-	 @CHECKDS@ checknames checkzone database dlv dlvauto dlz dlzexternal
-         dname dns64 dnssec ecdsa forward glue gost ixfr inline limits
-	 logfileconfig lwresd masterfile masterformat metadata notify
-	 nsupdate pending pkcs11 redirect resolver rndc rpz rrsetorder
-	 rsabigexponent sortlist smartsign staticstub stub tkey tsig
-	 tsiggss unknown upforwd verify views xfer xferquota zonechecks"
+SUBDIRS="acl additional allow_query addzone autosign builtin
+	 cacheclean case checkconf @CHECKDS@ checknames checkzone
+	 @COVERAGE@ database dlv dlvauto dlz dlzexternal dlzredir
+	 dname dns64 dnssec dsdigest dscp ecdsa emptyzones formerr
+	 forward glue gost ixfr inline limits logfileconfig lwresd
+	 masterfile masterformat metadata notify nsupdate pending
+	 @PKCS11_TEST@ redirect resolver rndc rpz rrl rrchecker
+	 rrsetorder rsabigexponent sit smartsign sortlist spf staticstub
+	 statistics stub tkey tsig tsiggss unknown upforwd verify
+	 views wildcard xfer xferquota zero zonechecks"
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@
@@ -78,4 +90,4 @@ fi
 
 export NAMED LWRESD DIG NSUPDATE KEYGEN KEYFRLAB SIGNER KEYSIGNER KEYSETTOOL \
        PERL SUBDIRS RNDC CHECKZONE PK11GEN PK11LIST PK11DEL TESTSOCK6 \
-       JOURNALPRINT
+       JOURNALPRINT ARPANAME RESOLVE RRCHECKER

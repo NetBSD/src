@@ -1,5 +1,5 @@
 ;; Scheduling description for UltraSPARC-III.
-;;   Copyright (C) 2002, 2004, 2007 Free Software Foundation, Inc.
+;;   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -36,7 +36,7 @@
 
 (define_insn_reservation "us3_single" 1
   (and (eq_attr "cpu" "ultrasparc3")
-    (eq_attr "type" "multi,savew,flushw,iflush,trap"))
+    (eq_attr "type" "multi,savew,flushw,iflush,trap,edge,gsr"))
   "us3_single_issue")
 
 (define_insn_reservation "us3_integer" 1
@@ -46,13 +46,18 @@
 
 (define_insn_reservation "us3_ialuX" 5
   (and (eq_attr "cpu" "ultrasparc3")
-    (eq_attr "type" "ialu,shift,compare"))
+    (eq_attr "type" "ialuX"))
   "us3_single_issue*4, nothing")
 
 (define_insn_reservation "us3_cmove" 2
   (and (eq_attr "cpu" "ultrasparc3")
     (eq_attr "type" "cmove"))
   "us3_ms + us3_br + us3_slotany, nothing")
+
+(define_insn_reservation "us3_array" 2
+  (and (eq_attr "cpu" "ultrasparc3")
+    (eq_attr "type" "array,edgen"))
+  "us3_ms + us3_slotany, nothing")
 
 ;; ??? Not entirely accurate.
 ;; ??? It can run from 6 to 9 cycles.  The first cycle the MS pipe
@@ -171,19 +176,19 @@
 (define_insn_reservation "us3_fga"
   3
   (and (eq_attr "cpu" "ultrasparc3")
-       (eq_attr "type" "fga"))
+       (eq_attr "type" "fga,visl,vismv"))
   "us3_fpa + us3_slotany, nothing*2")
 
 (define_insn_reservation "us3_fgm"
   4
   (and (eq_attr "cpu" "ultrasparc3")
-       (eq_attr "type" "fgm_pack,fgm_mul,fgm_cmp"))
+       (eq_attr "type" "fgm_pack,fgm_mul"))
   "us3_fpm + us3_slotany, nothing*3")
 
 (define_insn_reservation "us3_pdist"
   4
   (and (eq_attr "cpu" "ultrasparc3")
-       (eq_attr "type" "fgm_pdist"))
+       (eq_attr "type" "pdist"))
   "us3_fpm + us3_slotany, nothing*3")
 
 (define_bypass 1 "us3_pdist" "us3_pdist")

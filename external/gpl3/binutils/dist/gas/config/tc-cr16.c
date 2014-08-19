@@ -522,7 +522,6 @@ arelent *
 tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS * fixP)
 {
   arelent * reloc;
-  bfd_reloc_code_real_type code;
 
   /* If symbols are local and resolved, then no relocation needed.  */
   if ( ((fixP->fx_addsy) 
@@ -582,14 +581,12 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS * fixP)
            && GOT_symbol
 	   && fixP->fx_addsy == GOT_symbol)
 	{
-	    code = BFD_RELOC_CR16_GOT_REGREL20;
 	    reloc->addend = fixP->fx_offset = reloc->address;
 	}
       else if ((fixP->fx_r_type == BFD_RELOC_CR16_GOTC_REGREL20)
            && GOT_symbol
 	   && fixP->fx_addsy == GOT_symbol)
 	{
-	    code = BFD_RELOC_CR16_GOTC_REGREL20;
 	    reloc->addend = fixP->fx_offset = reloc->address;
 	}
 #endif
@@ -1549,28 +1546,25 @@ is_bcc_insn (char * op)
 
 /* Cinv instruction requires special handling.  */
 
-static int
+static void
 check_cinv_options (char * operand)
 {
   char *p = operand;
-  int i_used = 0, u_used = 0, d_used = 0;
 
   while (*++p != ']')
     {
-      if (*p == ',' || *p == ' ')
-        continue;
-
-      else if (*p == 'i')
-        i_used = 1;
-      else if (*p == 'u')
-        u_used = 1;
-      else if (*p == 'd')
-        d_used = 1;
-      else
-        as_bad (_("Illegal `cinv' parameter: `%c'"), *p);
+      switch (*p)
+	{
+	case ',':
+	case ' ':
+	case 'i':
+	case 'u':
+	case 'd':
+	  break;
+	default:
+	  as_bad (_("Illegal `cinv' parameter: `%c'"), *p);
+	}
     }
-
-  return 0;
 }
 
 /* Retrieve the opcode image of a given register pair.
@@ -1664,7 +1658,7 @@ getidxregp_image (reg r)
    If the register is illegal for the current instruction,
    issue an error.  */
 static int
-getprocreg_image (reg r)
+getprocreg_image (int r)
 {
   const reg_entry *rreg;
   char *reg_name;
@@ -1702,7 +1696,7 @@ getprocreg_image (reg r)
    If the register is illegal for the current instruction,
    issue an error.  */
 static int
-getprocregp_image (reg r)
+getprocregp_image (int r)
 {
   const reg_entry *rreg;
   char *reg_name;
@@ -2504,7 +2498,6 @@ md_assemble (char *op)
 {
   ins cr16_ins;
   char *param, param1[32];
-  char c;
 
   /* Reset global variables for a new instruction.  */
   reset_vars (op);
@@ -2512,7 +2505,6 @@ md_assemble (char *op)
   /* Strip the mnemonic.  */
   for (param = op; *param != 0 && !ISSPACE (*param); param++)
     ;
-  c = *param;
   *param++ = '\0';
 
   /* bCC instuctions and adjust the mnemonic by adding extra white spaces.  */

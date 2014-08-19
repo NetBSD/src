@@ -1,32 +1,39 @@
-/*	$NetBSD: ntpdc.c,v 1.6 2012/06/25 20:23:43 jnemeth Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.6.2.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
  */
-
+#include <config.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <ctype.h>
 #include <signal.h>
 #include <setjmp.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+#ifdef SYS_WINNT
+# include <mswsock.h>
+#endif
+#include <isc/net.h>
+#include <isc/result.h>
 
 #include "ntpdc.h"
 #include "ntp_select.h"
-#include "ntp_io.h"
 #include "ntp_stdlib.h"
 #include "ntp_assert.h"
 #include "ntp_lineedit.h"
-#include "isc/net.h"
-#include "isc/result.h"
+#ifdef OPENSSL
+#include "openssl/evp.h"
+#include "openssl/objects.h"
+#endif
 #include <ssl_applink.c>
 
 #include "ntp_libopts.h"
 #include "ntpdc-opts.h"
-
-#ifdef SYS_WINNT
-# include <Mswsock.h>
-# include <io.h>
-#endif /* SYS_WINNT */
 
 #ifdef SYS_VXWORKS
 				/* vxWorks needs mode flag -casey*/
@@ -220,11 +227,6 @@ static	const char *chosts[MAXHOSTS];
 #define	STREQ(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 
 /*
- * For converting time stamps to dates
- */
-#define	JAN_1970	2208988800	/* 1970 - 1900 in seconds */
-
-/*
  * Jump buffer for longjumping back to the command level
  */
 static	jmp_buf interrupt_buf;
@@ -241,7 +243,6 @@ static	FILE *current_output;
 extern struct xcmd opcmds[];
 
 char *progname;
-volatile int debug;
 
 #ifdef NO_MAIN_ALLOWED
 CALL(ntpdc,"ntpdc",ntpdcmain);
@@ -275,7 +276,6 @@ ntpdcmain(
 	char *argv[]
 	)
 {
-	extern int ntp_optind;
 
 	delay_time.l_ui = 0;
 	delay_time.l_uf = DEFDELAY;
@@ -287,6 +287,7 @@ ntpdcmain(
 
 	init_lib();	/* sets up ipv4_works, ipv6_works */
 	ssl_applink();
+	init_auth();
 
 	/* Check to see if we have IPv6. Otherwise default to IPv4 */
 	if (!ipv6_works)
@@ -316,7 +317,7 @@ ntpdcmain(
 		}
 	}
 
-	debug = DESC(DEBUG_LEVEL).optOccCt;
+	debug = OPT_VALUE_SET_DEBUG_LEVEL;
 
 	if (HAVE_OPT(INTERACTIVE)) {
 		interactive = 1;
@@ -349,62 +350,6 @@ ntpdcmain(
 	    && isatty(fileno(stdin)) && isatty(fileno(stderr))) {
 		interactive = 1;
 	}
-
-#if 0
-	ai_fam_templ = ai_fam_default;
-	while ((c = ntp_getopt(argc, argv, "46c:dilnps")) != EOF)
-	    switch (c) {
-		case '4':
-		    ai_fam_templ = AF_INET;
-		    break;
-		case '6':
-		    ai_fam_templ = AF_INET6;
-		    break;
-		case 'c':
-		    ADDCMD(ntp_optarg);
-		    break;
-		case 'd':
-		    ++debug;
-		    break;
-		case 'i':
-		    interactive = 1;
-		    break;
-		case 'l':
-		    ADDCMD("listpeers");
-		    break;
-		case 'n':
-		    showhostnames = 0;
-		    break;
-		case 'p':
-		    ADDCMD("peers");
-		    break;
-		case 's':
-		    ADDCMD("dmpeers");
-		    break;
-		default:
-		    errflg++;
-		    break;
-	    }
-
-	if (errflg) {
-		(void) fprintf(stderr,
-			       "usage: %s [-46dilnps] [-c cmd] host ...\n",
-			       progname);
-		exit(2);
-	}
-
-	if (ntp_optind == argc) {
-		ADDHOST(DEFHOST);
-	} else {
-		for (; ntp_optind < argc; ntp_optind++)
-		    ADDHOST(argv[ntp_optind]);
-	}
-
-	if (numcmds == 0 && interactive == 0
-	    && isatty(fileno(stdin)) && isatty(fileno(stderr))) {
-		interactive = 1;
-	}
-#endif
 
 #ifndef SYS_WINNT /* Under NT cannot handle SIGINT, WIN32 spawns a handler */
 	if (interactive)
@@ -451,6 +396,8 @@ openhost(
 	char temphost[LENHOSTNAME];
 	int a_info, i;
 	struct addrinfo hints, *ai = NULL;
+	sockaddr_u addr;
+	size_t octets;
 	register const char *cp;
 	char name[LENHOSTNAME];
 	char service[5];
@@ -480,8 +427,8 @@ openhost(
 	 * will return an "IPv4-mapped IPv6 address" address if you
 	 * give it an IPv4 address to lookup.
 	 */
-	strcpy(service, "ntp");
-	memset((char *)&hints, 0, sizeof(struct addrinfo));
+	strlcpy(service, "ntp", sizeof(service));
+	ZERO(hints);
 	hints.ai_family = ai_fam_templ;
 	hints.ai_protocol = IPPROTO_UDP;
 	hints.ai_socktype = SOCK_DGRAM;
@@ -505,7 +452,7 @@ openhost(
 		a_info = getaddrinfo(hname, service, &hints, &ai);	
 	}
 	if (a_info != 0) {
-		(void) fprintf(stderr, "%s\n", gai_strerror(a_info));
+		fprintf(stderr, "%s\n", gai_strerror(a_info));
 		if (ai != NULL)
 			freeaddrinfo(ai);
 		return 0;
@@ -515,30 +462,29 @@ openhost(
 	 * getaddrinfo() has returned without error so ai should not 
 	 * be NULL.
 	 */
-	NTP_INSIST(ai != NULL);
+	INSIST(ai != NULL);
+	ZERO(addr);
+	octets = min(sizeof(addr), ai->ai_addrlen);
+	memcpy(&addr, ai->ai_addr, octets);
 
-	if (ai->ai_canonname == NULL) {
-		strncpy(temphost, stoa((sockaddr_u *)ai->ai_addr),
-		    LENHOSTNAME);
-		temphost[LENHOSTNAME-1] = '\0';
-	} else {
-		strncpy(temphost, ai->ai_canonname, LENHOSTNAME);
-		temphost[LENHOSTNAME-1] = '\0';
-	}
+	if (ai->ai_canonname == NULL)
+		strlcpy(temphost, stoa(&addr), sizeof(temphost));
+	else
+		strlcpy(temphost, ai->ai_canonname, sizeof(temphost));
 
 	if (debug > 2)
-	    printf("Opening host %s\n", temphost);
+		printf("Opening host %s\n", temphost);
 
 	if (havehost == 1) {
 		if (debug > 2)
-		    printf("Closing old host %s\n", currenthost);
-		(void) closesocket(sockfd);
+			printf("Closing old host %s\n", currenthost);
+		closesocket(sockfd);
 		havehost = 0;
 	}
-	(void) strcpy(currenthost, temphost);
+	strlcpy(currenthost, temphost, sizeof(currenthost));
 	
 	/* port maps to the same in both families */
-	s_port = ((struct sockaddr_in6 *)ai->ai_addr)->sin6_port; 
+	s_port = NSRCPORT(&addr);; 
 #ifdef SYS_VXWORKS
 	((struct sockaddr_in6 *)&hostaddr)->sin6_port = htons(SERVER_PORT_NUM);
 	if (ai->ai_family == AF_INET)
@@ -560,16 +506,13 @@ openhost(
 			exit(1);
 		}
 	}
-
-	sockfd = socket(ai->ai_family, SOCK_DGRAM, 0);
-	if (sockfd == INVALID_SOCKET)
-		error("socket");
-#else
-	sockfd = socket(ai->ai_family, SOCK_DGRAM, 0);
-	if (sockfd == -1)
-	    error("socket");
 #endif /* SYS_WINNT */
 
+	sockfd = socket(ai->ai_family, SOCK_DGRAM, 0);
+	if (sockfd == INVALID_SOCKET) {
+		error("socket");
+		exit(-1);
+	}
 	
 #ifdef NEED_RCVBUF_SLOP
 # ifdef SO_RCVBUF
@@ -585,12 +528,13 @@ openhost(
 
 #ifdef SYS_VXWORKS
 	if (connect(sockfd, (struct sockaddr *)&hostaddr, 
-		    sizeof(hostaddr)) == -1)
+		    sizeof(hostaddr)) == -1) {
 #else
-	if (connect(sockfd, (struct sockaddr *)ai->ai_addr,
-		    ai->ai_addrlen) == -1)
+	if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) == -1) {
 #endif /* SYS_VXWORKS */
-	    error("connect");
+		error("connect");
+		exit(-1);
+	}
 
 	freeaddrinfo(ai);
 	havehost = 1;
@@ -625,8 +569,11 @@ sendpkt(
 static void
 growpktdata(void)
 {
+	size_t priorsz;
+
+	priorsz = (size_t)pktdatasize;
 	pktdatasize += INCDATASIZE;
-	pktdata = erealloc(pktdata, (size_t)pktdatasize);
+	pktdata = erealloc_zero(pktdata, (size_t)pktdatasize, priorsz);
 }
 
 
@@ -673,7 +620,7 @@ getresponse(
 	numrecv = 0;
 	*rdata = datap = pktdata;
 	lastseq = 999;	/* too big to be a sequence number */
-	memset(haveseq, 0, sizeof(haveseq));
+	ZERO(haveseq);
 	FD_ZERO(&fds);
 
     again:
@@ -727,35 +674,35 @@ getresponse(
 	 */
 	if (n < (ssize_t)RESP_HEADER_SIZE) {
 		if (debug)
-		    printf("Short (%zd byte) packet received\n", n);
+			printf("Short (%zd byte) packet received\n", n);
 		goto again;
 	}
 	if (INFO_VERSION(rpkt.rm_vn_mode) > NTP_VERSION ||
 	    INFO_VERSION(rpkt.rm_vn_mode) < NTP_OLDVERSION) {
 		if (debug)
-		    printf("Packet received with version %d\n",
-			   INFO_VERSION(rpkt.rm_vn_mode));
+			printf("Packet received with version %d\n",
+			       INFO_VERSION(rpkt.rm_vn_mode));
 		goto again;
 	}
 	if (INFO_MODE(rpkt.rm_vn_mode) != MODE_PRIVATE) {
 		if (debug)
-		    printf("Packet received with mode %d\n",
-			   INFO_MODE(rpkt.rm_vn_mode));
+			printf("Packet received with mode %d\n",
+			       INFO_MODE(rpkt.rm_vn_mode));
 		goto again;
 	}
 	if (INFO_IS_AUTH(rpkt.auth_seq)) {
 		if (debug)
-		    printf("Encrypted packet received\n");
+			printf("Encrypted packet received\n");
 		goto again;
 	}
 	if (!ISRESPONSE(rpkt.rm_vn_mode)) {
 		if (debug)
-		    printf("Received request packet, wanted response\n");
+			printf("Received request packet, wanted response\n");
 		goto again;
 	}
 	if (INFO_MBZ(rpkt.mbz_itemsize) != 0) {
 		if (debug)
-		    printf("Received packet with nonzero MBZ field!\n");
+			printf("Received packet with nonzero MBZ field!\n");
 		goto again;
 	}
 
@@ -764,7 +711,7 @@ getresponse(
 	 */
 	if (rpkt.implementation != implcode || rpkt.request != reqcode) {
 		if (debug)
-		    printf(
+			printf(
 			    "Received implementation/request of %d/%d, wanted %d/%d",
 			    rpkt.implementation, rpkt.request,
 			    implcode, reqcode);
@@ -804,7 +751,7 @@ getresponse(
 	 * If this isn't our first packet, make sure the size matches
 	 * the other ones.
 	 */
-	if (!firstpkt && esize != *rsize) {
+	if (!firstpkt && size != *rsize) {
 		if (debug)
 		    printf("Received itemsize %d, previous %d\n",
 			   size, *rsize);
@@ -846,11 +793,11 @@ getresponse(
 	 * items.  This is so we can play nice with older implementations
 	 */
 
-	tmp_data = rpkt.data;
+	tmp_data = rpkt.u.data;
 	for (i = 0; i < items; i++) {
 		memcpy(datap, tmp_data, (unsigned)size);
 		tmp_data += size;
-		memset(datap + size, 0, pad);
+		zero_mem(datap + size, pad);
 		datap += size + pad;
 	}
 
@@ -913,15 +860,14 @@ sendrequest(
 	int	maclen;
 	char *	pass;
 
-	memset(&qpkt, 0, sizeof(qpkt));
-
+	ZERO(qpkt);
 	qpkt.rm_vn_mode = RM_VN_MODE(0, 0, 0);
 	qpkt.implementation = (u_char)implcode;
 	qpkt.request = (u_char)reqcode;
 
 	datasize = qitems * qsize;
 	if (datasize && qdata != NULL) {
-		memcpy(qpkt.data, qdata, datasize);
+		memcpy(qpkt.u.data, qdata, datasize);
 		qpkt.err_nitems = ERR_NITEMS(0, qitems);
 		qpkt.mbz_itemsize = MBZ_ITEMSIZE(qsize);
 	} else {
@@ -1087,7 +1033,7 @@ again:
 			if (implcode == IMPL_XNTPD)
 				break;
 			(void) fprintf(stderr,
-				       "***Server implementation incompatable with our own\n");
+				       "***Server implementation incompatible with our own\n");
 			break;
 		case INFO_ERR_REQ:
 			(void) fprintf(stderr,
@@ -1181,6 +1127,11 @@ docmd(
 	/*
 	 * Tokenize the command line.  If nothing on it, return.
 	 */
+	if (strlen(cmdline) >= MAXLINE) {
+		fprintf(stderr, "***Command ignored, more than %d characters:\n%s\n",
+			MAXLINE - 1, cmdline);
+		return;
+	}
 	tokenize(cmdline, tokens, &ntok);
 	if (ntok == 0)
 	    return;
@@ -1398,8 +1349,7 @@ getarg(
 	char *cp, *np;
 	static const char *digits = "0123456789";
 
-	memset(argp, 0, sizeof(*argp));
-
+	ZERO(*argp);
 	argp->string = str;
 	argp->type   = code & ~OPT;
 
@@ -1498,15 +1448,13 @@ getnetnum(
 		NTP_INSIST(sizeof(*num) >= ai->ai_addrlen);
 		memcpy(num, ai->ai_addr, ai->ai_addrlen);
 		if (fullhost != NULL) {
-			if (ai->ai_canonname != NULL) {
-				strncpy(fullhost, ai->ai_canonname,
+			if (ai->ai_canonname != NULL)
+				strlcpy(fullhost, ai->ai_canonname,
 					LENHOSTNAME);
-				fullhost[LENHOSTNAME - 1] = '\0';
-			} else {
+			else
 				getnameinfo(&num->sa, SOCKLEN(num),
 					    fullhost, LENHOSTNAME, NULL,
 					    0, 0);
-			}
 		}
 		return 1;
 	}
@@ -1515,21 +1463,22 @@ getnetnum(
 	return 0;
 }
 
+
 /*
  * nntohost - convert network number to host name.  This routine enforces
  *	       the showhostnames setting.
  */
-char *
+const char *
 nntohost(
 	sockaddr_u *netnum
 	)
 {
-	if (!showhostnames)
+	if (!showhostnames || SOCK_UNSPEC(netnum))
 		return stoa(netnum);
-
-	if (ISREFCLOCKADR(netnum))
+	else if (ISREFCLOCKADR(netnum))
 		return refnumtoa(netnum);
-	return socktohost(netnum);
+	else
+		return socktohost(netnum);
 }
 
 
@@ -1563,8 +1512,7 @@ help(
 		for (xcp = opcmds; xcp->keyword != 0; xcp++)
 			list[words++] = xcp->keyword;
 
-		qsort((void *)list, (size_t)words, sizeof(list[0]),
-		      helpsort);
+		qsort((void *)list, words, sizeof(list[0]), helpsort);
 		col = 0;
 		for (word = 0; word < words; word++) {
 			length = strlen(list[word]);
@@ -1578,7 +1526,8 @@ help(
 
 		for (row = 0; row < rows; row++) {
 			for (word = row; word < words; word += rows)
-				fprintf(fp, "%-*.*s", (int)col, (int)col-1, list[word]);
+				fprintf(fp, "%-*.*s", (int)col,
+					(int)col - 1, list[word]);
 			fprintf(fp, "\n");
 		}
 	} else {
@@ -1826,20 +1775,17 @@ passwd(
 			return;
 		}
 	}
-	if (!interactive) {
-		authusekey(info_auth_keyid, info_auth_keytype,
-			   (u_char *)pcmd->argval[0].string);
-		authtrust(info_auth_keyid, 1);
-	} else {
+	if (pcmd->nargs >= 1)
+		pass = pcmd->argval[0].string;
+	else {
 		pass = getpass_keytype(info_auth_keytype);
-		if (*pass == '\0')
-		    (void) fprintf(fp, "Password unchanged\n");
-		else {
-		    authusekey(info_auth_keyid, info_auth_keytype,
-			       (u_char *)pass);
-		    authtrust(info_auth_keyid, 1);
+		if ('\0' == *pass) {
+			fprintf(fp, "Password unchanged\n");
+			return;
 		}
 	}
+	authusekey(info_auth_keyid, info_auth_keytype, (u_char *)pass);
+	authtrust(info_auth_keyid, 1);
 }
 
 

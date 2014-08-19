@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.5 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.5.24.1 2014/08/19 23:45:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,13 +34,14 @@
 	.text
 
 ENTRY(_atomic_cas_32)
-	movl	%sp@(4), %a0
-	movl	%sp@(8), %d0
-	movl	%sp@(12), %d1
-	casl	%d0, %d1, %a0@
+	movl	4(%sp), %a0
+	movl	8(%sp), %d0
+	movl	12(%sp), %d1
+	casl	%d0, %d1, (%a0)
 	/* %d0 now contains the old value */
 	movl	%d0, %a0	/* pointers return also in %a0 */
 	rts
+END(_atomic_cas_32)
 
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
@@ -49,6 +50,7 @@ ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
+CRT_ALIAS(__sync_val_compare_and_swap_4,_atomic_cas_32)
 
 ATOMIC_OP_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)
@@ -58,3 +60,71 @@ ATOMIC_OP_ALIAS(atomic_cas_ulong_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_32)
+
+ENTRY(__sync_bool_compare_and_swap_4)
+	movl	4(%sp), %a0
+	movl	8(%sp), %d3
+	movl	%d3, %d2
+	movl	12(%sp), %d1
+	casl	%d3, %d1, (%a0)
+	/* %d3 now contains the old value */
+	beq	1f
+	clrl	%d0	/* return false */
+	rts
+1:	movl	#1, %d0	/* return success */
+	rts
+END(__sync_bool_compare_and_swap_4)
+
+ENTRY(_atomic_cas_16)
+	movl	4(%sp), %a0
+	movw	8(%sp), %d0
+	movw	10(%sp), %d1
+	casw	%d0, %d1, (%a0)
+	/* %d0 now contains the old value */
+	rts
+END(_atomic_cas_16)
+
+ATOMIC_OP_ALIAS(atomic_cas_16,_atomic_cas_16)
+CRT_ALIAS(__sync_val_compare_and_swap_2,_atomic_cas_16)
+
+ENTRY(__sync_bool_compare_and_swap_2)
+	movl	4(%sp), %a0
+	movw	8(%sp), %d3
+	movw	%d3, %d2
+	movw	10(%sp), %d1
+	casw	%d3, %d1, (%a0)
+	/* %d3 now contains the old value */
+	beq	1f
+	clrl	%d0	/* return failure */
+	rts
+1:	movl	#1, %d0	/* return success */
+	rts
+END(__sync_bool_compare_and_swap_2)
+
+ENTRY(_atomic_cas_8)
+	movl	4(%sp), %a0
+	movb	8(%sp), %d0
+	movb	9(%sp), %d1
+	casb	%d0, %d1, (%a0)
+	/* %d0 now contains the old value */
+	rts
+END(_atomic_cas_8)
+
+ATOMIC_OP_ALIAS(atomic_cas_8,_atomic_cas_8)
+CRT_ALIAS(__sync_val_compare_and_swap_1,_atomic_cas_8)
+
+
+ENTRY(__sync_bool_compare_and_swap_1)
+	movl	4(%sp), %a0
+	movb	8(%sp), %d3
+	movb	%d3, %d2
+	movb	9(%sp), %d1
+	casb	%d3, %d1, (%a0)
+	/* %d3 now contains the old value */
+	beq	1f
+	clrl	%d0	/* return failure */
+	rts
+1:	movl	#1, %d0	/* return success */
+	rts
+END(__sync_bool_compare_and_swap_1)
+

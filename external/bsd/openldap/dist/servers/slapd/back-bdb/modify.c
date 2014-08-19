@@ -1,10 +1,10 @@
-/*	$NetBSD: modify.c,v 1.1.1.3 2010/12/12 15:22:58 adam Exp $	*/
+/*	$NetBSD: modify.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* modify.c - bdb backend modify routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.156.2.19 2010/04/14 23:09:01 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -155,7 +155,6 @@ int bdb_modify_internal(
 				mod->sm_desc->ad_cname.bv_val, 0, 0);
 			err = modify_delete_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
-			assert( err != LDAP_TYPE_OR_VALUE_EXISTS );
 			if( err != LDAP_SUCCESS ) {
 				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
 					err, *text, 0);
@@ -210,6 +209,58 @@ int bdb_modify_internal(
  			if ( err == LDAP_TYPE_OR_VALUE_EXISTS ) {
  				err = LDAP_SUCCESS;
  			}
+
+			if( err != LDAP_SUCCESS ) {
+				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
+					err, *text, 0);
+			}
+ 			break;
+
+		case SLAP_MOD_SOFTDEL:
+			Debug(LDAP_DEBUG_ARGS,
+				"bdb_modify_internal: softdel %s\n",
+				mod->sm_desc->ad_cname.bv_val, 0, 0);
+ 			/* Avoid problems in index_delete_mods()
+ 			 * We need to add index if necessary.
+ 			 */
+ 			mod->sm_op = LDAP_MOD_DELETE;
+
+			err = modify_delete_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
+
+ 			mod->sm_op = SLAP_MOD_SOFTDEL;
+
+			if ( err == LDAP_SUCCESS ) {
+				got_delete = 1;
+			} else if ( err == LDAP_NO_SUCH_ATTRIBUTE ) {
+ 				err = LDAP_SUCCESS;
+ 			}
+
+			if( err != LDAP_SUCCESS ) {
+				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
+					err, *text, 0);
+			}
+ 			break;
+
+		case SLAP_MOD_ADD_IF_NOT_PRESENT:
+			if ( attr_find( e->e_attrs, mod->sm_desc ) != NULL ) {
+				/* skip */
+				err = LDAP_SUCCESS;
+				break;
+			}
+
+			Debug(LDAP_DEBUG_ARGS,
+				"bdb_modify_internal: add_if_not_present %s\n",
+				mod->sm_desc->ad_cname.bv_val, 0, 0);
+ 			/* Avoid problems in index_add_mods()
+ 			 * We need to add index if necessary.
+ 			 */
+ 			mod->sm_op = LDAP_MOD_ADD;
+
+			err = modify_add_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
+
+ 			mod->sm_op = SLAP_MOD_ADD_IF_NOT_PRESENT;
 
 			if( err != LDAP_SUCCESS ) {
 				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
@@ -291,31 +342,25 @@ int bdb_modify_internal(
 			if ( a2 ) {
 				/* need to detect which values were deleted */
 				int i, j;
-				struct berval tmp;
-				j = ap->a_numvals;
-				for ( i=0; i<j; ) {
+				/* let add know there were deletes */
+				if ( a2->a_flags & SLAP_ATTR_IXADD )
+					a2->a_flags |= SLAP_ATTR_IXDEL;
+				vals = op->o_tmpalloc( (ap->a_numvals + 1) *
+					sizeof(struct berval), op->o_tmpmemctx );
+				j = 0;
+				for ( i=0; i < ap->a_numvals; i++ ) {
 					rc = attr_valfind( a2, SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH,
 						&ap->a_nvals[i], NULL, op->o_tmpmemctx );
-					/* Move deleted values to end of array */
-					if ( rc == LDAP_NO_SUCH_ATTRIBUTE ) {
-						j--;
-						if ( i != j ) {
-							tmp = ap->a_nvals[j];
-							ap->a_nvals[j] = ap->a_nvals[i];
-							ap->a_nvals[i] = tmp;
-							tmp = ap->a_vals[j];
-							ap->a_vals[j] = ap->a_vals[i];
-							ap->a_vals[i] = tmp;
-						}
-						continue;
-					}
-					i++;
+					/* Save deleted values */
+					if ( rc == LDAP_NO_SUCH_ATTRIBUTE )
+						vals[j++] = ap->a_nvals[i];
 				}
-				vals = &ap->a_nvals[j];
+				BER_BVZERO(vals+j);
 			} else {
 				/* attribute was completely deleted */
 				vals = ap->a_nvals;
 			}
+			rc = 0;
 			if ( !BER_BVISNULL( vals )) {
 				rc = bdb_index_values( op, tid, ap->a_desc,
 					vals, e->e_id, SLAP_INDEX_DELETE_OP );
@@ -325,9 +370,11 @@ int bdb_modify_internal(
 						op->o_log_prefix, ap->a_desc->ad_cname.bv_val, 0 );
 					attrs_free( e->e_attrs );
 					e->e_attrs = save_attrs;
-					return rc;
 				}
 			}
+			if ( vals != ap->a_nvals )
+				op->o_tmpfree( vals, op->o_tmpmemctx );
+			if ( rc ) return rc;
 		}
 	}
 
@@ -335,9 +382,53 @@ int bdb_modify_internal(
 	for ( ap = e->e_attrs; ap != NULL; ap = ap->a_next ) {
 		if (ap->a_flags & SLAP_ATTR_IXADD) {
 			ap->a_flags &= ~SLAP_ATTR_IXADD;
-			rc = bdb_index_values( op, tid, ap->a_desc,
-				ap->a_nvals,
-				e->e_id, SLAP_INDEX_ADD_OP );
+			if ( ap->a_flags & SLAP_ATTR_IXDEL ) {
+				/* if any values were deleted, we must readd index
+				 * for all remaining values.
+				 */
+				ap->a_flags &= ~SLAP_ATTR_IXDEL;
+				rc = bdb_index_values( op, tid, ap->a_desc,
+					ap->a_nvals,
+					e->e_id, SLAP_INDEX_ADD_OP );
+			} else {
+				int found = 0;
+				/* if this was only an add, we only need to index
+				 * the added values.
+				 */
+				for ( ml = modlist; ml != NULL; ml = ml->sml_next ) {
+					struct berval *vals;
+					if ( ml->sml_desc != ap->a_desc || !ml->sml_numvals )
+						continue;
+					found = 1;
+					switch( ml->sml_op ) {
+					case LDAP_MOD_ADD:
+					case LDAP_MOD_REPLACE:
+					case LDAP_MOD_INCREMENT:
+					case SLAP_MOD_SOFTADD:
+					case SLAP_MOD_ADD_IF_NOT_PRESENT:
+						if ( ml->sml_op == LDAP_MOD_INCREMENT )
+							vals = ap->a_nvals;
+						else if ( ml->sml_nvalues )
+							vals = ml->sml_nvalues;
+						else
+							vals = ml->sml_values;
+						rc = bdb_index_values( op, tid, ap->a_desc,
+							vals, e->e_id, SLAP_INDEX_ADD_OP );
+						break;
+					}
+					if ( rc )
+						break;
+				}
+				/* This attr was affected by a modify of a subtype, so
+				 * there was no direct match in the modlist. Just readd
+				 * all of its values.
+				 */
+				if ( !found ) {
+					rc = bdb_index_values( op, tid, ap->a_desc,
+						ap->a_nvals,
+						e->e_id, SLAP_INDEX_ADD_OP );
+				}
+			}
 			if ( rc != LDAP_SUCCESS ) {
 				Debug( LDAP_DEBUG_ANY,
 				       "%s: attribute \"%s\" index add failure\n",
@@ -474,6 +565,8 @@ retry:	/* transaction retry */
 		rs->sr_text = "internal error";
 		goto return_results;
 	}
+	Debug( LDAP_DEBUG_TRACE, LDAP_XSTRING(bdb_modify) ": txn1 id: %x\n",
+		ltid->id(ltid), 0, 0 );
 
 	opinfo.boi_oe.oe_key = bdb;
 	opinfo.boi_txn = ltid;
@@ -593,6 +686,8 @@ retry:	/* transaction retry */
 		rs->sr_text = "internal error";
 		goto return_results;
 	}
+	Debug( LDAP_DEBUG_TRACE, LDAP_XSTRING(bdb_modify) ": txn2 id: %x\n",
+		lt2->id(lt2), 0, 0 );
 	/* Modify the entry */
 	dummy = *e;
 	rs->sr_err = bdb_modify_internal( op, lt2, op->orm_modlist,

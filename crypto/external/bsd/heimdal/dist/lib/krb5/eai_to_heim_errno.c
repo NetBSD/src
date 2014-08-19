@@ -1,4 +1,4 @@
-/*	$NetBSD: eai_to_heim_errno.c,v 1.1.1.1 2011/04/13 18:15:33 elric Exp $	*/
+/*	$NetBSD: eai_to_heim_errno.c,v 1.1.1.1.10.1 2014/08/19 23:45:19 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
@@ -68,6 +68,10 @@ krb5_eai_to_heim_errno(int eai_errno, int system_error)
 	return HEIM_EAI_MEMORY;
 #if defined(EAI_NODATA) && EAI_NODATA != EAI_NONAME
     case EAI_NODATA:
+	return HEIM_EAI_NODATA;
+#endif
+#ifdef WSANO_DATA
+    case WSANO_DATA:
 	return HEIM_EAI_NODATA;
 #endif
     case EAI_NONAME:

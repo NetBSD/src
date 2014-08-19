@@ -1,4 +1,4 @@
-# $NetBSD: services,v 1.95.2.2 2013/06/23 06:26:21 tls Exp $
+# $NetBSD: services,v 1.95.2.3 2014/08/19 23:45:50 tls Exp $
 # See also: services(5), http://www.sethwklein.net/projects/iana-etc/
 #
 #  Last Updated
@@ -19742,7 +19742,7 @@ chat		531/udp
 uucpd		540/tcp
 uucpd		540/udp
 rdist		541/tcp	rdistd
-rfs_server	556/tcp	rfs		# Brunhoff remote filesystem
+rfs_server	556/tcp	rfs		# Brunhoff remote file system
 smtps		465/tcp			# smtp protocol over TLS/SSL
 smtps		465/udp			# smtp protocol over TLS/SSL
 kdc		750/tcp	kerberos4

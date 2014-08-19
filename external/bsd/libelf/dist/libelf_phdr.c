@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_phdr.c,v 1.4 2010/02/22 10:48:33 darran Exp $	*/
+/*	$NetBSD: libelf_phdr.c,v 1.4.12.1 2014/08/19 23:47:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -45,7 +45,7 @@
 void *
 _libelf_getphdr(Elf *e, int ec)
 {
-	size_t phnum, phentsize;
+	size_t phnum;
 	size_t fsz, msz;
 	uint64_t phoff;
 	Elf32_Ehdr *eh32;
@@ -76,11 +76,9 @@ _libelf_getphdr(Elf *e, int ec)
 
 	if (ec == ELFCLASS32) {
 		eh32      = (Elf32_Ehdr *) ehdr;
-		phentsize = eh32->e_phentsize;
 		phoff     = (uint64_t) eh32->e_phoff;
 	} else {
 		eh64      = (Elf64_Ehdr *) ehdr;
-		phentsize = eh64->e_phentsize;
 		phoff     = (uint64_t) eh64->e_phoff;
 	}
 

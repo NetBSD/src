@@ -1,8 +1,8 @@
-# $NetBSD: Makefile.cdrom,v 1.7.2.1 2013/02/25 00:24:26 tls Exp $
+# $NetBSD: Makefile.cdrom,v 1.7.2.2 2014/08/19 23:45:37 tls Exp $
 
 .include <bsd.own.mk>
 
-SYSINSTDIR!= cd ${.CURDIR}/../../../utils/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
+SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
 
 # Need multidot for the boot loader to read kernel modules as it doesn't
 # understand rockridge.
@@ -35,6 +35,7 @@ CDRUNTIME+=	./usr/bin/sed
 CDRUNTIME+=	./usr/bin/sort
 CDRUNTIME+=	./usr/bin/tip
 CDRUNTIME+=	./usr/bin/tput
+CDRUNTIME+=	./usr/bin/vi
 CDRUNTIME+=	./usr/bin/vmstat
 CDRUNTIME+=	./usr/lib/libbz2.so*
 CDRUNTIME+=	./usr/lib/libc.so*

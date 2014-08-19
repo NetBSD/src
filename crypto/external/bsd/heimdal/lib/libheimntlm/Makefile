@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:51 elric Exp $
+# $NetBSD: Makefile,v 1.1.10.1 2014/08/19 23:45:21 tls Exp $
 
 USE_FORT?= yes	# cryptographic software
 
@@ -11,8 +11,10 @@ NOLINT=
 
 LIB=		heimntlm
 
-LIBDPLIBS+=	asn1    ${.CURDIR}/../libasn1 \
-		krb5    ${.CURDIR}/../libkrb5 \
+LIBDPLIBS+=	asn1	${.CURDIR}/../libasn1 \
+		com_err	${.CURDIR}/../libcom_err \
+		crypto	${SSLBASE}/lib/libcrypto \
+		krb5	${.CURDIR}/../libkrb5 \
 		roken	${.CURDIR}/../libroken
 
 HEIMSRCS= ntlm_err.et ntlm.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_restore_cred.c,v 1.2.8.1 2013/06/23 06:28:27 tls Exp $	*/
+/*	$NetBSD: openpam_restore_cred.c,v 1.2.8.2 2014/08/19 23:52:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_restore_cred.c 437 2011-09-13 12:00:13Z des 
+ * Id: openpam_restore_cred.c 648 2013-03-05 17:54:27Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -52,6 +52,7 @@
 #include <security/pam_appl.h>
 
 #include "openpam_impl.h"
+#include "openpam_cred.h"
 
 /*
  * OpenPAM extension

@@ -73,6 +73,7 @@ cpu-crx.c
 cpu-d10v.c
 cpu-d30v.c
 cpu-dlx.c
+cpu-epiphany.c
 cpu-fr30.c
 cpu-frv.c
 cpu-h8300.c
@@ -85,6 +86,7 @@ cpu-i960.c
 cpu-ia64.c
 cpu-ip2k.c
 cpu-iq2000.c
+cpu-k1om.c
 cpu-l1om.c
 cpu-lm32.c
 cpu-m10200.c
@@ -110,6 +112,7 @@ cpu-pdp11.c
 cpu-pj.c
 cpu-plugin.c
 cpu-powerpc.c
+cpu-rl78.c
 cpu-rs6000.c
 cpu-rx.c
 cpu-s390.c
@@ -122,6 +125,8 @@ cpu-tic4x.c
 cpu-tic54x.c
 cpu-tic6x.c
 cpu-tic80.c
+cpu-tilegx.c
+cpu-tilepro.c
 cpu-v850.c
 cpu-vax.c
 cpu-w65.c
@@ -159,6 +164,7 @@ elf32-crx.c
 elf32-d10v.c
 elf32-d30v.c
 elf32-dlx.c
+elf32-epiphany.c
 elf32-fr30.c
 elf32-frv.c
 elf32-gen.c
@@ -190,6 +196,7 @@ elf32-openrisc.c
 elf32-or32.c
 elf32-pj.c
 elf32-ppc.c
+elf32-rl78.c
 elf32-rx.c
 elf32-s390.c
 elf32-score.c
@@ -201,6 +208,8 @@ elf32-sh64.c
 elf32-sparc.c
 elf32-spu.c
 elf32-tic6x.c
+elf32-tilegx.c
+elf32-tilepro.c
 elf32-v850.c
 elf32-vax.c
 elf32-xc16x.c
@@ -217,14 +226,17 @@ elf64-ppc.c
 elf64-s390.c
 elf64-sh64.c
 elf64-sparc.c
+elf64-tilegx.c
 elf64-x86-64.c
 elf64.c
 elfcode.h
 elfcore.h
 elflink.c
 elfn32-mips.c
+elfxx-ia64.c
 elfxx-mips.c
 elfxx-sparc.c
+elfxx-tilegx.c
 epoc-pe-arm.c
 epoc-pei-arm.c
 format.c
@@ -346,7 +358,6 @@ vms-alpha.c
 vms-lib.c
 vms-misc.c
 vms.h
-xcoff-target.h
 xcofflink.c
 xsym.c
 xsym.h

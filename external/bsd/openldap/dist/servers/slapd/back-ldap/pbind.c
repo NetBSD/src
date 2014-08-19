@@ -1,10 +1,10 @@
-/*	$NetBSD: pbind.c,v 1.1.1.1 2010/12/12 15:23:06 adam Exp $	*/
+/*	$NetBSD: pbind.c,v 1.1.1.1.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* pbind.c - passthru Bind overlay */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/pbind.c,v 1.1.2.2 2010/04/14 22:31:48 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2010 The OpenLDAP Foundation.
+ * Copyright 2003-2014 The OpenLDAP Foundation.
  * Portions Copyright 2003-2010 Howard Chu.
  * All rights reserved.
  *

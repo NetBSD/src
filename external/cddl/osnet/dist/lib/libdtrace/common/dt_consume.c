@@ -868,9 +868,9 @@ dt_print_stack(dtrace_hdl_t *dtp, FILE *fp, const char *format,
 
 		if (dtrace_lookup_by_addr(dtp, pc, &sym, &dts) == 0) {
 			if (pc > sym.st_value) {
-				(void) snprintf(c, sizeof (c), "%s`%s+0x%llx",
-				    dts.dts_object, dts.dts_name,
-				    pc - sym.st_value);
+				(void) snprintf(c, sizeof (c),
+				    "%s`%s+0x%" PRIx64, dts.dts_object,
+				    dts.dts_name, pc - sym.st_value);
 			} else {
 				(void) snprintf(c, sizeof (c), "%s`%s",
 				    dts.dts_object, dts.dts_name);
@@ -882,10 +882,11 @@ dt_print_stack(dtrace_hdl_t *dtp, FILE *fp, const char *format,
 			 * interested in the containing module.
 			 */
 			if (dtrace_lookup_by_addr(dtp, pc, NULL, &dts) == 0) {
-				(void) snprintf(c, sizeof (c), "%s`0x%llx",
+				(void) snprintf(c, sizeof (c), "%s`0x%" PRIx64,
 				    dts.dts_object, pc);
 			} else {
-				(void) snprintf(c, sizeof (c), "0x%llx", pc);
+				(void) snprintf(c, sizeof (c),
+				    "0x%" PRIx64, pc);
 			}
 		}
 
@@ -967,8 +968,8 @@ dt_print_ustack(dtrace_hdl_t *dtp, FILE *fp, const char *format,
 
 			if (pc[i] > sym.st_value) {
 				(void) snprintf(c, sizeof (c),
-				    "%s`%s+0x%llx", dt_basename(objname), name,
-				    (u_longlong_t)(pc[i] - sym.st_value));
+				    "%s`%s+0x%" PRIx64, dt_basename(objname),
+				    name, (pc[i] - sym.st_value));
 			} else {
 				(void) snprintf(c, sizeof (c),
 				    "%s`%s", dt_basename(objname), name);
@@ -1001,11 +1002,11 @@ dt_print_ustack(dtrace_hdl_t *dtp, FILE *fp, const char *format,
 			if (P != NULL && proc_objname(P, pc[i], objname,
 #endif
 			    sizeof (objname)) != 0) {
-				(void) snprintf(c, sizeof (c), "%s`0x%llx",
-				    dt_basename(objname), (u_longlong_t)pc[i]);
+				(void) snprintf(c, sizeof (c), "%s`0x%" PRIx64,
+				    dt_basename(objname), pc[i]);
 			} else {
-				(void) snprintf(c, sizeof (c), "0x%llx",
-				    (u_longlong_t)pc[i]);
+				(void) snprintf(c, sizeof (c), "0x%" PRIx64,
+				    pc[i]);
 			}
 		}
 
@@ -1133,7 +1134,7 @@ dt_print_umod(dtrace_hdl_t *dtp, FILE *fp, const char *format, caddr_t addr)
 #endif
 		(void) snprintf(c, sizeof (c), "%s", dt_basename(objname));
 	} else {
-		(void) snprintf(c, sizeof (c), "0x%llx", (u_longlong_t)pc);
+		(void) snprintf(c, sizeof (c), "0x%" PRIx64, pc);
 	}
 
 	err = dt_printf(dtp, fp, format, c);
@@ -1480,11 +1481,10 @@ dt_print_sym(dtrace_hdl_t *dtp, FILE *fp, const char *format, caddr_t addr)
 		 * the containing module.
 		 */
 		if (dtrace_lookup_by_addr(dtp, pc, NULL, &dts) == 0) {
-			(void) snprintf(c, sizeof (c), "%s`0x%llx",
-			    dts.dts_object, (u_longlong_t)pc);
+			(void) snprintf(c, sizeof (c), "%s`0x%" PRIx64,
+			    dts.dts_object, pc);
 		} else {
-			(void) snprintf(c, sizeof (c), "0x%llx",
-			    (u_longlong_t)pc);
+			(void) snprintf(c, sizeof (c), "0x%" PRIx64, pc);
 		}
 	}
 
@@ -1508,7 +1508,7 @@ dt_print_mod(dtrace_hdl_t *dtp, FILE *fp, const char *format, caddr_t addr)
 	if (dtrace_lookup_by_addr(dtp, pc, NULL, &dts) == 0) {
 		(void) snprintf(c, sizeof (c), "%s", dts.dts_object);
 	} else {
-		(void) snprintf(c, sizeof (c), "0x%llx", (u_longlong_t)pc);
+		(void) snprintf(c, sizeof (c), "0x%" PRIx64, pc);
 	}
 
 	if (dt_printf(dtp, fp, format, c) < 0)

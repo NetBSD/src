@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.43.6.1 2013/02/25 00:23:50 tls Exp $ */
+/* $NetBSD: csh.c,v 1.43.6.2 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.43.6.1 2013/02/25 00:23:50 tls Exp $");
+__RCSID("$NetBSD: csh.c,v 1.43.6.2 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,9 +93,9 @@ int reenter = 0;
 
 extern char **environ;
 
-static int readf(void *, char *, int);
+static ssize_t readf(void *, void *, size_t);
 static off_t seekf(void *, off_t, int);
-static int writef(void *, const char *, int);
+static ssize_t writef(void *, const void *, size_t);
 static int closef(void *);
 static int srccat(Char *, Char *);
 static int srcfile(const char *, int, int);
@@ -210,11 +210,14 @@ main(int argc, char *argv[])
     (void)fclose(cshin);
     (void)fclose(cshout);
     (void)fclose(csherr);
-    if (!(cshin  = funopen((void *) &SHIN,  readf, writef, seekf, closef)))
+    if (!(cshin  = funopen2((void *) &SHIN,  readf, writef, seekf, NULL,
+	closef)))
 	exit(1);
-    if (!(cshout = funopen((void *) &SHOUT, readf, writef, seekf, closef)))
+    if (!(cshout = funopen2((void *) &SHOUT, readf, writef, seekf, NULL,
+	closef)))
 	exit(1);
-    if (!(csherr = funopen((void *) &SHERR, readf, writef, seekf, closef)))
+    if (!(csherr = funopen2((void *) &SHERR, readf, writef, seekf, NULL,
+	closef)))
 	exit(1);
     (void)setvbuf(cshin,  NULL, _IOLBF, 0);
     (void)setvbuf(cshout, NULL, _IOLBF, 0);
@@ -675,7 +678,7 @@ srcunit(int unit, int onlyown, int hflg)
     sigset_t nsigset, osigset;
     jmp_buf oldexit;
     Char *oarginp, *oevalp, **oevalvec, *ogointr;
-    char OHIST;
+    Char OHIST;
     int oSHIN, oinsource, oldintty, oonelflg; 
     int oenterhist, otell;      
     /* The (few) real local variables */
@@ -1233,15 +1236,15 @@ gethdir(Char *home)
  */
 #define DESC(a) (*((int *) (a)) - (didfds && *((int *) a) >= FSHIN ? FSHIN : 0))
 
-static int
-readf(void *oreo, char *buf, int siz)
+static ssize_t
+readf(void *oreo, void *buf, size_t siz)
 {
     return read(DESC(oreo), buf, siz);
 }
 
 
-static int
-writef(void *oreo, const char *buf, int siz)
+static ssize_t
+writef(void *oreo, const void *buf, size_t siz)
 {
     return write(DESC(oreo), buf, siz);
 }
@@ -1314,7 +1317,7 @@ defaultpath(void)
     Char **blk, **blkp;
     char *ptr;
 
-    blkp = blk = (Char **)xmalloc((size_t) sizeof(Char *) * 10);
+    blkp = blk = xmalloc((size_t) sizeof(Char *) * 10);
 
 #define DIRAPPEND(a)  \
 	if (stat(ptr = a, &stb) == 0 && S_ISDIR(stb.st_mode)) \
@@ -1378,10 +1381,13 @@ printpromptstr(EditLine *elx) {
     for (cp = value(STRprompt); *cp; cp++) {
 	if (i >= sizeof(pbuf))
 	    break;
-	if (*cp == HIST)
-	    i += snprintf(pbuf + i, sizeof(pbuf) - i, "%d", eventno + 1);
-	else
-	    pbuf[i++] = *cp;
+	if (*cp == HIST) {
+	    int r;
+	    r = snprintf(pbuf + i, sizeof(pbuf) - i, "%d", eventno + 1);
+	    if (r > 0)
+		i += (size_t)r;
+	} else
+	    pbuf[i++] = (char)*cp;
     }
     if (i >= sizeof(pbuf))
 	i = sizeof(pbuf) - 1;

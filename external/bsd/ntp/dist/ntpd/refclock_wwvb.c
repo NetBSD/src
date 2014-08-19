@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_wwvb.c,v 1.2 2012/02/01 07:46:22 kardel Exp $	*/
+/*	$NetBSD: refclock_wwvb.c,v 1.2.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * refclock_wwvb - clock driver for Spectracom WWVB and GPS receivers
@@ -152,11 +152,12 @@ static	void	wwvb_receive	(struct recvbuf *);
 static	void	wwvb_poll	(int, struct peer *);
 static	void	wwvb_timer	(int, struct peer *);
 #ifdef HAVE_PPSAPI
-static	void	wwvb_control	(int, struct refclockstat *,
+static	void	wwvb_control	(int, const struct refclockstat *,
 				 struct refclockstat *, struct peer *);
 #define		WWVB_CONTROL	wwvb_control
 #else
-#define		WWVB_CONTROL	noentry
+#define		WWVB_CONTROL	(void)(*)
+noentry
 #endif /* HAVE_PPSAPI */
 
 /*
@@ -201,7 +202,7 @@ wwvb_start(
 	up = emalloc_zero(sizeof(*up));
 	pp = peer->procptr;
 	pp->io.clock_recv = wwvb_receive;
-	pp->io.srcclock = (void *)peer;
+	pp->io.srcclock = peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
@@ -231,8 +232,8 @@ wwvb_shutdown(
 	struct peer *peer
 	)
 {
-	register struct wwvbunit *up;
-	struct refclockproc *pp;
+	struct refclockproc *	pp;
+	struct wwvbunit *	up;
 
 	pp = peer->procptr;
 	up = pp->unitptr;
@@ -397,28 +398,28 @@ wwvb_receive(
 	 */
 	switch (qualchar) {
 
-	    case ' ':
+	case ' ':
 		pp->disp = .001;
 		pp->lastref = pp->lastrec;
 		break;
 
-	    case 'A':
+	case 'A':
 		pp->disp = .01;
 		break;
 
-	    case 'B':
+	case 'B':
 		pp->disp = .1;
 		break;
 
-	    case 'C':
+	case 'C':
 		pp->disp = .5;
 		break;
 
-	    case 'D':
+	case 'D':
 		pp->disp = MAXDISPERSE;
 		break;
 
-	    default:
+	default:
 		pp->disp = MAXDISPERSE;
 		refclock_report(peer, CEVNT_BADREPLY);
 		break;
@@ -457,7 +458,9 @@ wwvb_timer(
 	register struct wwvbunit *up;
 	struct refclockproc *pp;
 	char	pollchar;	/* character sent to clock */
+#ifdef DEBUG
 	l_fp	now;
+#endif
 
 	/*
 	 * Time to poll the clock. The Spectracom clock responds to a
@@ -557,7 +560,7 @@ wwvb_poll(
 static void
 wwvb_control(
 	int unit,
-	struct refclockstat *in_st,
+	const struct refclockstat *in_st,
 	struct refclockstat *out_st,
 	struct peer *peer
 	)
@@ -593,9 +596,8 @@ wwvb_control(
 		return;
 	}
 
-	NLOG(NLOG_CLOCKINFO)
-		msyslog(LOG_WARNING, "%s flag1 1 but PPSAPI fails",
-			refnumtoa(&peer->srcadr));
+	msyslog(LOG_WARNING, "%s flag1 1 but PPSAPI fails",
+		refnumtoa(&peer->srcadr));
 }
 #endif	/* HAVE_PPSAPI */
 

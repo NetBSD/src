@@ -1,7 +1,7 @@
-/*	$NetBSD: httpd.c,v 1.4 2012/06/05 00:42:28 christos Exp $	*/
+/*	$NetBSD: httpd.c,v 1.4.2.1 2014/08/19 23:46:32 tls Exp $	*/
 
 /*
- * Copyright (C) 2006-2008, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006-2008, 2010-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,7 @@
 #include <isc/socket.h>
 #include <isc/string.h>
 #include <isc/task.h>
+#include <isc/time.h>
 #include <isc/util.h>
 
 #include <string.h>
@@ -51,28 +52,14 @@
 #define EXIT(x) do { fprintf(stderr, "EXIT %s\n", (x)); } while (/*CONSTCOND*/0)
 #define NOTICE(x) do { fprintf(stderr, "NOTICE %s\n", (x)); } while (/*CONSTCOND*/0)
 #else
-#define ENTER(x) do { } while(0)
-#define EXIT(x) do { } while(0)
-#define NOTICE(x) do { } while(0)
+#define ENTER(x) do { } while(/*CONSTCOND*/0)
+#define EXIT(x) do { } while(/*CONSTCOND*/0)
+#define NOTICE(x) do { } while(/*CONSTCOND*/0)
 #endif
 
 #define HTTP_RECVLEN			1024
 #define HTTP_SENDGROW			1024
 #define HTTP_SEND_MAXLEN		10240
-
-/*%
- * HTTP urls.  These are the URLs we manage, and the function to call to
- * provide the data for it.  We pass in the base url (so the same function
- * can handle multiple requests), and a structure to fill in to return a
- * result to the client.  We also pass in a pointer to be filled in for
- * the data cleanup function.
- */
-struct isc_httpdurl {
-	char			       *url;
-	isc_httpdaction_t	       *action;
-	void			       *action_arg;
-	ISC_LINK(isc_httpdurl_t)	link;
-};
 
 #define HTTPD_CLOSE		0x0001 /* Got a Connection: close header */
 #define HTTPD_FOUNDHOST		0x0002 /* Got a Host: header */
@@ -89,6 +76,7 @@ struct isc_httpd {
 	 */
 	char			recvbuf[HTTP_RECVLEN]; /*%< receive buffer */
 	isc_uint32_t		recvlen;	/*%< length recv'd */
+	char		       *headers;	/*%< set in process_request() */
 	unsigned int		method;
 	char		       *url;
 	char		       *querystring;
@@ -219,20 +207,12 @@ static isc_result_t process_request(isc_httpd_t *, int);
 static void httpdmgr_destroy(isc_httpdmgr_t *);
 static isc_result_t grow_headerspace(isc_httpd_t *);
 static void reset_client(isc_httpd_t *httpd);
-static isc_result_t render_404(const char *, const char *,
-			       void *,
-			       unsigned int *, const char **,
-			       const char **, isc_buffer_t *,
-			       isc_httpdfree_t **, void **);
-static isc_result_t render_500(const char *, const char *,
-			       void *,
-			       unsigned int *, const char **,
-			       const char **, isc_buffer_t *,
-			       isc_httpdfree_t **, void **);
+
+static isc_httpdaction_t render_404;
+static isc_httpdaction_t render_500;
 
 static void
-destroy_client(isc_httpd_t **httpdp)
-{
+destroy_client(isc_httpd_t **httpdp) {
 	isc_httpd_t *httpd = *httpdp;
 	isc_httpdmgr_t *httpdmgr = httpd->mgr;
 
@@ -323,8 +303,7 @@ isc_httpdmgr_create(isc_mem_t *mctx, isc_socket_t *sock, isc_task_t *task,
 }
 
 static void
-httpdmgr_destroy(isc_httpdmgr_t *httpdmgr)
-{
+httpdmgr_destroy(isc_httpdmgr_t *httpdmgr) {
 	isc_mem_t *mctx;
 	isc_httpdurl_t *url;
 
@@ -381,8 +360,7 @@ httpdmgr_destroy(isc_httpdmgr_t *httpdmgr)
 #define BUFLENOK(s) (httpd->recvbuf - (s) < HTTP_RECVLEN)
 
 static isc_result_t
-process_request(isc_httpd_t *httpd, int length)
-{
+process_request(isc_httpd_t *httpd, int length) {
 	char *s;
 	char *p;
 	int delim;
@@ -392,6 +370,7 @@ process_request(isc_httpd_t *httpd, int length)
 	httpd->recvlen += length;
 
 	httpd->recvbuf[httpd->recvlen] = 0;
+	httpd->headers = NULL;
 
 	/*
 	 * If we don't find a blank line in our buffer, return that we need
@@ -496,6 +475,8 @@ process_request(isc_httpd_t *httpd, int length)
 	p = s + 1;
 	s = p;
 
+	httpd->headers = s;
+
 	if (strstr(s, "Connection: close") != NULL)
 		httpd->flags |= HTTPD_CLOSE;
 
@@ -515,8 +496,7 @@ process_request(isc_httpd_t *httpd, int length)
 }
 
 static void
-isc_httpd_accept(isc_task_t *task, isc_event_t *ev)
-{
+isc_httpd_accept(isc_task_t *task, isc_event_t *ev) {
 	isc_result_t result;
 	isc_httpdmgr_t *httpdmgr = ev->ev_arg;
 	isc_httpd_t *httpd;
@@ -611,8 +591,8 @@ isc_httpd_accept(isc_task_t *task, isc_event_t *ev)
 }
 
 static isc_result_t
-render_404(const char *url, const char *querystring,
-	   void *arg,
+render_404(const char *url, isc_httpdurl_t *urlinfo,
+	   const char *querystring, const char *headers, void *arg,
 	   unsigned int *retcode, const char **retmsg,
 	   const char **mimetype, isc_buffer_t *b,
 	   isc_httpdfree_t **freecb, void **freecb_args)
@@ -620,7 +600,9 @@ render_404(const char *url, const char *querystring,
 	static char msg[] = "No such URL.";
 
 	UNUSED(url);
+	UNUSED(urlinfo);
 	UNUSED(querystring);
+	UNUSED(headers);
 	UNUSED(arg);
 
 	*retcode = 404;
@@ -635,8 +617,8 @@ render_404(const char *url, const char *querystring,
 }
 
 static isc_result_t
-render_500(const char *url, const char *querystring,
-	   void *arg,
+render_500(const char *url, isc_httpdurl_t *urlinfo,
+	   const char *querystring, const char *headers, void *arg,
 	   unsigned int *retcode, const char **retmsg,
 	   const char **mimetype, isc_buffer_t *b,
 	   isc_httpdfree_t **freecb, void **freecb_args)
@@ -644,7 +626,9 @@ render_500(const char *url, const char *querystring,
 	static char msg[] = "Internal server failure.";
 
 	UNUSED(url);
+	UNUSED(urlinfo);
 	UNUSED(querystring);
+	UNUSED(headers);
 	UNUSED(arg);
 
 	*retcode = 500;
@@ -659,8 +643,7 @@ render_500(const char *url, const char *querystring,
 }
 
 static void
-isc_httpd_recvdone(isc_task_t *task, isc_event_t *ev)
-{
+isc_httpd_recvdone(isc_task_t *task, isc_event_t *ev) {
 	isc_region_t r;
 	isc_result_t result;
 	isc_httpd_t *httpd = ev->ev_arg;
@@ -712,8 +695,9 @@ isc_httpd_recvdone(isc_task_t *task, isc_event_t *ev)
 		url = ISC_LIST_NEXT(url, link);
 	}
 	if (url == NULL)
-		result = httpd->mgr->render_404(httpd->url, httpd->querystring,
-						NULL,
+		result = httpd->mgr->render_404(httpd->url, NULL,
+						httpd->querystring,
+						NULL, NULL,
 						&httpd->retcode,
 						&httpd->retmsg,
 						&httpd->mimetype,
@@ -721,14 +705,18 @@ isc_httpd_recvdone(isc_task_t *task, isc_event_t *ev)
 						&httpd->freecb,
 						&httpd->freecb_arg);
 	else
-		result = url->action(httpd->url, httpd->querystring,
+		result = url->action(httpd->url, url,
+				     httpd->querystring,
+				     httpd->headers,
 				     url->action_arg,
 				     &httpd->retcode, &httpd->retmsg,
 				     &httpd->mimetype, &httpd->bodybuffer,
 				     &httpd->freecb, &httpd->freecb_arg);
 	if (result != ISC_R_SUCCESS) {
-		result = httpd->mgr->render_500(httpd->url, httpd->querystring,
-						NULL, &httpd->retcode,
+		result = httpd->mgr->render_500(httpd->url, url,
+						httpd->querystring,
+						NULL, NULL,
+						&httpd->retcode,
 						&httpd->retmsg,
 						&httpd->mimetype,
 						&httpd->bodybuffer,
@@ -741,9 +729,19 @@ isc_httpd_recvdone(isc_task_t *task, isc_event_t *ev)
 	isc_httpd_addheader(httpd, "Content-Type", httpd->mimetype);
 	isc_httpd_addheader(httpd, "Date", datebuf);
 	isc_httpd_addheader(httpd, "Expires", datebuf);
-	isc_httpd_addheader(httpd, "Last-Modified", datebuf);
-	isc_httpd_addheader(httpd, "Pragma: no-cache", NULL);
-	isc_httpd_addheader(httpd, "Cache-Control: no-cache", NULL);
+
+	if (url != NULL && url->isstatic) {
+		char loadbuf[32];
+		isc_time_formathttptimestamp(&url->loadtime,
+					     loadbuf, sizeof(loadbuf));
+		isc_httpd_addheader(httpd, "Last-Modified", loadbuf);
+		isc_httpd_addheader(httpd, "Cache-Control: public", NULL);
+	} else {
+		isc_httpd_addheader(httpd, "Last-Modified", datebuf);
+		isc_httpd_addheader(httpd, "Pragma: no-cache", NULL);
+		isc_httpd_addheader(httpd, "Cache-Control: no-cache", NULL);
+	}
+
 	isc_httpd_addheader(httpd, "Server: libisc", NULL);
 	isc_httpd_addheaderuint(httpd, "Content-Length",
 				isc_buffer_usedlength(&httpd->bodybuffer));
@@ -768,8 +766,7 @@ isc_httpd_recvdone(isc_task_t *task, isc_event_t *ev)
 }
 
 void
-isc_httpdmgr_shutdown(isc_httpdmgr_t **httpdmgrp)
-{
+isc_httpdmgr_shutdown(isc_httpdmgr_t **httpdmgrp) {
 	isc_httpdmgr_t *httpdmgr;
 	isc_httpd_t *httpd;
 	httpdmgr = *httpdmgrp;
@@ -796,8 +793,7 @@ isc_httpdmgr_shutdown(isc_httpdmgr_t **httpdmgrp)
 }
 
 static isc_result_t
-grow_headerspace(isc_httpd_t *httpd)
-{
+grow_headerspace(isc_httpd_t *httpd) {
 	char *newspace;
 	unsigned int newlen;
 	isc_region_t r;
@@ -818,8 +814,7 @@ grow_headerspace(isc_httpd_t *httpd)
 }
 
 isc_result_t
-isc_httpd_response(isc_httpd_t *httpd)
-{
+isc_httpd_response(isc_httpd_t *httpd) {
 	isc_result_t result;
 	unsigned int needlen;
 
@@ -871,8 +866,7 @@ isc_httpd_addheader(isc_httpd_t *httpd, const char *name,
 }
 
 isc_result_t
-isc_httpd_endheaders(isc_httpd_t *httpd)
-{
+isc_httpd_endheaders(isc_httpd_t *httpd) {
 	isc_result_t result;
 
 	while (isc_buffer_availablelength(&httpd->headerbuffer) < 2) {
@@ -914,8 +908,7 @@ isc_httpd_addheaderuint(isc_httpd_t *httpd, const char *name, int val) {
 }
 
 static void
-isc_httpd_senddone(isc_task_t *task, isc_event_t *ev)
-{
+isc_httpd_senddone(isc_task_t *task, isc_event_t *ev) {
 	isc_httpd_t *httpd = ev->ev_arg;
 	isc_region_t r;
 	isc_socketevent_t *sev = (isc_socketevent_t *)ev;
@@ -940,9 +933,10 @@ isc_httpd_senddone(isc_task_t *task, isc_event_t *ev)
 	 */
 	if (httpd->freecb != NULL) {
 		isc_buffer_t *b = NULL;
-		if (isc_buffer_length(&httpd->bodybuffer) > 0)
+		if (isc_buffer_length(&httpd->bodybuffer) > 0) {
 			b = &httpd->bodybuffer;
-		httpd->freecb(b, httpd->freecb_arg);
+			httpd->freecb(b, httpd->freecb_arg);
+		}
 		NOTICE("senddone free callback performed");
 	}
 	if (ISC_LINK_LINKED(&httpd->bodybuffer, link)) {
@@ -978,8 +972,7 @@ out:
 }
 
 static void
-reset_client(isc_httpd_t *httpd)
-{
+reset_client(isc_httpd_t *httpd) {
 	/*
 	 * Catch errors here.  We MUST be in RECV mode, and we MUST NOT have
 	 * any outstanding buffers.  If we have buffers, we have a leak.
@@ -990,6 +983,7 @@ reset_client(isc_httpd_t *httpd)
 
 	httpd->recvbuf[0] = 0;
 	httpd->recvlen = 0;
+	httpd->headers = NULL;
 	httpd->method = ISC_HTTPD_METHODUNKNOWN;
 	httpd->url = NULL;
 	httpd->querystring = NULL;
@@ -1003,6 +997,14 @@ reset_client(isc_httpd_t *httpd)
 isc_result_t
 isc_httpdmgr_addurl(isc_httpdmgr_t *httpdmgr, const char *url,
 		    isc_httpdaction_t *func, void *arg)
+{
+	return (isc_httpdmgr_addurl2(httpdmgr, url, ISC_FALSE, func, arg));
+}
+
+isc_result_t
+isc_httpdmgr_addurl2(isc_httpdmgr_t *httpdmgr, const char *url,
+		     isc_boolean_t isstatic,
+		     isc_httpdaction_t *func, void *arg)
 {
 	isc_httpdurl_t *item;
 
@@ -1023,6 +1025,9 @@ isc_httpdmgr_addurl(isc_httpdmgr_t *httpdmgr, const char *url,
 
 	item->action = func;
 	item->action_arg = arg;
+	item->isstatic = isstatic;
+	isc_time_now(&item->loadtime);
+
 	ISC_LINK_INIT(item, link);
 	ISC_LIST_APPEND(httpdmgr->urls, item, link);
 

@@ -1,7 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -56,7 +55,7 @@
 #include <utility>
 #include <bits/functexcept.h>
 #include <bits/move.h>
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
 # include <functional>
 # include <random>
 #else
@@ -64,7 +63,9 @@
 # include <tr1/random>
 #endif
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /**
    *  @brief Thown by exception safety machinery.
@@ -76,14 +77,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
   // Substitute for forced_error object when -fno-exceptions.
   inline void
   __throw_forced_error()
-  {
-#if __EXCEPTIONS
-    throw forced_error();
-#else
-    __builtin_abort();
-#endif
-  }
-
+  { _GLIBCXX_THROW_OR_ABORT(forced_error()); }
 
   /**
    *  @brief Base class for checking address and label information
@@ -110,7 +104,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
     void
     insert(void* p, size_t size)
     {
-      if (p == NULL)
+      if (!p)
 	{
 	  std::string error("annotate_base::insert null insert!\n");
 	  log_to_string(error, make_entry(p, size));
@@ -391,7 +385,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
     { engine().seed(__s); }
 
   private:
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
     typedef std::uniform_real_distribution<double> 	distribution_type;
     typedef std::mt19937 				engine_type;
 #else
@@ -402,7 +396,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
     static double
     generate()
     {
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       const distribution_type distribution(0, 1);
       static auto generator = std::bind(distribution, engine());
 #else
@@ -465,6 +459,11 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       throw_value_base(const throw_value_base& __v) : _M_i(__v._M_i)
       { throw_conditionally(); }
 
+#if __cplusplus >= 201103L
+      // Shall not throw.
+      throw_value_base(throw_value_base&&) = default;
+#endif
+
       explicit throw_value_base(const std::size_t __i) : _M_i(__i)
       { throw_conditionally(); }
 #endif
@@ -476,6 +475,12 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 	_M_i = __v._M_i;
 	return *this;
       }
+
+#if __cplusplus >= 201103L
+      // Shall not throw.
+      throw_value_base&
+      operator=(throw_value_base&&) = default;
+#endif
 
       throw_value_base&
       operator++()
@@ -566,7 +571,23 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
     throw_value_limit(const throw_value_limit& __other)
     : base_type(__other._M_i) { }
 
+#if __cplusplus >= 201103L
+    throw_value_limit(throw_value_limit&&) = default;
+#endif
+
     explicit throw_value_limit(const std::size_t __i) : base_type(__i) { }
+#endif
+
+    throw_value_limit&
+    operator=(const throw_value_limit& __other)
+    {
+      base_type::operator=(__other);
+      return *this;
+    }
+
+#if __cplusplus >= 201103L
+    throw_value_limit&
+    operator=(throw_value_limit&&) = default;
 #endif
   };
 
@@ -581,8 +602,23 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
     throw_value_random(const throw_value_random& __other)
     : base_type(__other._M_i) { }
 
+#if __cplusplus >= 201103L
+    throw_value_random(throw_value_random&&) = default;
+#endif
 
     explicit throw_value_random(const std::size_t __i) : base_type(__i) { }
+#endif
+
+    throw_value_random&
+    operator=(const throw_value_random& __other)
+    {
+      base_type::operator=(__other);
+      return *this;
+    }
+
+#if __cplusplus >= 201103L
+    throw_value_random&
+    operator=(throw_value_random&&) = default;
 #endif
   };
 
@@ -607,6 +643,12 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       typedef value_type& 			reference;
       typedef const value_type& 		const_reference;
 
+#if __cplusplus >= 201103L
+      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+      // 2103. std::allocator propagate_on_container_move_assignment
+      typedef std::true_type propagate_on_container_move_assignment;
+#endif
+
     private:
       typedef _Cond				condition_type;
 
@@ -616,8 +658,16 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 
     public:
       size_type
-      max_size() const throw()
+      max_size() const _GLIBCXX_USE_NOEXCEPT
       { return _M_allocator.max_size(); }
+
+      pointer
+      address(reference __x) const _GLIBCXX_NOEXCEPT
+      { return std::__addressof(__x); }
+
+      const_pointer
+      address(const_reference __x) const _GLIBCXX_NOEXCEPT
+      { return std::__addressof(__x); }
 
       pointer
       allocate(size_type __n, std::allocator<void>::const_pointer hint = 0)
@@ -631,20 +681,25 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 	return a;
       }
 
+#if __cplusplus >= 201103L
+      template<typename _Up, typename... _Args>
+        void
+        construct(_Up* __p, _Args&&... __args)
+	{ return _M_allocator.construct(__p, std::forward<_Args>(__args)...); }
+
+      template<typename _Up>
+        void 
+        destroy(_Up* __p)
+        { _M_allocator.destroy(__p); }
+#else
       void
       construct(pointer __p, const value_type& val)
       { return _M_allocator.construct(__p, val); }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-      template<typename... _Args>
-	void
-	construct(pointer __p, _Args&&... __args)
-	{ return _M_allocator.construct(__p, std::forward<_Args>(__args)...); }
-#endif
-
       void
       destroy(pointer __p)
       { _M_allocator.destroy(__p); }
+#endif
 
       void
       deallocate(pointer __p, size_type __n)
@@ -686,14 +741,16 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 	struct rebind
 	{ typedef throw_allocator_limit<_Tp1> other; };
 
-      throw_allocator_limit() throw() { }
+      throw_allocator_limit() _GLIBCXX_USE_NOEXCEPT { }
 
-      throw_allocator_limit(const throw_allocator_limit&) throw() { }
+      throw_allocator_limit(const throw_allocator_limit&)
+      _GLIBCXX_USE_NOEXCEPT { }
 
       template<typename _Tp1>
-	throw_allocator_limit(const throw_allocator_limit<_Tp1>&) throw() { }
+	throw_allocator_limit(const throw_allocator_limit<_Tp1>&)
+	_GLIBCXX_USE_NOEXCEPT { }
 
-      ~throw_allocator_limit() throw() { }
+      ~throw_allocator_limit() _GLIBCXX_USE_NOEXCEPT { }
     };
 
   /// Allocator throwing via random condition.
@@ -705,23 +762,26 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 	struct rebind
 	{ typedef throw_allocator_random<_Tp1> other; };
 
-      throw_allocator_random() throw() { }
+      throw_allocator_random() _GLIBCXX_USE_NOEXCEPT { }
 
-      throw_allocator_random(const throw_allocator_random&) throw() { }
+      throw_allocator_random(const throw_allocator_random&)
+      _GLIBCXX_USE_NOEXCEPT { }
 
       template<typename _Tp1>
-	throw_allocator_random(const throw_allocator_random<_Tp1>&) throw() { }
+	throw_allocator_random(const throw_allocator_random<_Tp1>&)
+	_GLIBCXX_USE_NOEXCEPT { }
 
-      ~throw_allocator_random() throw() { }
+      ~throw_allocator_random() _GLIBCXX_USE_NOEXCEPT { }
     };
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
 
 # include <bits/functional_hash.h>
 
-namespace std
+namespace std _GLIBCXX_VISIBILITY(default)
 {
   /// Explicit specialization of std::hash for __gnu_cxx::throw_value_limit.
   template<>
@@ -731,8 +791,8 @@ namespace std
       size_t
       operator()(const __gnu_cxx::throw_value_limit& __val) const
       {
-	std::hash<std::size_t> h;
-	size_t __result = h(__val._M_i);
+	std::hash<std::size_t> __h;
+	size_t __result = __h(__val._M_i);
 	return __result;
       }
     };
@@ -745,8 +805,8 @@ namespace std
       size_t
       operator()(const __gnu_cxx::throw_value_random& __val) const
       {
-	std::hash<std::size_t> h;
-	size_t __result = h(__val._M_i);
+	std::hash<std::size_t> __h;
+	size_t __result = __h(__val._M_i);
 	return __result;
       }
     };

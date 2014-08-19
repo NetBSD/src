@@ -1,4 +1,4 @@
-/*	$NetBSD: fad-null.c,v 1.1.1.2.12.1 2013/06/23 06:28:19 tls Exp $	*/
+/*	$NetBSD: fad-null.c,v 1.1.1.2.12.2 2014/08/19 23:47:16 tls Exp $	*/
 
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
@@ -55,7 +55,7 @@ static const char rcsid[] _U_ =
  * packet capture.
  */
 int
-pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
+pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf)
 {
 	/*
 	 * Succeed, but don't return any interfaces; we return only those

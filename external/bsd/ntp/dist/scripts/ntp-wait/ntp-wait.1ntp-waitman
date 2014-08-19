@@ -1,0 +1,123 @@
+.TH ntp-wait 1ntp-waitman "30 Nov 2013" "ntp (4.2.7p401)" "User Commands"
+.\"
+.\"  EDIT THIS FILE WITH CAUTION  (ntp-wait-opts.man)
+.\"
+.\"  It has been AutoGen-ed  November 30, 2013 at 11:24:38 AM by AutoGen 5.18.3pre5
+.\"  From the definitions    ntp-wait-opts.def
+.\"  and the template file   agman-cmd.tpl
+.\"
+.SH NAME
+ntp-wait \- Wait for ntpd to stabilize the system clock
+.SH SYNOPSIS
+.B ntp-wait
+.\" Mixture of short (flag) options and long options
+.RB [ \-\fIflag\fP " [\fIvalue\fP]]... [" \-\-\fIopt\-name\fP "[[=| ]\fIvalue\fP]]..."
+.PP
+All arguments must be options.
+.PP
+.SH DESCRIPTION
+.B 
+will send at most
+Inum-triesR
+queries to
+.Xr ntpd 8 ,
+sleeping for
+Isecs-between-triesR
+after each status return that says
+.Xr ntpd 8
+has not yet produced a synchronized and stable system clock.
+.PP
+.B 
+will do this quietly, unless the
+ v
+flag is provided.
+.SH "OPTIONS"
+.TP
+.BR  \-n " \fInum\-tries\fP, " \-\- "=" \fInum\-tries\fP
+Number of times to check ntpd.
+This option takes an integer number as its argument.
+The default \fInum\-tries\fP for this option is:
+.ti +4
+ 100
+.sp
+The maximum number of times we will check \fBntpd\fP to see if
+it has been able to synchronize and stabilize the system clock.
+.TP
+.BR  \-s " \fIsecs\-between\-tries\fP, " \-\- "=" \fIsecs\-between\-tries\fP
+How long to sleep between tries.
+This option takes an integer number as its argument.
+The default \fIsecs\-between\-tries\fP for this option is:
+.ti +4
+ 6
+.sp
+We will sleep for \fIsecs-between-tries\fP after each query
+of \fBntpd\fP that returns "the time is not yet stable".
+.TP
+.BR  \-v ", " \-\-
+Be verbose.
+.sp
+By default, \fBntp-wait\fP is silent.
+With this option, \fBntp-wait\fP will provide status information.
+.TP
+.BR \-? , " \-\-help"
+Display usage information and exit.
+.TP
+.BR \-! , " \-\-more-help"
+Pass the extended usage information through a pager.
+.TP
+.BR \-\-version "[={\fIv|c|n\fP}]"
+Output version of program and exit.  The default mode is `v', a simple
+version.  The `c' mode will print copyright information and `n' will
+print the full copyright notice.
+.SH "OPTION PRESETS"
+Any option that is not marked as \fInot presettable\fP may be preset
+by loading values from environment variables named:
+.nf
+  \fBNTP_WAIT_<option-name>\fP or \fBNTP_WAIT\fP
+.fi
+.ad
+cvt_prog='/usr/local/gnu/share/autogen/texi2man'
+cvt_prog=`cd \`dirname "$cvt_prog"\` >/dev/null && pwd
+         `/`basename "$cvt_prog"`
+cd $tmp_dir
+test \-x "$cvt_prog" || die "'$cvt_prog' is not executable"
+{
+    list='synopsis description options option-presets'
+    for f in $list ; do cat $f ; echo ; done
+    rm \-f $list name
+    list='implementation-notes environment files examples exit-status errors
+        compatibility see-also conforming-to history authors copyright bugs
+        notes'
+    for f in $list ; do cat $f ; echo ; done > .end-doc
+    rm \-f $list
+    list=`ls \-1 *`' .end-doc'
+    for f in $list ; do cat $f ; echo ; done
+    rm \-f $list
+} 1>.doc 2>/dev/null
+sed \-f .cmds .doc | /usr/local/gnu/bin/grep \-E \-v '^[ 	]*$' | $cvt_prog
+.SH "ENVIRONMENT"
+See \fBOPTION PRESETS\fP for configuration environment variables.
+.SH "EXIT STATUS"
+One of the following exit values will be returned:
+.TP
+.BR 0 " (EXIT_SUCCESS)"
+Successful program execution.
+.TP
+.BR 1 " (EXIT_FAILURE)"
+The operation failed or the command syntax was not valid.
+.TP
+.BR 70 " (EX_SOFTWARE)"
+libopts had an internal operational error.  Please report
+it to autogen-users@lists.sourceforge.net.  Thank you.
+.SH AUTHORS
+.An "Harlan Stenn"
+.SH "COPYRIGHT"
+Copyright (C) 1970-2013 The University of Delaware all rights reserved.
+This program is released under the terms of the NTP license, <http://ntp.org/license>.
+.SH "BUGS"
+Please send bug reports to: http://bugs.ntp.org, bugs@ntp.org
+.SH NOTES
+This document corresponds to version 4.2.7p401 of NTP.
+.PP
+This manual page was \fIAutoGen\fP-erated from the \fBntp-wait\fP
+option definitions.

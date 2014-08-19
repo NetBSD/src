@@ -43,3 +43,4 @@ OTHER_SECTIONS="
     *(.l1.text)
   }
 "
+EXTRA_EM_FILE=bfin

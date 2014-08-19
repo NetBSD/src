@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2011/07/03 23:11:33 tron Exp $
+#	$NetBSD: list,v 1.13.8.1 2014/08/19 23:45:41 tls Exp $
 
 # mac68k extra's
 PROG	sbin/dmesg
@@ -15,7 +15,7 @@ PROG	usr/bin/less usr/bin/more
 SYMLINK	/bin/cat	usr/bin/strings
 
 # crunchgen source directory specials
-#SPECIAL	vi srcdir usr.bin/nvi/build
+#SPECIAL	vi srcdir external/bsd/nvi/usr.bin/nvi
 SPECIAL	less srcdir external/bsd/less/bin/less
 
 # Minimize use of MFS

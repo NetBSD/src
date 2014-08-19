@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7.8.1 2013/06/23 06:28:29 tls Exp $	
+#	$NetBSD: Makefile,v 1.7.8.2 2014/08/19 23:52:14 tls Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
-CWARNFLAGS.clang+=	-Wno-constant-logical-operand
+CWARNFLAGS.clang+=	-Wno-constant-logical-operand -Wno-error=unused-function
 
 .include <bsd.own.mk>
 
@@ -39,6 +39,7 @@ print-bfd.c \
 print-bgp.c \
 print-bootp.c \
 print-bt.c \
+print-calm-fast.c \
 print-carp.c \
 print-cdp.c \
 print-cfm.c \
@@ -60,6 +61,7 @@ print-fddi.c \
 print-forces.c \
 print-fr.c \
 print-frag6.c \
+print-geonet.c \
 print-gre.c \
 print-hsrp.c \
 print-icmp.c \
@@ -87,12 +89,18 @@ print-mobile.c \
 print-mobility.c \
 print-mpcp.c \
 print-mpls.c \
+print-mptcp.c \
 print-msdp.c \
+print-msnlb.c \
+print-nflog.c \
 print-nfs.c \
 print-ntp.c \
 print-null.c \
 print-olsr.c \
+print-openflow.c \
+print-openflow-1.0.c \
 print-ospf.c \
+print-otv.c \
 print-pflog.c \
 print-pfsync.c \
 print-pgm.c \
@@ -135,8 +143,10 @@ print-vjc.c \
 print-vqp.c \
 print-vrrp.c \
 print-vtp.c \
+print-vxlan.c \
 print-wb.c \
-print-zephyr.c 
+print-zephyr.c \
+print-zeromq.c
 
 version.c: VERSION
 	${_MKTARGET_CREATE}

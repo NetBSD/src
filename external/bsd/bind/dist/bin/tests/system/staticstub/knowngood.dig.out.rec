@@ -11,9 +11,6 @@
 ;; ANSWER SECTION:
 data.example.	5M IN TXT	"some" "test" "data"
 
-;; AUTHORITY SECTION:
-example.		5M IN NS	ns4.example.
-
 ;; Total query time: 8 msec
 ;; FROM: draco to SERVER: 10.53.0.3
 ;; WHEN: Wed Jun 21 10:58:54 2000

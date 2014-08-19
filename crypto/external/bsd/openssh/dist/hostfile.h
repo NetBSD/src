@@ -1,5 +1,5 @@
-/*	$NetBSD: hostfile.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: hostfile.h,v 1.19 2010/11/29 23:45:51 djm Exp $ */
+/*	$NetBSD: hostfile.h,v 1.4.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: hostfile.h,v 1.20 2013/07/12 00:19:58 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -41,7 +41,7 @@ HostStatus check_key_in_hostkeys(struct hostkeys *, Key *,
 int	 lookup_key_in_hostkeys_by_type(struct hostkeys *, int,
     const struct hostkey_entry **);
 
-int	 hostfile_read_key(char **, u_int *, Key *);
+int	 hostfile_read_key(char **, int *, Key *);
 int	 add_host_to_hostfile(const char *, const char *, const Key *, int);
 
 #define HASH_MAGIC	"|1|"

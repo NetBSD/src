@@ -1,7 +1,7 @@
-/*	$NetBSD: app.c,v 1.1.1.1 2009/12/13 16:54:41 kardel Exp $	*/
+/*	$NetBSD: app.c,v 1.1.1.1.12.1 2014/08/19 23:51:40 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: app.c,v 1.7 2007/06/19 23:47:19 tbox Exp */
+/* Id: app.c,v 1.9 2009/09/02 23:48:03 tbox Exp  */
 
 #include <config.h>
 
@@ -77,7 +77,7 @@ DWORD  dwWaitResult;
 static isc_thread_t	main_thread;
 
 isc_result_t
-isc_app_start(void) {
+isc__app_start(void) {
 	isc_result_t result;
 
 	/*
@@ -101,7 +101,7 @@ isc_app_start(void) {
 }
 
 isc_result_t
-isc_app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
+isc__app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
 	      void *arg) {
 	isc_event_t *event;
 	isc_task_t *cloned_task = NULL;
@@ -135,7 +135,7 @@ isc_app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
 }
 
 isc_result_t
-isc_app_run(void) {
+isc__app_run(void) {
 	isc_event_t *event, *next_event;
 	isc_task_t *task;
 	HANDLE *pHandles = NULL;
@@ -172,7 +172,7 @@ isc_app_run(void) {
 						      FALSE, INFINITE);
 
 		/* See why we returned */
-		
+
 		if (WaitSucceeded(dwWaitResult, NUM_EVENTS)) {
 			/*
 			 * The return was due to one of the events
@@ -201,7 +201,7 @@ isc_app_run(void) {
 }
 
 isc_result_t
-isc_app_shutdown(void) {
+isc__app_shutdown(void) {
 	isc_boolean_t want_kill = ISC_TRUE;
 
 	LOCK(&lock);
@@ -220,7 +220,7 @@ isc_app_shutdown(void) {
 }
 
 isc_result_t
-isc_app_reload(void) {
+isc__app_reload(void) {
 	isc_boolean_t want_reload = ISC_TRUE;
 
 	LOCK(&lock);
@@ -240,12 +240,12 @@ isc_app_reload(void) {
 }
 
 void
-isc_app_finish(void) {
+isc__app_finish(void) {
 	DESTROYLOCK(&lock);
 }
 
 void
-isc_app_block(void) {
+isc__app_block(void) {
 	REQUIRE(running);
 	REQUIRE(!blocked);
 
@@ -254,7 +254,7 @@ isc_app_block(void) {
 }
 
 void
-isc_app_unblock(void) {
+isc__app_unblock(void) {
 	REQUIRE(running);
 	REQUIRE(blocked);
 	blocked = ISC_FALSE;

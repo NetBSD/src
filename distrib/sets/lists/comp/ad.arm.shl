@@ -1,5 +1,5 @@
-# $NetBSD: ad.arm.shl,v 1.4.4.2 2013/02/25 00:24:31 tls Exp $
+# $NetBSD: ad.arm.shl,v 1.4.4.3 2014/08/19 23:45:43 tls Exp $
 ./usr/lib/libarm32_pic.a			comp-obsolete		obsolete
-./usr/lib/libarm_pic.a				comp-c-piclib
-./usr/lib/libc_vfp_pic.a			comp-c-piclib		softfloat
-./usr/lib/libpmc_pic.a				comp-c-piclib
+./usr/lib/libarm_pic.a				comp-c-piclib	picinstall
+./usr/lib/libc_vfp_pic.a			comp-c-piclib		softfloat,picinstall
+./usr/lib/libpmc_pic.a				comp-c-piclib	picinstall

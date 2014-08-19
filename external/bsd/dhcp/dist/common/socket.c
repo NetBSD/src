@@ -1,11 +1,10 @@
-/*	$NetBSD: socket.c,v 1.1.1.2.4.2 2013/06/23 06:26:28 tls Exp $	*/
-
+/*	$NetBSD: socket.c,v 1.1.1.2.4.3 2014/08/19 23:46:40 tls Exp $	*/
 /* socket.c
 
    BSD socket interface code... */
 
 /*
- * Copyright (c) 2004-2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,16 +25,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: socket.c,v 1.1.1.2.4.2 2013/06/23 06:26:28 tls Exp $");
+__RCSID("$NetBSD: socket.c,v 1.1.1.2.4.3 2014/08/19 23:46:40 tls Exp $");
 
 /* SO_BINDTODEVICE support added by Elliot Poger (poger@leland.stanford.edu).
  * This sockopt allows a socket to be bound to a particular interface,
@@ -72,6 +65,7 @@ __RCSID("$NetBSD: socket.c,v 1.1.1.2.4.2 2013/06/23 06:26:28 tls Exp $");
  * XXX: this is gross.  we need to go back and overhaul the API for socket
  * handling.
  */
+static int no_global_v6_socket = 0;
 static unsigned int global_v6_socket_references = 0;
 static int global_v6_socket = -1;
 
@@ -132,7 +126,7 @@ void if_reinitialize_receive (info)
 /* Generic interface registration routine... */
 int
 if_register_socket(struct interface_info *info, int family,
-		   int *do_multicast)
+		   int *do_multicast, struct in6_addr *linklocal6)
 {
 	struct sockaddr_storage name;
 	int name_len;
@@ -166,10 +160,12 @@ if_register_socket(struct interface_info *info, int family,
 		addr6 = (struct sockaddr_in6 *)&name; 
 		addr6->sin6_family = AF_INET6;
 		addr6->sin6_port = local_port;
-		/* XXX: What will happen to multicasts if this is nonzero? */
-		memcpy(&addr6->sin6_addr,
-		       &local_address6, 
-		       sizeof(addr6->sin6_addr));
+		if (linklocal6) {
+			memcpy(&addr6->sin6_addr,
+			       linklocal6,
+			       sizeof(addr6->sin6_addr));
+			addr6->sin6_scope_id = if_nametoindex(info->name);
+		}
 #ifdef HAVE_SA_LEN
 		addr6->sin6_len = sizeof(*addr6);
 #endif
@@ -226,9 +222,9 @@ if_register_socket(struct interface_info *info, int family,
 	 * daemons can bind to their own sockets and get data for their
 	 * respective interfaces.  This does not (and should not) affect
 	 * DHCPv4 sockets; we can't yet support BSD sockets well, much
-	 * less multiple sockets.
+	 * less multiple sockets. Make sense only with multicast.
 	 */
-	if (local_family == AF_INET6) {
+	if ((local_family == AF_INET6) && *do_multicast) {
 		flag = 1;
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
 			       (char *)&flag, sizeof(flag)) < 0) {
@@ -327,7 +323,7 @@ void if_register_send (info)
 	struct interface_info *info;
 {
 #ifndef USE_SOCKET_RECEIVE
-	info->wfdesc = if_register_socket(info, AF_INET, 0);
+	info->wfdesc = if_register_socket(info, AF_INET, 0, NULL);
 	/* If this is a normal IPv4 address, get the hardware address. */
 	if (strcmp(info->name, "fallback") != 0)
 		get_hw_addr(info->name, &info->hw_address);
@@ -373,7 +369,7 @@ void if_register_receive (info)
 
 #if defined(IP_PKTINFO) && defined(IP_RECVPKTINFO) && defined(USE_V4_PKTINFO)
 	if (global_v4_socket_references == 0) {
-		global_v4_socket = if_register_socket(info, AF_INET, 0);
+		global_v4_socket = if_register_socket(info, AF_INET, 0, NULL);
 		if (global_v4_socket < 0) {
 			/*
 			 * if_register_socket() fatally logs if it fails to
@@ -389,7 +385,7 @@ void if_register_receive (info)
 #else
 	/* If we're using the socket API for sending and receiving,
 	   we don't need to register this interface twice. */
-	info->rfdesc = if_register_socket(info, AF_INET, 0);
+	info->rfdesc = if_register_socket(info, AF_INET, 0, NULL);
 #endif /* IP_PKTINFO... */
 	/* If this is a normal IPv4 address, get the hardware address. */
 	if (strcmp(info->name, "fallback") != 0)
@@ -482,9 +478,13 @@ if_register6(struct interface_info *info, int do_multicast) {
 	/* Bounce do_multicast to a stack variable because we may change it. */
 	int req_multi = do_multicast;
 
+	if (no_global_v6_socket) {
+		log_fatal("Impossible condition at %s:%d", MDL);
+	}
+
 	if (global_v6_socket_references == 0) {
 		global_v6_socket = if_register_socket(info, AF_INET6,
-						      &req_multi);
+						      &req_multi, NULL);
 		if (global_v6_socket < 0) {
 			/*
 			 * if_register_socket() fatally logs if it fails to
@@ -520,12 +520,73 @@ if_register6(struct interface_info *info, int do_multicast) {
 	}
 }
 
+/*
+ * Register an IPv6 socket bound to the link-local address of
+ * the argument interface (used by clients on a multiple interface box,
+ * vs. a server or a relay using the global IPv6 socket and running
+ * *only* in a single instance).
+ */
+void
+if_register_linklocal6(struct interface_info *info) {
+	int sock;
+	int count;
+	struct in6_addr *addr6 = NULL;
+	int req_multi = 0;
+
+	if (global_v6_socket >= 0) {
+		log_fatal("Impossible condition at %s:%d", MDL);
+	}
+		
+	no_global_v6_socket = 1;
+
+	/* get the (?) link-local address */
+	for (count = 0; count < info->v6address_count; count++) {
+		addr6 = &info->v6addresses[count];
+		if (IN6_IS_ADDR_LINKLOCAL(addr6))
+			break;
+	}
+
+	if (!addr6) {
+		log_fatal("no link-local IPv6 address for %s", info->name);
+	}
+
+	sock = if_register_socket(info, AF_INET6, &req_multi, addr6);
+
+	if (sock < 0) {
+		log_fatal("if_register_socket for %s fails", info->name);
+	}
+
+	info->rfdesc = sock;
+	info->wfdesc = sock;
+
+	get_hw_addr(info->name, &info->hw_address);
+
+	if (!quiet_interface_discovery) {
+		if (info->shared_network != NULL) {
+			log_info("Listening on Socket/%d/%s/%s",
+				 global_v6_socket, info->name, 
+				 info->shared_network->name);
+			log_info("Sending on   Socket/%d/%s/%s",
+				 global_v6_socket, info->name,
+				 info->shared_network->name);
+		} else {
+			log_info("Listening on Socket/%s", info->name);
+			log_info("Sending on   Socket/%s", info->name);
+		}
+	}
+}
+
 void 
 if_deregister6(struct interface_info *info) {
-	/* Dereference the global v6 socket. */
-	if ((info->rfdesc == global_v6_socket) &&
-	    (info->wfdesc == global_v6_socket) &&
-	    (global_v6_socket_references > 0)) {
+	/* client case */
+	if (no_global_v6_socket) {
+		close(info->rfdesc);
+		info->rfdesc = -1;
+		info->wfdesc = -1;
+	} else if ((info->rfdesc == global_v6_socket) &&
+		   (info->wfdesc == global_v6_socket) &&
+		   (global_v6_socket_references > 0)) {
+		/* Dereference the global v6 socket. */
 		global_v6_socket_references--;
 		info->rfdesc = -1;
 		info->wfdesc = -1;
@@ -545,7 +606,8 @@ if_deregister6(struct interface_info *info) {
 		}
 	}
 
-	if (global_v6_socket_references == 0) {
+	if (!no_global_v6_socket &&
+	    (global_v6_socket_references == 0)) {
 		close(global_v6_socket);
 		global_v6_socket = -1;
 
@@ -697,9 +759,11 @@ ssize_t send_packet6(struct interface_info *interface,
 		     struct sockaddr_in6 *to) {
 	struct msghdr m;
 	struct iovec v;
+	struct sockaddr_in6 dst;
 	int result;
 	struct in6_pktinfo *pktinfo;
 	struct cmsghdr *cmsg;
+	unsigned int ifindex;
 
 	/*
 	 * If necessary allocate space for the control message header.
@@ -722,9 +786,14 @@ ssize_t send_packet6(struct interface_info *interface,
 
 	/*
 	 * Set the target address we're sending to.
+	 * Enforce the scope ID for bogus BSDs.
 	 */
-	m.msg_name = to;
-	m.msg_namelen = sizeof(*to);
+	memcpy(&dst, to, sizeof(dst));
+	m.msg_name = &dst;
+	m.msg_namelen = sizeof(dst);
+	ifindex = if_nametoindex(interface->name);
+	if (no_global_v6_socket)
+		dst.sin6_scope_id = ifindex;
 
 	/*
 	 * Set the data buffer we're sending. (Using this wacky 
@@ -747,12 +816,13 @@ ssize_t send_packet6(struct interface_info *interface,
 	m.msg_control = control_buf;
 	m.msg_controllen = control_buf_len;
 	cmsg = CMSG_FIRSTHDR(&m);
+	INSIST(cmsg != NULL);
 	cmsg->cmsg_level = IPPROTO_IPV6;
 	cmsg->cmsg_type = IPV6_PKTINFO;
 	cmsg->cmsg_len = CMSG_LEN(sizeof(*pktinfo));
 	pktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsg);
 	memset(pktinfo, 0, sizeof(*pktinfo));
-	pktinfo->ipi6_ifindex = if_nametoindex(interface->name);
+	pktinfo->ipi6_ifindex = ifindex;
 	m.msg_controllen = cmsg->cmsg_len;
 
 	result = sendmsg(interface->wfdesc, &m, 0);
@@ -1051,7 +1121,7 @@ void maybe_setup_fallback ()
 	isc_result_t status;
 	struct interface_info *fbi = (struct interface_info *)0;
 	if (setup_fallback (&fbi, MDL)) {
-		fbi -> wfdesc = if_register_socket (fbi, AF_INET, 0);
+		fbi -> wfdesc = if_register_socket (fbi, AF_INET, 0, NULL);
 		fbi -> rfdesc = fbi -> wfdesc;
 		log_info ("Sending on   Socket/%s%s%s",
 		      fbi -> name,

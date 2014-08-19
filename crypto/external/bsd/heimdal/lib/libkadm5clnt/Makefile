@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/04/15 14:39:32 elric Exp $
+# $NetBSD: Makefile,v 1.2.10.1 2014/08/19 23:45:21 tls Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -12,6 +12,7 @@ NOLINT=		# defined
 LIB=		kadm5clnt
 
 LIBDPLIBS+=	krb5	${.CURDIR}/../libkrb5 \
+		com_err	${.CURDIR}/../libcom_err \
 		hdb	${.CURDIR}/../libhdb \
 		roken	${.CURDIR}/../libroken
 

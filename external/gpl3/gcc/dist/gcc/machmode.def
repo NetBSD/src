@@ -1,7 +1,6 @@
 /* This file contains the definitions and documentation for the
    machine modes used in the GNU compiler.
-   Copyright (C) 1987, 1992, 1994, 1997, 1998, 2000, 2003, 2004, 2005,
-   2007  Free Software Foundation, Inc.
+   Copyright (C) 1987-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -86,14 +85,18 @@ along with GCC; see the file COPYING3.  If not see
 	using floating point format FORMAT.
 	All of the bits of its representation are significant.
 
-     DECIMAL FLOAT_MODE (MODE, BYTESIZE);
-	declares MODE to be of class DECIMAL_FLOAT and BYTESIZE bytes
-	wide.  All of the bits of its representation are significant.
-
      FRACTIONAL_FLOAT_MODE (MODE, PRECISION, BYTESIZE, FORMAT);
         declares MODE to be of class FLOAT, BYTESIZE bytes wide in
 	storage, but with only PRECISION significant bits, using
 	floating point format FORMAT.
+
+     DECIMAL_FLOAT_MODE (MODE, BYTESIZE, FORMAT);
+	declares MODE to be of class DECIMAL_FLOAT and BYTESIZE bytes
+	wide.  All of the bits of its representation are significant.
+
+     FRACTIONAL_DECIMAL_FLOAT_MODE (MODE, BYTESIZE, FORMAT);
+	declares MODE to be of class DECIMAL_FLOAT and BYTESIZE bytes
+	wide.  All of the bits of its representation are significant.
 
      FRACT_MODE (MODE, BYTESIZE, FBIT);
 	declares MODE to be of class FRACT and BYTESIZE bytes wide
@@ -108,7 +111,7 @@ along with GCC; see the file COPYING3.  If not see
 	with IBIT integral bits and FBIT fractional bits.
 	There may be padding bits.
 
-     UACCUM_MODE (MODE, BYTESIZE, FBIT);
+     UACCUM_MODE (MODE, BYTESIZE, IBIT, FBIT);
 	declares MODE to be of class UACCUM and BYTESIZE bytes wide
 	with IBIT integral bits and FBIT fractional bits.
 	There may be padding bits.
@@ -191,7 +194,7 @@ INT_MODE (TI, 16);
    that need 1-word, 2-word, 80-bit, or 128-bit float types respectively.
 
    These are the IEEE mappings.  They can be overridden with
-   RESET_FLOAT_FORMAT or at runtime (in OVERRIDE_OPTIONS).  */
+   RESET_FLOAT_FORMAT or at runtime (in TARGET_OPTION_OVERRIDE).  */
 
 FLOAT_MODE (SF, 4, ieee_single_format);
 FLOAT_MODE (DF, 8, ieee_double_format);

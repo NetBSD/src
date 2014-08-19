@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.2.3 2013/06/23 06:28:21 tls Exp $
+#	$NetBSD: Makefile,v 1.20.2.4 2014/08/19 23:47:17 tls Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -30,8 +30,8 @@ CLANG_LIBS+= \
 	clangSema \
 	clangEdit \
 	clangAnalysis \
-	clangRewriteFrontend \
-	clangRewriteCore \
+	clangFrontendRewrite \
+	clangRewrite \
 	clangAST \
 	clangLex \
 	clangBasic
@@ -45,8 +45,8 @@ LLVM_LIBS+= \
 	BitWriter \
 	AArch64CodeGen \
 	AArch64TargetInfo \
-	AArch64MCTargetDesc \
 	AArch64AsmParser \
+	AArch64MCTargetDesc \
 	AArch64AsmPrinter \
 	AArch64Utils \
 	ARMCodeGen \
@@ -56,9 +56,9 @@ LLVM_LIBS+= \
 	ARMAsmPrinter \
 	MipsCodeGen \
 	MipsTargetInfo \
-	MipsMCTargetDesc \
 	MipsAsmPrinter \
 	MipsAsmParser \
+	MipsMCTargetDesc \
 	PowerPCCodeGen \
 	PowerPCTargetInfo \
 	PowerPCMCTargetDesc \
@@ -67,16 +67,18 @@ LLVM_LIBS+= \
 	SparcCodeGen \
 	SparcTargetInfo \
 	SparcMCTargetDesc \
+	SparcAsmParser \
+	SparcAsmPrinter \
 	X86CodeGen \
 	X86MCTargetDesc \
 	X86TargetInfo \
 	X86Utils \
 	X86AsmParser \
 	X86AsmPrinter \
-	Object \
 	SelectionDAG \
 	AsmPrinter \
 	CodeGen \
+	ProfileData \
 	Vectorize \
 	Target \
 	InstCombine \
@@ -86,12 +88,19 @@ LLVM_LIBS+= \
 	MCDisassembler \
 	MCParser \
 	MC \
+	Object \
 	Linker \
 	TransformsUtils \
 	ipa \
 	IR \
+	Option \
 	Support
 
 .include "${.PARSEDIR}/../../link.mk"
+
+LDADD+=	-lz
+.if !defined(HOSTPROG)
+DPADD+=	${LIBZ}
+.endif
 
 .include <bsd.prog.mk>

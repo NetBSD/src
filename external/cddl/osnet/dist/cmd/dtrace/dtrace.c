@@ -953,7 +953,7 @@ bufhandler(const dtrace_bufdata_t *bufdata, void *arg)
 			uint8_t *data;
 			int lim = rec->dtrd_size;
 
-			(void) sprintf(buf, "%d (data: ", rec->dtrd_offset);
+			(void) snprintf(buf, end - buf, "%d (data: ", rec->dtrd_offset);
 			c = buf + strlen(buf);
 
 			if (lim > sizeof (uint64_t))

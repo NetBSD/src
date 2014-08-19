@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.h,v 1.1.1.1 2009/12/13 16:55:56 kardel Exp $	*/
+/*	$NetBSD: refclock_palisade.h,v 1.1.1.1.12.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies
@@ -52,12 +52,8 @@
  *
  */
 
-#ifndef _REFCLOCK_PALISADE_H
-#define _REFCLOCK_PALISADE_H
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef REFCLOCK_PALISADE_H
+#define REFCLOCK_PALISADE_H
 
 #if defined HAVE_SYS_MODEM_H
 #include <sys/modem.h>
@@ -185,14 +181,13 @@ static	int	palisade_start		(int, struct peer *);
 static	void	palisade_shutdown	(int, struct peer *);
 static	void	palisade_receive	(struct peer *);
 static	void	palisade_poll		(int, struct peer *);
-static  void 	palisade_io		(struct recvbuf *);
+static	void 	palisade_io		(struct recvbuf *);
 int 		palisade_configure	(int, struct peer *);
 int 		TSIP_decode		(struct peer *);
 long		HW_poll			(struct refclockproc *);
-float 		getfloat		(u_char *); 
-double 		getdbl 			(u_char *);
-short  		getint 			(u_char *);
-long		getlong			(u_char *);
+static	double	getdbl 			(u_char *);
+static	short	getint 			(u_char *);
+static	int32	getlong			(u_char *);
 
 
 #ifdef PALISADE_SENDCMD_RESURRECTED
@@ -204,4 +199,5 @@ static  void	sendint			(struct packettx *buffer, int a);
 static  int	sendetx			(struct packettx *buffer, int fd);
 static  void	init_thunderbolt	(int fd);
 static  void	init_acutime		(int fd);
-#endif /* PALISADE_H */
+
+#endif /* REFCLOCK_PALISADE_H */

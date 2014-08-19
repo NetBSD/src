@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.4.2.1 2013/02/25 00:25:43 tls Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.4.2.2 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -165,7 +165,8 @@ opensslrsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 
 	if (!EVP_DigestInit_ex(evp_md_ctx, type, NULL)) {
 		EVP_MD_CTX_destroy(evp_md_ctx);
-		return (dst__openssl_toresult2("EVP_DigestInit_ex",
+		return (dst__openssl_toresult3(dctx->category,
+					       "EVP_DigestInit_ex",
 					       ISC_R_FAILURE));
 	}
 	dctx->ctxdata.evp_md_ctx = evp_md_ctx;
@@ -314,7 +315,8 @@ opensslrsa_adddata(dst_context_t *dctx, const isc_region_t *data) {
 
 #if USE_EVP
 	if (!EVP_DigestUpdate(evp_md_ctx, data->base, data->length)) {
-		return (dst__openssl_toresult2("EVP_DigestUpdate",
+		return (dst__openssl_toresult3(dctx->category,
+					       "EVP_DigestUpdate",
 					       ISC_R_FAILURE));
 	}
 #else
@@ -404,7 +406,8 @@ opensslrsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 		return (ISC_R_NOSPACE);
 
 	if (!EVP_SignFinal(evp_md_ctx, r.base, &siglen, pkey)) {
-		return (dst__openssl_toresult2("EVP_SignFinal",
+		return (dst__openssl_toresult3(dctx->category,
+					       "EVP_SignFinal",
 					       ISC_R_FAILURE));
 	}
 #else
@@ -480,7 +483,7 @@ opensslrsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 		INSIST(prefixlen + digestlen <= sizeof(digest));
 
 		memmove(digest + prefixlen, digest, digestlen);
-		memcpy(digest, prefix, prefixlen);
+		memmove(digest, prefix, prefixlen);
 		status = RSA_private_encrypt(digestlen + prefixlen,
 					     digest, r.base, rsa,
 					     RSA_PKCS1_PADDING);
@@ -498,7 +501,8 @@ opensslrsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	status = RSA_sign(type, digest, digestlen, r.base, &siglen, rsa);
 #endif
 	if (status == 0)
-		return (dst__openssl_toresult2("RSA_sign",
+		return (dst__openssl_toresult3(dctx->category,
+					       "RSA_sign",
 					       DST_R_OPENSSLFAILURE));
 #endif
 
@@ -544,6 +548,16 @@ opensslrsa_verify2(dst_context_t *dctx, int maxbits, const isc_region_t *sig) {
 		return (DST_R_VERIFYFAILURE);
 
 	status = EVP_VerifyFinal(evp_md_ctx, sig->base, sig->length, pkey);
+	switch (status) {
+	case 1:
+		return (ISC_R_SUCCESS);
+	case 0:
+		return (dst__openssl_toresult(DST_R_VERIFYFAILURE));
+	default:
+		return (dst__openssl_toresult3(dctx->category,
+					       "EVP_VerifyFinal",
+					       DST_R_VERIFYFAILURE));
+	}
 #else
 	if (BN_num_bits(rsa->e) > maxbits && maxbits != 0)
 		return (DST_R_VERIFYFAILURE);
@@ -632,7 +646,8 @@ opensslrsa_verify2(dst_context_t *dctx, int maxbits, const isc_region_t *sig) {
 						    original, rsa,
 						    RSA_PKCS1_PADDING);
 			if (status <= 0)
-				return (dst__openssl_toresult2(
+				return (dst__openssl_toresult3(
+						dctx->category,
 						"RSA_public_decrypt",
 						DST_R_VERIFYFAILURE));
 			if (status != (int)(prefixlen + digestlen))
@@ -653,12 +668,10 @@ opensslrsa_verify2(dst_context_t *dctx, int maxbits, const isc_region_t *sig) {
 	status = RSA_verify(type, digest, digestlen, sig->base,
 			     RSA_size(rsa), rsa);
 #endif
-#endif
 	if (status != 1)
-		return (dst__openssl_toresult2("RSA_verify",
-					       DST_R_VERIFYFAILURE));
-
+		return (dst__openssl_toresult(DST_R_VERIFYFAILURE));
 	return (ISC_R_SUCCESS);
+#endif
 }
 
 static isc_result_t
@@ -733,8 +746,7 @@ opensslrsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 
 #if OPENSSL_VERSION_NUMBER > 0x00908000L
 static int
-progress_cb(int p, int n, BN_GENCB *cb)
-{
+progress_cb(int p, int n, BN_GENCB *cb) {
 	union {
 		void *dptr;
 		void (*fptr)(int);
@@ -1037,8 +1049,14 @@ opensslrsa_tofile(const dst_key_t *key, const char *directory) {
 		return (DST_R_NULLKEY);
 	rsa = key->keydata.rsa;
 #endif
-
 	memset(bufs, 0, sizeof(bufs));
+
+	if (key->external) {
+		priv.nelements = 0;
+		result = dst__privstruct_writefile(key, &priv, directory);
+		goto fail;
+	}
+
 	for (i = 0; i < 8; i++) {
 		bufs[i] = isc_mem_get(key->mctx, BN_num_bytes(rsa->n));
 		if (bufs[i] == NULL) {
@@ -1179,6 +1197,24 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	EVP_PKEY *pkey = NULL;
 #endif
 
+	/* read private key file */
+	ret = dst__privstruct_parse(key, DST_ALG_RSA, lexer, mctx, &priv);
+	if (ret != ISC_R_SUCCESS)
+		goto err;
+
+	if (key->external) {
+		if (priv.nelements != 0)
+			DST_RET(DST_R_INVALIDPRIVATEKEY);
+		if (pub == NULL)
+			DST_RET(DST_R_INVALIDPRIVATEKEY);
+		key->keydata.pkey = pub->keydata.pkey;
+		pub->keydata.pkey = NULL;
+		key->key_size = pub->key_size;
+		dst__privstruct_free(&priv, mctx);
+		memset(&priv, 0, sizeof(priv));
+		return (ISC_R_SUCCESS);
+	}
+
 #if USE_EVP
 	if (pub != NULL && pub->keydata.pkey != NULL)
 		pubrsa = EVP_PKEY_get1_RSA(pub->keydata.pkey);
@@ -1188,11 +1224,6 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		pub->keydata.rsa = NULL;
 	}
 #endif
-
-	/* read private key file */
-	ret = dst__privstruct_parse(key, DST_ALG_RSA, lexer, mctx, &priv);
-	if (ret != ISC_R_SUCCESS)
-		goto err;
 
 	for (i = 0; i < priv.nelements; i++) {
 		switch (priv.elements[i].tag) {
@@ -1206,6 +1237,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			break;
 		}
 	}
+
 	/*
 	 * Is this key is stored in a HSM?
 	 * See if we can fetch it.
@@ -1275,8 +1307,6 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		case TAG_RSA_ENGINE:
 			continue;
 		case TAG_RSA_LABEL:
-			continue;
-		case TAG_RSA_PIN:
 			continue;
 		default:
 			bn = BN_bin2bn(priv.elements[i].data,
@@ -1425,6 +1455,7 @@ opensslrsa_fromlabel(dst_key_t *key, const char *engine, const char *label,
 
 static dst_func_t opensslrsa_functions = {
 	opensslrsa_createctx,
+	NULL, /*%< createctx2 */
 	opensslrsa_destroyctx,
 	opensslrsa_adddata,
 	opensslrsa_sign,

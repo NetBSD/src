@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2013/02/25 00:26:34 tls Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2014/08/19 23:47:18 tls Exp $
 
 PROG_CXX=	llvm-symbolizer
 NOMAN=		yes
@@ -13,7 +13,14 @@ SRCS=	LLVMSymbolize.cpp \
 LLVM_LIBS+= \
 	DebugInfo \
 	Object \
+	MCParser \
+	MC \
+	BitReader \
+	IR \
 	Support
+
+LDADD+=	-lz
+DPADD+=	${LIBZ}
 
 .include "${.PARSEDIR}/../../link.mk"
 

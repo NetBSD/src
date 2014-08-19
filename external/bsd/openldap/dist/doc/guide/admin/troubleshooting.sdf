@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/troubleshooting.sdf,v 1.10.2.7 2010/04/13 20:22:35 kurt Exp
-# Copyright 2007-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 2007-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Troubleshooting
@@ -53,7 +53,7 @@ our Issue Tracking system {{URL:http://www.openldap.org/its/}} and report it.
 However, make sure it's not already a known bug or a common user problem.
 
 * bugs in historic versions of OpenLDAP will not be considered;
-* bugs in released versions that are no longer present in HEAD code, 
+* bugs in released versions that are no longer present in the Git master branch, 
 either because they have been fixed or because they no longer apply, 
 will not be considered as well;
 * bugs in distributions of OpenLDAP software that are not related to the 

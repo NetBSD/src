@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.56 2010/12/18 01:56:23 each Exp */
+/* Id: platform.h.in,v 1.56 2010/12/18 01:56:23 each Exp  */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -199,6 +199,11 @@
  */
 #undef ISC_PLATFORM_NEEDMEMMOVE
 
+/*
+ * Define if this system needs strcasestr.
+ */
+#undef ISC_PLATFORM_NEEDSTRCASESTR
+
 /***
  *** Miscellaneous.
  ***/
@@ -313,10 +318,25 @@
 #undef ISC_PLATFORM_OPENSSLHASH
 
 /*
+ * Define if AES must be provided by OpenSSL.
+ */
+#define ISC_PLATFORM_OPENSSLAES 1
+
+/*
+ * Define if AES support is wanted
+ */
+#define ISC_PLATFORM_WANTAES 1
+
+/*
  * Defines for the noreturn attribute.
  */
 #define ISC_PLATFORM_NORETURN_PRE
 #define ISC_PLATFORM_NORETURN_POST __attribute__((noreturn))
+
+/*
+ * Defined if we are enabling SIT (Source Identity Token).
+ */
+#define ISC_PLATFORM_USESIT 1
 
 /***
  ***	Windows dll support.
@@ -334,6 +354,7 @@
 #define LIBISCCC_EXTERNAL_DATA
 #define LIBISCCFG_EXTERNAL_DATA
 #define LIBBIND9_EXTERNAL_DATA
+#define LIBTESTS_EXTERNAL_DATA
 #else /*! \brief ISC_PLATFORM_USEDECLSPEC */
 #ifdef LIBISC_EXPORTS
 #define LIBISC_EXTERNAL_DATA __declspec(dllexport)
@@ -359,6 +380,11 @@
 #define LIBBIND9_EXTERNAL_DATA __declspec(dllexport)
 #else
 #define LIBBIND9_EXTERNAL_DATA __declspec(dllimport)
+#endif
+#ifdef LIBTESTS_EXPORTS
+#define LIBTESTS_EXTERNAL_DATA __declspec(dllexport)
+#else
+#define LIBTESTS_EXTERNAL_DATA __declspec(dllimport)
 #endif
 #endif /*! \brief ISC_PLATFORM_USEDECLSPEC */
 

@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
 "@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.31 2005-04-26 19:48:38 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pppoe.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-pppoe.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -56,7 +56,7 @@ enum {
 	PPPOE_PADT = 0xa7
 };
 
-static struct tok pppoecode2str[] = {
+static const struct tok pppoecode2str[] = {
 	{ PPPOE_PADI, "PADI" },
 	{ PPPOE_PADO, "PADO" },
 	{ PPPOE_PADR, "PADR" },
@@ -81,7 +81,7 @@ enum {
 	PPPOE_GENERIC_ERROR = 0x0203
 };
 
-static struct tok pppoetag2str[] = {
+static const struct tok pppoetag2str[] = {
 	{ PPPOE_EOL, "EOL" },
 	{ PPPOE_SERVICE_NAME, "Service-Name" },
 	{ PPPOE_AC_NAME, "AC-Name" },
@@ -164,7 +164,7 @@ pppoe_print(register const u_char *bp, u_int length)
 
 			if (tag_len) {
 				unsigned isascii = 0, isgarbage = 0;
-				const u_char *v = p;
+				const u_char *v;
 				char tag_str[MAXTAGPRINT];
 				unsigned tag_str_len = 0;
 

@@ -1,7 +1,6 @@
 ## Makefile for the GNU C++ Support library.
 ##
-## Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-## Free Software Foundation, Inc.
+## Copyright (C) 2000-2013 Free Software Foundation, Inc.
 ##
 ## Process this file with automake to produce Makefile.in.
 ##
@@ -30,19 +29,25 @@ toolexeclib_LTLIBRARIES = libsupc++.la
 # 2) integrated libsupc++convenience.la that is to be a part of libstdc++.a
 noinst_LTLIBRARIES = libsupc++convenience.la
 
+std_HEADERS = \
+	cxxabi.h exception initializer_list new typeinfo
 
-headers = \
-	exception new typeinfo cxxabi.h cxxabi-forced.h exception_defines.h \
-	initializer_list exception_ptr.h nested_exception.h
+bits_HEADERS = \
+	atomic_lockfree_defines.h cxxabi_forced.h \
+	exception_defines.h exception_ptr.h hash_bytes.h nested_exception.h
+
+headers = $(std_HEADERS) $(bits_HEADERS)
 
 if GLIBCXX_HOSTED
   c_sources = \
-	cp-demangle.c 
+	cp-demangle.c
 endif
 
 sources = \
 	array_type_info.cc \
 	atexit_arm.cc \
+	atexit_thread.cc \
+	bad_alloc.cc \
 	bad_cast.cc \
 	bad_typeid.cc \
 	class_type_info.cc \
@@ -62,6 +67,7 @@ sources = \
 	eh_ptr.cc \
 	eh_term_handler.cc \
 	eh_terminate.cc \
+	eh_tm.cc \
 	eh_throw.cc \
 	eh_type.cc \
 	eh_unex_handler.cc \
@@ -69,6 +75,9 @@ sources = \
 	function_type_info.cc \
 	fundamental_type_info.cc \
 	guard.cc \
+	guard_error.cc \
+	hash_bytes.cc \
+	nested_exception.cc \
 	new_handler.cc \
 	new_op.cc \
 	new_opnt.cc \
@@ -88,8 +97,40 @@ sources = \
 libsupc___la_SOURCES = $(sources) $(c_sources)
 libsupc__convenience_la_SOURCES = $(sources) $(c_sources)
 
-glibcxxinstalldir = $(gxx_include_dir)
-glibcxxinstall_HEADERS = $(headers)
+cp-demangle.c:
+	rm -f $@
+	$(LN_S) $(toplevel_srcdir)/libiberty/cp-demangle.c $@
+cp-demangle.lo: cp-demangle.c
+	$(LTCOMPILE) -DIN_GLIBCPP_V3 -Wno-error -c $<
+cp-demangle.o: cp-demangle.c
+	$(C_COMPILE) -DIN_GLIBCPP_V3 -Wno-error -c $<
+
+
+# Use special rules for the C++0x sources so that the proper flags are passed.
+eh_ptr.lo: eh_ptr.cc
+	$(LTCXXCOMPILE) -std=gnu++0x -c $<
+eh_ptr.o: eh_ptr.cc
+	$(CXXCOMPILE) -std=gnu++0x -c $<
+
+eh_throw.lo: eh_throw.cc
+	$(LTCXXCOMPILE) -std=gnu++0x -c $<
+eh_throw.o: eh_throw.cc
+	$(CXXCOMPILE) -std=gnu++0x -c $<
+
+guard.lo: guard.cc
+	$(LTCXXCOMPILE) -std=gnu++0x -c $<
+guard.o: guard.cc
+	$(CXXCOMPILE) -std=gnu++0x -c $<
+
+atexit_thread.lo: atexit_thread.cc
+	$(LTCXXCOMPILE) -std=gnu++0x -c $<
+atexit_thread.o: atexit_thread.cc
+	$(CXXCOMPILE) -std=gnu++0x -c $<
+
+nested_exception.lo: nested_exception.cc
+	$(LTCXXCOMPILE) -std=gnu++0x -c $<
+nested_exception.o: nested_exception.cc
+	$(CXXCOMPILE) -std=gnu++0x -c $<
 
 # AM_CXXFLAGS needs to be in each subdirectory so that it can be
 # modified in a per-library or per-sub-library way.  Need to manually
@@ -97,11 +138,9 @@ glibcxxinstall_HEADERS = $(headers)
 # OPTIMIZE_CXXFLAGS on the compile line so that -O2 can be overridden
 # as the occasion call for it.
 AM_CXXFLAGS = \
-	-fno-implicit-templates \
-	$(LIBSUPCXX_PICFLAGS) \
-	$(WARN_CXXFLAGS) \
-	$(OPTIMIZE_CXXFLAGS) \
-	$(CONFIG_CXXFLAGS)
+	$(glibcxx_lt_pic_flag) $(glibcxx_compiler_shared_flag) \
+	$(XTEMPLATE_FLAGS) \
+	$(WARN_CXXFLAGS) $(OPTIMIZE_CXXFLAGS)  $(CONFIG_CXXFLAGS)
 
 AM_MAKEFLAGS = \
 	"gxx_include_dir=$(gxx_include_dir)"
@@ -117,25 +156,13 @@ C_COMPILE = \
 
 # LTCOMPILE is copied from LTCXXCOMPILE below.
 LTCOMPILE = $(LIBTOOL) --tag CC --tag disable-shared $(LIBTOOLFLAGS) --mode=compile \
-	    $(CC) $(DEFS) $(C_INCLUDES) $(LIBSUPCXX_PICFLAGS) \
-            $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+	    $(CC) $(DEFS) $(C_INCLUDES) \
+	    $(glibcxx_lt_pic_flag) $(glibcxx_compiler_shared_flag) \
+	    $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 
-cp-demangle.c:
-	rm -f $@
-	$(LN_S) $(toplevel_srcdir)/libiberty/cp-demangle.c $@
-cp-demangle.lo: cp-demangle.c
-	$(LTCOMPILE) -DIN_GLIBCPP_V3 -Wno-error -c $<
-cp-demangle.o: cp-demangle.c
-	$(C_COMPILE) -DIN_GLIBCPP_V3 -Wno-error -c $<
+# Libtool notes
 
-
-# libstdc++ libtool notes
-
-# 1) Need to explicitly set LTCXXCOMPILE so that AM_CXXFLAGS is
-# last. (That way, things like -O2 passed down from the toplevel can
-# be overridden by --enable-debug.)
-
-# 2) In general, libtool expects an argument such as `--tag=CXX' when
+# 1) In general, libtool expects an argument such as `--tag=CXX' when
 # using the C++ compiler, because that will enable the settings
 # detected when C++ support was being configured.  However, when no
 # such flag is given in the command line, libtool attempts to figure
@@ -147,12 +174,23 @@ cp-demangle.o: cp-demangle.c
 # correct solution is to add `--tag CXX' to LTCXXCOMPILE and maybe
 # CXXLINK, just after $(LIBTOOL), so that libtool doesn't have to
 # attempt to infer which configuration to use.
-#
-# We have to put --tag disable-shared after --tag CXX lest things
-# CXX undo the affect of disable-shared.
-LTCXXCOMPILE = $(LIBTOOL) --tag CXX --tag disable-shared $(LIBTOOLFLAGS) \
-	       --mode=compile $(CXX) $(TOPLEVEL_INCLUDES) \
-	       $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) 
+# 
+# The second tag argument, `--tag disable-shared` means that libtool
+# only compiles each source once, for static objects. In actuality,
+# glibcxx_lt_pic_flag and glibcxx_compiler_shared_flag are added to
+# the libtool command that is used create the object, which is
+# suitable for shared libraries.  The `--tag disable-shared` must be
+# placed after --tag CXX lest things CXX undo the affect of
+# disable-shared.
+
+# 2) Need to explicitly set LTCXXCOMPILE so that EXTRA_CXX_FLAGS is
+# last. (That way, things like -O2 passed down from the toplevel can
+# be overridden by --enable-debug.)
+LTCXXCOMPILE = \
+	$(LIBTOOL) --tag CXX --tag disable-shared \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=compile $(CXX) $(TOPLEVEL_INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) $(EXTRA_CXX_FLAGS)
 
 LTLDFLAGS = $(shell $(SHELL) $(top_srcdir)/../libtool-ldflags $(LDFLAGS))
 
@@ -162,25 +200,48 @@ LTLDFLAGS = $(shell $(SHELL) $(top_srcdir)/../libtool-ldflags $(LDFLAGS))
 # course is problematic at this point.  So, we get the top-level
 # directory to configure libstdc++-v3 to use gcc as the C++
 # compilation driver.
-CXXLINK = $(LIBTOOL) --tag CXX --tag disable-shared $(LIBTOOLFLAGS) \
-	  --mode=link $(CXX) \
-	  $(OPT_LDFLAGS) $(SECTION_LDFLAGS) $(AM_CXXFLAGS) $(LTLDFLAGS) -o $@
+CXXLINK = \
+	$(LIBTOOL) --tag CXX --tag disable-shared \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXX) \
+	$(OPT_LDFLAGS) $(SECTION_LDFLAGS) $(AM_CXXFLAGS) $(LTLDFLAGS) -o $@
 
+# Install notes
 # We have to have rules modified from the default to counteract SUN make
-# prepending each of $(glibcxxinstall_HEADERS) with VPATH below.
-install-glibcxxinstallHEADERS: $(glibcxxinstall_HEADERS)
+# prepending each of $(*_HEADERS) with VPATH below.
+stddir = $(gxx_include_dir)
+bitsdir = $(gxx_include_dir)/bits
+
+install-stdHEADERS: $(std_HEADERS)
 	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(glibcxxinstalldir)
-	@list='$(glibcxxinstall_HEADERS)'; for p in $$list; do \
+	$(mkinstalldirs) $(DESTDIR)$(stddir)
+	@list='$(std_HEADERS)'; for p in $$list; do \
 	  q=`echo $$p | sed -e 's,.*/,,'`; \
 	  if test -f "$$p"; then d= ; else d="$(srcdir)/"; fi; \
-	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(glibcxxinstalldir)/$$q"; \
-	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(glibcxxinstalldir)/$$q; \
+	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(stddir)/$$q"; \
+	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(stddir)/$$q; \
 	done
 
-uninstall-glibcxxinstallHEADERS:
-	@$(NORMAL_UNINSTALL)
-	list='$(glibcxxinstall_HEADERS)'; for p in $$list; do \
+install-bitsHEADERS: $(bits_HEADERS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(bitsdir)
+	@list='$(bits_HEADERS)'; for p in $$list; do \
 	  q=`echo $$p | sed -e 's,.*/,,'`; \
-	  rm -f $(DESTDIR)$(glibcxxinstalldir)/$$q; \
+	  if test -f "$$p"; then d= ; else d="$(srcdir)/"; fi; \
+	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(bitsdir)/$$q"; \
+	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(bitsdir)/$$q; \
+	done
+
+uninstall-stdHEADERS:
+	@$(NORMAL_UNINSTALL)
+	list='$(std_HEADERS)'; for p in $$list; do \
+	  q=`echo $$p | sed -e 's,.*/,,'`; \
+	  rm -f $(DESTDIR)$(stddir)/$$q; \
+	done
+
+uninstall-bitsHEADERS:
+	@$(NORMAL_UNINSTALL)
+	list='$(bits_HEADERS)'; for p in $$list; do \
+	  q=`echo $$p | sed -e 's,.*/,,'`; \
+	  rm -f $(DESTDIR)$(bitsdir)/$$q; \
 	done

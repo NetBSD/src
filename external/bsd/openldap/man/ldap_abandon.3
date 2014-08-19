@@ -1,6 +1,7 @@
-.TH LDAP_ABANDON 3 "2010/06/30" "OpenLDAP 2.4.23"
-.\" OpenLDAP: pkg/ldap/doc/man/man3/ldap_abandon.3,v 1.17.2.7 2010/04/13 20:22:38 kurt Exp
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH LDAP_ABANDON 3 "2014/01/26" "OpenLDAP 2.4.39"
+.\" $OpenLDAP$
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_abandon_ext \- Abandon an LDAP operation in progress
@@ -57,6 +58,7 @@ routine is deprecated in favor of the
 .B ldap_abandon_ext()
 routine. 
 .LP
+.lf 1 ./Deprecated
 Deprecated interfaces generally remain in the library.  The macro
 LDAP_DEPRECATED can be defined to a non-zero value
 (e.g., -DLDAP_DEPRECATED=1) when compiling program designed to use
@@ -64,6 +66,7 @@ deprecated interfaces.  It is recommended that developers writing new
 programs, or updating old programs, avoid use of deprecated interfaces.
 Over time, it is expected that documentation (and, eventually, support) for
 deprecated interfaces to be eliminated.
+.lf 61 stdin
 
 .SH SEE ALSO
 .BR ldap (3),
@@ -71,9 +74,11 @@ deprecated interfaces to be eliminated.
 .BR ldap_result (3),
 .BR ldap_search_ext (3)
 .SH ACKNOWLEDGEMENTS
+.lf 1 ./../Project
 .\" Shared Project Acknowledgement Text
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from University of Michigan LDAP 3.3 Release.  
+.lf 69 stdin
 

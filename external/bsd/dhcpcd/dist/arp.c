@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.1.1.8.6.1 2013/06/23 06:26:31 tls Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.1.1.8.6.2 2014/08/19 23:46:43 tls Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -35,20 +42,21 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "arp.h"
 #include "ipv4.h"
 #include "common.h"
 #include "dhcp.h"
 #include "dhcpcd.h"
 #include "eloop.h"
+#include "if.h"
 #include "if-options.h"
 #include "ipv4ll.h"
-#include "net.h"
 
 #define ARP_LEN								      \
 	(sizeof(struct arphdr) + (2 * sizeof(uint32_t)) + (2 * HWADDR_LEN))
 
-static int
+static ssize_t
 arp_send(const struct interface *ifp, int op, in_addr_t sip, in_addr_t tip)
 {
 	uint8_t arp_buffer[ARP_LEN];
@@ -63,15 +71,15 @@ arp_send(const struct interface *ifp, int op, in_addr_t sip, in_addr_t tip)
 	ar.ar_op = htons(op);
 
 	p = arp_buffer;
-	len = sizeof(arp_buffer);
+	len = 0;
 
 #define CHECK(fun, b, l)						\
 	do {								\
-		if (len < (l))						\
+		if (len + (l) > sizeof(arp_buffer))			\
 			goto eexit;					\
 		fun(p, (b), (l));					\
 		p += (l);						\
-		len -= (l);						\
+		len += (l);						\
 	} while (/* CONSTCOND */ 0)
 #define APPEND(b, l)	CHECK(memcpy, b, l)
 #define ZERO(l)		CHECK(memset, 0, l)
@@ -81,8 +89,7 @@ arp_send(const struct interface *ifp, int op, in_addr_t sip, in_addr_t tip)
 	APPEND(&sip, sizeof(sip));
 	ZERO(ifp->hwlen);
 	APPEND(&tip, sizeof(tip));
-	len = p - arp_buffer;
-	return ipv4_sendrawpacket(ifp, ETHERTYPE_ARP, arp_buffer, len);
+	return if_sendrawpacket(ifp, ETHERTYPE_ARP, arp_buffer, len);
 
 eexit:
 	errno = ENOBUFS;
@@ -97,9 +104,9 @@ arp_failure(struct interface *ifp)
 	/* If we failed without a magic cookie then we need to try
 	 * and defend our IPv4LL address. */
 	if ((state->offer != NULL &&
-		state->offer->cookie != htonl(MAGIC_COOKIE)) ||
+	    state->offer->cookie != htonl(MAGIC_COOKIE)) ||
 	    (state->new != NULL &&
-		state->new->cookie != htonl(MAGIC_COOKIE)))
+	    state->new->cookie != htonl(MAGIC_COOKIE)))
 	{
 		ipv4ll_handle_failure(ifp);
 		return;
@@ -108,12 +115,12 @@ arp_failure(struct interface *ifp)
 	unlink(state->leasefile);
 	if (!state->lease.frominfo)
 		dhcp_decline(ifp);
-	dhcp_close(ifp);
-	eloop_timeout_delete(NULL, ifp);
+	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 	if (state->lease.frominfo)
-		start_interface(ifp);
+		dhcpcd_startinterface(ifp);
 	else
-		eloop_timeout_add_sec(DHCP_ARP_FAIL, start_interface, ifp);
+		eloop_timeout_add_sec(ifp->ctx->eloop,
+		    DHCP_ARP_FAIL, dhcpcd_startinterface, ifp);
 }
 
 static void
@@ -130,14 +137,21 @@ arp_packet(void *arg)
 	struct if_options *opts = ifp->options;
 	const char *hwaddr;
 	struct in_addr ina;
+	char hwbuf[HWADDR_LEN * 3];
+	int flags;
 
 	state = D_STATE(ifp);
 	state->fail.s_addr = 0;
-	for(;;) {
-		bytes = ipv4_getrawpacket(ifp, ETHERTYPE_ARP,
-		    arp_buffer, sizeof(arp_buffer), NULL);
-		if (bytes == 0 || bytes == -1)
+	flags = 0;
+	while (!(flags & RAW_EOF)) {
+		bytes = if_readrawpacket(ifp, ETHERTYPE_ARP,
+		    arp_buffer, sizeof(arp_buffer), &flags);
+		if (bytes == 0 || bytes == -1) {
+			syslog(LOG_ERR, "%s: arp if_readrawpacket: %m",
+			    ifp->name);
+			dhcp_close(ifp);
 			return;
+		}
 		/* We must have a full ARP header */
 		if ((size_t)bytes < sizeof(ar))
 			continue;
@@ -170,41 +184,52 @@ arp_packet(void *arg)
 		if (state->arping_index &&
 		    state->arping_index <= opts->arping_len &&
 		    (reply_s == opts->arping[state->arping_index - 1] ||
-			(reply_s == 0 &&
-			    reply_t == opts->arping[state->arping_index - 1])))
+		    (reply_s == 0 &&
+		    reply_t == opts->arping[state->arping_index - 1])))
 		{
 			ina.s_addr = reply_s;
 			hwaddr = hwaddr_ntoa((unsigned char *)hw_s,
-			    (size_t)ar.ar_hln);
+			    (size_t)ar.ar_hln, hwbuf, sizeof(hwbuf));
 			syslog(LOG_INFO,
 			    "%s: found %s on hardware address %s",
 			    ifp->name, inet_ntoa(ina), hwaddr);
-			if (select_profile(ifp, hwaddr) == -1 &&
-			    errno == ENOENT)
-				select_profile(ifp, inet_ntoa(ina));
+			if (dhcpcd_selectprofile(ifp, hwaddr) == -1 &&
+			    dhcpcd_selectprofile(ifp, inet_ntoa(ina)) == -1)
+			{
+				state->probes = 0;
+				/* We didn't find a profile for this
+				 * address or hwaddr, so move to the next
+				 * arping profile */
+				if (state->arping_index <
+				    ifp->options->arping_len)
+				{
+					arp_probe(ifp);
+					return;
+				}
+			}
 			dhcp_close(ifp);
-			eloop_timeout_delete(NULL, ifp);
-			start_interface(ifp);
+			eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
+			dhcpcd_startinterface(ifp);
 			return;
 		}
 
-		/* Check for conflict */
+		/* RFC 2131 3.1.5, Client-server interaction
+		 * RFC 3927 2.2.1, Probe Conflict Detection */
 		if (state->offer &&
 		    (reply_s == state->offer->yiaddr ||
-			(reply_s == 0 && reply_t == state->offer->yiaddr)))
+		    (reply_s == 0 && reply_t == state->offer->yiaddr)))
 			state->fail.s_addr = state->offer->yiaddr;
 
-		/* Handle IPv4LL conflicts */
+		/* RFC 3927 2.5, Conflict Defense */
 		if (IN_LINKLOCAL(htonl(state->addr.s_addr)) &&
-		    (reply_s == state->addr.s_addr ||
-			(reply_s == 0 && reply_t == state->addr.s_addr)))
+		    reply_s == state->addr.s_addr)
 			state->fail.s_addr = state->addr.s_addr;
 
 		if (state->fail.s_addr) {
 			syslog(LOG_ERR, "%s: hardware address %s claims %s",
 			    ifp->name,
 			    hwaddr_ntoa((unsigned char *)hw_s,
-				(size_t)ar.ar_hln),
+				(size_t)ar.ar_hln, hwbuf, sizeof(hwbuf)),
 			    inet_ntoa(state->fail));
 			errno = EEXIST;
 			arp_failure(ifp);
@@ -223,13 +248,18 @@ arp_announce(void *arg)
 	if (state->new == NULL)
 		return;
 	if (state->arp_fd == -1) {
-		ipv4_opensocket(ifp, ETHERTYPE_ARP);
-		eloop_event_add(state->arp_fd, arp_packet, ifp);
+		state->arp_fd = if_openrawsocket(ifp, ETHERTYPE_ARP);
+		if (state->arp_fd == -1) {
+			syslog(LOG_ERR, "%s: %s: %m", __func__, ifp->name);
+			return;
+		}
+		eloop_event_add(ifp->ctx->eloop,
+		    state->arp_fd, arp_packet, ifp);
 	}
 	if (++state->claims < ANNOUNCE_NUM)
 		syslog(LOG_DEBUG,
 		    "%s: sending ARP announce (%d of %d), "
-		    "next in %d.00 seconds",
+		    "next in %d.0 seconds",
 		    ifp->name, state->claims, ANNOUNCE_NUM, ANNOUNCE_WAIT);
 	else
 		syslog(LOG_DEBUG,
@@ -239,10 +269,14 @@ arp_announce(void *arg)
 		state->new->yiaddr, state->new->yiaddr) == -1)
 		syslog(LOG_ERR, "send_arp: %m");
 	if (state->claims < ANNOUNCE_NUM) {
-		eloop_timeout_add_sec(ANNOUNCE_WAIT, arp_announce, ifp);
+		eloop_timeout_add_sec(ifp->ctx->eloop,
+		    ANNOUNCE_WAIT, arp_announce, ifp);
 		return;
 	}
 	if (state->new->cookie != htonl(MAGIC_COOKIE)) {
+		/* Check if doing DHCP */
+		if (!(ifp->options->options & DHCPCD_DHCP))
+			return;
 		/* We should pretend to be at the end
 		 * of the DHCP negotation cycle unless we rebooted */
 		if (state->interval != 0)
@@ -250,11 +284,12 @@ arp_announce(void *arg)
 		state->probes = 0;
 		state->claims = 0;
 		tv.tv_sec = state->interval - DHCP_RAND_MIN;
-		tv.tv_usec = arc4random() % (DHCP_RAND_MAX_U - DHCP_RAND_MIN_U);
+		tv.tv_usec = (suseconds_t)arc4random_uniform(
+		    (DHCP_RAND_MAX - DHCP_RAND_MIN) * 1000000);
 		timernorm(&tv);
-		eloop_timeout_add_tv(&tv, dhcp_discover, ifp);
+		eloop_timeout_add_tv(ifp->ctx->eloop, &tv, dhcp_discover, ifp);
 	} else {
-		eloop_event_delete(state->arp_fd);
+		eloop_event_delete(ifp->ctx->eloop, state->arp_fd);
 		close(state->arp_fd);
 		state->arp_fd = -1;
 	}
@@ -270,9 +305,13 @@ arp_probe(void *arg)
 	int arping = 0;
 
 	if (state->arp_fd == -1) {
-		if (ipv4_opensocket(ifp, ETHERTYPE_ARP) == -1)
+		state->arp_fd = if_openrawsocket(ifp, ETHERTYPE_ARP);
+		if (state->arp_fd == -1) {
+			syslog(LOG_ERR, "%s: %s: %m", __func__, ifp->name);
 			return;
-		eloop_event_add(state->arp_fd, arp_packet, ifp);
+		}
+		eloop_event_add(ifp->ctx->eloop,
+		    state->arp_fd, arp_packet, ifp);
 	}
 
 	if (state->arping_index < ifp->options->arping_len) {
@@ -296,23 +335,27 @@ arp_probe(void *arg)
 	}
 	if (++state->probes < PROBE_NUM) {
 		tv.tv_sec = PROBE_MIN;
-		tv.tv_usec = arc4random() % (PROBE_MAX_U - PROBE_MIN_U);
+		tv.tv_usec = (suseconds_t)arc4random_uniform(
+		    (PROBE_MAX - PROBE_MIN) * 1000000);
 		timernorm(&tv);
-		eloop_timeout_add_tv(&tv, arp_probe, ifp);
+		eloop_timeout_add_tv(ifp->ctx->eloop, &tv, arp_probe, ifp);
 	} else {
 		tv.tv_sec = ANNOUNCE_WAIT;
 		tv.tv_usec = 0;
 		if (arping) {
 			state->probes = 0;
 			if (++state->arping_index < ifp->options->arping_len)
-				eloop_timeout_add_tv(&tv, arp_probe, ifp);
+				eloop_timeout_add_tv(ifp->ctx->eloop,
+				    &tv, arp_probe, ifp);
 			else
-				eloop_timeout_add_tv(&tv, start_interface, ifp);
+				eloop_timeout_add_tv(ifp->ctx->eloop,
+				    &tv, dhcpcd_startinterface, ifp);
 		} else
-			eloop_timeout_add_tv(&tv, dhcp_bind, ifp);
+			eloop_timeout_add_tv(ifp->ctx->eloop,
+			    &tv, dhcp_bind, ifp);
 	}
 	syslog(LOG_DEBUG,
-	    "%s: sending ARP probe (%d of %d), next in %0.2f seconds",
+	    "%s: sending ARP probe (%d of %d), next in %0.1f seconds",
 	    ifp->name, state->probes ? state->probes : PROBE_NUM, PROBE_NUM,
 	    timeval_to_double(&tv));
 	if (arp_send(ifp, ARPOP_REQUEST, 0, addr.s_addr) == -1)
@@ -328,3 +371,19 @@ arp_start(struct interface *ifp)
 	state->arping_index = 0;
 	arp_probe(ifp);
 }
+
+void
+arp_close(struct interface *ifp)
+{
+	struct dhcp_state *state = D_STATE(ifp);
+
+	if (state == NULL)
+		return;
+
+	if (state->arp_fd != -1) {
+		eloop_event_delete(ifp->ctx->eloop, state->arp_fd);
+		close(state->arp_fd);
+		state->arp_fd = -1;
+	}
+}
+

@@ -1,6 +1,7 @@
 /* tc-hppa.h -- Header file for the PA
    Copyright 1989, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2012
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -137,8 +138,8 @@ int hppa_fix_adjustable (struct fix *);
    *not* end up in the symbol table.  Likewise for absolute symbols
    with local scope.  */
 #define tc_frob_symbol(sym,punt) \
-    if ((S_GET_SEGMENT (sym) == &bfd_und_section && ! symbol_used_p (sym)) \
-	|| (S_GET_SEGMENT (sym) == &bfd_abs_section \
+    if ((S_GET_SEGMENT (sym) == bfd_und_section_ptr && ! symbol_used_p (sym)) \
+	|| (S_GET_SEGMENT (sym) == bfd_abs_section_ptr \
 	    && ! S_IS_EXTERNAL (sym))) \
       punt = 1
 
@@ -178,7 +179,7 @@ int hppa_fix_adjustable (struct fix *);
 
 #define tc_frob_symbol(sym,punt) \
   { \
-    if ((S_GET_SEGMENT (sym) == &bfd_und_section \
+    if ((S_GET_SEGMENT (sym) == bfd_und_section_ptr \
          && ! symbol_used_p (sym) \
          && ELF_ST_VISIBILITY (S_GET_OTHER (sym)) == STV_DEFAULT) \
 	|| strcmp (S_GET_NAME (sym), "$global$") == 0 \

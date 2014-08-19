@@ -1,7 +1,6 @@
 // std::moneypunct implementation details, GNU version -*- C++ -*-
 
-// Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2001-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -32,7 +31,9 @@
 #include <locale>
 #include <bits/c++locale_internal.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // Construct and return valid pattern consisting of some combination of:
   // space none symbol sign value
@@ -337,6 +338,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	      delete [] __group;
 	      delete [] __ps;
 	      delete [] __ns;
+	      __throw_exception_again;
 	    }
 
 	  char __pprecedes = *(__nl_langinfo_l(__INT_P_CS_PRECEDES, __cloc));
@@ -487,6 +489,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	      delete [] __group;
 	      delete [] __ps;
 	      delete [] __ns;
+	      __throw_exception_again;
 	    }
 
 	  char __pprecedes = *(__nl_langinfo_l(__P_CS_PRECEDES, __cloc));
@@ -574,7 +577,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	  __c_locale __old = __uselocale(__cloc);
 #else
 	  // Switch to named locale so that mbsrtowcs will work.
-	  char* __old = setlocale(LC_ALL, NULL);
+	  char* __old = setlocale(LC_ALL, 0);
           const size_t __llen = strlen(__old) + 1;
           char* __sav = new char[__llen];
           memcpy(__sav, __old, __llen);
@@ -757,7 +760,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	  __c_locale __old = __uselocale(__cloc);
 #else
 	  // Switch to named locale so that mbsrtowcs will work.
-	  char* __old = setlocale(LC_ALL, NULL);
+	  char* __old = setlocale(LC_ALL, 0);
           const size_t __llen = strlen(__old) + 1;
           char* __sav = new char[__llen];
           memcpy(__sav, __old, __llen);
@@ -929,4 +932,5 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     }
 #endif
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace

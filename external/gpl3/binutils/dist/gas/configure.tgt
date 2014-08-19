@@ -13,7 +13,7 @@
 #   em		emulation; identifies the config/te-* files
 
 # Optional output shell variables; these are not always set:
-#   arch	the default architecture; sets DEFAULT_ARCH on some systems 
+#   arch	the default architecture; sets DEFAULT_ARCH on some systems
 #   endian	"big" or "little"; used on bi-endian systems
 
 cpu_type=
@@ -29,6 +29,8 @@ eval `echo $targ | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/cpu=\1 vendor=\2 os=\3/'`
 # endian and arch.
 # Note: This table is alpha-sorted, please try to keep it that way.
 case ${cpu} in
+  aarch64)		cpu_type=aarch64 endian=little ;;
+  aarch64_be)		cpu_type=aarch64 endian=big ;;
   alpha*)		cpu_type=alpha ;;
   am33_2.0)		cpu_type=mn10300 endian=little ;;
   arm*be|arm*b)		cpu_type=arm endian=big ;;
@@ -38,17 +40,18 @@ case ${cpu} in
   cr16*)		cpu_type=cr16 endian=little ;;
   crisv32)		cpu_type=cris arch=crisv32 ;;
   crx*)			cpu_type=crx endian=little ;;
+  epiphany*)		cpu_type=epiphany endian=little ;;
   fido)			cpu_type=m68k ;;
   hppa*)		cpu_type=hppa ;;
   i[3-7]86)		cpu_type=i386 arch=i386;;
   ia64)			cpu_type=ia64 ;;
-  ip2k)			cpu_type=ip2k endian=big ;; 
-  iq2000)		cpu_type=iq2000 endian=big ;; 
+  ip2k)			cpu_type=ip2k endian=big ;;
+  iq2000)		cpu_type=iq2000 endian=big ;;
   lm32)			cpu_type=lm32 ;;
   m32c)			cpu_type=m32c endian=little ;;
   m32r)			cpu_type=m32r endian=big ;;
   m32rle)		cpu_type=m32r endian=little ;;
-  m5200)		cpu_type=m68k ;;
+  m5200|m5407)		cpu_type=m68k ;;
   m68008)		cpu_type=m68k ;;
   m680[012346]0)	cpu_type=m68k ;;
   m6811|m6812|m68hc12)	cpu_type=m68hc11 ;;
@@ -64,6 +67,7 @@ case ${cpu} in
   powerpc*le*)		cpu_type=ppc endian=little ;;
   powerpc*)		cpu_type=ppc endian=big ;;
   rs6000*)		cpu_type=ppc ;;
+  rl78*)		cpu_type=rl78 ;;
   rx)			cpu_type=rx ;;
   s390x*)		cpu_type=s390 arch=s390x ;;
   s390*)		cpu_type=s390 arch=s390 ;;
@@ -80,13 +84,11 @@ case ${cpu} in
   sparclet*)		cpu_type=sparc arch=sparclet ;;
   sparclite*)		cpu_type=sparc arch=sparclite ;;
   sparc*)		cpu_type=sparc arch=sparclite ;; # ??? See tc-sparc.c.
-  strongarm*be)		cpu_type=arm endian=big ;;
-  strongarm*b)		cpu_type=arm endian=big ;;
-  strongarm*)		cpu_type=arm endian=little ;;
+  tilegx*be)		cpu_type=tilegx endian=big ;;
+  tilegx*)		cpu_type=tilegx endian=little ;;
   v850*)		cpu_type=v850 ;;
   x86_64*)		cpu_type=i386 arch=x86_64;;
-  xscale*be|xscale*b)	cpu_type=arm endian=big ;;
-  xscale*)		cpu_type=arm endian=little ;;
+  xgate)		cpu_type=xgate ;;
   xtensa*)		cpu_type=xtensa arch=xtensa ;;
   *)			cpu_type=${cpu} ;;
 esac
@@ -96,6 +98,10 @@ esac
 generic_target=${cpu_type}-$vendor-$os
 # Note: This table is alpha-sorted, please try to keep it that way.
 case ${generic_target} in
+  aarch64*-*-elf)			fmt=elf;;
+  aarch64*-*-linux*)			fmt=elf em=linux ;;
+  aarch64*-*-netbsd*)			fmt=elf em=nbsd ;;
+
   alpha-*-*vms*)			fmt=evax ;;
   alpha-*-osf*)				fmt=ecoff ;;
   alpha-*-linuxecoff*)			fmt=ecoff ;;
@@ -120,13 +126,14 @@ case ${generic_target} in
   arm-*-linux-*)			fmt=elf  em=linux ;;
   arm-*-uclinux*eabi*)			fmt=elf  em=armlinuxeabi ;;
   arm-*-uclinux*)			fmt=elf  em=linux ;;
-  arm-*-netbsdelf*)			fmt=elf  em=nbsd ;;
-  arm-*-*n*bsd*)			fmt=aout em=nbsd ;;
+  arm-*-nacl*)				fmt=elf  em=nacl ;;
+  arm-*-netbsdelf*)			fmt=elf  em=armnbsd ;;
+  arm-*-*n*bsd*)			fmt=aout em=armnbsd ;;
   arm-*-nto*)				fmt=elf ;;
-  arm-epoc-pe | thumb-epoc-pe)		fmt=coff em=epoc-pe ;;
+  arm-epoc-pe)				fmt=coff em=epoc-pe ;;
   arm-wince-pe | arm-*-wince | arm*-*-mingw32ce* | arm*-*-cegcc*)
 					fmt=coff em=wince-pe ;;
-  arm-*-pe | thumb-*-pe)		fmt=coff em=pe ;;
+  arm-*-pe)				fmt=coff em=pe ;;
   arm-*-riscix*)			fmt=aout em=riscix ;;
 
   avr-*-*)				fmt=elf bfd_gas=yes ;;
@@ -147,6 +154,8 @@ case ${generic_target} in
   d10v-*-*)				fmt=elf ;;
   d30v-*-*)				fmt=elf ;;
   dlx-*-*)				fmt=elf ;;
+
+  epiphany-*-*)				fmt=elf ;;
 
   fr30-*-*)				fmt=elf ;;
   frv-*-*linux*)			fmt=elf em=linux;;
@@ -184,6 +193,10 @@ case ${generic_target} in
   i386-*-elf)				fmt=elf ;;
   i386-*-kaos*)				fmt=elf ;;
   i386-*-bsd*)				fmt=aout em=386bsd ;;
+  i386-*-nacl*)				fmt=elf em=nacl
+    case ${cpu} in
+      x86_64*)				arch=x86_64:32 ;;
+    esac ;;
   i386-*-netbsd0.8)			fmt=aout em=386bsd ;;
   i386-*-netbsdpe*)			fmt=coff em=pe ;;
   i386-*-netbsd*-gnu* | \
@@ -200,7 +213,10 @@ case ${generic_target} in
   i386-*-linux*aout*)			fmt=aout em=linux ;;
   i386-*-linux*oldld)			fmt=aout em=linux ;;
   i386-*-linux*coff*)			fmt=coff em=linux ;;
-  i386-*-linux-*)			fmt=elf em=linux ;;
+  i386-*-linux-*)			fmt=elf em=linux
+    case ${cpu}-${os} in
+      x86_64*-linux-gnux32)		arch=x86_64:32 ;;
+    esac ;;
   i386-*-lynxos*)			fmt=elf em=lynx ;;
   i386-*-sysv[45]*)			fmt=elf ;;
   i386-*-solaris*)			fmt=elf em=solaris ;;
@@ -292,6 +308,8 @@ case ${generic_target} in
   mips-*-lnews*)			fmt=ecoff em=lnews ;;
   mips-*-riscos*)			fmt=ecoff ;;
   mips*-*-linux*)			fmt=elf em=tmips ;;
+  mips*-*-freebsd* | mips*-*-kfreebsd*-gnu)
+					fmt=elf em=freebsd ;;
   mips-*-sysv4*MP* | mips-*-gnu*)	fmt=elf em=tmips ;;
   mips*-sde-elf*)			fmt=elf em=tmips ;;
   mips-*-sysv*)				fmt=ecoff ;;
@@ -404,15 +422,16 @@ case ${generic_target} in
   tic54x-*-* | c54x*-*-*)		fmt=coff bfd_gas=yes need_libm=yes;;
   tic6x-*-*)				fmt=elf ;;
 
+  tilepro-*-* | tilegx*-*-*)		fmt=elf ;;
+
   v850*-*-*)				fmt=elf ;;
 
   vax-*-netbsdelf*)			fmt=elf em=nbsd ;;
   vax-*-linux-*)			fmt=elf em=linux ;;
 
-  xscale-*-coff)			fmt=coff ;;
-  xscale-*-elf)				fmt=elf ;;
-
   xstormy16-*-*)			fmt=elf ;;
+  
+  xgate-*-*)    			fmt=elf ;;
 
   xtensa*-*-*)				fmt=elf ;;
 
@@ -435,7 +454,7 @@ case ${generic_target} in
 esac
 
 case ${cpu_type} in
-  alpha | arm | i386 | ia64 | microblaze | mips | ns32k | pdp11 | ppc | sparc | z80 | z8k)
+  aarch64 | alpha | arm | i386 | ia64 | microblaze | mips | ns32k | pdp11 | ppc | sparc | z80 | z8k)
     bfd_gas=yes
     ;;
 esac

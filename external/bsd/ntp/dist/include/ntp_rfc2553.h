@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_rfc2553.h,v 1.1.1.2 2012/01/31 21:23:24 kardel Exp $	*/
+/*	$NetBSD: ntp_rfc2553.h,v 1.1.1.2.6.1 2014/08/19 23:51:38 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,16 +70,33 @@
 #ifndef NTP_RFC2553_H
 #define NTP_RFC2553_H
 
-/*
- * Ensure that we include the configuration file before we check
- * for IPV6
- */
-#include <config.h>
 #include <netdb.h>
 #include <isc/net.h>
 
 #include "ntp_types.h"
+#include "ntp_malloc.h"
 
+struct addrinfo *copy_addrinfo_impl(const struct addrinfo *
+#ifdef EREALLOC_CALLSITE	/* from ntp_malloc.h */
+							   ,
+				    const char *, int
+#endif
+					 );
+struct addrinfo *copy_addrinfo_list_impl(const struct addrinfo *
+#ifdef EREALLOC_CALLSITE	/* from ntp_malloc.h */
+								,
+					 const char *, int
+#endif
+					 );
+#ifdef EREALLOC_CALLSITE
+# define copy_addrinfo(l) \
+	 copy_addrinfo_impl((l), __FILE__, __LINE__)
+# define copy_addrinfo_list(l) \
+	 copy_addrinfo_list_impl((l), __FILE__, __LINE__)
+#else
+# define copy_addrinfo(l)	copy_addrinfo_impl(l)
+# define copy_addrinfo_list(l)	copy_addrinfo_list_impl(l)
+#endif
 
 /*
  * If various macros are not defined we need to define them

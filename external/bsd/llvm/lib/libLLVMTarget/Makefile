@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.2 2013/02/25 00:26:40 tls Exp $
+#	$NetBSD: Makefile,v 1.8.2.3 2014/08/19 23:51:25 tls Exp $
 
 LIB=	LLVMTarget
 
@@ -6,8 +6,7 @@ LIB=	LLVMTarget
 
 .PATH: ${LLVM_SRCDIR}/lib/Target
 
-SRCS+=	Mangler.cpp \
-	Target.cpp \
+SRCS+=	Target.cpp \
 	TargetIntrinsicInfo.cpp \
 	TargetJITInfo.cpp \
 	TargetLibraryInfo.cpp \

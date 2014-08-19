@@ -1,5 +1,5 @@
 /* Definitions for target OS TPF for GNU compiler, for IBM S/390 hardware
-   Copyright (C) 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
    Contributed by P.J. Darcy (darcypj@us.ibm.com),
                   Hartmut Penner (hpenner@de.ibm.com), and
                   Ulrich Weigand (uweigand@de.ibm.com).
@@ -42,10 +42,6 @@ along with GCC; see the file COPYING3.  If not see
 #undef  WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-
-/* Basic record keeping for the TPF OS name.  */
-#undef  TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (TPF: zSeries)");
 
 /* TPF OS specific stack-pointer offset.  */
 #undef STACK_POINTER_OFFSET
@@ -98,12 +94,6 @@ along with GCC; see the file COPYING3.  If not see
 #define ASM_SPEC "%{m31&m64}%{mesa&mzarch}%{march=*} \
                   -alshd=%b.lst"
 
-/* It would be nice to get the system linker script define the ones that it
-   needed.  */
-#undef LIB_SPEC
-#define LIB_SPEC "-lCTIS -lCISO -lCLBM -lCTAL -lCFVS -lCTBX -lCTXO \
-                  -lCJ00 -lCTDF -lCOMX -lCOMS -lCTHD -lCTAD -lTPFSTUB"
-
 #undef TARGET_C99_FUNCTIONS
 #define TARGET_C99_FUNCTIONS 1
 
@@ -121,9 +111,7 @@ along with GCC; see the file COPYING3.  If not see
    %{!shared:-shared} \
    %(entry_spec)"
 
-#define MD_UNWIND_SUPPORT "config/s390/tpf-unwind.h"
-
 /* IBM copies these libraries over with these names.  */
-#define MATH_LIBRARY "-lCLBM"
-#define LIBSTDCXX "-lCPP1"
+#define MATH_LIBRARY "CLBM"
+#define LIBSTDCXX "CPP2"
 #endif /* ! _TPF_H */

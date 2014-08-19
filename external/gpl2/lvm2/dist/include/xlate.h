@@ -1,4 +1,4 @@
-/*	$NetBSD: xlate.h,v 1.1.1.1 2008/12/22 00:18:44 haad Exp $	*/
+/*	$NetBSD: xlate.h,v 1.1.1.1.14.1 2014/08/19 23:52:23 tls Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -21,6 +21,11 @@
 #ifdef linux
 #  include <endian.h>
 #  include <byteswap.h>
+#elif defined(__NetBSD__)
+#  include <sys/endian.h>
+#  define bswap_16(x) bswap16(x)
+#  define bswap_32(x) bswap32(x)
+#  define bswap_64(x) bswap64(x)
 #else
 #  include <machine/endian.h>
 #  define bswap_16(x) (((x) & 0x00ffU) << 8 | \

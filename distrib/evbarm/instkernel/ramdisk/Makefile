@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2010/02/11 09:06:48 roy Exp $
+#	$NetBSD: Makefile,v 1.12.12.1 2014/08/19 23:45:38 tls Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -13,7 +13,11 @@ DBG=		-Os
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
+.if empty(MACHINE_ARCH:M*eb)
 IMAGEENDIAN=	le
+.else
+IMAGEENDIAN=	be
+.endif
 MAKEDEVTARGETS=	ramdisk
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile \

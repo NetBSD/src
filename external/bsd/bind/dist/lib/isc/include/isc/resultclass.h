@@ -1,7 +1,7 @@
-/*	$NetBSD: resultclass.h,v 1.3 2012/06/05 00:42:39 christos Exp $	*/
+/*	$NetBSD: resultclass.h,v 1.3.2.1 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -48,6 +48,6 @@
 #define	ISC_RESULTCLASS_OMAPI		ISC_RESULTCLASS_FROMNUM(4)
 #define	ISC_RESULTCLASS_ISCCC		ISC_RESULTCLASS_FROMNUM(5)
 #define	ISC_RESULTCLASS_DHCP		ISC_RESULTCLASS_FROMNUM(6)
-
+#define	ISC_RESULTCLASS_PK11		ISC_RESULTCLASS_FROMNUM(7)
 
 #endif /* ISC_RESULTCLASS_H */

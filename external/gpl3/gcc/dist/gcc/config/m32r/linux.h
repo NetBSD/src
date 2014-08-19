@@ -1,5 +1,5 @@
 /* Definitions for Renesas M32R running Linux-based GNU systems using ELF.
-   Copyright (C) 2003, 2004, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -17,19 +17,6 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
-#define LINUX_DEFAULT_ELF
-
-/* A lie, I guess, but the general idea behind linux/ELF is that we are
-   supposed to be outputting something that will assemble under SVr4.
-   This gets us pretty close.  */
-
-#define HANDLE_SYSV_PRAGMA
-
-#undef  HANDLE_PRAGMA_PACK
-
-#undef  TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (M32R GNU/Linux with ELF)");
-
 #undef  SIZE_TYPE
 #define SIZE_TYPE "unsigned int"
  
@@ -45,18 +32,10 @@
 /* Provide a LINK_SPEC appropriate for Linux.  Here we provide support
    for the special GCC options -static and -shared, which allow us to
    link things in one of these three modes by applying the appropriate
-   combinations of options at link-time. We like to support here for
-   as many of the other GNU linker options as possible. But I don't
-   have the time to search for those flags. I am sure how to add
-   support for -soname shared_object_name. H.J.
-
-   I took out %{v:%{!V:-V}}. It is too much :-(. They can use
-   -Wl,-V.
+   combinations of options at link-time.
 
    When the -shared link option is used a final link is not being
    done.  */
-
-/* If ELF is the default format, we should not use /lib/elf.  */
 
 #define GLIBC_DYNAMIC_LINKER "/lib/ld-linux.so.2"
 
@@ -64,19 +43,17 @@
 #if TARGET_LITTLE_ENDIAN
 #define LINK_SPEC "%(link_cpu) -m m32rlelf_linux %{shared:-shared} \
   %{!shared: \
-    %{!ibcs: \
-      %{!static: \
-	%{rdynamic:-export-dynamic} \
-	%{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER "}} \
-	%{static:-static}}}"
+    %{!static: \
+      %{rdynamic:-export-dynamic} \
+      -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
+      %{static:-static}}"
 #else
 #define LINK_SPEC "%(link_cpu) -m m32relf_linux %{shared:-shared} \
   %{!shared: \
-    %{!ibcs: \
-      %{!static: \
-	%{rdynamic:-export-dynamic} \
-	%{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER "}} \
-	%{static:-static}}}"
+    %{!static: \
+      %{rdynamic:-export-dynamic} \
+      -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
+      %{static:-static}}"
 #endif
 
 #undef	LIB_SPEC
@@ -109,6 +86,6 @@
    %{pthread:-D_REENTRANT -D_PTHREADS} \
 "
                                                                                 
-#define TARGET_OS_CPP_BUILTINS() LINUX_TARGET_OS_CPP_BUILTINS()
+#define TARGET_OS_CPP_BUILTINS() GNU_USER_TARGET_OS_CPP_BUILTINS()
 
 #define TARGET_ASM_FILE_END file_end_indicate_exec_stack

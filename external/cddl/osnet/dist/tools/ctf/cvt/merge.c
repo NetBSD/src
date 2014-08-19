@@ -702,7 +702,8 @@ remap_node(tdesc_t **tgtp, tdesc_t *oldtgt, int selftid, tdesc_t *newself,
 	}
 
 	if ((template.t_id = get_mapping(mcd->md_ta, oldid)) == 0)
-		aborterr("failed to get mapping for tid %d <%x>\n", oldid, oldid);
+		aborterr("failed to get mapping for tid %d (%s) <%x>\n", oldid,
+		    oldtgt->t_name, oldid);
 
 	if (!hash_find(mcd->md_parent->td_idhash, (void *)&template,
 	    (void *)&tgt) && (!(mcd->md_flags & MCD_F_REFMERGE) ||

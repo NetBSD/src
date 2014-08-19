@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.4.2 2013/02/25 00:26:27 tls Exp $
+# $NetBSD: Makefile,v 1.1.4.3 2014/08/19 23:46:49 tls Exp $
 
 KYUA_LIBS=	cli engine store engine utils
 
@@ -17,7 +17,7 @@ WARNS?=		3
 	kyua-debug.1 kyua-help.1 kyua-list.1 kyua-report-html.1 \
 	kyua-report.1 kyua-test.1 kyua.1
 MAN+=	${name}
-${name}: ${name}.in
+${name}: ${name}.in ${MANPAGE_DEPS}
 	name=${name}; ${BUILD_MANPAGE}
 .endfor
 

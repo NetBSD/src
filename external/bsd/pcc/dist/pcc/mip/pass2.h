@@ -1,5 +1,5 @@
-/*	Id: pass2.h,v 1.131 2012/03/22 18:51:41 plunky Exp 	*/	
-/*	$NetBSD: pass2.h,v 1.1.1.5 2012/03/26 14:27:14 plunky Exp $	*/
+/*	Id: pass2.h,v 1.137 2014/06/01 11:33:52 ragge Exp 	*/	
+/*	$NetBSD: pass2.h,v 1.1.1.5.2.1 2014/08/19 23:52:09 tls Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -281,11 +281,13 @@ void myreader(struct interpass *pole);
 int oregok(NODE *p, int sharp);
 void myormake(NODE *);
 int *livecall(NODE *);
-void prtreg(FILE *, NODE *);
+void prtreg(NODE *);
 char *prcook(int);
 int myxasm(struct interpass *ip, NODE *p);
 int xasmcode(char *s);
 int freetemp(int k);
+NODE *storenode(TWORD t, int k);
+void storemod(NODE *, int k);
 int rewfld(NODE *p);
 void canon(NODE *);
 void mycanon(NODE *);
@@ -311,10 +313,7 @@ void p2tree(NODE *p);
 int flshape(NODE *p);
 int ncnt(int needs);
 
-
 extern	char *rnames[];
-extern	int rstatus[];
-extern	int roverlap[MAXREGS][MAXREGS];
 
 extern int classmask(int), tclassmask(int);
 extern void cmapinit(void);
@@ -347,22 +346,9 @@ int offset(NODE *p, int);
 #endif
 
 extern	int lineno;
-extern	int fldshf, fldsz;
 extern	int ndebug;
 extern	int b2debug, c2debug, e2debug, f2debug, g2debug, o2debug;
 extern	int r2debug, s2debug, t2debug, u2debug, x2debug;
-
-#ifdef FORT
-extern	int Oflag;
-#endif
-
-#ifndef callchk
-#define callchk(x) allchk()
-#endif
-
-#ifndef PUTCHAR
-#define PUTCHAR(x) putchar(x)
-#endif
 
 extern	int dope[];	/* a vector containing operator information */
 extern	char *opst[];	/* a vector containing names for ops */
@@ -461,8 +447,8 @@ void optimize(struct p2env *);
 
 struct basicblock {
 	DLIST_ENTRY(basicblock) bbelem;
-	SLIST_HEAD(, cfgnode) parents; /* CFG - parents to this node */
-	struct cfgnode *ch[2];		/* Child 1 (and 2) */
+	SLIST_HEAD(, cfgnode) parents;	/* CFG - parents to this node */
+	SLIST_HEAD(, cfgnode) child;	/* Children, usually max 2 of them */
 	int bbnum;	/* this basic block number */
 	unsigned int dfnum; /* DFS-number */
 	unsigned int dfparent; /* Parent in DFS */
@@ -515,6 +501,7 @@ struct varstack {
 
 struct cfgnode {
 	SLIST_ENTRY(cfgnode) cfgelem;
+	SLIST_ENTRY(cfgnode) chld;
 	struct basicblock *bblock;
 };
 

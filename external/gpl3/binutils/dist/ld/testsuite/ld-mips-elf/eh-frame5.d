@@ -1,5 +1,5 @@
 
-Relocation section '.rel.dyn' at offset 0x101f0 contains 8 entries:
+Relocation section '.rel.dyn' at offset 0x101dc contains 8 entries:
  Offset     Info    Type            Sym.Value  Sym. Name
 00000000  .* R_MIPS_NONE *
 #

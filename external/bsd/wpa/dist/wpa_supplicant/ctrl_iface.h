@@ -2,14 +2,8 @@
  * WPA Supplicant / UNIX domain socket -based control interface
  * Copyright (c) 2004-2005, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef CTRL_IFACE_H
@@ -93,21 +87,6 @@ void wpa_supplicant_ctrl_iface_deinit(struct ctrl_iface_priv *priv);
  * Required to be implemented in each control interface backend.
  */
 void wpa_supplicant_ctrl_iface_wait(struct ctrl_iface_priv *priv);
-
-/**
- * wpa_supplicant_ctrl_iface_ctrl_rsp_handle - Handle a control response
- * @wpa_s: Pointer to wpa_supplicant data
- * @ssid: Pointer to the network block the reply is for
- * @field: field the response is a reply for
- * @value: value (ie, password, etc) for @field
- * Returns: 0 on success, non-zero on error
- *
- * Helper function to handle replies to control interface requests.
- */
-int wpa_supplicant_ctrl_iface_ctrl_rsp_handle(struct wpa_supplicant *wpa_s,
-					      struct wpa_ssid *ssid,
-					      const char *field,
-					      const char *value);
 
 /**
  * wpa_supplicant_global_ctrl_iface_init - Initialize global control interface

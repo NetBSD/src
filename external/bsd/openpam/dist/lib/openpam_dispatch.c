@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_dispatch.c,v 1.3.8.1 2013/06/23 06:28:27 tls Exp $	*/
+/*	$NetBSD: openpam_dispatch.c,v 1.3.8.2 2014/08/19 23:52:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_dispatch.c 501 2011-12-07 01:28:05Z des 
+ * Id: openpam_dispatch.c 649 2013-03-05 17:58:33Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -121,12 +121,12 @@ openpam_dispatch(pam_handle_t *pamh,
 			debug = (openpam_get_option(pamh, "debug") != NULL);
 			if (debug)
 				++openpam_debug;
-			openpam_log(PAM_LOG_DEBUG, "calling %s() in %s",
+			openpam_log(PAM_LOG_LIBDEBUG, "calling %s() in %s",
 			    pam_sm_func_name[primitive], chain->module->path);
 			r = (chain->module->func[primitive])(pamh, flags,
 			    chain->optc, (void *)chain->optv);
 			pamh->current = NULL;
-			openpam_log(PAM_LOG_DEBUG, "%s: %s(): %s",
+			openpam_log(PAM_LOG_LIBDEBUG, "%s: %s(): %s",
 			    chain->module->path, pam_sm_func_name[primitive],
 			    pam_strerror(pamh, r));
 			if (debug)
@@ -162,7 +162,7 @@ openpam_dispatch(pam_handle_t *pamh,
 			err = r;
 		if ((chain->flag == PAM_REQUIRED ||
 		    chain->flag == PAM_BINDING) && !fail) {
-			openpam_log(PAM_LOG_DEBUG, "required module failed");
+			openpam_log(PAM_LOG_LIBDEBUG, "required module failed");
 			fail = 1;
 			err = r;
 		}
@@ -172,7 +172,7 @@ openpam_dispatch(pam_handle_t *pamh,
 		 * immediately.
 		 */
 		if (chain->flag == PAM_REQUISITE) {
-			openpam_log(PAM_LOG_DEBUG, "requisite module failed");
+			openpam_log(PAM_LOG_LIBDEBUG, "requisite module failed");
 			fail = 1;
 			break;
 		}
@@ -204,6 +204,7 @@ openpam_check_error_code(int primitive, int r)
 {
 	/* common error codes */
 	if (r == PAM_SUCCESS ||
+	    r == PAM_SYSTEM_ERR ||
 	    r == PAM_SERVICE_ERR ||
 	    r == PAM_BUF_ERR ||
 	    r == PAM_CONV_ERR ||

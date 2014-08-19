@@ -1,7 +1,7 @@
-/*	$NetBSD: time.c,v 1.2 2011/08/17 09:32:55 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.2.8.1 2014/08/19 23:51:40 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.c,v 1.56 2008/02/15 23:46:51 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -321,7 +321,7 @@ isc_time_microdiff(const isc_time_t *t1, const isc_time_t *t2) {
 	/*
 	 * Convert to microseconds.
 	 */
-	i3 = (i1 - i2) / NS_PER_US;
+	i3 /= NS_PER_US;
 
 	return (i3);
 }
@@ -336,7 +336,6 @@ isc_time_seconds(const isc_time_t *t) {
 
 isc_result_t
 isc_time_secondsastimet(const isc_time_t *t, time_t *secondsp) {
-	isc_uint64_t i;
 	time_t seconds;
 
 	REQUIRE(t != NULL);
@@ -356,33 +355,16 @@ isc_time_secondsastimet(const isc_time_t *t, time_t *secondsp) {
 	 * pretty much only true if time_t is a signed integer of the same
 	 * size as the return value of isc_time_seconds.
 	 *
-	 * The use of the 64 bit integer ``i'' takes advantage of C's
-	 * conversion rules to either zero fill or sign extend the widened
-	 * type.
-	 *
-	 * Solaris 5.6 gives this warning about the left shift:
-	 *	warning: integer overflow detected: op "<<"
-	 * if the U(nsigned) qualifier is not on the 1.
+	 * If the paradox in the if clause below is true, t->seconds is out
+	 * of range for time_t.
 	 */
 	seconds = (time_t)t->seconds;
 
 	INSIST(sizeof(unsigned int) == sizeof(isc_uint32_t));
 	INSIST(sizeof(time_t) >= sizeof(isc_uint32_t));
 
-	if (sizeof(time_t) == sizeof(isc_uint32_t) &&	       /* Same size. */
-	    (time_t)0.5 != 0.5 &&	       /* Not a floating point type. */
-	    (i = (time_t)-1) != 4294967295u &&		       /* Is signed. */
-	    (seconds &
-	     (1ULL << (sizeof(time_t) * CHAR_BIT - 1))) != 0ULL) {   /* Negative. */
-		/*
-		 * This UNUSED() is here to shut up the IRIX compiler:
-		 *	variable "i" was set but never used
-		 * when the value of i *was* used in the third test.
-		 * (Let's hope the compiler got the actual test right.)
-		 */
-		UNUSED(i);
+	if (t->seconds > (~0U>>1) && seconds <= (time_t)(~0U>>1))
 		return (ISC_R_RANGE);
-	}
 
 	*secondsp = seconds;
 

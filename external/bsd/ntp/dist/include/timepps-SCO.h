@@ -1,11 +1,11 @@
-/*	$NetBSD: timepps-SCO.h,v 1.1.1.1 2009/12/13 16:54:54 kardel Exp $	*/
+/*	$NetBSD: timepps-SCO.h,v 1.1.1.1.12.1 2014/08/19 23:51:38 tls Exp $	*/
 
 /***********************************************************************
  *								       *
  * Copyright (c) David L. Mills 1999-2000			       *
  *								       *
  * Permission to use, copy, modify, and distribute this software and   *
- * its documentation for any purpose and without fee is hereby	       *
+ * its documentation for any purpose and with or without fee is hereby *
  * granted, provided that the above copyright notice appears in all    *
  * copies and that both the copyright notice and this permission       *
  * notice appear in supporting documentation, and that the name        *

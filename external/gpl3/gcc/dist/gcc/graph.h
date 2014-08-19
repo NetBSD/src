@@ -1,5 +1,5 @@
 /* Header file for graph routines.
-   Copyright (C) 1999, 2003, 2004, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,7 +20,7 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_GRAPH_H
 #define GCC_GRAPH_H
 
-extern void print_rtl_graph_with_bb (const char *, rtx);
+extern void print_graph_cfg (const char *, struct function *);
 extern void clean_graph_dump_file (const char *);
 extern void finish_graph_dump_file (const char *);
 

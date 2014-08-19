@@ -1,10 +1,10 @@
-/*	$NetBSD: extended.c,v 1.1.1.3 2010/12/12 15:23:05 adam Exp $	*/
+/*	$NetBSD: extended.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* extended.c - ldap backend extended routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.36.2.11 2010/04/13 20:23:28 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2010 The OpenLDAP Foundation.
+ * Copyright 2003-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,6 +91,9 @@ ldap_back_extended(
 		SlapReply	*rs )
 {
 	int	i;
+
+	RS_ASSERT( !(rs->sr_flags & REP_ENTRY_MASK) );
+	rs->sr_flags &= ~REP_ENTRY_MASK;	/* paranoia */
 
 	for ( i = 0; exop_table[i].extended != NULL; i++ ) {
 		if ( bvmatch( &exop_table[i].oid, &op->oq_extended.rs_reqoid ) )
@@ -185,7 +188,7 @@ ldap_back_exop_passwd(
 		dn.bv_val, isproxy ? " (proxy)" : "", 0 );
 
 retry:
-	rc = ldap_passwd( lc->lc_ld, isproxy ? &dn : NULL,
+	rc = ldap_passwd( lc->lc_ld,  &dn,
 		qpw->rs_old.bv_val ? &qpw->rs_old : NULL,
 		qpw->rs_new.bv_val ? &qpw->rs_new : NULL,
 		op->o_ctrls, NULL, &msgid );
@@ -193,8 +196,7 @@ retry:
 	if ( rc == LDAP_SUCCESS ) {
 		/* TODO: set timeout? */
 		/* by now, make sure no timeout is used (ITS#6282) */
-		struct timeval tv;
-		tv.tv_sec = -1;
+		struct timeval tv = { -1, 0 };
 		if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, &tv, &res ) == -1 ) {
 			ldap_get_option( lc->lc_ld, LDAP_OPT_ERROR_NUMBER, &rc );
 			rs->sr_err = rc;
@@ -264,6 +266,10 @@ retry:
 		ldap_back_quarantine( op, rs );
 	}
 
+	ldap_pvt_thread_mutex_lock( &li->li_counter_mutex );
+	ldap_pvt_mp_add( li->li_ops_completed[ SLAP_OP_EXTENDED ], 1 );
+	ldap_pvt_thread_mutex_unlock( &li->li_counter_mutex );
+
 	if ( freedn ) {
 		op->o_tmpfree( dn.bv_val, op->o_tmpmemctx );
 		op->o_tmpfree( ndn.bv_val, op->o_tmpmemctx );
@@ -308,11 +314,10 @@ ldap_back_exop_generic(
 	int		do_retry = 1;
 	char		*text = NULL;
 
-	assert( lc != NULL );
-	assert( rs->sr_ctrls == NULL );
-
 	Debug( LDAP_DEBUG_ARGS, "==> ldap_back_exop_generic(%s, \"%s\")\n",
 		op->ore_reqoid.bv_val, op->o_req_dn.bv_val, 0 );
+	assert( lc != NULL );
+	assert( rs->sr_ctrls == NULL );
 
 retry:
 	rc = ldap_extended_operation( lc->lc_ld,
@@ -322,8 +327,7 @@ retry:
 	if ( rc == LDAP_SUCCESS ) {
 		/* TODO: set timeout? */
 		/* by now, make sure no timeout is used (ITS#6282) */
-		struct timeval tv;
-		tv.tv_sec = -1;
+		struct timeval tv = { -1, 0 };
 		if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, &tv, &res ) == -1 ) {
 			ldap_get_option( lc->lc_ld, LDAP_OPT_ERROR_NUMBER, &rc );
 			rs->sr_err = rc;
@@ -379,6 +383,10 @@ retry:
 		ldap_back_quarantine( op, rs );
 	}
 
+	ldap_pvt_thread_mutex_lock( &li->li_counter_mutex );
+	ldap_pvt_mp_add( li->li_ops_completed[ SLAP_OP_EXTENDED ], 1 );
+	ldap_pvt_thread_mutex_unlock( &li->li_counter_mutex );
+
 	/* these have to be freed anyway... */
 	if ( rs->sr_matched ) {
 		free( (char *)rs->sr_matched );
@@ -402,4 +410,3 @@ retry:
 
 	return rc;
 }
-

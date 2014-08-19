@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/runningslapd.sdf,v 1.16.2.9 2010/04/13 20:22:34 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: Running slapd
 
@@ -36,7 +36,16 @@ This option specifies alternative listener configurations.  The
 default is {{EX:ldap:///}} which implies {{TERM:LDAP}} over
 {{TERM:TCP}} on all interfaces on the default LDAP port 389.  You
 can specify specific host-port pairs or other protocol schemes (such
-as {{EX:ldaps://}} or {{EX:ldapi://}}).  For example, {{EX:-h
+as {{EX:ldaps://}} or {{EX:ldapi://}}).
+
+!block table
+URL        Protocol        Transport
+ldap:///   LDAP            TCP port 389
+ldaps:///  LDAP over SSL   TCP port 636
+ldapi:///  LDAP            IPC (Unix-domain socket)
+!endblock
+
+For example, {{EX:-h
 "ldaps:// ldap://127.0.0.1:666"}} will create two listeners: one
 for the (non-standard) {{EX:ldaps://}} scheme on all interfaces on
 the default {{EX:ldaps://}} port 636, and one for the standard
@@ -44,6 +53,18 @@ the default {{EX:ldaps://}} port 636, and one for the standard
 on port 666.  Hosts may be specified using using hostnames or
 {{TERM:IPv4}} or {{TERM:IPv6}} addresses.  Port values must be
 numeric.
+
+For LDAP over IPC, the pathname of the Unix-domain socket can be encoded
+in the URL. Note that directory separators must be 
+URL-encoded, like any other characters that are special to URLs.
+Thus the socket {{EX:/usr/local/var/ldapi}} must be encoded as
+
+>	ldapi://%2Fusr%2Flocal%2Fvar%2Fldapi
+
+ldapi: is described in detail in {{Using LDAP Over IPC Mechanisms}} [{{REF:Chu-LDAPI}}]
+
+Note that the ldapi:/// transport is not widely implemented: non-OpenLDAP clients
+may not be able to use it.
 
 >	-n <service-name>
 

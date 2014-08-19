@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_strerror.c,v 1.2.8.1 2013/06/23 06:28:27 tls Exp $	*/
+/*	$NetBSD: pam_strerror.c,v 1.2.8.2 2014/08/19 23:52:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_strerror.c 491 2011-11-12 00:12:32Z des 
+ * Id: pam_strerror.c 648 2013-03-05 17:54:27Z des 
  */
 
 #ifdef HAVE_CONFIG_H

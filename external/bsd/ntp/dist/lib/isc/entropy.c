@@ -1,7 +1,7 @@
-/*	$NetBSD: entropy.c,v 1.1.1.1 2009/12/13 16:54:12 kardel Exp $	*/
+/*	$NetBSD: entropy.c,v 1.1.1.1.12.1 2014/08/19 23:51:39 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: entropy.c,v 1.18.332.2 2009/01/18 23:47:41 tbox Exp */
+/* Id: entropy.c,v 1.22 2010/08/10 23:48:19 tbox Exp  */
 
 /*! \file
  * \brief
@@ -285,8 +285,11 @@ entropypool_add_word(isc_entropypool_t *rp, isc_uint32_t val) {
 	val ^= rp->pool[(rp->cursor + TAP3) & (RND_POOLWORDS - 1)];
 	val ^= rp->pool[(rp->cursor + TAP4) & (RND_POOLWORDS - 1)];
 	val ^= rp->pool[(rp->cursor + TAP5) & (RND_POOLWORDS - 1)];
-	rp->pool[rp->cursor++] ^=
-	  ((val << rp->rotate) | (val >> (32 - rp->rotate)));
+	if (rp->rotate == 0)
+		rp->pool[rp->cursor++] ^= val;
+	else
+		rp->pool[rp->cursor++] ^=
+		  ((val << rp->rotate) | (val >> (32 - rp->rotate)));
 
 	/*
 	 * If we have looped around the pool, increment the rotate

@@ -12,6 +12,7 @@ contains one command:
 
 	// parse-only
 	// xfail *-*-*
+	// cpparg <preprocessor options passed via --preprocessor-arg>
 
 parse-only must preceed any xfail commands, and indicates that a
 comparison with the *.rsd file will not happen.  xfail indicates when

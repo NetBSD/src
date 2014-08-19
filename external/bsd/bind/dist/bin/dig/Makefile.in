@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005, 2007, 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -23,6 +23,8 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_MAKE_INCLUDES@
 
+READLINE_LIB = @READLINE_LIB@
+
 CINCLUDES =	-I${srcdir}/include ${DNS_INCLUDES} ${BIND9_INCLUDES} \
 		${ISC_INCLUDES} ${LWRES_INCLUDES} ${ISCCFG_INCLUDES}
 
@@ -42,13 +44,13 @@ BIND9DEPLIBS =	../../lib/bind9/libbind9.@A@
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 LWRESDEPLIBS =	../../lib/lwres/liblwres.@A@
 
-DEPLIBS =	${DNSDEPLIBS} ${BIND9DEPLIBS} ${ISCDEPLIBS} ${ISCCFGDEPLIBS} \
-		${LWRESDEPLIBS}
+DEPLIBS =	${DNSDEPLIBS} ${BIND9DEPLIBS} ${ISCDEPLIBS} \
+		${ISCCFGDEPLIBS} ${LWRESDEPLIBS}
 
-LIBS =		${LWRESLIBS} ${DNSLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
+LIBS =		${LWRESLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
 		${ISCLIBS} @IDNLIBS@ @LIBS@
 
-NOSYMLIBS =	${LWRESLIBS} ${DNSLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
+NOSYMLIBS =	${LWRESLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
 		${ISCNOSYMLIBS} @IDNLIBS@ @LIBS@
 
 SUBDIRS =
@@ -71,14 +73,17 @@ MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 dig@EXEEXT@: dig.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
 	export BASEOBJS="dig.@O@ dighost.@O@ ${UOBJS}"; \
+	export LIBS0="${DNSLIBS}"; \
 	${FINALBUILDCMD}
 
 host@EXEEXT@: host.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
 	export BASEOBJS="host.@O@ dighost.@O@ ${UOBJS}"; \
+	export LIBS0="${DNSLIBS}"; \
 	${FINALBUILDCMD}
 
 nslookup@EXEEXT@: nslookup.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
-	export BASEOBJS="nslookup.@O@ dighost.@O@ ${UOBJS}"; \
+	export BASEOBJS="nslookup.@O@ dighost.@O@ ${READLINE_LIB} ${UOBJS}"; \
+	export LIBS0="${DNSLIBS}"; \
 	${FINALBUILDCMD}
 
 doc man:: ${MANOBJS}

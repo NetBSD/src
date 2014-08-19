@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.12.1 2013/02/25 00:26:40 tls Exp $
+#	$NetBSD: Makefile,v 1.1.12.2 2014/08/19 23:51:25 tls Exp $
 
 LIB=	LLVMX86AsmParser
 
@@ -9,7 +9,8 @@ CPPFLAGS+=	-I${X86_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/X86
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/X86/AsmParser
 
-SRCS+=	X86AsmParser.cpp
+SRCS+=	X86AsmParser.cpp \
+	X86AsmInstrumentation.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

@@ -1,6 +1,8 @@
 
-#include <inttypes.h>
+#include <sys/types.h>
 #include <sys/atomic.h>
+
+#ifndef __HAVE_ATOMIC64_OPS
 
 /* XXX: Not so atomic, could use mutexes but not worth it */
 uint64_t
@@ -30,3 +32,5 @@ uint64_t
 atomic_add_64_nv(volatile uint64_t *ptr, int64_t delta) {
 	return *ptr += delta;
 }
+
+#endif

@@ -46,7 +46,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.29 2006-06-13 22:21:38 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: parsenfsfh.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: parsenfsfh.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -119,7 +119,7 @@ Parse_fh(fh, len, fsidp, inop, osnamep, fsnamep, ourself)
 register const unsigned char *fh;
 int len _U_;
 my_fsid *fsidp;
-ino_t *inop;
+u_int32_t *inop;
 const char **osnamep;		/* if non-NULL, return OS name here */
 const char **fsnamep;		/* if non-NULL, return server fs name here (for VMS) */
 int ourself;		/* true if file handle was generated on this host */
@@ -269,8 +269,7 @@ int ourself;		/* true if file handle was generated on this host */
 	    fsidp->Fsid_dev.Major = fhp[6];
 	    fsidp->fsid_code = 0;
 
-	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
-	    *inop = temp;
+	    *inop = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
 
 	    if (osnamep)
 		*osnamep = "Auspex";
@@ -281,8 +280,7 @@ int ourself;		/* true if file handle was generated on this host */
 	    fsidp->Fsid_dev.Major = fhp[1];
 	    fsidp->fsid_code = 0;
 
-	    temp = make_uint32(fhp[15], fhp[14], fhp[13], fhp[12]);
-	    *inop = temp;
+	    *inop = make_uint32(fhp[15], fhp[14], fhp[13], fhp[12]);
 
 	    if (osnamep)
 		*osnamep = "BSD 4.4";
@@ -296,8 +294,7 @@ int ourself;		/* true if file handle was generated on this host */
 	    fsidp->Fsid_dev.Minor = temp & 0xFFFFF;
 	    fsidp->Fsid_dev.Major = (temp>>20) & 0xFFF;
 
-	    temp = make_uint32(fhp[15], fhp[14], fhp[13], fhp[12]);
-	    *inop = temp;
+	    *inop = make_uint32(fhp[15], fhp[14], fhp[13], fhp[12]);
 	    if (osnamep)
 		*osnamep = "OSF";
 	    break;
@@ -307,8 +304,7 @@ int ourself;		/* true if file handle was generated on this host */
 	    fsidp->Fsid_dev.Major = fhp[2];
 	    fsidp->fsid_code = 0;
 
-	    temp = make_uint32(fhp[8], fhp[9], fhp[10], fhp[11]);
-	    *inop = temp;
+	    *inop = make_uint32(fhp[8], fhp[9], fhp[10], fhp[11]);
 
 	    if (osnamep)
 		*osnamep = "IRIX4";
@@ -319,8 +315,7 @@ int ourself;		/* true if file handle was generated on this host */
 	    fsidp->Fsid_dev.Major = make_uint16(fhp[0], fhp[1]);
 	    fsidp->fsid_code = make_uint32(fhp[4], fhp[5], fhp[6], fhp[7]);
 
-	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
-	    *inop = temp;
+	    *inop = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
 
 	    if (osnamep)
 		*osnamep = "IRIX5";
@@ -342,8 +337,7 @@ int ourself;		/* true if file handle was generated on this host */
 	    fsidp->Fsid_dev.Major = fhp[2];
 	    fsidp->fsid_code = make_uint32(fhp[4], fhp[5], fhp[6], fhp[7]);
 
-	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
-	    *inop = temp;
+	    *inop = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
 
 	    if (osnamep)
 		*osnamep = "SUNOS4";
@@ -356,8 +350,7 @@ int ourself;		/* true if file handle was generated on this host */
 	    fsidp->Fsid_dev.Minor = temp & 0x3FFFF;
 	    fsidp->fsid_code = make_uint32(fhp[4], fhp[5], fhp[6], fhp[7]);
 
-	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
-	    *inop = temp;
+	    *inop = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
 
 	    if (osnamep)
 		*osnamep = "SUNOS5";
@@ -408,8 +401,7 @@ int ourself;		/* true if file handle was generated on this host */
 	    fsidp->Fsid_dev.Major = make_uint16(fhp[0], fhp[1]);
 	    fsidp->fsid_code = make_uint32(fhp[4], fhp[5], fhp[6], fhp[7]);
 
-	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
-	    *inop = temp;
+	    *inop = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
 
 	    if (osnamep)
 		*osnamep = "AIX32";
@@ -421,8 +413,7 @@ int ourself;		/* true if file handle was generated on this host */
 	    fsidp->Fsid_dev.Minor = temp;
 	    fsidp->fsid_code = make_uint32(fhp[4], fhp[5], fhp[6], fhp[7]);
 
-	    temp = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
-	    *inop = temp;
+	    *inop = make_uint32(fhp[12], fhp[13], fhp[14], fhp[15]);
 
 	    if (osnamep)
 		*osnamep = "HPUX9";

@@ -1,11 +1,11 @@
-/*	$NetBSD: gpstolfp.c,v 1.1.1.1 2009/12/13 16:55:24 kardel Exp $	*/
+/*	$NetBSD: gpstolfp.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libntp/gpstolfp.c,v 4.8 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
  * gpstolfp.c,v 4.8 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
- * Created: Sun Jun 28 16:30:38 1998
+ * $Created: Sun Jun 28 16:30:38 1998 $
  *
  * Copyright (c) 1998-2005 by Frank Kardel <kardel <AT> ntp.org>
  *
@@ -34,6 +34,7 @@
  * SUCH DAMAGE.
  *
  */
+#include <config.h>
 #include "ntp_fp.h"
 
 #define GPSORIGIN	2524953600UL	/* NTP origin - GPS origin in seconds */

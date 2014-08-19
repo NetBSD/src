@@ -1,6 +1,6 @@
 /* Motorola MCore specific support for 32-bit ELF
    Copyright 1994, 1995, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007 Free Software Foundation, Inc.
+   2007, 2011, 2012 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -55,7 +55,7 @@ mcore_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
   flagword old_flags;
   flagword new_flags;
 
-  /* Check if we have the same endianess.  */
+  /* Check if we have the same endianness.  */
   if (! _bfd_generic_verify_endian_match (ibfd, obfd))
     return FALSE;
 
@@ -89,7 +89,7 @@ static bfd_reloc_status_type
 mcore_elf_unsupported_reloc (bfd * abfd,
 			     arelent * reloc_entry,
 			     asymbol * symbol ATTRIBUTE_UNUSED,
-			     PTR data ATTRIBUTE_UNUSED,
+			     void * data ATTRIBUTE_UNUSED,
 			     asection * input_section ATTRIBUTE_UNUSED,
 			     bfd * output_bfd ATTRIBUTE_UNUSED,
 			     char ** error_message ATTRIBUTE_UNUSED)
@@ -466,9 +466,9 @@ mcore_elf_relocate_section (bfd * output_bfd,
 				   unresolved_reloc, warned);
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	continue;

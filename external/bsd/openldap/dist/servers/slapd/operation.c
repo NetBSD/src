@@ -1,10 +1,10 @@
-/*	$NetBSD: operation.c,v 1.1.1.3 2010/12/12 15:22:34 adam Exp $	*/
+/*	$NetBSD: operation.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* operation.c - routines to deal with pending ldap operations */
-/* OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.11 2010/04/13 20:23:17 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,6 +81,9 @@ slap_op_free( Operation *op, void *ctx )
 
 	assert( LDAP_STAILQ_NEXT(op, o_next) == NULL );
 
+	/* paranoia */
+	op->o_abandon = 1;
+
 	if ( op->o_ber != NULL ) {
 		ber_free( op->o_ber, 1 );
 	}
@@ -115,19 +118,41 @@ slap_op_free( Operation *op, void *ctx )
 
 	if ( !BER_BVISNULL( &op->o_csn ) ) {
 		op->o_tmpfree( op->o_csn.bv_val, op->o_tmpmemctx );
-		BER_BVZERO( &op->o_csn );
 	}
 
+	if ( op->o_pagedresults_state != NULL ) {
+		op->o_tmpfree( op->o_pagedresults_state, op->o_tmpmemctx );
+	}
+
+	/* Selectively zero out the struct. Ignore fields that will
+	 * get explicitly initialized later anyway. Keep o_abandon intact.
+	 */
 	opbuf = (OperationBuffer *) op;
-	memset( opbuf, 0, sizeof(*opbuf) );
-	op->o_hdr = &opbuf->ob_hdr;
+	op->o_bd = NULL;
+	BER_BVZERO( &op->o_req_dn );
+	BER_BVZERO( &op->o_req_ndn );
+	memset( op->o_hdr, 0, sizeof( *op->o_hdr ));
+	memset( &op->o_request, 0, sizeof( op->o_request ));
+	memset( &op->o_do_not_cache, 0, sizeof( Operation ) - offsetof( Operation, o_do_not_cache ));
+	memset( opbuf->ob_controls, 0, sizeof( opbuf->ob_controls ));
 	op->o_controls = opbuf->ob_controls;
 
 	if ( ctx ) {
-		void *op2 = NULL;
+		Operation *op2 = NULL;
 		ldap_pvt_thread_pool_setkey( ctx, (void *)slap_op_free,
-			op, slap_op_q_destroy, &op2, NULL );
+			op, slap_op_q_destroy, (void **)&op2, NULL );
 		LDAP_STAILQ_NEXT( op, o_next ) = op2;
+		if ( op2 ) {
+			op->o_tincr = op2->o_tincr + 1;
+			/* No more than 10 ops on per-thread free list */
+			if ( op->o_tincr > 10 ) {
+				ldap_pvt_thread_pool_setkey( ctx, (void *)slap_op_free,
+					op2, slap_op_q_destroy, NULL, NULL );
+				ber_memfree_x( op, NULL );
+			}
+		} else {
+			op->o_tincr = 1;
+		}
 	} else {
 		ber_memfree_x( op, NULL );
 	}
@@ -166,6 +191,8 @@ slap_op_alloc(
 			otmp = LDAP_STAILQ_NEXT( op, o_next );
 			ldap_pvt_thread_pool_setkey( ctx, (void *)slap_op_free,
 				otmp, slap_op_q_destroy, NULL, NULL );
+			op->o_abandon = 0;
+			op->o_cancel = 0;
 		}
 	}
 	if (!op) {
@@ -180,7 +207,6 @@ slap_op_alloc(
 
 	slap_op_time( &op->o_time, &op->o_tincr );
 	op->o_opid = id;
-	op->o_res_ber = NULL;
 
 #if defined( LDAP_SLAPI )
 	if ( slapi_plugins_used ) {

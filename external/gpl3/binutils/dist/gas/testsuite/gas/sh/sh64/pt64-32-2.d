@@ -16,7 +16,7 @@ Disassembly of section \.text:
 [ 	]+8:[ 	]+ebfffe50[ 	]+pta/l	4 <start1>,tr5
 [ 	]+c:[ 	]+6ff0fff0[ 	]+nop	
 [ 	]+10:[ 	]+cc000190[ 	]+movi	0,r25
-[ 	]+10:[ 	]+R_SH_IMM_MEDLOW16_PCREL	\.text\.other\+0xfffffffffffffffd
+[ 	]+10:[ 	]+R_SH_IMM_MEDLOW16_PCREL	\.text\.other-0x3
 [ 	]+14:[ 	]+c8000190[ 	]+shori	0,r25
 [ 	]+14:[ 	]+R_SH_IMM_LOW16_PCREL	\.text\.other\+0x1
 [ 	]+18:[ 	]+6bf56670[ 	]+ptrel/l	r25,tr7

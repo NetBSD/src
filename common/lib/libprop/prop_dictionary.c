@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.38 2012/07/27 09:10:59 pooka Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.38.2.1 2014/08/19 23:45:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -338,7 +338,7 @@ _prop_dict_keysym_alloc(const char *key)
 	rpdk = _prop_rb_tree_insert_node(&_prop_dict_keysym_tree, pdk);
 	_PROP_ASSERT(rpdk == pdk);
 	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
-	return (pdk);
+	return (rpdk);
 }
 
 static _prop_object_free_rv_t

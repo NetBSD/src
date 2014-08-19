@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.9 2011/06/12 04:43:11 mrg Exp $	*/
+/*	$NetBSD: vnode.h,v 1.9.8.1 2014/08/19 23:52:23 tls Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -294,7 +294,12 @@ int	vn_is_readonly(vnode_t *);
 #define vn_renamepath(tdvp, svp, tnm, lentnm)   do { } while (0)
 
 #define	VN_HOLD(v)	vref(v)
-#define	VN_RELE(v)	vrele(v)
+#define	VN_RELE(v)	do { \
+	    if ((v)->v_usecount == 0) \
+		    printf("%s, %d: %p unused\n", __FILE__, __LINE__, v); \
+	    else \
+		    vrele(v); \
+    } while (/*CONSTCOND*/0)
 #define	VN_URELE(v)	vput(v)
 #define	VN_SET_VFS_TYPE_DEV(vp, vfs, type, flag)	(0)
 
@@ -572,7 +577,7 @@ zfs_vn_rdwr(enum uio_rw rw, vnode_t *vp, caddr_t base, ssize_t len,
 	ASSERT(ioflag == 0);
 	ASSERT(ulimit == RLIM64_INFINITY);
 
-	ioflag = IO_APPEND | IO_UNIT;
+	ioflag = IO_UNIT;
 
 	error = vn_rdwr(rw, vp, base, len, offset, seg, ioflag, cr,
 	    &resid, curlwp);
@@ -681,7 +686,6 @@ vn_remove(char *fnamep, enum uio_seg seg, enum rm dirflag)
 
 #define VN_RELE_ASYNC(vp, taskq) 	vrele_async((vp))
 #define vn_exists(a) 	do { } while(0)
-#define vn_reinit(a) 	vclean((a), 0)
 
 /*
  * Flags for VOP_LOOKUP

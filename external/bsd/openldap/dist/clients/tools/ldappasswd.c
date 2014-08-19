@@ -1,10 +1,10 @@
-/*	$NetBSD: ldappasswd.c,v 1.1.1.3 2010/12/12 15:18:12 adam Exp $	*/
+/*	$NetBSD: ldappasswd.c,v 1.1.1.3.12.1 2014/08/19 23:51:55 tls Exp $	*/
 
 /* ldappasswd -- a tool for change LDAP passwords */
-/* OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.136.2.10 2010/04/15 22:16:50 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -251,10 +251,6 @@ main( int argc, char *argv[] )
 
 	tool_bind( ld );
 
-	if ( assertion || authzid || manageDSAit || noop ) {
-		tool_server_controls( ld, NULL, 0 );
-	}
-
 	if( user != NULL || oldpw.bv_val != NULL || newpw.bv_val != NULL ) {
 		/* build the password modify request data */
 		ber = ber_alloc_t( LBER_USE_DER );
@@ -319,7 +315,7 @@ main( int argc, char *argv[] )
 		struct timeval	tv;
 
 		if ( tool_check_abandon( ld, id ) ) {
-			return LDAP_CANCELLED;
+			tool_exit( ld, LDAP_CANCELLED );
 		}
 
 		tv.tv_sec = 0;
@@ -328,7 +324,7 @@ main( int argc, char *argv[] )
 		rc = ldap_result( ld, LDAP_RES_ANY, LDAP_MSG_ALL, &tv, &res );
 		if ( rc < 0 ) {
 			tool_perror( "ldap_result", rc, NULL, NULL, NULL, NULL );
-			return rc;
+			tool_exit( ld, rc );
 		}
 
 		if ( rc != 0 ) {
@@ -380,7 +376,7 @@ main( int argc, char *argv[] )
 	}
 
 	if( verbose || code != LDAP_SUCCESS ||
-		matcheddn || text || refs || ctrls )
+		( matcheddn && *matcheddn ) || ( text && *text ) || refs || ctrls )
 	{
 		printf( _("Result: %s (%d)\n"), ldap_err2string( code ), code );
 
@@ -415,8 +411,5 @@ main( int argc, char *argv[] )
 
 done:
 	/* disconnect from server */
-	if ( ld )
-		tool_unbind( ld ); 
-	tool_destroy();
-	return rc;
+	tool_exit( ld, rc ); 
 }

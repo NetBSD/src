@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-netfilter-linux.h,v 1.1.1.1.4.2 2013/06/23 06:28:19 tls Exp $	*/
+/*	$NetBSD: pcap-netfilter-linux.h,v 1.1.1.1.4.3 2014/08/19 23:47:16 tls Exp $	*/
 
 /*
  * Copyright (c) 2011 Jakub Zawadzki
@@ -33,5 +33,5 @@
 /*
  * Prototypes for netlink-related functions
  */
-int netfilter_platform_finddevs(pcap_if_t **alldevsp, char *err_str);
-pcap_t *nflog_create(const char *device, char *ebuf);
+int netfilter_findalldevs(pcap_if_t **alldevsp, char *err_str);
+pcap_t *netfilter_create(const char *device, char *ebuf, int *is_ours);

@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.62 2009/04/07 19:52:35 perry Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.62.12.1 2014/08/19 23:45:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.62 2009/04/07 19:52:35 perry Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.62.12.1 2014/08/19 23:45:11 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -791,9 +791,9 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc, int slk)
 	struct timeval tv[2];
 	struct stat sb;
 
-	tv[0].tv_sec = (long)atime;
+	tv[0].tv_sec = atime;
 	tv[0].tv_usec = 0;
-	tv[1].tv_sec = (long)mtime;
+	tv[1].tv_sec = mtime;
 	tv[1].tv_usec = 0;
 	if (!frc && (!patime || !pmtime)) {
 		/*

@@ -1,9 +1,9 @@
-/*	$NetBSD: lutil.h,v 1.1.1.3 2010/12/12 15:21:24 adam Exp $	*/
+/*	$NetBSD: lutil.h,v 1.1.1.3.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/include/lutil.h,v 1.63.2.10 2010/04/19 16:53:01 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@ lutil_b64_pton LDAP_P((
 	size_t));
 
 /* detach.c */
-LDAP_LUTIL_F( void )
+LDAP_LUTIL_F( int )
 lutil_detach LDAP_P((
 	int debug,
 	int do_close));
@@ -144,6 +144,13 @@ lutil_passwd_scheme LDAP_P((
 LDAP_LUTIL_F( int )
 lutil_salt_format LDAP_P((
 	const char *format ));
+
+LDAP_LUTIL_F( int )
+lutil_passwd_string64 LDAP_P((
+	const struct berval *sc,
+	const struct berval *hash,
+	struct berval *b64,
+	const struct berval *salt ));
 
 /* utils.c */
 LDAP_LUTIL_F( char* )
@@ -300,6 +307,20 @@ lutil_atoulx( unsigned long *v, const char *s, int x );
 #define lutil_atou(v, s)	lutil_atoux((v), (s), 10)
 #define lutil_atol(v, s)	lutil_atolx((v), (s), 10)
 #define lutil_atoul(v, s)	lutil_atoulx((v), (s), 10)
+
+#ifdef HAVE_LONG_LONG
+#if defined(HAVE_STRTOLL) || defined(HAVE_STRTOQ)
+LDAP_LUTIL_F (int)
+lutil_atollx( long long *v, const char *s, int x );
+#define lutil_atoll(v, s)	lutil_atollx((v), (s), 10)
+#endif /* HAVE_STRTOLL || HAVE_STRTOQ */
+
+#if defined(HAVE_STRTOULL) || defined(HAVE_STRTOUQ)
+LDAP_LUTIL_F (int)
+lutil_atoullx( unsigned long long *v, const char *s, int x );
+#define lutil_atoull(v, s)	lutil_atoullx((v), (s), 10)
+#endif /* HAVE_STRTOULL || HAVE_STRTOUQ */
+#endif /* HAVE_LONG_LONG */
 
 LDAP_LUTIL_F (int)
 lutil_str2bin( struct berval *in, struct berval *out, void *ctx );

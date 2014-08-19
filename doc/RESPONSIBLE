@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.100.2.1 2013/02/25 00:24:48 tls Exp $
+#	$NetBSD: RESPONSIBLE,v 1.100.2.2 2014/08/19 23:45:49 tls Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -34,7 +34,7 @@ installboot(mi)	core
 kerberos	lha*, joda*
 less/more	mrg
 lint		christos
-lua/luac	mbalmer
+lua/luac	mbalmer, lneto
 make		christos, sjg, dholland
 named(bind)	christos
 ntp		simonb, jonathan*
@@ -275,10 +275,10 @@ evbppc		scw
 evbsh3		core
 ews4800mips	tsutsui
 hp300		tsutsui
-hp700		skrll
 hpcarm		core
 hpcmips		core
 hpcsh		uwe
+hppa		skrll
 i386		dsl
 ibmnws		matt
 iyonix		gavan
@@ -294,6 +294,7 @@ news68k		tsutsui
 newsmips	core
 next68k		core
 ofppc		garbled
+playstation2	martin
 pmax		simonb
 pmax		simonb
 pmppc		core

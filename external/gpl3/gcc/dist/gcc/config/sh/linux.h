@@ -1,6 +1,5 @@
 /* Definitions for SH running Linux-based GNU systems using ELF
-   Copyright (C) 1999, 2000, 2002, 2003, 2004, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
    Contributed by Kazumoto Kojima <kkojima@rr.iij4u.or.jp>
 
 This file is part of GCC.
@@ -20,8 +19,6 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 /* Run-time Target Specification.  */
-#undef TARGET_VERSION
-#define TARGET_VERSION  fputs (" (SH GNU/Linux with ELF)", stderr);
 
 /* Enable DWARF 2 exceptions.  */
 #undef DWARF2_UNWIND_INFO
@@ -36,14 +33,13 @@ along with GCC; see the file COPYING3.  If not see
 #define TARGET_OS_CPP_BUILTINS() \
   do						\
     {						\
-      LINUX_TARGET_OS_CPP_BUILTINS();		\
+      GNU_USER_TARGET_OS_CPP_BUILTINS();	\
     }						\
   while (0)
 
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT \
-  (TARGET_CPU_DEFAULT | MASK_USERMODE | TARGET_ENDIAN_DEFAULT \
-   | TARGET_OPT_DEFAULT)
+  (TARGET_CPU_DEFAULT | TARGET_ENDIAN_DEFAULT | TARGET_OPT_DEFAULT)
 
 #define TARGET_ASM_FILE_END file_end_indicate_exec_stack
 
@@ -56,11 +52,10 @@ along with GCC; see the file COPYING3.  If not see
   "%{shared:-shared} \
    %{!static: \
      %{rdynamic:-export-dynamic} \
-     %{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER "}} \
+     -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
    %{static:-static}"
 
 /* Output assembler code to STREAM to call the profiler.  */
-
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(STREAM,LABELNO)				\
   do {									\
@@ -116,8 +111,6 @@ along with GCC; see the file COPYING3.  If not see
       }									\
   } while (0)
 
-#define MD_UNWIND_SUPPORT "config/sh/linux-unwind.h"
-
 /* For SH3 and SH4, we use a slot of the unwind frame which correspond
    to a fake register number 16 as a placeholder for the return address
    in MD_FALLBACK_FRAME_STATE_FOR and its content will be read with
@@ -135,3 +128,25 @@ along with GCC; see the file COPYING3.  If not see
 #define SH_DIV_STRATEGY_DEFAULT SH_DIV_CALL2
 #undef SH_DIV_STR_FOR_SIZE
 #define SH_DIV_STR_FOR_SIZE "call2"
+
+/* Install the __sync libcalls.  */
+#undef TARGET_INIT_LIBFUNCS
+#define TARGET_INIT_LIBFUNCS  sh_init_sync_libfuncs
+
+#undef SUBTARGET_OVERRIDE_OPTIONS
+#define SUBTARGET_OVERRIDE_OPTIONS					\
+  do									\
+    {									\
+      /* Set default atomic model if it hasn't been specified.  */	\
+      if (global_options_set.x_sh_atomic_model_str == 0)		\
+	{								\
+	  if (TARGET_SH3)						\
+	    sh_atomic_model_str = "soft-gusa";				\
+	  else if (TARGET_SH1)						\
+	    sh_atomic_model_str = "soft-imask";				\
+	}								\
+      /* Set -musermode if it hasn't been specified.  */		\
+      if (global_options_set.x_TARGET_USERMODE == 0)			\
+	TARGET_USERMODE = true;						\
+    }									\
+  while (0)

@@ -20,6 +20,6 @@ Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 5 entries:
  Offset     Info    Type            Sym.Value  Sym. Name \+ Addend
 [0-9a-f]+  [0-9a-f]+ R_68K_32          00000000   __tls_get_addr \+ 0
 [0-9a-f]+  [0-9a-f]+ R_68K_32          00000000   __m68k_read_tp \+ 0
-[0-9a-f]+  [0-9a-f]+ R_68K_TLS_DTPMOD3 00000000   x \+ 0
-[0-9a-f]+  [0-9a-f]+ R_68K_TLS_DTPREL3 00000000   x \+ 0
-[0-9a-f]+  [0-9a-f]+ R_68K_TLS_TPREL32 00000000   x \+ 0
+[0-9a-f]+  [0-9a-f]+ R_68K_TLS_.?TP.....? 00000000   x \+ 0
+[0-9a-f]+  [0-9a-f]+ R_68K_TLS_.?TP.....? 00000000   x \+ 0
+[0-9a-f]+  [0-9a-f]+ R_68K_TLS_.?TP.....? 00000000   x \+ 0

@@ -1,8 +1,6 @@
 // istream classes -*- C++ -*-
 
-// Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-// 2006, 2007, 2008, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 1997-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file istream.tcc
+/** @file bits/istream.tcc
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{istream}
  */
 
 //
@@ -38,9 +36,11 @@
 
 #pragma GCC system_header
 
-#include <cxxabi-forced.h>
+#include <bits/cxxabi_forced.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<typename _CharT, typename _Traits>
     basic_istream<_CharT, _Traits>::sentry::
@@ -713,6 +713,8 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // 60. What is a formatted input function?
       _M_gcount = 0;
+      // Clear eofbit per N3168.
+      this->clear(this->rdstate() & ~ios_base::eofbit);
       sentry __cerb(*this, true);
       if (__cerb)
 	{
@@ -746,6 +748,8 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // 60. What is a formatted input function?
       _M_gcount = 0;
+      // Clear eofbit per N3168.
+      this->clear(this->rdstate() & ~ios_base::eofbit);
       sentry __cerb(*this, true);
       if (__cerb)
 	{
@@ -815,19 +819,23 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // DR60.  Do not change _M_gcount.
       pos_type __ret = pos_type(-1);
-      __try
+      sentry __cerb(*this, true);
+      if (__cerb)
 	{
-	  if (!this->fail())
-	    __ret = this->rdbuf()->pubseekoff(0, ios_base::cur,
-					      ios_base::in);
+	  __try
+	    {
+	      if (!this->fail())
+		__ret = this->rdbuf()->pubseekoff(0, ios_base::cur,
+						  ios_base::in);
+	    }
+	  __catch(__cxxabiv1::__forced_unwind&)
+	    {
+	      this->_M_setstate(ios_base::badbit);
+	      __throw_exception_again;
+	    }
+	  __catch(...)
+	    { this->_M_setstate(ios_base::badbit); }
 	}
-      __catch(__cxxabiv1::__forced_unwind&)
-	{
-	  this->_M_setstate(ios_base::badbit);
-	  __throw_exception_again;
-	}
-      __catch(...)
-	{ this->_M_setstate(ios_base::badbit); }
       return __ret;
     }
 
@@ -838,29 +846,35 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     {
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // DR60.  Do not change _M_gcount.
-      ios_base::iostate __err = ios_base::goodbit;
-      __try
+      // Clear eofbit per N3168.
+      this->clear(this->rdstate() & ~ios_base::eofbit);
+      sentry __cerb(*this, true);
+      if (__cerb)
 	{
-	  if (!this->fail())
+	  ios_base::iostate __err = ios_base::goodbit;
+	  __try
 	    {
-	      // 136.  seekp, seekg setting wrong streams?
-	      const pos_type __p = this->rdbuf()->pubseekpos(__pos,
-							     ios_base::in);
-	      
-	      // 129.  Need error indication from seekp() and seekg()
-	      if (__p == pos_type(off_type(-1)))
-		__err |= ios_base::failbit;
+	      if (!this->fail())
+		{
+		  // 136.  seekp, seekg setting wrong streams?
+		  const pos_type __p = this->rdbuf()->pubseekpos(__pos,
+								 ios_base::in);
+		  
+		  // 129.  Need error indication from seekp() and seekg()
+		  if (__p == pos_type(off_type(-1)))
+		    __err |= ios_base::failbit;
+		}
 	    }
+	  __catch(__cxxabiv1::__forced_unwind&)
+	    {
+	      this->_M_setstate(ios_base::badbit);
+	      __throw_exception_again;
+	    }
+	  __catch(...)
+	    { this->_M_setstate(ios_base::badbit); }
+	  if (__err)
+	    this->setstate(__err);
 	}
-      __catch(__cxxabiv1::__forced_unwind&)
-	{
-	  this->_M_setstate(ios_base::badbit);
-	  __throw_exception_again;
-	}
-      __catch(...)
-	{ this->_M_setstate(ios_base::badbit); }
-      if (__err)
-	this->setstate(__err);
       return *this;
     }
 
@@ -871,29 +885,35 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     {
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // DR60.  Do not change _M_gcount.
-      ios_base::iostate __err = ios_base::goodbit;
-      __try
+      // Clear eofbit per N3168.
+      this->clear(this->rdstate() & ~ios_base::eofbit);
+      sentry __cerb(*this, true);
+      if (__cerb)
 	{
-	  if (!this->fail())
+	  ios_base::iostate __err = ios_base::goodbit;
+	  __try
 	    {
-	      // 136.  seekp, seekg setting wrong streams?
-	      const pos_type __p = this->rdbuf()->pubseekoff(__off, __dir,
-							     ios_base::in);
+	      if (!this->fail())
+		{
+		  // 136.  seekp, seekg setting wrong streams?
+		  const pos_type __p = this->rdbuf()->pubseekoff(__off, __dir,
+								 ios_base::in);
 	      
-	      // 129.  Need error indication from seekp() and seekg()
-	      if (__p == pos_type(off_type(-1)))
-		__err |= ios_base::failbit;
+		  // 129.  Need error indication from seekp() and seekg()
+		  if (__p == pos_type(off_type(-1)))
+		    __err |= ios_base::failbit;
+		}
 	    }
+	  __catch(__cxxabiv1::__forced_unwind&)
+	    {
+	      this->_M_setstate(ios_base::badbit);
+	      __throw_exception_again;
+	    }
+	  __catch(...)
+	    { this->_M_setstate(ios_base::badbit); }
+	  if (__err)
+	    this->setstate(__err);
 	}
-      __catch(__cxxabiv1::__forced_unwind&)
-	{
-	  this->_M_setstate(ios_base::badbit);
-	  __throw_exception_again;
-	}
-      __catch(...)
-	{ this->_M_setstate(ios_base::badbit); }
-      if (__err)
-	this->setstate(__err);
       return *this;
     }
 
@@ -1016,7 +1036,6 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   // Inhibit implicit instantiations for required instantiations,
   // which are defined via explicit instantiations elsewhere.
-  // NB:  This syntax is a GNU extension.
 #if _GLIBCXX_EXTERN_TEMPLATE
   extern template class basic_istream<char>;
   extern template istream& ws(istream&);
@@ -1067,6 +1086,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 #endif
 #endif
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace std
 
 #endif

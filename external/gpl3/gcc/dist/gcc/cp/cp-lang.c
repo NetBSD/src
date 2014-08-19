@@ -1,5 +1,5 @@
 /* Language-dependent hooks for C++.
-   Copyright 2001, 2002, 2004, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
 This file is part of GCC.
@@ -24,22 +24,22 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm.h"
 #include "tree.h"
 #include "cp-tree.h"
-#include "c-common.h"
-#include "toplev.h"
+#include "c-family/c-common.h"
 #include "langhooks.h"
 #include "langhooks-def.h"
-#include "diagnostic.h"
 #include "debug.h"
 #include "cp-objcp-common.h"
 #include "hashtab.h"
-#include "except.h"
-#include "expr.h"
+#include "target.h"
+#include "parser.h"
 
 enum c_language_kind c_language = clk_cxx;
 static void cp_init_ts (void);
 static const char * cxx_dwarf_name (tree t, int verbosity);
 static enum classify_record cp_classify_record (tree type);
 static tree cp_eh_personality (void);
+static tree get_template_innermost_arguments_folded (const_tree);
+static tree get_template_argument_pack_elems_folded (const_tree);
 
 /* Lang hooks common to C++ and ObjC++ are declared in cp/cp-objcp-common.h;
    consequently, there should be very few hooks below.  */
@@ -58,13 +58,13 @@ static tree cp_eh_personality (void);
 	get_primary_template_innermost_parameters
 #undef LANG_HOOKS_GET_INNERMOST_GENERIC_ARGS
 #define LANG_HOOKS_GET_INNERMOST_GENERIC_ARGS \
-	get_template_innermost_arguments
+	get_template_innermost_arguments_folded
 #undef LANG_HOOKS_FUNCTION_PARAMETER_PACK_P
 #define LANG_HOOKS_FUNCTION_PARAMETER_PACK_P \
 	function_parameter_pack_p
 #undef LANG_HOOKS_GET_ARGUMENT_PACK_ELEMS
 #define LANG_HOOKS_GET_ARGUMENT_PACK_ELEMS \
-	get_template_argument_pack_elems
+	get_template_argument_pack_elems_folded
 #undef LANG_HOOKS_GENERIC_GENERIC_PARAMETER_DECL_P
 #define LANG_HOOKS_GENERIC_GENERIC_PARAMETER_DECL_P \
 	template_template_parameter_p
@@ -73,12 +73,8 @@ static tree cp_eh_personality (void);
 	function_parameter_expanded_from_pack_p
 #undef LANG_HOOKS_GET_GENERIC_FUNCTION_DECL
 #define LANG_HOOKS_GET_GENERIC_FUNCTION_DECL get_function_template_decl
-#undef LANG_HOOKS_DECL_PRINTABLE_NAME
-#define LANG_HOOKS_DECL_PRINTABLE_NAME	cxx_printable_name
 #undef LANG_HOOKS_DWARF_NAME
 #define LANG_HOOKS_DWARF_NAME cxx_dwarf_name
-#undef LANG_HOOKS_FOLD_OBJ_TYPE_REF
-#define LANG_HOOKS_FOLD_OBJ_TYPE_REF cp_fold_obj_type_ref
 #undef LANG_HOOKS_INIT_TS
 #define LANG_HOOKS_INIT_TS cp_init_ts
 #undef LANG_HOOKS_EH_PERSONALITY
@@ -95,41 +91,21 @@ struct lang_hooks lang_hooks = LANG_HOOKS_INITIALIZER;
 /* The following function does something real, but only in Objective-C++.  */
 
 tree
-objcp_tsubst_copy_and_build (tree t ATTRIBUTE_UNUSED,
-			     tree args ATTRIBUTE_UNUSED,
-			     tsubst_flags_t complain ATTRIBUTE_UNUSED,
-			     tree in_decl ATTRIBUTE_UNUSED,
-			     bool function_p ATTRIBUTE_UNUSED)
+objcp_tsubst_copy_and_build (tree /*t*/,
+			     tree /*args*/,
+			     tsubst_flags_t /*complain*/,
+			     tree /*in_decl*/,
+			     bool /*function_p*/)
 {
   return NULL_TREE;
 }
 
-
 static void
 cp_init_ts (void)
 {
-  tree_contains_struct[NAMESPACE_DECL][TS_DECL_NON_COMMON] = 1;
-  tree_contains_struct[USING_DECL][TS_DECL_NON_COMMON] = 1;
-  tree_contains_struct[TEMPLATE_DECL][TS_DECL_NON_COMMON] = 1;
-
-  tree_contains_struct[NAMESPACE_DECL][TS_DECL_WITH_VIS] = 1;
-  tree_contains_struct[USING_DECL][TS_DECL_WITH_VIS] = 1;
-  tree_contains_struct[TEMPLATE_DECL][TS_DECL_WITH_VIS] = 1;
-
-  tree_contains_struct[NAMESPACE_DECL][TS_DECL_WRTL] = 1;
-  tree_contains_struct[USING_DECL][TS_DECL_WRTL] = 1;
-  tree_contains_struct[TEMPLATE_DECL][TS_DECL_WRTL] = 1;
-
-  tree_contains_struct[NAMESPACE_DECL][TS_DECL_COMMON] = 1;
-  tree_contains_struct[USING_DECL][TS_DECL_COMMON] = 1;
-  tree_contains_struct[TEMPLATE_DECL][TS_DECL_COMMON] = 1;
-
-  tree_contains_struct[NAMESPACE_DECL][TS_DECL_MINIMAL] = 1;
-  tree_contains_struct[USING_DECL][TS_DECL_MINIMAL] = 1;
-  tree_contains_struct[TEMPLATE_DECL][TS_DECL_MINIMAL] = 1;
+  cp_common_init_ts ();
 
   init_shadowed_var_for_decl ();
-
 }
 
 static const char *
@@ -138,14 +114,14 @@ cxx_dwarf_name (tree t, int verbosity)
   gcc_assert (DECL_P (t));
 
   if (DECL_NAME (t)
-      && (ANON_AGGRNAME_P (DECL_NAME (t)) || LAMBDANAME_P (DECL_NAME (t))))
+      && (ANON_AGGRNAME_P (DECL_NAME (t)) || LAMBDA_TYPE_P (t)))
     return NULL;
   if (verbosity >= 2)
-    return decl_as_string (t,
-			   TFF_DECL_SPECIFIERS | TFF_UNQUALIFIED_NAME
-			   | TFF_NO_OMIT_DEFAULT_TEMPLATE_ARGUMENTS);
+    return decl_as_dwarf_string (t,
+                                 TFF_DECL_SPECIFIERS | TFF_UNQUALIFIED_NAME
+                                 | TFF_NO_OMIT_DEFAULT_TEMPLATE_ARGUMENTS);
 
-  return cxx_printable_name (t, verbosity);
+  return lang_decl_dwarf_name (t, verbosity, false);
 }
 
 static enum classify_record
@@ -157,11 +133,6 @@ cp_classify_record (tree type)
   return RECORD_IS_STRUCT;
 }
 
-void
-finish_file (void)
-{
-}
-
 static GTY(()) tree cp_eh_personality_decl;
 
 static tree
@@ -169,19 +140,82 @@ cp_eh_personality (void)
 {
   if (!cp_eh_personality_decl)
     {
-      if (!pragma_java_exceptions)
-	cp_eh_personality_decl
-	  = build_personality_function (USING_SJLJ_EXCEPTIONS
-					? "__gxx_personality_sj0"
-					: "__gxx_personality_v0");
-      else
-	cp_eh_personality_decl
-	  = build_personality_function (USING_SJLJ_EXCEPTIONS
-					? "__gcj_personality_sj0"
-					: "__gcj_personality_v0");
+      const char *lang = (pragma_java_exceptions ? "gcj" : "gxx");
+      cp_eh_personality_decl = build_personality_function (lang);
     }
 
   return cp_eh_personality_decl;
+}
+
+/* This is a subroutine of fold_cplus_constants.  It returns TRUE if T
+   is a C++ specific constant that needs to be folded further before
+   being passed to the debug info emitter.  */
+
+static bool
+template_arg_needs_folding (const_tree t)
+{
+  /* For now only PTRMEM_CST nodes are to be folded further.  */
+  if (TREE_CODE (t) == PTRMEM_CST)
+    return true;
+  return false;
+}
+
+/* Fold the elements of the TREE_VEC C which are C++ specific nodes
+   that would need folding so that they can be processed by the debug
+   info emitter. This is a subroutine of
+   get_template_innermost_arguments_folded and
+   get_template_argument_pack_elems_folded.  */
+
+static tree
+fold_cplus_constants (const_tree c)
+{
+  tree folded_elems, elems = CONST_CAST_TREE (c);
+  int vec_len, i;
+
+  if (elems == NULL_TREE || elems == error_mark_node)
+    return elems;
+
+  vec_len = TREE_VEC_LENGTH (elems);
+
+  /* First check if there is at least one element that needs
+     folding. If there is none, we just return ELEMS. Otherwise create
+     and return a new tree vector that contains the folded versions of
+     ELEMS. This is to avoid allocating memory if we don't need
+     to.  */
+  for (i = 0; i < vec_len; ++i)
+    {
+      if (template_arg_needs_folding (TREE_VEC_ELT (elems, i)))
+	break;
+    }
+  if (i == vec_len)
+    return elems;
+
+  folded_elems = make_tree_vec (vec_len);
+  for (i = 0; i < vec_len; ++i)
+    {
+      tree elem = TREE_VEC_ELT (elems, i);
+      TREE_VEC_ELT (folded_elems, i) =  
+	(elem && !TYPE_P (elem)) ? cplus_expand_constant (elem) : elem;
+
+    }
+  return folded_elems;
+}
+
+/* The C++ implementation of the LANG_HOOKS_GET_INNERMOST_GENERIC_ARGS
+   hook. It returns the innermost template arguments of type T, and
+   makes sure those arguments are folded enough for the debug info
+   emitter.  */
+
+static tree
+get_template_innermost_arguments_folded (const_tree t)
+{
+  return fold_cplus_constants (get_template_innermost_arguments (t));
+}
+
+static tree
+get_template_argument_pack_elems_folded (const_tree t)
+{
+  return fold_cplus_constants (get_template_argument_pack_elems (t));
 }
 
 #include "gt-cp-cp-lang.h"

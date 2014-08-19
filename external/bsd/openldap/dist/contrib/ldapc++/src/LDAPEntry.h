@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPEntry.h,v 1.1.1.3 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: LDAPEntry.h,v 1.1.1.3.12.1 2014/08/19 23:51:55 tls Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPEntry.h,v 1.6.8.6 2008/07/08 19:31:00 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

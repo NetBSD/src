@@ -1,11 +1,10 @@
-/*	$NetBSD: upf.c,v 1.1.1.1.4.2 2013/06/23 06:26:28 tls Exp $	*/
-
+/*	$NetBSD: upf.c,v 1.1.1.1.4.3 2014/08/19 23:46:40 tls Exp $	*/
 /* upf.c
 
    Ultrix PacketFilter interface code. */
 
 /*
- * Copyright (c) 2004,2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2007,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,16 +25,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: upf.c,v 1.1.1.1.4.2 2013/06/23 06:26:28 tls Exp $");
+__RCSID("$NetBSD: upf.c,v 1.1.1.1.4.3 2014/08/19 23:46:40 tls Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_UPF_SEND) || defined (USE_UPF_RECEIVE)

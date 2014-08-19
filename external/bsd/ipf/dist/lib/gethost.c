@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: gethost.c,v 1.2.2.1 2014/08/19 23:46:48 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -19,16 +19,17 @@ int gethost(family, name, hostp)
 	struct netent *n;
 	u_32_t addr;
 
+	memset(hostp, 0, sizeof(*hostp));
 	if (!strcmp(name, "test.host.dots")) {
 		if (family == AF_INET) {
 			hostp->in4.s_addr = htonl(0xfedcba98);
 		}
 #ifdef USE_INET6
 		if (family == AF_INET6) {
-			hostp->i6[0] = 0xfe80aa55;
-			hostp->i6[1] = 0x12345678;
-			hostp->i6[2] = 0x5a5aa5a5;
-			hostp->i6[3] = 0xfedcba98;
+			hostp->i6[0] = htonl(0xfe80aa55);
+			hostp->i6[1] = htonl(0x12345678);
+			hostp->i6[2] = htonl(0x5a5aa5a5);
+			hostp->i6[3] = htonl(0xfedcba98);
 		}
 #endif
 		return 0;
@@ -59,7 +60,7 @@ int gethost(family, name, hostp)
 		struct addrinfo hints, *res;
 		struct sockaddr_in6 *sin6;
 
-		bzero((char *)&hints, sizeof(hints));
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = PF_INET6;
 
 		getaddrinfo(name, NULL, &hints, &res);

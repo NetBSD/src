@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.20 2011/06/23 13:41:25 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.4 2011/09/01 12:46:49 plunky Exp $	*/
+/*	Id: code.c,v 1.22 2014/04/19 07:47:51 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.4.8.1 2014/08/19 23:52:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 David Crawshaw <david@zentus.com>
@@ -41,7 +41,8 @@ setseg(int seg, char *name)
 	case DTORS:
 		uerror("FIXME: unknown section");
 	case NMSEG: 
-		printf("\t.section %s,\"aw\",@progbits\n", name);
+		printf("\t.section %s,\"a%c\",@progbits\n", name,
+		    cftnsp ? 'x' : 'w');
 		return;
 	}
 	printf("\t%s\n", name);
@@ -73,7 +74,7 @@ defloc(struct symtab *sp)
 }
 
 void
-efcode()
+efcode(void)
 {
 	/* XXX */
 }
@@ -117,7 +118,7 @@ ejobcode(int flag)
 }
 
 void
-bjobcode()
+bjobcode(void)
 {
 	astypnames[USHORT] = astypnames[SHORT] = "\t.half";
 	astypnames[INT] = astypnames[UNSIGNED] = "\t.long";

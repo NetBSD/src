@@ -1,4 +1,4 @@
-/* $NetBSD: x86emu_i8254.c,v 1.1 2007/12/21 17:45:50 joerg Exp $ */
+/* $NetBSD: x86emu_i8254.c,v 1.1.34.1 2014/08/19 23:45:15 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -109,8 +109,6 @@ x86emu_i8254_counter(struct x86emu_i8254_timer *timer, uint64_t curtick)
 static bool
 x86emu_i8254_out(struct x86emu_i8254_timer *timer, uint64_t curtick)
 {
-	uint16_t maxtick;
-
 	/*
 	 * TODO:
 	 * Mode 0:
@@ -124,12 +122,6 @@ x86emu_i8254_out(struct x86emu_i8254_timer *timer, uint64_t curtick)
 	 */
 	if (timer->gate_high || timer->start_tick > curtick)
 		return (timer->active_mode != 0);
-
-	/* Max tick based on BCD/binary mode */
-	if (timer->active_is_bcd)
-		maxtick = 9999;
-	else
-		maxtick = 0xffff;
 
 	curtick -= timer->start_tick;
 

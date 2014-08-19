@@ -1,7 +1,7 @@
-/*	$NetBSD: keytable.c,v 1.6 2012/06/05 00:41:33 christos Exp $	*/
+/*	$NetBSD: keytable.c,v 1.6.2.1 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -69,7 +69,8 @@ dns_keytable_create(isc_mem_t *mctx, dns_keytable_t **keytablep) {
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_lock;
 
-	keytable->mctx = mctx;
+	keytable->mctx = NULL;
+	isc_mem_attach(mctx, &keytable->mctx);
 	keytable->active_nodes = 0;
 	keytable->references = 1;
 	keytable->magic = KEYTABLE_MAGIC;
@@ -84,7 +85,7 @@ dns_keytable_create(isc_mem_t *mctx, dns_keytable_t **keytablep) {
 	dns_rbt_destroy(&keytable->table);
 
    cleanup_keytable:
-	isc_mem_put(mctx, keytable, sizeof(*keytable));
+	isc_mem_putanddetach(&mctx, keytable, sizeof(*keytable));
 
 	return (result);
 }
@@ -139,7 +140,8 @@ dns_keytable_detach(dns_keytable_t **keytablep) {
 		isc_rwlock_destroy(&keytable->rwlock);
 		DESTROYLOCK(&keytable->lock);
 		keytable->magic = 0;
-		isc_mem_put(keytable->mctx, keytable, sizeof(*keytable));
+		isc_mem_putanddetach(&keytable->mctx,
+				     keytable, sizeof(*keytable));
 	}
 
 	*keytablep = NULL;
@@ -174,6 +176,7 @@ insert(dns_keytable_t *keytable, isc_boolean_t managed,
 			for (k = node->data; k != NULL; k = k->next) {
 				if (k->key == NULL) {
 					k->key = *keyp;
+					*keyp = NULL; /* transfer ownership */
 					break;
 				}
 				if (dst_key_compare(k->key, *keyp) == ISC_TRUE)
@@ -182,7 +185,7 @@ insert(dns_keytable_t *keytable, isc_boolean_t managed,
 
 			if (k == NULL)
 				result = ISC_R_SUCCESS;
-			else
+			else if (*keyp != NULL)
 				dst_key_free(keyp);
 		}
 
@@ -575,6 +578,8 @@ dns_keytable_dump(dns_keytable_t *keytable, FILE *fp)
 
 		dns_rbtnodechain_current(&chain, NULL, NULL, &node);
 		for (knode = node->data; knode != NULL; knode = knode->next) {
+			if (knode->key == NULL)
+				continue;
 			dst_key_format(knode->key, pbuf, sizeof(pbuf));
 			fprintf(fp, "%s ; %s\n", pbuf,
 				knode->managed ? "managed" : "trusted");

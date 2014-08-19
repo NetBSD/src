@@ -1,4 +1,4 @@
-; Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,6 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: test2,v 1.6 2011/11/18 19:32:13 each Exp 
 
 
 ; Use comment lines instead of blank lines to combine update requests into
@@ -45,7 +44,7 @@ update add  32.3.4.168.192.rpz-ip.bl	300 CNAME *.
 ;	9
 update add  128.1.zz.3.2.2001.rpz-ip.bl	300 CNAME .
 ;
-; apply the policy with the lexically smallest address of 192.168.5.1
+; apply the policy with the lexically smaller trigger address of 192.168.5.1
 ; to an RRset of more than one A RR
 ;	11
 update add  32.1.5.168.192.rpz-ip.bl	300 A	127.0.0.1
@@ -59,7 +58,7 @@ update add 32.3.5.168.192.rpz-ip.bl-2	300 A	127.0.0.2
 send
 
 ; prefer QNAME to IP for a5-4.tld2
-;	13
+;	13, 14
 update add 32.4.5.168.192.rpz-ip.bl	300 CNAME a12.tld2.
 update add a5-4.tld2.bl			300 CNAME a14.tld4.
 ;
@@ -72,4 +71,9 @@ update add  32.4.4.168.192.rpz-ip.bl	300 CNAME rpz-passthru.
 update add 32.16.1.16.172.rpz-ip.bl	300 CNAME .
 send
 update add c2.crash2.tld3.bl-2		300 A	127.0.0.16
+send
+
+; client-IP address trigger
+;	17
+update add 32.1.0.53.10.rpz-client-ip.bl 300 A	127.0.0.17
 send

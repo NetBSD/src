@@ -1,4 +1,4 @@
-/* $NetBSD: dol.c,v 1.28 2011/11/09 19:16:01 christos Exp $ */
+/* $NetBSD: dol.c,v 1.28.6.1 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.28 2011/11/09 19:16:01 christos Exp $");
+__RCSID("$NetBSD: dol.c,v 1.28.6.1 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: dol.c,v 1.28 2011/11/09 19:16:01 christos Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -164,7 +165,8 @@ Dfix2(Char **v)
 static Char *
 Dpack(Char *wbuf, Char *wp)
 {
-    int c, i;
+    int c;
+    ptrdiff_t i;
     
     i = MAXWLEN - (wp - wbuf);
     for (;;) {
@@ -198,7 +200,7 @@ Dpack(Char *wbuf, Char *wp)
 	}
 	if (--i <= 0)
 	    stderror(ERR_WTOOLONG);
-	*wp++ = c;
+	*wp++ = (Char)c;
     }
 }
 
@@ -212,7 +214,8 @@ static int
 Dword(void)
 {
     Char wbuf[BUFSIZE], *wp;
-    int c, c1, i;
+    int c, c1;
+    ptrdiff_t i;
     int dolflg, done, sofar;
     
     done = 0;
@@ -240,7 +243,7 @@ Dword(void)
 	    break;
 	case '`':
 	    /* We preserve ` quotations which are done yet later */
-	    *wp++ = c, --i;
+	    *wp++ = (Char)c, --i;
 	    /* FALLTHROUGH */
 	case '\'':
 	case '"':
@@ -266,15 +269,15 @@ Dword(void)
 		     * Leave any `s alone for later. Other chars are all
 		     * quoted, thus `...` can tell it was within "...".
 		     */
-		    *wp++ = c == '`' ? '`' : c | QUOTE;
+		    *wp++ = (Char)(c == '`' ? '`' : (c | QUOTE));
 		    break;
 		case '\'':
 		    /* Prevent all further interpretation */
-		    *wp++ = c | QUOTE;
+		    *wp++ = (Char)(c | QUOTE);
 		    break;
 		case '`':
 		    /* Leave all text alone for later */
-		    *wp++ = c;
+		    *wp++ = (Char)c;
 		    break;
 		default:
 		    break;
@@ -491,7 +494,7 @@ Dgetdol(void)
 	if (!alnum(c))
 	    stderror(ERR_VARALNUM);
 	for (;;) {
-	    *np++ = c;
+	    *np++ = (Char)c;
 	    c = DgetC(0);
 	    if (!alnum(c))
 		break;
@@ -527,7 +530,7 @@ Dgetdol(void)
 		stderror(ERR_INCBR);
 	    if (np >= &name[sizeof(name) / sizeof(Char) - 2])
 		stderror(ERR_VARTOOLONG);
-	    *np++ = c;
+	    *np++ = (Char)c;
 	}
 	*np = 0, np = name;
 	if (dolp || dolcnt)	/* $ exp must end before ] */
@@ -636,8 +639,8 @@ fixDolMod(void)
 	    if (c == 's') {	/* [eichin:19910926.0755EST] */
 		int delimcnt = 2;
 		int delim = DgetC(0);
-		dolmod[dolnmod++] = c;
-		dolmod[dolnmod++] = delim;
+		dolmod[dolnmod++] = (Char)c;
+		dolmod[dolnmod++] = (Char)delim;
 		
 		if (!delim || letter(delim)
 		    || Isdigit(delim) || any(" \t\n", delim)) {
@@ -645,7 +648,7 @@ fixDolMod(void)
 		    break;
 		}	
 		while ((c = DgetC(0)) != (-1)) {
-		    dolmod[dolnmod++] = c;
+		    dolmod[dolnmod++] = (Char)c;
 		    if(c == delim) delimcnt--;
 		    if(!delimcnt) break;
 		}
@@ -657,7 +660,7 @@ fixDolMod(void)
 	    }
 	    if (!any("htrqxes", c))
 		stderror(ERR_BADMOD, c);
-	    dolmod[dolnmod++] = c;
+	    dolmod[dolnmod++] = (Char)c;
 	    if (c == 'q')
 		dolmcnt = 10000;
 	}
@@ -707,10 +710,10 @@ setDolp(Char *cp)
 	    do {
 		dp = Strstr(cp, lhsub);
 		if (dp) {
-		    np = (Char *)xmalloc(
+		    np = xmalloc(
 		        (size_t)((Strlen(cp) + 1 - lhlen + rhlen) *
-		        sizeof(Char)));
-		    (void)Strncpy(np, cp, dp - cp);
+		        sizeof(*np)));
+		    (void)Strncpy(np, cp, (size_t)(dp - cp));
 		    (void)Strcpy(np + (dp - cp), rhsub);
 		    (void)Strcpy(np + (dp - cp) + rhlen, dp + lhlen);
 
@@ -726,7 +729,7 @@ setDolp(Char *cp)
 	    /*
 	     * restore dolmod for additional words
 	     */
-	    dolmod[i] = rhsub[-1] = delim;
+	    dolmod[i] = rhsub[-1] = (Char)delim;
 	    if (didmod)
 		dolmcnt--;
 	    else
@@ -856,7 +859,7 @@ again:
 	    if (c < 0 || c == '\n')
 		break;
 	    if ((c &= TRIM) != '\0') {
-		*lbp++ = c;
+		*lbp++ = (Char)c;
 		if (--lcnt < 0) {
 		    setname("<<");
 		    stderror(ERR_NAME | ERR_OVERFLOW);
@@ -881,7 +884,7 @@ again:
 	    *lbp++ = '\n';
 	    *lbp = 0;
 	    for (lbp = lbuf; (c = *lbp++) != '\0';) {
-		*obp++ = c;
+		*obp++ = (Char)c;
 		if (--ocnt == 0) {
 		    (void) write(0, short2str(obuf), BUFSIZE);
 		    obp = obuf;
@@ -913,7 +916,7 @@ again:
 		else
 		    c |= QUOTE;
 	    }
-	    *mbp++ = c;
+	    *mbp++ = (Char)c;
 	    if (--mcnt == 0) {
 		setname("<<");
 		stderror(ERR_NAME | ERR_OVERFLOW);

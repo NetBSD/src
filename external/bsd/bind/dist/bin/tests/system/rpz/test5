@@ -1,4 +1,4 @@
-; Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,6 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: test5,v 1.5.4.1 2012/02/24 17:22:37 vjs Exp 
 
 
 ; Use comment lines instead of blank lines to combine update requests into
@@ -36,10 +35,8 @@ send
 ;	4
 update add  a3-4.tld2.bl-disabled.  300 A 127.0.0.4
 send
-;	5 - 8
+;	5 - 7
 update add  a3-5.tld2.bl-nodata.    300 A 127.0.0.5
-;	9 - 10
-update add  a3-5.tld2s.bl-nodata.   300 A 127.0.0.9
 send
 ;	11
 update add  a3-6.tld2.bl-nxdomain.  300 A 127.0.0.11
@@ -57,4 +54,10 @@ update add  a3-15.tld2.bl-garden.   300 A 127.0.0.15
 send
 ;	16
 update add  a3-16.tld2.bl.	    300 A 127.0.0.16
+send
+;	18
+update add  a3-18.tld2.bl-drop.	    300 A 127.0.0.18
+send
+;	19
+update add  a3-19.tld2.bl-tcp-only. 300 A 127.0.0.19
 send

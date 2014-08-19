@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.1.1.3 2010/12/12 15:23:15 adam Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.3.12.1 2014/08/19 23:52:02 tls Exp $	*/
 
 /* init.c - initialize monitor backend */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.14 2010/04/19 16:53:03 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -66,7 +66,11 @@ static const monitor_extra_t monitor_extra = {
 	monitor_back_unregister_entry,
 	monitor_back_unregister_entry_parent,
 	monitor_back_unregister_entry_attrs,
-	monitor_back_unregister_entry_callback
+	monitor_back_unregister_entry_callback,
+
+	monitor_back_entry_stub,
+	monitor_back_entrypriv_create,
+	monitor_back_register_subsys_late
 };
 	
 
@@ -282,6 +286,7 @@ enum {
 	LIMBO_DATABASE,
 	LIMBO_OVERLAY_INFO,
 	LIMBO_OVERLAY,
+	LIMBO_SUBSYS,
 
 	LIMBO_LAST
 };
@@ -307,6 +312,46 @@ int
 monitor_back_is_configured( void )
 {
 	return be_monitor != NULL;
+}
+
+int
+monitor_back_register_subsys_late(
+	monitor_subsys_t	*ms )
+{
+	entry_limbo_t	**elpp, el = { 0 };
+	monitor_info_t 	*mi;
+
+	if ( be_monitor == NULL ) {
+		Debug( LDAP_DEBUG_ANY,
+			"monitor_back_register_subsys_late: "
+			"monitor database not configured.\n",
+			0, 0, 0 );
+		return -1;
+	}
+
+	/* everyting is ready, can register already */
+	if ( monitor_subsys_is_opened() ) {
+		return monitor_back_register_subsys( ms );
+	}
+
+	mi = ( monitor_info_t * )be_monitor->be_private;
+
+
+	el.el_type = LIMBO_SUBSYS;
+
+	el.el_mss = ms;
+
+	for ( elpp = &mi->mi_entry_limbo;
+			*elpp;
+			elpp = &(*elpp)->el_next )
+		/* go to last */;
+
+	*elpp = (entry_limbo_t *)ch_malloc( sizeof( entry_limbo_t ) );
+
+	el.el_next = NULL;
+	**elpp = el;
+
+	return 0;
 }
 
 int
@@ -832,7 +877,7 @@ monitor_search2ndn(
 	OperationBuffer	opbuf;
 	Operation	*op;
 	void	*thrctx;
-	SlapReply	rs = { 0 };
+	SlapReply	rs = { REP_RESULT };
 	slap_callback	cb = { NULL, monitor_search2ndn_cb, NULL, NULL };
 	int		rc;
 
@@ -943,6 +988,10 @@ monitor_back_register_entry_attrs(
 	monitor_info_t 	*mi;
 	struct berval	ndn = BER_BVNULL;
 	char		*fname = ( a == NULL ? "callback" : "attrs" );
+	struct berval	empty_bv = BER_BVC("");
+
+	if ( nbase == NULL ) nbase = &empty_bv;
+	if ( filter == NULL ) filter = &empty_bv;
 
 	if ( be_monitor == NULL ) {
 		char		buf[ SLAP_TEXT_BUFLEN ];
@@ -1110,16 +1159,6 @@ done:;
 
 		*elpp = (entry_limbo_t *)ch_malloc( sizeof( entry_limbo_t ) );
 		if ( *elpp == NULL ) {
-			el.el_e->e_private = NULL;
-			entry_free( el.el_e );
-			return -1;
-		}
-
-		if ( *elpp != NULL ) {
-			el.el_next = NULL;
-			**elpp = el;
-
-		} else {
 			if ( !BER_BVISNULL( &el.el_filter ) ) {
 				ch_free( el.el_filter.bv_val );
 			}
@@ -1131,6 +1170,9 @@ done:;
 			}
 			return -1;
 		}
+
+		el.el_next = NULL;
+		**elpp = el;
 	}
 
 	return 0;
@@ -2053,7 +2095,7 @@ monitor_back_initialize(
 
 	bi->bi_extended = 0;
 
-	bi->bi_entry_release_rw = 0;
+	bi->bi_entry_release_rw = monitor_back_release;
 	bi->bi_chk_referrals = 0;
 	bi->bi_operational = monitor_back_operational;
 
@@ -2246,7 +2288,7 @@ monitor_back_db_open(
 	/*
 	 * creates the "cn=Monitor" entry 
 	 */
-	e = monitor_entry_stub( NULL, NULL, &rdn, mi->mi_oc_monitorServer, mi,
+	e = monitor_entry_stub( NULL, NULL, &rdn, mi->mi_oc_monitorServer,
 		NULL, NULL );
 
 	if ( e == NULL) {
@@ -2327,7 +2369,7 @@ monitor_back_db_open(
 		}
 
 		e = monitor_entry_stub( &root->e_name, &root->e_nname,
-			&monitor_subsys[ i ]->mss_rdn, mi->mi_oc_monitorContainer, mi,
+			&monitor_subsys[ i ]->mss_rdn, mi->mi_oc_monitorContainer,
 			NULL, NULL );
 
 		if ( e == NULL) {
@@ -2440,6 +2482,10 @@ monitor_back_db_open(
 
 			case LIMBO_OVERLAY:
 				rc = monitor_back_register_overlay( el->el_be, el->el_on, el->el_ndn );
+				break;
+
+			case LIMBO_SUBSYS:
+				rc = monitor_back_register_subsys( el->el_mss );
 				break;
 
 			default:

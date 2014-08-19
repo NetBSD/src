@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.115.2.1 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.115.2.2 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -11213,3 +11213,489 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		on LUNA-II. [tsutsui 20120728]
 	zoneinfo: Import tzdata2012e. [apb 20120808]
 	postfix(1): Import version 2.8.12 [tron 20120810]
+
+Changes from NetBSD 6.0 to NetBSD 7.0:
+	window(1): Removed from the base system in favor of tmux(1).  Use the
+		pkgsrc/misc/window package from now on.  [jmmv 20120215]
+	pkg_add(1): Imported 20120221 version from pkgsrc. [wiz 20120221]
+	file(1): Upgraded to 5.11. [christos 20120222]
+	evbmips: Add support for Lemote Yeeloong Notebook. [nonaka 20120302]
+	dbsym(8): Add option -p. [bsh 20120319]
+	dhcpcd(8): Import dhcpcd-5.5.5. [roy 20120323]
+	ipf: Upgrade to 5.1.1 with new build framework, no module and
+		test support yet. [christos 20120323]
+	pcc: Upgrade to 1.1.0.DEVEL 20120325. [plunky 20120325]
+	openresolv(8): Import openresolv-3.5.1. [roy 20120327]
+	dhcpcd(8): Import dhcpcd-5.5.6. [roy 20120328]
+	apple: Recognize the apple disk partitioning scheme, and auto-discover
+		wedges. Fix iPod disk mounting, by adding quirk.
+		[christos 20120306]
+	fstab(5): Add NAME=wedgename for fs_spec and routines to parse it. Now
+		wedges can be used in /etc/fstab, even in dynamic environments
+		where disks come and go and wedges get renumbered.
+		[christos 20120306]
+	pdisk(8): Make it work for 64 bit hosts, and make it MI.
+		[christos 20120306]
+	amiga: Add clockport(4) layer and a driver for A1200 on-board clockport
+		a1k2cp(4). [rkujawa 20120417]
+	kernel: Add mpii(4), a driver for LSI Logic Fusion-MPT Message Passing
+		Interface II SAS controllers.  [bouyer 20120419]
+	kernel: Add support for 256 CPUs on amd64. [rmind 20120420]
+	OpenSSH: Imported 6.0. [christos 20120501]
+	bzip2(1): Imported 1.0.6. [wiz 20120507]
+	kernel: Add a genfs_rename abstraction to help file systems correctly
+		implement rename, and use it for tmpfs, ffs, and ext2fs.
+		[riastradh 20120508]
+	amiga: Rework X-Surf driver as xsurf(4). Add support for clockport(4)
+		on top of xsurf(4). [rkujawa 20120515]
+	backtrace(3): Add <execinfo.h> and the backtrace family of functions
+		[christos 20120526]
+	kernel: Add run(4), a driver for Ralink Technology
+		RT2700U/RT2800U/RT3000U USB IEEE 802.11a/b/g/n wireless
+		network devices, ported from OpenBSD. [nonaka 20120530]
+	bind: Update to 9.9.1-P1 to fix the recent rdata exploit.
+		[christos 20120604]
+	empb(4): Add ELBOX Mediator PCI 1200 driver. [rkujawa 20120604]
+	kernel: Add a new RLIMIT_NTHR limit to limit the number of processes
+		per user and the corresponding kern.maxlwp sysctl. Expose
+		kern.uidinfo.* via sysctl. [christos 20120608]
+	usb(9): Added support for SMP to the USB subsytem.  By Jared D.
+		McNeill and myself.  [mrg 20120609]
+	kernel: Add sendmmsg and recvmmsg support. [christos 20120621]
+	kernel: Add sysctls to avoid ipv6 DoS attacks (from OpenBSD):
+		net.inet6.ip6.neighborgcthresh = 2048
+		net.inet6.ip6.maxifprefixes = 16
+		net.inet6.ip6.maxifdefrouters = 16
+		net.inet6.ip6.maxdynroutes = 4096
+		[christos 20120622]
+	ata(4): Added support for sata Port MultiPliers (PMP)
+		[bouyer 20120702]
+	kernel, libc: Add MurmurHash2 function. [rmind 20120708]
+	atf(7): Import 0.16.  [jmmv 20120711]
+	dhcpcd(8): Import dhcpcd-5.6.1. [roy 20120712]
+	kernel: Add support for sensors to provide entropy to rnd(4)
+		[pgoyette 20120715]
+	tdvfb(4): Add 3Dfx Voodoo2 driver. [rkujawa 20120719]
+	tdvfb(4): Add 3Dfx Voodoo Graphics (aka Voodoo1) support.
+		[rkujawa 20120720]
+	kernel: Change mii_statchg to take "struct ifnet *" instead of
+		"device_t". [matt 20120722]
+	pr(1): Add support for POSIX -f and -p options. [ginsbach 20120724]
+	powerpc: Add support for FPU emulation on BookE. [matt 20120722]
+	OpenSSL: Imported 1.0.1c. [christos 20120726]
+	kernel: safepri is dead; replaced by macro IPL_SAFEPRI. [matt 20120727]
+	kernel: Add malo(4), a driver for Marvell Libertas IEEE 802.11b/g
+		wireless network devices, ported from OpenBSD.
+		[degroote 20120730]
+	kernel, libc: Add modctl(MODCTL_EXISTS, ...) to determine if modules
+		can be loaded. [jnemeth 20120803]
+	modstat(8): Add -A, -a, and -e options for testing module loadability.
+		[jnemeth 20120803]
+	uatp(4): Add driver for USB Apple trackpads. [riastradh 20120804]
+	libc: Update to tzcode2012e. [christos 20120809]
+	evbarm: Add support for the Beaglebone (TI AM335x-based board).
+		[matt 20120820]
+	evbarm: Add support for BEAGLEBOARDXM (TI DM37XX cpus) boards.
+		[matt 20120822]
+	mfi(8): Added tagged queuing support.  [bouyer 20120823]
+	mfi(8): Added support for LSI SAS2208-based controllers.
+		[bouyer 20120823]
+	mkdep(1): Add -P option.  [jmmv 20120826]
+	share/mk: Add placeholder test programs (with some very basic test
+		cases within) for common bsd.*.mk modules.  [jmmv 20120826]
+	arm: Add Cortex-A9 support (a9tmr, a9wdt, armgic, armperiph).  Add
+		initial MP support (can boot 2nd cpu but dies quickly).  Add
+		L1 SuperSection support for ARMv6/ARMv7.  Add support for 
+		BCM5301X SoC.  Add initial support for OMAP4430 and partial
+		support for Freescale i.MX6.  Add new common boot/kvminit
+		code.  [matt 20120831]
+	dhcpcd(8): Import dhcpcd-5.6.2. [roy 20120903]
+	bge(4): Add support for BCM57762, found in Apple's Thunderbolt to
+		Gigabit Ethernet Adapter. PR/46961. [tsutsui 20120917]
+	mfi(4): Add a command pass-through ioctl, and associated COMPAT_LINUX
+		support. This allows to use the LSI MegaCLI linux binary
+		on a NetBSD host.  [bouyer 20120919]
+	zoneinfo: Import tzdata2012f. [apb 20120927]
+	kernel: Add clock_nanosleep(2). [christos 20121001]
+	wpa: New wpa_supplicant(8) and hostapd(8) 1.0. [christos 20121007]
+	x68k: Add network bootloader for Neptune-X and Nereid Ethernet.
+		[tsutsui,isaki 20121012]
+	x68k: Add support for formatting floppy. [tsutsui 20121014]
+	zoneinfo: Import tzdata2012g. [apb 20121018]
+	kernel: Added experimental support for the (mostly SSD specific)
+		"discard", or ATA "TRIM" command to wd(4) and ffs
+		[drochner 20121019]
+	libc: Import tzcode2012g. [christos 20121023]
+	zoneinfo: Import tzdata2012h. [apb 20121027]
+	libc: Update to tzcode2012h. [christos 20121028]
+	kernel: Import sljit and add BPF JIT compiler. [alnsn 20121028]
+	flock(1): Add a utility to provide locks to shell scripts similar
+		to shlock(1). [christos 20121101]
+	zoneinfo: Import tzdata2012i. [apb 20121104]
+	voodoofb(4): Add 3Dfx Voodoo Banshee support. [rkujawa 20121109]
+	zoneinfo: Import tzdata2012j. [apb 20121113]
+	msm6242b(4): Add MI OKI MSM6242B driver. [rkujawa 20121114]
+	amiga: A2000-style RTCs are now driven by the msm6242b(4) driver.
+		[rkujawa 20121114]
+	xsurf(4): Add X-Surf IDE controller support. [rkujawa 20121119]
+	z3rambd(4): Add driver for Zorro III RAM boards as block devices.
+		[rkujawa 20121126]
+	bind: Update to 9.9.2-P1 to fix the DNS64 vulnerability.
+		[spz 20121204]
+	arm: ARMFPE support had bitrotted and has been removed. [matt 20121205]
+	dhcpcd(8): Import dhcpcd-5.6.4. [roy 20121206]
+	openresolv(8): Import openresolv-3.5.3. [roy 20121206]
+	arm: Fix EHCI support for OMAP3.  [jmcneill 20121211]
+	arm: Enable direct-mapped poolpage support.  [matt 20121211]
+	arm: Enable VFP-based pmap page zero/copy ops.  [matt 20121211]
+	OpenSSH: Import 6.1. [christos 20121212]
+	ptcd(4): Add a driver for the Protech PS3100 cash drawer port.
+		[mbalmer 20121216]
+	ibmcd(4): Add a driver for the IBM 4810 BSP cash drawer port.
+		[mbalmer 20121217]
+	postfix(1): Import version 2.8.13. [tron 20121218]
+	dhcpcd(8): Import dhcpcd-5.6.6. [roy 20121219]
+	arm: Support NEON in userland. [matt 20121226]
+	kernel: Allow MD kernel code to use PCUs. [matt 20121226]
+	units(1): Add -l and -L options.  [apb 20130101]
+	postfix(1): Import version 2.9.5. [tron 20130102]
+	file(1): Upgraded to 5.12. [christos 20130103]
+	luna68k: Add native bootloader. Based on 4.4BSD-Lite2/luna68k
+		"Stinger" loader. [tsutsui 20130105]
+	kernel: Add dotg(4), a driver for Synopsys DesignWare USB OTG,
+		ported from FreeBSD. [skrll 20130109]
+	kernel: Add usmsc(4), a driver for SMSC LAN95xx USB LAN devices, 
+		ported from OpenBSD. [skrll 20130109]
+	atactl(8): Add support for ATA SECURITY commands including setting
+		firmware passwords and erasing disks. [riastradh 20130109]
+	hp300: Add support for sti(4) framebuffer at sgc bus on some 425t.
+		Ported by kiyohara@ from OpenBSD. [tsutsui 20130111]
+	arm: Kill userland FPA support, replace with VFP. [matt 20130111]
+	luna68k: Add netboot support. [tsutsui 20130113]
+	luna68k: Fix bootloader to make secondary SPC SCSI on LUNA-II work
+		properly.  [tsutsui 20130114]
+	libdwarf: Sync with FreeBSD. [christos 20130117]
+	empm(4): Add driver for power manager present on Mediator 1200 TX and
+		SX bridges. [rkujawa 20130128]
+	amiga: Support software power-off with empm(4). [rkujawa 20130128]
+	dhcpcd(8): Import dhcpcd-5.6.7. [roy 20130128]
+	em4k(4): Add driver for Mediator 4000 PCI bridges. [rkujawa 20130129]
+	makefs(8): Add support for msdos, creating filesystems at an offset,
+		merging directories with common files.  [christos 20130202]
+	OpenSSL: Update to 1.0.1d. [christos 20130205]
+	sparc: Add hardware acceleration for cgfourteen(4) using SX
+		[macallan 20130207]
+	OpenSSL: Update to 1.0.1e. [christos 20130212]
+	atf(7): Import 0.17.  [jmmv 20130215]
+	lutok: Import 0.2.  This is a new import that provides a C++ wrapper
+		for the Lua API and will be used by Kyua.  Its build depends
+		on the MKKYUA knob.  [jmmv 20130216]
+	kyua(1): Import kyua-testers 0.1.  This is a new import that provides
+		scriptable utilities to invoke test programs that implement
+		different interfaces.  [jmmv 20130217]
+	services(5), protocols(5): Pull iana-generated services and protocols
+		[christos 20130221]
+	kyua(1): Import kyua-cli 0.6.  This is a new import that provides the
+		command-line interface to Kyua.  Its build depends on the
+		MKKYUA knob.  [jmmv 20130223]
+	kyua(1): Import kyua-atf-compat 0.1.  This is a new import that
+		provides the last piece of Kyua, namely a compatibility
+		version of atf-run and atf-report that use kyua(1) internally.
+		[jmmv 20130223]
+	kernel: Retire OSI protocol support.  [joerg 20130301]
+	libc: Update to tzcode2013a. [christos 20130302]
+	zoneinfo: Import tzdata2013a. [apb 20130303]
+	zoneinfo: Import tzdata2013b. [apb 20130312]
+	libc: Update to tzcode2013b. [christos 20130315]
+	brgphy(4): Add support for BCM5756, BCM5717C, BCM5719C, BCM5720C and
+		BCM57780. [msaitoh 20130315]
+	vmt(4): Synchronize the clock periodically to ensure it remains
+		up-to-date even when the host is suspended.  [jmmv 20130316]
+	file(1): Upgraded to 5.14. [christos 20130323]
+	dhcp: Upgrade to 4.2.5. [christos 20130324]
+	vchiq(4): Add support for Broadcom VideoCore IV firmware interface.
+		[jmcneill 20130325]
+	vcaudio(4): Add support for Broadcom VideoCore IV audio service.
+		[jmcneill 20130325]
+	OpenSSH: Import 6.2. [christos 20130329]
+	mdocml: Import 1.12.1. [christos 20130402]
+	openpam(3): Import 20120526 (Micrampelis). [christos 20130405]
+	flex: Import 2.5.37. [christos 20130405]
+	byacc: Import 20130304. [christos 20130405]
+	libpcap: Import 1.3.0. [christos 20130406]
+	tcpdump(8): Import 4.3.0. [christos 20130406]
+	libevent: Upgrade 2.0.21-stable. [christos 20130411]
+	wm(4): Add support for I210 and I211. [msaitoh 20130419]
+	m68k: Add inverse trigonometric functions, hyperbolic arctangent,
+		exponential and power functions to m68k FPE.  As a result,
+		m68k FPE supports all mathematics functions. [isaki 20130420]
+	tps65217pmic(4): Add support for TPS65217 PMIC as found on BeagleBone
+		and other AM335x based boards. [rkujawa 20130425]
+	amiga: Add minimal support for Thylacine USB card using slhci(4).
+		Works at least with some keyboards and mice. [rkujawa 20130428]
+	epoc32: Add new port NetBSD/epoc32. [kiyohara 20130428]
+	arm: Make all arm ports with a command MACHINE_ARCH generate the same
+		userspace.  All sets are the same except for etc.tgz.
+		[matt 20130501]
+	disklabel(8): This is now a MI tool like installboot.  [matt 20130503]
+	vndcompress(1): Add support for restarting after interrupt.
+		[riastradh 20130503]
+	mcp980x(4): Add driver for Microchip MCP9800/1/2/3 I2C temperature
+		sensor. [rkujawa 20130507]
+	zoneinfo: Import tzdata2013c. [apb 20130508]
+	arm: Add support for Marvell Armada XP SoCs. From Marvell and Semihalf.
+		[rkujawa 20130530]
+	wm(4): Add support for I217 and I218. [msaitoh 20130602]
+	X11: Updated all Xorg packages that could be, for Xorg SA 2003-05-23,
+		and general.  [mrg 20130605]
+	ipsec(4): FAST_IPSEC is now named IPSEC, old IPSEC is gone.
+		[christos 20130605]
+	kernel: Add driver soekrisgpio for Soekris net6501 
+		Ported by kardel@ from a patch for OpenBSD. [kardel 20130609]
+	cgfourteen: Both kernel and Xorg driver now support hardware
+		acceleration using SX. [macallan 20130619]
+	dhcpcd(8): Import dhcpcd-6.0.0. [roy 20130621]
+	zoneinfo: Import tzdata2013d. [apb 20130707]
+	bge(4): Add support for Altima AC1003, Apple BCM5701,
+		Broadcom BCM5787F, BCM5787G, BCM5787F, BCM5719, BCM5720,
+		BCM57766, BCM57782 and BCM57786. [msaitoh 20130708]
+	openresolv(8): Import openresolv-3.5.6. [roy 20130712]
+	libc: Update to tzcode2013d. [christo 20130717]
+	wpa: Import wpa_supplicant and hostapd 1.1. [adam 20130717]
+	dhcpcd(8): Import dhcpcd-6.0.3. [roy 20130719]
+	coldfire: Add userland and toolchain support for FreeScale Coldfire
+		CPUs (which implement a subset of m68k instructions and
+		addressing modes). [matt 20130719]
+	bind: Update to 9.9.3-P2 to fix CVE-2013-4854 remote query can cause
+		named to terminate. [christos 20130727]
+	iwn(4): Add support for Centrino Wireless-N 1030 and Centrino
+		Advanced-N 6230. [prlw1 20130728]
+	dhcpcd(8): Import dhcpcd-6.0.5. [roy 20130803]
+	makefs(8): Added UDF support for makefs(8). It allows for the creation
+		of images for both read-only, rewritable or recordable media.
+		[reinoud 20130805]
+	xsh(4): Add driver for Individual Computers X-Surf 100 network interface
+		card. [rkujawa 20130808]
+	postfix(1): Import version 2.9.7. [tron 20130821]
+	libc: Add consttime_memequal and explicit_memset for crypto
+		applications. [riastradh 20130828]
+	kernel: Add BPF coprocessor support (BPF_COP/BPF_COPX instructions).
+		[rmind 20130829]
+	npf: Convert NPF to use BPF byte-code by default.  Many other
+		improvements. [rmind 20130929]
+	less(1): Import version 458. [tron 20130804]
+	mpl115a(4): Add driver for Freescale MPL115A2 I2C absolute pressure 
+		sensor. [rkujawa 20130908]
+	dhcpcd(8): Import dhcpcd-6.1.0. [roy 20130920]
+	alpha: Add support for AlphaStation DS15.  Ported from OpenBSD via
+		PR port-alpha/48148 by nullnilaki. [tsutsui 20130923]
+	postfix(1): Import version 2.10.2. [tron 20130925]
+	binutils: Updated to FSF binutils 2.23.2.  [christos 20130929]
+	getaddrinfo(1): Add utility for querying the system's name resolver.
+		[riastradh 20130929]
+	gdb(1): Updated to 7.6.1.  [christos 20131003]
+	httpd(8): Added Lua scripting for content creation. [mbalmer 20131012]
+	lutok: Update to 0.3.  [jmmv 20131018]
+	kyua-cli: Update to 0.7.  [jmmv 20131018]
+	netstat(1): Accept -faddress_family[,family ...]. [bad 20131019]
+	systat(1): Accept shell patterns to select drives. [bad 20131019]
+	gffb: Add a driver for NVIDIA GeForce2 MX graphics controllers.
+		[macallan 20131023]
+	axen(4): Add a driver for ASIX AX88178a and AX88179 Ethernet interface.
+		Ported from OpenBSD. [nonaka 20131026]
+	x68k: Support upto 1008 MB extended memory that is found on the XM6i
+		emulator. [tsutsui 20131027]
+	OpenSSH: Imported 6.4. [christos 20131108]
+	x86: Default rounding mode of the x87 changed to long double precision.
+		[joerg 20131111]
+	zless(1): Added via lastest version of zmore(1) from OpenBSD
+		[pettai 20131112]
+	libm: Added basic long double support for elementary functions.
+		Most transcendent functions are stubbed out. [joerg 20131119]
+	nvi(1): Upgrade to the latest git source. [christos 20131122]
+	MPC: Updated to MPC 1.0.1.  [mrg 20131128]
+	MPFR: Updated to MPFR 3.1.2.  [mrg 20131128]
+	GMP: Updated to GMP 5.1.3.  [mrg 20131129]
+	file(1): Updated to 5.16. [christos 20131201]
+	librt: Added shm_open(3) and shm_unlink(3). [rmind 20131219]
+	acafh(4): Added driver for Individual Computers ACA500. Enjoy NetBSD
+		on an Amiga 500.  [rkujawa 20131222] 
+	libc: Update to tzcode2013i. [christos 20131226]
+	zoneinfo: Import tzdata2013i. [apb 20131226]
+	acpi(4): Updated ACPICA to 20131218. [christos 20131227]
+	openpam(3): Import 20130907 (Nummularia). [christos 20131227]
+	ntp: Import ntp 4.2.7p404.  [christos 20131227]
+	luna68k: Add preleminary support of 4bpp framebuffer.
+		[tsutsui 20131227]
+	wm(4): Add support for I354 (C2000 Internal) Ethernet
+		[msaitoh 20131230]
+	tcpdump(8): Import 4.5.1. [christos 20131231]
+	libpcap: Import 1.5.2. [christos 20131231]
+	bind: Update to 9.9.5b1. [christos 20131231]
+	wpa: Import wpa_supplicant and hostapd 2.0. [christos 20140102]
+	dhcpcd(8): Import dhcpcd-6.2.0. [roy 20140103]
+	luna68k: Make bootloader to detect booted device on ROM monitor's
+		load command and set proper default boot device.
+		[tsutsui 20140105]
+	luna68k: Reorganize bootloader device configuration.  I.e. use
+		(controller * 10 + id) for sd unit number, rather than
+		static numbers against probed disks at ID 5 and 6.
+		[tsutsui 20140110]
+	luna68k: Add support to pass boothowto and boot device info from
+		bootloader to kernel. [tsutsui 20140111]
+	OpenSSL: Imported 1.0.1f. [christos 20130111]
+	postfix(1): Import version 2.10.3. [tron 20140118]
+	igmafb(4): Added framebuffer driver for Intel Graphics
+		[mlelstv 20140121]
+	vndcompress(1): Add support for constant memory, so 32-bit systems
+		should in theory now be able to compress or uncompress
+		multi-terabyte disks. [riastradh 20140122]
+	ohci(4): Support the National Semiconductor PC87560 as found in
+		many hppa machines. [skrll 20140128]
+	ews4800mips: Switch to X11FLAVOUR=Xorg. Untested. [tsutsui 20140131]
+	newsmips: Switch to X11FLAVOUR=Xorg. Untested. [tsutsui 20140131]
+	npf: Added support for CDB based tables. [rmind 20140206]
+	npf: Added support for static (stateless) NAT. [rmind 20140207]
+	atf(7): Import atf 0.19.  [jmmv 20140208]
+	atf(7): Import atf 0.20.  [jmmv 20140211]
+	npf: Added support for IPv6-to-IPv6 Network Prefix Translation
+		(NPTv6), as per RFC 6296. [rmind 20140213]
+	sqlite3: Import 3.8.3.1. [christos 20140216]
+	luna68k: Make sysinst to create a boot UFS partition and install
+		the native bootloader during installation. [tsutsui 20140219]
+	dhcpcd(8): Import dhcpcd-6.3.0. [roy 20140225]
+	mcp48x1dac(4): Add preliminary support for Microchip MCP48x1 family of
+		Digital-to-Analog converters. [rkujawa 20140225]
+	micphy(4): Add Micrel PHY (KSZ9021RN). [ozaki-r 20140226]
+	bind: Update to 9.10.0b1. [christos 20130228]
+	dhcpcd(8): Import dhcpcd-6.3.1. [roy 20140301]
+	x68k: Switch to X11FLAVOUR=Xorg, including X68k monolithic server.
+		[tsutsui 20140301]
+	macppc: Add support for ppc601-based machines
+		from scole_mail via PR48600. [macallan 20140303]
+	hppa: Switched to GCC 4.8.  [skrll 20140306]
+	sparc: Switched to GCC 4.8.  [mrg 20140306]
+	sparc64: Switched to GCC 4.8.  [mrg 20140306]
+	alpha: Switched to GCC 4.8.  [martin 20140307]
+	arm: Switched to GCC 4.8.  [skrll 20140307]
+	elftoolchain: Import FreeBSD-2014-03-08. [christos 20140309]
+	amd64: Switched to GCC 4.8.  [christos 20140311]
+	dhcpcd(8): Import dhcpcd-6.3.2. [roy 20140314]
+	rtsx(4): Add a driver for Realtek RTS5209/RTS5229 Card Reader.
+		Ported from OpenBSD. [nonaka 20140319]
+	mdnsd(8), dns-sd(1), libdns_sd: Import mDNSResponder 258.14
+		[pettai 20140324]
+	arm: Add support for ARMv6+ MMU features ASIDS, XN, split TTBR.
+		add support for SMP. [matt 20140330]
+	applesmc(4): Add drivers for the Apple System Management Controller.
+		[riastradh 20140401]
+	ptyfs: Allow multiple mounts and support proper device visibility
+		in chroots (Ilya Zykov). [christos 20140404]
+	i386: Switched to GCC 4.8.  [christos 20140404]
+	mcp23s17gpio(4): Add Microchip MCP23S17 16-bit GPIO chip driver.
+		e.g. Raspberry Pi interface boards. [kardel 20140406]
+	OpenSSL: Imported 1.0.1g. [christos 20140407]
+	sparc64: Switched to TOPDOWN_VM. [martin 20140414]
+	hp300: Fix broken apci console support of bootloader. [tsutsui 20140410]
+	hp300: Add sti(4) at sgc screen console support to bootloader.
+		[tsutsui 20140413]
+	hp300: Add HP9000/425e RTC support. [tsutsui 20140419]
+	ubsec(4): Add support for AES-CBC modes and BCM586x chips.
+		[bad 20140419]
+	hp300: Add proper consinit(9) support for sti(4) at sgc framebuffer on
+		HP9000/425e. [tsutsui 20140420]
+	bcmgpio(4): Add BCM2835 GPIO obio driver.
+		[kardel 20140422]
+	kerberos(8): Update to latest Heimdal-1-5-branch.
+		[pettai 20140424]
+	hp300: Make the Apollo Domain keyboard actually work.
+		[tsutsui 20140424]
+	hp300: Enable sti(4) driver for HP9000/425e console graphics on
+		install kernels. [tsutsui 20140430]
+	libc: Update to tzcode2014c. [christos 20140513]
+	zoneinfo: Import tzdata2014c. [apb 20140515]
+	hythygtemp(4): Add HYT-221/271/939 humidity/temperature iic sensor
+		driver.	[kardel 20140518]
+	envsys(4): Add %rH (relative Humidity) to sensor framework. 
+		[kardel 20140518]
+	gcc(1): Import version 4.8.3.  [skrll 20140527]
+	openldap: Import 2.4.39. [tron 20140528]
+	libc: Update to tzcode2014d. [christos 20140528]
+	alpha: Fix wrong disk cylinder detection during sysinst installation
+		onto a disk disklabel'ed by Tru64 as reported in PR/48697.
+		[tsutsui 20140602]
+	OpenSSL: Imported 1.0.1h. [christos 20140605]
+	vax: Switch to GCC 4.8. [matt 20140605]
+	vmx(4): Add VMware VMXNET3 driver, from OpenBSD. [hikaru 20140610]
+	etcupdate(8): Add destdir support.  [apb 20140612]
+	file(1): Upgraded to 5.19. [christos 20140612]
+	zoneinfo: Import tzdata2014e. [apb 20140613]
+	libc: Update to tzcode2014e. [christos 20140614]
+	dhcpcd(8): Import dhcpcd-6.4.0. [roy 20140614]
+	pigz(1): Update to pigz-2.3.1. [tls 20140615]
+	gdb(1): Updated to 7.7.1.  [christos 20140622]
+	m68k: Use "-O2 -fno-reorder-blocks" for the default optimization
+		by default to avoid unexpected code size growth by
+		-freorder-blocks option on m68k. [tsutsui 20140705]
+	m68k: Use "-O2 -fno-reorder-blocks" for most kernels as userland.
+		[tsutsui 20140705]
+	/usr/share/doc: Install formatted docs instead of nroff sources,
+		and reorganize. [dholland 20140705]
+	x68k: Make bootloader probe actual memory size and warn if memory size
+		value stored in SRAM is different, for machines with dead
+		battery.  [tsutsui 20140706]
+	postfix(1): Import version 2.11.1. [tron 20140706]
+	bind: Import version 9.10.0-P2. [spz 20140708]
+	dhcp: Import version 4.3.0. [spz 20140712]
+	luna68k: Add ANSI text color support for 8bpp color framebuffer.
+		[tsutsui 20140713]
+	dhcpcd(8): Import dhcpcd-6.4.2. [roy 20140714]
+	wskbd(4): Added belgian keyboard layouts (KB_BE) to pckbd(4) and
+		ukbd(4). [mbalmer 20140714]
+	tiotg(4): Added a driver for the Texas Instruments AM335x SoC's
+		USB OTG controller. [bouyer 20140716]
+	tifb(4): Added an experimental driver for the Texas Instruments AM335x
+		SoC's graphic controller. [bouyer 20140716]
+	lua(1): Updated to 5.3 work3. [lneto 20140719]
+	luna68k: Add WSDISPLAY_COMPAT_RAWKBD support so that keyboard on
+		Xserver works without xmodmap(1) tweaks. [tsutsui 20140720]
+	urtwn(4): Add support for Realtek RTL8188EUS and RTL8188ETV chipsets.
+		Ported from FreeBSD. [nonaka 20140720]
+	luna68k: Make wsfb Xserver work as monochrome server even with
+		4bpp/8bpp color framebuffers. [tsutsui 20140721]
+	wm(4): Add internal SERDES support older than 82575.
+		[msaitoh 20140722]
+	tmux(1): Import of tmux 1.9a.  [christos 20140724]
+	kernel: Added fdiscard and posix_fallocate system calls.
+		[dholland 20140725]
+	evbarm: Add support for the Kobo touch (i.MX50). [hkenken 20140725]
+	luna68k: Reset console ANSI color palette properly after returning to
+		WSDISPLAYIO_MODE_EMUL, i.e. on exiting Xserver.
+		[tsutsui 20140725]
+	atari: Adjust VM related constants so that larger packages can be built
+		on TT030. [tsutsui 20140726]
+	sun3: Move bootloader address to allow loading growing GENERIC kernels.
+		[tsutsui 20140726]
+	dhcpcd(8): Import dhcpcd-6.4.3. [roy 20140730]
+	timeout(1): Import from FreeBSD. [christos 20140801]
+	build: New BUILDINFO variable may be passed to build.sh, and exposed
+		in /etc/release, as well as in sysctl kern.buildinfo.
+		[apb 20140803]
+	x68k: Add a 'switch' command to bootloader to display and modify
+		SRAM parameters as NetBSD's memswitch(8) and Human68k's
+		SWITCH.X commands. [isaki 20140805]
+	zoneinfo: Import tzdata2014f. [apb 20140806]
+	ekermit(1): Add BSD-licenced ekermit, and remove GPL-licenced
+		gkermit. [apb 20140808]
+	rescue(8): Add /rescue/ekermit. [apb 20140809]
+	rnd(4): Suck in much more entropy early in boot and thereafter:
+		autoconf timings, all sysctl settings (including hostname),
+		contents of early network packets, environmental sensor
+		values generically rather than as per-driver special cases.
+		[tls 20140810]
+	cprng_fast(9): Replace slow/broken mutex-protected kernel
+		_arc4random() with new cprng_fast implemenation
+		from riastradh@ using per-cpu instances of chacha8.
+		[tls 20140810]
+	OpenSSL: Update to 1.0.1i. [spz 20140810]
+	kernel: Add MODULAR infrastructure for Xen kernels. [jnemeth 20140810]

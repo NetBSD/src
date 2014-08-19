@@ -1,7 +1,7 @@
-/*	$NetBSD: dst.h,v 1.4.2.1 2013/02/25 00:25:46 tls Exp $	*/
+/*	$NetBSD: dst.h,v 1.4.2.2 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -28,8 +28,11 @@
 #include <isc/stdtime.h>
 
 #include <dns/types.h>
+#include <dns/log.h>
 #include <dns/name.h>
 #include <dns/secalg.h>
+#include <dns/ds.h>
+#include <dns/dsdigest.h>
 
 #include <dst/gssapi.h>
 
@@ -169,8 +172,32 @@ dst_algorithm_supported(unsigned int alg);
  * \li	ISC_FALSE
  */
 
+isc_boolean_t
+dst_ds_digest_supported(unsigned int digest_type);
+/*%<
+ * Checks that a given digest algorithm is supported by DST.
+ *
+ * Returns:
+ * \li	ISC_TRUE
+ * \li	ISC_FALSE
+ */
+
 isc_result_t
 dst_context_create(dst_key_t *key, isc_mem_t *mctx, dst_context_t **dctxp);
+
+isc_result_t
+dst_context_create2(dst_key_t *key, isc_mem_t *mctx,
+		    isc_logcategory_t *category, dst_context_t **dctxp);
+
+isc_result_t
+dst_context_create3(dst_key_t *key, isc_mem_t *mctx,
+		    isc_logcategory_t *category, isc_boolean_t useforsigning,
+		    dst_context_t **dctxp);
+
+isc_result_t
+dst_context_create4(dst_key_t *key, isc_mem_t *mctx,
+		    isc_logcategory_t *category, isc_boolean_t useforsigning,
+		    int maxbits, dst_context_t **dctxp);
 /*%<
  * Creates a context to be used for a sign or verify operation.
  *
@@ -919,6 +946,29 @@ dst_key_restore(dns_name_t *name, unsigned int alg, unsigned int flags,
 		unsigned int protocol, dns_rdataclass_t rdclass,
 		isc_mem_t *mctx, const char *keystr, dst_key_t **keyp);
 
+isc_boolean_t
+dst_key_inactive(const dst_key_t *key);
+/*%<
+ * Determines if the private key is missing due the key being deemed inactive.
+ *
+ * Requires:
+ *	'key' to be valid.
+ */
+
+void
+dst_key_setinactive(dst_key_t *key, isc_boolean_t inactive);
+/*%<
+ * Set key inactive state.
+ *
+ * Requires:
+ *	'key' to be valid.
+ */
+
+void
+dst_key_setexternal(dst_key_t *key, isc_boolean_t value);
+
+isc_boolean_t
+dst_key_isexternal(dst_key_t *key);
 
 ISC_LANG_ENDDECLS
 

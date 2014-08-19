@@ -1,7 +1,7 @@
-/*	$NetBSD: controlconf.c,v 1.4.2.1 2013/02/25 00:25:03 tls Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.4.2.2 2014/08/19 23:46:00 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -26,6 +26,7 @@
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/event.h>
+#include <isc/file.h>
 #include <isc/mem.h>
 #include <isc/net.h>
 #include <isc/netaddr.h>
@@ -73,6 +74,7 @@ typedef ISC_LIST(controllistener_t) controllistenerlist_t;
 
 struct controlkey {
 	char *				keyname;
+	isc_uint32_t			algorithm;
 	isc_region_t			secret;
 	ISC_LINK(controlkey_t)		link;
 };
@@ -151,7 +153,7 @@ free_listener(controllistener_t *listener) {
 	if (listener->acl != NULL)
 		dns_acl_detach(&listener->acl);
 
-	isc_mem_put(listener->mctx, listener, sizeof(*listener));
+	isc_mem_putanddetach(&listener->mctx, listener, sizeof(*listener));
 }
 
 static void
@@ -327,13 +329,14 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 	isccc_sexpr_t *request = NULL;
 	isccc_sexpr_t *response = NULL;
 	isccc_region_t ccregion;
+	isc_uint32_t algorithm;
 	isccc_region_t secret;
 	isc_stdtime_t now;
 	isc_buffer_t b;
 	isc_region_t r;
 	isc_uint32_t len;
 	isc_buffer_t text;
-	char textarray[1024];
+	char textarray[2*1024];
 	isc_result_t result;
 	isc_result_t eresult;
 	isccc_sexpr_t *_ctrl;
@@ -345,6 +348,7 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 
 	conn = event->ev_arg;
 	listener = conn->listener;
+	algorithm = DST_ALG_UNKNOWN;
 	secret.rstart = NULL;
 
 	/* Is the server shutting down? */
@@ -369,16 +373,18 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 		secret.rstart = isc_mem_get(listener->mctx, key->secret.length);
 		if (secret.rstart == NULL)
 			goto cleanup;
-		memcpy(secret.rstart, key->secret.base, key->secret.length);
+		memmove(secret.rstart, key->secret.base, key->secret.length);
 		secret.rend = secret.rstart + key->secret.length;
-		result = isccc_cc_fromwire(&ccregion, &request, &secret);
+		algorithm = key->algorithm;
+		result = isccc_cc_fromwire(&ccregion, &request,
+					   algorithm, &secret);
 		if (result == ISC_R_SUCCESS)
 			break;
 		isc_mem_put(listener->mctx, secret.rstart, REGION_SIZE(secret));
 		if (result != ISCCC_R_BADAUTH) {
-		log_invalid(&conn->ccmsg, result);
-		goto cleanup;
-	}
+			log_invalid(&conn->ccmsg, result);
+			goto cleanup;
+		}
 	}
 
 	if (key == NULL) {
@@ -441,14 +447,17 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 		goto cleanup_request;
 	}
 
+	isc_buffer_init(&text, textarray, sizeof(textarray));
+
 	/*
 	 * Establish nonce.
 	 */
-	while (conn->nonce == 0)
-		isc_random_get(&conn->nonce);
-
-	isc_buffer_init(&text, textarray, sizeof(textarray));
-	eresult = ns_control_docommand(request, &text);
+	if (conn->nonce == 0) {
+		while (conn->nonce == 0)
+			isc_random_get(&conn->nonce);
+		eresult = ISC_R_SUCCESS;
+	} else
+		eresult = ns_control_docommand(request, &text);
 
 	result = isccc_cc_createresponse(request, now, now + 60, &response);
 	if (result != ISC_R_SUCCESS)
@@ -482,7 +491,7 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 
 	ccregion.rstart = conn->buffer + 4;
 	ccregion.rend = conn->buffer + sizeof(conn->buffer);
-	result = isccc_cc_towire(response, &ccregion, &secret);
+	result = isccc_cc_towire(response, &ccregion, algorithm, &secret);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_response;
 	isc_buffer_init(&b, conn->buffer, 4);
@@ -695,6 +704,7 @@ controlkeylist_fromcfg(const cfg_obj_t *keylist, isc_mem_t *mctx,
 		if (key == NULL)
 			goto cleanup;
 		key->keyname = newstr;
+		key->algorithm = DST_ALG_UNKNOWN;
 		key->secret.base = NULL;
 		key->secret.length = 0;
 		ISC_LINK_INIT(key, link);
@@ -739,6 +749,7 @@ register_keys(const cfg_obj_t *control, const cfg_obj_t *keylist,
 			const cfg_obj_t *secretobj = NULL;
 			const char *algstr = NULL;
 			const char *secretstr = NULL;
+			unsigned int algtype;
 
 			(void)cfg_map_get(keydef, "algorithm", &algobj);
 			(void)cfg_map_get(keydef, "secret", &secretobj);
@@ -747,8 +758,8 @@ register_keys(const cfg_obj_t *control, const cfg_obj_t *keylist,
 			algstr = cfg_obj_asstring(algobj);
 			secretstr = cfg_obj_asstring(secretobj);
 
-			if (ns_config_getkeyalgorithm(algstr, NULL, NULL) !=
-			    ISC_R_SUCCESS)
+			if (ns_config_getkeyalgorithm2(algstr, NULL,
+					&algtype, NULL) != ISC_R_SUCCESS)
 			{
 				cfg_obj_log(control, ns_g_lctx,
 					    ISC_LOG_WARNING,
@@ -761,6 +772,7 @@ register_keys(const cfg_obj_t *control, const cfg_obj_t *keylist,
 				continue;
 			}
 
+			keyid->algorithm = algtype;
 			isc_buffer_init(&b, secret, sizeof(secret));
 			result = isc_base64_decodestring(secretstr, &b);
 
@@ -786,8 +798,8 @@ register_keys(const cfg_obj_t *control, const cfg_obj_t *keylist,
 				free_controlkey(keyid, mctx);
 				break;
 			}
-			memcpy(keyid->secret.base, isc_buffer_base(&b),
-			       keyid->secret.length);
+			memmove(keyid->secret.base, isc_buffer_base(&b),
+				keyid->secret.length);
 		}
 	}
 }
@@ -811,7 +823,15 @@ get_rndckey(isc_mem_t *mctx, controlkeylist_t *keyids) {
 	const char *secretstr = NULL;
 	controlkey_t *keyid = NULL;
 	char secret[1024];
+	unsigned int algtype;
 	isc_buffer_t b;
+
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+		      NS_LOGMODULE_CONTROL, ISC_LOG_INFO,
+		      "configuring command channel from '%s'",
+		      ns_g_keyfile);
+	if (! isc_file_exists(ns_g_keyfile))
+		return (ISC_R_FILENOTFOUND);
 
 	CHECK(cfg_parser_create(mctx, ns_g_lctx, &pctx));
 	CHECK(cfg_parse_file(pctx, ns_g_keyfile, &cfg_type_rndckey, &config));
@@ -824,6 +844,7 @@ get_rndckey(isc_mem_t *mctx, controlkeylist_t *keyids) {
 					cfg_obj_asstring(cfg_map_getname(key)));
 	keyid->secret.base = NULL;
 	keyid->secret.length = 0;
+	keyid->algorithm = DST_ALG_UNKNOWN;
 	ISC_LINK_INIT(keyid, link);
 	if (keyid->keyname == NULL)
 		CHECK(ISC_R_NOMEMORY);
@@ -837,7 +858,8 @@ get_rndckey(isc_mem_t *mctx, controlkeylist_t *keyids) {
 	algstr = cfg_obj_asstring(algobj);
 	secretstr = cfg_obj_asstring(secretobj);
 
-	if (ns_config_getkeyalgorithm(algstr, NULL, NULL) != ISC_R_SUCCESS) {
+	if (ns_config_getkeyalgorithm2(algstr, NULL,
+				       &algtype, NULL) != ISC_R_SUCCESS) {
 		cfg_obj_log(key, ns_g_lctx,
 			    ISC_LOG_WARNING,
 			    "unsupported algorithm '%s' in "
@@ -847,6 +869,7 @@ get_rndckey(isc_mem_t *mctx, controlkeylist_t *keyids) {
 		goto cleanup;
 	}
 
+	keyid->algorithm = algtype;
 	isc_buffer_init(&b, secret, sizeof(secret));
 	result = isc_base64_decodestring(secretstr, &b);
 
@@ -866,8 +889,8 @@ get_rndckey(isc_mem_t *mctx, controlkeylist_t *keyids) {
 			   "out of memory", keyid->keyname);
 		CHECK(ISC_R_NOMEMORY);
 	}
-	memcpy(keyid->secret.base, isc_buffer_base(&b),
-	       keyid->secret.length);
+	memmove(keyid->secret.base, isc_buffer_base(&b),
+		keyid->secret.length);
 	ISC_LIST_APPEND(*keyids, keyid, link);
 	keyid = NULL;
 	result = ISC_R_SUCCESS;
@@ -1068,8 +1091,9 @@ add_listener(ns_controls_t *cp, controllistener_t **listenerp,
 		result = ISC_R_NOMEMORY;
 
 	if (result == ISC_R_SUCCESS) {
+		listener->mctx = NULL;
+		isc_mem_attach(mctx, &listener->mctx);
 		listener->controls = cp;
-		listener->mctx = mctx;
 		listener->task = cp->server->task;
 		listener->address = *addr;
 		listener->sock = NULL;

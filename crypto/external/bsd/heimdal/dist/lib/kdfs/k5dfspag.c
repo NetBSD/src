@@ -1,4 +1,4 @@
-/*	$NetBSD: k5dfspag.c,v 1.1.1.1 2011/04/13 18:15:31 elric Exp $	*/
+/*	$NetBSD: k5dfspag.c,v 1.1.1.1.10.1 2014/08/19 23:45:19 tls Exp $	*/
 
 /*
  * lib/krb5/os/k5dfspag.c
@@ -27,7 +27,7 @@
 #include <config.h>
 #endif
 
-__RCSID("$NetBSD: k5dfspag.c,v 1.1.1.1 2011/04/13 18:15:31 elric Exp $");
+__RCSID("NetBSD");
 
 #include <krb5/krb5.h>
 

@@ -1,6 +1,7 @@
 /* SPARC-specific support for 32-bit ELF
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2010 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006, 2007, 2010, 2011
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -110,7 +111,7 @@ elf32_sparc_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
       return FALSE;
     }
 
-  return TRUE;
+  return _bfd_sparc_elf_merge_private_bfd_data (ibfd, obfd);
 }
 
 /* The final processing done just before writing out the object file.

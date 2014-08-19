@@ -1,4 +1,4 @@
-/*	$NetBSD: dcfd.c,v 1.1.1.1 2009/12/13 16:56:35 kardel Exp $	*/
+/*	$NetBSD: dcfd.c,v 1.1.1.1.12.1 2014/08/19 23:51:43 tls Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/parseutil/dcfd.c,v 4.18 2005/10/07 22:08:18 kardel RELEASE_20051008_A
@@ -589,7 +589,8 @@ cvt_rawdcf(
 			/*
 			 * invalid character (no consecutive bit sequence)
 			 */
-			dprintf(("parse: cvt_rawdcf: character check for 0x%x@%d FAILED\n", *s, s - buffer));
+			dprintf(("parse: cvt_rawdcf: character check for 0x%x@%ld FAILED\n",
+				 (u_int)*s, (long)(s - buffer)));
 			*s = (unsigned char)~0;
 			rtc = CVT_FAIL|CVT_BADFMT;
 		}
@@ -900,15 +901,19 @@ static const char *wday[8] =
  */
 static char *
 pr_timeval(
-	   struct timeval *val
-	   )
+	struct timeval *val
+	)
 {
 	static char buf[20];
 
 	if (val->tv_sec == 0)
-	    sprintf(buf, "%c0.%06ld", (val->tv_usec < 0) ? '-' : '+', (long int)l_abs(val->tv_usec));
+		snprintf(buf, sizeof(buf), "%c0.%06ld",
+			 (val->tv_usec < 0) ? '-' : '+',
+			 (long int)l_abs(val->tv_usec));
 	else
-	    sprintf(buf, "%ld.%06ld", (long int)val->tv_sec, (long int)l_abs(val->tv_usec));
+		snprintf(buf, sizeof(buf), "%ld.%06ld",
+			 (long int)val->tv_sec,
+			 (long int)l_abs(val->tv_usec));
 	return buf;
 }
 
@@ -1322,43 +1327,6 @@ check_y2k( void )
 	    break;
 	}
 
-	if ( year >= YEAR_PIVOT+1900 )
-	{
-	    /* check year % 100 code we put into dcf_to_unixtime() */
-	    ct.year = year % 100;
-	    Flag = 0;
-
-	    Observed = dcf_to_unixtime( &ct, &Flag );
-
-	    if ( Observed != Expected  ||  Flag )
-	    {   /* time difference */
-		fprintf( stdout, 
-"%04d: dcf_to_unixtime(%d,%d) FAILURE: was=%lu s/b=%lu  (%ld)\n",
-		   year, (int)ct.year, (int)Flag, 
-		   (unsigned long)Observed, (unsigned long)Expected,
-		   ((long)Observed - (long)Expected) );
-		Error(year);
-		break;
-	    }
-
-	    /* check year - 1900 code we put into dcf_to_unixtime() */
-	    ct.year = year - 1900;
-	    Flag = 0;
-
-	    Observed = dcf_to_unixtime( &ct, &Flag );
-
-	    if ( Observed != Expected  ||  Flag ) {   /* time difference */
-		    fprintf( stdout, 
-			     "%04d: dcf_to_unixtime(%d,%d) FAILURE: was=%lu s/b=%lu  (%ld)\n",
-			     year, (int)ct.year, (int)Flag, 
-			     (unsigned long)Observed, (unsigned long)Expected,
-			     ((long)Observed - (long)Expected) );
-		    Error(year);
-		break;
-	    }
-
-
-	}
     }
 
     return ( Fatals );

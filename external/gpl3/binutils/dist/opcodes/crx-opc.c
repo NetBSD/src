@@ -1,5 +1,5 @@
 /* crx-opc.c -- Table of opcodes for the CRX processor.
-   Copyright 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2004, 2005, 2007, 2012 Free Software Foundation, Inc.
    Contributed by Tomer Levi NSC, Israel.
    Originally written for GAS 2.12 by Tomer Levi.
 
@@ -701,7 +701,7 @@ The value in entry <N> is mapped to the value <N>
 Example (for N=5):
 
     cst4_map[5]=-4  -->>	5		*/
-const long cst4_map[] =
+const int cst4_map[] =
 {
   0, 1, 2, 3, 4, -4, -1, 7, 8, 16, 32, 20, 12, 48
 };

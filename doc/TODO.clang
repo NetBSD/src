@@ -1,17 +1,16 @@
-$NetBSD: TODO.clang,v 1.4 2012/01/17 15:38:44 joerg Exp $
+$NetBSD: TODO.clang,v 1.4.6.1 2014/08/19 23:45:49 tls Exp $
 
 Hacks for the clang integration
 -------------------------------
 
-"-no-integrated-as" in src/sys/arch/amd64 and src/sys/arch/i386
-to compensate for the missing .code16 support in LLVM MC
-and slightly different encoding of the lock stubs.
+"-no-integrated-as" is used in src/sys/arch/i386/stand to compensate
+for the incomplete explicit positioning support in LLVM MC.
 
-Various places use NOCLANGERROR or CWARNFLAGS.clang to disable errors or
-warnings.
+Workaround for .fpu handling in src/sys/lib/libunwind for ARM by forcing
+GNU as.
 
-Issues with CMSG_SPACE() used inside a union:
-src/external/tmux/dist/compat/imsg-buffer.c
-src/external/tmux/dist/compat/imsg.c
-src/external/ibm-public/postfix/dist/src/util/unix_recv_fd.c
-src/external/ibm-public/postfix/dist/src/util/unix_send_fd.c
+src/external/gpl3/gcc/usr.bin/backend forces tree.c to be compiled with -O0.
+g++ otherwise on trivial input.
+
+src/external/mit/xorg/lib/pixman uses -fno-integrated-as on ARM for the
+macro (ab)use.

@@ -4,11 +4,21 @@ sinclude(../config/enable.m4)
 sinclude(../config/tls.m4)
 sinclude(../config/acx.m4)
 sinclude(../config/no-executables.m4)
+sinclude(../config/lib-ld.m4)
 sinclude(../config/override.m4)
+sinclude(../config/picflag.m4)
+sinclude(../config/dfp.m4)
+sinclude(../config/unwind_ipinfo.m4)
+sinclude(../config/gthr.m4)
 
 AC_PREREQ(2.64)
 AC_INIT([GNU C Runtime Library], 1.0,,[libgcc])
 AC_CONFIG_SRCDIR([static-object.mk])
+
+# The libgcc should not depend on any header files
+AC_DEFUN([_AC_INCLUDES_DEFAULT_REQUIREMENTS],
+  [m4_divert_text([DEFAULTS],
+    [ac_includes_default='/* none */'])])
 
 AC_ARG_WITH(target-subdir,
 [  --with-target-subdir=SUBDIR      Configuring in a subdirectory for target])
@@ -35,6 +45,7 @@ else
 fi
 AC_SUBST(libgcc_topdir)
 AC_CONFIG_AUX_DIR($libgcc_topdir)
+AC_CONFIG_HEADER(auto-target.h:config.in)
 
 AC_ARG_ENABLE(shared,
 [  --disable-shared        don't provide a shared libgcc],
@@ -54,6 +65,9 @@ AC_ARG_ENABLE(shared,
   esac
 ], [enable_shared=yes])
 AC_SUBST(enable_shared)
+
+GCC_PICFLAG
+AC_SUBST(PICFLAG)
 
 AC_MSG_CHECKING([for --enable-version-specific-runtime-libs])
 AC_ARG_ENABLE(version-specific-runtime-libs,
@@ -103,7 +117,38 @@ esac
 
 AC_CANONICAL_HOST
 ACX_NONCANONICAL_HOST
+ACX_NONCANONICAL_TARGET
 GCC_TOPLEV_SUBDIRS
+
+# Calculate toolexeclibdir
+# Also toolexecdir, though it's only used in toolexeclibdir
+case ${version_specific_libs} in
+  yes)
+    # Need the gcc compiler version to know where to install libraries
+    # and header files if --enable-version-specific-runtime-libs option
+    # is selected.
+    toolexecdir='$(libdir)/gcc/$(target_noncanonical)'
+    toolexeclibdir='$(toolexecdir)/$(gcc_version)$(MULTISUBDIR)'
+    ;;
+  no)
+    if test -n "$with_cross_host" &&
+       test x"$with_cross_host" != x"no"; then
+      # Install a library built with a cross compiler in tooldir, not libdir.
+      toolexecdir='$(exec_prefix)/$(target_noncanonical)'
+      toolexeclibdir='$(toolexecdir)/lib'
+    else
+      toolexecdir='$(libdir)/gcc-lib/$(target_noncanonical)'
+      toolexeclibdir='$(libdir)'
+    fi
+    multi_os_directory=`$CC -print-multi-os-directory`
+    case $multi_os_directory in
+      .) ;; # Avoid trailing /.
+      *) toolexeclibdir=$toolexeclibdir/$multi_os_directory ;;
+    esac
+    ;;
+esac
+AC_SUBST(toolexecdir)
+AC_SUBST(toolexeclibdir)
 
 dnl These must be called before AM_PROG_LIBTOOL, because it may want
 dnl to call AC_CHECK_PROG.
@@ -118,6 +163,13 @@ GCC_NO_EXECUTABLES
 AC_PROG_CC
 AC_PROG_CPP_WERROR
 
+AC_CHECK_SIZEOF([double])
+AC_CHECK_SIZEOF([long double])
+AS_VAR_ARITH([double_type_size], [$ac_cv_sizeof_double \* 8])
+AS_VAR_ARITH([long_double_type_size], [$ac_cv_sizeof_long_double \* 8])
+AC_SUBST(double_type_size)
+AC_SUBST(long_double_type_size)
+
 # Check for decimal float support.
 AC_CACHE_CHECK([whether decimal floating point is supported], [libgcc_cv_dfp],
 	       [AC_COMPILE_IFELSE([_Decimal32 x;], [libgcc_cv_dfp=yes],
@@ -125,41 +177,7 @@ AC_CACHE_CHECK([whether decimal floating point is supported], [libgcc_cv_dfp],
 decimal_float=$libgcc_cv_dfp
 AC_SUBST(decimal_float)
 
-AC_ARG_ENABLE(decimal-float,
-[  --enable-decimal-float={no,yes,bid,dpd}
-			enable decimal float extension to C.  Selecting 'bid'
-			or 'dpd' choses which decimal floating point format
-			to use],
-[
-  case $enable_decimal_float in
-    yes | no | bid | dpd) ;;
-    *) AC_MSG_ERROR(['$enable_decimal_float' is an invalid value for --enable-decimal-float.
-Valid choices are 'yes', 'bid', 'dpd', and 'no'.]) ;;
-  esac
-],
-[
-  case $host in
-    powerpc*-*-linux* | i?86*-*-linux* | x86_64*-*-linux*)
-      enable_decimal_float=yes
-      ;;
-    *)
-      enable_decimal_float=no
-      ;;
-  esac
-])
-
-# x86's use BID format instead of DPD
-if test x$enable_decimal_float = xyes; then
-  case $host in
-    i?86*-*-linux* | x86_64*-*-linux*)
-      enable_decimal_float=bid
-      ;;
-    *)
-      enable_decimal_float=dpd
-      ;;
-  esac
-fi
-AC_SUBST(enable_decimal_float)
+GCC_AC_ENABLE_DECIMAL_FLOAT([$host])
 
 # Check for fixed-point support.
 AC_CACHE_CHECK([whether fixed-point is supported], [libgcc_cv_fixed_point],
@@ -168,20 +186,92 @@ AC_CACHE_CHECK([whether fixed-point is supported], [libgcc_cv_fixed_point],
 fixed_point=$libgcc_cv_fixed_point
 AC_SUBST(fixed_point)
 
-# Check 32bit or 64bit for x86.
-case ${host} in
-i?86*-*-* | x86_64*-*-*)
-  cat > conftest.c <<EOF
-#ifdef __x86_64__
+# For platforms with the unwind ABI which includes an unwind library,
+# libunwind, we can choose to use the system libunwind.
+# config.gcc also contains tests of with_system_libunwind.
+GCC_CHECK_UNWIND_GETIPINFO
+
+# The sjlj test is almost duplicated here and in libgo/configure.ac (for C),
+# libstdc++-v3/acinclude.m4 and libjava/configure.ac (for C++), and
+# libobjc/configure.ac (for Objective-C).
+# FIXME: This should be centralized in config/sjlj.m4.
+AC_ARG_ENABLE(sjlj-exceptions,
+  AC_HELP_STRING([--enable-sjlj-exceptions],
+		 [force use of builtin_setjmp for exceptions]),
+  [case "$enableval" in
+   yes|no|auto) ;;
+   *) AC_MSG_ERROR([unknown argument to --enable-sjlj-exceptions]) ;;
+   esac],
+  [enable_sjlj_exceptions=auto])
+
+AC_CACHE_CHECK([whether to use setjmp/longjmp exceptions],
+[libgcc_cv_lib_sjlj_exceptions],
+[AC_LANG_CONFTEST(
+  [AC_LANG_SOURCE([
+void bar ();
+void clean (int *);
+void foo ()
+{
+  int i __attribute__ ((cleanup (clean)));
+  bar();
+}
+])])
+CFLAGS_hold=$CFLAGS
+CFLAGS="--save-temps -fexceptions"
+libgcc_cv_lib_sjlj_exceptions=unknown
+AS_IF([ac_fn_c_try_compile],
+  [if grep _Unwind_SjLj_Resume conftest.s >/dev/null 2>&1; then
+    libgcc_cv_lib_sjlj_exceptions=yes
+  elif grep _Unwind_Resume conftest.s >/dev/null 2>&1; then
+    libgcc_cv_lib_sjlj_exceptions=no
+  fi])
+CFLAGS=$CFLAGS_hold
+rm -f conftest*
+])
+
+if test "$enable_sjlj_exceptions" = "auto"; then
+  enable_sjlj_exceptions=$libgcc_cv_lib_sjlj_exceptions
+fi
+
+case $enable_sjlj_exceptions in
+yes)
+  AC_DEFINE(LIBGCC_SJLJ_EXCEPTIONS, 1,
+	[Define if the C compiler is configured for setjmp/longjmp exceptions.])
+  ;;
+no)
+  ;;
+*)
+  AC_MSG_ERROR([unable to detect exception model])
+  ;;
+esac
+
+AC_LIB_PROG_LD_GNU
+
+AC_MSG_CHECKING([for thread model used by GCC])
+target_thread_file=`$CC -v 2>&1 | sed -n 's/^Thread model: //p'`
+AC_MSG_RESULT([$target_thread_file]) 
+
+# Check for assembler CFI support.
+AC_CACHE_CHECK([whether assembler supports CFI directives], [libgcc_cv_cfi],
+	       [AC_COMPILE_IFELSE(
+[asm("\n\
+	.text\n\
+	.cfi_startproc\n\
+	.cfi_personality 0, symbol\n\
+	.cfi_endproc");],
+  [libgcc_cv_cfi=yes],
+  [libgcc_cv_cfi=no])])
+
+# Check 32bit or 64bit
+cat > conftest.c <<EOF
+#if defined(__x86_64__) || (!defined(__i386__) && defined(__LP64__))
 host_address=64
 #else
 host_address=32
 #endif
 EOF
-    eval `${CC-cc} -E conftest.c | grep host_address=`
-    rm -f conftest.c
-    ;;
-esac
+eval `${CC-cc} -E conftest.c | grep host_address=`
+rm -f conftest.c
 
 # Collect host-machine-specific information.
 . ${srcdir}/config.host
@@ -191,7 +281,7 @@ esac
 # Link with -nostartfiles -nodefaultlibs since neither are present while
 # building libgcc.
 case ${host} in
-i?86-*-solaris2.1[[0-9]]*)
+i?86-*-solaris2* | x86_64-*-solaris2.1[[0-9]]*)
   cat > conftest.s <<EOF
 	.section	.eh_frame,"a",@unwind
 	.zero	4
@@ -199,9 +289,7 @@ i?86-*-solaris2.1[[0-9]]*)
 	.zero	8
 EOF
   if AC_TRY_COMMAND(${CC-cc} -shared -nostartfiles -nodefaultlibs -o conftest.so conftest.s 1>&AS_MESSAGE_LOG_FD); then
-      # configure expects config files in libgcc/config, so need a relative
-      # path here.
-      tmake_file="${tmake_file} ../../gcc/config/i386/t-crtstuff"
+      tmake_file="${tmake_file} i386/t-crtstuff"
   fi
   ;;
 esac
@@ -228,7 +316,7 @@ fi
 AC_SUBST(vis_hide)
 
 # See if we have thread-local storage.  We can only test assembler
-# sicne link-time and run-time tests require the newly built
+# since link-time and run-time tests require the newly built
 # gcc, which can't be used to build executable due to that libgcc
 # is yet to be built here.
 GCC_CHECK_CC_TLS
@@ -246,6 +334,26 @@ if test "$enable_tls $gcc_cv_use_emutls" = "yes yes"; then
 fi
 AC_SUBST(set_use_emutls)
 
+AC_CACHE_CHECK(for init priority support, libgcc_cv_init_priority, [
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,
+  [[void ip (void) __attribute__ ((constructor (1)));]])],
+  [libgcc_cv_init_priority=yes],[libgcc_cv_init_priority=no])])
+if test $libgcc_cv_init_priority = yes; then
+  AC_DEFINE(HAVE_INIT_PRIORITY, 1,
+  [Define if the compiler supports init priority.])
+fi
+
+# Conditionalize the sfp-machine.h header for this target machine.
+if test -z "${sfp_machine_header}"; then
+	sfp_machine_header=$cpu_type/sfp-machine.h
+	if test -f ${srcdir}/config/${sfp_machine_header}; then
+		:
+	else
+		sfp_machine_header=no-sfp-machine.h
+	fi
+fi
+AC_SUBST(sfp_machine_header)
+
 # Conditionalize the makefile for this target machine.
 tmake_file_=
 for f in ${tmake_file}
@@ -258,9 +366,28 @@ done
 tmake_file="${tmake_file_}"
 AC_SUBST(tmake_file)
 
+# Likewise export definitions for libgcc_tm.h
+tm_file_=
+for f in ${tm_file}
+do
+	tm_file_="${tm_file_} \$(srcdir)/config/$f"
+done
+tm_file="${tm_file_}"
+AC_SUBST(tm_file)
+AC_SUBST(tm_defines)
+
+# Map from thread model to thread header.
+GCC_AC_THREAD_HEADER([$target_thread_file])
+
 # Substitute configuration variables
+AC_SUBST(cpu_type)
 AC_SUBST(extra_parts)
 AC_SUBST(asm_hidden_op)
+AC_CONFIG_LINKS([enable-execute-stack.c:$enable_execute_stack])
+AC_CONFIG_LINKS([unwind.h:$unwind_header])
+AC_CONFIG_LINKS([md-unwind-support.h:config/$md_unwind_header])
+AC_CONFIG_LINKS([sfp-machine.h:config/$sfp_machine_header])
+AC_CONFIG_LINKS([gthr-default.h:$thread_header])
 
 # We need multilib support.
 AC_CONFIG_FILES([Makefile])

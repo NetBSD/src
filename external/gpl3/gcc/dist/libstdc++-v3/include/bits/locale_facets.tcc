@@ -1,8 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-// 2006, 2007, 2008, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 1997-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file locale_facets.tcc
+/** @file bits/locale_facets.tcc
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{locale}
  */
 
 #ifndef _LOCALE_FACETS_TCC
@@ -34,7 +32,9 @@
 
 #pragma GCC system_header
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // Routine to access a cache for the facet.  If the cache didn't
   // exist before, it gets constructed on the fly.
@@ -56,7 +56,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	const locale::facet** __caches = __loc._M_impl->_M_caches;
 	if (!__caches[__i])
 	  {
-	    __numpunct_cache<_CharT>* __tmp = NULL;
+	    __numpunct_cache<_CharT>* __tmp = 0;
 	    __try
 	      {
 		__tmp = new __numpunct_cache<_CharT>;
@@ -137,7 +137,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   __verify_grouping(const char* __grouping, size_t __grouping_size,
 		    const string& __grouping_tmp) throw ();
 
-_GLIBCXX_BEGIN_LDBL_NAMESPACE
+_GLIBCXX_BEGIN_NAMESPACE_LDBL
 
   template<typename _CharT, typename _InIter>
     _InIter
@@ -782,7 +782,7 @@ _GLIBCXX_BEGIN_LDBL_NAMESPACE
       __len = static_cast<int>(__w);
     }
 
-_GLIBCXX_END_LDBL_NAMESPACE
+_GLIBCXX_END_NAMESPACE_LDBL
 
   template<typename _CharT, typename _ValueT>
     int
@@ -826,7 +826,7 @@ _GLIBCXX_END_LDBL_NAMESPACE
       return __bufend - __buf;
     }
 
-_GLIBCXX_BEGIN_LDBL_NAMESPACE
+_GLIBCXX_BEGIN_NAMESPACE_LDBL
 
   template<typename _CharT, typename _OutIter>
     void
@@ -1177,7 +1177,7 @@ _GLIBCXX_BEGIN_LDBL_NAMESPACE
       return __s;
     }
 
-_GLIBCXX_END_LDBL_NAMESPACE
+_GLIBCXX_END_NAMESPACE_LDBL
 
   // Construct correctly padded string, as per 22.2.2.2.2
   // Assumes
@@ -1274,12 +1274,11 @@ _GLIBCXX_END_LDBL_NAMESPACE
 
   // Inhibit implicit instantiations for required instantiations,
   // which are defined via explicit instantiations elsewhere.
-  // NB: This syntax is a GNU extension.
 #if _GLIBCXX_EXTERN_TEMPLATE
   extern template class numpunct<char>;
   extern template class numpunct_byname<char>;
-  extern template class _GLIBCXX_LDBL_NAMESPACE num_get<char>;
-  extern template class _GLIBCXX_LDBL_NAMESPACE num_put<char>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL num_get<char>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL num_put<char>;
   extern template class ctype_byname<char>;
 
   extern template
@@ -1317,8 +1316,8 @@ _GLIBCXX_END_LDBL_NAMESPACE
 #ifdef _GLIBCXX_USE_WCHAR_T
   extern template class numpunct<wchar_t>;
   extern template class numpunct_byname<wchar_t>;
-  extern template class _GLIBCXX_LDBL_NAMESPACE num_get<wchar_t>;
-  extern template class _GLIBCXX_LDBL_NAMESPACE num_put<wchar_t>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL num_get<wchar_t>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL num_put<wchar_t>;
   extern template class ctype_byname<wchar_t>;
 
   extern template
@@ -1355,6 +1354,7 @@ _GLIBCXX_END_LDBL_NAMESPACE
 #endif
 #endif
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif

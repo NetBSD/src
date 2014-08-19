@@ -1,4 +1,4 @@
-/*	$NetBSD: iter_cred.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: iter_cred.c,v 1.1.1.1.10.1 2014/08/19 23:45:17 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -37,16 +37,17 @@
 
 #include "ntlm.h"
 
-void
+void GSSAPI_CALLCONV
 _gss_ntlm_iter_creds_f(OM_uint32 flags,
 		       void *userctx ,
 		       void (*cred_iter)(void *, gss_OID, gss_cred_id_t))
 {
+#ifdef HAVE_KCM
     krb5_error_code ret;
     krb5_context context = NULL;
     krb5_storage *request, *response;
     krb5_data response_data;
-    
+
     ret = krb5_init_context(&context);
     if (ret)
 	goto done;
@@ -95,5 +96,6 @@ _gss_ntlm_iter_creds_f(OM_uint32 flags,
  done:
     if (context)
 	krb5_free_context(context);
+#endif /* HAVE_KCM */
     (*cred_iter)(userctx, NULL, NULL);
-}		 
+}

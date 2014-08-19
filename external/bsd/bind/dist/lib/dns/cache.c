@@ -1,7 +1,7 @@
-/*	$NetBSD: cache.c,v 1.4 2012/06/05 00:41:28 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.4.2.1 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -23,12 +23,16 @@
 
 #include <config.h>
 
+#include <isc/json.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/string.h>
+#include <isc/stats.h>
 #include <isc/task.h>
 #include <isc/time.h>
 #include <isc/timer.h>
 #include <isc/util.h>
+#include <isc/xml.h>
 
 #include <dns/cache.h>
 #include <dns/db.h>
@@ -41,6 +45,7 @@
 #include <dns/rdataset.h>
 #include <dns/rdatasetiter.h>
 #include <dns/result.h>
+#include <dns/stats.h>
 
 #include "rbtdb.h"
 
@@ -52,7 +57,7 @@
  * DNS_CACHE_MINSIZE is how many bytes is the floor for dns_cache_setcachesize().
  * See also DNS_CACHE_CLEANERINCREMENT
  */
-#define DNS_CACHE_MINSIZE	2097152 /*%< Bytes.  2097152 = 2 MB */
+#define DNS_CACHE_MINSIZE	2097152U /*%< Bytes.  2097152 = 2 MB */
 /*!
  * Control incremental cleaning.
  * CLEANERINCREMENT is how many nodes are examined in one pass.
@@ -138,7 +143,8 @@ struct dns_cache {
 	char			*db_type;
 	int			db_argc;
 	char			**db_argv;
-	isc_uint32_t		size;
+	size_t			size;
+	isc_stats_t		*stats;
 
 	/* Locked by 'filelock'. */
 	char			*filename;
@@ -239,10 +245,16 @@ dns_cache_create3(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
 	cache->live_tasks = 0;
 	cache->rdclass = rdclass;
 
+	cache->stats = NULL;
+	result = isc_stats_create(cmctx, &cache->stats,
+				  dns_cachestatscounter_max);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup_filelock;
+
 	cache->db_type = isc_mem_strdup(cmctx, db_type);
 	if (cache->db_type == NULL) {
 		result = ISC_R_NOMEMORY;
-		goto cleanup_filelock;
+		goto cleanup_stats;
 	}
 
 	/*
@@ -311,6 +323,11 @@ dns_cache_create3(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_db;
 
+	result = dns_db_setcachestats(cache->db, cache->stats);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup_db;
+
+
 	*cachep = cache;
 	return (ISC_R_SUCCESS);
 
@@ -327,6 +344,8 @@ dns_cache_create3(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
 	isc_mem_free(cmctx, cache->db_type);
  cleanup_filelock:
 	DESTROYLOCK(&cache->filelock);
+ cleanup_stats:
+	isc_stats_detach(&cache->stats);
  cleanup_lock:
 	DESTROYLOCK(&cache->lock);
  cleanup_mem:
@@ -388,6 +407,9 @@ cache_free(dns_cache_t *cache) {
 
 	if (cache->name != NULL)
 		isc_mem_free(cache->mctx, cache->name);
+
+	if (cache->stats != NULL)
+		isc_stats_detach(&cache->stats);
 
 	DESTROYLOCK(&cache->lock);
 	DESTROYLOCK(&cache->filelock);
@@ -489,7 +511,6 @@ dns_cache_setfilename(dns_cache_t *cache, const char *filename) {
 	return (ISC_R_SUCCESS);
 }
 
-#ifdef BIND9
 isc_result_t
 dns_cache_load(dns_cache_t *cache) {
 	isc_result_t result;
@@ -505,28 +526,21 @@ dns_cache_load(dns_cache_t *cache) {
 
 	return (result);
 }
-#endif /* BIND9 */
 
 isc_result_t
 dns_cache_dump(dns_cache_t *cache) {
-#ifdef BIND9
 	isc_result_t result;
-#endif
 
 	REQUIRE(VALID_CACHE(cache));
 
 	if (cache->filename == NULL)
 		return (ISC_R_SUCCESS);
 
-#ifdef BIND9
 	LOCK(&cache->filelock);
 	result = dns_master_dump(cache->mctx, cache->db, NULL,
 				 &dns_master_style_cache, cache->filename);
 	UNLOCK(&cache->filelock);
 	return (result);
-#else
-	return (ISC_R_NOTIMPLEMENTED);
-#endif
 
 }
 
@@ -1030,9 +1044,8 @@ water(void *arg, int mark) {
 }
 
 void
-dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size) {
-	isc_uint32_t lowater;
-	isc_uint32_t hiwater;
+dns_cache_setcachesize(dns_cache_t *cache, size_t size) {
+	size_t hiwater, lowater;
 
 	REQUIRE(VALID_CACHE(cache));
 
@@ -1040,7 +1053,7 @@ dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size) {
 	 * Impose a minimum cache size; pathological things happen if there
 	 * is too little room.
 	 */
-	if (size != 0 && size < DNS_CACHE_MINSIZE)
+	if (size != 0U && size < DNS_CACHE_MINSIZE)
 		size = DNS_CACHE_MINSIZE;
 
 	LOCK(&cache->lock);
@@ -1057,7 +1070,7 @@ dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size) {
 	 * water().
 	 */
 
-	if (size == 0 || hiwater == 0 || lowater == 0)
+	if (size == 0U || hiwater == 0U || lowater == 0U)
 		/*
 		 * Disable cache memory limiting.
 		 */
@@ -1070,9 +1083,9 @@ dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size) {
 		isc_mem_setwater(cache->mctx, water, cache, hiwater, lowater);
 }
 
-isc_uint32_t
+size_t
 dns_cache_getcachesize(dns_cache_t *cache) {
-	isc_uint32_t size;
+	size_t size;
 
 	REQUIRE(VALID_CACHE(cache));
 
@@ -1149,6 +1162,7 @@ dns_cache_flush(dns_cache_t *cache) {
 	}
 	dns_db_detach(&cache->db);
 	cache->db = db;
+	dns_db_setcachestats(cache->db, cache->stats);
 	UNLOCK(&cache->cleaner.lock);
 	UNLOCK(&cache->lock);
 
@@ -1281,3 +1295,257 @@ dns_cache_flushnode(dns_cache_t *cache, dns_name_t *name,
 	dns_db_detach(&db);
 	return (result);
 }
+
+isc_stats_t *
+dns_cache_getstats(dns_cache_t *cache) {
+	REQUIRE(VALID_CACHE(cache));
+	return (cache->stats);
+}
+
+void
+dns_cache_updatestats(dns_cache_t *cache, isc_result_t result) {
+	REQUIRE(VALID_CACHE(cache));
+	if (cache->stats == NULL)
+		return;
+
+	switch (result) {
+	case ISC_R_SUCCESS:
+	case DNS_R_NCACHENXDOMAIN:
+	case DNS_R_NCACHENXRRSET:
+	case DNS_R_CNAME:
+	case DNS_R_DNAME:
+	case DNS_R_GLUE:
+	case DNS_R_ZONECUT:
+		isc_stats_increment(cache->stats,
+				    dns_cachestatscounter_queryhits);
+		break;
+	default:
+		isc_stats_increment(cache->stats,
+				    dns_cachestatscounter_querymisses);
+	}
+}
+
+/*
+ * XXX: Much of the following code has been copied in from statschannel.c.
+ * We should refactor this into a generic function in stats.c that can be
+ * called from both places.
+ */
+typedef struct
+cache_dumparg {
+	isc_statsformat_t	type;
+	void			*arg;		/* type dependent argument */
+	int			ncounters;	/* for general statistics */
+	int			*counterindices; /* for general statistics */
+	isc_uint64_t		*countervalues;	 /* for general statistics */
+	isc_result_t		result;
+} cache_dumparg_t;
+
+static void
+getcounter(isc_statscounter_t counter, isc_uint64_t val, void *arg) {
+	cache_dumparg_t *dumparg = arg;
+
+	REQUIRE(counter < dumparg->ncounters);
+	dumparg->countervalues[counter] = val;
+}
+
+static void
+getcounters(isc_stats_t *stats, isc_statsformat_t type, int ncounters,
+	    int *indices, isc_uint64_t *values)
+{
+	cache_dumparg_t dumparg;
+
+	memset(values, 0, sizeof(values[0]) * ncounters);
+
+	dumparg.type = type;
+	dumparg.ncounters = ncounters;
+	dumparg.counterindices = indices;
+	dumparg.countervalues = values;
+
+	isc_stats_dump(stats, getcounter, &dumparg, ISC_STATSDUMP_VERBOSE);
+}
+
+void
+dns_cache_dumpstats(dns_cache_t *cache, FILE *fp) {
+	int indices[dns_cachestatscounter_max];
+	isc_uint64_t values[dns_cachestatscounter_max];
+
+	REQUIRE(VALID_CACHE(cache));
+
+	getcounters(cache->stats, isc_statsformat_file,
+		    dns_cachestatscounter_max, indices, values);
+
+	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+		values[dns_cachestatscounter_hits],
+		"cache hits");
+	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+		values[dns_cachestatscounter_misses],
+		"cache misses");
+	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+		values[dns_cachestatscounter_queryhits],
+		"cache hits (from query)");
+	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+		values[dns_cachestatscounter_querymisses],
+		"cache misses (from query)");
+	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+		values[dns_cachestatscounter_deletelru],
+		"cache records deleted due to memory exhaustion");
+	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+		values[dns_cachestatscounter_deletettl],
+		"cache records deleted due to TTL expiration");
+	fprintf(fp, "%20u %s\n", dns_db_nodecount(cache->db),
+		"cache database nodes");
+	fprintf(fp, "%20u %s\n", dns_db_hashsize(cache->db),
+		"cache database hash buckets");
+
+	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_total(cache->mctx),
+		"cache tree memory total");
+	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_inuse(cache->mctx),
+		"cache tree memory in use");
+	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_maxinuse(cache->mctx),
+		"cache tree highest memory in use");
+
+	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_total(cache->hmctx),
+		"cache heap memory total");
+	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_inuse(cache->hmctx),
+		"cache heap memory in use");
+	fprintf(fp, "%20u %s\n", (unsigned int) isc_mem_maxinuse(cache->hmctx),
+		"cache heap highest memory in use");
+}
+
+#ifdef HAVE_LIBXML2
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
+static int
+renderstat(const char *name, isc_uint64_t value, xmlTextWriterPtr writer) {
+	int xmlrc;
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counter"));
+	TRY0(xmlTextWriterWriteAttribute(writer,
+					 ISC_XMLCHAR "name", ISC_XMLCHAR name));
+	TRY0(xmlTextWriterWriteFormatString(writer,
+					    "%" ISC_PRINT_QUADFORMAT "u",
+					    value));
+	TRY0(xmlTextWriterEndElement(writer)); /* counter */
+
+error:
+	return (xmlrc);
+}
+
+int
+dns_cache_renderxml(dns_cache_t *cache, xmlTextWriterPtr writer) {
+	int indices[dns_cachestatscounter_max];
+	isc_uint64_t values[dns_cachestatscounter_max];
+	int xmlrc;
+
+	REQUIRE(VALID_CACHE(cache));
+
+	getcounters(cache->stats, isc_statsformat_file,
+		    dns_cachestatscounter_max, indices, values);
+	TRY0(renderstat("CacheHits",
+		   values[dns_cachestatscounter_hits], writer));
+	TRY0(renderstat("CacheMisses",
+		   values[dns_cachestatscounter_misses], writer));
+	TRY0(renderstat("QueryHits",
+		   values[dns_cachestatscounter_queryhits], writer));
+	TRY0(renderstat("QueryMisses",
+		   values[dns_cachestatscounter_querymisses], writer));
+	TRY0(renderstat("DeleteLRU",
+		   values[dns_cachestatscounter_deletelru], writer));
+	TRY0(renderstat("DeleteTTL",
+		   values[dns_cachestatscounter_deletettl], writer));
+
+	TRY0(renderstat("CacheNodes", dns_db_nodecount(cache->db), writer));
+	TRY0(renderstat("CacheBuckets", dns_db_hashsize(cache->db), writer));
+
+	TRY0(renderstat("TreeMemTotal", isc_mem_total(cache->mctx), writer));
+	TRY0(renderstat("TreeMemInUse", isc_mem_inuse(cache->mctx), writer));
+	TRY0(renderstat("TreeMemMax", isc_mem_maxinuse(cache->mctx), writer));
+
+	TRY0(renderstat("HeapMemTotal", isc_mem_total(cache->hmctx), writer));
+	TRY0(renderstat("HeapMemInUse", isc_mem_inuse(cache->hmctx), writer));
+	TRY0(renderstat("HeapMemMax", isc_mem_maxinuse(cache->hmctx), writer));
+error:
+	return (xmlrc);
+}
+#endif
+
+#ifdef HAVE_JSON
+#define CHECKMEM(m) do { \
+	if (m == NULL) { \
+		result = ISC_R_NOMEMORY;\
+		goto error;\
+	} \
+} while(/*CONSTCOND*/0)
+
+isc_result_t
+dns_cache_renderjson(dns_cache_t *cache, json_object *cstats) {
+	isc_result_t result = ISC_R_SUCCESS;
+	int indices[dns_cachestatscounter_max];
+	isc_uint64_t values[dns_cachestatscounter_max];
+	json_object *obj;
+
+	REQUIRE(VALID_CACHE(cache));
+
+	getcounters(cache->stats, isc_statsformat_file,
+		    dns_cachestatscounter_max, indices, values);
+
+	obj = json_object_new_int64(values[dns_cachestatscounter_hits]);
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "CacheHits", obj);
+
+	obj = json_object_new_int64(values[dns_cachestatscounter_misses]);
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "CacheMisses", obj);
+
+	obj = json_object_new_int64(values[dns_cachestatscounter_queryhits]);
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "QueryHits", obj);
+
+	obj = json_object_new_int64(values[dns_cachestatscounter_querymisses]);
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "QueryMisses", obj);
+
+	obj = json_object_new_int64(values[dns_cachestatscounter_deletelru]);
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "DeleteLRU", obj);
+
+	obj = json_object_new_int64(values[dns_cachestatscounter_deletettl]);
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "DeleteTTL", obj);
+
+	obj = json_object_new_int64(dns_db_nodecount(cache->db));
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "CacheNodes", obj);
+
+	obj = json_object_new_int64(dns_db_hashsize(cache->db));
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "CacheBuckets", obj);
+
+	obj = json_object_new_int64(isc_mem_total(cache->mctx));
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "TreeMemTotal", obj);
+
+	obj = json_object_new_int64(isc_mem_inuse(cache->mctx));
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "TreeMemInUse", obj);
+
+	obj = json_object_new_int64(isc_mem_maxinuse(cache->mctx));
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "HeapMemMax", obj);
+
+	obj = json_object_new_int64(isc_mem_total(cache->hmctx));
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "HeapMemTotal", obj);
+
+	obj = json_object_new_int64(isc_mem_inuse(cache->hmctx));
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "HeapMemInUse", obj);
+
+	obj = json_object_new_int64(isc_mem_maxinuse(cache->hmctx));
+	CHECKMEM(obj);
+	json_object_object_add(cstats, "HeapMemMax", obj);
+
+	result = ISC_R_SUCCESS;
+error:
+	return (result);
+}
+#endif

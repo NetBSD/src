@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.3 2012/06/05 00:39:14 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.3.2.1 2014/08/19 23:46:00 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: os.c,v 1.39 2012/02/06 23:46:44 tbox Exp  */
 
 #include <config.h>
 #include <stdarg.h>
@@ -58,7 +58,7 @@ static char *version_error =
 	"named requires Windows 2000 Service Pack 2 or later to run correctly";
 
 void
-ns_paths_init() {
+ns_paths_init(void) {
 	if (!Initialized)
 		isc_ntpaths_init();
 
@@ -295,7 +295,7 @@ isc_result_t
 ns_os_gethostname(char *buf, size_t len) {
 	int n;
 
-	n = gethostname(buf, len);
+	n = gethostname(buf, (int)len);
 	return ((n == 0) ? ISC_R_SUCCESS : ISC_R_FAILURE);
 }
 

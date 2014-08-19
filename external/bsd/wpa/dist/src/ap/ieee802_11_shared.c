@@ -1,15 +1,9 @@
 /*
  * hostapd / IEEE 802.11 Management
- * Copyright (c) 2002-2010, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2012, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "utils/includes.h"
@@ -74,13 +68,13 @@ void ieee802_11_send_sa_query_req(struct hostapd_data *hapd,
 	os_memcpy(mgmt.u.action.u.sa_query_req.trans_id, trans_id,
 		  WLAN_SA_QUERY_TR_ID_LEN);
 	end = mgmt.u.action.u.sa_query_req.trans_id + WLAN_SA_QUERY_TR_ID_LEN;
-	if (hostapd_drv_send_mlme(hapd, &mgmt, end - (u8 *) &mgmt) < 0)
+	if (hostapd_drv_send_mlme(hapd, &mgmt, end - (u8 *) &mgmt, 0) < 0)
 		perror("ieee802_11_send_sa_query_req: send");
 }
 
 
-void ieee802_11_send_sa_query_resp(struct hostapd_data *hapd,
-				   const u8 *sa, const u8 *trans_id)
+static void ieee802_11_send_sa_query_resp(struct hostapd_data *hapd,
+					  const u8 *sa, const u8 *trans_id)
 {
 	struct sta_info *sta;
 	struct ieee80211_mgmt resp;
@@ -112,7 +106,7 @@ void ieee802_11_send_sa_query_resp(struct hostapd_data *hapd,
 	os_memcpy(resp.u.action.u.sa_query_req.trans_id, trans_id,
 		  WLAN_SA_QUERY_TR_ID_LEN);
 	end = resp.u.action.u.sa_query_req.trans_id + WLAN_SA_QUERY_TR_ID_LEN;
-	if (hostapd_drv_send_mlme(hapd, &resp, end - (u8 *) &resp) < 0)
+	if (hostapd_drv_send_mlme(hapd, &resp, end - (u8 *) &resp, 0) < 0)
 		perror("ieee80211_mgmt_sa_query_request: send");
 }
 
@@ -179,6 +173,14 @@ u8 * hostapd_eid_ext_capab(struct hostapd_data *hapd, u8 *eid)
 		len = 5;
 	if (len < 4 && hapd->conf->interworking)
 		len = 4;
+	if (len < 3 && hapd->conf->wnm_sleep_mode)
+		len = 3;
+	if (len < 7 && hapd->conf->ssid.utf8_ssid)
+		len = 7;
+#ifdef CONFIG_WNM
+	if (len < 4)
+		len = 4;
+#endif /* CONFIG_WNM */
 	if (len == 0)
 		return eid;
 
@@ -186,9 +188,20 @@ u8 * hostapd_eid_ext_capab(struct hostapd_data *hapd, u8 *eid)
 	*pos++ = len;
 	*pos++ = 0x00;
 	*pos++ = 0x00;
-	*pos++ = 0x00;
 
 	*pos = 0x00;
+	if (hapd->conf->wnm_sleep_mode)
+		*pos |= 0x02; /* Bit 17 - WNM-Sleep Mode */
+	if (hapd->conf->bss_transition)
+		*pos |= 0x08; /* Bit 19 - BSS Transition */
+	pos++;
+
+	if (len < 4)
+		return pos;
+	*pos = 0x00;
+#ifdef CONFIG_WNM
+	*pos |= 0x02; /* Bit 25 - SSID List */
+#endif /* CONFIG_WNM */
 	if (hapd->conf->time_advertisement == 2)
 		*pos |= 0x08; /* Bit 27 - UTC TSF Offset */
 	if (hapd->conf->interworking)
@@ -202,6 +215,18 @@ u8 * hostapd_eid_ext_capab(struct hostapd_data *hapd, u8 *eid)
 		*pos |= 0x40; /* Bit 38 - TDLS Prohibited */
 	if (hapd->conf->tdls & TDLS_PROHIBIT_CHAN_SWITCH)
 		*pos |= 0x80; /* Bit 39 - TDLS Channel Switching Prohibited */
+	pos++;
+
+	if (len < 6)
+		return pos;
+	*pos = 0x00;
+	pos++;
+
+	if (len < 7)
+		return pos;
+	*pos = 0x00;
+	if (hapd->conf->ssid.utf8_ssid)
+		*pos |= 0x01; /* Bit 48 - UTF-8 SSID */
 	pos++;
 
 	return pos;
@@ -402,4 +427,32 @@ int hostapd_update_time_adv(struct hostapd_data *hapd)
 	*pos++ = hapd->time_update_counter++;
 
 	return 0;
+}
+
+
+u8 * hostapd_eid_bss_max_idle_period(struct hostapd_data *hapd, u8 *eid)
+{
+	u8 *pos = eid;
+
+#ifdef CONFIG_WNM
+	if (hapd->conf->ap_max_inactivity > 0) {
+		unsigned int val;
+		*pos++ = WLAN_EID_BSS_MAX_IDLE_PERIOD;
+		*pos++ = 3;
+		val = hapd->conf->ap_max_inactivity;
+		if (val > 68000)
+			val = 68000;
+		val *= 1000;
+		val /= 1024;
+		if (val == 0)
+			val = 1;
+		if (val > 65535)
+			val = 65535;
+		WPA_PUT_LE16(pos, val);
+		pos += 2;
+		*pos++ = 0x00; /* TODO: Protected Keep-Alive Required */
+	}
+#endif /* CONFIG_WNM */
+
+	return pos;
 }

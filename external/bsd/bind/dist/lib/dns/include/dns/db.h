@@ -1,7 +1,7 @@
-/*	$NetBSD: db.h,v 1.4.2.1 2013/02/25 00:25:45 tls Exp $	*/
+/*	$NetBSD: db.h,v 1.4.2.2 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db.h,v 1.107 2011/10/13 01:32:34 vjs Exp  */
+/* Id */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -59,6 +59,7 @@
 #include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/ondestroy.h>
+#include <isc/stats.h>
 #include <isc/stdtime.h>
 
 #include <dns/clientinfo.h>
@@ -78,9 +79,12 @@ ISC_LANG_BEGINDECLS
 typedef struct dns_dbmethods {
 	void		(*attach)(dns_db_t *source, dns_db_t **targetp);
 	void		(*detach)(dns_db_t **dbp);
-	isc_result_t	(*beginload)(dns_db_t *db, dns_addrdatasetfunc_t *addp,
-				     dns_dbload_t **dbloadp);
-	isc_result_t	(*endload)(dns_db_t *db, dns_dbload_t **dbloadp);
+	isc_result_t	(*beginload)(dns_db_t *db,
+				     dns_rdatacallbacks_t *callbacks);
+	isc_result_t	(*endload)(dns_db_t *db,
+				     dns_rdatacallbacks_t *callbacks);
+	isc_result_t	(*serialize)(dns_db_t *db,
+				     dns_dbversion_t *version, FILE *file);
 	isc_result_t	(*dump)(dns_db_t *db, dns_dbversion_t *version,
 				const char *filename,
 				dns_masterformat_t masterformat);
@@ -174,14 +178,9 @@ typedef struct dns_dbmethods {
 					   dns_dbversion_t *version);
 	isc_boolean_t	(*isdnssec)(dns_db_t *db);
 	dns_stats_t	*(*getrrsetstats)(dns_db_t *db);
-	void		(*rpz_enabled)(dns_db_t *db, dns_rpz_st_t *st);
-	void		(*rpz_findips)(dns_rpz_zone_t *rpz,
-				       dns_rpz_type_t rpz_type,
-				       dns_zone_t *zone, dns_db_t *db,
-				       dns_dbversion_t *version,
-				       dns_rdataset_t *ardataset,
-				       dns_rpz_st_t *st,
-				       dns_name_t *query_qname);
+	void		(*rpz_attach)(dns_db_t *db, dns_rpz_zones_t *rpzs,
+				      dns_rpz_num_t rpz_num);
+	isc_result_t	(*rpz_ready)(dns_db_t *db);
 	isc_result_t	(*findnodeext)(dns_db_t *db, dns_name_t *name,
 				     isc_boolean_t create,
 				     dns_clientinfomethods_t *methods,
@@ -196,6 +195,8 @@ typedef struct dns_dbmethods {
 				   dns_clientinfo_t *clientinfo,
 				   dns_rdataset_t *rdataset,
 				   dns_rdataset_t *sigrdataset);
+	isc_result_t	(*setcachestats)(dns_db_t *db, isc_stats_t *stats);
+	unsigned int	(*hashsize)(dns_db_t *db);
 } dns_dbmethods_t;
 
 typedef isc_result_t
@@ -253,6 +254,7 @@ struct dns_db {
 #define DNS_DBADD_FORCE			0x02
 #define DNS_DBADD_EXACT			0x04
 #define DNS_DBADD_EXACTTTL		0x08
+#define DNS_DBADD_PREFETCH		0x10
 /*@}*/
 
 /*%
@@ -461,8 +463,7 @@ dns_db_class(dns_db_t *db);
  */
 
 isc_result_t
-dns_db_beginload(dns_db_t *db, dns_addrdatasetfunc_t *addp,
-		 dns_dbload_t **dbloadp);
+dns_db_beginload(dns_db_t *db, dns_rdatacallbacks_t *callbacks);
 /*%<
  * Begin loading 'db'.
  *
@@ -472,15 +473,17 @@ dns_db_beginload(dns_db_t *db, dns_addrdatasetfunc_t *addp,
  *
  * \li	This is the first attempt to load 'db'.
  *
- * \li	addp != NULL && *addp == NULL
- *
- * \li	dbloadp != NULL && *dbloadp == NULL
+ * \li  'callbacks' is a pointer to an initialized dns_rdatacallbacks_t
+ *       structure.
  *
  * Ensures:
  *
- * \li	On success, *addp will be a valid dns_addrdatasetfunc_t suitable
- *	for loading 'db'.  *dbloadp will be a valid DB load context which
- *	should be used as 'arg' when *addp is called.
+ * \li	On success, callbacks->add will be a valid dns_addrdatasetfunc_t
+ *      suitable for loading records into 'db' from a raw or text zone
+ *      file. callbacks->add_private will be a valid DB load context
+ *      which should be used as 'arg' when callbacks->add is called.
+ *      callbacks->deserialize will be a valid dns_deserialize_func_t
+ *      suitable for loading 'db' from a map format zone file.
  *
  * Returns:
  *
@@ -492,7 +495,7 @@ dns_db_beginload(dns_db_t *db, dns_addrdatasetfunc_t *addp,
  */
 
 isc_result_t
-dns_db_endload(dns_db_t *db, dns_dbload_t **dbloadp);
+dns_db_endload(dns_db_t *db, dns_rdatacallbacks_t *callbacks);
 /*%<
  * Finish loading 'db'.
  *
@@ -500,11 +503,13 @@ dns_db_endload(dns_db_t *db, dns_dbload_t **dbloadp);
  *
  * \li	'db' is a valid database that is being loaded.
  *
- * \li	dbloadp != NULL and *dbloadp is a valid database load context.
+ * \li	'callbacks' is a valid dns_rdatacallbacks_t structure.
+ *
+ * \li	callbacks->add_private is not NULL and is a valid database load context.
  *
  * Ensures:
  *
- * \li	*dbloadp == NULL
+ * \li	'callbacks' is returned to its state prior to calling dns_db_beginload()
  *
  * Returns:
  *
@@ -549,6 +554,26 @@ dns_db_load3(dns_db_t *db, const char *filename, dns_masterformat_t format,
  *
  * \li	Other results are possible, depending upon the database
  *	implementation used, syntax errors in the master file, etc.
+ */
+
+isc_result_t
+dns_db_serialize(dns_db_t *db, dns_dbversion_t *version, FILE *rbtfile);
+/*%<
+ * Dump version 'version' of 'db' to map-format file 'filename'.
+ *
+ * Requires:
+ *
+ * \li	'db' is a valid database.
+ *
+ * \li	'version' is a valid version.
+ *
+ * Returns:
+ *
+ * \li	#ISC_R_SUCCESS
+ * \li	#ISC_R_NOMEMORY
+ *
+ * \li	Other results are possible, depending upon the database
+ *	implementation used, OS file errors, etc.
  */
 
 isc_result_t
@@ -1343,6 +1368,21 @@ dns_db_nodecount(dns_db_t *db);
  * \li	The number of nodes in the database
  */
 
+unsigned int
+dns_db_hashsize(dns_db_t *db);
+/*%<
+ * For database implementations using a hash table, report the
+ * current number of buckets.
+ *
+ * Requires:
+ *
+ * \li	'db' is a valid database.
+ *
+ * Returns:
+ * \li	The number of buckets in the database's hash table, or
+ *      ISC_R_NOTIMPLEMENTED.
+ */
+
 void
 dns_db_settask(dns_db_t *db, isc_task_t *task);
 /*%<
@@ -1537,7 +1577,22 @@ dns_db_getrrsetstats(dns_db_t *db);
  *
  * Requires:
  *
- * \li	'db' is a valid database (zone or cache).
+ * \li	'db' is a valid database (cache only).
+ *
+ * Returns:
+ * \li	when available, a pointer to a statistics object created by
+ *	dns_rdatasetstats_create(); otherwise NULL.
+ */
+
+isc_result_t
+dns_db_setcachestats(dns_db_t *db, isc_stats_t *stats);
+/*%<
+ * Set the location in which to collect cache statistics.
+ * This option may not exist depending on the DB implementation.
+ *
+ * Requires:
+ *
+ * \li	'db' is a valid database (cache only).
  *
  * Returns:
  * \li	when available, a pointer to a statistics object created by
@@ -1545,29 +1600,16 @@ dns_db_getrrsetstats(dns_db_t *db);
  */
 
 void
-dns_db_rpz_enabled(dns_db_t *db, dns_rpz_st_t *st);
+dns_db_rpz_attach(dns_db_t *db, dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num);
 /*%<
- * See if a policy database has DNS_RPZ_TYPE_IP, DNS_RPZ_TYPE_NSIP, or
- * DNS_RPZ_TYPE_NSDNAME records.
+ * Attach the response policy information for a view to a database for a
+ * zone for the view.
  */
 
-void
-dns_db_rpz_findips(dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
-		   dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *version,
-		   dns_rdataset_t *ardataset, dns_rpz_st_t *st,
-		   dns_name_t *query_qname);
+isc_result_t
+dns_db_rpz_ready(dns_db_t *db);
 /*%<
- * Search the CDIR block tree of a response policy tree of trees for the best
- * match to any of the IP addresses in an A or AAAA rdataset.
- *
- * Requires:
- * \li	search in policy zone 'rpz' for a match of 'rpz_type' either
- *	    DNS_RPZ_TYPE_IP or DNS_RPZ_TYPE_NSIP
- * \li	'zone' and 'db' are the database corresponding to 'rpz'
- * \li	'version' is the required version of the database
- * \li	'ardataset' is an A or AAAA rdataset of addresses to check
- * \li	'found' specifies the previous best match if any or
- *	    or NULL, an empty name, 0, DNS_RPZ_POLICY_MISS, and 0
+ * Finish loading a response policy zone.
  */
 
 ISC_LANG_ENDDECLS

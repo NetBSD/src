@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_set_option.c,v 1.2.8.1 2013/06/23 06:28:27 tls Exp $	*/
+/*	$NetBSD: openpam_set_option.c,v 1.2.8.2 2014/08/19 23:52:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_set_option.c 532 2012-03-31 14:24:53Z des 
+ * Id: openpam_set_option.c 648 2013-03-05 17:54:27Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -50,6 +50,7 @@
 #include <security/pam_appl.h>
 
 #include "openpam_impl.h"
+#include "openpam_asprintf.h"
 
 /*
  * OpenPAM extension
@@ -92,7 +93,8 @@ openpam_set_option(pam_handle_t *pamh,
 		RETURNC(PAM_BUF_ERR);
 	if (i == cur->optc) {
 		/* add */
-		optv = realloc(cur->optv, sizeof(char *) * (cur->optc + 2));
+		optv = realloc(cur->optv,
+		    sizeof(*optv) * ((size_t)cur->optc + 2));
 		if (optv == NULL) {
 			FREE(opt);
 			RETURNC(PAM_BUF_ERR);

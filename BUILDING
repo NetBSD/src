@@ -49,6 +49,12 @@ FILES
                     ``reachover'' Makefile semantics when building these
                     programs for a native host.
 
+     external, sys/external
+                    Sources and build infrastructure for components imported
+                    (mostly) unchanged from upstream maintainers, sorted by
+                    applicable license.  This is (slowly) replacing the
+                    crypto/dist, dist, and gnu/dist directories.
+
      distrib/, etc/
                     Sources for items used when making a full release
                     snapshot, such as files installed in DESTDIR/etc on the
@@ -145,10 +151,27 @@ CONFIGURATION
      otherwise specified, these variables may be set in either the process
      environment or the make(1) configuration file specified by MAKECONF.
 
-     BUILDID     Identifier for the build.  The identifier will be appended to
-                 object directory names, and can be consulted in the make(1)
+     BUILDID     Identifier for the build.  If set, this should be a short
+                 string that is suitable for use as part of a file or
+                 directory name.  The identifier will be appended to object
+                 directory names, and can be consulted in the make(1)
                  configuration file in order to set additional build
-                 parameters, such as compiler flags.
+                 parameters, such as compiler flags.  It will also be used as
+                 part of the kernel version string, which can be printed by
+                 ``uname -v''.
+
+                 Default: Unset.
+
+     BUILDINFO   This may be a multi-line string containing information about
+                 the build.  This will appear in DESTDIR/etc/release, and it
+                 will be stored in the buildinfo variable in any kernels that
+                 are built.  When such kernels are booted, the sysctl(7)
+                 kern.buildinfo variable will report this value.  The string
+                 may contain backslash escape sequences, such as ``\\''
+                 (representing a backslash character) and ``\n'' (representing
+                 a newline).
+
+                 Default: Unset.
 
      BUILDSEED   GCC uses random numbers when compiling C++ code.  This
                  variable seeds the gcc random number generator using the
@@ -209,6 +232,11 @@ CONFIGURATION
 
                  Default: ``no''
 
+     MKCROSSGDB  Can be set to ``yes'' or ``no''.  Create a cross-gdb as a
+                 host tool.
+
+                 Default: ``no''
+
      MKCRYPTO    Can be set to ``yes'' or ``no''.  Indicates whether
                  cryptographic code will be included in a build; provided for
                  the benefit of countries that do not allow strong
@@ -216,6 +244,19 @@ CONFIGURATION
                  security password encryption system, crypt(3).
 
                  Default: ``yes''
+
+     MKDEBUG     Can be set to ``yes'' or ``no''.  Indicates whether debug
+                 information should be generated for all userland binaries
+                 compiled.  The result is collected as an additional debug.tgz
+                 and xdebug.tgz set and installed in /usr/libdata/debug.
+
+                 Default: ``no''
+
+     MKDEBUGLIB  Can be set to ``yes'' or ``no''.  Indicates whether debug
+                 information (see MKDEBUG) should also be generated for all
+                 libraries build.
+
+                 Default: ``no''
 
      MKDOC       Can be set to ``yes'' or ``no''.  Indicates whether system
                  documentation destined for DESTDIR/usr/share/doc will be
@@ -244,6 +285,14 @@ CONFIGURATION
                  tools, will be created and installed during a build.
 
                  Default: ``yes''
+
+     MKKDEBUG    Can be set to ``yes'' or ``no''.  Force generation of full-
+                 debug symbol versions of all kernels compiled.  Alongside of
+                 the netbsd kernel file, an unstripped version netbsd.gdb is
+                 created.  This is useful if a cross-gdb is built as well (see
+                 MKCROSSGDB).
+
+                 Default: ``no''
 
      MKKMOD      Can be set to ``yes'' or ``no''.  Indicates whether kernel
                  modules are built and installed.
@@ -764,6 +813,13 @@ BUILDING
                    This command will run ``make cleandir'' on the kernel in
                    question first unless the -u option is given.
 
+     kernel.gdb=kconf
+                   Build a new kernel with debug information.  Similar to the
+                   above kernel=kconf operation, but creates a netbsd.gdb file
+                   alongside of the kernel netbsd, which contains a full
+                   symbol table and can be used for debugging (for example
+                   with a cross-gdb built by MKCROSSGDB).
+
      modules       This command will build kernel modules and install them
                    into DESTDIR.
 
@@ -790,10 +846,21 @@ BUILDING
 
      live-image    Perform ``make live-image''.
 
+     list-arch     Prints a list of valid MACHINE and MACHINE_ARCH settings,
+                   the default MACHINE_ARCH for each MACHINE, and aliases for
+                   MACHINE/MACHINE_ARCH pairs, and then exits.  The -m or -a
+                   options (or both) may be used to specify glob patterns that
+                   will be used to narrow the list of results; for example,
+                   ``build.sh -m 'evm*' -a '*arm*' list-arch'' will list all
+                   known MACHINE/MACHINE_ARCH values in which either MACHINE
+                   or ALIAS matches the pattern `evb*', and MACHINE_ARCH
+                   matches the pattern `*arm*'.
+
      The following command line options alter the behaviour of the build.sh
      operations described above:
 
-     -a arch   Set the value of MACHINE_ARCH to arch.
+     -a arch   Set the value of MACHINE_ARCH to arch.  See the -m option for
+               more information.
 
      -B buildid
                Set the value of BUILDID to buildid.  This will also append the
@@ -837,7 +904,7 @@ BUILDING
                bandwidth.
 
      -M obj    Set MAKEOBJDIRPREFIX to obj.  Unsets MAKEOBJDIR.  See ``-O
-               -obj'' for more information.
+               obj'' for more information.
 
                For instance, if the source directory is /usr/src, a setting of
                ``-M /usr/obj'' will place build-time files under
@@ -852,30 +919,19 @@ BUILDING
                relative path.  If the directory does not already exist,
                build.sh will create it.
 
-     -m mach   Set the value of MACHINE to mach, except in some special cases
-               listed below.  This will also override any value of
-               MACHINE_ARCH in the process environment with a value deduced
-               from mach, unless -a is specified.  All cross builds require
-               -m, but if unset on a NetBSD host, the host's value of MACHINE
-               will be detected and used automatically.
+     -m mach   Set the value of MACHINE to mach, unless the mach argument is
+               an alias that refers to a MACHINE/MACHINE_ARCH pair, in which
+               case both MACHINE and MACHINE_ARCH are set from the alias.
+               Such aliases are interpreted entirely by build.sh; they are not
+               used by any other part of the build system.  The MACHINE_ARCH
+               setting implied by mach will override any value of MACHINE_ARCH
+               in the process environment, but will not override a value set
+               by the -a option.  All cross builds require -m, but if unset on
+               a NetBSD host, the host's value of MACHINE will be detected and
+               used automatically.
 
-               Some machines support multiple values for MACHINE_ARCH.  The
-               following special cases for the mach argument are defined to
-               set the listed values of MACHINE and MACHINE_ARCH:
-
-                     mach          MACHINE    MACHINE_ARCH
-                     evbarm        evbarm     (not set)
-                     evbarm-eb     evbarm     armeb
-                     evbarm-el     evbarm     arm
-                     evbmips       evbmips    (not set)
-                     evbmips-eb    evbmips    mipseb
-                     evbmips-el    evbmips    mipsel
-                     evbsh3        evbsh3     (not set)
-                     evbsh3-eb     evbsh3     sh3eb
-                     evbsh3-el     evbsh3     sh3el
-                     sbmips        sbmips     (not set)
-                     sbmips-eb     sbmips     mipseb
-                     sbmips-el     sbmips     mipsel
+               See the list-arch operation for a way to get a list of valid
+               MACHINE and MACHINE_ARCH settings.
 
      -N noiselevel
                Set the ``noisyness'' level of the build, by setting
@@ -906,6 +962,16 @@ BUILDING
                because it is determined by complex rules that are influenced
                by the values of several variables and by the location of the
                source directory.
+
+               Note that placing the obj directory location outside of the
+               default source tree hierarchy makes it easier to manually clear
+               out old files in the event the ``make cleandir'' operation is
+               unable to do so.  (See CAVEATS below.)
+
+               Note also that use of one of -M or -O is the only means of
+               building multiple machine architecture userlands from the same
+               source tree without cleaning between builds (in which case, one
+               would specify distinct obj locations for each).
 
      -o        Set the value of MKOBJDIRS to ``no''.  Otherwise, it will be
                automatically set to ``yes''.  This default is opposite to the
@@ -1008,4 +1074,10 @@ HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as
      USE_NEW_TOOLCHAIN, and re-worked to TOOLCHAIN_MISSING after that.
 
-NetBSD                         November 8, 2012                         NetBSD
+CAVEATS
+     After significant updates to third-party components in the source tree,
+     the ``make cleandir'' operation may be insufficient to clean out old
+     files in object directories.  Instead, one may have to manually remove
+     the files.  Consult the UPDATING file for notices concerning this.
+
+NetBSD                          August 7, 2014                          NetBSD

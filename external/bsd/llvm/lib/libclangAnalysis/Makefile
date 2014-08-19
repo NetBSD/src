@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.1 2012/11/20 02:58:03 tls Exp $
+#	$NetBSD: Makefile,v 1.8.2.2 2014/08/19 23:51:26 tls Exp $
 
 LIB=	clangAnalysis
 
@@ -13,6 +13,8 @@ SRCS+=	AnalysisDeclContext.cpp \
 	CFGStmtMap.cpp \
 	CallGraph.cpp \
 	CocoaConventions.cpp \
+	Consumed.cpp \
+	DataflowWorklist.cpp \
 	Dominators.cpp \
 	FormatString.cpp \
 	LiveVariables.cpp \
@@ -24,6 +26,9 @@ SRCS+=	AnalysisDeclContext.cpp \
 	ReachableCode.cpp \
 	ScanfFormatString.cpp \
 	ThreadSafety.cpp \
+	ThreadSafetyCommon.cpp \
+	ThreadSafetyLogical.cpp \
+	ThreadSafetyTIL.cpp \
 	UninitializedValues.cpp
 
 .if defined(HOSTLIB)

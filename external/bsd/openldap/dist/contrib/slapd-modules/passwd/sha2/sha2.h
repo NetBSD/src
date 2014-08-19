@@ -1,6 +1,6 @@
-/*	$NetBSD: sha2.h,v 1.1.1.1 2010/03/08 02:14:15 lukem Exp $	*/
+/*	$NetBSD: sha2.h,v 1.1.1.1.12.1 2014/08/19 23:51:57 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/sha2/sha2.h,v 1.1.2.1 2009/01/26 21:07:06 quanah Exp */
+/* $OpenLDAP$ */
 /*
  * FILE:	sha2.h
  * AUTHOR:	Aaron D. Gifford - http://www.aarongifford.com/
@@ -32,16 +32,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: sha2.h,v 1.1 2001/11/08 00:02:01 adg Exp adg
+ * Id: sha2.h,v 1.1 2001/11/08 00:02:01 adg Exp adg 
  */
 
 #ifndef __SHA2_H__
 #define __SHA2_H__
 
+#include "portable.h"
+
+#ifdef HAVE_INTTYPES_H
+#  define SHA2_USE_INTTYPES_H 1
+#endif
+
+#ifndef LITTLE_ENDIAN
+#  define LITTLE_ENDIAN 1234
+#endif
+#ifndef BIG_ENDIAN
+#  define BIG_ENDIAN    4321
+#endif
+#ifndef BYTE_ORDER
+#  ifdef WORDS_BIGENDIAN
+#    define BYTE_ORDER BIG_ENDIAN
+#  else
+#    define BYTE_ORDER LITTLE_ENDIAN
+#  endif
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /*
  * Import u_intXX_t size_t type definitions from system headers.  You

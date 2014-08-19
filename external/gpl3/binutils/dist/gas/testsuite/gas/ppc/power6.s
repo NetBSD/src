@@ -1,6 +1,6 @@
 # PowerPC POWER6 AltiVec tests
 #as: -mpower6
-	.section ".text"
+	.text
 start:
 	doze
 	nap
@@ -14,7 +14,7 @@ start:
 	mffgpr	6,7
 	mftgpr	8,9
 	lwzcix	10,11,12
-	lfdpx	13,14,15
+	lfdpx	12,14,15
 	dadd	16,17,18
 	daddq	20,22,24
 	dss	3

@@ -1,30 +1,34 @@
-/*	$NetBSD: lib_strbuf.h,v 1.1.1.1 2009/12/13 16:54:49 kardel Exp $	*/
+/*	$NetBSD: lib_strbuf.h,v 1.1.1.1.12.1 2014/08/19 23:51:38 tls Exp $	*/
 
 /*
  * lib_strbuf.h - definitions for routines which use the common string buffers
  */
+#ifndef LIB_STRBUF_H
+#define LIB_STRBUF_H
 
 #include <ntp_types.h>
+#include <ntp_malloc.h>			/* for ZERO() */
 
 /*
  * Sizes of things
  */
-#define	LIB_NUMBUFS	200
-#define	LIB_BUFLENGTH	80
+#define LIB_NUMBUF	16
+#define	LIB_BUFLENGTH	128
+
+typedef char libbufstr[LIB_BUFLENGTH];
+extern libbufstr lib_stringbuf[LIB_NUMBUF];
+extern int lib_nextbuf;
+extern int lib_inited;
+
 
 /*
  * Macro to get a pointer to the next buffer
  */
-#define	LIB_GETBUF(buf) \
-	do { \
-		if (!lib_inited) \
-			init_lib(); \
-		buf = &lib_stringbuf[lib_nextbuf][0]; \
-		if (++lib_nextbuf >= LIB_NUMBUFS) \
-			lib_nextbuf = 0; \
-		memset(buf, 0, LIB_BUFLENGTH); \
-	} while (0)
+#define	LIB_GETBUF(bufp)					\
+	do {							\
+		ZERO(lib_stringbuf[lib_nextbuf]);		\
+		(bufp) = &lib_stringbuf[lib_nextbuf++][0];	\
+		lib_nextbuf %= COUNTOF(lib_stringbuf);		\
+	} while (FALSE)
 
-extern char lib_stringbuf[LIB_NUMBUFS][LIB_BUFLENGTH];
-extern int lib_nextbuf;
-extern int lib_inited;
+#endif	/* LIB_STRBUF_H */

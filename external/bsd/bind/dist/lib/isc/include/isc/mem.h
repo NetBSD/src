@@ -1,7 +1,7 @@
-/*	$NetBSD: mem.h,v 1.8.2.1 2013/06/23 06:26:25 tls Exp $	*/
+/*	$NetBSD: mem.h,v 1.8.2.2 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 
+#include <isc/json.h>
 #include <isc/lang.h>
 #include <isc/mutex.h>
 #include <isc/platform.h>
@@ -40,15 +41,6 @@ typedef void (*isc_mem_water_t)(void *, int);
 
 typedef void * (*isc_memalloc_t)(void *, size_t);
 typedef void (*isc_memfree_t)(void *, void *);
-
-/*%
- * Define ISC_MEM_DEBUG=1 to make all functions that free memory
- * set the pointer being freed to NULL after being freed.
- * This is the default; set ISC_MEM_DEBUG=0 to disable it.
- */
-#ifndef ISC_MEM_DEBUG
-#define ISC_MEM_DEBUG 1
-#endif
 
 /*%
  * Define ISC_MEM_TRACKLINES=1 to turn on detailed tracing of memory
@@ -157,20 +149,10 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_debugging;
 /*%<
  * We use either isc___mem (three underscores) or isc__mem (two) depending on
  * whether it's for BIND9's internal purpose (with -DBIND9) or generic export
- * library.  This condition is generally handled in isc/namespace.h, but for
- * Windows it doesn't work if it involves multiple times of macro expansion
- * (such as isc_mem to isc__mem then to isc___mem).  The following definitions
- * are used to work around this portability issue.  Right now, we don't support
- * the export library for Windows, so we always use the three-underscore
- * version.
+ * library.
  */
-#ifdef WIN32
-#define ISCMEMFUNC(sfx) isc___mem_ ## sfx
-#define ISCMEMPOOLFUNC(sfx) isc___mempool_ ## sfx
-#else
 #define ISCMEMFUNC(sfx) isc__mem_ ## sfx
 #define ISCMEMPOOLFUNC(sfx) isc__mempool_ ## sfx
-#endif
 
 #define isc_mem_get(c, s)	ISCMEMFUNC(get)((c), (s) _ISC_MEM_FILELINE)
 #define isc_mem_allocate(c, s)	ISCMEMFUNC(allocate)((c), (s) _ISC_MEM_FILELINE)
@@ -226,6 +208,8 @@ typedef struct isc_memmethods {
 			 void *water_arg, size_t hiwater, size_t lowater);
 	void (*waterack)(isc_mem_t *ctx, int flag);
 	size_t (*inuse)(isc_mem_t *mctx);
+	size_t (*maxinuse)(isc_mem_t *mctx);
+	size_t (*total)(isc_mem_t *mctx);
 	isc_boolean_t (*isovermem)(isc_mem_t *mctx);
 	isc_result_t (*mpcreate)(isc_mem_t *mctx, size_t size,
 				 isc_mempool_t **mpctxp);
@@ -276,7 +260,6 @@ struct isc_mempool {
 #define ISCAPI_MPOOL_VALID(mp)	((mp) != NULL && \
 				 (mp)->magic == ISCAPI_MPOOL_MAGIC)
 
-#if ISC_MEM_DEBUG
 #define isc_mem_put(c, p, s) \
 	do { \
 		ISCMEMFUNC(put)((c), (p), (s) _ISC_MEM_FILELINE);	\
@@ -297,13 +280,6 @@ struct isc_mempool {
 		ISCMEMPOOLFUNC(put)((c), (p) _ISC_MEM_FILELINE);	\
 		(p) = NULL; \
 	} while (/*CONSTCOND*/0)
-#else
-#define isc_mem_put(c, p, s)	ISCMEMFUNC(put)((c), (p), (s) _ISC_MEM_FILELINE)
-#define isc_mem_putanddetach(c, p, s) \
-	ISCMEMFUNC(putanddetach)((c), (p), (s) _ISC_MEM_FILELINE)
-#define isc_mem_free(c, p)	ISCMEMFUNC(free)((c), (p) _ISC_MEM_FILELINE)
-#define isc_mempool_put(c, p)	ISCMEMPOOLFUNC(put)((c), (p) _ISC_MEM_FILELINE)
-#endif
 
 /*@{*/
 isc_result_t
@@ -418,9 +394,23 @@ isc_mem_getquota(isc_mem_t *);
 size_t
 isc_mem_inuse(isc_mem_t *mctx);
 /*%<
- * Get an estimate of the number of memory in use in 'mctx', in bytes.
+ * Get an estimate of the amount of memory in use in 'mctx', in bytes.
  * This includes quantization overhead, but does not include memory
  * allocated from the system but not yet used.
+ */
+
+size_t
+isc_mem_maxinuse(isc_mem_t *mctx);
+/*%<
+ * Get an estimate of the largest amount of memory that has been in
+ * use in 'mctx' at any time.
+ */
+
+size_t
+isc_mem_total(isc_mem_t *mctx);
+/*%<
+ * Get the total amount of memory in 'mctx', in bytes, including memory
+ * not yet used.
  */
 
 isc_boolean_t
@@ -550,12 +540,21 @@ isc_mem_gettag(isc_mem_t *ctx);
  */
 
 #ifdef HAVE_LIBXML2
-void
+int
 isc_mem_renderxml(xmlTextWriterPtr writer);
 /*%<
  * Render all contexts' statistics and status in XML for writer.
  */
 #endif /* HAVE_LIBXML2 */
+
+#ifdef HAVE_JSON
+isc_result_t
+isc_mem_renderjson(json_object *memobj);
+/*%<
+ * Render all contexts' statistics and status in JSON.
+ */
+#endif /* HAVE_JSON */
+
 
 /*
  * Memory pools
@@ -720,18 +719,12 @@ ISCMEMPOOLFUNC(get)(isc_mempool_t * _ISC_MEM_FLARG);
 void
 ISCMEMPOOLFUNC(put)(isc_mempool_t *, void * _ISC_MEM_FLARG);
 
-void *
-isc_default_memalloc(void *arg, size_t len);
-void
-isc_default_memfree(void *arg, void *ptr);
-
 /*%<
  * See isc_mem_create2() above.
  */
 typedef isc_result_t
 (*isc_memcreatefunc_t)(size_t init_max_size, size_t target_size,
-		       isc_memalloc_t memalloc, isc_memfree_t memfree,
-		       void *arg, isc_mem_t **ctxp, unsigned int flags);
+		       isc_mem_t **ctxp, unsigned int flags);
 
 isc_result_t
 isc_mem_register(isc_memcreatefunc_t createfunc);

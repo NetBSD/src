@@ -1,4 +1,4 @@
-/*	$NetBSD: log-internal.h,v 1.2.4.2 2013/06/23 06:28:17 tls Exp $	*/
+/*	$NetBSD: log-internal.h,v 1.2.4.3 2014/08/19 23:47:16 tls Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -31,7 +31,7 @@
 #include "event2/util.h"
 
 #ifdef __GNUC__
-#define EV_CHECK_FMT(a,b) __attribute__((format(printf, a, b)))
+#define EV_CHECK_FMT(a,b) __attribute__((__format__(__printf__, a, b)))
 #define EV_NORETURN __attribute__((noreturn))
 #else
 #define EV_CHECK_FMT(a,b)
@@ -54,7 +54,5 @@ void _event_debugx(const char *fmt, ...) EV_CHECK_FMT(1,2);
 #else
 #define event_debug(x) do {;} while (/*CONSTCOND*/0)
 #endif
-
-#undef EV_CHECK_FMT
 
 #endif

@@ -1,4 +1,4 @@
-#as: -64 -EB
+#as: -march=from-abi -64 -EB
 #objdump: -sj.eh_frame
 
 .*

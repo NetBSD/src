@@ -23,7 +23,7 @@ Disassembly of section \.text:
 
 Disassembly of section \.data:
 
-.* <.data>:
+.* <(\.data|_edata-0x10)>:
 .*	00 04 08 00 	.*
 .*	00 04 0d 04 	.*
 .*	00 04 0c 00 	.*
@@ -31,7 +31,7 @@ Disassembly of section \.data:
 
 Disassembly of section \.bss:
 
-.* <__icache_tag_array>:
+.* <(__icache_tag_array|__bss_start)>:
 	\.\.\.
 
 .* <__icache_rewrite_to>:

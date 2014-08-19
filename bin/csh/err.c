@@ -1,4 +1,4 @@
-/* $NetBSD: err.c,v 1.20 2009/02/14 07:12:29 lukem Exp $ */
+/* $NetBSD: err.c,v 1.20.12.1 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.20 2009/02/14 07:12:29 lukem Exp $");
+__RCSID("$NetBSD: err.c,v 1.20.12.1 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: err.c,v 1.20 2009/02/14 07:12:29 lukem Exp $");
 
 char *seterr = NULL;	/* Holds last error if there was one */
 
-#define ERR_FLAGS	0xf0000000
+#define ERR_FLAGS	((int)0xf0000000)
 #define ERR_NAME	0x10000000
 #define ERR_SILENT	0x20000000
 #define ERR_OLD		0x40000000

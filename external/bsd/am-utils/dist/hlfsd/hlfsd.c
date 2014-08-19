@@ -1,4 +1,4 @@
-/*	$NetBSD: hlfsd.c,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.1.1.2.12.1 2014/08/19 23:45:52 tls Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Erez Zadok
@@ -150,7 +150,6 @@ main(int argc, char *argv[])
   int opterrs = 0;
   int retry;
   int soNFS;			/* NFS socket */
-  int s = -99;
   mntent_t mnt;
   nfs_args_t nfs_args;
   am_nfs_handle_t anh;
@@ -454,17 +453,16 @@ main(int argc, char *argv[])
    * set this signal handler.
    */
   if (amuDebug(D_DAEMON)) {
-    s = -99;
     while (stoplight != SIGUSR2) {
       plog(XLOG_INFO, "parent waits for child to setup (stoplight=%d)", stoplight);
 #ifdef HAVE_SIGSUSPEND
       {
 	sigset_t mask;
 	sigemptyset(&mask);
-	s = sigsuspend(&mask);	/* wait for child to set up */
+	(void)sigsuspend(&mask);	/* wait for child to set up */
       }
 #else /* not HAVE_SIGSUSPEND */
-      s = sigpause(0);		/* wait for child to set up */
+      (void)sigpause(0);		/* wait for child to set up */
 #endif /* not HAVE_SIGSUSPEND */
       sleep(1);
     }

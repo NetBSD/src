@@ -1,11 +1,11 @@
-/*	$NetBSD: data_mbg.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: data_mbg.c,v 1.2.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/data_mbg.c,v 4.8 2006/06/22 18:40:01 kardel RELEASE_20060622_A
  *
  * data_mbg.c,v 4.8 2006/06/22 18:40:01 kardel RELEASE_20060622_A
  *
- * Created: Sun Jul 20 12:08:14 1997
+ * $Created: Sun Jul 20 12:08:14 1997 $
  *
  * Copyright (c) 1997-2005 by Frank Kardel <kardel <AT> ntp.org>
  *
@@ -35,6 +35,7 @@
  *
  */
 
+#include <config.h>
 #ifdef PARSESTREAM
 #define NEED_BOPS
 #include "ntp_string.h"
@@ -178,7 +179,7 @@ get_mbg_tzname(
 	char *tznamep
 	)
 {
-  strncpy(tznamep, (char *)*buffpp, sizeof(TZ_NAME));
+  strlcpy(tznamep, (char *)*buffpp, sizeof(TZ_NAME));
   *buffpp += sizeof(TZ_NAME);
 }
 
@@ -243,10 +244,10 @@ mbg_time_status_str(
 			{
 				if (p != *buffpp)
 				{
-					strncpy(p, ", ", size - (p - start));
+					strlcpy(p, ", ", size - (p - start));
 					p += 2;
 				}
-				strncpy(p, s->string, size - (p - start));
+				strlcpy(p, s->string, size - (p - start));
 				p += strlen(p);
 			}
 		}
@@ -267,8 +268,8 @@ mbg_tm_str(
 		 tmp->year, tmp->month, tmp->mday,
 		 tmp->hour, tmp->minute, tmp->second, tmp->frac,
 		 (tmp->offs_from_utc < 0) ? '-' : '+',
-		 abs(tmp->offs_from_utc) / 3600,
-		 (abs(tmp->offs_from_utc) / 60) % 60);
+		 abs((int)tmp->offs_from_utc) / 3600,
+		 (abs((int)tmp->offs_from_utc) / 60) % 60);
 	*buffpp += strlen(*buffpp);
 
 	mbg_time_status_str(buffpp, tmp->status, size - (*buffpp - s));

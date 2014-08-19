@@ -1,6 +1,6 @@
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPSchema.cpp,v 1.2.6.2 2008/04/14 23:09:26 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2003, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2003-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

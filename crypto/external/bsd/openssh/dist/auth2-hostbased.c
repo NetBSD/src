@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: auth2-hostbased.c,v 1.14 2010/08/04 05:42:47 djm Exp $ */
+/*	$NetBSD: auth2-hostbased.c,v 1.4.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: auth2-hostbased.c,v 1.16 2013/06/21 00:34:49 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.4.8.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 
 #include <pwd.h>
@@ -117,6 +117,10 @@ userauth_hostbased(Authctxt *authctxt)
 #ifdef DEBUG_PK
 	buffer_dump(&b);
 #endif
+
+	pubkey_auth_info(authctxt, key,
+	    "client user \"%.100s\", client host \"%.100s\"", cuser, chost);
+
 	/* test for allowed key and correct signature */
 	authenticated = 0;
 	if (PRIVSEP(hostbased_key_allowed(authctxt->pw, cuser, chost, key)) &&
@@ -129,11 +133,11 @@ done:
 	debug2("userauth_hostbased: authenticated %d", authenticated);
 	if (key != NULL)
 		key_free(key);
-	xfree(pkalg);
-	xfree(pkblob);
-	xfree(cuser);
-	xfree(chost);
-	xfree(sig);
+	free(pkalg);
+	free(pkblob);
+	free(cuser);
+	free(chost);
+	free(sig);
 	return authenticated;
 }
 
@@ -208,7 +212,7 @@ hostbased_key_allowed(struct passwd *pw, const char *cuser, char *chost,
 			verbose("Accepted %s public key %s from %s@%s",
 			    key_type(key), fp, cuser, lookup);
 		}
-		xfree(fp);
+		free(fp);
 	}
 
 	return (host_status == HOST_OK);

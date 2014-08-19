@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.158.2.3 2013/06/23 06:26:21 tls Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.158.2.4 2014/08/19 23:45:49 tls Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,6 +42,7 @@
 #	ramdisk	devices to be put into INSTALL kernel ramdisks.
 #	std	standard devices
 #	local	configuration specific devices
+#	lua	Lua device
 #	wscons	make wscons devices
 #	usbs	make USB devices
 #	isdns	make ISDN devices
@@ -837,6 +838,7 @@ all)
 	makedev drm0
 	makedev altmem
 	makedev zfs
+	makedev lua
 	makedev local # do this last
 	;;
 
@@ -858,6 +860,11 @@ audio)
 gpio)
 	makedev gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	lndev gpio0 gpio
+	;;
+
+lua)
+	makedev lua0
+	lndev lua0 lua
 	;;
 
 pad)
@@ -894,7 +901,7 @@ usbs)
 	makedev usb usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
 	makedev uhid0 uhid1 uhid2 uhid3
 	makedev ulpt0 ulpt1
-	makedev ttyU0 ttyU1
+	makedev ttyU0 ttyU1 ttyU2 ttyU3 ttyU4 ttyU5 ttyU6 ttyU7
 	makedev ttyY0 ttyY1
 	makedev ttyHS0
 	makedev urio0
@@ -1460,6 +1467,11 @@ hdaudio[0-9]*)
 gpio[0-9]*)
 	unit=${i#gpio}
 	mkdev gpio$unit c %gpio_chr% $unit 664 $g_gpio
+	;;
+
+lua[0-9]*)
+	unit=${i#lua}
+	mkdev lua$unit c %lua_chr% $unit 664
 	;;
 
 rmidi[0-9]*)

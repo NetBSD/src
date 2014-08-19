@@ -1,6 +1,528 @@
-2012-07-02  Release Manager
+2014-05-22  Release Manager
 
-	* GCC 4.5.4 released.
+	* GCC 4.8.3 released.
+
+2014-04-04  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	Backport from mainline
+	2013-11-15  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+
+	* configure: Regenerate.
+
+2014-04-02  Richard Henderson  <rth@redhat.com>
+
+	* config/linux/futex.h (futex_wait): Get error value from errno.
+	(futex_wake): Likewise.
+
+2013-12-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR libgomp/59467
+	* testsuite/libgomp.fortran/crayptr2.f90: Add private (d) clause to
+	!$omp parallel.
+
+2013-10-16  Release Manager
+
+	* GCC 4.8.2 released.
+
+2013-10-09  Jakub Jelinek  <jakub@redhat.com>
+
+	* parallel.c (GOMP_parallel_end): Remember team->nthreads and call
+	gomp_team_end before adjusting gomp_remaining_threads_count, increment
+	gomp_remaining_threads_count instead of decrementing it again.
+	* testsuite/libgomp.c/thread-limit-1.c: New test.
+
+2013-09-19  Jakub Jelinek  <jakub@redhat.com>
+
+	* testsuite/libgomp.c/sections-2.c: New test.
+
+2013-05-31  Release Manager
+
+	* GCC 4.8.1 released.
+
+2013-05-16  Jakub Jelinek  <jakub@redhat.com>
+
+	* testsuite/libgomp.c/loop-13.c: New test.
+	* testsuite/libgomp.c/loop-14.c: New test.
+	* testsuite/libgomp.c/loop-15.c: New test.
+	* testsuite/libgomp.c++/loop-13.C: New test.
+	* testsuite/libgomp.c++/loop-14.C: New test.
+	* testsuite/libgomp.c++/loop-15.C: New test.
+
+2013-03-22  Release Manager
+
+	* GCC 4.8.0 released.
+
+2013-02-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/56217
+	* testsuite/libgomp.c++/pr56217.C: New test.
+
+2013-02-01  Alan Modra  <amodra@gmail.com>
+
+	* task.c (GOMP_task, GOMP_taskwait): Comment.
+
+2013-01-31  Dmitry Vyukov  <dvyukov@gcc.gnu.org>
+	    Joost VandeVondele  <Joost.VandeVondele@mat.ethz.ch>
+
+	PR libgomp/55561
+	* config/linux/wait.h (do_spin): Use atomic load for addr.
+	* config/linux/ptrlock.c (gomp_ptrlock_get_slow): Use atomic
+	for intptr and ptrlock.
+	* config/linux/ptrlock.h (gomp_ptrlock_get): Use atomic load
+	for ptrlock.
+
+2013-01-22  Alan Modra  <amodra@gmail.com>
+
+	PR libgomp/51376
+	PR libgomp/56073
+	* task.c (GOMP_task): Revert 2011-12-09 change.
+	(GOMP_taskwait): Likewise.  Instead use atomic load with acquire
+	barrier to read task->children..
+	(gomp_barrier_handle_tasks): ..and matching atomic store with
+	release barrier here when setting parent->children to NULL.
+
+2013-01-16  Jakub Jelinek  <jakub@redhat.com>
+	    Tobias Burnus  <burnus@net-b.de>
+
+	PR driver/55884
+	* testsuite/libgomp.fortran/fortran.exp: Use
+	-fintrinsic-modules-path= instead of
+	-fintrinsic-modules-path.
+
+2013-01-14  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	Update copyright years.
+
+2012-12-19  Tobias Burnus  <burnus@net-b.de>
+
+	* testsuite/libgomp.fortran/fortran.exp: Set
+	-fintrinsic-modules-path.
+
+2012-12-19  Tobias Burnus  <burnus@net-b.de>
+
+	* testsuite/libgomp.fortran/use_intrinsic_1.f90: New; moved
+	from gcc/testsuite/gfortran.dg/gomp/use_intrinsic_1.f90.
+
+2012-11-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR libgomp/55411
+	* team.c (gomp_free_thread): Decrease gomp_managed_threads
+	if pool had any threads_used.
+
+2012-11-07  Jack Howarth <howarth@bromo.med.uc.edu>
+
+	* testsuite/libgomp.c++/pr24455.C: Use
+	-Wl,-undefined,dynamic_lookup on darwin.
+
+2012-11-07  David Edelsohn  <dje.gcc@gmail.com>
+
+	* testsuite/libgomp.c++/pr24455.C: Use -Wl,-G on AIX.
+
+2012-10-24  Dominique d'Humieres  <dominiq@lps.ens.fr>
+
+	* testsuite/libgomp.graphite/force-parallel-6.c: Adjust the loops.
+
+2012-10-23  Ian Bolton  <ian.bolton@arm.com>
+	    Jim MacArthur  <jim.macarthur@arm.com>
+	    Marcus Shawcroft  <marcus.shawcroft@arm.com>
+	    Nigel Stephens  <nigel.stephens@arm.com>
+	    Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
+	    Richard Earnshaw  <rearnsha@arm.com>
+	    Sofiane Naci  <sofiane.naci@arm.com>
+	    Stephen Thomas  <stephen.thomas@arm.com>
+	    Tejas Belagod  <tejas.belagod@arm.com>
+	    Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* configure.tgt: Add AArch64.
+
+2012-10-04  Jason Merrill  <jason@redhat.com>
+
+	* testsuite/libgomp.c++/tls-init1.C: New.
+
+2012-09-14  David Edelsohn  <dje.gcc@gmail.com>
+
+	* configure: Regenerated.
+
+2012-08-29  Chung-Lin Tang  <cltang@codesourcery.com>
+
+	* config/linux/mips/futex.h (sys_futex0): Change to static
+	function with noinline, nomips16 attributes under MIPS16. Adjust
+	asm statement to place 'li v0,SYS_futex' immediately before
+	syscall insn.
+
+2012-07-04  Sandra Loosemore <sandra@codesourcery.com>
+
+	* libgomp.texi (Library Index): Renamed from "Index" to prevent
+	conflict with index.html on case-insensitive file systems.
+
+2012-07-03  Uros Bizjak  <ubizjak@gmail.com>
+
+	* config/linux/x86/futex.h (cpu_relax): Use __builtin_ia32_pause.
+	* testsuite/libgomp.c/sort-1.c (busy_wait): Ditto.
+
+2012-07-02  Richard Guenther  <rguenther@suse.de>
+	    Michael Matz  <matz@suse.de>
+	    Tobias Grosser <tobias@grosser.es>
+	    Sebastian Pop <sebpop@gmail.com>
+
+	* testsuite/libgomp.graphite/force-parallel-4.c: Adjust.
+	* testsuite/libgomp.graphite/force-parallel-5.c: Likewise.
+	* testsuite/libgomp.graphite/force-parallel-7.c: Likewise.
+	* testsuite/libgomp.graphite/force-parallel-8.c: Likewise.
+
+2012-06-28  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* libgomp.texi: Include gpl_v3.texi instead of gpl.texi.
+
+2012-06-22  Richard Guenther  <rguenther@suse.de>
+
+	Merge from graphite branch
+	2012-01-13  Tobias Grosser  <tobias@grosser.es>
+
+	* testsuite/libgomp.graphite/force-parallel-1.c: Adjust.
+	* testsuite/libgomp.graphite/force-parallel-2.c: Likewise.
+
+2012-06-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/53580
+	* testsuite/libgomp.c/pr26943-2.c: Remove #pragma omp barrier,
+	use GOMP_barrier () call instead.
+	* testsuite/libgomp.c/pr26943-3.c: Likewise.
+	* testsuite/libgomp.c/pr26943-4.c: Likewise.
+	* testsuite/libgomp.fortran/vla4.f90: Remove !$omp barrier,
+	call GOMP_barrier instead.
+	* testsuite/libgomp.fortran/vla5.f90: Likewise.
+
+2012-06-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR libgomp/52993
+	* config/linux/lock.c (gomp_init_nest_lock_25): Fix up last
+	argument to memset call.
+
+2012-05-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure: Regenerated.
+
+2012-04-11  Manuel López-Ibáñez  <manu@gcc.gnu.org>
+
+	* testsuite/lib/libgomp.exp: Add -fno-diagnostics-show-caret.
+
+2012-03-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/52812
+	* configure.tgt (i[456]86-*-linux*): Handle -mx32 like -m64.
+
+2012-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/52547
+	* testsuite/libgomp.c/pr52547.c: New test.
+
+2012-03-16  Bernhard Reutner-Fischer  <aldot@gcc.gnu.org>
+
+	* testsuite/lib/libgomp.exp: load fortran-modules.exp
+
+2012-03-14  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* configure.tgt (mips-sgi-irix6*): Remove.
+
+2012-03-12  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* configure.tgt (alpha*-dec-osf*): Remove.
+
+	* config/osf/sem.h: Remove.
+	* config/posix/lock.c (_XOPEN_SOURCE): Define unconditionally.
+
+2012-02-29  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* config/linux/sparc/futex.h (cpu_relax): Read from CC register.
+
+2012-02-27  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR libstdc++/52188
+	* acinclude.m4 (LIBGOMP_ENABLE_SYMVERS): Remove	symvers_renaming.
+	Remove ENABLE_SYMVERS_SOL2.
+	* configure: Regenerate.
+	* Makefile.am [LIBGOMP_BUILD_VERSIONED_SHLIB] (comma): New variable.
+	(PREPROCESS): New variable.
+	(libgomp.ver): New target.
+	[LIBGOMP_BUILD_VERSIONED_SHLIB &&
+	LIBGOMP_BUILD_VERSIONED_SHLIB_GNU]: Remove
+	LIBGOMP_BUILD_VERSIONED_SHLIB_SOL2 handling.
+	Use libgomp.ver.
+	[LIBGOMP_BUILD_VERSIONED_SHLIB_SUN]: Use libgomp.ver, libgomp.ver-sun.
+	* Makefile.in: Regenerate.
+
+2012-02-14  Walter Lee  <walt@tilera.com>
+
+	* configure.tgt: Handle tilegx and tilepro.
+	* config/linux/tile/futex.h: New file.
+
+2012-02-08  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/46886
+	* testsuite/libgomp.c/pr46886.c: New testcase.
+
+2012-01-25  Matthias Klose  <doko@ubuntu.com>
+
+	* config/linux/arm: Remove empty directory.
+	* configure.tgt (config_path): Remove linux-arm for arm*-*-linux*.
+
+2011-12-09  Alan Modra  <amodra@gmail.com>
+
+	PR libgomp/51376
+	* task.c (GOMP_taskwait): Don't access task->children outside of
+	task_lock mutex region.
+	(GOMP_task): Likewise.
+
+2011-12-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR libgomp/51132
+	* testsuite/libgomp.graphite/force-parallel-1.c: Move large arrays
+	to file scope.
+	* testsuite/libgomp.graphite/force-parallel-3.c: Likewise.
+	* testsuite/libgomp.graphite/force-parallel-6.c: Likewise.
+	* testsuite/libgomp.graphite/force-parallel-7.c: Likewise.
+	* testsuite/libgomp.graphite/force-parallel-8.c: Likewise.
+	* testsuite/libgomp.graphite/force-parallel-9.c: Likewise.
+
+2011-12-02  Alan Modra  <amodra@gmail.com>
+
+	* config/linux/affinity.c: Use atomic rather than sync builtin.
+	* config/linux/lock.c: Likewise.
+	* config/linux/ptrlock.h: Likewise.
+	* config/linux/ptrlock.c: Likewise.
+	* config/linux/ptrlock.h (gomp_ptrlock_set): Always write here..
+	* config/linux/ptrlock.c (gomp_ptrlock_set_slow): ..not here.
+	* config/linux/futex.h (atomic_write_barrier): Delete unused function.
+	* config/linux/alpha/futex.h (atomic_write_barrier): Likewise.
+	* config/linux/ia64/futex.h (atomic_write_barrier): Likewise.
+	* config/linux/mips/futex.h (atomic_write_barrier): Likewise.
+	* config/linux/powerpc/futex.h (atomic_write_barrier): Likewise.
+	* config/linux/s390/futex.h (atomic_write_barrier): Likewise.
+	* config/linux/sparc/futex.h (atomic_write_barrier): Likewise.
+	* config/linux/x86/futex.h (atomic_write_barrier): Likewise.
+
+2011-11-30  Alan Modra  <amodra@gmail.com>
+
+	PR libgomp/51298
+	* config/linux/bar.h: Use atomic rather than sync builtins.
+	* config/linux/bar.c: Likewise.  Add missing acquire
+	synchronisation on generation field.
+	* task.c (gomp_barrier_handle_tasks): Regain lock so as to not
+	double unlock.
+
+2011-11-30  Alan Modra  <amodra@gmail.com>
+
+	* ordered.c (gomp_ordered_sync): Add MEMMODEL_ACQ_REL fence.
+	* critical.c (GOMP_critical_start): Add MEMMODEL_RELEASE fence.
+	* config/linux/mutex.h: Use atomic rather than sync builtins.
+	* config/linux/mutex.c: Likewise.  Comment.  Use -1 for waiting state.
+	* config/linux/omp-lock.h: Comment fix.
+	* config/linux/arm/mutex.h: Delete.
+	* config/linux/powerpc/mutex.h: Delete.
+	* config/linux/ia64/mutex.h: Delete.
+	* config/linux/mips/mutex.h: Delete.
+
+2011-11-30  Alan Modra  <amodra@gmail.com>
+
+	PR libgomp/51249
+	* config/linux/sem.h: Rewrite.
+	* config/linux/sem.c: Rewrite.
+
+2011-11-28  Richard Henderson  <rth@redhat.com>
+
+	* libgomp.h (enum memmodel): New.
+
+2011-11-21  Andreas Tobler  <andreast@fgznet.ch>
+
+	* configure: Regenerate.
+
+2011-10-10  Matthias Klose  <doko@ubuntu.com>
+
+	* config/posix95: Remove empty directory.
+
+2011-08-26  Jakub Jelinek  <jakub@redhat.com>
+
+	* testsuite/libgomp.fortran/threadprivate4.f90: New test.
+
+2011-08-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR fortran/49792
+	* testsuite/libgomp.fortran/pr49792-1.f90: New test.
+	* testsuite/libgomp.fortran/pr49792-2.f90: New test.
+
+2011-08-08  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config/posix95/lock.c, posix95/omp-lock.h: Remove.
+
+2011-08-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR libgomp/49965
+	* testsuite/libgomp.c++/task-8.C: Replaced err by errval.
+
+2011-08-03  Uros Bizjak  <ubizjak@gmail.com>
+
+	* config/linux/proc.h: New.
+	* config/linux/proc.c: Include "proc.h".  Do not include <sched.h>.
+	(gomp_cpuset_popcount): Rename from cpuset_popcount.  No more static.
+	(gomp_init_num_threads): Update call to cpuset_popcount.
+	(get_num_procs): Ditto.
+	* config/linux/affinity.c (gomp_init_affinity): Call
+	gomp_cpuset_popcount.
+
+2011-08-02  Jakub Jelinek  <jakub@redhat.com>
+
+	PR fortran/42041
+	PR fortran/46752
+	* omp.h.in (omp_in_final): New prototype.
+	* omp_lib.f90.in (omp_in_final): New interface.
+	(omp_integer_kind, omp_logical_kind): Remove
+	and replace all its uses in the module with 4.
+	(openmp_version): Change to 201107.
+	* omp_lib.h.in (omp_sched_static, omp_sched_dynamic,
+	omp_sched_guided, omp_sched_auto): Use omp_sched_kind
+	kind for the parameters.
+	(omp_in_final): New external.
+	(openmp_version): Change to 201107.
+	* task.c (omp_in_final): New function.
+	(gomp_init_task): Initialize final_task.
+	(GOMP_task): Remove unused attribute from flags.  Handle final
+	tasks.
+	(GOMP_taskyield): New function.
+	(omp_in_final): Return true if if (false) or final (true) task
+	or descendant of final (true).
+	* fortran.c (omp_in_final_): New function.
+	* libgomp.map (OMP_3.1): Export omp_in_final and omp_in_final_.
+	(GOMP_3.0): Export GOMP_taskyield.
+	* env.c (gomp_nthreads_var_list, gomp_nthreads_var_list_len): New
+	variables.
+	(parse_unsigned_long_list): New function.
+	(initialize_env): Use it for OMP_NUM_THREADS.  Call parse_boolean
+	with "OMP_PROC_BIND".  If OMP_PROC_BIND=true, call gomp_init_affinity
+	even if parse_affinity returned false.
+	* config/linux/affinity.c (gomp_init_affinity): Handle
+	gomp_cpu_affinity_len == 0.
+	* libgomp_g.h (GOMP_taskyield): New prototype.
+	* libgomp.h (struct gomp_task): Add final_task field.
+	(gomp_nthreads_var_list, gomp_nthreads_var_list_len): New externs.
+	* team.c (gomp_team_start): Override new task's nthreads_var icv
+	if list form OMP_NUM_THREADS has been used and it has value for
+	the new nesting level.
+
+	* testsuite/libgomp.c/atomic-11.c: New test.
+	* testsuite/libgomp.c/atomic-12.c: New test.
+	* testsuite/libgomp.c/atomic-13.c: New test.
+	* testsuite/libgomp.c/atomic-14.c: New test.
+	* testsuite/libgomp.c/reduction-6.c: New test.
+	* testsuite/libgomp.c/task-5.c: New test.
+	* testsuite/libgomp.c++/atomic-2.C: New test.
+	* testsuite/libgomp.c++/atomic-3.C: New test.
+	* testsuite/libgomp.c++/atomic-4.C: New test.
+	* testsuite/libgomp.c++/atomic-5.C: New test.
+	* testsuite/libgomp.c++/atomic-6.C: New test.
+	* testsuite/libgomp.c++/atomic-7.C: New test.
+	* testsuite/libgomp.c++/atomic-8.C: New test.
+	* testsuite/libgomp.c++/atomic-9.C: New test.
+	* testsuite/libgomp.c++/task-8.C: New test.
+	* testsuite/libgomp.c++/reduction-4.C: New test.
+	* testsuite/libgomp.fortran/allocatable7.f90: New test.
+	* testsuite/libgomp.fortran/allocatable8.f90: New test.
+	* testsuite/libgomp.fortran/crayptr3.f90: New test.
+	* testsuite/libgomp.fortran/omp_atomic3.f90: New test.
+	* testsuite/libgomp.fortran/omp_atomic4.f90: New test.
+	* testsuite/libgomp.fortran/pointer1.f90: New test.
+	* testsuite/libgomp.fortran/pointer2.f90: New test.
+	* testsuite/libgomp.fortran/task4.f90: New test.
+
+2011-08-02  Tobias Burnus  <burnus@net-b.de>
+
+	* libgomp.texi: Update OpenMP spec references to 3.1.
+	(omp_in_final,OMP_PROC_BIND): New sections.
+	(OMP_NUM_THREADS): Document that the value can be now a list.
+	(GOMP_STACKSIZE,GOMP_CPU_AFFINITY): Update @ref.
+
+2011-08-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/linux/x86/futex.h: Check __x86_64__ instead of
+	__LP64__.
+
+2011-07-29  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/49897
+	PR middle-end/49898
+	* testsuite/libgomp.c/pr49897-1.c: New test.
+	* testsuite/libgomp.c/pr49897-2.c: New test.
+	* testsuite/libgomp.c/pr49898-1.c: New test.
+	* testsuite/libgomp.c/pr49898-2.c: New test.
+
+2011-07-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* testsuite/lib/libgomp.exp (libgomp_init): Add -march=i486
+	for ia32 instead of ilp32.
+
+	* testsuite/libgomp.c/atomic-1.c: Require ia32 instead of ilp32.
+	* testsuite/libgomp.c/atomic-6.c: Likewise.
+
+2011-07-23  Sebastian Pop  <sebastian.pop@amd.com>
+
+	* testsuite/libgomp.graphite/force-parallel-1.c: Un-xfail.
+	* testsuite/libgomp.graphite/force-parallel-2.c: Adjust pattern.
+
+2011-07-25  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR libgomp/45351
+	* config/osf/sem.h: New file.
+	* configure.tgt (alpha*-dec-osf*): Prepend osf to config_path.
+
+2011-07-18  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR target/49541
+	* testsuite/lib/libgomp.exp (libgomp_init): Don't add -lgomp to
+	ldflags.
+
+2011-07-15  Jakub Jelinek  <jakub@redhat.com>
+
+	* config/linux/wait.h (do_spin): New inline, largely copied
+	from do_wait, just don't do futex_wait here, instead return true if
+	it should be done.
+	(do_wait): Implement using do_spin.
+	* config/linux/mutex.h (gomp_mutex_lock_slow): Add an int argument
+	to prototype.
+	(gomp_mutex_lock): Use __sync_val_compare_and_swap instead of
+	__sync_bool_compare_and_swap, pass the oldval to
+	gomp_mutex_lock_slow.
+	* config/linux/mutex.c (gomp_mutex_lock_slow): Add oldval argument.
+	If all mutex contenders are just spinning and not sleeping, don't
+	change state to 2 unnecessarily.  Optimize the loop when state has
+	already become 2 to use just one atomic operation per loop instead
+	of two.
+	* config/linux/ia64/mutex.h (gomp_mutex_lock_slow): Add an int argument
+	to prototype.
+	(gomp_mutex_lock): Use __sync_val_compare_and_swap instead of
+	__sync_bool_compare_and_swap, pass the oldval to
+	gomp_mutex_lock_slow.
+
+2011-06-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR libgomp/49490
+	* iter.c (gomp_iter_static_next): For chunk size 0
+	only use n ceil/ nthreads size for the first
+	n % nthreads threads in the team instead of
+	all threads except for the last few ones which
+	get less work or none at all.
+	* iter_ull.c (gomp_iter_ull_static_next): Likewise.
+	* env.c (parse_schedule): If OMP_SCHEDULE doesn't have
+	chunk argument, set run_sched_modifier to 0 for static
+	resp. 1 for other kinds.  If chunk argument is 0
+	and not static, set value to 1.
+
+2011-05-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/49043
+	* testsuite/libgomp.c++/pr49043.C: New test.
+
+	PR c++/48869
+	* testsuite/libgomp.c++/pr48869.C: New test.
 
 2011-05-06  Jakub Jelinek  <jakub@redhat.com>
 
@@ -14,65 +536,201 @@
 	omp_get_team_size_8_): Use TO_INT macro.
 	* testsuite/libgomp.fortran/pr48894.f90: New test.
 
-2011-04-28  Release Manager
+2011-04-13  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 4.5.3 released.
+	PR middle-end/48591
+	* testsuite/libgomp.c/pr48591.c: New test.
 
-2011-02-27  Tobias Burnus  <burnus@net-b.de>
+2011-03-21  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
-	Backport from mainline
-	2011-02-27  Jakub Jelinek  <jakub@redhat.com>
+	PR bootstrap/48135
+	* acinclude.m4 (enable_symvers): Handle --disable-symvers.
+	* configure: Regenerate.
+
+2011-02-27  Jakub Jelinek  <jakub@redhat.com>
 
 	PR fortran/47886
 	* testsuite/libgomp.fortran/task3.f90: New test.
-	
 
-2011-01-16  Jakub Jelinek  <jakub@redhat.com>
+2011-02-24  Tobias Burnus  <burnus@net-b.de>
 
-	Backport from mainline
-	2010-12-14  Jakub Jelinek  <jakub@redhat.com>
+	* libgomp.texi (GOMP_STACKSIZE): Fix @ref to OMP_STACKSIZE.
+
+2011-02-23  Jakub Jelinek  <jakub@redhat.com>
+
+	PR libgomp/47854
+	* libgomp.texi (omp_get_wtime): Don't say time in the past
+	must be Unix Epoch.
+
+2011-02-18  Jakub Jelinek  <jakub@redhat.com>
+
+	PR libgomp/47804
+	* testsuite/libgomp.fortran/fortran.exp: Check for both
+	libquadmath.a and libquadmath.${shlib_ext}.  If neither exists,
+	but $blddir != "", still append ${blddir}/${lang_library_path}
+	to ld_library_path.
+
+2011-02-16  Tobias Burnus  <burnus@net-b.de>
+
+	PR libgomp/47758
+	* testsuite/libgomp.fortran/fortran.exp: Check for the existence
+	of libquadmath.a before adding its libpath to ldflags.
+
+2011-02-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR libgomp/47731
+	* config/linux/futex.h (futex_wait): Pass NULL as timeout argument
+	to FUTEX_WAIT futex syscall.
+	* config/linux/wait.h: Include <futex.h> instead of "futex.h".
+
+2011-02-13  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* configure: Regenerate.
+
+2011-01-20  Benjamin Kosnik  <bkoz@redhat.com>
+
+	PR libstdc++/36104
+	* acinclude.m4 (LIBGOMP_ENABLE_SYMVERS): Accept gnu variants.
+
+2011-01-16  Gerald Pfeifer
+
+	* configure.tgt (*-*-freebsd*): Add -lpthread to XLDFLAGS.
+
+2010-12-14  Jakub Jelinek  <jakub@redhat.com>
 
 	PR fortran/46874
 	* libgomp.fortran/allocatable6.f90: New test.
 
-2010-12-17  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+2010-12-06  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
-	Backport from mainline:
-	2010-12-01  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+	* acinclude.m4 (symvers_renaming): Also set if enable_symvers = no.
+	* configure: Regenerate.
 
-	* configure.tgt (mips-sgi-irix6*): Add -lpthread to XLDFLAGS.
+2010-12-06  Dave Korn  <dave.korn.cygwin@gmail.com>
 
-2010-12-16  Release Manager
+	PR target/40125
+	PR lto/46695
+	* configure.ac: Invoke ACX_LT_HOST_FLAGS.
+	* Makefile.am (libgomp_la_LDFLAGS): Use lt_host_flags.
+	* aclocal.m4: Regenerate.
+	* configure: Regenerate.
+	* Makefile.in: Regenerate.
+	* testsuite/Makefile.in: Regenerate.
 
-	* GCC 4.5.2 released.
-
-2010-12-07  Jakub Jelinek  <jakub@redhat.com>
-
-	Backport from mainline
-	2010-12-02  Jakub Jelinek  <jakub@redhat.com>
+2010-12-02  Jakub Jelinek  <jakub@redhat.com>
 
 	PR fortran/46753
 	* libgomp.fortran/pr46753.f90: New test.
+
+	PR libgomp/43706
+	* env.c (initialize_env): Default to spin count 300000
+	instead of 20000000 if neither OMP_WAIT_POLICY nor GOMP_SPINCOUNT
+	is specified.
 
 	PR libgomp/45240
 	* parallel.c (GOMP_parallel_end): Unlock gomp_remaining_threads_lock
 	at the end if sync builtins aren't supported.
 
-2010-12-03  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+2010-12-01  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
-	Backport from mainline:
-	2010-12-01  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+	* configure.tgt (mips-sgi-irix6*): Add -lpthread to XLDFLAGS.
+
+2010-12-01  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
 	* testsuite/libgomp.fortran/vla8.f90: Use dg-timeout-factor 2.0.
 
-2010-07-31  Release Manager
+2010-11-24  Iain Sandoe  <iains@gcc.gnu.org>
 
-	* GCC 4.5.1 released.
+	* testsuite/libgomp.fortran/fortran.exp: Add paths for libquadmath.
 
-2010-06-10  Iain Sandoe  <iains@gcc.gnu.org>
+2010-11-16  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+	    Tobias Burnus  <burnus@net-b.de>
+
+	PR fortran/32049
+	* configure.ac:
+	* configure: Regenerate.
+
+2010-10-06  Marcus Shawcroft  <marcus.shawcroft@arm.com>
+
+	* config/linux/futex.h: New.
+	* config/linux/arm/mutex.h: New.
+	* configure.tgt (arm*-*-linux*): Add config path.
+
+2010-09-30  Sebastian Pop  <sebastian.pop@amd.com>
+
+	* testsuite/libgomp.graphite/force-parallel-1.c: Adjust.
+
+2010-09-23  Tobias Burnus  <burnus@net-b.de>
+
+	* libgomp.texi (omp_get_nested, omp_set_nested, omp_set_dynamic):
+	Change Fortran datatype to LOGICAL.
+	(omp_set_lock, omp_test_lock, omp_unset_lock, omp_set_nested_lock,
+	omp_unset_nested_lock): Use intent(inout) instead of intent(out).
+
+2010-08-21  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* configure: Regenerate.
+
+2010-07-26  Jakub Jelinek  <jakub@redhat.com>
+
+	* libgomp.texi: Add function keyword to a couple of Fortran
+	interfaces, use integer instead of int for Fortran.
+
+2010-07-26  Aldy Hernandez  <aldyh@redhat.com>
+
+	* libgomp.texi: Fix spelling and pasto problems throughout.
+	Adjust prototypes to match code.
+
+2010-07-24  Tobias Burnus  <burnus@net-b.de>
+
+	* testsuite/libgomp.fortran/appendix-a/a.28.5.f90: Add -w to
+	silence -fwhole-file warning.
+
+2010-07-23  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* configure.tgt (*-*-solaris2.[56]*): Removed.
+
+2010-07-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* acinclude.m4 (LIBGOMP_ENABLE_SYMVERS): Handle sun style.
+	Define LIBGOMP_BUILD_VERSIONED_SHLIB_GNU,
+	LIBGOMP_BUILD_VERSIONED_SHLIB_SUN automake conditionals.
+	(HAVE_SYMVER_SYMBOL_RENAMING_RUNTIME_SUPPORT): Define unless
+	targetting solaris2*.
+	* configure: Regenerate.
+	* config.h.in: Regenerate.
+
+	* Makefile.am [LIBGOMP_BUILD_VERSIONED_SHLIB]: Protect
+	libgomp_version_script with LIBGOMP_BUILD_VERSIONED_SHLIB_GNU.
+	Add libgomp_version_dep.
+	[LIBGOMP_BUILD_VERSIONED_SHLIB_SUN]: Handle Sun symbol
+	versioning.
+	[!LIBGOMP_BUILD_VERSIONED_SHLIB]: Add libgomp_version_dep.
+	(libgomp_la_DEPENDENCIES): Set to $(libgomp_version_dep).
+	* Makefile.in: Regenerate.
+
+	* libgomp.h (LIBGOMP_GNU_SYMBOL_VERSIONING): Undef unless
+	HAVE_SYMVER_SYMBOL_RENAMING_RUNTIME_SUPPORT.
+	* libgomp.map (OMP_1.0): Move symbols both in OMP_1.0 and OMP_3.0
+	to common block, protected by
+	HAVE_SYMVER_SYMBOL_RENAMING_RUNTIME_SUPPORT.
+
+2010-06-10  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* libgomp.texi: Move to GFDL version 1.3.  Update copyright years.
+
+2010-06-09  Iain Sandoe  <iains@gcc.gnu.org>
 
 	PR bootstrap/43170
 	* configure: Regenerate.
+
+2010-05-04  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	PR other/43620
+	* configure.ac (AM_INIT_AUTOMAKE): Add no-dist.
+	* configure: Regenerate.
+	* Makefile.in: Regenerate.
+	* testsuite/Makefile.in: Regenerate.
 
 2010-04-26  Jakub Jelinek  <jakub@redhat.com>
 
@@ -85,6 +743,8 @@
 	PR middle-end/43570
 	* testsuite/libgomp.fortran/vla8.f90: New test.
 
+2010-04-20  Jakub Jelinek  <jakub@redhat.com>
+
 	PR libgomp/43706
 	* config/linux/affinity.c (gomp_init_affinity): Decrease
 	gomp_available_cpus if affinity mask confines the process to fewer
@@ -95,9 +755,11 @@
 	PR libgomp/43569
 	* sections.c (gomp_sections_init): Initialize ws->mode.
 
-2010-04-14  Release Manager
+2010-04-14  Uros Bizjak  <ubizjak@gmail.com>
 
-	* GCC 4.5.0 released.
+	* acinclude.m4 (LIBGOMP_CHECK_SYNC_BUILTINS): Remove set but
+	not unused bar variable.
+	* configure: Regenerate.
 
 2010-04-02  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
 
@@ -749,7 +1411,7 @@
 	(gomp_new_thread_pool, gomp_free_pool_helper, gomp_free_thread): New
 	functions.
 	(gomp_team_start): Create new pool if current thread doesn't have
-	one.  Use pool fields instead of global gomp_* variables. 
+	one.  Use pool fields instead of global gomp_* variables.
 	Initialize thread_pool field for new threads.  Clear single_count.
 	Change last argument from ws to team, don't create
 	new team, set ts.work_share to &team->work_shares[0] and clear
@@ -981,7 +1643,7 @@
 	inlines.
 	* config/posix/bar.c (gomp_barrier_init): Clear generation field.
 	(gomp_barrier_wait_end): Change second argument to
-	gomp_barrier_state_t. 
+	gomp_barrier_state_t.
 	(gomp_team_barrier_wait, gomp_team_barrier_wait_end,
 	gomp_team_barrier_wake): New functions.
 	* config/linux/mutex.c: Include wait.h instead of libgomp.h and

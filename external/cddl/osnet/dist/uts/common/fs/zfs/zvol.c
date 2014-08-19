@@ -189,9 +189,11 @@ zvol_check_volsize(uint64_t volsize, uint64_t blocksize)
 	if (volsize % blocksize != 0)
 		return (EINVAL);
 
+#if 0
 #ifdef _ILP32
 	if (volsize - 1 > SPEC_MAXOFFSET_T)
 		return (EOVERFLOW);
+#endif
 #endif
 	return (0);
 }
@@ -509,7 +511,7 @@ zvol_create_minor(const char *name)
 	devpath = kmem_alloc(devpathlen, KM_SLEEP);
 	
 	/* Get full path to ZFS volume disk device */
-	(void) sprintf(devpath, "%s/%s", ZVOL_FULL_DEV_DIR, name);
+	(void) snprintf(devpath, devpathlen, "%s/%s", ZVOL_FULL_DEV_DIR, name);
 	
 	error = lookupname(devpath, UIO_SYSSPACE, NULL, &vp);
 	

@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4ll.c,v 1.1.1.7.6.1 2013/06/23 06:26:31 tls Exp $");
+ __RCSID("$NetBSD: ipv4ll.c,v 1.1.1.7.6.2 2014/08/19 23:46:43 tls Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -35,13 +35,14 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "arp.h"
 #include "common.h"
 #include "dhcp.h"
 #include "eloop.h"
+#include "if.h"
 #include "if-options.h"
 #include "ipv4ll.h"
-#include "net.h"
 
 static struct dhcp_message *
 ipv4ll_make_lease(uint32_t addr)
@@ -78,8 +79,7 @@ ipv4ll_find_lease(uint32_t old_addr)
 
 	for (;;) {
 		addr = htonl(LINKLOCAL_ADDR |
-		    (((uint32_t)abs((int)arc4random())
-			% 0xFD00) + 0x0100));
+		    (uint32_t)(abs((int)arc4random_uniform(0xFD00)) + 0x0100));
 		if (addr != old_addr &&
 		    IN_LINKLOCAL(ntohl(addr)))
 			break;
@@ -94,7 +94,7 @@ ipv4ll_start(void *arg)
 	struct dhcp_state *state = D_STATE(ifp);
 	uint32_t addr;
 
-	eloop_timeout_delete(NULL, ifp);
+	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 	state->probes = 0;
 	state->claims = 0;
 	if (state->addr.s_addr) {
@@ -137,9 +137,10 @@ ipv4ll_handle_failure(void *arg)
 	time_t up;
 
 	if (state->fail.s_addr == state->addr.s_addr) {
+		/* RFC 3927 Section 2.5 */
 		up = uptime();
 		if (state->defend + DEFEND_INTERVAL > up) {
-			syslog(LOG_DEBUG,
+			syslog(LOG_WARNING,
 			    "%s: IPv4LL %d second defence failed",
 			    ifp->name, DEFEND_INTERVAL);
 			dhcp_drop(ifp, "EXPIRE");
@@ -152,16 +153,20 @@ ipv4ll_handle_failure(void *arg)
 		}
 	}
 
-	dhcp_close(ifp);
 	free(state->offer);
 	state->offer = NULL;
-	eloop_timeout_delete(NULL, ifp);
+	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 	if (++state->conflicts > MAX_CONFLICTS) {
 		syslog(LOG_ERR, "%s: failed to acquire an IPv4LL address",
 		    ifp->name);
-		state->interval = RATE_LIMIT_INTERVAL / 2;
-		dhcp_discover(ifp);
+		if (ifp->options->options & DHCPCD_DHCP) {
+			state->interval = RATE_LIMIT_INTERVAL / 2;
+			dhcp_discover(ifp);
+		} else
+			eloop_timeout_add_sec(ifp->ctx->eloop,
+			    RATE_LIMIT_INTERVAL, ipv4ll_start, ifp);
 	} else {
-		eloop_timeout_add_sec(PROBE_WAIT, ipv4ll_start, ifp);
+		eloop_timeout_add_sec(ifp->ctx->eloop,
+		    PROBE_WAIT, ipv4ll_start, ifp);
 	}
 }

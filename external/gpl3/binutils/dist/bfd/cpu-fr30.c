@@ -35,5 +35,6 @@ const bfd_arch_info_type bfd_fr30_arch =
   TRUE,				/* the default ? */
   bfd_default_compatible,	/* architecture comparison fn */
   bfd_default_scan,		/* string to architecture convert fn */
+  bfd_arch_default_fill,	/* Default fill.  */
   NULL				/* next in list */
 };

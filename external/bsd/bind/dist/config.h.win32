@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -30,7 +30,7 @@
 /* Define as __inline if that's what the C compiler calls it.  */
 #define inline __inline
 
-/* Define to `unsigned' if <sys/types.h> doesn't define.  */
+/* Define to `unsigned int/__int64' if <sys/types.h> doesn't define.  */
 /* #undef size_t */
 
 /*
@@ -46,12 +46,25 @@
 /*
  * Use 32 bit time.
  */
+#ifndef _WIN64
 #define _USE_32BIT_TIME_T 1
+#endif
 
 /*
  * Minimum version is Windows XP
  */
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
+#endif
+#if _WIN32_WINNT < 0x0501
+#error Minimum Target environment is Windows XP and Windows Server 2003
+#endif
+#ifndef NTDDI_VERSION
+#define NTDDI_VERSION 0x05010100
+#endif
+#if NTDDI_VERSION < 0x05010100
+#error Minimum Target environment is Windows XP SP1 and Windows Server 2003
+#endif
 
 /* Define if you have the ANSI C header files.  */
 #define STDC_HEADERS 1
@@ -124,6 +137,11 @@
 /* Define if you have DH_generate_parameters(). */
 #define HAVE_DH_GENERATE_PARAMETERS
 
+/* Define if you have getpassphrase in the C library. */
+#define HAVE_GETPASSPHRASE
+
+char *getpassphrase(const char *);
+
 /*
  * Define to 1 if you want to use the DLZ "dlopen" driver
  * (which has the same name on windows even though it uses
@@ -176,15 +194,26 @@
 #define strdup _strdup
 #define sopen _sopen
 #define isascii __isascii
+#ifndef _WIN64
 #define stat _stat
 #define fstat _fstat
+#else
+#define stat _stat64
+#define fstat _fstat64
+#endif
 #define fileno _fileno
 #define unlink _unlink
 #define chdir _chdir
 #define mkdir _mkdir
+#define rmdir _rmdir
 #define getcwd _getcwd
 #define utime _utime
 #define utimbuf _utimbuf
+#ifndef _WIN64
+#define lseek _lseek
+#else
+#define lseek _lseeki64
+#endif
 
 /* #define EAFNOSUPPORT EINVAL */
 #define chmod _chmod
@@ -196,8 +225,16 @@
 typedef unsigned int    uid_t;          /* user id */
 typedef unsigned int    gid_t;          /* group id */
 typedef long pid_t;			/* PID */
+#ifndef _WIN64
 typedef int ssize_t;
 typedef long off_t;
+#else
+typedef __int64 ssize_t;
+#ifndef _AFX
+/* BINDInstall defines it with another type but doesn't use it */
+typedef __int64 off_t;
+#endif
+#endif
 
 /*
  * Set up the Version Information
@@ -237,29 +274,25 @@ typedef long off_t;
  * macro is used there.
  */
 
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 16384
+#endif
 #include <windows.h>
 
 /*
- * Windows doesn't use configure so just set "default" here.
+ * main() is hooked
  */
-#define CONFIGARGS "default"
+#define ISC_MAIN_HOOK 1
+
+/*
+ * Configure sensible arguments
+ */
+@CONFIGARGS@
 
 /*
  * Define if libxml2 is present
  */
-#define HAVE_LIBXML2 1
-
-/*
- * Define when building BIND9.  When building exportable versions
- * of libisc, libdns, etc, this must be removed.
- */
-#define BIND9 1
-
-/*
- * Define if PKCS11 is to be used.
- */
-/* #undef USE_PKCS11 */
+@HAVE_LIBXML2@
 
 /** define if struct addrinfo exists */
 #define HAVE_ADDRINFO
@@ -270,11 +303,106 @@ typedef long off_t;
 /** define if gai_strerror() exists */
 #define HAVE_GAISTRERROR
 
+/* return type of gai_strerror */
+#define IRS_GAISTRERROR_RETURN_T char *
+
+/* Define to the buffer length type used by getnameinfo(3). */
+#define IRS_GETNAMEINFO_BUFLEN_T DWORD
+
+/* Define to the flags type used by getnameinfo(3). */
+#define IRS_GETNAMEINFO_FLAGS_T int
+
+/* Define to enable the "filter-aaaa-on-v4" and "filter-aaaa-on-v6" options.
+   */
+@ALLOW_FILTER_AAAA@
+
+/* Define to enable "rrset-order fixed" syntax. */
+@DNS_RDATASET_FIXED@
+
+/* Define to 1 if you have the `EVP_sha256' function. */
+@HAVE_EVP_SHA256@
+
+/* Define to 1 if you have the `EVP_sha384' function. */
+@HAVE_EVP_SHA384@
+
+/* Define to 1 if you have the `EVP_sha512' function. */
+@HAVE_EVP_SHA512@
+
+/* Define if OpenSSL includes DSA support */
+@HAVE_OPENSSL_DSA@
+
+/* Define if OpenSSL includes ECDSA support */
+@HAVE_OPENSSL_ECDSA@
+
 /* Define if your OpenSSL version supports GOST. */
-#define HAVE_OPENSSL_GOST
+@HAVE_OPENSSL_GOST@
+
+/* Define if your PKCS11 provider supports ECDSA. */
+@HAVE_PKCS11_ECDSA@
+
+/* Define if your PKCS11 provider supports GOST. */
+@HAVE_PKCS11_GOST@
+
+/* Define if GOST private keys are encoded in ASN.1. */
+@PREFER_GOSTASN1@
+
+/* Define if your OpenSSL version supports EVP AES */
+@HAVE_OPENSSL_EVP_AES@
+
+/* Define if your OpenSSL version supports AES */
+@HAVE_OPENSSL_AES@
+
+/* Use AES for Source Identity Token generation */
+@AES_SIT@
+
+/* Use HMAC-SHA1 for Source Identity Token generation */
+@HMAC_SHA1_SIT@
+
+/* Use HMAC-SHA256 for Source Identity Token generation */
+@HMAC_SHA256_SIT@
+
+/* Define to 1 if you have the `readline' function. */
+@HAVE_READLINE@
+
+/* Build with GeoIP support */
+@HAVE_GEOIP@
+
+/* define if idnkit support is to be included. */
+@WITH_IDN@
+
+/* Build with GeoIP City IPv6 support */
+@HAVE_GEOIP_CITY_V6@
+
+/* Build with GeoIP Country IPv6 support */
+@HAVE_GEOIP_V6@
 
 /* Define to enable rpz-nsdname rules. */
-#define ENABLE_RPZ_NSDNAME
+@ENABLE_RPZ_NSDNAME@
 
 /* Define to enable rpz-nsip rules. */
-#define ENABLE_RPZ_NSIP
+@ENABLE_RPZ_NSIP@
+
+/* From enable developer */
+@ISC_LIST_CHECKINIT@
+
+/* Large system tuning */
+@TUNE_LARGE@
+
+/*
+ * Define to nothing if C supports flexible array members, and to 1 if it does
+ * not. That way, with a declaration like `struct s { int n; double
+ * d[FLEXIBLE_ARRAY_MEMBER]; };', the struct hack can be used with pre-C99
+ * compilers. When computing the size of such an object, don't use 'sizeof
+ * (struct s)' as it overestimates the size. Use 'offsetof (struct s, d)'
+ * instead. Don't use 'offsetof (struct s, d[0])', as this doesn't work with
+ * MSVC and with C++ compilers.
+ */
+#define FLEXIBLE_ARRAY_MEMBER /**/
+
+/* Avoid warnings with strlen() */
+#ifdef _WIN64
+#define strlen(x)	(unsigned int) strlen(x)
+#endif
+
+/* Get SRCID */
+#include "srcid.h"

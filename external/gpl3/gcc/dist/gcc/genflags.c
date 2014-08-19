@@ -1,8 +1,7 @@
 /* Generate from machine description:
    - some flags HAVE_... saying which simple standard instructions are
    available for this machine.
-   Copyright (C) 1987, 1991, 1995, 1998, 1999, 2000, 2003, 2004, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -28,6 +27,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "rtl.h"
 #include "obstack.h"
 #include "errors.h"
+#include "read-md.h"
 #include "gensupport.h"
 
 /* Obstack to remember insns with.  */
@@ -261,7 +261,7 @@ main (int argc, char **argv)
      direct calls to their generators in C code.  */
   insn_elision = 0;
 
-  if (init_md_reader_args (argc, argv) != SUCCESS_EXIT_CODE)
+  if (!init_rtx_reader_args (argc, argv))
     return (FATAL_EXIT_CODE);
 
   puts ("/* Generated automatically by the program `genflags'");

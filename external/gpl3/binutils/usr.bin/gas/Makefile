@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.4.12.2 2013/06/23 06:28:32 tls Exp $
+#	$NetBSD: Makefile,v 1.4.12.3 2014/08/19 23:53:03 tls Exp $
 
 .include <bsd.own.mk>
 
 TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
 
 .include "${.CURDIR}/../common/Makefile.inc"
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
 
 PROG=		as
 SRCS=		${G_OBJS:Nitbl-[pl]*:Nm68k-parse.o:.o=.c} \
 		${G_OBJS:Mitbl-parse.o:.o=.y} \
-		${G_OBJS:Mitbl-lex.o:.o=.l} \
+		${G_OBJS:Mitbl-lex-wrapper.o:S/-wrapper.o/.l/} \
 		${G_OBJS:Mm68k-parse.o:.o=.y}
 
 COPTS.obj-elf.c = -Wno-stack-protector
@@ -20,7 +20,7 @@ COPTS.symbols.c = -Wno-stack-protector
 COPTS.stabs.c = -Wno-stack-protector
 COPTS.macro.c = -Wno-stack-protector
 
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}
 CPPFLAGS+=	-I${DIST}/gas -I${DIST}/gas/config
 CPPFLAGS+=	-I${DIST}
 

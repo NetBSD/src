@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.325.2.3 2013/06/23 06:26:21 tls Exp $
+#	$NetBSD: BRANCHES,v 1.325.2.4 2014/08/19 23:45:49 tls Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -232,6 +232,17 @@ Start Date:	15 Feb 2012
 End Date:
 Base Tag:	netbsd-6-base
 Maintainer:	6.0 Release Engineering <releng-6@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:
+		Commits restricted to Release Engineering.
+
+Branch:		netbsd-7
+Description:	The NetBSD 7 release branch
+Status:		Active
+Start Date:	11 Aug 2014
+End Date:
+Base Tag:	netbsd-7-base
+Maintainer:	7.0 Release Engineering <releng-7@NetBSD.org>
 Scope:		Entire tree. (src + xsrc)
 Notes:
 		Commits restricted to Release Engineering.
@@ -538,6 +549,21 @@ Scope:		pkgsrc, basesrc/usr.sbin/pkg_install
 Notes:		A more flexible infrastructure for third-party packages by
 		allowing multiple conflicting packages and versions to co-exist
 		within the same tree
+
+Branch:		rmind-smpnet
+Description:	MP safe network stack (milestone 1): IPv4, UDP and ICMP
+Status:		Active
+Start Date:	17 July 2013
+End Date:	
+Base Tag:	rmind-smpnet-base
+Maintainer:	Mindaugas Rasiukevicius <rmind@netbsd.org>
+Scope:		Kernel: src/sys (src/common is tagged but not branched)
+Notes:		Goals:
+
+		- Improve the abstraction of PCB and other interfaces.
+		- Add PCB and route cache locking, adjust socket locking.
+		- Rework IPv4, UDP and ICMP paths to be MP safe.
+		- Switch UDP sockets to a separate lock, test and benchmark.
 
 Branch:		rpaulo-netinet-merge-pcb
 Description:	merge in6pcb with inpcb

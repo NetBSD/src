@@ -1,6 +1,6 @@
-/*	$NetBSD: constraint.c,v 1.1.1.3 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: constraint.c,v 1.1.1.3.12.1 2014/08/19 23:52:03 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/constraint.c,v 1.2.2.17 2008/11/10 18:24:27 quanah Exp */
+/* $OpenLDAP$ */
 /* constraint.c - Overlay to constrain attributes to certain values */
 /* 
  * Copyright 2003-2004 Hewlett-Packard Company
@@ -147,6 +147,8 @@ constraint_cf_gen( ConfigArgs *c )
 				char *tstr = NULL;
 				int quotes = 0;
 				int j;
+				size_t val;
+				char val_buf[SLAP_TEXT_BUFLEN] = { '\0' };
 
 				bv.bv_len = STRLENOF("  ");
 				for (j = 0; cp->ap[j]; j++) {
@@ -158,6 +160,7 @@ constraint_cf_gen( ConfigArgs *c )
 
 				if (cp->re) {
 					tstr = REGEX_STR;
+					quotes = 1;
 				} else if (cp->lud) {
 					tstr = URI_STR;
 					quotes = 1;
@@ -166,8 +169,10 @@ constraint_cf_gen( ConfigArgs *c )
 					quotes = 1;
 				} else if (cp->size) {
 					tstr = SIZE_STR;
+					val = cp->size;
 				} else if (cp->count) {
 					tstr = COUNT_STR;
+					val = cp->count;
 				}
 
 				bv.bv_len += strlen(tstr);
@@ -175,6 +180,15 @@ constraint_cf_gen( ConfigArgs *c )
 
 				if (cp->restrict_lud != NULL) {
 					bv.bv_len += cp->restrict_val.bv_len + STRLENOF(" restrict=\"\"");
+				}
+
+				if (cp->count || cp->size) {
+					int len = snprintf(val_buf, sizeof(val_buf), "%zd", val);
+					if (len <= 0) {
+						/* error */
+						return -1;
+					}
+					bv.bv_len += len;
 				}
 
 				s = bv.bv_val = ch_malloc(bv.bv_len + 1);
@@ -187,9 +201,13 @@ constraint_cf_gen( ConfigArgs *c )
 				*s++ = ' ';
 				s = lutil_strcopy( s, tstr );
 				*s++ = ' ';
-				if ( quotes ) *s++ = '"';
-				s = lutil_strncopy( s, cp->val.bv_val, cp->val.bv_len );
-				if ( quotes ) *s++ = '"';
+				if (cp->count || cp->size) {
+					s = lutil_strcopy( s, val_buf );
+				} else {
+					if ( quotes ) *s++ = '"';
+					s = lutil_strncopy( s, cp->val.bv_val, cp->val.bv_len );
+					if ( quotes ) *s++ = '"';
+				}
 				if (cp->restrict_lud != NULL) {
 					s = lutil_strcopy( s, " restrict=\"" );
 					s = lutil_strncopy( s, cp->restrict_val.bv_val, cp->restrict_val.bv_len );
@@ -473,7 +491,7 @@ constraint_cf_gen( ConfigArgs *c )
 							}
 						}
 
-						ber_str2bv(c->argv[argidx], 0, 1, &ap.restrict_val);
+						ber_str2bv(c->argv[argidx] + STRLENOF("restrict="), 0, 1, &ap.restrict_val);
 
 					} else {
 						/* cleanup */
@@ -543,7 +561,7 @@ constraint_uri_cb( Operation *op, SlapReply *rs )
 }
 
 static int
-constraint_violation( constraint *c, struct berval *bv, Operation *op, SlapReply *rs)
+constraint_violation( constraint *c, struct berval *bv, Operation *op )
 {
 	if ((!c) || (!bv)) return LDAP_SUCCESS;
 	
@@ -558,18 +576,12 @@ constraint_violation( constraint *c, struct berval *bv, Operation *op, SlapReply
 		Operation nop = *op;
 		slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
 		slap_callback cb;
-		SlapReply nrs = { REP_RESULT };
 		int i;
-		int found;
+		int found = 0;
 		int rc;
 		size_t len;
 		struct berval filterstr;
 		char *ptr;
-
-		found = 0;
-
-		nrs.sr_entry = NULL;
-		nrs.sr_nentries = 0;
 
 		cb.sc_next = NULL;
 		cb.sc_response = constraint_uri_cb;
@@ -647,6 +659,8 @@ constraint_violation( constraint *c, struct berval *bv, Operation *op, SlapReply
 			rc = LDAP_OTHER;
 
 		} else {
+			SlapReply nrs = { REP_RESULT };
+
 			Debug(LDAP_DEBUG_TRACE, 
 				"==> constraint_violation uri filter = %s\n",
 				filterstr.bv_val, 0, 0);
@@ -665,7 +679,6 @@ constraint_violation( constraint *c, struct berval *bv, Operation *op, SlapReply
 
 		if (!found)
 			return LDAP_CONSTRAINT_VIOLATION; /* constraint violation */
-			
 	}
 
 	return LDAP_SUCCESS;
@@ -760,7 +773,7 @@ constraint_add( Operation *op, SlapReply *rs )
 	int rc;
 	char *msg = NULL;
 
-	if (get_relax(op)) {
+	if (get_relax(op) || SLAPD_SYNC_IS_SYNCCONN( op->o_connid )) {
 		return SLAP_CB_CONTINUE;
 	}
 
@@ -798,7 +811,7 @@ constraint_add( Operation *op, SlapReply *rs )
 			}
 
 			for ( i = 0; b[i].bv_val; i++ ) {
-				rc = constraint_violation( cp, &b[i], op, rs );
+				rc = constraint_violation( cp, &b[i], op );
 				if ( rc ) {
 					goto add_violation;
 				}
@@ -827,6 +840,64 @@ add_violation:
 
 
 static int
+constraint_check_count_violation( Modifications *m, Entry *target_entry, constraint *cp )
+{
+	BerVarray b = NULL;
+	unsigned ce = 0;
+	unsigned ca;
+	int j;
+
+	for ( j = 0; cp->ap[j]; j++ ) {
+		/* Get this attribute count */
+		if ( target_entry )
+			ce = constraint_count_attr( target_entry, cp->ap[j] );
+
+		for( ; m; m = m->sml_next ) {
+			if ( cp->ap[j] == m->sml_desc ) {
+				ca = m->sml_numvals;
+				switch ( m->sml_op ) {
+				case LDAP_MOD_DELETE:
+				case SLAP_MOD_SOFTDEL:
+					if ( !ca || ca > ce ) {
+						ce = 0;
+					} else {
+						/* No need to check for values' validity. Invalid values
+						 * cause the whole transaction to die anyway. */
+						ce -= ca;
+					}
+					break;
+
+				case LDAP_MOD_ADD:
+				case SLAP_MOD_SOFTADD:
+					ce += ca;
+					break;
+
+				case LDAP_MOD_REPLACE:
+					ce = ca;
+					break;
+
+#if 0
+				/* TODO */
+				case handle SLAP_MOD_ADD_IF_NOT_PRESENT:
+#endif
+
+				default:
+					/* impossible! assert? */
+					return 1;
+				}
+
+				Debug(LDAP_DEBUG_TRACE,
+					"==> constraint_check_count_violation ce = %u, "
+					"ca = %u, cp->count = %lu\n",
+					ce, ca, (unsigned long) cp->count);
+			}
+		}
+	}
+
+	return ( ce > cp->count );
+}
+
+static int
 constraint_update( Operation *op, SlapReply *rs )
 {
 	slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
@@ -839,8 +910,9 @@ constraint_update( Operation *op, SlapReply *rs )
 	struct berval rsv = BER_BVC("modify breaks constraint");
 	int rc;
 	char *msg = NULL;
+	int is_v;
 
-	if (get_relax(op)) {
+	if (get_relax(op) || SLAPD_SYNC_IS_SYNCCONN( op->o_connid )) {
 		return SLAP_CB_CONTINUE;
 	}
 
@@ -866,13 +938,17 @@ constraint_update( Operation *op, SlapReply *rs )
 		return(rs->sr_err);
 	}
 
+	op->o_bd = on->on_info->oi_origdb;
+	rc = be_entry_get_rw( op, &op->o_req_ndn, NULL, NULL, 0, &target_entry );
+	op->o_bd = be;
+
+	/* let the backend send the error */
+	if ( target_entry == NULL )
+		return SLAP_CB_CONTINUE;
+
 	/* Do we need to count attributes? */
 	for(cp = c; cp; cp = cp->ap_next) {
-		if (cp->count != 0 || cp->set || cp->restrict_lud != 0) {
-			op->o_bd = on->on_info->oi_origdb;
-			rc = be_entry_get_rw( op, &op->o_req_ndn, NULL, NULL, 0, &target_entry );
-			op->o_bd = be;
-
+		if (cp->count != 0) {
 			if (rc != 0 || target_entry == NULL) {
 				Debug(LDAP_DEBUG_TRACE, 
 					"==> constraint_update rc = %d DN=\"%s\"%s\n",
@@ -882,7 +958,20 @@ constraint_update( Operation *op, SlapReply *rs )
 					rc = LDAP_CONSTRAINT_VIOLATION;
 				goto mod_violation;
 			}
-			break;
+
+			if (cp->restrict_lud && constraint_check_restrict(op, cp, target_entry) == 0) {
+				continue;
+			}
+
+			is_v = constraint_check_count_violation(m, target_entry, cp);
+
+			Debug(LDAP_DEBUG_TRACE,
+				"==> constraint_update is_v: %d\n", is_v, 0, 0);
+
+			if (is_v) {
+				rc = LDAP_CONSTRAINT_VIOLATION;
+				goto mod_violation;
+			}
 		}
 	}
 
@@ -901,10 +990,6 @@ constraint_update( Operation *op, SlapReply *rs )
 		if ((( b = m->sml_values ) == NULL ) || (b[0].bv_val == NULL))
 			continue;
 
-		/* Get this attribute count, if needed */
-		if (target_entry)
-			ce = constraint_count_attr(target_entry, m->sml_desc);
-
 		for(cp = c; cp; cp = cp->ap_next) {
 			int j;
 			for (j = 0; cp->ap[j]; j++) {
@@ -918,40 +1003,12 @@ constraint_update( Operation *op, SlapReply *rs )
 				continue;
 			}
 
-			if (cp->count != 0) {
-				unsigned ca;
-
-				if (m->sml_op == LDAP_MOD_DELETE)
-					ce = 0;
-
-				for (ca = 0; b[ca].bv_val; ++ca);
-
-				Debug(LDAP_DEBUG_TRACE, 
-					"==> constraint_update ce = %u, "
-					"ca = %u, cp->count = %lu\n",
-					ce, ca, (unsigned long) cp->count);
-
-				if (m->sml_op == LDAP_MOD_ADD) {
-					if (ca + ce > cp->count) {
-						rc = LDAP_CONSTRAINT_VIOLATION;
-						goto mod_violation;
-					}
-				}
-				if (m->sml_op == LDAP_MOD_REPLACE) {
-					if (ca > cp->count) {
-						rc = LDAP_CONSTRAINT_VIOLATION;
-						goto mod_violation;
-					}
-					ce = ca;
-				}
-			} 
-
 			/* DELETE are to be ignored beyond this point */
 			if (( m->sml_op & LDAP_MOD_OP ) == LDAP_MOD_DELETE)
 				continue;
 
 			for ( i = 0; b[i].bv_val; i++ ) {
-				rc = constraint_violation( cp, &b[i], op, rs );
+				rc = constraint_violation( cp, &b[i], op );
 				if ( rc ) {
 					goto mod_violation;
 				}
@@ -1027,6 +1084,29 @@ constraint_update( Operation *op, SlapReply *rs )
  							if ( err == LDAP_TYPE_OR_VALUE_EXISTS ) {
  								err = LDAP_SUCCESS;
  							}
+							break;
+
+						case SLAP_MOD_SOFTDEL:
+ 							mod->sm_op = LDAP_MOD_ADD;
+							err = modify_delete_values( target_entry_copy,
+								mod, get_permissiveModify(op),
+								&text, textbuf, textlen );
+ 							mod->sm_op = SLAP_MOD_SOFTDEL;
+ 							if ( err == LDAP_NO_SUCH_ATTRIBUTE ) {
+ 								err = LDAP_SUCCESS;
+ 							}
+							break;
+
+						case SLAP_MOD_ADD_IF_NOT_PRESENT:
+							if ( attr_find( target_entry_copy->e_attrs, mod->sm_desc ) ) {
+								err = LDAP_SUCCESS;
+								break;
+							}
+ 							mod->sm_op = LDAP_MOD_ADD;
+							err = modify_add_values( target_entry_copy,
+								mod, get_permissiveModify(op),
+								&text, textbuf, textlen );
+ 							mod->sm_op = SLAP_MOD_ADD_IF_NOT_PRESENT;
 							break;
 
 						default:

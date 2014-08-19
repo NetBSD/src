@@ -1,7 +1,7 @@
 /* Print Motorola 68k instructions.
    Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+   2012  Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -654,7 +654,7 @@ print_insn_arg (const char *d,
       {
         static char *const cacheFieldName[] = { "nc", "dc", "ic", "bc" };
         FETCH_ARG (2, val);
-	(*info->fprintf_func) (info->stream, cacheFieldName[val]);
+	(*info->fprintf_func) (info->stream, "%s", cacheFieldName[val]);
         break;
       }
 
@@ -792,7 +792,7 @@ print_insn_arg (const char *d,
 	  static char *const scalefactor_name[] = { "<<", ">>" };
 
 	  FETCH_ARG (1, val);
-	  (*info->fprintf_func) (info->stream, scalefactor_name[val]);
+	  (*info->fprintf_func) (info->stream, "%s", scalefactor_name[val]);
 	}
       else
 	{

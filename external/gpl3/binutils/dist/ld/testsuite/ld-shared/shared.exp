@@ -1,6 +1,6 @@
 # Expect script for ld-shared tests
 #   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-#   2004, 2005, 2007, 2008, 2009, 2010
+#   2004, 2005, 2007, 2008, 2009, 2010, 2012
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -39,6 +39,7 @@ if { ![istarget hppa*64*-*-hpux*] \
      && ![istarget i?86-*-elf*] \
      && ![istarget i?86-*-linux*] \
      && ![istarget i?86-*-gnu*] \
+     && ![istarget *-*-nacl*] \
      && ![istarget ia64-*-elf*] \
      && ![istarget ia64-*-linux*] \
      && ![istarget m68k-*-linux*] \
@@ -56,6 +57,7 @@ if { ![istarget hppa*64*-*-hpux*] \
      && ![istarget rs6000*-*-aix*] \
      && ![istarget powerpc*-*-aix*] \
      && ![istarget s390*-*-linux*] \
+     && ![istarget aarch64*-*-linux*] \
      && ![istarget x86_64-*-linux*] } {
     return
 }
@@ -101,13 +103,13 @@ if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 
 if [istarget arm*-*-linux*] {
     # On ARM section anchors can change the symbol pre-emptability for
-    # non-PIC shared libraries, causing these tests to fail.  Turn section 
+    # non-PIC shared libraries, causing these tests to fail.  Turn section
     # anchors off.
     set SHCFLAG "-fno-section-anchors"
 
-    # On targets that have MOVW the compiler will emit relocations which 
+    # On targets that have MOVW the compiler will emit relocations which
     # the linker doesn't support when compiling -shared without -fpic.  The
-    # test to find out whether we want to XFAIL the non-PIC tests requires 
+    # test to find out whether we want to XFAIL the non-PIC tests requires
     # a compile - so we pre-calculate it here.  We also note that this can
     # only affect arm*-*-*eabi targets as the old ABI doesn't support v7.
     if [istarget arm*-*-*eabi] {
@@ -181,7 +183,9 @@ proc shared_test { progname testname main sh1 sh2 dat args } {
     pass "$testname"
 }
 
-if [istarget mips*-*-*] {
+# Old version of GCC for MIPS default to enabling -fpic
+# and get confused if it is used on the command line.
+if { [istarget mips*-*-*] && ! [at_least_gcc_version 4 3] } then {
     set picflag ""
 } else {
     # Unfortunately, the gcc argument is -fpic and the cc argument is
@@ -234,7 +238,10 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	if { [istarget sparc*-*-linux*] && [is_elf64 $tmpdir/mainnp.o] } {
 	    setup_xfail "sparc*-*-linux*"
 	}
-	setup_xfail "x86_64-*-linux*"
+	if { [is_elf64 $tmpdir/mainnp.o] } {
+	    setup_xfail "x86_64-*-linux*"
+	}
+	setup_xfail "x86_64-*-linux-gnux32"
 	setup_xfail "s390x-*-linux*"
 	if [ string match $shared_needs_pic "yes" ] {
 	    setup_xfail "arm*-*-linux*"
@@ -257,7 +264,10 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	if { [istarget sparc*-*-linux*] && [is_elf64 $tmpdir/mainnp.o] } {
 	    setup_xfail "sparc*-*-linux*"
 	}
-	setup_xfail "x86_64-*-linux*"
+	if { [is_elf64 $tmpdir/mainnp.o] } {
+	    setup_xfail "x86_64-*-linux*"
+	}
+	setup_xfail "x86_64-*-linux-gnux32"
 	setup_xfail "s390x-*-linux*"
 	if [ string match $shared_needs_pic "yes" ] {
 	    setup_xfail "arm*-*-linux*"
@@ -269,7 +279,7 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 
     # Now compile the code using -fpic.
 
-    if { ![ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/sh1.c $tmpdir/sh1p.o] 
+    if { ![ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/sh1.c $tmpdir/sh1p.o]
 	 || ![ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/sh2.c $tmpdir/sh2p.o] } {
 	unresolved "shared"
     } else {
@@ -282,7 +292,7 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	    shared_test shp "shared" mainnp.o sh1p.o sh2p.o shared
 	    ld_compile "$CC $CFLAGS -DSYMBOLIC_TEST -DXCOFF_TEST $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o
 	    ld_compile "$CC $CFLAGS -DSYMBOLIC_TEST -DXCOFF_TEST $SHCFLAG $picflag" $srcdir/$subdir/sh1.c $tmpdir/sh1p.o
-	    shared_test shp "shared -Bsymbolic" mainnp.o sh1p.o sh2p.o symbolic "-Bsymbolic" 
+	    shared_test shp "shared -Bsymbolic" mainnp.o sh1p.o sh2p.o symbolic "-Bsymbolic"
 	    ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o
 	    ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/sh1.c $tmpdir/sh1p.o
 	} }
@@ -310,7 +320,10 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/main.c $tmpdir/m
 	    if { [istarget sparc*-*-linux*] && [is_elf64 $tmpdir/mainp.o] } {
 		setup_xfail "sparc*-*-linux*"
 	    }
-	    setup_xfail "x86_64-*-linux*"
+	    if { [is_elf64 $tmpdir/mainp.o] } {
+		setup_xfail "x86_64-*-linux*"
+	    }
+	    setup_xfail "x86_64-*-linux-gnux32"
 	    setup_xfail "s390x-*-linux*"
 	    if [ string match $shared_needs_pic "yes" ] {
 		setup_xfail "arm*-*-linux*"

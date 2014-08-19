@@ -1,7 +1,7 @@
-/*	$NetBSD: ntgroups.c,v 1.3 2012/06/05 00:42:53 christos Exp $	*/
+/*	$NetBSD: ntgroups.c,v 1.3.2.1 2014/08/19 23:46:34 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -64,7 +64,6 @@ isc_ntsecurity_getaccountgroups(char *username, char **GroupList,
 	DWORD dwEntriesRead = 0;
 	DWORD dwTotalEntries = 0;
 	NET_API_STATUS nStatus;
-	DWORD dwTotalCount = 0;
 	size_t retlen;
 	wchar_t user[MAX_NAME_LENGTH];
 
@@ -99,7 +98,6 @@ isc_ntsecurity_getaccountgroups(char *username, char **GroupList,
 			dwEntriesRead = 0;
 	}
 
-	dwTotalCount = 0;
 	if (pBuf != NULL) {
 		pTmpLBuf = pBuf;
 		/*

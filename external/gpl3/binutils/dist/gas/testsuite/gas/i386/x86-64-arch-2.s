@@ -46,15 +46,17 @@ movbe   (%rcx),%ebx
 invept  (%rcx),%rbx
 # RDTSCP
 rdtscp
-# 3DNow
-pmulhrw %mm4,%mm3
-# 3DNow Extensions
-pswapd %mm4,%mm3
+# 3DNow or PRFCHW
+prefetchw   0x1000(,%rsi,2)
 # SSE4a
 insertq %xmm2,%xmm1
 # SVME
 vmload
-# ABM
+# ABM/LZCNT
 lzcnt %ecx,%ebx
 # PadLock
 xstorerng
+# BMI
+blsr %ecx,%ebx
+# TBM
+blcfill %ecx,%ebx

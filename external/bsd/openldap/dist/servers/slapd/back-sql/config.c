@@ -1,9 +1,9 @@
-/*	$NetBSD: config.c,v 1.1.1.3 2010/12/12 15:23:24 adam Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.3.12.1 2014/08/19 23:52:03 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/config.c,v 1.32.2.8 2010/04/13 20:23:42 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -30,7 +30,9 @@
 #include <sys/types.h>
 
 #include "slap.h"
+#include "config.h"
 #include "ldif.h"
+#include "lutil.h"
 #include "proto-sql.h"
 
 static int
@@ -44,517 +46,462 @@ read_baseObject(
 	BackendDB	*be,
 	const char	*fname );
 
-int
-backsql_db_config(
-	BackendDB	*be,
-	const char	*fname,
-	int		lineno,
-	int		argc,
-	char		**argv )
+static ConfigDriver sql_cf_gen;
+
+enum {
+	BSQL_CONCAT_PATT = 1,
+	BSQL_CREATE_NEEDS_SEL,
+	BSQL_UPPER_NEEDS_CAST,
+	BSQL_HAS_LDAPINFO_DN_RU,
+	BSQL_FAIL_IF_NO_MAPPING,
+	BSQL_ALLOW_ORPHANS,
+	BSQL_BASE_OBJECT,
+	BSQL_LAYER,
+	BSQL_SUBTREE_SHORTCUT,
+	BSQL_FETCH_ALL_ATTRS,
+	BSQL_FETCH_ATTRS,
+	BSQL_CHECK_SCHEMA,
+	BSQL_ALIASING_KEYWORD,
+	BSQL_AUTOCOMMIT
+};
+
+static ConfigTable sqlcfg[] = {
+	{ "dbhost", "hostname", 2, 2, 0, ARG_STRING|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_dbhost),
+		"( OLcfgDbAt:6.1 NAME 'olcDbHost' "
+			"DESC 'Hostname of SQL server' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "dbname", "name", 2, 2, 0, ARG_STRING|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_dbname),
+		"( OLcfgDbAt:6.2 NAME 'olcDbName' "
+			"DESC 'Name of SQL database' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "dbuser", "username", 2, 2, 0, ARG_STRING|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_dbuser),
+		"( OLcfgDbAt:6.3 NAME 'olcDbUser' "
+			"DESC 'Username for SQL session' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "dbpasswd", "password", 2, 2, 0, ARG_STRING|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_dbpasswd),
+		"( OLcfgDbAt:6.4 NAME 'olcDbPass' "
+			"DESC 'Password for SQL session' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "concat_pattern", "pattern", 2, 2, 0,
+		ARG_STRING|ARG_MAGIC|BSQL_CONCAT_PATT, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.20 NAME 'olcSqlConcatPattern' "
+			"DESC 'Pattern used to concatenate strings' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "subtree_cond", "SQL expression", 2, 0, 0, ARG_BERVAL|ARG_QUOTE|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_subtree_cond),
+		"( OLcfgDbAt:6.21 NAME 'olcSqlSubtreeCond' "
+			"DESC 'Where-clause template for a subtree search condition' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "children_cond", "SQL expression", 2, 0, 0, ARG_BERVAL|ARG_QUOTE|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_children_cond),
+		"( OLcfgDbAt:6.22 NAME 'olcSqlChildrenCond' "
+			"DESC 'Where-clause template for a children search condition' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "dn_match_cond", "SQL expression", 2, 0, 0, ARG_BERVAL|ARG_QUOTE|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_dn_match_cond),
+		"( OLcfgDbAt:6.23 NAME 'olcSqlDnMatchCond' "
+			"DESC 'Where-clause template for a DN match search condition' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "oc_query", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_oc_query),
+		"( OLcfgDbAt:6.24 NAME 'olcSqlOcQuery' "
+			"DESC 'Query used to collect objectClass mapping data' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "at_query", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_at_query),
+		"( OLcfgDbAt:6.25 NAME 'olcSqlAtQuery' "
+			"DESC 'Query used to collect attributeType mapping data' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "insentry_stmt", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_insentry_stmt),
+		"( OLcfgDbAt:6.26 NAME 'olcSqlInsEntryStmt' "
+			"DESC 'Statement used to insert a new entry' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "create_needs_select", "yes|no", 2, 2, 0,
+		ARG_ON_OFF|ARG_MAGIC|BSQL_CREATE_NEEDS_SEL, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.27 NAME 'olcSqlCreateNeedsSelect' "
+			"DESC 'Whether entry creation needs a subsequent select' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "upper_func", "SQL function name", 2, 2, 0, ARG_BERVAL|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_upper_func),
+		"( OLcfgDbAt:6.28 NAME 'olcSqlUpperFunc' "
+			"DESC 'Function that converts a value to uppercase' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "upper_needs_cast", "yes|no", 2, 2, 0,
+		ARG_ON_OFF|ARG_MAGIC|BSQL_UPPER_NEEDS_CAST, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.29 NAME 'olcSqlUpperNeedsCast' "
+			"DESC 'Whether olcSqlUpperFunc needs an explicit cast' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "strcast_func", "SQL function name", 2, 2, 0, ARG_BERVAL|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_strcast_func),
+		"( OLcfgDbAt:6.30 NAME 'olcSqlStrcastFunc' "
+			"DESC 'Function that converts a value to a string' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "delentry_stmt", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_delentry_stmt),
+		"( OLcfgDbAt:6.31 NAME 'olcSqlDelEntryStmt' "
+			"DESC 'Statement used to delete an existing entry' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "renentry_stmt", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_renentry_stmt),
+		"( OLcfgDbAt:6.32 NAME 'olcSqlRenEntryStmt' "
+			"DESC 'Statement used to rename an entry' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "delobjclasses_stmt", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_delobjclasses_stmt),
+		"( OLcfgDbAt:6.33 NAME 'olcSqlDelObjclassesStmt' "
+			"DESC 'Statement used to delete the ID of an entry' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "has_ldapinfo_dn_ru", "yes|no", 2, 2, 0,
+		ARG_ON_OFF|ARG_MAGIC|BSQL_HAS_LDAPINFO_DN_RU, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.34 NAME 'olcSqlHasLDAPinfoDnRu' "
+			"DESC 'Whether the dn_ru column is present' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "fail_if_no_mapping", "yes|no", 2, 2, 0,
+		ARG_ON_OFF|ARG_MAGIC|BSQL_FAIL_IF_NO_MAPPING, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.35 NAME 'olcSqlFailIfNoMapping' "
+			"DESC 'Whether to fail on unknown attribute mappings' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "allow_orphans", "yes|no", 2, 2, 0,
+		ARG_ON_OFF|ARG_MAGIC|BSQL_ALLOW_ORPHANS, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.36 NAME 'olcSqlAllowOrphans' "
+			"DESC 'Whether to allow adding entries with no parent' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "baseobject", "[file]", 1, 2, 0,
+		ARG_STRING|ARG_MAGIC|BSQL_BASE_OBJECT, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.37 NAME 'olcSqlBaseObject' "
+			"DESC 'Manage an in-memory baseObject entry' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "sqllayer", "name", 2, 0, 0,
+		ARG_MAGIC|BSQL_LAYER, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.38 NAME 'olcSqlLayer' "
+			"DESC 'Helper used to map DNs between LDAP and SQL' "
+			"SYNTAX OMsDirectoryString )", NULL, NULL },
+	{ "use_subtree_shortcut", "yes|no", 2, 2, 0,
+		ARG_ON_OFF|ARG_MAGIC|BSQL_SUBTREE_SHORTCUT, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.39 NAME 'olcSqlUseSubtreeShortcut' "
+			"DESC 'Collect all entries when searchBase is DB suffix' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "fetch_all_attrs", "yes|no", 2, 2, 0,
+		ARG_ON_OFF|ARG_MAGIC|BSQL_FETCH_ALL_ATTRS, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.40 NAME 'olcSqlFetchAllAttrs' "
+			"DESC 'Require all attributes to always be loaded' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "fetch_attrs", "attrlist", 2, 0, 0,
+		ARG_MAGIC|BSQL_FETCH_ATTRS, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.41 NAME 'olcSqlFetchAttrs' "
+			"DESC 'Set of attributes to always fetch' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "check_schema", "yes|no", 2, 2, 0,
+		ARG_ON_OFF|ARG_MAGIC|BSQL_CHECK_SCHEMA, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.42 NAME 'olcSqlCheckSchema' "
+			"DESC 'Check schema after modifications' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "aliasing_keyword", "string", 2, 2, 0,
+		ARG_STRING|ARG_MAGIC|BSQL_ALIASING_KEYWORD, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.43 NAME 'olcSqlAliasingKeyword' "
+			"DESC 'The aliasing keyword' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "aliasing_quote", "string", 2, 2, 0, ARG_BERVAL|ARG_OFFSET,
+		(void *)offsetof(struct backsql_info, sql_aliasing_quote),
+		"( OLcfgDbAt:6.44 NAME 'olcSqlAliasingQuote' "
+			"DESC 'Quoting char of the aliasing keyword' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "autocommit", "yes|no", 2, 2, 0,
+		ARG_ON_OFF|ARG_MAGIC|SQL_AUTOCOMMIT, (void *)sql_cf_gen,
+		"( OLcfgDbAt:6.45 NAME 'olcSqlAutocommit' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ NULL, NULL, 0, 0, 0, ARG_IGNORED,
+		NULL, NULL, NULL, NULL }
+};
+
+static ConfigOCs sqlocs[] = {
+	{
+		"( OLcfgDbOc:6.1 "
+		"NAME 'olcSqlConfig' "
+		"DESC 'SQL backend configuration' "
+		"SUP olcDatabaseConfig "
+		"MUST olcDbName "
+		"MAY ( olcDbHost $ olcDbUser $ olcDbPass $ olcSqlConcatPattern $ "
+		"olcSqlSubtreeCond $ olcsqlChildrenCond $ olcSqlDnMatchCond $ "
+		"olcSqlOcQuery $ olcSqlAtQuery $ olcSqlInsEntryStmt $ "
+		"olcSqlCreateNeedsSelect $ olcSqlUpperFunc $ olcSqlUpperNeedsCast $ "
+		"olcSqlStrCastFunc $ olcSqlDelEntryStmt $ olcSqlRenEntryStmt $ "
+		"olcSqlDelObjClassesStmt $ olcSqlHasLDAPInfoDnRu $ "
+		"olcSqlFailIfNoMapping $ olcSqlAllowOrphans $ olcSqlBaseObject $ "
+		"olcSqlLayer $ olcSqlUseSubtreeShortcut $ olcSqlFetchAllAttrs $ "
+		"olcSqlFetchAttrs $ olcSqlCheckSchema $ olcSqlAliasingKeyword $ "
+		"olcSqlAliasingQuote $ olcSqlAutocommit ) )",
+			Cft_Database, sqlcfg },
+	{ NULL, Cft_Abstract, NULL }
+};
+
+static int
+sql_cf_gen( ConfigArgs *c )
 {
-	backsql_info 	*bi = (backsql_info *)be->be_private;
+	backsql_info 	*bi = (backsql_info *)c->be->be_private;
+	int rc = 0;
 
-	Debug( LDAP_DEBUG_TRACE, "==>backsql_db_config()\n", 0, 0, 0 );
-	assert( bi != NULL );
-  
-	if ( !strcasecmp( argv[ 0 ], "dbhost" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"missing hostname in \"dbhost\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-	    	}
-		bi->sql_dbhost = ch_strdup( argv[ 1 ] );
-		Debug( LDAP_DEBUG_TRACE,
-			"<==backsql_db_config(): hostname=%s\n",
-			bi->sql_dbhost, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "dbuser" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"missing username in \"dbuser\" directive\n",
-				fname, lineno, 0 );
-			return 1;
+	if ( c->op == SLAP_CONFIG_EMIT ) {
+		switch( c->type ) {
+		case BSQL_CONCAT_PATT:
+			if ( bi->sql_concat_patt ) {
+				c->value_string = ch_strdup( bi->sql_concat_patt );
+			} else {
+				rc = 1;
+			}
+			break;
+		case BSQL_CREATE_NEEDS_SEL:
+			if ( bi->sql_flags & BSQLF_CREATE_NEEDS_SELECT )
+				c->value_int = 1;
+			break;
+		case BSQL_UPPER_NEEDS_CAST:
+			if ( bi->sql_flags & BSQLF_UPPER_NEEDS_CAST )
+				c->value_int = 1;
+			break;
+		case BSQL_HAS_LDAPINFO_DN_RU:
+			if ( !(bi->sql_flags & BSQLF_DONTCHECK_LDAPINFO_DN_RU) )
+				return 1;
+			if ( bi->sql_flags & BSQLF_HAS_LDAPINFO_DN_RU )
+				c->value_int = 1;
+			break;
+		case BSQL_FAIL_IF_NO_MAPPING:
+			if ( bi->sql_flags & BSQLF_FAIL_IF_NO_MAPPING )
+				c->value_int = 1;
+			break;
+		case BSQL_ALLOW_ORPHANS:
+			if ( bi->sql_flags & BSQLF_ALLOW_ORPHANS )
+				c->value_int = 1;
+			break;
+		case BSQL_SUBTREE_SHORTCUT:
+			if ( bi->sql_flags & BSQLF_USE_SUBTREE_SHORTCUT )
+				c->value_int = 1;
+			break;
+		case BSQL_FETCH_ALL_ATTRS:
+			if ( bi->sql_flags & BSQLF_FETCH_ALL_ATTRS )
+				c->value_int = 1;
+			break;
+		case BSQL_CHECK_SCHEMA:
+			if ( bi->sql_flags & BSQLF_CHECK_SCHEMA )
+				c->value_int = 1;
+			break;
+		case BSQL_AUTOCOMMIT:
+			if ( bi->sql_flags & BSQLF_AUTOCOMMIT_ON )
+				c->value_int = 1;
+			break;
+		case BSQL_BASE_OBJECT:
+			if ( bi->sql_base_ob_file ) {
+				c->value_string = ch_strdup( bi->sql_base_ob_file );
+			} else if ( bi->sql_baseObject ) {
+				c->value_string = ch_strdup( "TRUE" );
+			} else {
+				rc = 1;
+			}
+			break;
+		case BSQL_LAYER:
+			if ( bi->sql_api ) {
+				backsql_api *ba;
+				struct berval bv;
+				char *ptr;
+				int i;
+				for ( ba = bi->sql_api; ba; ba = ba->ba_next ) {
+					bv.bv_len = strlen( ba->ba_name );
+					if ( ba->ba_argc ) {
+						for ( i = 0; i<ba->ba_argc; i++ )
+							bv.bv_len += strlen( ba->ba_argv[i] ) + 3;
+					}
+					bv.bv_val = ch_malloc( bv.bv_len + 1 );
+					ptr = lutil_strcopy( bv.bv_val, ba->ba_name );
+					if ( ba->ba_argc ) {
+						for ( i = 0; i<ba->ba_argc; i++ ) {
+							*ptr++ = ' ';
+							*ptr++ = '"';
+							ptr = lutil_strcopy( ptr, ba->ba_argv[i] );
+							*ptr++ = '"';
+						}
+					}
+					ber_bvarray_add( &c->rvalue_vals, &bv );
+				}
+			} else {
+				rc = 1;
+			}
+			break;
+		case BSQL_ALIASING_KEYWORD:
+			if ( !BER_BVISNULL( &bi->sql_aliasing )) {
+				struct berval bv;
+				bv = bi->sql_aliasing;
+				bv.bv_len--;
+				value_add_one( &c->rvalue_vals, &bv );
+			} else {
+				rc = 1;
+			}
+			break;
+		case BSQL_FETCH_ATTRS:
+			if ( bi->sql_anlist ||
+				( bi->sql_flags & (BSQLF_FETCH_ALL_USERATTRS|
+								   BSQLF_FETCH_ALL_OPATTRS)))
+			{
+				char buf[BUFSIZ*2], *ptr;
+				struct berval bv;
+#   define WHATSLEFT    ((ber_len_t) (&buf[sizeof( buf )] - ptr))
+				ptr = buf;
+				if ( bi->sql_anlist ) {
+					ptr = anlist_unparse( bi->sql_anlist, ptr, WHATSLEFT );
+					if ( ptr == NULL )
+						return 1;
+				}
+				if ( bi->sql_flags & BSQLF_FETCH_ALL_USERATTRS ) {
+					if ( WHATSLEFT <= STRLENOF( ",*" )) return 1;
+					if ( ptr != buf ) *ptr++ = ',';
+					*ptr++ = '*';
+				}
+				if ( bi->sql_flags & BSQLF_FETCH_ALL_OPATTRS ) {
+					if ( WHATSLEFT <= STRLENOF( ",+" )) return 1;
+					if ( ptr != buf ) *ptr++ = ',';
+					*ptr++ = '+';
+				}
+				bv.bv_val = buf;
+				bv.bv_len = ptr - buf;
+				value_add_one( &c->rvalue_vals, &bv );
+			}
+			break;
 		}
-		bi->sql_dbuser = ch_strdup( argv[ 1 ] );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): dbuser=%s\n",
-			bi->sql_dbuser, 0, 0 );
+		return rc;
+	} else if ( c->op == LDAP_MOD_DELETE ) {	/* FIXME */
+		return -1;
+	}
 
-	} else if ( !strcasecmp( argv[ 0 ], "dbpasswd" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"missing password in \"dbpasswd\" directive\n",
-				fname, lineno, 0 );
-			return 1;
+	switch( c->type ) {
+	case BSQL_CONCAT_PATT:
+		if ( backsql_split_pattern( c->argv[ 1 ], &bi->sql_concat_func, 2 ) ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				"%s: unable to parse pattern \"%s\"",
+				c->log, c->argv[ 1 ] );
+			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg, 0, 0 );
+			return -1;
 		}
-		bi->sql_dbpasswd = ch_strdup( argv[ 1 ] );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"dbpasswd=%s\n", /* bi->sql_dbpasswd */ "xxxx", 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "dbname" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"missing database name in \"dbname\" "
-				"directive\n", fname, lineno, 0 );
-			return 1;
-		}
-		bi->sql_dbname = ch_strdup( argv[ 1 ] );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): dbname=%s\n",
-			bi->sql_dbname, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "concat_pattern" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"missing pattern"
-				"in \"concat_pattern\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		if ( backsql_split_pattern( argv[ 1 ], &bi->sql_concat_func, 2 ) ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"unable to parse pattern \"%s\"\n"
-				"in \"concat_pattern\" directive\n",
-				fname, lineno, argv[ 1 ] );
-			return 1;
-		}
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"concat_pattern=\"%s\"\n", argv[ 1 ], 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "subtree_cond" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"missing SQL condition "
-				"in \"subtree_cond\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		ber_str2bv( argv[ 1 ], 0, 1, &bi->sql_subtree_cond );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"subtree_cond=%s\n", bi->sql_subtree_cond.bv_val, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "children_cond" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"missing SQL condition "
-				"in \"children_cond\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		ber_str2bv( argv[ 1 ], 0, 1, &bi->sql_children_cond );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"children_cond=%s\n", bi->sql_children_cond.bv_val, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "dn_match_cond" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"missing SQL condition "
-				"in \"dn_match_cond\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		ber_str2bv( argv[ 1 ], 0, 1, &bi->sql_dn_match_cond );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"children_cond=%s\n", bi->sql_dn_match_cond.bv_val, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "oc_query" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"missing SQL statement "
-				"in \"oc_query\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		bi->sql_oc_query = ch_strdup( argv[ 1 ] );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"oc_query=%s\n", bi->sql_oc_query, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "at_query" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing SQL statement "
-				"in \"at_query\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		bi->sql_at_query = ch_strdup( argv[ 1 ] );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"at_query=%s\n", bi->sql_at_query, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "insentry_stmt" ) ||
-			!strcasecmp( argv[ 0 ], "insentry_query" ) )
-	{
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"missing SQL statement "
-				"in \"insentry_stmt\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		bi->sql_insentry_stmt = ch_strdup( argv[ 1 ] );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"insentry_stmt=%s\n", bi->sql_insentry_stmt, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "create_needs_select" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing { yes | no }"
-				"in \"create_needs_select\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-
-		if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
+		bi->sql_concat_patt = c->value_string;
+		break;
+	case BSQL_CREATE_NEEDS_SEL:
+		if ( c->value_int )
 			bi->sql_flags |= BSQLF_CREATE_NEEDS_SELECT;
-
-		} else if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
+		else
 			bi->sql_flags &= ~BSQLF_CREATE_NEEDS_SELECT;
-
-		} else {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"\"create_needs_select\" directive arg "
-				"must be \"yes\" or \"no\"\n",
-				fname, lineno, 0 );
-			return 1;
-
-		}
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"create_needs_select =%s\n", 
-			BACKSQL_CREATE_NEEDS_SELECT( bi ) ? "yes" : "no",
-			0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "upper_func" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing function name "
-				"in \"upper_func\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		ber_str2bv( argv[ 1 ], 0, 1, &bi->sql_upper_func );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"upper_func=%s\n", bi->sql_upper_func.bv_val, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "upper_needs_cast" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing { yes | no }"
-				"in \"upper_needs_cast\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-
-		if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
+		break;
+	case BSQL_UPPER_NEEDS_CAST:
+		if ( c->value_int )
 			bi->sql_flags |= BSQLF_UPPER_NEEDS_CAST;
-
-		} else if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
+		else
 			bi->sql_flags &= ~BSQLF_UPPER_NEEDS_CAST;
-
-		} else {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"\"upper_needs_cast\" directive arg "
-				"must be \"yes\" or \"no\"\n",
-				fname, lineno, 0 );
-			return 1;
-
-		}
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"upper_needs_cast =%s\n", 
-			BACKSQL_UPPER_NEEDS_CAST( bi ) ? "yes" : "no", 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "strcast_func" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing function name "
-				"in \"strcast_func\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		ber_str2bv( argv[ 1 ], 0, 1, &bi->sql_strcast_func );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"strcast_func=%s\n", bi->sql_strcast_func.bv_val, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "delentry_stmt" ) ||
-			!strcasecmp( argv[ 0 ], "delentry_query" ) )
-	{
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing SQL statement "
-				"in \"delentry_stmt\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		bi->sql_delentry_stmt = ch_strdup( argv[ 1 ] );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"delentry_stmt=%s\n", bi->sql_delentry_stmt, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "renentry_stmt" ) ||
-			!strcasecmp( argv[ 0 ], "renentry_query" ) )
-	{
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing SQL statement "
-				"in \"renentry_stmt\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		bi->sql_renentry_stmt = ch_strdup( argv[ 1 ] );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"renentry_stmt=%s\n", bi->sql_renentry_stmt, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "delobjclasses_stmt" ) ||
-			!strcasecmp( argv[ 0 ], "delobjclasses_query" ) )
-	{
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing SQL statement "
-				"in \"delobjclasses_stmt\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		bi->sql_delobjclasses_stmt = ch_strdup( argv[ 1 ] );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"delobjclasses_stmt=%s\n", bi->sql_delobjclasses_stmt, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "has_ldapinfo_dn_ru" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing { yes | no }"
-				"in \"has_ldapinfo_dn_ru\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-
-		if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
+		break;
+	case BSQL_HAS_LDAPINFO_DN_RU:
+		bi->sql_flags |= BSQLF_DONTCHECK_LDAPINFO_DN_RU;
+		if ( c->value_int )
 			bi->sql_flags |= BSQLF_HAS_LDAPINFO_DN_RU;
-			bi->sql_flags |= BSQLF_DONTCHECK_LDAPINFO_DN_RU;
-
-		} else if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
+		else
 			bi->sql_flags &= ~BSQLF_HAS_LDAPINFO_DN_RU;
-			bi->sql_flags |= BSQLF_DONTCHECK_LDAPINFO_DN_RU;
-
-		} else {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"\"has_ldapinfo_dn_ru\" directive arg "
-				"must be \"yes\" or \"no\"\n",
-				fname, lineno, 0 );
-			return 1;
-
-		}
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"has_ldapinfo_dn_ru=%s\n", 
-			BACKSQL_HAS_LDAPINFO_DN_RU( bi ) ? "yes" : "no", 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "fail_if_no_mapping" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing { yes | no }"
-				"in \"fail_if_no_mapping\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-
-		if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
+		break;
+	case BSQL_FAIL_IF_NO_MAPPING:
+		if ( c->value_int )
 			bi->sql_flags |= BSQLF_FAIL_IF_NO_MAPPING;
-
-		} else if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
+		else
 			bi->sql_flags &= ~BSQLF_FAIL_IF_NO_MAPPING;
-
-		} else {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"\"fail_if_no_mapping\" directive arg "
-				"must be \"yes\" or \"no\"\n",
-				fname, lineno, 0 );
-			return 1;
-
-		}
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"fail_if_no_mapping=%s\n", 
-			BACKSQL_FAIL_IF_NO_MAPPING( bi ) ? "yes" : "no", 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "allow_orphans" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing { yes | no }"
-				"in \"allow_orphans\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-
-		if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
+		break;
+	case BSQL_ALLOW_ORPHANS:
+		if ( c->value_int )
 			bi->sql_flags |= BSQLF_ALLOW_ORPHANS;
-
-		} else if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
+		else
 			bi->sql_flags &= ~BSQLF_ALLOW_ORPHANS;
-
-		} else {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"\"allow_orphans\" directive arg "
-				"must be \"yes\" or \"no\"\n",
-				fname, lineno, 0 );
-			return 1;
-
+		break;
+	case BSQL_SUBTREE_SHORTCUT:
+		if ( c->value_int )
+			bi->sql_flags |= BSQLF_USE_SUBTREE_SHORTCUT;
+		else
+			bi->sql_flags &= ~BSQLF_USE_SUBTREE_SHORTCUT;
+		break;
+	case BSQL_FETCH_ALL_ATTRS:
+		if ( c->value_int )
+			bi->sql_flags |= BSQLF_FETCH_ALL_ATTRS;
+		else
+			bi->sql_flags &= ~BSQLF_FETCH_ALL_ATTRS;
+		break;
+	case BSQL_CHECK_SCHEMA:
+		if ( c->value_int )
+			bi->sql_flags |= BSQLF_CHECK_SCHEMA;
+		else
+			bi->sql_flags &= ~BSQLF_CHECK_SCHEMA;
+		break;
+	case BSQL_AUTOCOMMIT:
+		if ( c->value_int )
+			bi->sql_flags |= BSQLF_AUTOCOMMIT_ON;
+		else
+			bi->sql_flags &= ~BSQLF_AUTOCOMMIT_ON;
+		break;
+	case BSQL_BASE_OBJECT:
+		if ( c->be->be_nsuffix == NULL ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				"%s: suffix must be set", c->log );
+			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg, 0, 0 );
+			rc = ARG_BAD_CONF;
+			break;
 		}
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"allow_orphans=%s\n", 
-			BACKSQL_ALLOW_ORPHANS( bi ) ? "yes" : "no", 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "baseobject" ) ) {
-		if ( be->be_suffix == NULL ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): : "
-				"must be defined after \"suffix\"\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-
 		if ( bi->sql_baseObject ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): : "
+			Debug( LDAP_DEBUG_CONFIG,
+				"%s: "
 				"\"baseObject\" already provided (will be overwritten)\n",
-				fname, lineno, 0 );
+				c->log, 0, 0 );
 			entry_free( bi->sql_baseObject );
 		}
-	
-		switch ( argc ) {
+		if ( c->argc == 2 && !strcmp( c->argv[1], "TRUE" ))
+			c->argc = 1;
+		switch( c->argc ) {
 		case 1:
-			return create_baseObject( be, fname, lineno );
+			return create_baseObject( c->be, c->fname, c->lineno );
 
 		case 2:
-			return read_baseObject( be, argv[ 1 ] );
+			rc = read_baseObject( c->be, c->argv[ 1 ] );
+			if ( rc == 0 ) {
+				ch_free( bi->sql_base_ob_file );
+				bi->sql_base_ob_file = c->value_string;
+			}
+			return rc;
 
 		default:
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"trailing values "
-				"in \"baseObject\" directive?\n",
-				fname, lineno, 0 );
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				"%s: trailing values in directive", c->log );
+			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg, 0, 0 );
 			return 1;
 		}
-
-	} else if ( !strcasecmp( argv[ 0 ], "sqllayer" ) ) {
-		if ( backsql_api_config( bi, argv[ 1 ], argc - 2, &argv[ 2 ] ) )
+		break;
+	case BSQL_LAYER:
+		if ( backsql_api_config( bi, c->argv[ 1 ], c->argc - 2, &c->argv[ 2 ] ) )
 		{
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"unable to load sqllayer \"%s\"\n",
-				fname, lineno, argv[ 1 ] );
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				"%s: unable to load sql layer", c->log );
+			Debug( LDAP_DEBUG_ANY, "%s \"%s\"\n",
+				c->cr_msg, c->argv[1], 0 );
 			return 1;
 		}
-
-	} else if ( !strcasecmp( argv[ 0 ], "id_query" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE, 
-				"<==backsql_db_config (%s line %d): "
-				"missing SQL condition "
-				"in \"id_query\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-		bi->sql_id_query = ch_strdup( argv[ 1 ] );
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"id_query=%s\n", bi->sql_id_query, 0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "use_subtree_shortcut" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing { yes | no }"
-				"in \"use_subtree_shortcut\" directive\n",
-				fname, lineno, 0 );
-			return 1;
+		break;
+	case BSQL_ALIASING_KEYWORD:
+		if ( ! BER_BVISNULL( &bi->sql_aliasing ) ) {
+			ch_free( bi->sql_aliasing.bv_val );
 		}
 
-		if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
-			bi->sql_flags |= BSQLF_USE_SUBTREE_SHORTCUT;
-
-		} else if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
-			bi->sql_flags &= ~BSQLF_USE_SUBTREE_SHORTCUT;
-
-		} else {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"\"use_subtree_shortcut\" directive arg "
-				"must be \"yes\" or \"no\"\n",
-				fname, lineno, 0 );
-			return 1;
-
-		}
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"use_subtree_shortcut=%s\n", 
-			BACKSQL_USE_SUBTREE_SHORTCUT( bi ) ? "yes" : "no",
-			0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "fetch_all_attrs" ) ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing { yes | no }"
-				"in \"fetch_all_attrs\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-
-		if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
-			bi->sql_flags |= BSQLF_FETCH_ALL_ATTRS;
-
-		} else if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
-			bi->sql_flags &= ~BSQLF_FETCH_ALL_ATTRS;
-
-		} else {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"\"fetch_all_attrs\" directive arg "
-				"must be \"yes\" or \"no\"\n",
-				fname, lineno, 0 );
-			return 1;
-
-		}
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"fetch_all_attrs=%s\n", 
-			BACKSQL_FETCH_ALL_ATTRS( bi ) ? "yes" : "no",
-			0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "fetch_attrs" ) ) {
+		ber_str2bv( c->argv[ 1 ], strlen( c->argv[ 1 ] ) + 1, 1,
+			&bi->sql_aliasing );
+		/* add a trailing space... */
+		bi->sql_aliasing.bv_val[ bi->sql_aliasing.bv_len - 1] = ' ';
+		break;
+	case BSQL_FETCH_ATTRS: {
 		char		*str, *s, *next;
 		const char	*delimstr = ",";
 
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing <attrlist>"
-				"in \"fetch_all_attrs <attrlist>\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-
-		str = ch_strdup( argv[ 1 ] );
+		str = ch_strdup( c->argv[ 1 ] );
 		for ( s = ldap_pvt_strtok( str, delimstr, &next );
 				s != NULL;
 				s = ldap_pvt_strtok( NULL, delimstr, &next ) )
@@ -562,90 +509,23 @@ backsql_db_config(
 			if ( strlen( s ) == 1 ) {
 				if ( *s == '*' ) {
 					bi->sql_flags |= BSQLF_FETCH_ALL_USERATTRS;
-					argv[ 1 ][ s - str ] = ',';
+					c->argv[ 1 ][ s - str ] = ',';
 
 				} else if ( *s == '+' ) {
 					bi->sql_flags |= BSQLF_FETCH_ALL_OPATTRS;
-					argv[ 1 ][ s - str ] = ',';
+					c->argv[ 1 ][ s - str ] = ',';
 				}
 			}
 		}
 		ch_free( str );
-		bi->sql_anlist = str2anlist( bi->sql_anlist, argv[ 1 ], delimstr );
+		bi->sql_anlist = str2anlist( bi->sql_anlist, c->argv[ 1 ], delimstr );
 		if ( bi->sql_anlist == NULL ) {
 			return -1;
 		}
-
-	} else if ( !strcasecmp( argv[ 0 ], "check_schema" ) ) {
-		if ( argc != 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing { yes | no }"
-				"in \"check_schema\" directive\n",
-				fname, lineno, 0 );
-			return 1;
 		}
-
-		if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
-			bi->sql_flags |= BSQLF_CHECK_SCHEMA;
-
-		} else if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
-			bi->sql_flags &= ~BSQLF_CHECK_SCHEMA;
-
-		} else {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"\"check_schema\" directive arg "
-				"must be \"yes\" or \"no\"\n",
-				fname, lineno, 0 );
-			return 1;
-
-		}
-		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"check_schema=%s\n", 
-			BACKSQL_CHECK_SCHEMA( bi ) ? "yes" : "no",
-			0, 0 );
-
-	} else if ( !strcasecmp( argv[ 0 ], "aliasing_keyword" ) ) {
-		if ( argc != 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing arg "
-				"in \"aliasing_keyword <string>\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-
-		if ( ! BER_BVISNULL( &bi->sql_aliasing ) ) {
-			ch_free( bi->sql_aliasing.bv_val );
-		}
-
-		ber_str2bv( argv[ 1 ], strlen( argv[ 1 ] ) + 1, 1,
-			&bi->sql_aliasing );
-		/* add a trailing space... */
-		bi->sql_aliasing.bv_val[ bi->sql_aliasing.bv_len - 1] = ' ';
-
-	} else if ( !strcasecmp( argv[ 0 ], "aliasing_quote" ) ) {
-		if ( argc != 2 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"missing arg "
-				"in \"aliasing_quote <string>\" directive\n",
-				fname, lineno, 0 );
-			return 1;
-		}
-
-		if ( ! BER_BVISNULL( &bi->sql_aliasing_quote ) ) {
-			ch_free( bi->sql_aliasing_quote.bv_val );
-		}
-
-		ber_str2bv( argv[ 1 ], 0, 1, &bi->sql_aliasing_quote );
-
-	} else {
-		return SLAP_CONF_UNKNOWN;
+		break;
 	}
-
-	return 0;
+	return rc;
 }
 
 /*
@@ -661,7 +541,8 @@ read_baseObject(
 {
 	backsql_info 	*bi = (backsql_info *)be->be_private;
 	LDIFFP		*fp;
-	int		rc = 0, lineno = 0, lmax = 0, ldifrc;
+	int		rc = 0, lmax = 0, ldifrc;
+	unsigned long	lineno = 0;
 	char		*buf = NULL;
 
 	assert( fname != NULL );
@@ -693,7 +574,7 @@ read_baseObject(
 
 		if( e == NULL ) {
 			fprintf( stderr, "back-sql baseObject: "
-					"could not parse entry (line=%d)\n",
+					"could not parse entry (line=%lu)\n",
 					lineno );
 			rc = LDAP_OTHER;
 			break;
@@ -703,7 +584,7 @@ read_baseObject(
 		if ( !be_issuffix( be, &e->e_nname ) ) {
 			fprintf( stderr,
 				"back-sql: invalid baseObject - "
-				"dn=\"%s\" (line=%d)\n",
+				"dn=\"%s\" (line=%lu)\n",
 				e->e_name.bv_val, lineno );
 			entry_free( e );
 			rc = LDAP_OTHER;
@@ -866,3 +747,12 @@ create_baseObject(
 	return 0;
 }
 
+int backsql_init_cf( BackendInfo *bi )
+{
+	int rc;
+
+	bi->bi_cf_ocs = sqlocs;
+	rc = config_register_schema( sqlcfg, sqlocs );
+	if ( rc ) return rc;
+	return 0;
+}

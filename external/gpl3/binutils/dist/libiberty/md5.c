@@ -1,6 +1,6 @@
 /* md5.c - Functions to compute MD5 message digest of files or memory blocks
    according to the definition of MD5 in RFC 1321 from April 1992.
-   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 2011 Free Software Foundation, Inc.
 
    NOTE: This source is derived from an old version taken from the GNU C
    Library (glibc).
@@ -76,15 +76,19 @@ md5_init_ctx (struct md5_ctx *ctx)
 /* Put result from CTX in first 16 bytes following RESBUF.  The result
    must be in little endian byte order.
 
-   IMPORTANT: On some systems it is required that RESBUF is correctly
-   aligned for a 32 bits value.  */
+   IMPORTANT: RESBUF may not be aligned as strongly as MD5_UNIT32 so we
+   put things in a local (aligned) buffer first, then memcpy into RESBUF.  */
 void *
 md5_read_ctx (const struct md5_ctx *ctx, void *resbuf)
 {
-  ((md5_uint32 *) resbuf)[0] = SWAP (ctx->A);
-  ((md5_uint32 *) resbuf)[1] = SWAP (ctx->B);
-  ((md5_uint32 *) resbuf)[2] = SWAP (ctx->C);
-  ((md5_uint32 *) resbuf)[3] = SWAP (ctx->D);
+  md5_uint32 buffer[4];
+
+  buffer[0] = SWAP (ctx->A);
+  buffer[1] = SWAP (ctx->B);
+  buffer[2] = SWAP (ctx->C);
+  buffer[3] = SWAP (ctx->D);
+
+  memcpy (resbuf, buffer, 16);
 
   return resbuf;
 }
@@ -99,6 +103,7 @@ md5_finish_ctx (struct md5_ctx *ctx, void *resbuf)
 {
   /* Take yet unprocessed bytes into account.  */
   md5_uint32 bytes = ctx->buflen;
+  md5_uint32 swap_bytes;
   size_t pad;
 
   /* Now count remaining bytes.  */
@@ -109,10 +114,13 @@ md5_finish_ctx (struct md5_ctx *ctx, void *resbuf)
   pad = bytes >= 56 ? 64 + 56 - bytes : 56 - bytes;
   memcpy (&ctx->buffer[bytes], fillbuf, pad);
 
-  /* Put the 64-bit file length in *bits* at the end of the buffer.  */
-  *(md5_uint32 *) &ctx->buffer[bytes + pad] = SWAP (ctx->total[0] << 3);
-  *(md5_uint32 *) &ctx->buffer[bytes + pad + 4] = SWAP ((ctx->total[1] << 3) |
-							(ctx->total[0] >> 29));
+  /* Put the 64-bit file length in *bits* at the end of the buffer.
+     Use memcpy to avoid aliasing problems.  On most systems, this
+     will be optimized away to the same code.  */
+  swap_bytes = SWAP (ctx->total[0] << 3);
+  memcpy (&ctx->buffer[bytes + pad], &swap_bytes, sizeof (swap_bytes));
+  swap_bytes = SWAP ((ctx->total[1] << 3) | (ctx->total[0] >> 29));
+  memcpy (&ctx->buffer[bytes + pad + 4], &swap_bytes, sizeof (swap_bytes));
 
   /* Process last bytes.  */
   md5_process_block (ctx->buffer, bytes + pad + 8, ctx);
@@ -241,9 +249,11 @@ md5_process_bytes (const void *buffer, size_t len, struct md5_ctx *ctx)
           }
       else
 #endif
-      md5_process_block (buffer, len & ~63, ctx);
-      buffer = (const void *) ((const char *) buffer + (len & ~63));
-      len &= 63;
+	{
+	  md5_process_block (buffer, len & ~63, ctx);
+	  buffer = (const void *) ((const char *) buffer + (len & ~63));
+	  len &= 63;
+	}
     }
 
   /* Move remaining bytes in internal buffer.  */

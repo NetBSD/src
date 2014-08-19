@@ -1,5 +1,5 @@
 # Expect script for DWARF relocation test.
-#   Copyright 2008  Free Software Foundation, Inc.
+#   Copyright 2008, 2012  Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -27,14 +27,15 @@
 # `ld -r'.
 #
 #  <1><57>: Abbrev Number: 2 (DW_TAG_variable)
-#     <58>   DW_AT_name        : i2	
+#     <58>   DW_AT_name        : i2
 #  ...
-#     <5d>   DW_AT_type        : <0x32>	
+#     <5d>   DW_AT_type        : <0x32>
 # vs.
-#     <5d>   DW_AT_type        : <0x0>	
+#     <5d>   DW_AT_type        : <0x0>
 
 # Only the testcase .s files are arch-dependent, the relocations are cross-arch.
 if { !([istarget "x86_64-*-elf*"]
+       || [istarget "x86_64-*-nacl*"]
        || [istarget "x86_64-*-linux*"]) } {
     return
 }

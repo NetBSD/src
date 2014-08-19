@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.14.1 2013/06/23 06:26:32 tls Exp $
+#	$NetBSD: Makefile,v 1.1.14.2 2014/08/19 23:46:46 tls Exp $
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>
 
 .include "../Makefile.inc"
 

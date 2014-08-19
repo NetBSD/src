@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses --show-raw-insn
 #name: MIPS ELF xgot reloc n64
-#as: -64 -KPIC -xgot
+#as: -march=from-abi -64 -KPIC -xgot
 #source: elf-rel-got-n64.s
 
 .*: +file format elf64-.*mips.*
@@ -952,4 +952,5 @@ Disassembly of section \.text:
 			5ec: R_MIPS_NONE	\*ABS\*\+0xd6
 00000000000005f0 <fn\+0x5f0> 10000003 	b	0000000000000600 <fn2>
 00000000000005f4 <fn\+0x5f4> 00000000 	nop
+	\.\.\.
 	\.\.\.

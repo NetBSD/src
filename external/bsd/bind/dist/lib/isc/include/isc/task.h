@@ -1,7 +1,7 @@
-/*	$NetBSD: task.h,v 1.5.2.2 2013/06/23 06:26:25 tls Exp $	*/
+/*	$NetBSD: task.h,v 1.5.2.3 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -83,6 +83,7 @@
  ***/
 
 #include <isc/eventclass.h>
+#include <isc/json.h>
 #include <isc/lang.h>
 #include <isc/stdtime.h>
 #include <isc/types.h>
@@ -142,7 +143,6 @@ typedef struct isc_taskmethods {
 	void (*endexclusive)(isc_task_t *task);
     void (*setprivilege)(isc_task_t *task, isc_boolean_t priv);
     isc_boolean_t (*privilege)(isc_task_t *task);
-    void (*getcurrenttime)(isc_task_t *task, isc_stdtime_t *t);
 } isc_taskmethods_t;
 
 /*%
@@ -634,7 +634,7 @@ isc_task_setprivilege(isc_task_t *task, isc_boolean_t priv);
  * 'priv'.
  *
  * Under normal circumstances this flag has no effect on the task behavior,
- * but when the task manager has been set to privileged exeuction mode via
+ * but when the task manager has been set to privileged execution mode via
  * isc_taskmgr_setmode(), only tasks with the flag set will be executed,
  * and all other tasks will wait until they're done.  Once all privileged
  * tasks have finished executing, the task manager will automatically
@@ -790,10 +790,13 @@ isc_taskmgr_excltask(isc_taskmgr_t *mgr, isc_task_t **taskp);
 
 
 #ifdef HAVE_LIBXML2
-
-void
+int
 isc_taskmgr_renderxml(isc_taskmgr_t *mgr, xmlTextWriterPtr writer);
+#endif
 
+#ifdef HAVE_JSON
+isc_result_t
+isc_taskmgr_renderjson(isc_taskmgr_t *mgr, json_object *tasksobj);
 #endif
 
 /*%<

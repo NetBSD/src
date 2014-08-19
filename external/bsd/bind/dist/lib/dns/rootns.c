@@ -1,7 +1,7 @@
-/*	$NetBSD: rootns.c,v 1.3 2012/06/05 00:41:39 christos Exp $	*/
+/*	$NetBSD: rootns.c,v 1.3.2.1 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rootns.c,v 1.40 2010/06/18 05:36:24 marka Exp  */
+/* Id: rootns.c,v 1.40.476.1 2012/02/07 00:44:14 each Exp  */
 
 /*! \file */
 
@@ -65,7 +65,9 @@ static char root_ns[] =
 "A.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:503:BA3E::2:30\n"
 "B.ROOT-SERVERS.NET.     3600000 IN      A       192.228.79.201\n"
 "C.ROOT-SERVERS.NET.     3600000 IN      A       192.33.4.12\n"
-"D.ROOT-SERVERS.NET.     3600000 IN      A       128.8.10.90\n"
+"C.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2::c\n"
+"D.ROOT-SERVERS.NET.     3600000 IN      A       199.7.91.13\n"
+"D.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2d::d\n"
 "E.ROOT-SERVERS.NET.     3600000 IN      A       192.203.230.10\n"
 "F.ROOT-SERVERS.NET.     3600000 IN      A       192.5.5.241\n"
 "F.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2F::F\n"
@@ -202,7 +204,7 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 {
 	isc_result_t result, eresult;
 	isc_buffer_t source;
-	size_t len;
+	unsigned int len;
 	dns_rdatacallbacks_t callbacks;
 	dns_db_t *db = NULL;
 
@@ -213,14 +215,12 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	dns_rdatacallbacks_init(&callbacks);
-
 	len = strlen(root_ns);
 	isc_buffer_init(&source, root_ns, len);
 	isc_buffer_add(&source, len);
 
-	result = dns_db_beginload(db, &callbacks.add,
-				  &callbacks.add_private);
+	dns_rdatacallbacks_init(&callbacks);
+	result = dns_db_beginload(db, &callbacks);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	if (filename != NULL) {
@@ -241,7 +241,7 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 					       &callbacks, db->mctx);
 	} else
 		result = ISC_R_NOTFOUND;
-	eresult = dns_db_endload(db, &callbacks.add_private);
+	eresult = dns_db_endload(db, &callbacks);
 	if (result == ISC_R_SUCCESS || result == DNS_R_SEENINCLUDE)
 		result = eresult;
 	if (result != ISC_R_SUCCESS && result != DNS_R_SEENINCLUDE)

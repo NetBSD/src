@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2012/02/01 07:46:21 kardel Exp $
-
-NOGCCERROR=yes
+#	$NetBSD: Makefile,v 1.4.6.1 2014/08/19 23:51:32 tls Exp $
 
 .include <bsd.own.mk>
-
 
 PROG=	ntp-keygen
 MAN=	ntp-keygen.8
@@ -22,11 +19,5 @@ DIST=${IDIST}/util
 CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
 
 .PATH: ${DIST}
-
-ntp-keygen.8:	ntp-keygen.1
-	${_MKTARGET_BUILD}
-	${TOOL_SED} -e "s,NTP-KEYGEN 1,NTP-KEYGEN 8," $? > $@
-
-CLEANFILES+=ntp-keygen.8
 
 .include <bsd.prog.mk>

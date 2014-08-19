@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.111 2007-12-22 03:08:04 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: print-nfs.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 
 static void nfs_printfh(const u_int32_t *, const u_int);
 static int xid_map_enter(const struct sunrpc_msg *, const u_char *);
-static int32_t xid_map_find(const struct sunrpc_msg *, const u_char *,
+static int xid_map_find(const struct sunrpc_msg *, const u_char *,
 			    u_int32_t *, u_int32_t *);
 static void interp_reply(const struct sunrpc_msg *, u_int32_t, u_int32_t, int);
 static const u_int32_t *parse_post_op_attr(const u_int32_t *, int);
@@ -105,7 +105,7 @@ u_int32_t nfsv3_procid[NFS_NPROCS] = {
  * the first NFS server was the SunOS 2.0 one, and until 5.0 SunOS
  * was primarily BSD-derived.
  */
-static struct tok status2str[] = {
+static const struct tok status2str[] = {
 	{ 1,     "Operation not permitted" },	/* EPERM */
 	{ 2,     "No such file or directory" },	/* ENOENT */
 	{ 5,     "Input/output error" },	/* EIO */
@@ -143,14 +143,14 @@ static struct tok status2str[] = {
 	{ 0,     NULL }
 };
 
-static struct tok nfsv3_writemodes[] = {
+static const struct tok nfsv3_writemodes[] = {
 	{ 0,		"unstable" },
 	{ 1,		"datasync" },
 	{ 2,		"filesync" },
 	{ 0,		NULL }
 };
 
-static struct tok type2str[] = {
+static const struct tok type2str[] = {
 	{ NFNON,	"NON" },
 	{ NFREG,	"REG" },
 	{ NFDIR,	"DIR" },
@@ -292,12 +292,7 @@ nfsreply_print(register const u_char *bp, u_int length,
 	       register const u_char *bp2)
 {
 	register const struct sunrpc_msg *rp;
-	u_int32_t proc, vers, reply_stat;
 	char srcid[20], dstid[20];	/*fits 32bit*/
-	enum sunrpc_reject_stat rstat;
-	u_int32_t rlow;
-	u_int32_t rhigh;
-	enum sunrpc_auth_stat rwhy;
 
 	nfserr = 0;		/* assume no error */
 	rp = (const struct sunrpc_msg *)bp;
@@ -313,6 +308,29 @@ nfsreply_print(register const u_char *bp, u_int length,
 		    EXTRACT_32BITS(&rp->rm_xid));
 	}
 	print_nfsaddr(bp2, srcid, dstid);
+
+	nfsreply_print_noaddr(bp, length, bp2);
+	return;
+
+trunc:
+	if (!nfserr)
+		fputs(" [|nfs]", stdout);
+}
+
+void
+nfsreply_print_noaddr(register const u_char *bp, u_int length,
+	       register const u_char *bp2)
+{
+	register const struct sunrpc_msg *rp;
+	u_int32_t proc, vers, reply_stat;
+	enum sunrpc_reject_stat rstat;
+	u_int32_t rlow;
+	u_int32_t rhigh;
+	enum sunrpc_auth_stat rwhy;
+
+	nfserr = 0;		/* assume no error */
+	rp = (const struct sunrpc_msg *)bp;
+
 	TCHECK(rp->rm_reply.rp_stat);
 	reply_stat = EXTRACT_32BITS(&rp->rm_reply.rp_stat);
 	switch (reply_stat) {
@@ -509,12 +527,6 @@ nfsreq_print(register const u_char *bp, u_int length,
     register const u_char *bp2)
 {
 	register const struct sunrpc_msg *rp;
-	register const u_int32_t *dp;
-	nfs_type type;
-	int v3;
-	u_int32_t proc;
-	u_int32_t access_flags;
-	struct nfsv3_sattr sa3;
 	char srcid[20], dstid[20];	/*fits 32bit*/
 
 	nfserr = 0;		/* assume no error */
@@ -532,6 +544,29 @@ nfsreq_print(register const u_char *bp, u_int length,
 	}
 	print_nfsaddr(bp2, srcid, dstid);
 	(void)printf("%d", length);
+
+	nfsreq_print_noaddr(bp, length, bp2);
+	return;
+
+trunc:
+	if (!nfserr)
+		fputs(" [|nfs]", stdout);
+}
+
+void
+nfsreq_print_noaddr(register const u_char *bp, u_int length,
+    register const u_char *bp2)
+{
+	register const struct sunrpc_msg *rp;
+	register const u_int32_t *dp;
+	nfs_type type;
+	int v3;
+	u_int32_t proc;
+	u_int32_t access_flags;
+	struct nfsv3_sattr sa3;
+
+	nfserr = 0;		/* assume no error */
+	rp = (const struct sunrpc_msg *)bp;
 
 	if (!xid_map_enter(rp, bp2))	/* record proc number for later on */
 		goto trunc;
@@ -858,7 +893,7 @@ static void
 nfs_printfh(register const u_int32_t *dp, const u_int len)
 {
 	my_fsid fsid;
-	ino_t ino;
+	u_int32_t ino;
 	const char *sfsname = NULL;
 	char *spacep;
 

@@ -11,7 +11,7 @@
 case "${targ}" in
     powerpc-*-aix[5-9]* | rs6000-*-aix[5-9]*)
 	targ_emul=aix 
-	targ_emul_vector=bin_aix5_emulation 
+	targ_emul_vector=bin_aix_emulation 
         ;;
 
     powerpc-*-aix4.3* | rs6000-*-aix4.3*)

@@ -1,5 +1,5 @@
-/*	Id: table.c,v 1.15 2011/06/05 08:54:42 plunky Exp 	*/	
-/*	$NetBSD: table.c,v 1.1.1.3 2011/09/01 12:46:34 plunky Exp $	*/
+/*	Id: table.c,v 1.16 2012/09/18 10:57:10 mickey Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.3.8.1 2014/08/19 23:52:08 tls Exp $	*/
 /*	$OpenBSD: table.c,v 1.2 2007/12/19 20:19:54 otto Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ struct optab table[] = {
 { SCONV,	ININT,
 	SHDBL,	TDOUBLE|TLDOUBLE,
 	SHINT,	TWORD,
-		NCREG|NCSL|NAREG,	RESC2,
+		NCREG|NCSL|NAREG,	RESC1,
 		"\tfcnvfxt,dbl,sgl\tAL,A1\n"
 		"\tfstws,ma\tA1,4(%sp)\n"
 		"\tldw,mb\t-4(%sp),A2\n", },
@@ -310,7 +310,7 @@ struct optab table[] = {
 { SCONV,	INLL,
 	SHFL,	TFLOAT,
 	SHLL,	TLL,
-		NDREG|NDSL|NBREG,	RESC2,
+		NDREG|NDSL|NBREG,	RESC1,
 		"\tfcnvfxt,sgl,dbl\tAL,A1\n"
 		"\tfstds,ma\tA1,8(%sp)\n"
 		"\tldw\t-8(%sp),A2\n"

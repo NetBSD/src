@@ -1,10 +1,10 @@
-/*	$NetBSD: back-monitor.h,v 1.1.1.3 2010/12/12 15:23:13 adam Exp $	*/
+/*	$NetBSD: back-monitor.h,v 1.1.1.3.12.1 2014/08/19 23:52:02 tls Exp $	*/
 
 /* back-monitor.h - ldap monitor back-end header file */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/back-monitor.h,v 1.52.2.9 2010/04/13 20:23:32 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -270,6 +270,8 @@ typedef struct monitor_subsys_t {
 				struct berval *ndn, Entry *, Entry ** );
 	/* modify entry and subentries */
 	int		( *mss_modify )( Operation *, SlapReply *, Entry * );
+
+	void		*mss_private;
 } monitor_subsys_t;
 
 extern BackendDB *be_monitor;
@@ -306,6 +308,14 @@ typedef struct monitor_extra_t {
 	monitor_cbfunc *unregister_entry_parent;
 	monitor_cbafunc *unregister_entry_attrs;
 	monitor_cbfunc *unregister_entry_callback;
+	Entry * (*entry_stub)( struct berval *pdn,
+		struct berval *pndn,
+		struct berval *rdn,
+		ObjectClass *oc,
+		struct berval *create,
+		struct berval *modify );
+	monitor_entry_t * (*entrypriv_create)( void );
+	int (*register_subsys_late)( monitor_subsys_t *ms );
 } monitor_extra_t;
 
 LDAP_END_DECL

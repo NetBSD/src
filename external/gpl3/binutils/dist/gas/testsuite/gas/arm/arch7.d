@@ -57,10 +57,10 @@ Disassembly of section .text:
 0+0c0 <[^>]*> f3ef 8009 	mrs	r0, PSP
 0+0c4 <[^>]*> f3ef 8010 	mrs	r0, PRIMASK
 0+0c8 <[^>]*> f3ef 8011 	mrs	r0, BASEPRI
-0+0cc <[^>]*> f3ef 8012 	mrs	r0, BASEPRI_MASK
+0+0cc <[^>]*> f3ef 8012 	mrs	r0, BASEPRI_MAX
 0+0d0 <[^>]*> f3ef 8013 	mrs	r0, FAULTMASK
 0+0d4 <[^>]*> f3ef 8014 	mrs	r0, CONTROL
-0+0d8 <[^>]*> f380 8800 	msr	(CPSR_f|APSR), r0
+0+0d8 <[^>]*> f380 8800 	msr	(CPSR_f|APSR_nzcvq), r0
 0+0dc <[^>]*> f380 8801 	msr	IAPSR, r0
 0+0e0 <[^>]*> f380 8802 	msr	EAPSR, r0
 0+0e4 <[^>]*> f380 8803 	msr	PSR, r0
@@ -71,8 +71,10 @@ Disassembly of section .text:
 0+0f8 <[^>]*> f380 8809 	msr	PSP, r0
 0+0fc <[^>]*> f380 8810 	msr	PRIMASK, r0
 0+100 <[^>]*> f380 8811 	msr	BASEPRI, r0
-0+104 <[^>]*> f380 8812 	msr	BASEPRI_MASK, r0
+0+104 <[^>]*> f380 8812 	msr	BASEPRI_MAX, r0
 0+108 <[^>]*> f380 8813 	msr	FAULTMASK, r0
 0+10c <[^>]*> f380 8814 	msr	CONTROL, r0
 0+110 <[^>]*> f3ef 8003 	mrs	r0, PSR
 0+114 <[^>]*> f380 8803 	msr	PSR, r0
+0+118 <[^>]*> df00      	svc	0
+#...

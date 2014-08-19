@@ -29,7 +29,7 @@
 [ -f "@SYSCONFDIR@"/resolvconf.conf ] || exit 0
 . "@SYSCONFDIR@/resolvconf.conf" || exit 1
 [ -z "$pdnsd_conf" -a -z "$pdnsd_resolv" ] && exit 0
-[ -z "$RESOLVCONF" ] && eval "$(@PREFIX@/sbin/resolvconf -v)"
+[ -z "$RESOLVCONF" ] && eval "$(@SBINDIR@/resolvconf -v)"
 NL="
 "
 
@@ -89,7 +89,7 @@ changed=false
 if type config_mkdirs >/dev/null 2>&1; then
 	config_mkdirs "$pdnsd_resolv" "$pdnsd_conf"
 else
-	@PREFIX@/sbin/resolvconf -D "$pdnsd_resolv" "$pdnsd_conf"
+	@SBINDIR@/resolvconf -D "$pdnsd_resolv" "$pdnsd_conf"
 fi
 
 if [ -n "$pdnsd_resolv" ]; then

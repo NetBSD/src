@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/17 20:07:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.8.1 2014/08/19 23:51:25 tls Exp $
 
 LIB=	LLVMSparcMCTargetDesc
 
@@ -9,8 +9,13 @@ CPPFLAGS+=	-I${SPARC_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/Sparc
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/Sparc/MCTargetDesc
 
-SRCS+=	SparcMCAsmInfo.cpp \
-	SparcMCTargetDesc.cpp
+SRCS+=	SparcAsmBackend.cpp \
+	SparcELFObjectWriter.cpp \
+	SparcMCAsmInfo.cpp \
+	SparcMCCodeEmitter.cpp \
+	SparcMCExpr.cpp \
+	SparcMCTargetDesc.cpp \
+	SparcTargetStreamer.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

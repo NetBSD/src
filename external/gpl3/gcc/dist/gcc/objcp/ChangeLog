@@ -1,22 +1,209 @@
-2012-07-02  Release Manager
+2014-05-22  Release Manager
 
-	* GCC 4.5.4 released.
+	* GCC 4.8.3 released.
 
-2011-04-28  Release Manager
+2013-10-16  Release Manager
 
-	* GCC 4.5.3 released.
+	* GCC 4.8.2 released.
 
-2010-12-16  Release Manager
+2013-05-31  Release Manager
 
-	* GCC 4.5.2 released.
+	* GCC 4.8.1 released.
 
-2010-07-31  Release Manager
+2013-03-22  Release Manager
 
-	* GCC 4.5.1 released.
+	* GCC 4.8.0 released.
 
-2010-04-14  Release Manager
+2012-06-02  Jason Merrill  <jason@redhat.com>
 
-	* GCC 4.5.0 released.
+	* objcp-decl.c (objcp_start_struct): Adjust for change in
+	begin_class_definition prototype.
+
+2011-10-14  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	* Make-lang.in (OBJCXX_OBJS): Added objc-map.o.
+	(objcp/objc-map.o): New rule.
+	(objcp/objcp-act.o): Depend on objc/objc-map.h.
+	* config-lang.in (gtfiles): Added objc-map.h.
+
+2011-07-11  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	* Make-lang.in (objcp/objc-runtime-shared-support.o): Do not
+	depend on OBSTACK_H.
+	(objcp/objc-gnu-runtime-abi-01.o): Likewise.
+	(objcp/objc-next-runtime-abi-01.o): Likewise.
+	(objcp/objc-next-runtime-abi-02.o): Likewise.
+	(objcp/objcp-act.o): Likewise.
+
+2011-07-04  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	* Make-lang.in (OBJCXX_OBJS): Added objc-encoding.o.
+	(objcp/objcp-lang.o): Reordered dependencies.  Depend on GGC_H.
+	(objcp/objcp-decl.o): Reordered dependencies.
+	(objcp/objc-runtime-shared-support.o): Reordered dependencies.
+	Updated them to be identical to the corresponding new objc/ ones,
+	with the addition of objcp-decl.h.
+	(objcp/objc-runtime-shared-support.o): Likewise.
+	(objcp/objc-gnu-runtime-abi-01.o): Likewise.
+	(objcp/objc-next-runtime-abi-01.o): Likewise.
+	(objcp/objc-next-runtime-abi-02.o): Likewise.
+	(objcp/objcp-act.o): Reordered dependencies.  Added dependency on
+	objc-encoding.h.
+	(objcp/objc-encoding.o): New rule.
+	
+2011-04-15  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	* objcp-decl.c (objcp_finish_struct): Use
+	objc_detect_field_duplicates instead of having a local
+	implementation.
+
+2011-04-12  Nathan Froyd  <froydnj@codesourcery.com>
+
+	* objcp-lang.c (objcxx_init_ts): Call objc_common_init_ts and
+	cp_common_init_ts.
+
+2011-03-21  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	PR bootstrap/48167
+	* Make-lang.in (START_HDRS): Added CXX_PARSER_H and
+	CXX_PRETTY_PRINT_H.
+	* config-lang.in (gtfiles): Added cp/parser.h and reorganized list
+	so that it is more obvious that it is identical to the C++ one
+	with the addition of some files at the end.
+	
+2011-03-06  Joseph Myers  <joseph@codesourcery.com>
+
+	* lang-specs.h: Match -save-temps* instead of -save-temps.
+
+2011-02-20  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	PR objc++/47711
+	* config-lang.in (gtfiles): Updated list.
+
+2011-02-17  Iain Sandoe  <iains@gcc.gnu.org>
+
+	* Make-lang.in (START_HDRS): New.
+	(OBJCXX_OBJS): Added new object files from objc/.
+	(objcp/objcp-act.o): Updated prerequisites.
+	(objcp/objcp-lang.o): Updated prerequisites.
+	(objcp/objc-runtime-shared-support.o): New.
+	(objcp/objc-gnu-runtime-abi-01.o): New.
+	(objcp/objc-next-runtime-abi-01.o): New.
+	(objcp/objc-next-runtime-abi-02.o): New.
+	* config-lang.in (gtfiles): Updated.
+	* objcp-lang.c (objcxx_eh_personality): Removed.
+	(LANG_HOOKS_EH_PERSONALITY): Removed.
+	(LANG_HOOKS_EH_RUNTIME_TYPE): Removed.
+	(objcp_eh_personality_decl): Removed.
+	
+2011-02-07  Mike Stump  <mikestump@comcast.net>
+
+	* Make-lang.in (obj-c++.tags): Don't include *.y.
+
+2010-12-29  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	* objcp-lang.c (objcp_tsubst_copy_and_build): Update call to
+	objc_finish_message_expr.
+
+2010-12-26  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	* config-lang.in (gtfiles): Added c-family/c-cppbuiltin.c.
+
+2010-12-06  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	* config-lang.in (gtfiles): Added c-family/c-objc.h.
+	* Make-lang.in (objcp/objcp-act.o): Depend on
+	c-family/c-objc.h.
+	(objcp/objcp-lang.o): Same change.
+	(objcp/objcp-decl.o): Same change.
+	* objcp-lang.c: Include c-family/c-objc.h.
+	* objcp-decl.c: Same change.
+
+2010-11-23  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	PR objc/24358
+	* lang-specs.h: Print a deprecation note every time
+	objc++-cpp-output is requested.
+
+2010-10-24  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	* objcp-lang.c (LANG_HOOKS_DECL_PRINTABLE_NAME): Do not define.
+
+2010-10-20  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	* objcp-lang.c (finish_file): Removed.
+
+2010-10-14  Iain Sandoe  <iains@gcc.gnu.org>
+
+	merge from FSF apple 'trunk' branch. 
+	2006 Fariborz Jahanian <fjahanian@apple.com>
+	
+	Radars 4436866, 4505126, 4506903, 4517826
+	* objcp-lang.c (objcxx_init_ts): Update for property_decl.
+
+2010-10-13  Richard Henderson  <rth@redhat.com>
+
+	* objcp-lang.c (objcxx_eh_personality): Update call to
+	build_personality_function.
+
+2010-10-11  Andi Kleen  <ak@linux.intel.com>
+
+	* Make-lang.in (cc1objplus-checksum.c): Use correct temporary
+	name.
+
+2010-10-07  Andi Kleen  <ak@linux.intel.com>
+
+	* Make-lang.in (cc1objplus-dummy): Remove.
+	(cc1objplus-checksum): Change to run checksum over object files
+        and options only.
+
+2010-10-04  Andi Kleen <ak@linux.intel.com>
+
+	* Make-lang.in (cc1objplus-dummy, cc1objplus): Add + to build rule.
+
+2010-09-28  Richard Henderson  <rth@redhat.com>
+
+	* objcp-lang.c: Include "target.h".
+	(objcxx_eh_personality): Use targetm.except_unwind_info.
+	* Make-lang.in (objcp-lang.o): Update deps.
+
+2010-09-21  Nicola Pero  <nicola.pero@meta-innovation.com>
+
+	PR objc/25965	
+	* objcp-decl.c (objcp_finish_struct): Call
+	objc_get_interface_ivars() and check for duplicate ivars.
+
+2010-06-28  Steven Bosscher  <steven@gcc.gnu.org>
+
+	* objcp-lang.c: Do not include except.h.
+	* Make-lang.in: Update dependencies.
+
+2010-06-25  Joseph Myers  <joseph@codesourcery.com>
+
+	* lang-specs.h: Remove +e handling.
+
+2010-06-08  Laurynas Biveinis  <laurynas.biveinis@gmail.com>
+
+	* objcp-decl.h (ALLOC_OBJC_TYPE_LANG_SPECIFIC): Use typed GC
+	allocation.
+
+2010-06-05  Steven Bosscher  <steven@gcc.gnu.org>
+
+	* objcp-lang.c: Update include path for moved files.
+	* config-lang.in: Update paths in gtfiles for files in c-family/.
+
+2010-05-25  Steven Bosscher  <steven@gcc.gnu.org>
+
+	* objcp-decl.c: Do not include tm.h, rtl.h, expr.h, c-common.h,
+	flags.h, input.h, except.h, output.h, toplev.h, cpplib.h, debug.h,
+	and target.h.
+	* objcp-lang.c: Do not include tm.h, toplev.h, diagnostics.h,
+	and debug.h.  Explain why except.h has to be included.
+	* Make-lang.in: Update dependencies.
+
+2010-04-30  Steven Bosscher  <steven@gcc.gnu.org>
+
+	* objcp-decl.c: Do not include varray.h.
 
 2009-09-22  Richard Guenther  <rguenther@suse.de>
 
@@ -265,7 +452,7 @@
 	* objcp-lang.c: Likewise.
 
 
-Copyright (C) 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+Copyright (C) 2005-2013 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

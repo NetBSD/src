@@ -1,7 +1,7 @@
-# OpenLDAP: pkg/ldap/contrib/slapd-modules/comp_match/Makefile,v 1.11.2.5 2010/04/13 20:22:26 kurt Exp
+# $OpenLDAP$
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 2003-2010 The OpenLDAP Foundation.
+# Copyright 2003-2014 The OpenLDAP Foundation.
 # Portions Copyright 2004 by IBM Corporation.
 # All rights reserved.
 
@@ -15,52 +15,55 @@
 # top-level directory of the distribution or, alternatively, at
 # <http://www.OpenLDAP.org/license.html>.
 
-topsrcdir = ../../..
-snaccdir = ../$(topsrcdir)/snacc
-openssldir = /usr/local/include/openssl
+LDAP_SRC = ../../..
+LDAP_BUILD = ../../..
+LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd
+LDAP_LIB = $(LDAP_BUILD)/libraries/libldap_r/libldap_r.la \
+	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
-LIBTOOL=$(topsrcdir)/libtool
-OPT=-g -O2 -DLDAP_COMPONENT
-CC=gcc
+SNACC_DIR = ../$(LDAP_SRC)/snacc
+SNACC_INC = -I$(SNACC_DIR) -I$(SNACC_DIR)/c-lib/inc
+SNACC_LIB = $(SNACC_DIR)/c-lib/libcasn1.a
 
-SNACC_INC=-I$(snaccdir) -I$(snaccdir)/c-lib/inc
-LDAP_INC=-I$(topsrcdir)/include -I$(topsrcdir)/servers/slapd -I$(topbuilddir)/include
-OPENSSL_INC=-I$(openssldir)
-INCS=$(LDAP_INC) $(SNACC_INC) $(OPENSSL_INC)
+SSL_DIR = /usr/local
+SSL_INC = -I$(SSL_DIR)/include/openssl
+SSL_LIB = -lcrypto -L$(SSL_DIR)/lib
 
-SNACC_LIB=$(snaccdir)/c-lib/libcasn1.a
-SSL_LIB=/usr/local/lib/lcrypto
+LIBTOOL = $(LDAP_BUILD)/libtool
+CC = gcc
+OPT = -g -O2 -Wall
+DEFS = -DLDAP_COMPONENT
+INCS = $(LDAP_INC) $(SNACC_INC) $(SSL_INC)
+LIBS = $(LDAP_LIB) $(SNACC_LIB) $(SSL_LIB)
 
-LIBS=$(LDAP_LIB) $(SNACC_LIB) $(SSL_LIB)
+PROGRAMS = compmatch.la
+LTVER = 0:0:0
 
-all:	compmatch.la
+prefix=/usr/local
+exec_prefix=$(prefix)
+ldap_subdir=/openldap
 
+libdir=$(exec_prefix)/lib
+libexecdir=$(exec_prefix)/libexec
+moduledir = $(libexecdir)$(ldap_subdir)
 
-componentlib.lo:	componentlib.c
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(INCS) -c $?
+.SUFFIXES: .c .o .lo
 
-certificate.lo:	certificate.c
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(INCS) -c $?
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
 
-crl.lo:	crl.c
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(INCS) -c $?
+all: $(PROGRAMS)
 
-authorityKeyIdentifier.lo:	authorityKeyIdentifier.c
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(INCS) -c $?
-
-asn_to_syn_mr.lo:	asn_to_syn_mr.c
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(INCS) -c $?
-
-init.lo:	init.c
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(INCS) -c $?
-
-compmatch.la:	componentlib.lo init.lo certificate.lo asn_to_syn_mr.lo authorityKeyIdentifier.lo crl.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) $(LIBS) -version-info 0:0:0 \
-	-rpath /usr/local/libexec/openldap -module -o $@ $? $(LIBS)
+compmatch.la: componentlib.lo init.lo certificate.lo asn_to_syn_mr.lo authorityKeyIdentifier.lo crl.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
 clean:
-	\rm compmatch.la componentlib.lo certificate.lo asn_to_syn_mr.lo authorityKeyIdentifier.lo crl.lo\
-		init.o init.lo componentlib.o certificate.o asn_to_syn_mr.o authorityKeyIdentifier.o crl.o
-install:
-	cp -r .libs $(topsrcdir)/tests/data/comp_libs
-	cp compmatch.la  $(topsrcdir)/tests/data/comp_libs
+	rm -rf *.o *.lo *.la .libs
+
+install: $(PROGRAMS)
+	mkdir -p $(DESTDIR)$(moduledir)
+	for p in $(PROGRAMS) ; do \
+		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)$(moduledir) ; \
+	done
+

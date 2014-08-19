@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.299.2.2 2013/02/25 00:23:49 tls Exp $
+#	$NetBSD: Makefile,v 1.299.2.3 2014/08/19 23:45:10 tls Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -139,7 +139,8 @@ _SRC_TOP_OBJ_=
 #
 _SUBDIR=	tools lib include gnu external crypto/external bin games
 _SUBDIR+=	libexec sbin usr.bin
-_SUBDIR+=	usr.sbin share rescue sys etc tests compat .WAIT distrib regress
+_SUBDIR+=	usr.sbin share sys etc tests compat
+_SUBDIR+=	.WAIT rescue .WAIT distrib regress
 
 .for dir in ${_SUBDIR}
 .if "${dir}" == ".WAIT" \
@@ -169,13 +170,15 @@ afterinstall: .PHONY .MAKE
 	${MAKEDIRTARGET} . postinstall-check
 .endif
 
-_POSTINSTALL=	${.CURDIR}/usr.sbin/postinstall/postinstall
+_POSTINSTALL=	${.CURDIR}/usr.sbin/postinstall/postinstall \
+		-m ${MACHINE} -a ${MACHINE_ARCH}
 _POSTINSTALL_ENV= \
 	AWK=${TOOL_AWK:Q}		\
 	DB=${TOOL_DB:Q}			\
 	HOST_SH=${HOST_SH:Q}		\
 	MAKE=${MAKE:Q}			\
 	PWD_MKDB=${TOOL_PWD_MKDB:Q}	\
+	SED=${TOOL_SED:Q}		\
 	STAT=${TOOL_STAT:Q}
 
 postinstall-check: .PHONY
@@ -193,20 +196,18 @@ postinstall-fix-obsolete: .NOTMAIN .PHONY
 	${_POSTINSTALL_ENV} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete
 	@echo "   ==============================="
 
+postinstall-fix-obsolete_stand: .NOTMAIN .PHONY
+	@echo "   === Removing obsolete files ==="
+	${_POSTINSTALL_ENV} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete_stand
+	@echo "   ==============================="
+
 
 #
 # Targets (in order!) called by "make build".
 #
 .if defined(HAVE_GCC)
-.if ${HAVE_GCC} == "4"
-LIBGCC_EXT=4
-BUILD_CC_LIB_BASEDIR= gnu/lib
-BUILD_CC_LIB_BASETARGET= gnu-lib
-.else
-LIBGCC_EXT=
-BUILD_CC_LIB_BASEDIR= external/gpl3/gcc/lib
+BUILD_CC_LIB_BASEDIR= external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib
 BUILD_CC_LIB_BASETARGET= external-gpl3-gcc-lib
-.endif
 .endif
 
 BUILDTARGETS+=	check-tools
@@ -312,6 +313,7 @@ distribution buildworld: .PHONY .MAKE
 	${MAKEDIRTARGET} etc distribution INSTALL_DONE=1
 .if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
 	${MAKEDIRTARGET} . postinstall-fix-obsolete
+	${MAKEDIRTARGET} . postinstall-fix-obsolete_stand
 	${MAKEDIRTARGET} distrib/sets checkflist
 .endif
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
@@ -523,7 +525,6 @@ install-${dir}: .PHONY
 dependall-distrib depend-distrib all-distrib: .PHONY
 	@true
 
-.include <bsd.sys.mk>
 .include <bsd.obj.mk>
 .include <bsd.kernobj.mk>
 .include <bsd.subdir.mk>

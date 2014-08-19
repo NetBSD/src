@@ -56,8 +56,8 @@ Disassembly of section .text:
 00000066 <move_register_half>:
   66:	09 c4 28 40 	A0.X = R5.L;
   6a:	09 c4 10 c0 	A1.X = R2.L;
-  6e:	0a c4 [0|3][0|6] 00 	R0.L = A0.X;
-  72:	0a c4 [0|3][0|6] 4e 	R7.L = A1.X;
+  6e:	0a c4 3f 00 	R0.L = A0.X;
+  72:	0a c4 3f 4e 	R7.L = A1.X;
   76:	09 c4 18 00 	A0.L = R3.L;
   7a:	09 c4 20 80 	A1.L = R4.L;
   7e:	29 c4 30 00 	A0.H = R6.H;

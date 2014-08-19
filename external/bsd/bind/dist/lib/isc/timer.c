@@ -1,7 +1,7 @@
-/*	$NetBSD: timer.c,v 1.5.2.1 2013/06/23 06:26:25 tls Exp $	*/
+/*	$NetBSD: timer.c,v 1.5.2.2 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -23,12 +23,14 @@
 
 #include <config.h>
 
+#include <isc/app.h>
 #include <isc/condition.h>
 #include <isc/heap.h>
 #include <isc/log.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/msgs.h>
+#include <isc/once.h>
 #include <isc/platform.h>
 #include <isc/task.h>
 #include <isc/thread.h>
@@ -118,34 +120,33 @@ struct isc__timermgr {
 };
 
 /*%
- * The followings can be either static or public, depending on build
- * environment.
+ * The following are intended for internal use (indicated by "isc__"
+ * prefix) but are not declared as static, allowing direct access from
+ * unit tests etc.
  */
 
-#define ISC_TIMERFUNC_SCOPE static
-
-ISC_TIMERFUNC_SCOPE isc_result_t
+isc_result_t
 isc__timer_create(isc_timermgr_t *manager, isc_timertype_t type,
-		  isc_time_t *expires, isc_interval_t *interval,
+		  const isc_time_t *expires, const isc_interval_t *interval,
 		  isc_task_t *task, isc_taskaction_t action, const void *arg,
 		  isc_timer_t **timerp);
-ISC_TIMERFUNC_SCOPE isc_result_t
+isc_result_t
 isc__timer_reset(isc_timer_t *timer, isc_timertype_t type,
-		 isc_time_t *expires, isc_interval_t *interval,
+		 const isc_time_t *expires, const isc_interval_t *interval,
 		 isc_boolean_t purge);
-ISC_TIMERFUNC_SCOPE isc_timertype_t
-isc__timer_gettype(isc_timer_t *timer);
-ISC_TIMERFUNC_SCOPE isc_result_t
+isc_timertype_t
+isc_timer_gettype(isc_timer_t *timer);
+isc_result_t
 isc__timer_touch(isc_timer_t *timer);
-ISC_TIMERFUNC_SCOPE void
+void
 isc__timer_attach(isc_timer_t *timer0, isc_timer_t **timerp);
-ISC_TIMERFUNC_SCOPE void
+void
 isc__timer_detach(isc_timer_t **timerp);
-ISC_TIMERFUNC_SCOPE isc_result_t
+isc_result_t
 isc__timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);
-ISC_TIMERFUNC_SCOPE void
-isc__timermgr_poke(isc_timermgr_t *manager0);
-ISC_TIMERFUNC_SCOPE void
+void
+isc_timermgr_poke(isc_timermgr_t *manager0);
+void
 isc__timermgr_destroy(isc_timermgr_t **managerp);
 
 static struct isc__timermethods {
@@ -162,17 +163,18 @@ static struct isc__timermethods {
 		isc__timer_reset,
 		isc__timer_touch
 	},
-	(void *)isc__timer_gettype
+	(void *)isc_timer_gettype
 };
 
 static struct isc__timermgrmethods {
 	isc_timermgrmethods_t methods;
+	void *poke;		/* see above */
 } timermgrmethods = {
 	{
 		isc__timermgr_destroy,
-		isc__timer_create,
-		isc__timermgr_poke
+		isc__timer_create
 	},
+	(void *)isc_timermgr_poke
 };
 
 #ifdef USE_SHARED_MANAGER
@@ -375,9 +377,9 @@ destroy(isc__timer_t *timer) {
 	isc_mem_put(manager->mctx, timer, sizeof(*timer));
 }
 
-ISC_TIMERFUNC_SCOPE isc_result_t
+isc_result_t
 isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
-		  isc_time_t *expires, isc_interval_t *interval,
+		  const isc_time_t *expires, const isc_interval_t *interval,
 		  isc_task_t *task, isc_taskaction_t action, const void *arg,
 		  isc_timer_t **timerp)
 {
@@ -497,9 +499,9 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 	return (ISC_R_SUCCESS);
 }
 
-ISC_TIMERFUNC_SCOPE isc_result_t
+isc_result_t
 isc__timer_reset(isc_timer_t *timer0, isc_timertype_t type,
-		 isc_time_t *expires, isc_interval_t *interval,
+		 const isc_time_t *expires, const isc_interval_t *interval,
 		 isc_boolean_t purge)
 {
 	isc__timer_t *timer = (isc__timer_t *)timer0;
@@ -573,8 +575,8 @@ isc__timer_reset(isc_timer_t *timer0, isc_timertype_t type,
 	return (result);
 }
 
-ISC_TIMERFUNC_SCOPE isc_timertype_t
-isc__timer_gettype(isc_timer_t *timer0) {
+isc_timertype_t
+isc_timer_gettype(isc_timer_t *timer0) {
 	isc__timer_t *timer = (isc__timer_t *)timer0;
 	isc_timertype_t t;
 
@@ -587,7 +589,7 @@ isc__timer_gettype(isc_timer_t *timer0) {
 	return (t);
 }
 
-ISC_TIMERFUNC_SCOPE isc_result_t
+isc_result_t
 isc__timer_touch(isc_timer_t *timer0) {
 	isc__timer_t *timer = (isc__timer_t *)timer0;
 	isc_result_t result;
@@ -618,7 +620,7 @@ isc__timer_touch(isc_timer_t *timer0) {
 	return (result);
 }
 
-ISC_TIMERFUNC_SCOPE void
+void
 isc__timer_attach(isc_timer_t *timer0, isc_timer_t **timerp) {
 	isc__timer_t *timer = (isc__timer_t *)timer0;
 
@@ -636,7 +638,7 @@ isc__timer_attach(isc_timer_t *timer0, isc_timer_t **timerp) {
 	*timerp = (isc_timer_t *)timer;
 }
 
-ISC_TIMERFUNC_SCOPE void
+void
 isc__timer_detach(isc_timer_t **timerp) {
 	isc__timer_t *timer;
 	isc_boolean_t free_timer = ISC_FALSE;
@@ -677,7 +679,7 @@ dispatch(isc__timermgr_t *manager, isc_time_t *now) {
 
 	while (manager->nscheduled > 0 && !done) {
 		timer = isc_heap_element(manager->heap, 1);
-		INSIST(timer->type != isc_timertype_inactive);
+		INSIST(timer != NULL && timer->type != isc_timertype_inactive);
 		if (isc_time_compare(now, &timer->due) >= 0) {
 			if (timer->type == isc_timertype_ticker) {
 				type = ISC_TIMEREVENT_TICK;
@@ -852,7 +854,7 @@ set_index(void *what, unsigned int index) {
 	timer->index = index;
 }
 
-ISC_TIMERFUNC_SCOPE isc_result_t
+isc_result_t
 isc__timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
 	isc__timermgr_t *manager;
 	isc_result_t result;
@@ -933,8 +935,8 @@ isc__timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
 	return (ISC_R_SUCCESS);
 }
 
-ISC_TIMERFUNC_SCOPE void
-isc__timermgr_poke(isc_timermgr_t *manager0) {
+void
+isc_timermgr_poke(isc_timermgr_t *manager0) {
 #ifdef USE_TIMER_THREAD
 	isc__timermgr_t *manager = (isc__timermgr_t *)manager0;
 
@@ -946,7 +948,7 @@ isc__timermgr_poke(isc_timermgr_t *manager0) {
 #endif
 }
 
-ISC_TIMERFUNC_SCOPE void
+void
 isc__timermgr_destroy(isc_timermgr_t **managerp) {
 	isc__timermgr_t *manager;
 	isc_mem_t *mctx;
@@ -1050,6 +1052,145 @@ isc__timermgr_dispatch(isc_timermgr_t *manager0) {
 #endif /* USE_TIMER_THREAD */
 
 isc_result_t
-isc__timer_register() {
+isc__timer_register(void) {
 	return (isc_timer_register(isc__timermgr_create));
+}
+
+static isc_mutex_t createlock;
+static isc_once_t once = ISC_ONCE_INIT;
+static isc_timermgrcreatefunc_t timermgr_createfunc = NULL;
+
+static void
+initialize(void) {
+	RUNTIME_CHECK(isc_mutex_init(&createlock) == ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_timer_register(isc_timermgrcreatefunc_t createfunc) {
+	isc_result_t result = ISC_R_SUCCESS;
+
+	RUNTIME_CHECK(isc_once_do(&once, initialize) == ISC_R_SUCCESS);
+
+	LOCK(&createlock);
+	if (timermgr_createfunc == NULL)
+		timermgr_createfunc = createfunc;
+	else
+		result = ISC_R_EXISTS;
+	UNLOCK(&createlock);
+
+	return (result);
+}
+
+isc_result_t
+isc_timermgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
+			 isc_timermgr_t **managerp)
+{
+	isc_result_t result;
+
+	LOCK(&createlock);
+
+	REQUIRE(timermgr_createfunc != NULL);
+	result = (*timermgr_createfunc)(mctx, managerp);
+
+	UNLOCK(&createlock);
+
+	if (result == ISC_R_SUCCESS)
+		isc_appctx_settimermgr(actx, *managerp);
+
+	return (result);
+}
+
+isc_result_t
+isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
+	isc_result_t result;
+
+	if (isc_bind9)
+		return (isc__timermgr_create(mctx, managerp));
+
+	LOCK(&createlock);
+
+	REQUIRE(timermgr_createfunc != NULL);
+	result = (*timermgr_createfunc)(mctx, managerp);
+
+	UNLOCK(&createlock);
+
+	return (result);
+}
+
+void
+isc_timermgr_destroy(isc_timermgr_t **managerp) {
+	REQUIRE(*managerp != NULL && ISCAPI_TIMERMGR_VALID(*managerp));
+
+	if (isc_bind9)
+		isc__timermgr_destroy(managerp);
+	else
+		(*managerp)->methods->destroy(managerp);
+
+	ENSURE(*managerp == NULL);
+}
+
+isc_result_t
+isc_timer_create(isc_timermgr_t *manager, isc_timertype_t type,
+		 const isc_time_t *expires, const isc_interval_t *interval,
+		 isc_task_t *task, isc_taskaction_t action, const void *arg,
+		 isc_timer_t **timerp)
+{
+	REQUIRE(ISCAPI_TIMERMGR_VALID(manager));
+
+	if (isc_bind9)
+		return (isc__timer_create(manager, type, expires, interval,
+					  task, action, arg, timerp));
+
+	return (manager->methods->timercreate(manager, type, expires,
+					      interval, task, action, arg,
+					      timerp));
+}
+
+void
+isc_timer_attach(isc_timer_t *timer, isc_timer_t **timerp) {
+	REQUIRE(ISCAPI_TIMER_VALID(timer));
+	REQUIRE(timerp != NULL && *timerp == NULL);
+
+	if (isc_bind9)
+		isc__timer_attach(timer, timerp);
+	else
+		timer->methods->attach(timer, timerp);
+
+	ENSURE(*timerp == timer);
+}
+
+void
+isc_timer_detach(isc_timer_t **timerp) {
+	REQUIRE(timerp != NULL && ISCAPI_TIMER_VALID(*timerp));
+
+	if (isc_bind9)
+		isc__timer_detach(timerp);
+	else
+		(*timerp)->methods->detach(timerp);
+
+	ENSURE(*timerp == NULL);
+}
+
+isc_result_t
+isc_timer_reset(isc_timer_t *timer, isc_timertype_t type,
+		const isc_time_t *expires, const isc_interval_t *interval,
+		isc_boolean_t purge)
+{
+	REQUIRE(ISCAPI_TIMER_VALID(timer));
+
+	if (isc_bind9)
+		return (isc__timer_reset(timer, type, expires,
+					 interval, purge));
+
+	return (timer->methods->reset(timer, type, expires, interval, purge));
+}
+
+isc_result_t
+isc_timer_touch(isc_timer_t *timer) {
+	REQUIRE(ISCAPI_TIMER_VALID(timer));
+
+	if (isc_bind9)
+		return (isc__timer_touch(timer));
+
+	return (timer->methods->touch(timer));
 }

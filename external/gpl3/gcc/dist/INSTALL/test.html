@@ -7,12 +7,10 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997,
-1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-2009, 2010, 2011 Free Software Foundation, Inc.
+Copyright (C) 1988-2013 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.2 or
+under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, the Front-Cover texts being (a) (see below), and
 with the Back-Cover Texts being (b) (see below).  A copy of the
@@ -68,15 +66,15 @@ installed are not in the <samp><span class="env">PATH</span></samp>, you may nee
 environment variables appropriately, as in the following example (which
 assumes that DejaGnu has been installed under <samp><span class="file">/usr/local</span></samp>):
 
-<pre class="smallexample">          TCL_LIBRARY = /usr/local/share/tcl8.0
-          DEJAGNULIBS = /usr/local/share/dejagnu
+<pre class="smallexample">     TCL_LIBRARY = /usr/local/share/tcl8.0
+     DEJAGNULIBS = /usr/local/share/dejagnu
 </pre>
    <p>(On systems such as Cygwin, these paths are required to be actual
 paths, not mounts or links; presumably this is due to some lack of
 portability in the DejaGnu code.)
 
    <p>Finally, you can run the testsuite (which may take a long time):
-<pre class="smallexample">          cd <var>objdir</var>; make -k check
+<pre class="smallexample">     cd <var>objdir</var>; make -k check
 </pre>
    <p>This will test various components of GCC, such as compiler
 front ends and runtime libraries.  While running the testsuite, DejaGnu
@@ -90,19 +88,22 @@ on a simulator as described at <a href="http://gcc.gnu.org/simtest-howto.html">h
 <h3 class="section"><a name="TOC0"></a>How can you run the testsuite on selected tests?</h3>
 
 <p>In order to run sets of tests selectively, there are targets
-&lsquo;<samp><span class="samp">make check-gcc</span></samp>&rsquo; and &lsquo;<samp><span class="samp">make check-g++</span></samp>&rsquo;
+&lsquo;<samp><span class="samp">make check-gcc</span></samp>&rsquo; and language specific &lsquo;<samp><span class="samp">make check-c</span></samp>&rsquo;,
+&lsquo;<samp><span class="samp">make check-c++</span></samp>&rsquo;, &lsquo;<samp><span class="samp">make check-fortran</span></samp>&rsquo;, &lsquo;<samp><span class="samp">make check-java</span></samp>&rsquo;,
+&lsquo;<samp><span class="samp">make check-ada</span></samp>&rsquo;, &lsquo;<samp><span class="samp">make check-objc</span></samp>&rsquo;, &lsquo;<samp><span class="samp">make check-obj-c++</span></samp>&rsquo;,
+&lsquo;<samp><span class="samp">make check-lto</span></samp>&rsquo;
 in the <samp><span class="file">gcc</span></samp> subdirectory of the object directory.  You can also
 just run &lsquo;<samp><span class="samp">make check</span></samp>&rsquo; in a subdirectory of the object directory.
 
    <p>A more selective way to just run all <samp><span class="command">gcc</span></samp> execute tests in the
 testsuite is to use
 
-<pre class="smallexample">         make check-gcc RUNTESTFLAGS="execute.exp <var>other-options</var>"
+<pre class="smallexample">     make check-gcc RUNTESTFLAGS="execute.exp <var>other-options</var>"
 </pre>
    <p>Likewise, in order to run only the <samp><span class="command">g++</span></samp> &ldquo;old-deja&rdquo; tests in
 the testsuite with filenames matching &lsquo;<samp><span class="samp">9805*</span></samp>&rsquo;, you would use
 
-<pre class="smallexample">         make check-g++ RUNTESTFLAGS="old-deja.exp=9805* <var>other-options</var>"
+<pre class="smallexample">     make check-g++ RUNTESTFLAGS="old-deja.exp=9805* <var>other-options</var>"
 </pre>
    <p>The <samp><span class="file">*.exp</span></samp> files are located in the testsuite directories of the GCC
 source, the most important ones being <samp><span class="file">compile.exp</span></samp>,
@@ -118,7 +119,7 @@ output of &lsquo;<samp><span class="samp">make check</span></samp>&rsquo; into a
 &lsquo;<samp><span class="samp">RUNTESTFLAGS</span></samp>&rsquo;, or directly to <samp><span class="command">runtest</span></samp> if you prefer to
 work outside the makefiles.  For example,
 
-<pre class="smallexample">         make check-g++ RUNTESTFLAGS="--target_board=unix/-O3/-fmerge-constants"
+<pre class="smallexample">     make check-g++ RUNTESTFLAGS="--target_board=unix/-O3/-fmerge-constants"
 </pre>
    <p>will run the standard <samp><span class="command">g++</span></samp> testsuites (&ldquo;unix&rdquo; is the target name
 for a standard native testsuite situation), passing
@@ -128,25 +129,25 @@ slashes separate options.
    <p>You can run the testsuites multiple times using combinations of options
 with a syntax similar to the brace expansion of popular shells:
 
-<pre class="smallexample">         ..."--target_board=arm-sim\{-mhard-float,-msoft-float\}\{-O1,-O2,-O3,\}"
+<pre class="smallexample">     ..."--target_board=arm-sim\{-mhard-float,-msoft-float\}\{-O1,-O2,-O3,\}"
 </pre>
    <p>(Note the empty option caused by the trailing comma in the final group.) 
 The following will run each testsuite eight times using the &lsquo;<samp><span class="samp">arm-sim</span></samp>&rsquo;
 target, as if you had specified all possible combinations yourself:
 
-<pre class="smallexample">         --target_board=arm-sim/-mhard-float/-O1
-         --target_board=arm-sim/-mhard-float/-O2
-         --target_board=arm-sim/-mhard-float/-O3
-         --target_board=arm-sim/-mhard-float
-         --target_board=arm-sim/-msoft-float/-O1
-         --target_board=arm-sim/-msoft-float/-O2
-         --target_board=arm-sim/-msoft-float/-O3
-         --target_board=arm-sim/-msoft-float
+<pre class="smallexample">     --target_board='arm-sim/-mhard-float/-O1 \
+                     arm-sim/-mhard-float/-O2 \
+                     arm-sim/-mhard-float/-O3 \
+                     arm-sim/-mhard-float \
+                     arm-sim/-msoft-float/-O1 \
+                     arm-sim/-msoft-float/-O2 \
+                     arm-sim/-msoft-float/-O3 \
+                     arm-sim/-msoft-float'
 </pre>
    <p>They can be combined as many times as you wish, in arbitrary ways.  This
 list:
 
-<pre class="smallexample">         ..."--target_board=unix/-Wextra\{-O3,-fno-strength\}\{-fomit-frame,\}"
+<pre class="smallexample">     ..."--target_board=unix/-Wextra\{-O3,-fno-strength\}\{-fomit-frame,\}"
 </pre>
    <p>will generate four combinations, all involving &lsquo;<samp><span class="samp">-Wextra</span></samp>&rsquo;.
 
@@ -157,11 +158,11 @@ parallel by having the shell perform the combinations and <samp><span class="com
 do the parallel runs.  Instead of using &lsquo;<samp><span class="samp">--target_board</span></samp>&rsquo;, use a
 special makefile target:
 
-<pre class="smallexample">         make -j<var>N</var> check-<var>testsuite</var>//<var>test-target</var>/<var>option1</var>/<var>option2</var>/...
+<pre class="smallexample">     make -j<var>N</var> check-<var>testsuite</var>//<var>test-target</var>/<var>option1</var>/<var>option2</var>/...
 </pre>
    <p>For example,
 
-<pre class="smallexample">         make -j3 check-gcc//sh-hms-sim/{-m1,-m2,-m3,-m3e,-m4}/{,-nofpu}
+<pre class="smallexample">     make -j3 check-gcc//sh-hms-sim/{-m1,-m2,-m3,-m3e,-m4}/{,-nofpu}
 </pre>
    <p>will run three concurrent &ldquo;make-gcc&rdquo; testsuites, eventually testing all
 ten combinations as described above.  Note that this is currently only
@@ -209,8 +210,8 @@ be fixed in future releases.
 <p>If you want to report the results to the GCC project, use the
 <samp><span class="file">contrib/test_summary</span></samp> shell script.  Start it in the <var>objdir</var> with
 
-<pre class="smallexample">         <var>srcdir</var>/contrib/test_summary -p your_commentary.txt \
-             -m gcc-testresults@gcc.gnu.org |sh
+<pre class="smallexample">     <var>srcdir</var>/contrib/test_summary -p your_commentary.txt \
+         -m gcc-testresults@gcc.gnu.org |sh
 </pre>
    <p>This script uses the <samp><span class="command">Mail</span></samp> program to send the results, so
 make sure it is in your <samp><span class="env">PATH</span></samp>.  The file <samp><span class="file">your_commentary.txt</span></samp> is

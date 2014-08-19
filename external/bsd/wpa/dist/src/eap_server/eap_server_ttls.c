@@ -2,14 +2,8 @@
  * hostapd / EAP-TTLS (RFC 5281)
  * Copyright (c) 2004-2011, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -680,6 +674,13 @@ static void eap_ttls_process_phase2_mschapv2(struct eap_sm *sm,
 		return;
 	}
 
+	if (sm->identity == NULL) {
+		wpa_printf(MSG_DEBUG, "EAP-TTLS/MSCHAPV2: No user identity "
+			   "known");
+		eap_ttls_state(data, FAILURE);
+		return;
+	}
+
 	/* MSCHAPv2 does not include optional domain name in the
 	 * challenge-response calculation, so remove domain prefix
 	 * (if present). */
@@ -985,11 +986,12 @@ static void eap_ttls_process_phase2(struct eap_sm *sm,
 	if (parse.user_name) {
 		os_free(sm->identity);
 		sm->identity = os_malloc(parse.user_name_len);
-		if (sm->identity) {
-			os_memcpy(sm->identity, parse.user_name,
-				  parse.user_name_len);
-			sm->identity_len = parse.user_name_len;
+		if (sm->identity == NULL) {
+			eap_ttls_state(data, FAILURE);
+			goto done;
 		}
+		os_memcpy(sm->identity, parse.user_name, parse.user_name_len);
+		sm->identity_len = parse.user_name_len;
 		if (eap_user_get(sm, parse.user_name, parse.user_name_len, 1)
 		    != 0) {
 			wpa_printf(MSG_DEBUG, "EAP-TTLS: Phase2 Identity not "

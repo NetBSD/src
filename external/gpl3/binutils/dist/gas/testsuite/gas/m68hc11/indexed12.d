@@ -17,122 +17,122 @@ _main:
    0:	a7          	nop
 ;;; Global check \(1st\)
 	ldab	L1\-_main,x	; Offset/const of these 2 insns must be
-   1:	e6 e0 93    	ldab	147,X
+   1:	e6 e0 93    	ldab	0x93,X
 	ldaa	#L1\-_main	; identical \(likewise for 2nd global check\)
-   4:	86 93       	ldaa	#147
+   4:	86 93       	ldaa	#0x93
 ;;; Test gas relax with difference of symbols \(same section\)
 	ldaa	L2\-L1,x		; \-> ldaa 2,x \(5\-bit offset\), text seg
-   6:	a6 02       	ldaa	2,X
+   6:	a6 02       	ldaa	0x2,X
 	adda	L1\-L2,y		; \-> adda \-2,y \(5\-bit offset\), text seg
-   8:	ab 5e       	adda	\-2,Y
+   8:	ab 5e       	adda	0xfffe,Y
 
 	orab	L7\-L6,sp	; \-> orab 8,sp  \(5\-bit offset\), text seg
-   a:	ea 88       	orab	8,SP
+   a:	ea 88       	orab	0x8,SP
 	anda	L8\-L7,sp	; \-> anda 15,sp \(5\-bit offset\), text seg
-   c:	a4 8f       	anda	15,SP
+   c:	a4 8f       	anda	0xf,SP
 	eora	L7\-L8,sp	; \-> eora \-15,sp \(5\-bit offset\), text seg
-   e:	a8 91       	eora	\-15,SP
+   e:	a8 91       	eora	0xfff1,SP
 	eorb	L7\-L9,sp	; \-> eorb \-16,sp \(5\-bit offset\), text seg
-  10:	e8 90       	eorb	\-16,SP
+  10:	e8 90       	eorb	0xfff0,SP
 
 	andb	L9\-L7,sp	; \-> andb 16,sp \(9\-bit offset\), text seg
-  12:	e4 f0 10    	andb	16,SP
+  12:	e4 f0 10    	andb	0x10,SP
 	staa	L7\-L10,x	; \-> staa \-17,x \(9\-bit offset\), text seg
-  15:	6a e1 ef    	staa	\-17,X
+  15:	6a e1 ef    	staa	0xffef,X
 	stab	L11\-L10,y	; \-> stab 128,y \(9\-bit offset\), text seg
-  18:	6b e8 80    	stab	128,Y
+  18:	6b e8 80    	stab	0x80,Y
 	stab	L10\-L11,y	; \-> stab \-128,y \(9\-bit offset\), text seg
-  1b:	6b e9 80    	stab	\-128,Y
+  1b:	6b e9 80    	stab	0xff80,Y
 	stab	L11\-L10\+1,y	; \-> stab 129,y \(9\-bit offset\), text seg
-  1e:	6b e8 81    	stab	129,Y
+  1e:	6b e8 81    	stab	0x81,Y
 	stab	L10\-L11\-1,y	; \-> stab \-129,y \(9\-bit offset\), text seg
-  21:	6b e9 7f    	stab	\-129,Y
+  21:	6b e9 7f    	stab	0xff7f,Y
 	stab	L11\-1\-L10,y	; \-> stab 127,y \(9\-bit offset\), text seg
-  24:	6b e8 7f    	stab	127,Y
+  24:	6b e8 7f    	stab	0x7f,Y
 	stab	L10\-1\-L11,y	; \-> stab \-129,y \(9\-bit offset\), text seg
-  27:	6b e9 7f    	stab	\-129,Y
+  27:	6b e9 7f    	stab	0xff7f,Y
 
 	tst	L12\-L10,x	; \-> tst 255,x \(9\-bit offset\), text seg
-  2a:	e7 e0 ff    	tst	255,X
+  2a:	e7 e0 ff    	tst	0xff,X
 	tst	L10\-L12,x	; \-> tst \-255,x \(9\-bit offset\), text seg
-  2d:	e7 e1 01    	tst	\-255,X
+  2d:	e7 e1 01    	tst	0xff01,X
 	tst	L12\-L10\+1,x	; \-> tst 256,x \(16\-bit offset\), text seg
-  30:	e7 e2 01 00 	tst	256,X
+  30:	e7 e2 01 00 	tst	0x100,X
 	mina	L13\-L10,x	; \-> mina 256,x \(16\-bit offset\)
-  34:	18 19 e2 01 	mina	256,X
+  34:	18 19 e2 01 	mina	0x100,X
   38:	00 
 	mina	L10\-L13,x	; \-> mina \-256,x \(9\-bit offset\)
-  39:	18 19 e1 00 	mina	\-256,X
+  39:	18 19 e1 00 	mina	0xff00,X
 
 	maxa	L14\-L10,x	; \-> maxa 257,x \(16\-bit offset\)
-  3d:	18 18 e2 01 	maxa	257,X
+  3d:	18 18 e2 01 	maxa	0x101,X
   41:	01 
 	maxa	L10\-L14,x	; \-> maxa \-257,x \(16\-bit offset\)
-  42:	18 18 e2 fe 	maxa	\-257,X
+  42:	18 18 e2 fe 	maxa	0xfeff,X
   46:	ff 
 
 ;;; Test gas relax with difference of symbols \(different section\)
 	ldaa	D2\-D1,x		; \-> ldaa 2,x \(5\-bit offset\), data seg
-  47:	a6 02       	ldaa	2,X
+  47:	a6 02       	ldaa	0x2,X
 	adda	D1\-D2,y		; \-> adda \-2,y \(5\-bit offset\), data seg
-  49:	ab 5e       	adda	\-2,Y
+  49:	ab 5e       	adda	0xfffe,Y
 
 	orab	D7\-D6,sp	; \-> orab 8,sp  \(5\-bit offset\), data seg
-  4b:	ea 88       	orab	8,SP
+  4b:	ea 88       	orab	0x8,SP
 	anda	D8\-D7,sp	; \-> anda 15,sp \(5\-bit offset\), data seg
-  4d:	a4 8f       	anda	15,SP
+  4d:	a4 8f       	anda	0xf,SP
 	eora	D7\-D8,sp	; \-> eora \-15,sp \(5\-bit offset\), data seg
-  4f:	a8 91       	eora	\-15,SP
+  4f:	a8 91       	eora	0xfff1,SP
 	eorb	D7\-D9,sp	; \-> eorb \-16,sp \(5\-bit offset\), data seg
-  51:	e8 90       	eorb	\-16,SP
+  51:	e8 90       	eorb	0xfff0,SP
 
 	andb	D9\-D7,sp	; \-> andb 16,sp \(9\-bit offset\), data seg
-  53:	e4 f0 10    	andb	16,SP
+  53:	e4 f0 10    	andb	0x10,SP
 	staa	D7\-D10,x	; \-> staa \-17,x \(9\-bit offset\), data seg
-  56:	6a e1 ef    	staa	\-17,X
+  56:	6a e1 ef    	staa	0xffef,X
 	stab	D11\-D10,y	; \-> stab 128,y \(9\-bit offset\), data seg
-  59:	6b e8 80    	stab	128,Y
+  59:	6b e8 80    	stab	0x80,Y
 	stab	D10\-D11,y	; \-> stab \-128,y \(9\-bit offset\), data seg
-  5c:	6b e9 80    	stab	\-128,Y
+  5c:	6b e9 80    	stab	0xff80,Y
 	stab	D11\-D10\+1,y	; \-> stab 129,y \(9\-bit offset\), data seg
-  5f:	6b e8 81    	stab	129,Y
+  5f:	6b e8 81    	stab	0x81,Y
 	stab	D10\-D11\+1,y	; \-> stab \-127,y \(9\-bit offset\), data seg
-  62:	6b e9 81    	stab	\-127,Y
+  62:	6b e9 81    	stab	0xff81,Y
 	stab	D11\-1\-D10,y	; \-> stab 127,y \(9\-bit offset\), data seg
-  65:	6b e8 7f    	stab	127,Y
+  65:	6b e8 7f    	stab	0x7f,Y
 	stab	D10\-1\-D11,y	; \-> stab \-129,y \(9\-bit offset\), data seg
-  68:	6b e9 7f    	stab	\-129,Y
+  68:	6b e9 7f    	stab	0xff7f,Y
 
 	tst	D12\-D10,x	; \-> tst 255,x \(9\-bit offset\), data seg
-  6b:	e7 e0 ff    	tst	255,X
+  6b:	e7 e0 ff    	tst	0xff,X
 	tst	D10\-D12,x	; \-> tst \-255,x \(9\-bit offset\), data seg
-  6e:	e7 e1 01    	tst	\-255,X
+  6e:	e7 e1 01    	tst	0xff01,X
 	tst	D12\-D10\+1,x	; \-> tst 256,x \(16\-bit offset\), data seg
-  71:	e7 e2 01 00 	tst	256,X
+  71:	e7 e2 01 00 	tst	0x100,X
 	mina	D13\-D10,x	; \-> mina 256,x \(16\-bit offset\)
-  75:	18 19 e2 01 	mina	256,X
+  75:	18 19 e2 01 	mina	0x100,X
   79:	00 
 	mina	D10\-D13,x	; \-> mina \-256,x \(9\-bit offset\)
-  7a:	18 19 e1 00 	mina	\-256,X
+  7a:	18 19 e1 00 	mina	0xff00,X
 
 	maxa	D14\-D10,x	; \-> maxa 257,x \(16\-bit offset\)
-  7e:	18 18 e2 01 	maxa	257,X
+  7e:	18 18 e2 01 	maxa	0x101,X
   82:	01 
 	maxa	D10\-D14,x	; \-> maxa \-257,x \(16\-bit offset\)
-  83:	18 18 e2 fe 	maxa	\-257,X
+  83:	18 18 e2 fe 	maxa	0xfeff,X
   87:	ff 
 
 ;;; Global check \(2nd\)
 	ldab	L1\-_main,x
-  88:	e6 e0 93    	ldab	147,X
+  88:	e6 e0 93    	ldab	0x93,X
 	ldaa	#L1\-_main
-  8b:	86 93       	ldaa	#147
+  8b:	86 93       	ldaa	#0x93
 
 ;;; Indexed addressing with external symbol
 	ldab	_external\+128,x
-  8d:	e6 e2 00 80 	ldab	128,X
+  8d:	e6 e2 00 80 	ldab	0x80,X
 	bra	L2
-  91:	20 02       	bra	95 <L2>
+  91:	20 02       	bra	0x95 <L2>
 
 0+93 <L1>:
   93:	aa bb       	oraa	5,SP\-

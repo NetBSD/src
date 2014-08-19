@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.7.8.1 2013/06/23 06:26:26 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.7.8.2 2014/08/19 23:46:39 tls Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.7.8.1 2013/06/23 06:26:26 tls Exp $");
+__RCSID("$NetBSD: main.c,v 1.7.8.2 2014/08/19 23:46:39 tls Exp $");
 /* Id: main.c,v 1.40 2012/09/29 13:11:00 Adrian.Bunk Exp  */
 
 #include <signal.h>
@@ -93,6 +93,7 @@ short *symbol_prec;
 char *symbol_assoc;
 
 int pure_parser;
+int token_table;
 int exit_code;
 
 Value_t *ritem;

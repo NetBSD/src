@@ -1,4 +1,4 @@
-/*	$NetBSD: check_y2k.c,v 1.1.1.1 2009/12/13 16:56:07 kardel Exp $	*/
+/*	$NetBSD: check_y2k.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /* check_y2k.c -- test ntp code constructs for Y2K correctness 	Y2KFixes [*/
 
@@ -106,7 +106,6 @@
 
 #define GoodLeap(Year) (((Year)%4 || (!((Year)%100) && (Year)%400)) ? 0 : 13 )
 
-volatile int debug = 0;		/* debugging requests for parse stuff */
 char const *progname = "check_y2k";
 
 long

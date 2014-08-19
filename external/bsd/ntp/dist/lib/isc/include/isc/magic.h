@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.h,v 1.1.1.1 2009/12/13 16:54:24 kardel Exp $	*/
+/*	$NetBSD: magic.h,v 1.1.1.1.12.1 2014/08/19 23:51:39 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: magic.h,v 1.18 2007/06/19 23:47:18 tbox Exp */
+/* Id: magic.h,v 1.18 2007/06/19 23:47:18 tbox Exp  */
 
 #ifndef ISC_MAGIC_H
 #define ISC_MAGIC_H 1

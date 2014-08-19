@@ -1,5 +1,4 @@
-# Copyright (C) 1998, 1999, 2000, 2001, 2002, 2004,
-# 2006 Free Software Foundation, Inc.
+# Copyright (C) 1998-2013 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -26,14 +25,5 @@
 
 MULTILIB_OPTIONS = m64/m32
 MULTILIB_DIRNAMES = 64 32
-MULTILIB_OSDIRNAMES = ../lib64 $(if $(wildcard $(shell echo $(SYSTEM_HEADER_DIR))/../../usr/lib32),../lib32,../lib)
-
-LIBGCC = stmp-multilib
-INSTALL_LIBGCC = install-multilib
-
-EXTRA_MULTILIB_PARTS=crtbegin.o crtend.o crtbeginS.o crtendS.o crtbeginT.o \
-	crtfastmath.o
-
-CRTSTUFF_T_CFLAGS = `if test x$$($(GCC_FOR_TARGET) $(MULTILIB_CFLAGS) \
-				 -print-multi-os-directory) \
-			= x../lib64; then echo -mcmodel=medany; fi`
+MULTILIB_OSDIRNAMES = ../lib64$(call if_multiarch,:sparc64-linux-gnu)
+MULTILIB_OSDIRNAMES += $(if $(wildcard $(shell echo $(SYSTEM_HEADER_DIR))/../../usr/lib32),../lib32,../lib)$(call if_multiarch,:sparc-linux-gnu)

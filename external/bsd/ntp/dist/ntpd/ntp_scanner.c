@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_scanner.c,v 1.4 2012/02/01 07:46:22 kardel Exp $	*/
+/*	$NetBSD: ntp_scanner.c,v 1.4.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 
 /* ntp_scanner.c
@@ -21,11 +21,11 @@
 #include <errno.h>
 #include <string.h>
 
+#include "ntpd.h"
 #include "ntp_config.h"
 #include "ntpsim.h"
 #include "ntp_scanner.h"
 #include "ntp_parser.h"
-#include "ntp_debug.h"
 
 /* ntp_keyword.h declares finite state machine and token text */
 #include "ntp_keyword.h"
@@ -38,6 +38,7 @@
 
 #define MAX_LEXEME (1024 + 1)	/* The maximum size of a lexeme */
 char yytext[MAX_LEXEME];	/* Buffer for storing the input text/lexeme */
+u_int32 conf_file_sum;		/* Simple sum of characters read */
 extern int input_from_file;
 
 
@@ -125,14 +126,23 @@ FGETC(
 	struct FILE_INFO *stream
 	)
 {
-	int ch = fgetc(stream->fd);
+	int ch;
+	
+	do 
+		ch = fgetc(stream->fd);
+	while (EOF != ch && (CHAR_MIN > ch || ch > CHAR_MAX));
 
-	++stream->col_no;
-	if (ch == '\n') {
-		stream->prev_line_col_no = stream->col_no;
-		++stream->line_no;
-		stream->col_no = 1;
+	if (EOF != ch) {
+		if (input_from_file)
+			conf_file_sum += (u_char)ch;
+		++stream->col_no;
+		if (ch == '\n') {
+			stream->prev_line_col_no = stream->col_no;
+			++stream->line_no;
+			stream->col_no = 1;
+		}
 	}
+
 	return ch;
 }
 
@@ -146,6 +156,8 @@ UNGETC(
 	struct FILE_INFO *stream
 	)
 {
+	if (input_from_file)
+		conf_file_sum -= (u_char)ch;
 	if (ch == '\n') {
 		stream->col_no = stream->prev_line_col_no;
 		stream->prev_line_col_no = -1;
@@ -273,18 +285,63 @@ is_integer(
 	char *lexeme
 	)
 {
-	int i = 0;
+	int	i;
+	int	is_neg;
+	u_int	u_val;
+	
+	i = 0;
 
 	/* Allow a leading minus sign */
-	if (lexeme[i] == '-')
-		++i;
+	if (lexeme[i] == '-') {
+		i++;
+		is_neg = TRUE;
+	} else {
+		is_neg = FALSE;
+	}
 
 	/* Check that all the remaining characters are digits */
-	for (; lexeme[i]; ++i) {
+	for (; lexeme[i] != '\0'; i++) {
 		if (!isdigit((unsigned char)lexeme[i]))
-			return 0;
+			return FALSE;
 	}
-	return 1;
+
+	if (is_neg)
+		return TRUE;
+
+	/* Reject numbers that fit in unsigned but not in signed int */
+	if (1 == sscanf(lexeme, "%u", &u_val))
+		return (u_val <= INT_MAX);
+	else
+		return FALSE;
+}
+
+
+/* U_int -- assumes is_integer() has returned FALSE */
+static int
+is_u_int(
+	char *lexeme
+	)
+{
+	int	i;
+	int	is_hex;
+	
+	i = 0;
+	if ('0' == lexeme[i] && 'x' == tolower((unsigned char)lexeme[i + 1])) {
+		i += 2;
+		is_hex = TRUE;
+	} else {
+		is_hex = FALSE;
+	}
+
+	/* Check that all the remaining characters are digits */
+	for (; lexeme[i] != '\0'; i++) {
+		if (is_hex && !isxdigit((unsigned char)lexeme[i]))
+			return FALSE;
+		if (!is_hex && !isdigit((unsigned char)lexeme[i]))
+			return FALSE;
+	}
+
+	return TRUE;
 }
 
 
@@ -307,15 +364,13 @@ is_double(
 	for (; lexeme[i] && isdigit((unsigned char)lexeme[i]); i++)
 		num_digits++;
 
-	/* Check for the required decimal point */
-	if ('.' == lexeme[i])
+	/* Check for the optional decimal point */
+	if ('.' == lexeme[i]) {
 		i++;
-	else
-		return 0;
-
-	/* Check for any digits after the decimal point */
-	for (; lexeme[i] && isdigit((unsigned char)lexeme[i]); i++)
-		num_digits++;
+		/* Check for any digits after the decimal point */
+		for (; lexeme[i] && isdigit((unsigned char)lexeme[i]); i++)
+			num_digits++;
+	}
 
 	/*
 	 * The number of digits in both the decimal part and the
@@ -387,7 +442,7 @@ quote_if_needed(char *str)
 		|| strchr(str, ' ') != NULL)) {
 		snprintf(ret, octets, "\"%s\"", str);
 	} else
-		strncpy(ret, str, octets);
+		strlcpy(ret, str, octets);
 
 	return ret;
 }
@@ -429,12 +484,16 @@ yylex(
 	void
 	)
 {
-	size_t i;
-	int instring = 0;
-	int yylval_was_set = 0;
-	int token;		/* The return value/the recognized token */
-	int ch;
-	static follby followedby = FOLLBY_TOKEN;
+	static follby	followedby = FOLLBY_TOKEN;
+	size_t		i;
+	int		instring;
+	int		yylval_was_set;
+	int		converted;
+	int		token;		/* The return value */
+	int		ch;
+
+	instring = FALSE;
+	yylval_was_set = FALSE;
 
 	do {
 		/* Ignore whitespace at the beginning */
@@ -445,7 +504,7 @@ yylex(
 
 		if (EOF == ch) {
 
-			if (!input_from_file || !curr_include_level) 
+			if (!input_from_file || curr_include_level <= 0) 
 				return 0;
 
 			FCLOSE(fp[curr_include_level]);
@@ -464,13 +523,11 @@ yylex(
 			/* special chars are their own token values */
 			token = ch;
 			/*
-			 * '=' implies a single string following as in:
+			 * '=' outside simulator configuration implies
+			 * a single string following as in:
 			 * setvar Owner = "The Boss" default
-			 * This could alternatively be handled by
-			 * removing '=' from special_chars and adding
-			 * it to the keyword table.
 			 */
-			if ('=' == ch)
+			if ('=' == ch && old_config_style)
 				followedby = FOLLBY_STRING;
 			yytext[0] = (char)ch;
 			yytext[1] = '\0';
@@ -515,7 +572,7 @@ yylex(
 		 * XXX - HMS: I'm not sure we want to assume the closing "
 		 */
 		if ('"' == ch) {
-			instring = 1;
+			instring = TRUE;
 			while (EOF != (ch = get_next_char()) &&
 			       ch != '"' && ch != '\n') {
 				yytext[i++] = (char)ch;
@@ -552,24 +609,61 @@ yylex(
 	
 	if (followedby == FOLLBY_TOKEN && !instring) {
 		token = is_keyword(yytext, &followedby);
-		if (token)
+		if (token) {
+			/*
+			 * T_Server is exceptional as it forces the
+			 * following token to be a string in the
+			 * non-simulator parts of the configuration,
+			 * but in the simulator configuration section,
+			 * "server" is followed by "=" which must be
+			 * recognized as a token not a string.
+			 */
+			if (T_Server == token && !old_config_style)
+				followedby = FOLLBY_TOKEN;
 			goto normal_return;
-		else if (is_integer(yytext)) {
-			yylval_was_set = 1;
+		} else if (is_integer(yytext)) {
+			yylval_was_set = TRUE;
 			errno = 0;
 			if ((yylval.Integer = strtol(yytext, NULL, 10)) == 0
 			    && ((errno == EINVAL) || (errno == ERANGE))) {
 				msyslog(LOG_ERR, 
 					"Integer cannot be represented: %s",
 					yytext);
-				exit(1);
-			} else {
-				token = T_Integer;
-				goto normal_return;
+				if (input_from_file) {
+					exit(1);
+				} else {
+					/* force end of parsing */
+					yylval.Integer = 0;
+					return 0;
+				}
 			}
-		}
-		else if (is_double(yytext)) {
-			yylval_was_set = 1;
+			token = T_Integer;
+			goto normal_return;
+		} else if (is_u_int(yytext)) {
+			yylval_was_set = TRUE;
+			if ('0' == yytext[0] &&
+			    'x' == tolower((unsigned char)yytext[1]))
+				converted = sscanf(&yytext[2], "%x",
+						   &yylval.U_int);
+			else
+				converted = sscanf(yytext, "%u",
+						   &yylval.U_int);
+			if (1 != converted) {
+				msyslog(LOG_ERR, 
+					"U_int cannot be represented: %s",
+					yytext);
+				if (input_from_file) {
+					exit(1);
+				} else {
+					/* force end of parsing */
+					yylval.Integer = 0;
+					return 0;
+				}
+			}
+			token = T_U_int;
+			goto normal_return;
+		} else if (is_double(yytext)) {
+			yylval_was_set = TRUE;
 			errno = 0;
 			if ((yylval.Double = atof(yytext)) == 0 && errno == ERANGE) {
 				msyslog(LOG_ERR,
@@ -582,7 +676,7 @@ yylex(
 			}
 		} else {
 			/* Default: Everything is a string */
-			yylval_was_set = 1;
+			yylval_was_set = TRUE;
 			token = create_string_token(yytext);
 			goto normal_return;
 		}
@@ -620,11 +714,11 @@ yylex(
 		}
 	}
 
-	instring = 0;
+	instring = FALSE;
 	if (FOLLBY_STRING == followedby)
 		followedby = FOLLBY_TOKEN;
 
-	yylval_was_set = 1;
+	yylval_was_set = TRUE;
 	token = create_string_token(yytext);
 
 normal_return:
@@ -642,8 +736,9 @@ normal_return:
 lex_too_long:
 	yytext[min(sizeof(yytext) - 1, 50)] = 0;
 	msyslog(LOG_ERR, 
-		"configuration item on line %d longer than limit of %zu, began with '%s'",
-		ip_file->line_no, sizeof(yytext) - 1, yytext);
+		"configuration item on line %d longer than limit of %lu, began with '%s'",
+		ip_file->line_no, (u_long)min(sizeof(yytext) - 1, 50),
+		yytext);
 
 	/*
 	 * If we hit the length limit reading the startup configuration

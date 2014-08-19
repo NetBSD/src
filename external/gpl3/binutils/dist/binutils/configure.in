@@ -28,9 +28,29 @@ AC_ARG_ENABLE(targets,
   *)        enable_targets=$enableval ;;
 esac])dnl
 
+AC_ARG_ENABLE(deterministic-archives,
+[AS_HELP_STRING([--enable-deterministic-archives],
+		[ar and ranlib default to -D behavior])], [
+if test "${enableval}" = no; then
+  default_ar_deterministic=0
+else
+  default_ar_deterministic=1
+fi], [default_ar_deterministic=0])
+
+AC_DEFINE_UNQUOTED(DEFAULT_AR_DETERMINISTIC, $default_ar_deterministic,
+		   [Should ar and ranlib use -D behavior by default?])
+
 AM_BINUTILS_WARNINGS
-		   
+
 AC_CONFIG_HEADERS(config.h:config.in)
+
+AH_VERBATIM([00_CONFIG_H_CHECK],
+[/* Check that config.h is #included before system headers
+   (this works only for glibc, but that should be enough).  */
+#if defined(__GLIBC__) && !defined(__FreeBSD_kernel__) && !defined(__CONFIG_H__)
+#  error config.h must be #included before system headers
+#endif
+#define __CONFIG_H__ 1])
 
 if test -z "$target" ; then
     AC_MSG_ERROR(Unrecognized target system type; please check config.sub.)
@@ -42,7 +62,7 @@ fi
 AC_PROG_YACC
 AM_PROG_LEX
 
-ALL_LINGUAS="da es fi fr id ja ro ru rw sk sv tr uk vi zh_CN zh_TW bg"
+ALL_LINGUAS="bg da es fi fr id it ja ro ru rw sk sv tr uk vi zh_CN zh_TW"
 ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
 
@@ -77,19 +97,30 @@ case "${host}" in
 esac
 AC_SUBST(DEMANGLER_NAME)
 
-AC_CHECK_HEADERS(string.h strings.h stdlib.h unistd.h fcntl.h sys/file.h limits.h sys/param.h)
+AC_CHECK_HEADERS(string.h strings.h stdlib.h unistd.h fcntl.h sys/file.h limits.h locale.h sys/param.h wchar.h)
 AC_HEADER_SYS_WAIT
+ACX_HEADER_STRING
 AC_FUNC_ALLOCA
-AC_CHECK_FUNCS(sbrk utimes setmode getc_unlocked strcoll)
+AC_CHECK_FUNCS(sbrk utimes setmode getc_unlocked strcoll setlocale)
 AC_CHECK_FUNC([mkstemp],
 	      AC_DEFINE([HAVE_MKSTEMP], 1,
 	      [Define to 1 if you have the `mkstemp' function.]))
 AC_CHECK_FUNC([mkdtemp],
               AC_DEFINE([HAVE_MKDTEMP], 1,
               [Define to 1 if you have the `mkdtemp' function.]))
+  AC_MSG_CHECKING([for mbstate_t])
+  AC_TRY_COMPILE([#include <wchar.h>],
+  [mbstate_t teststate;],
+  have_mbstate_t=yes, have_mbstate_t=no)
+  AC_MSG_RESULT($have_mbstate_t)
+  if test x"$have_mbstate_t" = xyes; then
+    AC_DEFINE(HAVE_MBSTATE_T,1,[Define if mbstate_t exists in wchar.h.])
+  fi
 
 # Some systems have frexp only in -lm, not in -lc.
 AC_SEARCH_LIBS(frexp, m)
+
+AM_LC_MESSAGES
 
 AC_MSG_CHECKING(for time_t in time.h)
 AC_CACHE_VAL(bu_cv_decl_time_t_time_h,
@@ -143,7 +174,7 @@ AC_CHECK_DECLS([fprintf, stpcpy, strstr, sbrk, getenv, environ, getc_unlocked,
 # Link in zlib if we can.  This allows us to read compressed debug
 # sections.  This is used only by readelf.c (objdump uses bfd for
 # reading compressed sections).
-AC_SEARCH_LIBS(zlibVersion, z, [AC_CHECK_HEADERS(zlib.h)])
+AM_ZLIB
 
 BFD_BINARY_FOPEN
 
@@ -179,6 +210,9 @@ BUILD_DLLWRAP=
 BUILD_MISC=
 BUILD_INSTALL_MISC=
 OBJDUMP_DEFS=
+OBJDUMP_PRIVATE_VECTORS=
+OBJDUMP_PRIVATE_OFILES=
+od_vectors=
 
 for targ in $target $canon_targets
 do
@@ -196,10 +230,11 @@ do
 	fi
 	DLLTOOL_DEFS="$DLLTOOL_DEFS -DDLLTOOL_I386"
 	BUILD_DLLWRAP='$(DLLWRAP_PROG)$(EXEEXT)'
+	od_vectors="$od_vectors objdump_private_desc_xcoff"
     else
 	case $targ in
 changequote(,)dnl
-	i[3-7]86*-*-netware*) 
+	i[3-7]86*-*-netware*)
 changequote([,])dnl
 	  BUILD_NLMCONV='$(NLMCONV_PROG)$(EXEEXT)'
 	  NLMCONV_DEFS="$NLMCONV_DEFS -DNLMCONV_I386"
@@ -217,9 +252,11 @@ changequote([,])dnl
 	  NLMCONV_DEFS="$NLMCONV_DEFS -DNLMCONV_SPARC"
 	  ;;
 	esac
+
 	case $targ in
 	*-*-hms*) BUILD_SRCONV='$(SRCONV_PROG)' ;;
 	esac
+
 	case $targ in
 	arm-epoc-pe*)
   	  BUILD_DLLTOOL='$(DLLTOOL_PROG)$(EXEEXT)'
@@ -240,15 +277,6 @@ changequote([,])dnl
 	  BUILD_WINDMC='$(WINDMC_PROG)$(EXEEXT)'
 	  ;;
 	arm-*-pe*)
-  	  BUILD_DLLTOOL='$(DLLTOOL_PROG)$(EXEEXT)'
-	  if test -z "$DLLTOOL_DEFAULT"; then
-	    DLLTOOL_DEFAULT="-DDLLTOOL_DEFAULT_ARM"
-	  fi
-	  DLLTOOL_DEFS="$DLLTOOL_DEFS -DDLLTOOL_ARM"
-	  BUILD_WINDRES='$(WINDRES_PROG)$(EXEEXT)'
-	  BUILD_WINDMC='$(WINDMC_PROG)$(EXEEXT)'
-	  ;;
-	thumb-*-pe*)
   	  BUILD_DLLTOOL='$(DLLTOOL_PROG)$(EXEEXT)'
 	  if test -z "$DLLTOOL_DEFAULT"; then
 	    DLLTOOL_DEFAULT="-DDLLTOOL_DEFAULT_ARM"
@@ -353,7 +381,49 @@ changequote([,])dnl
 	  OBJDUMP_DEFS="-DSKIP_ZEROES=256 -DSKIP_ZEROES_AT_END=0"
 	  ;;
 	esac
+
+	# Add objdump private vectors.
+	case $targ in
+	powerpc-*-aix*)
+	  od_vectors="$od_vectors objdump_private_desc_xcoff"
+	  ;;
+        *-*-darwin*)
+	  od_vectors="$od_vectors objdump_private_desc_mach_o"
+	  ;;
+	esac
     fi
+done
+
+# Uniq objdump private vector, build objdump target ofiles.
+od_files=
+f=""
+for i in $od_vectors ; do
+    case " $f " in
+    *" $i "*) ;;
+    *)
+	f="$f $i"
+	OBJDUMP_PRIVATE_VECTORS="$OBJDUMP_PRIVATE_VECTORS &$i,"
+	case $i in
+	objdump_private_desc_xcoff)
+	    od_files="$od_files od-xcoff" ;;
+	objdump_private_desc_mach_o)
+	    od_files="$od_files od-macho" ;;
+	*) AC_MSG_ERROR(*** unknown private vector $i) ;;
+	esac
+	;;
+    esac
+done
+
+# Uniq objdump target ofiles
+f=""
+for i in $od_files ; do
+    case " $f " in
+    *" $i "*) ;;
+    *)
+	f="$f $i"
+	OBJDUMP_PRIVATE_OFILES="$OBJDUMP_PRIVATE_OFILES $i.$objext"
+	;;
+    esac
 done
 
 DLLTOOL_DEFS="$DLLTOOL_DEFS $DLLTOOL_DEFAULT"
@@ -366,6 +436,8 @@ if test "${with_windmc+set}" = set; then
 	  BUILD_WINDMC='$(WINDMC_PROG)$(EXEEXT)'
 fi
 
+OBJDUMP_DEFS="${OBJDUMP_DEFS} -DOBJDUMP_PRIVATE_VECTORS=\"${OBJDUMP_PRIVATE_VECTORS}\""
+
 AC_SUBST(NLMCONV_DEFS)
 AC_SUBST(BUILD_NLMCONV)
 AC_SUBST(BUILD_SRCONV)
@@ -377,6 +449,7 @@ AC_SUBST(BUILD_DLLWRAP)
 AC_SUBST(BUILD_MISC)
 AC_SUBST(BUILD_INSTALL_MISC)
 AC_SUBST(OBJDUMP_DEFS)
+AC_SUBST(OBJDUMP_PRIVATE_OFILES)
 
 AC_DEFINE_UNQUOTED(TARGET, "${target}", [Configured target name.])
 
@@ -390,11 +463,11 @@ fi
 AC_DEFINE_UNQUOTED(TARGET_PREPENDS_UNDERSCORE, $UNDERSCORE,
  [Define to 1 if user symbol names have a leading underscore, 0 if not.])
 
-# Emulation 
+# Emulation
 targ=$target
 . ${srcdir}/configure.tgt
 EMULATION=$targ_emul
-EMULATION_VECTOR=$targ_emul_vector	
+EMULATION_VECTOR=$targ_emul_vector
 
 AC_SUBST(EMULATION)
 AC_SUBST(EMULATION_VECTOR)

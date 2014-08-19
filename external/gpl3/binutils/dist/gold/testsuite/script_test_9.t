@@ -2,6 +2,7 @@ PHDRS
 {
   text    PT_LOAD FLAGS(5);
   data    PT_LOAD FLAGS(6);
+  tls     PT_TLS;
 }
 
 SECTIONS
@@ -15,4 +16,12 @@ SECTIONS
   .data :
   {
   } :data
+  .tdata :
+  {
+    *(.tdata*)
+  } :data :tls
+  .tbss :
+  {
+    *(.tbss*)
+  } :data :tls
 }

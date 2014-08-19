@@ -35,5 +35,5 @@ Disassembly of section \.MIPS\.stubs:
  c00:	8f998010 	lw	t9,-32752\(gp\)
  c04:	03e07821 	move	t7,ra
  c08:	0320f809 	jalr	t9
- c0c:	24180007 	li	t8,7
+ c0c:	24180006 	li	t8,6
 	\.\.\.

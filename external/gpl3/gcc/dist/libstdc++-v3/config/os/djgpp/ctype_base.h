@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 2001, 2003, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2001-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -26,7 +26,9 @@
 // ISO C++ 14882: 22.1  Locales
 //
   
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /// @brief  Base class for ctype.
   struct ctype_base
@@ -51,4 +53,5 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     static const mask graph = __dj_ISALPHA | __dj_ISDIGIT | __dj_ISPUNCT;  // Graphical
   };
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace

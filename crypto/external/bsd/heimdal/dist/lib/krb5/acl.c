@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.1.1.1 2011/04/13 18:15:31 elric Exp $	*/
+/*	$NetBSD: acl.c,v 1.1.1.1.10.1 2014/08/19 23:45:19 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2002, 2004 Kungliga Tekniska Högskolan
@@ -226,7 +226,7 @@ krb5_acl_match_string(krb5_context context,
 	return EACCES;
     }
 }
-	
+
 /**
  * krb5_acl_match_file matches ACL format against each line in a file
  * using krb5_acl_match_string(). Lines starting with # are treated

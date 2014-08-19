@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_debug.c,v 1.5.2.1 2013/06/23 06:28:30 tls Exp $	*/
+/*	$NetBSD: dtrace_debug.c,v 1.5.2.2 2014/08/19 23:52:21 tls Exp $	*/
 
 /*-
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>.
@@ -36,62 +36,6 @@ static char const hex2ascii_data[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 #ifdef DEBUG
 
-#if defined(__amd64__)
-static __inline int
-dtrace_cmpset_long(volatile u_long *dst, u_long exp, u_long src)
-{
-	u_char res;
-
-	__asm __volatile(
-	"	 lock ; 		"
-	"	cmpxchgq %2,%1 ;	"
-	"       sete	%0 ;		"
-	"1:				"
-	"# dtrace_cmpset_long"
-	: "=a" (res),			/* 0 */
-	  "=m" (*dst)			/* 1 */
-	: "r" (src),			/* 2 */
-	  "a" (exp),			/* 3 */
-	  "m" (*dst)			/* 4 */
-	: "memory");
-
-	return (res);
-}
-#elif defined(__i386__)
-static __inline int
-dtrace_cmpset_long(volatile u_long *dst, u_long exp, u_long src)
-{
-	u_char res;
-
-	__asm __volatile(
-	"        lock ;            	"
-	"       cmpxchgl %2,%1 ;        "
-	"       sete    %0 ;            "
-	"1:                             "
-	"# dtrace_cmpset_long"
-	: "=a" (res),                   /* 0 */
-	  "=m" (*dst)                   /* 1 */
-	: "r" (src),                    /* 2 */
-	  "a" (exp),                    /* 3 */
-	  "m" (*dst)                    /* 4 */
-	: "memory");
-
-	return (res);
-}
-#elif defined(__arm__)
-static __inline int
-dtrace_cmpset_long(volatile u_long *dst, u_long exp, u_long src)
-{
-	u_char res;
-	if (*dst == src) {
-		res = *dst;
-		*dst = src;
-		return res;
-	}
-	return exp;
-}
-#endif
-
 #define DTRACE_DEBUG_BUFR_SIZE	(32 * 1024)
 
 struct dtrace_debug_data {
@@ -108,7 +52,8 @@ static volatile u_long	dtrace_debug_flag[MAXCPUS];
 static void
 dtrace_debug_lock(int cpu)
 {
-	while (dtrace_cmpset_long(&dtrace_debug_flag[cpu], 0, 1) == 0)
+	/* FIXME: use atomic_cmpset_ulong once we have it  */
+	while (atomic_cas_ulong(&dtrace_debug_flag[cpu], 0, 1) == 0)
 		/* Loop until the lock is obtained. */
 		;
 }
@@ -167,7 +112,7 @@ dtrace_debug_output(void)
 
 			for (p = d->first; p < d->next; p++)
 				*p1++ = *p;
-		} else if (d->next > d->first) {
+		} else if (d->first > d->next) {
 			char *p1 = dtrace_debug_bufr;
 
 			count = (uintptr_t) d->last - (uintptr_t) d->first;

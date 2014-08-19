@@ -1,8 +1,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-	       [<!ENTITY mdash "&#8212;">]>
+               [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2001, 2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,10 +18,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: rndc-confgen.docbook,v 1.4 2009/06/15 23:47:59 tbox Exp  -->
 <refentry id="man.rndc-confgen">
   <refentryinfo>
-    <date>Aug 27, 2001</date>
+    <date>March 14, 2013</date>
   </refentryinfo>
 
   <refmeta>
@@ -41,6 +40,8 @@
       <year>2005</year>
       <year>2007</year>
       <year>2009</year>
+      <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -54,6 +55,7 @@
     <cmdsynopsis>
       <command>rndc-confgen</command>
       <arg><option>-a</option></arg>
+      <arg><option>-A <replaceable class="parameter">algorithm</replaceable></option></arg>
       <arg><option>-b <replaceable class="parameter">keysize</replaceable></option></arg>
       <arg><option>-c <replaceable class="parameter">keyfile</replaceable></option></arg>
       <arg><option>-h</option></arg>
@@ -129,11 +131,23 @@
       </varlistentry>
 
       <varlistentry>
+        <term>-A <replaceable class="parameter">algorithm</replaceable></term>
+        <listitem>
+          <para>
+            Specifies the algorithm to use for the TSIG key.  Available
+            choices are: hmac-md5, hmac-sha1, hmac-sha224, hmac-sha256,
+            hmac-sha384 and hmac-sha512.  The default is hmac-md5.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>-b <replaceable class="parameter">keysize</replaceable></term>
         <listitem>
           <para>
             Specifies the size of the authentication key in bits.
-            Must be between 1 and 512 bits; the default is 128.
+            Must be between 1 and 512 bits; the default is the
+            hash size.
           </para>
         </listitem>
       </varlistentry>

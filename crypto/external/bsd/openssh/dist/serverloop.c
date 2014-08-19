@@ -1,5 +1,5 @@
-/*	$NetBSD: serverloop.c,v 1.4.8.2 2013/06/23 06:26:14 tls Exp $	*/
-/* $OpenBSD: serverloop.c,v 1.164 2012/12/07 01:51:35 dtucker Exp $ */
+/*	$NetBSD: serverloop.c,v 1.4.8.3 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: serverloop.c,v 1.168 2013/07/12 00:19:59 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.4.8.2 2013/06/23 06:26:14 tls Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.4.8.3 2014/08/19 23:45:25 tls Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -160,7 +160,7 @@ static void
 notify_parent(void)
 {
 	if (notify_pipe[1] != -1)
-		write(notify_pipe[1], "", 1);
+		(void)write(notify_pipe[1], "", 1);
 }
 static void
 notify_prepare(fd_set *readset)
@@ -287,7 +287,7 @@ client_alive_check(void)
  */
 static void
 wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
-    u_int *nallocp, u_int max_time_milliseconds)
+    u_int *nallocp, u_int64_t max_time_milliseconds)
 {
 	struct timeval tv, *tvp;
 	int ret;
@@ -313,7 +313,7 @@ wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
 	if (compat20 &&
 	    max_time_milliseconds == 0 && options.client_alive_interval) {
 		client_alive_scheduled = 1;
-		max_time_milliseconds = options.client_alive_interval * 1000;
+		max_time_milliseconds = options.client_alive_interval * 1000ULL;
 	}
 
 	if (compat20) {
@@ -549,7 +549,7 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 	int wait_status;	/* Status returned by wait(). */
 	pid_t wait_pid;		/* pid returned by wait(). */
 	int waiting_termination = 0;	/* Have displayed waiting close message. */
-	u_int max_time_milliseconds;
+	u_int64_t max_time_milliseconds;
 	u_int previous_stdout_buffer_bytes;
 	u_int stdout_buffer_bytes;
 	int type;
@@ -680,7 +680,7 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 				/* Display list of open channels. */
 				cp = channel_open_message();
 				buffer_append(&stderr_buffer, cp, strlen(cp));
-				xfree(cp);
+				free(cp);
 			}
 		}
 		max_fd = MAX(connection_in, connection_out);
@@ -708,10 +708,8 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 		/* Process output to the client and to program stdin. */
 		process_output(writeset);
 	}
-	if (readset)
-		xfree(readset);
-	if (writeset)
-		xfree(writeset);
+	free(readset);
+	free(writeset);
 
 	/* Cleanup and termination code. */
 
@@ -813,6 +811,7 @@ server_loop2(Authctxt *authctxt)
 	fd_set *readset = NULL, *writeset = NULL;
 	int rekeying = 0, max_fd;
 	u_int nalloc = 0;
+	u_int64_t rekey_timeout_ms = 0;
 	double start_time, total_time;
 
 	debug("Entering interactive session for SSH2.");
@@ -843,8 +842,13 @@ server_loop2(Authctxt *authctxt)
 
 		if (!rekeying && packet_not_very_much_data_to_write())
 			channel_output_poll();
+		if (options.rekey_interval > 0 && compat20 && !rekeying)
+			rekey_timeout_ms = packet_get_rekey_timeout() * 1000;
+		else
+			rekey_timeout_ms = 0;
+
 		wait_until_can_do_something(&readset, &writeset, &max_fd,
-		    &nalloc, 0);
+		    &nalloc, rekey_timeout_ms);
 
 		if (received_sigterm) {
 			logit("Exiting on signal %d", (int)received_sigterm);
@@ -868,10 +872,8 @@ server_loop2(Authctxt *authctxt)
 	}
 	collect_children();
 
-	if (readset)
-		xfree(readset);
-	if (writeset)
-		xfree(writeset);
+	free(readset);
+	free(writeset);
 
 	/* free all channels, no more reads and writes */
 	channel_free_all();
@@ -911,7 +913,7 @@ server_input_stdin_data(int type, u_int32_t seq, void *ctxt)
 	packet_check_eom();
 	buffer_append(&stdin_buffer, data, data_len);
 	memset(data, 0, data_len);
-	xfree(data);
+	free(data);
 }
 
 static void
@@ -968,8 +970,8 @@ server_request_direct_tcpip(void)
 		    originator, originator_port, target, target_port);
 	}
 
-	xfree(originator);
-	xfree(target);
+	free(originator);
+	free(target);
 
 	return c;
 }
@@ -1099,7 +1101,7 @@ server_input_channel_open(int type, u_int32_t seq, void *ctxt)
 		}
 		packet_send();
 	}
-	xfree(ctype);
+	free(ctype);
 }
 
 static void
@@ -1141,7 +1143,7 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 			    listen_address, listen_port,
 			    &allocated_listen_port, options.gateway_ports);
 		}
-		xfree(listen_address);
+		free(listen_address);
 	} else if (strcmp(rtype, "cancel-tcpip-forward") == 0) {
 		char *cancel_address;
 		u_short cancel_port;
@@ -1153,7 +1155,7 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 
 		success = channel_cancel_rport_listener(cancel_address,
 		    cancel_port);
-		xfree(cancel_address);
+		free(cancel_address);
 	} else if (strcmp(rtype, "no-more-sessions@openssh.com") == 0) {
 		no_more_sessions = 1;
 		success = 1;
@@ -1166,7 +1168,7 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 		packet_send();
 		packet_write_wait();
 	}
-	xfree(rtype);
+	free(rtype);
 }
 
 static void
@@ -1198,7 +1200,7 @@ server_input_channel_req(int type, u_int32_t seq, void *ctxt)
 		packet_put_int(c->remote_id);
 		packet_send();
 	}
-	xfree(rtype);
+	free(rtype);
 }
 
 static void

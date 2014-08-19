@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.29 2007/07/16 18:26:09 christos Exp $ */
+/* $NetBSD: dir.c,v 1.29.40.1 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.29 2007/07/16 18:26:09 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.29.40.1 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,7 +145,7 @@ dset(Char *dp)
      * other junk characters glob will fail.
      */
 
-    vec = (Char **)xmalloc((size_t)(2 * sizeof(Char **)));
+    vec = xmalloc((size_t)(2 * sizeof(Char **)));
     vec[0] = Strsave(dp);
     vec[1] = 0;
     setq(STRcwd, vec, &shvhed);
@@ -201,7 +201,7 @@ printdirs(void)
 {
     struct directory *dp;
     Char *hp, *s;
-    int cur, idx, len;
+    size_t cur, idx, len;
 
     hp = value(STRhome);
     if (*hp == '\0')
@@ -213,7 +213,7 @@ printdirs(void)
 	if (dp == &dhead)
 	    continue;
 	if (dirflag & DIR_VERT) {
-	    (void)fprintf(cshout, "%d\t", idx++);
+	    (void)fprintf(cshout, "%zu\t", idx++);
 	    cur = 0;
 	}
 	if (!(dirflag & DIR_LONG) && hp != NULL && !eq(hp, STRslash) &&
@@ -274,10 +274,10 @@ dnormalize(Char *cp)
 	return (Strsave(cp));
 
     if (adrof(STRignore_symlinks)) {
-	int     dotdot = 0;
+	size_t  dotdot = 0;
 	Char   *dp, *cwd;
 
-	cwd = (Char *)xmalloc((size_t)((Strlen(dcwd->di_name) + 3) *
+	cwd = xmalloc((size_t)((Strlen(dcwd->di_name) + 3) *
 	    sizeof(Char)));
 	(void)Strcpy(cwd, dcwd->di_name);
 
@@ -379,15 +379,15 @@ dgoto(Char *cp)
 
     if (*cp != '/') {
 	Char *p, *q;
-	int cwdlen;
+	size_t cwdlen;
 
 	for (p = dcwd->di_name; *p++;)
 	    continue;
-	if ((cwdlen = p - dcwd->di_name - 1) == 1)	/* root */
+	if ((cwdlen = (size_t)(p - dcwd->di_name - 1)) == 1)	/* root */
 	    cwdlen = 0;
 	for (p = cp; *p++;)
 	    continue;
-	dp = (Char *)xmalloc((size_t)((cwdlen + (p - cp) + 1) * sizeof(Char)));
+	dp = xmalloc((size_t)(cwdlen + (size_t)(p - cp) + 1) * sizeof(Char));
 	for (p = dp, q = dcwd->di_name; (*p++ = *q++) != '\0';)
 	    continue;
 	if (cwdlen)
@@ -613,7 +613,8 @@ dcanon(Char *cp, Char *p)
     char tlink[MAXPATHLEN];
     Char *newcp, *sp;
     Char *p1, *p2;	/* general purpose */
-    int cc;
+    ssize_t cc;
+    size_t len;
     int slash;
 
     /*
@@ -702,8 +703,8 @@ dcanon(Char *cp, Char *p)
 		    /*
 		     * New length is "yyy/" + slink + "/.." and rest
 		     */
-		    p1 = newcp = (Char *)xmalloc(
-		        (size_t)(((sp - cp) + cc + (p1 - p)) * sizeof(Char)));
+		    p1 = newcp = xmalloc(
+		        (size_t)((sp - cp) + cc + (p1 - p)) * sizeof(Char));
 		    /*
 		     * Copy new path into newcp
 		     */
@@ -722,8 +723,8 @@ dcanon(Char *cp, Char *p)
 		    /*
 		     * New length is slink + "/.." and rest
 		     */
-		    p1 = newcp = (Char *)xmalloc(
-		        (size_t)((cc + (p1 - p)) * sizeof(Char)));
+		    p1 = newcp = xmalloc(
+		        (size_t)(cc + (p1 - p)) * sizeof(Char));
 		    /*
 		     * Copy new path into newcp
 		     */
@@ -791,8 +792,8 @@ dcanon(Char *cp, Char *p)
 		    /*
 		     * New length is "yyy/" + slink + "/.." and rest
 		     */
-		    p1 = newcp = (Char *)xmalloc(
-		        (size_t)(((sp - cp) + cc + (p1 - p)) * sizeof(Char)));
+		    p1 = newcp = xmalloc(
+		        (size_t)((sp - cp) + cc + (p1 - p)) * sizeof(Char));
 		    /*
 		     * Copy new path into newcp
 		     */
@@ -811,8 +812,8 @@ dcanon(Char *cp, Char *p)
 		    /*
 		     * New length is slink + the rest
 		     */
-		    p1 = newcp = (Char *)xmalloc(
-		        (size_t)((cc + (p1 - p)) * sizeof(Char)));
+		    p1 = newcp = xmalloc(
+		        (size_t)(cc + (p1 - p)) * sizeof(Char));
 		    /*
 		     * Copy new path into newcp
 		     */
@@ -838,12 +839,12 @@ dcanon(Char *cp, Char *p)
      * fix home...
      */
     p1 = value(STRhome);
-    cc = Strlen(p1);
+    len = Strlen(p1);
     /*
      * See if we're not in a subdir of STRhome
      */
     if (p1 && *p1 == '/' &&
-	(Strncmp(p1, cp, cc) != 0 || (cp[cc] != '/' && cp[cc] != '\0'))) {
+	(Strncmp(p1, cp, len) != 0 || (cp[len] != '/' && cp[len] != '\0'))) {
 	static ino_t home_ino;
 	static dev_t home_dev = NODEV;
 	static Char *home_ptr = NULL;

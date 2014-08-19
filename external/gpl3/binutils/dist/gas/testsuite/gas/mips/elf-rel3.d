@@ -2,7 +2,7 @@
 #name: MIPS ELF reloc 3
 #as: -32
 
-.*:     file format elf.*mips
+.*:     file format .*
 
 RELOCATION RECORDS FOR \[\.data\]:
 OFFSET [ ]+ TYPE              VALUE 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.89.2.2 2013/06/23 06:26:21 tls Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.89.2.3 2014/08/19 23:45:49 tls Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd November 8, 2012
+.Dd August 7, 2014
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -74,13 +74,13 @@ to override or manually select your compilers.)
 .Ss Source tree layout
 .
 .Bl -tag -width "BUILDING.mdoc"
-.It Sy doc/BUILDING.mdoc
+.It Pa doc/BUILDING.mdoc
 This document (in -mdoc troff format; the original copy).
-.It Sy BUILDING
+.It Pa BUILDING
 This document (in plaintext).
-.It Sy tools/compat/README
+.It Pa tools/compat/README
 Special notes for cross-hosting a NetBSD build on non-NetBSD platforms.
-.It Sy Makefile
+.It Pa Makefile
 The main Makefile for
 .Nx ;
 should only be run for native builds with an appropriately up-to-date
@@ -90,12 +90,12 @@ version of
 (For building from out-of-date systems or on a non-native host, see the
 .Nm build.sh
 shell script.)
-.It Sy UPDATING
+.It Pa UPDATING
 Special notes for updating from an earlier revision of
 .Nx .
 It is important to read this file before every build of an updated
 source tree.
-.It Sy build.sh
+.It Pa build.sh
 Bourne-compatible shell script used for building the host build tools
 and the
 .Nx
@@ -103,7 +103,7 @@ system from scratch.
 Can be used for both native and cross builds, and should be used instead of
 .Xr make 1
 for any source tree that is updated and recompiled regularly.
-.It Sy crypto/dist/ , dist/ , gnu/dist/
+.It Pa crypto/dist/ , dist/ , gnu/dist/
 Sources imported verbatim from third parties, without mangling the
 existing build structure.
 Other source trees in
@@ -115,12 +115,21 @@ use the
 .Xr make 1
 .Dq reachover
 Makefile semantics when building these programs for a native host.
-.It Sy distrib/ , etc/
+.It Pa external , sys/external
+Sources and build infrastructure for components imported (mostly) unchanged
+from upstream maintainers, sorted by applicable license.
+This is (slowly) replacing the
+.Pa crypto/dist ,
+.Pa dist ,
+and
+.Pa gnu/dist
+directories.
+.It Pa distrib/ , etc/
 Sources for items used when making a full release snapshot, such as
 files installed in
 .Sy DESTDIR Ns Pa /etc
 on the destination system, boot media, and release notes.
-.It Sy tests/ , regress/
+.It Pa tests/ , regress/
 Regression test harness.
 Can be cross-compiled, but only run natively.
 .Pa tests/
@@ -130,19 +139,19 @@ test framework;
 .Pa regress/
 contains older tests that have not yet been migrated to
 .Xr atf 7 .
-.It Sy sys/
+.It Pa sys/
 .Nx
 kernel sources.
-.It Sy tools/
+.It Pa tools/
 .Dq Reachover
 build structure for the host build tools.
 This has a special method of determining out-of-date status.
-.It Sy bin/ ... usr.sbin/
+.It Pa bin/ ... usr.sbin/
 Sources to the
 .Nx
 userland (non-kernel) programs.
 If any of these directories are missing, they will be skipped during the build.
-.It Sy x11/
+.It Pa x11/
 .Dq Reachover
 build structure for X11R6; the source is in
 .Sy X11SRCDIR .
@@ -330,11 +339,36 @@ configuration file specified by
 .
 .It Sy BUILDID
 Identifier for the build.
+If set, this should be a short string that is suitable for use as
+part of a file or directory name.
 The identifier will be appended to
 object directory names, and can be consulted in the
 .Xr make 1
 configuration file in order to set additional build parameters,
 such as compiler flags.
+It will also be used as part of the kernel version string,
+which can be printed by
+.Dq Li uname \-v .
+.DFLTu
+.
+.It Sy BUILDINFO
+This may be a multi-line string containing information about the build.
+This will appear in
+.Sy DESTDIR Ns Pa /etc/release ,
+and it will be stored in the
+.Va buildinfo
+variable in any kernels that are built.
+When such kernels are booted, the
+.Xr sysctl 7
+.Va kern.buildinfo
+variable will report this value.
+The string may contain backslash escape sequences, such as
+.Dq "\e\e"
+(representing a backslash character)
+and
+.Dq "\en"
+(representing a newline).
+.DFLTu
 .
 .It Sy BUILDSEED
 GCC uses random numbers when compiling C++ code.
@@ -352,7 +386,7 @@ Directory to contain the built
 system.
 If set, special options are passed to the compilation tools to
 prevent their default use of the host system's
-.Sy /usr/include , /usr/lib ,
+.Pa /usr/include , /usr/lib ,
 and so forth.
 This pathname must be an absolute path, and should
 .Em not
@@ -433,6 +467,11 @@ Indicates whether preformatted plaintext manual pages will be created
 during a build.
 .DFLTn
 .
+.It Sy MKCROSSGDB
+.YorN
+Create a cross-gdb as a host tool.
+.DFLTn
+.
 .It Sy MKCRYPTO
 .YorN
 Indicates whether cryptographic code will be included in a build;
@@ -441,6 +480,25 @@ cryptography.
 Will not affect use of the standard low-security password encryption system,
 .Xr crypt 3 .
 .DFLTy
+.
+.It Sy MKDEBUG
+.YorN
+Indicates whether debug information should be generated for all userland
+binaries compiled.
+The result is collected as an additional
+.Sy debug.tgz
+and
+.Sy xdebug.tgz
+set and installed in
+.Pa /usr/libdata/debug .
+.DFLTn
+.
+.It Sy MKDEBUGLIB
+.YorN
+Indicates whether debug information (see
+.Sy MKDEBUG )
+should also be generated for all libraries build.
+.DFLTn
 .
 .It Sy MKDOC
 .YorN
@@ -476,6 +534,18 @@ Indicates whether GNU Info files, used for the documentation for
 most of the compilation tools, will be created and installed during a
 build.
 .DFLTy
+.
+.It Sy MKKDEBUG
+.YorN
+Force generation of full-debug symbol versions of all kernels compiled.
+Alongside of the
+.Pa netbsd
+kernel file, an unstripped version
+.Pa netbsd.gdb
+is created.
+This is useful if a cross-gdb is built as well (see
+.Sy MKCROSSGDB ) .
+.DFLTn
 .
 .It Sy MKKMOD
 .YorN
@@ -850,7 +920,7 @@ files.
 When building any full
 .Nx
 source tree, this should be set to the
-.Dq share/mk
+.Dq Pa share/mk
 directory in the source tree.
 This is set automatically when building from the top level, or when using
 .Sy build.sh .
@@ -1402,11 +1472,11 @@ does not contain any
 characters, the configuration file is expected to be found in the
 .Sy KERNCONFDIR
 directory, which is typically
-.Sy sys/arch/MACHINE/conf .
+.Pa sys/arch/MACHINE/conf .
 The new kernel will be built in a subdirectory of
 .Sy KERNOBJDIR ,
 which is typically
-.Sy sys/arch/MACHINE/compile
+.Pa sys/arch/MACHINE/compile
 or an associated object directory.
 .Pp
 This command does
@@ -1425,6 +1495,17 @@ on the kernel in question first unless the
 .Fl u
 option is given.
 .
+.It Sy kernel.gdb Ns = Ns Ar kconf
+Build a new kernel with debug information.
+Similar to the above
+.Sy kernel Ns = Ns Ar kconf
+operation, but creates a
+.Pa netbsd.gdb
+file alongside of the kernel
+.Pa netbsd ,
+which contains a full symbol table and can be used for debugging
+(for example with a cross-gdb built by
+.Sy MKCROSSGDB ) .
 .It Sy modules
 This command will build kernel modules and install them into
 .Sy DESTDIR .
@@ -1473,6 +1554,39 @@ Perform
 Perform
 .Dq make live-image .
 .
+.It Sy list-arch
+Prints a list of valid
+.Sy MACHINE
+and
+.Sy MACHINE_ARCH
+settings, the default
+.Sy MACHINE_ARCH
+for each
+.Sy MACHINE ,
+and aliases for
+.Sy MACHINE Ns No / Ns Sy MACHINE_ARCH
+pairs, and then exits.
+The
+.Fl m
+or
+.Fl a
+options (or both) may be used to specify glob patterns
+that will be used to narrow the list of results;
+for example,
+.Dq Li build.sh -m 'evm*' -a '*arm*' list-arch
+will list all known
+.Sy MACHINE Ns No / Ns Sy MACHINE_ARCH
+values in which either
+.Sy MACHINE
+or
+.Sy ALIAS
+matches the pattern
+.Ql evb* ,
+and
+.Sy MACHINE_ARCH
+matches the pattern
+.Ql *arm* .
+.
 .El
 .
 .Pp
@@ -1487,6 +1601,9 @@ Set the value of
 .Sy MACHINE_ARCH
 to
 .Ar arch .
+See the
+.Fl m
+option for more information.
 .
 .It Fl B Ar buildid
 Set the value of
@@ -1574,7 +1691,7 @@ to
 Unsets
 .Sy MAKEOBJDIR .
 See
-.Dq Fl O obj
+.Dq Fl O Ar obj
 for more information.
 .Pp
 For instance, if the source directory is
@@ -1606,42 +1723,39 @@ Set the value of
 .Sy MACHINE
 to
 .Ar mach ,
-except in some special cases listed below.
-This will also override any value of
+unless the
+.Ar mach
+argument is an alias that refers to a
+.Sy MACHINE Ns No / Ns Sy MACHINE_ARCH
+pair, in which case both
+.Sy MACHINE
+and
 .Sy MACHINE_ARCH
-in the process environment with a value deduced from
-.Ar mach ,
-unless
+are set from the alias.
+Such aliases are interpreted entirely by
+.Sy build.sh ;
+they are not used by any other part of the build system.
+The
+.Sy MACHINE_ARCH
+setting implied by
+.Ar mach
+will override any value of
+.Sy MACHINE_ARCH
+in the process environment, but will not override a value set by the
 .Fl a
-is specified.
+option.
 All cross builds require
 .Fl m ,
 but if unset on a NetBSD host, the host's value of MACHINE will be
 detected and used automatically.
 .Pp
-Some machines support multiple values for
-.Sy MACHINE_ARCH .
-The following special cases for the
-.Ar mach
-argument are defined to set the listed values of
-.Sy MACHINE
+See the
+.Cm list-arch
+operation for a way to get a list of valid
+.Sy MACHINE 
 and
-.Sy MACHINE_ARCH :
-.Bl -column "evbmips-el" "MACHINE" "MACHINE_ARCH" -offset indent
-.It Sy mach Ta Sy "MACHINE" Ta Sy "MACHINE_ARCH"
-.It evbarm Ta evbarm Ta (not set)
-.It evbarm-eb Ta evbarm Ta armeb
-.It evbarm-el Ta evbarm Ta arm
-.It evbmips Ta evbmips Ta (not set)
-.It evbmips-eb Ta evbmips Ta mipseb
-.It evbmips-el Ta evbmips Ta mipsel
-.It evbsh3 Ta evbsh3 Ta (not set)
-.It evbsh3-eb Ta evbsh3 Ta sh3eb
-.It evbsh3-el Ta evbsh3 Ta sh3el
-.It sbmips Ta sbmips Ta (not set)
-.It sbmips-eb Ta sbmips Ta mipseb
-.It sbmips-el Ta sbmips Ta mipsel
-.El
+.Sy MACHINE_ARCH
+settings.
 .
 .It Fl N Ar noiselevel
 Set the
@@ -1703,6 +1817,26 @@ Relying on this default is not recommended because
 it is determined by complex rules that are influenced
 by the values of several variables and
 by the location of the source directory.
+.Pp
+Note that placing the
+.Ar obj
+directory location outside of the default source tree hierarchy makes
+it easier to manually clear out old files in the event the
+.Dq make cleandir
+operation is unable to do so.
+(See
+.Sx CAVEATS
+below.)
+.Pp
+Note also that use of one of
+.Fl M
+or
+.Fl O
+is the only means of building multiple machine architecture userlands
+from the same source tree without cleaning between builds (in which
+case, one would specify distinct
+.Ar obj
+locations for each).
 .It Fl o
 Set the value of
 .Sy MKOBJDIRS
@@ -1820,7 +1954,7 @@ script to build
 a
 .Sy \*[toolprefix]make-MACHINE
 script will be created in
-.Sy TOOLDIR/bin
+.Sy TOOLDIR Ns Pa /bin
 upon the first build to assist in building subtrees on a cross-compile
 host.
 .Pp
@@ -1830,7 +1964,7 @@ can be invoked in lieu of
 and will instead call the up-to-date version of
 .Dq \*[toolprefix]make
 installed into
-.Sy TOOLDIR/bin
+.Sy TOOLDIR Ns Pa /bin
 with several key variables pre-set, including
 .Sy MACHINE , MACHINE_ARCH ,
 and
@@ -1934,3 +2068,15 @@ as
 and re-worked to
 .Sy TOOLCHAIN_MISSING
 after that.
+.
+.Sh CAVEATS
+.
+After significant updates to third-party components in the source
+tree, the
+.Dq make cleandir
+operation may be insufficient to clean out old files in object
+directories.
+Instead, one may have to manually remove the files.
+Consult the
+.Pa UPDATING
+file for notices concerning this.

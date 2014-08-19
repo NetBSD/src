@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24.2.3 2013/06/23 06:28:22 tls Exp $
+# $NetBSD: Makefile,v 1.24.2.4 2014/08/19 23:51:23 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,8 @@ SUBDIR=	\
 	libLLVMMCParser \
 	libLLVMObjCARC \
 	libLLVMObject \
+	libLLVMOption \
+	libLLVMProfileData \
 	libLLVMScalarOpts \
 	libLLVMSelectionDAG \
 	libLLVMSupport \
@@ -62,10 +64,14 @@ SUBDIR+= \
 SUBDIR+= \
 	libLLVMPowerPCAsmParser \
 	libLLVMPowerPCAsmPrinter \
+	libLLVMPowerPCDisassembler \
 	libLLVMPowerPCMCTargetDesc \
 	libLLVMPowerPCTargetInfo
 
 SUBDIR+= \
+	libLLVMSparcAsmParser \
+	libLLVMSparcAsmPrinter \
+	libLLVMSparcDisassembler \
 	libLLVMSparcMCTargetDesc \
 	libLLVMSparcTargetInfo
 
@@ -77,19 +83,28 @@ SUBDIR+= \
 	libLLVMX86TargetInfo \
 	libLLVMX86Utils
 
+.if ${NO_LLVM_DEVELOPER:Uno} == "no" && (${LLVM_DEVELOPER:U} == "yes" || ${MKLLDB} == "yes")
+SUBDIR+= \
+	libLLVMExecutionEngine \
+	libLLVMJIT \
+	libLLVMMCAnalysis \
+	libLLVMMCJIT \
+	libLLVMRuntimeDyld
+.endif
+
+.if (${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes") || ${MKLLD} == "yes"
+SUBDIR+= \
+	libLLVMDebugInfo
+.endif
+
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
-	libLLVMArchive \
-	libLLVMDebugInfo \
 	libLLVMCppBackend \
 	libLLVMCppBackendInfo \
-	libLLVMExecutionEngine \
 	libLLVMHello \
 	libLLVMInterpreter \
-	libLLVMJIT \
-	libLLVMMCJIT \
-	libLLVMOption \
-	libLLVMRuntimeDyld
+	libLLVMLTO \
+	libLLVMLineEditor
 .endif
 
 SUBDIR+= \
@@ -101,11 +116,11 @@ SUBDIR+= \
 	libclangDriver \
 	libclangEdit \
 	libclangFrontend \
+	libclangFrontendRewrite \
 	libclangFrontendTool \
 	libclangLex \
 	libclangParse \
-	libclangRewriteFrontend \
-	libclangRewriteCore \
+	libclangRewrite \
 	libclangSema \
 	libclangSerialization \
 	libclangStaticAnalyzerCheckers \
@@ -118,7 +133,26 @@ SUBDIR+= \
 	libclangASTMatchers \
 	libclangASTMatchersDynamic \
 	libclangFormat \
+	libclangIndex \
 	libclangTooling
+.endif
+
+.if ${MKLLD} != "no"
+SUBDIR+= \
+	liblldCore \
+	liblldDriver \
+	liblldPasses \
+	liblldReaderWriter \
+	liblldReaderWriterELF \
+	liblldReaderWriterELFHexagon \
+	liblldReaderWriterELFMips \
+	liblldReaderWriterELFPPC \
+	liblldReaderWriterELFX86 \
+	liblldReaderWriterELFX86_64 \
+	liblldReaderWriterMachO \
+	liblldReaderWriterNative \
+	liblldReaderWriterPECOFF \
+	liblldReaderWriterYAML
 .endif
 
 .if ${MKMCLINKER} != "no"
@@ -140,6 +174,63 @@ SUBDIR+= \
 SUBDIR+= \
 	libMCLinkerX86CodeGen libMCLinkerX86TargetInfo
 
+.endif
+
+.if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${MKLLDB} == "yes"
+SUBDIR+= \
+	liblldbAPI \
+	liblldbBreakpoint \
+	liblldbCommands \
+	liblldbCore \
+	liblldbDataFormatters \
+	liblldbExpression \
+	liblldbHostCommon \
+	liblldbHostNetBSD \
+	liblldbInterpreter \
+	liblldbLog \
+	liblldbPluginABIMacOSX_arm \
+	liblldbPluginABIMacOSX_arm64 \
+	liblldbPluginABIMacOSX_i386 \
+	liblldbPluginABISysV_hexagon \
+	liblldbPluginABISysV_x86_64 \
+	liblldbPluginAppleObjCRuntime \
+	liblldbPluginCXXItaniumABI \
+	liblldbPluginDisassemblerLLVM \
+	liblldbPluginDynamicLoaderHexagonDYLD \
+	liblldbPluginDynamicLoaderMacOSXDYLD \
+	liblldbPluginDynamicLoaderPosixDYLD \
+	liblldbPluginDynamicLoaderStatic \
+	liblldbPluginInstructionARM \
+	liblldbPluginInstructionARM64 \
+	liblldbPluginJITLoaderGDB \
+	liblldbPluginObjectContainerBSDArchive \
+	liblldbPluginObjectContainerMachOArchive \
+	liblldbPluginObjectFileELF \
+	liblldbPluginObjectFileJIT \
+	liblldbPluginObjectFileMachO \
+	liblldbPluginObjectFilePECOFF \
+	liblldbPluginPlatformNetBSD \
+	liblldbPluginPlatformGDB \
+	liblldbPluginPlatformKalimba \
+	liblldbPluginPlatformLinux \
+	liblldbPluginPlatformMacOSX \
+	liblldbPluginPlatformPOSIX \
+	liblldbPluginPlatformWindows \
+	liblldbPluginProcessElfCore \
+	liblldbPluginProcessNetBSD \
+	liblldbPluginProcessGDBRemote \
+	liblldbPluginProcessMachCore \
+	liblldbPluginProcessPOSIX \
+	liblldbPluginProcessUtility \
+	liblldbPluginSymbolFileDWARF \
+	liblldbPluginSymbolFileSymtab \
+	liblldbPluginSymbolVendorELF \
+	liblldbPluginSystemRuntimeMacOSX \
+	liblldbPluginUnwindAssemblyInstEmulation \
+	liblldbPluginUnwindAssemblyX86 \
+	liblldbSymbol \
+	liblldbTarget \
+	liblldbUtility
 .endif
 
 .include <bsd.subdir.mk>

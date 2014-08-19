@@ -1,7 +1,6 @@
 // SGI's rope class implementation -*- C++ -*-
 
-// Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 2001-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -38,7 +37,7 @@
 
 /** @file ropeimpl.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{ext/rope}
  */
 
 #include <cstdio>
@@ -49,14 +48,16 @@
 #include <ext/memory> // For uninitialized_copy_n
 #include <ext/numeric> // For power
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   using std::size_t;
   using std::printf;
   using std::basic_ostream;
   using std::__throw_length_error;
   using std::_Destroy;
-  using std::uninitialized_fill_n;
+  using std::__uninitialized_fill_n_a;
 
   // Set buf_start, buf_end, and buf_ptr appropriately, filling tmp_buf
   // if necessary.  Assumes _M_path_end[leaf_index] and leaf_pos are correct.
@@ -428,7 +429,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
     {
       size_t __old_len = __r->_M_size;
       _CharT* __new_data = (_CharT*)
-	_Rope_rep_base<_CharT, _Alloc>::_Data_allocate(_S_rounded_up_size(__old_len + __len));
+	rope::_Data_allocate(_S_rounded_up_size(__old_len + __len));
       _RopeLeaf* __result;
 
       uninitialized_copy_n(__r->_M_data, __old_len, __new_data);
@@ -812,7 +813,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 	    if (__result_len > __lazy_threshold)
 	      goto lazy;
 	    __section = (_CharT*)
-	      _Rope_rep_base<_CharT, _Alloc>::_Data_allocate(_S_rounded_up_size(__result_len));
+	      rope::_Data_allocate(_S_rounded_up_size(__result_len));
 	    __try
 	      {	(*(__f->_M_fn))(__start, __result_len, __section); }
 	    __catch(...)
@@ -1698,4 +1699,5 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
   { _Rope_rotate(__first, __middle, __last); }
 # endif
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace

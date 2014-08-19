@@ -1,0 +1,10 @@
+#	$NetBSD: list.cgdroot,v 1.1.10.2 2014/08/19 23:45:38 tls Exp $
+#
+# list file (c.f. parselist.awk) for cgd full-disk encryption.
+#
+
+PROG	sbin/cgdconfig
+PROG	sbin/wsconsctl
+LIBS	-lcrypto
+
+COPY	${NETBSDSRCDIR}/distrib/common/cgdroot.rc etc/rc

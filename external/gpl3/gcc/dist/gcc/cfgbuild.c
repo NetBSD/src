@@ -1,7 +1,5 @@
 /* Control flow graph building code for GNU compiler.
-   Copyright (C) 1987, 1988, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -30,12 +28,12 @@ along with GCC; see the file COPYING3.  If not see
 #include "basic-block.h"
 #include "regs.h"
 #include "flags.h"
-#include "output.h"
 #include "function.h"
 #include "except.h"
 #include "expr.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 #include "timevar.h"
+#include "sbitmap.h"
 
 static void make_edges (basic_block, basic_block, int);
 static void make_label_edge (sbitmap, basic_block, rtx, int);
@@ -111,7 +109,7 @@ control_flow_insn_p (const_rtx insn)
       if (GET_CODE (PATTERN (insn)) == TRAP_IF
 	  && XEXP (PATTERN (insn), 0) == const1_rtx)
 	return true;
-      if (!flag_non_call_exceptions)
+      if (!cfun->can_throw_non_call_exceptions)
 	return false;
       break;
 
@@ -236,12 +234,12 @@ make_edges (basic_block min, basic_block max, int update_p)
       /* If we have an edge cache, cache edges going out of BB.  */
       if (edge_cache)
 	{
-	  sbitmap_zero (edge_cache);
+	  bitmap_clear (edge_cache);
 	  if (update_p)
 	    {
 	      FOR_EACH_EDGE (e, ei, bb->succs)
 		if (e->dest != EXIT_BLOCK_PTR)
-		  SET_BIT (edge_cache, e->dest->index);
+		  bitmap_set_bit (edge_cache, e->dest->index);
 	    }
 	}
 
@@ -332,23 +330,35 @@ make_edges (basic_block min, basic_block max, int update_p)
 	 handler for this CALL_INSN.  If we're handling non-call
 	 exceptions then any insn can reach any of the active handlers.
 	 Also mark the CALL_INSN as reaching any nonlocal goto handler.  */
-      else if (code == CALL_INSN || flag_non_call_exceptions)
+      else if (code == CALL_INSN || cfun->can_throw_non_call_exceptions)
 	{
 	  /* Add any appropriate EH edges.  */
 	  rtl_make_eh_edge (edge_cache, bb, insn);
 
-	  if (code == CALL_INSN && nonlocal_goto_handler_labels)
+	  if (code == CALL_INSN)
 	    {
-	      /* ??? This could be made smarter: in some cases it's possible
-		 to tell that certain calls will not do a nonlocal goto.
-		 For example, if the nested functions that do the nonlocal
-		 gotos do not have their addresses taken, then only calls to
-		 those functions or to other nested functions that use them
-		 could possibly do nonlocal gotos.  */
 	      if (can_nonlocal_goto (insn))
-		for (x = nonlocal_goto_handler_labels; x; x = XEXP (x, 1))
-		  make_label_edge (edge_cache, bb, XEXP (x, 0),
-				   EDGE_ABNORMAL | EDGE_ABNORMAL_CALL);
+		{
+		  /* ??? This could be made smarter: in some cases it's
+		     possible to tell that certain calls will not do a
+		     nonlocal goto.  For example, if the nested functions
+		     that do the nonlocal gotos do not have their addresses
+		     taken, then only calls to those functions or to other
+		     nested functions that use them could possibly do
+		     nonlocal gotos.  */
+		  for (x = nonlocal_goto_handler_labels; x; x = XEXP (x, 1))
+		    make_label_edge (edge_cache, bb, XEXP (x, 0),
+				     EDGE_ABNORMAL | EDGE_ABNORMAL_CALL);
+		}
+
+	      if (flag_tm)
+		{
+		  rtx note;
+		  for (note = REG_NOTES (insn); note; note = XEXP (note, 1))
+		    if (REG_NOTE_KIND (note) == REG_TM)
+		      make_label_edge (edge_cache, bb, XEXP (note, 0),
+				       EDGE_ABNORMAL | EDGE_ABNORMAL_CALL);
+		}
 	    }
 	}
 
@@ -373,7 +383,7 @@ make_edges (basic_block min, basic_block max, int update_p)
     }
 
   if (edge_cache)
-    sbitmap_vector_free (edge_cache);
+    sbitmap_free (edge_cache);
 }
 
 static void
@@ -547,16 +557,35 @@ compute_outgoing_frequencies (basic_block b)
 	  f->count = b->count - e->count;
 	  return;
 	}
+      else
+        {
+          guess_outgoing_edge_probabilities (b);
+        }
     }
-
-  if (single_succ_p (b))
+  else if (single_succ_p (b))
     {
       e = single_succ_edge (b);
       e->probability = REG_BR_PROB_BASE;
       e->count = b->count;
       return;
     }
-  guess_outgoing_edge_probabilities (b);
+  else
+    {
+      /* We rely on BBs with more than two successors to have sane probabilities
+         and do not guess them here. For BBs terminated by switch statements
+         expanded to jump-table jump, we have done the right thing during
+         expansion. For EH edges, we still guess the probabilities here.  */
+      bool complex_edge = false;
+      FOR_EACH_EDGE (e, ei, b->succs)
+        if (e->flags & EDGE_COMPLEX)
+          {
+            complex_edge = true;
+            break;
+          }
+      if (complex_edge)
+        guess_outgoing_edge_probabilities (b);
+    }
+
   if (b->count)
     FOR_EACH_EDGE (e, ei, b->succs)
       e->count = ((b->count * e->probability + REG_BR_PROB_BASE / 2)
@@ -574,7 +603,7 @@ find_many_sub_basic_blocks (sbitmap blocks)
 
   FOR_EACH_BB (bb)
     SET_STATE (bb,
-	       TEST_BIT (blocks, bb->index) ? BLOCK_TO_SPLIT : BLOCK_ORIGINAL);
+	       bitmap_bit_p (blocks, bb->index) ? BLOCK_TO_SPLIT : BLOCK_ORIGINAL);
 
   FOR_EACH_BB (bb)
     if (STATE (bb) == BLOCK_TO_SPLIT)

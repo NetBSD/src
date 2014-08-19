@@ -1,10 +1,10 @@
-/*	$NetBSD: slap.h,v 1.1.1.4 2010/12/12 15:22:47 adam Exp $	*/
+/*	$NetBSD: slap.h,v 1.1.1.4.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* slap.h - stand alone ldap server include file */
-/* OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.68 2010/04/16 20:03:05 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,6 @@ LDAP_BEGIN_DECL
 #define LDAP_COLLECTIVE_ATTRIBUTES
 #define LDAP_COMP_MATCH
 #define LDAP_SYNC_TIMESTAMP
-#define SLAP_CONTROL_X_SESSION_TRACKING
 #define SLAP_CONTROL_X_WHATFAILED
 #define SLAP_CONFIG_DELETE
 #ifndef SLAP_SCHEMA_EXPOSE
@@ -74,6 +73,7 @@ LDAP_BEGIN_DECL
 
 #define LDAP_DYNAMIC_OBJECTS
 #define SLAP_CONTROL_X_TREE_DELETE LDAP_CONTROL_X_TREE_DELETE
+#define SLAP_CONTROL_X_SESSION_TRACKING
 #define SLAP_DISTPROC
 
 #ifdef ENABLE_REWRITE
@@ -112,12 +112,25 @@ LDAP_BEGIN_DECL
 # define SLAP_STRING_UNKNOWN	"unknown"
 #endif /* ! TCP Wrappers */
 
-/* LDAPMod.mod_op value ===> Must be kept in sync with ldap.h!
- * This is a value used internally by the backends. It is needed to allow
- * adding values that already exist without getting an error as required by
- * modrdn when the new rdn was already an attribute value itself.
+/* LDAPMod.mod_op value ===> Must be kept in sync with ldap.h! */
+/* These values are used internally by the backends. */
+/* SLAP_MOD_SOFTADD allows adding values that already exist without getting
+ * an error as required by modrdn when the new rdn was already an attribute
+ * value itself.
  */
-#define SLAP_MOD_SOFTADD	0x1000
+#define SLAP_MOD_SOFTADD		0x1000
+/* SLAP_MOD_SOFTDEL allows deleting values if they exist without getting
+ * an error otherwise.
+ */
+#define SLAP_MOD_SOFTDEL		0x1001
+/* SLAP_MOD_ADD_IF_NOT_PRESENT allows adding values unless the attribute
+ * is already present without getting an error.
+ */
+#define SLAP_MOD_ADD_IF_NOT_PRESENT	0x1002
+/* SLAP_MOD_DEL_IF_PRESENT allows deleting values if the attribute
+ * is present, without getting an error otherwise.
+ * The semantics can be obtained using SLAP_MOD_SOFTDEL with NULL values.
+ */
 
 #define MAXREMATCHES (100)
 
@@ -131,10 +144,10 @@ LDAP_BEGIN_DECL
 
 #define SLAP_TEXT_BUFLEN (256)
 
-/* psuedo error code indicating abandoned operation */
+/* pseudo error code indicating abandoned operation */
 #define SLAPD_ABANDON (-1024)
 
-/* psuedo error code indicating disconnect */
+/* pseudo error code indicating disconnect */
 #define SLAPD_DISCONNECT (-1025)
 
 /* unknown config file directive */
@@ -423,6 +436,7 @@ struct Syntax {
 #define SLAP_SYNTAX_HIDE	0x8000U /* hide (do not publish) */
 #endif
 #define	SLAP_SYNTAX_HARDCODE	0x10000U	/* This is hardcoded schema */
+#define	SLAP_SYNTAX_DN		0x20000U	/* Treat like a DN */
 
 	Syntax				**ssyn_sups;
 
@@ -838,6 +852,7 @@ struct AttributeDescription {
 #define SLAP_DESC_BINARY	0x01U
 #define SLAP_DESC_TAG_RANGE	0x80U
 #define SLAP_DESC_TEMPORARY	0x1000U
+	unsigned ad_index;
 };
 
 /* flags to slap_*2undef_ad to register undefined (0, the default)
@@ -1544,6 +1559,7 @@ typedef struct AccessControlState {
 
 	/* Value dependent acl where processing can restart */
 	AccessControl  *as_vd_acl;
+	int as_vd_acl_present;
 	int as_vd_acl_count;
 	slap_mask_t		as_vd_mask;
 
@@ -1554,7 +1570,7 @@ typedef struct AccessControlState {
 	/* True if started to process frontend ACLs */
 	int as_fe_done;
 } AccessControlState;
-#define ACL_STATE_INIT { NULL, ACL_NONE, NULL, 0, ACL_PRIV_NONE, -1, 0 }
+#define ACL_STATE_INIT { NULL, ACL_NONE, NULL, 0, 0, ACL_PRIV_NONE, -1, 0 }
 
 typedef struct AclRegexMatches {        
 	int dn_count;
@@ -1588,6 +1604,9 @@ LDAP_SLAPD_V (int) slapMode;
 #define	SLAP_TOOL_READONLY	0x0400
 #define	SLAP_TOOL_QUICK		0x0800
 #define SLAP_TOOL_NO_SCHEMA_CHECK	0x1000
+#define SLAP_TOOL_VALUE_CHECK	0x2000
+
+#define SLAP_SERVER_RUNNING	0x8000
 
 #define SB_TLS_DEFAULT		(-1)
 #define SB_TLS_OFF		0
@@ -1735,12 +1754,12 @@ struct syncinfo_s;
 #define SLAP_SYNCUUID_SET_SIZE 256
 
 struct sync_cookie {
-	struct berval *ctxcsn;
-	struct berval octet_str;
-	int rid;
-	int sid;
-	int numcsns;
+	BerVarray ctxcsn;
 	int *sids;
+	int numcsns;
+	int rid;
+	struct berval octet_str;
+	int sid;
 	LDAP_STAILQ_ENTRY(sync_cookie) sc_next;
 };
 
@@ -1835,6 +1854,7 @@ struct BackendDB {
 #define SLAP_DBFLAG_CLEAN		0x10000U /* was cleanly shutdown */
 #define SLAP_DBFLAG_ACL_ADD		0x20000U /* check attr ACLs on adds */
 #define SLAP_DBFLAG_SYNC_SUBENTRY	0x40000U /* use subentry for context */
+#define SLAP_DBFLAG_MULTI_SHADOW	0x80000U /* uses mirrorMode/multi-master */
 	slap_mask_t	be_flags;
 #define SLAP_DBFLAGS(be)			((be)->be_flags)
 #define SLAP_NOLASTMOD(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_NOLASTMOD)
@@ -1858,7 +1878,7 @@ struct BackendDB {
 #define SLAP_SYNC_SHADOW(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_SYNC_SHADOW)
 #define SLAP_SLURP_SHADOW(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_SLURP_SHADOW)
 #define SLAP_SINGLE_SHADOW(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_SINGLE_SHADOW)
-#define SLAP_MULTIMASTER(be)			(!SLAP_SINGLE_SHADOW(be))
+#define SLAP_MULTIMASTER(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_MULTI_SHADOW)
 #define SLAP_DBCLEAN(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_CLEAN)
 #define SLAP_DBACL_ADD(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_ACL_ADD)
 #define SLAP_SYNC_SUBENTRY(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_SYNC_SUBENTRY)
@@ -1938,6 +1958,7 @@ struct BackendDB {
 	struct slap_limits **be_limits; /* regex-based size and time limits */
 	AccessControl *be_acl;	/* access control list for this backend	   */
 	slap_access_t	be_dfltaccess;	/* access given if no acl matches	   */
+	AttributeName	*be_extra_anlist;	/* attributes that need to be added to search requests (ITS#6513) */
 
 	/* Replica Information */
 	struct berval be_update_ndn;	/* allowed to make changes (in replicas) */
@@ -2101,23 +2122,23 @@ struct SlapReply {
 		rep_extended_s sru_extended;
 	} sr_un;
 	slap_mask_t sr_flags;
-#define REP_ENTRY_MODIFIABLE	0x0001U
-#define REP_ENTRY_MUSTBEFREED	0x0002U
-#define REP_ENTRY_MUSTRELEASE	0x0004U
-#define	REP_ENTRY_MASK		(REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED|REP_ENTRY_MUSTRELEASE)
+#define	REP_ENTRY_MODIFIABLE	((slap_mask_t) 0x0001U)
+#define	REP_ENTRY_MUSTBEFREED	((slap_mask_t) 0x0002U)
+#define	REP_ENTRY_MUSTRELEASE	((slap_mask_t) 0x0004U)
+#define	REP_ENTRY_MASK		(REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTFLUSH)
 #define	REP_ENTRY_MUSTFLUSH	(REP_ENTRY_MUSTBEFREED|REP_ENTRY_MUSTRELEASE)
 
-#define REP_MATCHED_MUSTBEFREED	0x0010U
+#define	REP_MATCHED_MUSTBEFREED	((slap_mask_t) 0x0010U)
 #define	REP_MATCHED_MASK	(REP_MATCHED_MUSTBEFREED)
 
-#define REP_REF_MUSTBEFREED	0x0020U
+#define REP_REF_MUSTBEFREED	((slap_mask_t) 0x0020U)
 #define REP_REF_MASK		(REP_REF_MUSTBEFREED)
 
-#define REP_CTRLS_MUSTBEFREED	0x0040U
+#define REP_CTRLS_MUSTBEFREED	((slap_mask_t) 0x0040U)
 #define REP_CTRLS_MASK		(REP_CTRLS_MUSTBEFREED)
 
-#define	REP_NO_ENTRYDN		0x1000U
-#define	REP_NO_SUBSCHEMA	0x2000U
+#define	REP_NO_ENTRYDN		((slap_mask_t) 0x1000U)
+#define	REP_NO_SUBSCHEMA	((slap_mask_t) 0x2000U)
 #define	REP_NO_OPERATIONALS	(REP_NO_ENTRYDN|REP_NO_SUBSCHEMA)
 };
 
@@ -3023,7 +3044,6 @@ typedef int (*SLAP_ENTRY_INFO_FN) LDAP_P(( void *arg, Entry *e ));
 
 #define SLAP_SLAB_SIZE	(1024*1024)
 #define SLAP_SLAB_STACK 1
-#define SLAP_SLAB_SOBLOCK 64
 
 #define SLAP_ZONE_ALLOC 1
 #undef SLAP_ZONE_ALLOC
@@ -3252,25 +3272,6 @@ struct ComponentSyntaxInfo {
 };
 
 #endif /* LDAP_COMP_MATCH */
-
-/* slab heap data structures */
-
-struct slab_object {
-    void *so_ptr;
-	int so_blockhead;
-    LDAP_LIST_ENTRY(slab_object) so_link;
-};
-
-struct slab_heap {
-    void *sh_base;
-    void *sh_last;
-    void *sh_end;
-	int sh_stack;
-	int sh_maxorder;
-    unsigned char **sh_map;
-    LDAP_LIST_HEAD( sh_freelist, slab_object ) *sh_free;
-	LDAP_LIST_HEAD( sh_so, slab_object ) sh_sopool;
-};
 
 #ifdef SLAP_ZONE_ALLOC
 #define SLAP_ZONE_SIZE 0x80000		/* 512KB */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2012/01/29 15:54:35 phx Exp $
+#	$NetBSD: Makefile,v 1.43.6.1 2014/08/19 23:45:41 tls Exp $
 #
 
 .include <bsd.own.mk>
@@ -23,7 +23,7 @@ SUBDIR+= emips
 SUBDIR+= evbarm
 SUBDIR+= evbppc
 SUBDIR+= hp300
-SUBDIR+= hp700
+SUBDIR+= hppa
 SUBDIR+= hpcmips
 SUBDIR+= hpcsh
 SUBDIR+= i386

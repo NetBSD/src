@@ -1,5 +1,4 @@
-# Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-# 2009 Free Software Foundation, Inc.
+# Copyright (C) 2000-2013 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -19,178 +18,66 @@
 
 driver-avr.o: $(srcdir)/config/avr/driver-avr.c \
   $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H)
-	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
 
 avr-devices.o: $(srcdir)/config/avr/avr-devices.c \
+  $(srcdir)/config/avr/avr-mcus.def \
   $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H)
-	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
-	
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
 
 avr-c.o: $(srcdir)/config/avr/avr-c.c \
-  $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H)
-	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
-	
+  $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) $(C_COMMON_H)
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
 
+avr-log.o: $(srcdir)/config/avr/avr-log.c \
+  $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) $(INPUT_H) dumpfile.h
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
 
-LIB1ASMSRC = avr/libgcc.S
-LIB1ASMFUNCS = \
-	_mulqi3 \
-	_mulhi3 \
-	_mulsi3 \
-	_udivmodqi4 \
-	_divmodqi4 \
-	_udivmodhi4 \
-	_divmodhi4 \
-	_udivmodsi4 \
-	_divmodsi4 \
-	_prologue \
-	_epilogue \
-	_exit \
-	_cleanup \
-	_tablejump \
-	_tablejump_elpm \
-	_copy_data \
-	_clear_bss \
-	_ctors \
-	_dtors
+avr.o avr-c.o: $(srcdir)/config/avr/builtins.def
 
-# We do not have the DF type.
-# Most of the C functions in libgcc2 use almost all registers,
-# so use -mcall-prologues for smaller code size.
-TARGET_LIBGCC2_CFLAGS = -DDF=SF -Dinhibit_libc -mcall-prologues -Os
+# This overrides stdfix.h from USER_H which we supply and include
+# in our own stdint.h as stdint-gcc.h.
 
-fp-bit.c: $(srcdir)/config/fp-bit.c $(srcdir)/config/avr/t-avr
-	echo '#define FLOAT' > fp-bit.c
-	echo '#define FLOAT_ONLY' >> fp-bit.c
-	echo '#define CMPtype QItype' >> fp-bit.c
-	echo '#define DF SF' >> fp-bit.c
-	echo '#define DI SI' >> fp-bit.c
-	echo '#define FLOAT_BIT_ORDER_MISMATCH' >> fp-bit.c
-	echo '#define SMALL_MACHINE' >> fp-bit.c
-	echo 'typedef int QItype __attribute__ ((mode (QI)));' >> fp-bit.c
-	cat $(srcdir)/config/fp-bit.c >> fp-bit.c
+EXTRA_HEADERS = $(srcdir)/config/avr/stdfix.h \
+	      	stdfix-gcc.h
 
-FPBIT = fp-bit.c
+stdfix-gcc.h: $(srcdir)/ginclude/stdfix.h
+	-cp $< $@
 
-MULTILIB_OPTIONS = mmcu=avr2/mmcu=avr25/mmcu=avr3/mmcu=avr31/mmcu=avr35/mmcu=avr4/mmcu=avr5/mmcu=avr51/mmcu=avr6
-MULTILIB_DIRNAMES = avr2 avr25 avr3 avr31 avr35 avr4 avr5 avr51 avr6
+# Files and Variables auto-generated from avr-mcus.def
 
-# The many avr2 matches are not listed here - this is the default.
-MULTILIB_MATCHES = \
-	mmcu?avr25=mmcu?ata6289 \
-	mmcu?avr25=mmcu?attiny13 \
-	mmcu?avr25=mmcu?attiny13a \
-	mmcu?avr25=mmcu?attiny2313 \
-	mmcu?avr25=mmcu?attiny24 \
-	mmcu?avr25=mmcu?attiny44 \
-	mmcu?avr25=mmcu?attiny84 \
-	mmcu?avr25=mmcu?attiny25 \
-	mmcu?avr25=mmcu?attiny45 \
-	mmcu?avr25=mmcu?attiny85 \
-	mmcu?avr25=mmcu?attiny261 \
-	mmcu?avr25=mmcu?attiny461 \
-	mmcu?avr25=mmcu?attiny861 \
-	mmcu?avr25=mmcu?attiny43u \
-	mmcu?avr25=mmcu?attiny87 \
-	mmcu?avr25=mmcu?attiny48 \
-	mmcu?avr25=mmcu?attiny88 \
-	mmcu?avr25=mmcu?at86rf401 \
-	mmcu?avr3=mmcu?at43usb355 \
-	mmcu?avr3=mmcu?at76c711 \
-	mmcu?avr31=mmcu?atmega103 \
-	mmcu?avr31=mmcu?at43usb320 \
-	mmcu?avr35=mmcu?at90usb82 \
-	mmcu?avr35=mmcu?at90usb162 \
-	mmcu?avr35=mmcu?atmega8u2 \
-	mmcu?avr35=mmcu?atmega16u2 \
-	mmcu?avr35=mmcu?atmega32u2 \
-	mmcu?avr35=mmcu?attiny167 \
-	mmcu?avr35=mmcu?attiny327 \
-	mmcu?avr4=mmcu?atmega48 \
-	mmcu?avr4=mmcu?atmega48p \
-	mmcu?avr4=mmcu?atmega8 \
-	mmcu?avr4=mmcu?atmega8515 \
-	mmcu?avr4=mmcu?atmega8535 \
-	mmcu?avr4=mmcu?atmega88 \
-	mmcu?avr4=mmcu?atmega88p \
-	mmcu?avr4=mmcu?atmega8hva \
-	mmcu?avr4=mmcu?atmega4hvd \
-	mmcu?avr4=mmcu?atmega8hvd \
-	mmcu?avr4=mmcu?atmega8c1 \
-	mmcu?avr4=mmcu?atmega8m1 \
-	mmcu?avr4=mmcu?at90pwm1 \
-	mmcu?avr4=mmcu?at90pwm2 \
-	mmcu?avr4=mmcu?at90pwm2b \
-	mmcu?avr4=mmcu?at90pwm3 \
-	mmcu?avr4=mmcu?at90pwm3b \
-	mmcu?avr4=mmcu?at90pwm81 \
-	mmcu?avr5=mmcu?atmega16 \
-	mmcu?avr5=mmcu?atmega161 \
-	mmcu?avr5=mmcu?atmega162 \
-	mmcu?avr5=mmcu?atmega163 \
-	mmcu?avr5=mmcu?atmega164p \
-	mmcu?avr5=mmcu?atmega165 \
-	mmcu?avr5=mmcu?atmega165p \
-	mmcu?avr5=mmcu?atmega168 \
-	mmcu?avr5=mmcu?atmega168p \
-	mmcu?avr5=mmcu?atmega169 \
-	mmcu?avr5=mmcu?atmega169p \
-	mmcu?avr5=mmcu?atmega32 \
-	mmcu?avr5=mmcu?atmega323 \
-	mmcu?avr5=mmcu?atmega324p \
-	mmcu?avr5=mmcu?atmega325 \
-	mmcu?avr5=mmcu?atmega325p \
-	mmcu?avr5=mmcu?atmega3250 \
-	mmcu?avr5=mmcu?atmega3250p \
-	mmcu?avr5=mmcu?atmega328p \
-	mmcu?avr5=mmcu?atmega329 \
-	mmcu?avr5=mmcu?atmega329p \
-	mmcu?avr5=mmcu?atmega3290 \
-	mmcu?avr5=mmcu?atmega3290p \
-	mmcu?avr5=mmcu?atmega406 \
-	mmcu?avr5=mmcu?atmega64  \
-	mmcu?avr5=mmcu?atmega640 \
-	mmcu?avr5=mmcu?atmega644 \
-	mmcu?avr5=mmcu?atmega644p \
-	mmcu?avr5=mmcu?atmega645 \
-	mmcu?avr5=mmcu?atmega6450 \
-	mmcu?avr5=mmcu?atmega649 \
-	mmcu?avr5=mmcu?atmega6490 \
-	mmcu?avr5=mmcu?atmega16hva \
-	mmcu?avr5=mmcu?atmega16hvb \
-	mmcu?avr5=mmcu?atmega32hvb \
-	mmcu?avr5=mmcu?at90can32 \
-	mmcu?avr5=mmcu?at90can64 \
-	mmcu?avr5=mmcu?at90pwm216 \
-	mmcu?avr5=mmcu?at90pwm316 \
-	mmcu?avr5=mmcu?atmega16c1 \
-	mmcu?avr5=mmcu?atmega32c1 \
-	mmcu?avr5=mmcu?atmega64c1 \
-	mmcu?avr5=mmcu?atmega16m1 \
-	mmcu?avr5=mmcu?atmega32m1 \
-	mmcu?avr5=mmcu?atmega64m1 \
-	mmcu?avr5=mmcu?atmega16u4 \
-	mmcu?avr5=mmcu?atmega32u4 \
-	mmcu?avr5=mmcu?atmega32u6 \
-	mmcu?avr5=mmcu?at90scr100 \
-	mmcu?avr5=mmcu?at90usb646 \
-	mmcu?avr5=mmcu?at90usb647 \
-	mmcu?avr5=mmcu?at94k \
-	mmcu?avr51=mmcu?atmega128 \
-	mmcu?avr51=mmcu?atmega1280 \
-	mmcu?avr51=mmcu?atmega1281 \
-	mmcu?avr51=mmcu?atmega1284p \
-	mmcu?avr51=mmcu?atmega128rfa1 \
-	mmcu?avr51=mmcu?at90can128 \
-	mmcu?avr51=mmcu?at90usb1286 \
-	mmcu?avr51=mmcu?at90usb1287 \
-	mmcu?avr51=mmcu?m3000f \
-	mmcu?avr51=mmcu?m3000s \
-	mmcu?avr51=mmcu?m3001b \
- 	mmcu?avr6=mmcu?atmega2560 \
- 	mmcu?avr6=mmcu?atmega2561
+AVR_MCUS = $(srcdir)/config/avr/avr-mcus.def
 
-MULTILIB_EXCEPTIONS =
+# Run `avr-mcus' after you changed or added devices in  avr-mcus.def
 
-LIBGCC = stmp-multilib
-INSTALL_LIBGCC = install-multilib
+.PHONY: avr-mcus
+
+avr-mcus: $(srcdir)/config/avr/t-multilib \
+	  $(srcdir)/config/avr/avr-tables.opt \
+	  $(srcdir)/doc/avr-mmcu.texi ; @true
+
+# Make sure that -mmcu= is supported for devices from avr-mcus.def and
+# all -mmcu= values are displayed on the help screen
+$(srcdir)/config/avr/avr-tables.opt: $(srcdir)/config/avr/genopt.sh $(AVR_MCUS)
+	$(SHELL) $< $(AVR_MCUS) > $@
+
+# Make sure that -mmcu= support is in sync with -mmcu= documentation.
+gen-avr-mmcu-texi$(build_exeext): $(srcdir)/config/avr/gen-avr-mmcu-texi.c \
+  $(AVR_MCUS) $(srcdir)/config/avr/avr-devices.c \
+  $(srcdir)/config/avr/avr-arch.h
+	$(CC_FOR_BUILD) $(CFLAGS_FOR_BUILD) $< -o $@
+
+$(srcdir)/doc/avr-mmcu.texi: gen-avr-mmcu-texi$(build_exeext)
+	$(RUN_GEN) ./$< > $@
+
+# Map -mmcu= to the right multilib variant
+# MULTILIB_OPTIONS
+# MULTILIB_DIRNAMES
+# MULTILIB_EXCEPTIONS
+# MULTILIB_MATCHES
+
+s-mlib: $(srcdir)/config/avr/t-multilib
+
+$(srcdir)/config/avr/t-multilib: $(srcdir)/config/avr/genmultilib.awk \
+				 $(AVR_MCUS)
+	$(AWK) -f $< -v FORMAT=Makefile   $< $(AVR_MCUS) > $@

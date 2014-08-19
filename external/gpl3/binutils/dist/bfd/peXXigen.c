@@ -2418,7 +2418,9 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
     }
 
   h1 = coff_link_hash_lookup (coff_hash_table (info),
-			      "__tls_used", FALSE, FALSE, TRUE);
+			      (bfd_get_symbol_leading_char(abfd) != 0
+			       ? "__tls_used" : "_tls_used"),
+			      FALSE, FALSE, TRUE);
   if (h1 != NULL)
     {
       if ((h1->root.type == bfd_link_hash_defined
@@ -2437,8 +2439,15 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
 	     abfd);
 	  result = FALSE;
 	}
-
+     /* According to PECOFF sepcifications by Microsoft version 8.2
+	the TLS data directory consists of 4 pointers, followed
+	by two 4-byte integer. This implies that the total size
+	is different for 32-bit and 64-bit executables.  */ 
+#if !defined(COFF_WITH_pep) && !defined(COFF_WITH_pex64)
       pe_data (abfd)->pe_opthdr.DataDirectory[PE_TLS_TABLE].Size = 0x18;
+#else
+      pe_data (abfd)->pe_opthdr.DataDirectory[PE_TLS_TABLE].Size = 0x28;
+#endif
     }
 
 /* If there is a .pdata section and we have linked pdata finally, we

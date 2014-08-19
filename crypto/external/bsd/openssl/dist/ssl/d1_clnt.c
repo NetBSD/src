@@ -538,13 +538,6 @@ int dtls1_connect(SSL *s)
 				SSL3_ST_CW_CHANGE_A,SSL3_ST_CW_CHANGE_B);
 			if (ret <= 0) goto end;
 
-#ifndef OPENSSL_NO_SCTP
-			/* Change to new shared key of SCTP-Auth,
-			 * will be ignored if no SCTP used.
-			 */
-			BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
-#endif
-
 			s->state=SSL3_ST_CW_FINISHED_A;
 			s->init_num=0;
 
@@ -571,6 +564,16 @@ int dtls1_connect(SSL *s)
 				goto end;
 				}
 			
+#ifndef OPENSSL_NO_SCTP
+				if (s->hit)
+					{
+					/* Change to new shared key of SCTP-Auth,
+					 * will be ignored if no SCTP used.
+					 */
+					BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
+					}
+#endif
+
 			dtls1_reset_seq_numbers(s, SSL3_CC_WRITE);
 			break;
 
@@ -613,6 +616,13 @@ int dtls1_connect(SSL *s)
 				}
 			else
 				{
+#ifndef OPENSSL_NO_SCTP
+				/* Change to new shared key of SCTP-Auth,
+				 * will be ignored if no SCTP used.
+				 */
+				BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
+#endif
+
 #ifndef OPENSSL_NO_TLSEXT
 				/* Allow NewSessionTicket if ticket expected */
 				if (s->tlsext_ticket_expected)
@@ -773,7 +783,7 @@ int dtls1_client_hello(SSL *s)
 	unsigned char *buf;
 	unsigned char *p,*d;
 	unsigned int i,j;
-	unsigned long Time,l;
+	unsigned long l;
 	SSL_COMP *comp;
 
 	buf=(unsigned char *)s->init_buf->data;
@@ -798,13 +808,11 @@ int dtls1_client_hello(SSL *s)
 
 		/* if client_random is initialized, reuse it, we are
 		 * required to use same upon reply to HelloVerify */
-		for (i=0;p[i]=='\0' && i<sizeof(s->s3->client_random);i++) ;
+		for (i=0;p[i]=='\0' && i<sizeof(s->s3->client_random);i++)
+			;
 		if (i==sizeof(s->s3->client_random))
-			{
-			Time=(unsigned long)time(NULL);	/* Time */
-			l2n(Time,p);
-			RAND_pseudo_bytes(p,sizeof(s->s3->client_random)-4);
-			}
+			ssl_fill_hello_random(s, 0, p,
+					      sizeof(s->s3->client_random));
 
 		/* Do the message type and length last */
 		d=p= &(buf[DTLS1_HM_HEADER_LENGTH]);
@@ -868,12 +876,18 @@ int dtls1_client_hello(SSL *s)
 		*(p++)=0; /* Add the NULL method */
 
 #ifndef OPENSSL_NO_TLSEXT
+		/* TLS extensions*/
+		if (ssl_prepare_clienthello_tlsext(s) <= 0)
+			{
+			SSLerr(SSL_F_DTLS1_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
+			goto err;
+			}
 		if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
 			{
 			SSLerr(SSL_F_DTLS1_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
-#endif		
+#endif
 
 		l=(p-d);
 		d=buf;
@@ -981,6 +995,13 @@ int dtls1_send_client_key_exchange(SSL *s)
 			{
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
+
+			if (s->session->sess_cert == NULL)
+				{
+				/* We should always have a server certificate with SSL_kRSA. */
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
 
 			if (s->session->sess_cert->peer_rsa_tmp != NULL)
 				rsa=s->session->sess_cert->peer_rsa_tmp;
@@ -1172,6 +1193,13 @@ int dtls1_send_client_key_exchange(SSL *s)
 			{
 			DH *dh_srvr,*dh_clnt;
 
+			if (s->session->sess_cert == NULL)
+				{
+				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_UNEXPECTED_MESSAGE);
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
+				goto err;
+				}
+
 			if (s->session->sess_cert->peer_dh_tmp != NULL)
 				dh_srvr=s->session->sess_cert->peer_dh_tmp;
 			else
@@ -1230,6 +1258,13 @@ int dtls1_send_client_key_exchange(SSL *s)
 			EC_KEY *tkey;
 			int ecdh_clnt_cert = 0;
 			int field_size = 0;
+
+			if (s->session->sess_cert == NULL)
+				{
+				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_UNEXPECTED_MESSAGE);
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
+				goto err;
+				}
 
 			/* Did we send out the client's
 			 * ECDH share for use in premaster
@@ -1706,5 +1741,3 @@ int dtls1_send_client_certificate(SSL *s)
 	/* SSL3_ST_CW_CERT_D */
 	return(dtls1_do_write(s,SSL3_RT_HANDSHAKE));
 	}
-
-

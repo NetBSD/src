@@ -29,9 +29,11 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: __aeabi_idiv0.c,v 1.1.4.3 2013/06/23 06:26:13 tls Exp $");
+__RCSID("$NetBSD: __aeabi_idiv0.c,v 1.1.4.4 2014/08/19 23:45:12 tls Exp $");
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/systm.h>
+#else
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -44,7 +46,9 @@ __RCSID("$NetBSD: __aeabi_idiv0.c,v 1.1.4.3 2013/06/23 06:26:13 tls Exp $");
 int
 __aeabi_idiv0(int result)
 {
-#if !defined(_KERNEL) || !defined(_STANDALONE)
+#if defined(_KERNEL) || defined(_STANDALONE)
+	panic("divide by 0");
+#else
 	siginfo_t info;
 	
 	memset(&info, 0, sizeof info);

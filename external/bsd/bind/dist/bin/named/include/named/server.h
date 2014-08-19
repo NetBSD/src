@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.4 2012/06/05 00:39:10 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.4.2.1 2014/08/19 23:46:00 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: server.h,v 1.118 2012/01/31 23:47:31 tbox Exp  */
 
 #ifndef NAMED_SERVER_H
 #define NAMED_SERVER_H 1
@@ -39,6 +39,7 @@
 #define NS_EVENTCLASS		ISC_EVENTCLASS(0x4E43)
 #define NS_EVENT_RELOAD		(NS_EVENTCLASS + 0)
 #define NS_EVENT_CLIENTCONTROL	(NS_EVENTCLASS + 1)
+#define NS_EVENT_IFSCAN		(NS_EVENTCLASS + 2)
 
 /*%
  * Name server state.  Better here than in lots of separate global variables.
@@ -116,6 +117,8 @@ struct ns_server {
 	dns_name_t		*session_keyname;
 	unsigned int		session_keyalg;
 	isc_uint16_t		session_keybits;
+	isc_boolean_t		interface_auto;
+	unsigned char		secret[32];	/*%< Source Identity Token */
 };
 
 #define NS_SERVER_MAGIC			ISC_MAGIC('S','V','E','R')
@@ -132,7 +135,7 @@ enum {
 	dns_nsstatscounter_tsigin = 4,
 	dns_nsstatscounter_sig0in = 5,
 	dns_nsstatscounter_invalidsig = 6,
-	dns_nsstatscounter_tcp = 7,
+	dns_nsstatscounter_requesttcp = 7,
 
 	dns_nsstatscounter_authrej = 8,
 	dns_nsstatscounter_recurserej = 9,
@@ -167,7 +170,34 @@ enum {
 	dns_nsstatscounter_updatefail = 34,
 	dns_nsstatscounter_updatebadprereq = 35,
 
-	dns_nsstatscounter_max = 36
+	dns_nsstatscounter_recursclients = 36,
+
+	dns_nsstatscounter_dns64 = 37,
+
+	dns_nsstatscounter_ratedropped = 38,
+	dns_nsstatscounter_rateslipped = 39,
+
+	dns_nsstatscounter_rpz_rewrites = 40,
+
+	dns_nsstatscounter_udp = 41,
+	dns_nsstatscounter_tcp = 42,
+
+	dns_nsstatscounter_nsidopt = 43,
+	dns_nsstatscounter_expireopt = 44,
+	dns_nsstatscounter_otheropt = 45,
+
+#ifdef ISC_PLATFORM_USESIT
+	dns_nsstatscounter_sitopt = 46,
+	dns_nsstatscounter_sitbadsize = 47,
+	dns_nsstatscounter_sitbadtime = 48,
+	dns_nsstatscounter_sitnomatch = 49,
+	dns_nsstatscounter_sitmatch = 50,
+	dns_nsstatscounter_sitnew = 51,
+
+	dns_nsstatscounter_max = 52
+#else
+	dns_nsstatscounter_max = 46
+#endif
 };
 
 void
@@ -191,6 +221,12 @@ ns_server_reloadwanted(ns_server_t *server);
  * may be called asynchronously, from outside the server's task.
  * If a reload is already scheduled or in progress, the call
  * is ignored.
+ */
+
+void
+ns_server_scan_interfaces(ns_server_t *server);
+/*%<
+ * Trigger a interface scan.
  */
 
 void
@@ -224,7 +260,8 @@ ns_server_refreshcommand(ns_server_t *server, char *args, isc_buffer_t *text);
  */
 
 isc_result_t
-ns_server_retransfercommand(ns_server_t *server, char *args);
+ns_server_retransfercommand(ns_server_t *server, char *args,
+			    isc_buffer_t *text);
 /*%<
  * Act on a "retransfer" command from the command channel.
  */
@@ -313,7 +350,7 @@ ns_server_sync(ns_server_t *server, char *args, isc_buffer_t *text);
  * take place incrementally.
  */
 isc_result_t
-ns_server_rekey(ns_server_t *server, char *args);
+ns_server_rekey(ns_server_t *server, char *args, isc_buffer_t *text);
 
 /*%
  * Dump the current recursive queries.
@@ -331,7 +368,7 @@ ns_add_reserved_dispatch(ns_server_t *server, const isc_sockaddr_t *addr);
  * Enable or disable dnssec validation.
  */
 isc_result_t
-ns_server_validation(ns_server_t *server, char *args);
+ns_server_validation(ns_server_t *server, char *args, isc_buffer_t *text);
 
 /*%
  * Add a zone to a running process
@@ -343,11 +380,18 @@ ns_server_add_zone(ns_server_t *server, char *args);
  * Deletes a zone from a running process
  */
 isc_result_t
-ns_server_del_zone(ns_server_t *server, char *args);
+ns_server_del_zone(ns_server_t *server, char *args, isc_buffer_t *text);
 
 /*%
  * Lists the status of the signing records for a given zone.
  */
 isc_result_t
 ns_server_signing(ns_server_t *server, char *args, isc_buffer_t *text);
+
+/*%
+ * Lists status information for a given zone (e.g., name, type, files,
+ * load time, expiry, etc).
+ */
+isc_result_t
+ns_server_zonestatus(ns_server_t *server, char *args, isc_buffer_t *text);
 #endif /* NAMED_SERVER_H */

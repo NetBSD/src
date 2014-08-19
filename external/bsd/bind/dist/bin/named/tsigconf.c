@@ -1,7 +1,7 @@
-/*	$NetBSD: tsigconf.c,v 1.3 2012/06/05 00:39:06 christos Exp $	*/
+/*	$NetBSD: tsigconf.c,v 1.3.2.1 2014/08/19 23:46:00 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -80,7 +80,7 @@ add_initial_keys(const cfg_obj_t *list, dns_tsig_keyring_t *ring,
 		 * Create the key name.
 		 */
 		dns_name_init(&keyname, NULL);
-		isc_buffer_init(&keynamesrc, keyid, strlen(keyid));
+		isc_buffer_constinit(&keynamesrc, keyid, strlen(keyid));
 		isc_buffer_add(&keynamesrc, strlen(keyid));
 		isc_buffer_init(&keynamebuf, keynamedata, sizeof(keynamedata));
 		ret = dns_name_fromtext(&keyname, &keynamesrc, dns_rootname,

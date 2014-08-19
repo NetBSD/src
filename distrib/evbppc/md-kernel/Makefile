@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2005/08/03 14:55:37 shige Exp $
+#	$NetBSD: Makefile,v 1.3.50.1 2014/08/19 23:45:38 tls Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,14 +8,15 @@ MKIMG?=	${HOST_SH} ${NETBSDSRCDIR}/sys/arch/evbppc/compile/walnut-mkimg.sh
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
-MDSETTARGETS=		INSTALL_WALNUT ${RAMDISK} -	\
-			INSTALL_OPENBLOCKS266 ${RAMDISK} -
+MDSETTARGETS=		INSTALL_OPENBLOCKS266 ${RAMDISK} - \
+			INSTALL_TWRP1025 ${RAMDISK} - \
+			INSTALL_WALNUT ${RAMDISK} -
 MDSET_RELEASEDIR=	binary/kernel
 MDSET_SUFFIXES.-=	img create-img
 
 create-img= \
-	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; export OBJDUMP OBJCOPY; \
-		${MKIMG} ${.TARGET:R} ${.TARGET}
+	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT}; \
+		export OBJDUMP OBJCOPY STAT; ${MKIMG} ${.TARGET:R} ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 

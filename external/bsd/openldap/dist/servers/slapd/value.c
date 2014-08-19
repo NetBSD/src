@@ -1,10 +1,10 @@
-/*	$NetBSD: value.c,v 1.1.1.3 2010/12/12 15:22:52 adam Exp $	*/
+/*	$NetBSD: value.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* value.c - routines for dealing with values */
-/* OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.96.2.9 2010/04/13 20:23:22 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -471,7 +471,7 @@ ordered_value_pretty(
 	struct berval *out,
 	void *ctx )
 {
-	struct berval	bv = *val,
+	struct berval	bv,
 			idx = BER_BVNULL;
 	int		rc;
 
@@ -479,6 +479,8 @@ ordered_value_pretty(
 	assert( ad->ad_type->sat_syntax->ssyn_pretty != NULL );
 	assert( val != NULL );
 	assert( out != NULL );
+
+	bv = *val;
 
 	if ( ad->ad_type->sat_flags & SLAP_AT_ORDERED ) {
 
@@ -540,7 +542,7 @@ ordered_value_normalize(
 	struct berval *normalized,
 	void *ctx )
 {
-	struct berval	bv = *val,
+	struct berval	bv,
 			idx = BER_BVNULL;
 	int		rc;
 
@@ -548,6 +550,8 @@ ordered_value_normalize(
 	assert( ad->ad_type->sat_equality->smr_normalize != NULL );
 	assert( val != NULL );
 	assert( normalized != NULL );
+
+	bv = *val;
 
 	if ( ad->ad_type->sat_flags & SLAP_AT_ORDERED ) {
 

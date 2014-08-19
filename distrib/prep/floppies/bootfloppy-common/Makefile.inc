@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2008/06/23 02:16:54 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.12.24.1 2014/08/19 23:45:42 tls Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,7 +12,7 @@ BOOTLOADER?=	${MDEC}/boot_com0
 TMPKERNEL=	${.OBJDIR}/netbsd
 
 ${IMAGE}: ${KERNEL}
-	gzip -cd ${KERNEL} > ${TMPKERNEL}
+	${TOOL_GZIP} -cd ${KERNEL} > ${TMPKERNEL}
 	${TOOL_POWERPCMKBOOTIMAGE} -m ${MACHINE} -b ${BOOTLOADER} 	\
 		-k ${TMPKERNEL} ${.TARGET}
 	-rm -f ${TMPKERNEL}

@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv.c,v 1.4 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: gss-serv.c,v 1.23 2011/08/01 19:18:15 markus Exp $ */
+/*	$NetBSD: gss-serv.c,v 1.4.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: gss-serv.c,v 1.24 2013/07/20 01:55:13 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv.c,v 1.4 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: gss-serv.c,v 1.4.8.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>

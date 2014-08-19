@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.h,v 1.6.2.1 2013/06/23 06:26:14 tls Exp $	*/
-/* $OpenBSD: clientloop.h,v 1.30 2012/08/17 00:45:45 dtucker Exp $ */
+/*	$NetBSD: clientloop.h,v 1.6.2.2 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: clientloop.h,v 1.31 2013/06/02 23:36:29 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -77,5 +77,4 @@ void	muxserver_listen(void);
 void	muxclient(const char *);
 void	mux_exit_message(Channel *, int);
 void	mux_tty_alloc_failed(Channel *);
-void	mux_master_session_cleanup_cb(int, void *);
 

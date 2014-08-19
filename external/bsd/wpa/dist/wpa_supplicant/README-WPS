@@ -67,6 +67,10 @@ will also need to add following line:
 
 CONFIG_WPS_ER=y
 
+Following parameter can be used to enable support for NFC config method:
+
+CONFIG_WPS_NFC=y
+
 
 WPS needs the Universally Unique IDentifier (UUID; see RFC 4122) for
 the device. This is configured in the runtime configuration for
@@ -125,6 +129,12 @@ wpa_cli wps_pin any 12345670
 
 This starts the WPS negotiation in the same way as above with the
 generated PIN.
+
+When the wps_pin command is issued for an AP (including P2P GO) mode
+interface, an optional timeout parameter can be used to specify
+expiration timeout for the PIN in seconds. For example:
+
+wpa_cli wps_pin any 12345670 300
 
 
 If a random PIN is needed for a user interface, "wpa_cli wps_pin get"
@@ -303,3 +313,65 @@ WPS-ER-AP-SETTINGS
 - WPS ER learned AP settings
 
 WPS-ER-AP-SETTINGS uuid=fd91b4ec-e3fa-5891-a57d-8c59efeed1d2 ssid=test-wps auth_type=0x0020 encr_type=0x0008 key=12345678
+
+
+WPS with NFC
+------------
+
+WPS can be used with NFC-based configuration method. An NFC tag
+containing a password token from the Enrollee can be used to
+authenticate the connection instead of the PIN. In addition, an NFC tag
+with a configuration token can be used to transfer AP settings without
+going through the WPS protocol.
+
+When the station acts as an Enrollee, a local NFC tag with a password
+token can be used by touching the NFC interface of a Registrar.
+
+"wps_nfc [BSSID]" command starts WPS protocol run with the local end as
+the Enrollee using the NFC password token that is either pre-configured
+in the configuration file (wps_nfc_dev_pw_id, wps_nfc_dh_pubkey,
+wps_nfc_dh_privkey, wps_nfc_dev_pw) or generated dynamically with
+"wps_nfc_token <WPS|NDEF>" command. The included nfc_pw_token tool
+(build with "make nfc_pw_token") can be used to generate NFC password
+tokens during manufacturing (each station needs to have its own random
+keys).
+
+If the station includes NFC interface and reads an NFC tag with a MIME
+media type "application/vnd.wfa.wsc", the NDEF message payload (with or
+without NDEF encapsulation) can be delivered to wpa_supplicant using the
+following wpa_cli command:
+
+wps_nfc_tag_read <hexdump of payload>
+
+If the NFC tag contains a configuration token, the network is added to
+wpa_supplicant configuration. If the NFC tag contains a password token,
+the token is added to the WPS Registrar component. This information can
+then be used with wps_reg command (when the NFC password token was from
+an AP) using a special value "nfc-pw" in place of the PIN parameter. If
+the ER functionality has been started (wps_er_start), the NFC password
+token is used to enable enrollment of a new station (that was the source
+of the NFC password token).
+
+"nfc_get_handover_req <NDEF> <WPS>" command can be used to build the
+contents of a Handover Request Message for connection handover. The
+first argument selects the format of the output data and the second
+argument selects which type of connection handover is requested (WPS =
+Wi-Fi handover as specified in WSC 2.0).
+
+"nfc_get_handover_sel <NDEF> <WPS>" command can be used to build the
+contents of a Handover Select Message for connection handover when this
+does not depend on the contents of the Handover Request Message. The
+first argument selects the format of the output data and the second
+argument selects which type of connection handover is requested (WPS =
+Wi-Fi handover as specified in WSC 2.0).
+
+"nfc_rx_handover_req <hexdump of payload>" is used to indicate receipt
+of NFC connection handover request. The payload may include multiple
+carriers the the applicable ones are matched based on the media
+type. The reply data is contents for the Handover Select Message
+(hexdump).
+
+"nfc_rx_handover_sel <hexdump of payload>" is used to indicate receipt
+of NFC connection handover select. The payload may include multiple
+carriers the the applicable ones are matched based on the media
+type.

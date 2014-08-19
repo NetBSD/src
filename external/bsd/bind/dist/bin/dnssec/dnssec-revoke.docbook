@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
                [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2009, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,10 +17,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-revoke.docbook,v 1.9 2011/10/20 23:46:51 tbox Exp  -->
 <refentry id="man.dnssec-revoke">
   <refentryinfo>
-    <date>June 1, 2009</date>
+    <date>January 15, 2014</date>
   </refentryinfo>
 
   <refmeta>
@@ -38,6 +37,7 @@
     <copyright>
       <year>2009</year>
       <year>2011</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -109,8 +109,15 @@
         <term>-E <replaceable class="parameter">engine</replaceable></term>
         <listitem>
           <para>
-            Use the given OpenSSL engine. When compiled with PKCS#11 support
-            it defaults to pkcs11; the empty name resets it to no engine.
+            Specifies the cryptographic hardware to use, when applicable.
+          </para>
+          <para>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
           </para>
         </listitem>
       </varlistentry>

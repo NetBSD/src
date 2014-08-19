@@ -1,4 +1,4 @@
-/*	$NetBSD: entropy.h,v 1.1.1.1 2009/12/13 16:54:24 kardel Exp $	*/
+/*	$NetBSD: entropy.h,v 1.1.1.1.12.1 2014/08/19 23:51:39 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: entropy.h,v 1.32.332.2 2009/01/18 23:47:41 tbox Exp */
+/* Id: entropy.h,v 1.35 2009/10/19 02:37:08 marka Exp  */
 
 #ifndef ISC_ENTROPY_H
 #define ISC_ENTROPY_H 1
@@ -184,8 +184,8 @@ isc_result_t
 isc_entropy_createsamplesource(isc_entropy_t *ent,
 			       isc_entropysource_t **sourcep);
 /*!<
- * \brief Create an entropy source that consists of samples.  Each sample is added
- * to the source via isc_entropy_addsamples(), below.
+ * \brief Create an entropy source that consists of samples.  Each sample is
+ * added to the source via isc_entropy_addsamples(), below.
  */
 
 isc_result_t
@@ -256,11 +256,11 @@ void
 isc_entropy_putdata(isc_entropy_t *ent, void *data, unsigned int length,
 		    isc_uint32_t entropy);
 /*!<
- * \brief Add "length" bytes in "data" to the entropy pool, incrementing the pool's
- * entropy count by "entropy."
+ * \brief Add "length" bytes in "data" to the entropy pool, incrementing the
+ * pool's entropy count by "entropy."
  *
- * These bytes will prime the pseudorandom portion even no entropy is actually
- * added.
+ * These bytes will prime the pseudorandom portion even if no entropy is
+ * actually added.
  */
 
 void

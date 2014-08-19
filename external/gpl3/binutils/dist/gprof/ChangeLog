@@ -1,101 +1,39 @@
-2011-02-07  Alan Modra  <amodra@gmail.com>
+2012-09-11  Molly Heidecker <tworoses1@gmail.com>
 
-	PR gprof/12468
-	* corefile.c (core_create_function_syms): Set is_func for targets
-	that have no BSF_FUNCTION syms.
+	PR gprof/13836
+	* fsf_callg_bl.m: Fix typo.
 
-2010-12-21  Alan Modra  <amodra@gmail.com>
+2012-08-09  Nick Clifton  <nickc@redhat.com>
 
-	* po/ja.po: New translation.
+	* po/vi.po: Updated Vietnamese translation.
 
-2010-11-25  Alan Modra  <amodra@gmail.com>
+2012-08-07  Nick Clifton  <nickc@redhat.com>
 
-	* po/bg.po: Update.
-	* po/es.po: Update.
+	* po/ja.po: Updated Japanese translation.
 
-2010-11-10  Nick Clifton  <nickc@redhat.com>
+2012-07-30  Nick Clifton  <nickc@redhat.com>
 
-	* po/ru.po: New Russian translation.
-
-2010-11-05  Tristan Gingold  <gingold@adacore.com>
-
-	* po/gprof.pot: Regenerate
-
-2010-10-29  Matthias Klose  <doko@ubuntu.com>
-
-	* gprof.texi (Deprecated Options): Move introduction out of the table.
-
-2010-10-28  Matthias Klose  <doko@ubuntu.com>
-
-	* gprof.texi: Add directory section for info document.
-
-2010-09-27  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
-
-	* configure: Regenerate.
-
-2010-07-16  James Blackburn  <james.blackburn@broadcom.com>
-
-	* corefile.c (core_sym_class): Fix handling of subprogram names
-	and add support for cloned function names.
-
-2010-06-15  Doug Semler  <dougsemler@gmail.com>
-
-	* gmon_io.c (gmon_out_read): Remove double fclose of input file.
-
-2010-06-08  Nick Clifton  <nickc@redhat.com>
-
-	* gprof.texi (Sampling Error): Note that call counts and basic
-	block counts are only reliable for multi-threaded applications if
-	the counting function itself is thread safe.
-
-2010-06-08  Nick Clifton  <nickc@redhat.com>
-
-	* gprof.texi: Replace abbreviated 20th century year numbers with
-	full versions.
-
-2010-05-07  Tristan Gingold  <gingold@adacore.com>
-
-	* Makefile.in: Regenerate with automake 1.11.1.
-	* aclocal.m4: Ditto.
-
-2010-05-05  Nick Clifton  <nickc@redhat.com>
-
+	* po/gprof.pot: Updated template.
+	* po/bg.po: Updated Bulgarian translation.
 	* po/es.po: Updated Spanish translation.
 
-2010-04-27  Hongsheng Zhang  <hongsheng611@gmail.com>
+2012-06-02  Andreas Schwab  <schwab@linux-m68k.org>
 
-	PR gprof/11524
-	* corefile.c (core_create_syms_from): Use correct size of buffer.
-
-2010-04-22  Nick Clifton  <nickc@redhat.com>
-
-	* po/gprof.pot: Updated by the Translation project.
-	* po/vi.po: Updated Vietnamese translation.
-	* po/bg.po: Updated Bulgarian translation.
-
-2010-04-07  Alan Modra  <amodra@gmail.com>
-
-	* configure: Regenerate.
-
-2010-03-30  Andreas Schwab  <schwab@linux-m68k.org>
-
-	* Makefile.am (CONFIG_STATUS_DEPENDENCIES): Define.
+	* Makefile.am (TEXINFO_TEX): Remove $(top_srcdir) prefix.
 	* Makefile.in: Regenerate.
 
-2010-03-16  Segher Boessenkool  <segher@kernel.crashing.org>
+2012-03-06  Tristan Gingold  <gingold@adacore.com>
 
-	* gmon_io.c (gmon_out_read): Close file when done.
+	* corefile.c (core_create_function_syms): Do not call bsearch if
+	symbol_map_count is 0.
 
-2010-02-15  Nick Clifton  <nickc@redhat.com>
+2012-02-06  Nick Clifton  <nickc@redhat.com>
 
-	* po/vi.po: Updated Vietnamese translation.
-
-2010-01-09  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
-
-	* Makefile.in: Regenerate.
+	* po/sr.po: New Serbian translation.
+	* configure.in (ALL_LINGUAS): Add sr.
 	* configure: Regenerate.
 
-For older changes see ChangeLog-2009
+For older changes see ChangeLog-2011
 
 Local Variables:
 mode: change-log

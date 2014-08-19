@@ -28,6 +28,7 @@ namespace gold
 
 class General_options;
 class Errors;
+class Timer;
 class Target;
 template<int size, bool big_endian>
 class Sized_target;
@@ -57,6 +58,9 @@ class Parameters
   set_errors(Errors* errors);
 
   void
+  set_timer(Timer* timer);
+
+  void
   set_options(const General_options* options);
 
   void
@@ -69,6 +73,11 @@ class Parameters
   Errors*
   errors() const
   { return this->errors_; }
+
+  // Return the timer object.
+  Timer*
+  timer() const
+  { return this->timer_; }
 
   // Whether the options are valid.  This should not normally be
   // called, but it is needed by gold_exit.
@@ -134,6 +143,10 @@ class Parameters
     return debug_;
   }
 
+  // Return the name of the entry symbol.
+  const char*
+  entry() const;
+
   // A convenience routine for combining size and endianness.  It also
   // checks the HAVE_TARGET_FOO configure options and dies if the
   // current target's size/endianness is not supported according to
@@ -155,6 +168,10 @@ class Parameters
   bool
   incremental() const;
 
+  // Return true if we are doing a full incremental link.
+  bool
+  incremental_full() const;
+
   // Return true if we are doing an incremental update.
   bool
   incremental_update() const;
@@ -169,6 +186,7 @@ class Parameters
   friend class Set_parameters_target_once;
 
   Errors* errors_;
+  Timer* timer_;
   const General_options* options_;
   Target* target_;
   bool doing_static_link_valid_;
@@ -186,6 +204,9 @@ extern const Parameters* parameters;
 
 extern void
 set_parameters_errors(Errors* errors);
+
+extern void
+set_parameters_timer(Timer* timer);
 
 extern void
 set_parameters_options(const General_options* options);

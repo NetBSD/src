@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.2 2013/06/23 06:28:16 tls Exp $
+#	$NetBSD: Makefile,v 1.3.2.3 2014/08/19 23:47:15 tls Exp $
 
 LIB=		c++
 WARNS=		4
@@ -10,7 +10,8 @@ NOLINT=		# defined
 
 SRCS=	algorithm.cpp bind.cpp chrono.cpp condition_variable.cpp debug.cpp \
 	exception.cpp future.cpp hash.cpp ios.cpp iostream.cpp locale.cpp \
-	memory.cpp mutex.cpp new.cpp random.cpp regex.cpp stdexcept.cpp \
+	memory.cpp mutex.cpp new.cpp optional.cpp random.cpp regex.cpp \
+	shared_mutex.cpp stdexcept.cpp \
 	string.cpp strstream.cpp system_error.cpp thread.cpp \
 	utility.cpp valarray.cpp
 # typeinfo.cc: prefer libcxxrt's version

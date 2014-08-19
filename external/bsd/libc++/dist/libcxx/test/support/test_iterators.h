@@ -1,3 +1,12 @@
+//===----------------------------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef ITERATORS_H
 #define ITERATORS_H
 
@@ -290,7 +299,7 @@ inline Iter base(bidirectional_iterator<Iter> i) { return i.base(); }
 template <class Iter>
 inline Iter base(random_access_iterator<Iter> i) { return i.base(); }
 
-template <class Iter>	// everything else
+template <class Iter>    // everything else
 inline Iter base(Iter i) { return i; }
 
 #endif  // ITERATORS_H

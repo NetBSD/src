@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.4.12.1 2012/11/20 02:58:12 tls Exp $	*/
+/*	$NetBSD: mount.h,v 1.4.12.2 2014/08/19 23:52:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -52,7 +52,7 @@ struct zfs_args {
 	int  datalen;
 	int  optlen;
 	int  flags;
-} za;
+};
 
 typedef struct zfs_args zfs_args_t;
 

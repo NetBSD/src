@@ -1,6 +1,6 @@
 /* tc-sh.c -- Assemble code for the Renesas / SuperH SH
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2012
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -789,11 +789,9 @@ sh_cons_fix_new (fragS *frag, int off, int size, expressionS *exp)
 	r_type = BFD_RELOC_32;
 	break;
 
-#ifdef HAVE_SH64
       case 8:
 	r_type = BFD_RELOC_64;
 	break;
-#endif
 
       default:
 	goto error;
@@ -3968,6 +3966,11 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
      the other symbol.  We have to adjust the relocation type here.  */
   if (fixP->fx_pcrel)
     {
+#ifndef HAVE_SH64
+      /* Safeguard; this must not occur for non-sh64 configurations.  */
+      gas_assert (fixP->fx_r_type != BFD_RELOC_64);
+#endif
+
       switch (fixP->fx_r_type)
 	{
 	default:
@@ -4165,6 +4168,12 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
       buf[lowbyte] = val & 0xff;
       buf[highbyte] |= (val >> 8) & 0xf;
       break;
+
+#ifndef HAVE_SH64
+    case BFD_RELOC_64:
+      apply_full_field_fix (fixP, buf, *valP, 8);
+      break;
+#endif
 
     case BFD_RELOC_32:
     case BFD_RELOC_32_PCREL:

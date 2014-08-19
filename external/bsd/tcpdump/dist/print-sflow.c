@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
 "@(#) Header: /tcpdump/master/tcpdump/print-sflow.c,v 1.1 2007-08-08 17:20:58 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-sflow.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-sflow.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -845,7 +845,7 @@ sflow_print(const u_char *pptr, u_int len) {
                EXTRACT_32BITS(sflow_datagram->version),
                EXTRACT_32BITS(sflow_datagram->ip_version) == 1 ? "IPv4" : "IPv6",
 	       ipaddr_string(sflow_datagram->agent),
-               EXTRACT_32BITS(sflow_datagram->samples),
+               EXTRACT_32BITS(sflow_datagram->agent_id),
                len);
         return;
     }

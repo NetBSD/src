@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,10 +18,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named.docbook,v 1.28 2011/11/09 23:46:23 tbox Exp  -->
 <refentry id="man.named">
   <refentryinfo>
-    <date>May 21, 2009</date>
+    <date>February 19, 2014</date>
   </refentryinfo>
 
   <refmeta>
@@ -44,6 +43,8 @@
       <year>2008</year>
       <year>2009</year>
       <year>2011</year>
+      <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -61,6 +62,7 @@
       <arg><option>-6</option></arg>
       <arg><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
       <arg><option>-d <replaceable class="parameter">debug-level</replaceable></option></arg>
+      <arg><option>-D <replaceable class="parameter">string</replaceable></option></arg>
       <arg><option>-E <replaceable class="parameter">engine-name</replaceable></option></arg>
       <arg><option>-f</option></arg>
       <arg><option>-g</option></arg>
@@ -149,14 +151,32 @@
       </varlistentry>
 
       <varlistentry>
+        <term>-D <replaceable class="parameter">string</replaceable></term>
+        <listitem>
+          <para>
+	    Specifies a string that is used to identify a instance of
+	    <command>named</command> in a process listing.  The contents
+	    of <replaceable class="parameter">string</replaceable> are
+	    not examined.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>-E <replaceable class="parameter">engine-name</replaceable></term>
         <listitem>
           <para>
-            Use a crypto hardware (OpenSSL engine) for the crypto operations
-            it supports, for instance re-signing with private keys from
-            a secure key store. When compiled with PKCS#11 support
-            <replaceable class="parameter">engine-name</replaceable>
-            defaults to pkcs11, the empty name resets it to no engine.
+            When applicable, specifies the hardware to use for
+            cryptographic operations, such as a secure key store used
+            for signing.
+          </para>
+          <para>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
           </para>
         </listitem>
       </varlistentry>
@@ -241,6 +261,9 @@
 	  <para>
 	    Allow <command>named</command> to use up to
 	    <replaceable class="parameter">#max-socks</replaceable> sockets.
+            The default value is 4096 on systems built with default
+            configuration options, and 21000 on systems built with
+            "configure --with-tuning=large".
 	  </para>
           <warning>
             <para>
@@ -290,9 +313,12 @@
             Use <replaceable class="parameter">#listeners</replaceable>
             worker threads to listen for incoming UDP packets on each
             address.  If not specified, <command>named</command> will
-            use all of the worker threads for this purpose; the
-            <option>-U</option> option allows the number to be
-            decreased but not increased.
+            calculate a default value based on the number of detected
+            CPUs: 1 for 1 CPU, 2 for 2-4 CPUs, and the number of
+            detected CPUs divided by 2 for values higher than 4.
+            If <option>-n</option> has been set to a higher value than
+            the number of detected CPUs, then <option>-U</option> may
+            be increased as high as that value, but no higher.
           </para>
         </listitem>
       </varlistentry>

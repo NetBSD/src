@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,38 +20,52 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_MAKE_INCLUDES@
 
-PROVIDER =	@PKCS11_PROVIDER@
+CINCLUDES =	${ISC_INCLUDES}
 
-CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix
+CDEFINES =
 
-CDEFINES =	-DPK11_LIB_LOCATION=\"${PROVIDER}\"
+ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
 
-# if FORCE_STATIC_PROVIDER: LIBS = ${PROVIDER}
-LIBS =		-ldl
+ISCDEPLIBS =	../../lib/isc/libisc.@A@
 
-SUBDIRS =
+DEPLIBS =	${ISCDEPLIBS}
 
-TARGETS =	pkcs11-keygen@EXEEXT@ pkcs11-list@EXEEXT@ \
-		pkcs11-destroy@EXEEXT@
-SRCS =		pkcs11-keygen.c pkcs11-list.c pkcs11-destroy.c
+# if FORCE_STATIC_PROVIDER: LIBS += ${PROVIDER}
+LIBS =		${ISCLIBS} @LIBS@
 
-MANPAGES =	pkcs11-keygen.8 pkcs11-list.8 pkcs11-destroy.8
-HTMLPAGES =	pkcs11-keygen.html pkcs11-list.html pkcs11-destroy.html
+SUBDIRS =	benchmarks
+
+TARGETS =	pkcs11-list@EXEEXT@ pkcs11-destroy@EXEEXT@ \
+		pkcs11-keygen@EXEEXT@ pkcs11-tokens@EXEEXT@
+SRCS =		pkcs11-list.c pkcs11-destroy.c \
+		pkcs11-keygen.c pkcs11-tokens.c
+OBJS =		pkcs11-list.@O@ pkcs11-destroy.@O@ \
+		pkcs11-keygen.@O@ pkcs11-tokens.@O@
+
+
+MANPAGES =	pkcs11-list.8 pkcs11-destroy.8 \
+		pkcs11-keygen.8 pkcs11-tokens.8
+HTMLPAGES =	pkcs11-list.html pkcs11-destroy.html \
+		pkcs11-keygen.html pkcs11-tokens.html
 MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
-pkcs11-keygen@EXEEXT@: @srcdir@/pkcs11-keygen.c
-	${CC} ${ALL_CFLAGS} ${LDFLAGS} \
-	-o $@ @srcdir@/pkcs11-keygen.c ${LIBS}
+pkcs11-list@EXEEXT@: @srcdir@/pkcs11-list.@O@ ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/pkcs11-list.@O@ ${LIBS}
 
-pkcs11-list@EXEEXT@: @srcdir@/pkcs11-list.c
-	${CC} ${ALL_CFLAGS} ${LDFLAGS} \
-	-o $@ @srcdir@/pkcs11-list.c ${LIBS}
+pkcs11-destroy@EXEEXT@: @srcdir@/pkcs11-destroy.@O@ ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/pkcs11-destroy.@O@ ${LIBS}
 
-pkcs11-destroy@EXEEXT@: @srcdir@/pkcs11-destroy.c
-	${CC} ${ALL_CFLAGS} ${LDFLAGS} \
-	-o $@ @srcdir@/pkcs11-destroy.c ${LIBS}
+pkcs11-keygen@EXEEXT@: @srcdir@/pkcs11-keygen.@O@ ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/pkcs11-keygen.@O@ ${LIBS}
+
+pkcs11-tokens@EXEEXT@: @srcdir@/pkcs11-tokens.@O@ ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/pkcs11-tokens.@O@ ${LIBS}
 
 doc man:: ${MANOBJS}
 
@@ -63,12 +77,18 @@ installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: ${TARGETS} installdirs
-	${INSTALL_PROGRAM} pkcs11-keygen@EXEEXT@ ${DESTDIR}${sbindir}
-	${INSTALL_PROGRAM} pkcs11-list@EXEEXT@ ${DESTDIR}${sbindir}
-	${INSTALL_PROGRAM} pkcs11-destroy@EXEEXT@ ${DESTDIR}${sbindir}
-	${INSTALL_DATA} ${srcdir}/pkcs11-keygen.8 ${DESTDIR}${mandir}/man8
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} pkcs11-list@EXEEXT@ \
+		${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} pkcs11-destroy@EXEEXT@ \
+		${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} pkcs11-keygen@EXEEXT@ \
+		${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} pkcs11-tokens@EXEEXT@ \
+		${DESTDIR}${sbindir}
 	${INSTALL_DATA} ${srcdir}/pkcs11-list.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/pkcs11-destroy.8 ${DESTDIR}${mandir}/man8
+	${INSTALL_DATA} ${srcdir}/pkcs11-keygen.8 ${DESTDIR}${mandir}/man8
+	${INSTALL_DATA} ${srcdir}/pkcs11-tokens.8 ${DESTDIR}${mandir}/man8
 
 clean distclean::
-	rm -f ${TARGETS}
+	rm -f ${OBJS} ${TARGETS}

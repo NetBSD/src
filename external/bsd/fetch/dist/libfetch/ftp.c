@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.5 2011/08/17 09:19:38 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.5.8.1 2014/08/19 23:46:46 tls Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -138,6 +138,7 @@ static void
 unmappedaddr(struct sockaddr_in6 *sin6, socklen_t *len)
 {
 	struct sockaddr_in *sin4;
+	void *addrp;
 	uint32_t addr;
 	int port;
 
@@ -145,7 +146,8 @@ unmappedaddr(struct sockaddr_in6 *sin6, socklen_t *len)
 	    !IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
 		return;
 	sin4 = (struct sockaddr_in *)(void *)sin6;
-	addr = *(uint32_t *)(void *)&sin6->sin6_addr.s6_addr[12];
+	addrp = &sin6->sin6_addr.s6_addr[12];
+	addr = *(uint32_t *)addrp;
 	port = sin6->sin6_port;
 	memset(sin4, 0, sizeof(struct sockaddr_in));
 	sin4->sin_addr.s_addr = addr;
@@ -196,6 +198,7 @@ ftp_chkerr(conn_t *conn)
 /*
  * Send a command and check reply
  */
+__printflike(2, 3)
 static int
 ftp_cmd(conn_t *conn, const char *fmt, ...)
 {
@@ -389,7 +392,7 @@ ftp_cwd(conn_t *conn, const char *path, int subdir)
 			++beg, ++i;
 		for (++i; dst + i < end && dst[i] != '/'; ++i)
 			/* nothing */ ;
-		e = ftp_cmd(conn, "CWD %.*s\r\n", dst + i - beg, beg);
+		e = ftp_cmd(conn, "CWD %.*s\r\n", (int)(dst + i - beg), beg);
 		if (e != FTP_FILE_ACTION_OK) {
 			free(dst);
 			ftp_seterr(e);
@@ -487,7 +490,7 @@ ftp_stat(conn_t *conn, const char *file, struct url_stat *us)
 		return (-1);
 	}
 
-	e = ftp_cmd(conn, "SIZE %.*s\r\n", filenamelen, filename);
+	e = ftp_cmd(conn, "SIZE %.*s\r\n", (int)filenamelen, filename);
 	if (e != FTP_FILE_STATUS) {
 		ftp_seterr(e);
 		return (-1);
@@ -504,7 +507,7 @@ ftp_stat(conn_t *conn, const char *file, struct url_stat *us)
 	if (us->size == 0)
 		us->size = -1;
 
-	e = ftp_cmd(conn, "MDTM %.*s\r\n", filenamelen, filename);
+	e = ftp_cmd(conn, "MDTM %.*s\r\n", (int)filenamelen, filename);
 	if (e != FTP_FILE_STATUS) {
 		ftp_seterr(e);
 		return (-1);
@@ -849,7 +852,7 @@ retry_mode:
 			e = ftp_cmd(conn, "%s%s%s\r\n", oper, *op_arg ? " " : "", op_arg);
 		else
 			e = ftp_cmd(conn, "%s %.*s\r\n", oper,
-			    filenamelen, filename);
+			    (int)filenamelen, filename);
 		if (e != FTP_CONNECTION_ALREADY_OPEN && e != FTP_OPEN_DATA_CONNECTION)
 			goto ouch;
 
@@ -946,7 +949,7 @@ retry_mode:
 			e = ftp_cmd(conn, "%s%s%s\r\n", oper, *op_arg ? " " : "", op_arg);
 		else
 			e = ftp_cmd(conn, "%s %.*s\r\n", oper,
-			    filenamelen, filename);
+			    (int)filenamelen, filename);
 		if (e != FTP_CONNECTION_ALREADY_OPEN && e != FTP_OPEN_DATA_CONNECTION)
 			goto ouch;
 
