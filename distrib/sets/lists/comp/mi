@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1907 2014/08/18 22:33:25 matt Exp $
+#	$NetBSD: mi,v 1.1908 2014/08/19 07:28:45 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3132,11 +3132,13 @@
 ./usr/include/sys/chio.h			comp-c-include
 ./usr/include/sys/clist.h			comp-obsolete		obsolete
 ./usr/include/sys/clockctl.h			comp-c-include
+./usr/include/sys/common_ansi.h			comp-c-include
 ./usr/include/sys/common_int_const.h		comp-c-include
 ./usr/include/sys/common_int_fmtio.h		comp-c-include
 ./usr/include/sys/common_int_limits.h		comp-c-include
 ./usr/include/sys/common_int_mwgwtypes.h	comp-c-include
 ./usr/include/sys/common_int_types.h		comp-c-include
+./usr/include/sys/common_limits.h		comp-c-include
 ./usr/include/sys/common_wchar_limits.h		comp-c-include
 ./usr/include/sys/condvar.h			comp-c-include
 ./usr/include/sys/conf.h			comp-c-include
